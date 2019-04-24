@@ -76,7 +76,11 @@ Definition pack (T : Type) (asg : ASG.type) (m : mixin_of asg) :=
   fun m' of phant_id m m' =>
     Pack T (Class _ b m').
 
-Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+Variable cT : type.
+
+Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
+
+Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
 
 End ClassOps.
 
@@ -88,8 +92,6 @@ Definition times {A : type} := times _ (mixin _ (class A)).
 Definition one {A : type} := one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
-
-Definition asgType (R : type) : ASG.type := ASG.Pack R (base R (class R)).
 
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* RING.sort ? = ASG.sort ? *)
@@ -208,7 +210,11 @@ Structure type := Pack {
 
 Local Coercion sort : type >-> Sortclass.
 
-Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+Variable cT : type.
+
+Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
+
+Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
 
 End ClassOps.
 
@@ -218,8 +224,6 @@ Definition times {A : type} := RING_input.times _ (mixin _ (class A)).
 Definition one {A : type} := RING_input.one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
-
-Definition asgType (R : type) : ASG.type := ASG.Pack R (base R (class R)).
 
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* RING.sort ? = ASG.sort ? *)
