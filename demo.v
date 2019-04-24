@@ -1,4 +1,5 @@
 Require Import ssreflect ssrfun.
+Require Import ZArith.
 
 (* 1 : ring and additive sg ================================================================= *)
 
@@ -49,12 +50,13 @@ Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
 
 Module RING.
 
-Axiom from_asg_laws : forall T : ASG.type, T -> (T -> T -> T) -> Prop.
+Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> T -> (T -> T -> T) -> Prop.
 
 Record mixin_of (A : ASG.type) := Mixin {
+  opp : A -> A;
   one : A;
   times : A -> A -> A;
-  _ : from_asg_laws A one times;
+  _ : from_asg_laws A opp one times;
   }.
 
 Section ClassOps.
@@ -88,6 +90,7 @@ Notation Make T m := (pack T _ m _ idfun _ idfun).
 
 Module Exports.
 
+Definition opp {A : type} := opp _ (mixin _ (class A)).
 Definition times {A : type} := times _ (mixin _ (class A)).
 Definition one {A : type} := one _ (mixin _ (class A)).
 
@@ -107,13 +110,15 @@ Check fun x : _ => times x one = x. (* _ is a RING.type *)
 (* requires the Canonical asgType. *)
 Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
 
-Axiom N_asg : ASG.laws nat 0 Nat.add.
-Canonical NasgType := ASG.Make nat (ASG.Mixin _ _ _ N_asg).
+Axiom Z_asg : ASG.laws Z 0%Z Z.add.
+Canonical Z_asgType := ASG.Make Z (ASG.Mixin _ _ _ Z_asg).
 
-Axiom N_ring : RING.from_asg_laws _ 1 Nat.mul.
-Canonical NringType := RING.Make nat (RING.Mixin _ _ _ N_ring).
+Check RING.from_asg_laws.
 
-Check fun n : nat => plus 1 (times 0 n) = n.
+Axiom Z_ring : RING.from_asg_laws _ Z.opp 1%Z Z.mul.
+Canonical Z_ringType := RING.Make Z (RING.Mixin _ _ _ _ Z_ring).
+
+Check fun n : Z => plus 1%Z (times 0%Z n) = n.
 
 End Example1.
 
@@ -182,12 +187,13 @@ Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
 
 Module RING_input.
 
-Axiom from_asg_laws : forall T : ASG.type, T -> (T -> T -> T) -> Prop.
+Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> T -> (T -> T -> T) -> Prop.
 
 Record from_asg (A : ASG.type) := FromAsg {
+  opp : A -> A;
   one : A;
   times : A -> A -> A;
-  _ : from_asg_laws A one times;
+  _ : from_asg_laws A opp one times;
   }.
 
 End RING_input.
@@ -256,13 +262,13 @@ Check fun x : _ => times x one = x. (* _ is a RING.type *)
 
 Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
 
-Axiom N_asg : ASG_input.laws nat 0 Nat.add.
-Canonical NasgType := ASG_Make.from_type nat (ASG_input.FromType _ _ _ N_asg).
+Axiom Z_asg : ASG_input.laws Z 0%Z Z.add.
+Canonical Z_asgType := ASG_Make.from_type Z (ASG_input.FromType _ _ _ Z_asg).
 
-Axiom N_ring : RING_input.from_asg_laws _ 1 Nat.mul.
-Canonical NringType := RING_Make.from_asg nat (RING_input.FromAsg _ _ _ N_ring).
+Axiom Z_ring : RING_input.from_asg_laws _ Z.opp 1%Z Z.mul.
+Canonical Z_ringType := RING_Make.from_asg Z (RING_input.FromAsg _ _ _ _ Z_ring).
 
-Check fun n : nat => plus 1 (times 0 n) = n.
+Check fun n : Z => plus 1%Z (times 0%Z n) = n.
 
 End Example1_meta.
 
