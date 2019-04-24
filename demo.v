@@ -14,14 +14,22 @@ Record mixin_of A := Mixin {
   _ : laws A zero plus;
   }.
 
+Section ClassOps.
+
 Record class_of (A : Type) := Class {
   mixin : mixin_of A
   }.
 
 Structure type := Pack {
   sort : Type;
-  class : class_of sort
+  _ : class_of sort
   }.
+
+Local Coercion sort : type >-> Sortclass.
+
+Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+
+End ClassOps.
 
 Notation Make T m := (Pack T (Class _ m)).
 
@@ -49,6 +57,8 @@ Record mixin_of (A : ASG.type) := Mixin {
   _ : from_asg_laws A one times;
   }.
 
+Section ClassOps.
+
 Record class_of (A : Type) := Class {
   base : ASG.class_of A;
   mixin : mixin_of (ASG.Pack A base)
@@ -56,14 +66,19 @@ Record class_of (A : Type) := Class {
 
 Structure type := Pack {
   sort : Type;
-  class : class_of sort
+  _ : class_of sort
   }.
 
+Local Coercion sort : type >-> Sortclass.
 
 Definition pack (T : Type) (asg : ASG.type) (m : mixin_of asg) :=
   fun b of phant_id (ASG.class asg) b =>
   fun m' of phant_id m m' =>
     Pack T (Class _ b m').
+
+Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+
+End ClassOps.
 
 Notation Make T m := (pack T _ m _ idfun _ idfun).
 
@@ -125,11 +140,18 @@ Record class_of (A : Type) := Class {
   mixin : ASG_input.from_type A (* TODO: inline *)
   }.
 
+Section ClassOps.
+
 Structure type := Pack {
   sort : Type;
-  class : class_of sort
+  _ : class_of sort
   }.
 
+Local Coercion sort : type >-> Sortclass.
+
+Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+
+End ClassOps.
 
 
 Module Exports.
@@ -177,13 +199,18 @@ Record class_of (A : Type) := Class {
   mixin : RING_input.from_asg (ASG.Pack A base)
   }.
 
+Section ClassOps.
+
 Structure type := Pack {
   sort : Type;
-  class : class_of sort
+  _ : class_of sort
   }.
 
+Local Coercion sort : type >-> Sortclass.
 
+Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+End ClassOps.
 
 Module Exports.
 
