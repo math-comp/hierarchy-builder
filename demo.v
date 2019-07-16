@@ -1123,21 +1123,47 @@ End Join_AG_SRIG_Make.
 Module RING_input.
 
 Axiom from_ag_srig_laws : Join_AG_SRIG.type -> Prop.
-
-Record from_ag_srig (A : Join_AG_SRIG.type) := FromAgSrig {
+Record from_ag_srig A := FromAgSrig {
   _ : from_ag_srig_laws A;
+}.
+
+
+(*
+Section XX.
+
+Variable T : ASG.type.
+Let J : Type := T. 
+Canonical asg := @ASG.Pack J (ASG.class T).
+Variables m1 : AG_input.from_asg asg.
+Variables m2 : SRIG_input.from_asg asg.
+Canonical xxx := AG_Make.from_asg J m1.
+Canonical yyy := SRIG_Make.from_asg J m2.
+
+Definition from_ag_srig_laws :=
+  forall x y : J, opp (times x y) = times (opp x) y.
+
+Record from_ag_srig  := FromAgSrig {
+  _ : from_ag_srig_laws;
   }.
 
+  End XX.
+  *)
 End RING_input.
 
+Print RING_input.from_ag_srig.
 (* declare_structure base: Join_AG_SRIG mix: RING_input.from_ag_srig *)
 
 Module RING.
 
-Record class_of (A : Type) := Class {
-  base : Join_AG_SRIG.class_of A;
-  mixin : RING_input.from_ag_srig (Join_AG_SRIG.Pack A base)
-  }.
+Record class_of (A : Type) := Class { (*
+  mixin1 : ASG_input.from_type A;
+  mixin2 : AG_input.from_asg (ASG.Pack A (ASG.Class _ mixin1));
+  mixin3 : SRIG_input.from_asg (ASG.Pack A (ASG.Class _ mixin1)); *)
+  base : Join_AG_SRIG.class_of A; 
+ 
+ (* mixin_new : RING_input.from_ag_srig (ASG.Pack A (ASG.Class _ mixin1)) mixin2 mixin3 *)
+  mixin : RING_input.from_ag_srig (Join_AG_SRIG.Pack A base) 
+}.
 
 Section ClassOps.
 
