@@ -1,6 +1,6 @@
 shorten std.{ do!, assert! }.
 
-% ===== preliminaries, should go in coq-lib.elpi =====
+% ============= preliminaries, should go in coq-lib.elpi ========================
 
 % Reification of vernacular commands, so that we can eventually print them
 kind vernac type.
@@ -34,7 +34,7 @@ logn F XS L0 LN :-
   std.map XS (x\r\ r = log1 F x) LXS,
   do!-monad LXS L0 LN.
 
-% ===== actual code =====
+% ======================== actual code ====================================
 
 pred build-class_of
   i:@constructor, % BASE.Pack
