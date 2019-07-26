@@ -1,6 +1,19 @@
 Require Import ssreflect ssrfun.
 Require Import ZArith.
 
+From elpi Require Import elpi.
+
+Elpi Command build_structure.
+Elpi Accumulate File "hierarchy-builder.elpi".
+Elpi Typecheck. 
+
+Module TYPE.
+Record class_of (A : Type) := Class {}.
+Structure type := Pack { sort : Type; _ : class_of sort }.
+End TYPE.
+Coercion TYPE.sort : TYPE.type >-> Sortclass.
+Canonical type_is_type (T : Type) : TYPE.type := TYPE.Pack T (TYPE.Class T).
+
 (* 1 : ring and additive sg ================================================================= *)
 
 Module Example1.
@@ -130,7 +143,7 @@ Module ASG_input.
 
 Axiom laws : forall T, T -> (T -> T -> T) -> Prop.
 
-Record from_type A := FromType { (* from scratch *)
+Record from_type (A : TYPE.type) := FromType { (* from scratch *)
   zero : A;
   plus : A -> A -> A;
   _ : laws A zero plus;
@@ -138,12 +151,21 @@ Record from_type A := FromType { (* from scratch *)
 
 End ASG_input.
 
-(* declare_structure ASG_input.mixin_of *)
+Elpi build_structure
+  ASG    (* new name*)
+  TYPE   (* base *)
+  ASG_input.from_type (* mixin *)
+  ASG_input.plus ASG_input.zero (* exported operations *).
+Export ASG.Exports.
+Arguments plus {_}.
+Arguments zero {_}.
 
-Module ASG.
+
+Module ASG_reference.
 
 Record class_of (A : Type) := Class {
-  mixin : ASG_input.from_type A (* TODO: inline *)
+  base : TYPE.class_of A;
+  mixin : ASG_input.from_type (TYPE.Pack A base) (* TODO: inline *)
   }.
 
 Section ClassOps.
@@ -169,15 +191,15 @@ Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
 
 End Exports.
 
-End ASG.
+End ASG_reference.
 
-Export ASG.Exports.
+
 
 (* declare_factory ASG_input.from_type *)
 
 Module ASG_Make.
 
-  Notation from_type T m := (ASG.Pack T (ASG.Class _ m)).
+  Notation from_type T m := (ASG.Pack T (ASG.Class _ _ m)).
 
 End ASG_Make.
 
