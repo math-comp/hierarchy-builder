@@ -19,7 +19,6 @@ interp-vernac (declare-coercion C G)   :- coq.coercion.declare C G.
 interp-vernac (declare-constant N B T) :- coq.env.add-const N B T ff _.
 
 % Writer monad, so that we can log the vernacular commands being executed
-:index(_ 1)
 pred do!-monad i:list (A -> A -> prop), i:A, o:A.
 do!-monad [] X X.
 do!-monad [P|PS] A0 AN :- P A0 A1, !, do!-monad PS A1 AN.
