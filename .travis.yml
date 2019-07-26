@@ -1,0 +1,29 @@
+dist: trusty
+sudo: required
+language: c
+
+git:
+  submodules: false
+
+install:
+ - curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh > install.sh
+ - echo | sudo sh install.sh
+ - opam init --disable-sandboxing -j 2 --compiler=4.05.0 -n -y
+ - eval $(opam env)
+ - opam config var root
+ - opam repo add coq-core-dev http://coq.inria.fr/opam/core-dev
+ - travis_wait opam install coq.8.10.dev -y
+
+matrix:
+  include:
+
+  - env: TEST="test"
+    os: linux
+    addons:
+      apt:
+        sources:
+        - avsm
+    script:
+    - eval $(opam env)
+    - opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y
+    - coqc demo
