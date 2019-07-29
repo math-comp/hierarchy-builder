@@ -41,7 +41,7 @@ logn F XS L0 LN :-
 pred build-class_of
   i:@constructor, % BASE.Pack
   i:@inductive, % BASE.class_of
-  i:@inductive, % MIX.from_BASE.type
+  i:@inductive, % MIX.from_"BASE.type"
   o:indt-decl.
 
 build-class_of Pack Class_of Mix RD :-
@@ -54,13 +54,13 @@ build-class_of Pack Class_of Mix RD :-
   coq.typecheck-indt-decl RD.
 
 pred build-type
-  i:@inductive, % class_of
+  i:@inductive, % NEW.class_of
   o:indt-decl.
 
-build-type Class RD :-
+build-type ClassOf RD :-
   RD = (record "type" (sort (typ U_)) "Pack" (
           field _ "sort"     (sort (typ V_)) s\
-          field _ "class"    (app [global (indt Class),s]) _\
+          field _ "class"    (app [global (indt ClassOf),s]) _\
         end-record)),
   coq.typecheck-indt-decl RD.
 
