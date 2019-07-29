@@ -178,6 +178,7 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+Definition TYPE (T : type) := @TYPE.Pack (sort T) (base _ (class T)).
 
 End ClassOps.
 
@@ -188,6 +189,12 @@ Coercion sort : type >-> Sortclass.
 
 Definition plus {A : type} := ASG_input.plus _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
+
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE.
+
+
+
 
 End Exports.
 
