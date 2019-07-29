@@ -92,6 +92,8 @@ build-operation T M C Bsort Bpack Op (declare-constant Name Bo Ty) :- !,
   Type = global (indt T),
   % For now we elaborate, but I'd prefer to fill in the holes myself
   coq.elaborate {{ fun T : lp:Type => lp:Operation _ (lp:Mixin _ (lp:Class T)) }} ITy Bo,
+  % TODO: I can take the original type of Op and replace mixin type parameter
+  % (A : BASE.type) with sort
   red-proj-iota Bsort Bpack ITy Ty.
 
 pred build-structure
@@ -112,14 +114,36 @@ build-structure New BaseSort BasePack BaseClassOf Mix Ops  L :- do!-monad [
   log1  interp-vernac (declare-inductive T (global (indt Type))),
   pure  (coq.locate "sort" Sort),   % projection
   pure  (coq.locate "class" (const Class)), % projection, XXX we don't define it, we let Coq do it
+% TODO: define coercions to all super structures  
   log1  interp-vernac (begin-module "Exports"),
   log1  interp-vernac (declare-coercion 
                (coercion Sort _ (grefclass (indt Type)) sortclass) tt),
   pure  (std.map Ops (build-operation Type Mixin Class (const BaseSort) (indc BasePack)) Defs),
   logn  interp-vernac Defs,
+% TODO: export all coercions
+% TODO: declare all coercions as canonical
   log1  interp-vernac (end-module),
   log1  interp-vernac (end-module)
 ] [] L.
+
+
+
+% TODO: think about these APIs and implement them.
+%% NOTE: a class is a label for a finite set of mixin names
+% [class_containing M CL] given M that is a set of mixings, let P be the
+% power set of M, then CL is the list of classes corresponding to each p \in P
+pred class_containing i:closed_set mixin, o:list class.
+%
+% from the label to the contents
+pred class_contents i:class, o:closed_set mixin.
+%
+% take the intersection of class_contents then class_containing, and if there is
+% no such a thing we return the set of mixins so that we can build the class
+% lazily
+pred pushout_class i:class, i:class, o:(class + closed_set mixin).
+%
+% END todo
+
 
 pred locate-constant i:argument, o:@constant.
 locate-constant (str S) G :- !, coq.locate S (const G).
@@ -133,7 +157,7 @@ main [str New, str BaseN, str MixN | OpsN] :- do! [
   assert!
     (std.mem Refs (indt GRT), coq.gr->id (indt GRT) "type")
     "base module lacks field type",
-  assert!
+  assert! % TODO: may have parameters in the future
     (coq.env.indt GRT tt 0 0 (sort _) [global (indc GRC)] _, coq.gr->id (indc GRC) "Pack")
     "base module lacks constructor Pack",
   assert!
