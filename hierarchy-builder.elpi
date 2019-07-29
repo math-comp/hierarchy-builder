@@ -9,6 +9,7 @@ type end-module vernac.
 type declare-inductive indt-decl -> term -> vernac.
 type declare-coercion coercion -> @global? -> vernac.
 type declare-constant @id -> term -> term -> vernac.
+type declare-instance gref -> vernac.
 
 % Vernacular commands interpreter
 pred interp-vernac i:vernac.
@@ -17,6 +18,7 @@ interp-vernac (end-module)             :- coq.env.end-module _.
 interp-vernac (declare-inductive D I)  :- coq.env.add-indt D I.
 interp-vernac (declare-coercion C G)   :- coq.coercion.declare C G.
 interp-vernac (declare-constant N B T) :- coq.env.add-const N B T ff _.
+interp-vernac (declare-instance GR)     :- coq.CS.declare-instance GR.
 
 % Writer monad, so that we can log the vernacular commands being executed
 pred do!-monad i:list (A -> A -> prop), i:A, o:A.
