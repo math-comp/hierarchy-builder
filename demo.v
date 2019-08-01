@@ -649,6 +649,55 @@ Notation from_ag T m := (pack_from_ag T _ m _ idfun _ idfun _ idfun).
 
 End RING_Make.
 
+Module RING_Factory.
+Section RING_Factory.
+
+Variable (T : ASG.type).
+Let A : Type := T.
+Canonical A_ASG := ASG.Pack A (ASG.class T).
+
+Axiom from_asg_laws : (A -> A) -> A -> (A -> A -> A) -> Prop.
+
+Record from_asg := FromAsg {
+  opp : A -> A;
+  one : A;
+  times : A -> A -> A;
+  laws : from_asg_laws opp one times;
+  }.
+
+Axiom from_asg_laws_to_ag_axiom :
+  forall (opp : A -> A) (one : A) (times : A -> A -> A),
+    from_asg_laws opp one times -> AG_input.from_asg_laws A_ASG opp.
+
+
+Print AG_input.from_asg.
+
+Hypothesis A_ring_from_asg : from_asg.
+
+Definition from_asg_to_AG_from_asg : AG_input.from_asg (A_ASG) :=
+  @AG_input.FromAsg _ _ (from_asg_laws_to_ag_axiom _ _ _ (laws A_ring_from_asg)).
+
+Canonical A_AG := AG_Make.from_asg A from_asg_to_AG_from_asg.
+
+End RING_Factory.
+End RING_Factory.
+
+Coercion RING_Factory.A_AG
+
+
+Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> T -> (T -> T -> T) -> Prop.
+
+
+Axiom from_asg_laws_to_ring_axiom :
+  forall (T : ASG.type) (opp : T -> T) (one : T) (times : T -> T -> T)
+         (a : from_asg_laws T opp one times),
+    from_ag_laws
+      (AG.Pack
+
+                             (AG_input.FromAsg _ _ (from_asg_laws_to_ag_axiom _ _ _ _ a)) _ idfun _ idfun _ idfun)
+      one times.
+
+End RING_Factory.
 
 Check fun x : _ => times x one = x. (* _ is a RING.type *)
 
