@@ -140,7 +140,7 @@ pred class_contents i:class, o:closed_set mixin.
 % take the intersection of class_contents then class_containing, and if there is
 % no such a thing we return the set of mixins so that we can build the class
 % lazily
-pred pushout_class i:class, i:class, o:(class + closed_set mixin).
+%pred pushout_class i:class, i:class, o:(class + closed_set mixin).
 %
 % END todo
 
