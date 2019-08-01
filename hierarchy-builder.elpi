@@ -6,7 +6,7 @@ shorten std.{ do!, assert! }.
 kind vernac type.
 type begin-module @id -> vernac.
 type end-module vernac.
-type declare-inductive indt-decl -> term -> vernac.
+type declare-inductive indt-decl -> @inductive -> vernac.
 type declare-coercion coercion -> @global? -> vernac.
 type declare-constant @id -> term -> term -> vernac.
 type declare-instance gref -> vernac.
@@ -108,16 +108,16 @@ pred build-structure
 build-structure New BaseSort BasePack BaseClassOf Mix Ops  L :- do!-monad [
   log1  interp-vernac (begin-module New),
   pure  (build-class_of BasePack BaseClassOf Mix C),
-  log1  interp-vernac (declare-inductive C (global (indt ClassOf))),
+  log1  interp-vernac (declare-inductive C ClassOf),
   pure  (coq.locate "mixin" (const Mixin)),   % projection
   pure  (build-type ClassOf T),
-  log1  interp-vernac (declare-inductive T (global (indt Type))),
+  log1  interp-vernac (declare-inductive T Type),
   pure  (coq.locate "sort" Sort),   % projection
   pure  (coq.locate "class" (const Class)), % projection, XXX we don't define it, we let Coq do it
 % TODO: define coercions to all super structures  
   log1  interp-vernac (begin-module "Exports"),
   log1  interp-vernac (declare-coercion 
-               (coercion Sort _ (grefclass (indt Type)) sortclass) tt),
+               (coercion Sort _ (indt Type) sortclass) tt),
   pure  (std.map Ops (build-operation Type Mixin Class (const BaseSort) (indc BasePack)) Defs),
   logn  interp-vernac Defs,
 % TODO: export all coercions
@@ -158,7 +158,7 @@ main [str New, str BaseN, str MixN | OpsN] :- do! [
     (std.mem Refs (indt GRT), coq.gr->id (indt GRT) "type")
     "base module lacks field type",
   assert! % TODO: may have parameters in the future
-    (coq.env.indt GRT tt 0 0 (sort _) [global (indc GRC)] _, coq.gr->id (indc GRC) "Pack")
+    (coq.env.indt GRT tt 0 0 (sort _) [GRC] _, coq.gr->id (indc GRC) "Pack")
     "base module lacks constructor Pack",
   assert!
     (std.mem Refs (indt GRclass_of), coq.gr->id (indt GRclass_of) "class_of")
