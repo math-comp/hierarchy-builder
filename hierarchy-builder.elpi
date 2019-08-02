@@ -8,17 +8,19 @@ type begin-module @id -> vernac.
 type end-module vernac.
 type declare-inductive indt-decl -> @inductive -> vernac.
 type declare-coercion coercion -> @global? -> vernac.
-type declare-constant @id -> term -> term -> vernac.
+type declare-constant @id -> term -> term -> @constant -> vernac.
+type declare-implicit gref -> list implicit_kind -> vernac.
 type declare-instance gref -> vernac.
 
 % Vernacular commands interpreter
 pred interp-vernac i:vernac.
-interp-vernac (begin-module M)         :- coq.env.begin-module M _.
-interp-vernac (end-module)             :- coq.env.end-module _.
-interp-vernac (declare-inductive D I)  :- coq.env.add-indt D I.
-interp-vernac (declare-coercion C G)   :- coq.coercion.declare C G.
-interp-vernac (declare-constant N B T) :- coq.env.add-const N B T ff _.
-interp-vernac (declare-instance GR)     :- coq.CS.declare-instance GR.
+interp-vernac (begin-module M)           :- coq.env.begin-module M _.
+interp-vernac (end-module)               :- coq.env.end-module _.
+interp-vernac (declare-inductive D I)    :- coq.env.add-indt D I.
+interp-vernac (declare-coercion C G)     :- coq.coercion.declare C G.
+interp-vernac (declare-constant N B T G) :- coq.env.add-const N B T ff G.
+interp-vernac (declare-instance GR)      :- coq.CS.declare-instance GR.
+interp-vernac  (declare-implicit GR L)    :- coq.arguments.set-implicit GR [L] tt.
 
 % Writer monad, so that we can log the vernacular commands being executed
 pred do!-monad i:list (A -> A -> prop), i:A, o:A.
@@ -82,9 +84,9 @@ pred build-operation
   i:gref, % BASE.sort
   i:gref, % BASE.pack
   i:@constant, % Mix.op
-  o:vernac.
+  o:list vernac.
 
-build-operation T M C Bsort Bpack Op (declare-constant Name Bo Ty) :- !,
+build-operation T M C Bsort Bpack Op [declare-constant Name Bo Ty OpC, declare-implicit (const OpC) [maximal]] :- !,
   coq.gr->id (const Op) Name, % we pick the same name
   Mixin = global (const M),
   Class = global (const C),
@@ -118,7 +120,8 @@ build-structure New BaseSort BasePack BaseClassOf Mix Ops  L :- do!-monad [
   log1  interp-vernac (begin-module "Exports"),
   log1  interp-vernac (declare-coercion 
                (coercion Sort _ (indt Type) sortclass) tt),
-  pure  (std.map Ops (build-operation Type Mixin Class (const BaseSort) (indc BasePack)) Defs),
+  pure  (std.map Ops (build-operation Type Mixin Class (const BaseSort) (indc BasePack)) DefsL),
+  pure  (std.flatten DefsL Defs),
   logn  interp-vernac Defs,
 % TODO: export all coercions
 % TODO: declare all coercions as canonical

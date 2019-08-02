@@ -157,8 +157,6 @@ Elpi build_structure
   ASG_input.from_type (* mixin *)
   ASG_input.plus ASG_input.zero (* exported operations *).
 Export ASG.Exports.
-Arguments plus {_}.
-Arguments zero {_}.
 
 
 Module ASG_reference.
