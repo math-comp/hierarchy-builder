@@ -680,23 +680,6 @@ Canonical A_AG := AG_Make.from_asg A from_asg_to_AG_from_asg.
 End RING_Factory.
 End RING_Factory.
 
-Coercion RING_Factory.A_AG
-
-
-Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> T -> (T -> T -> T) -> Prop.
-
-
-Axiom from_asg_laws_to_ring_axiom :
-  forall (T : ASG.type) (opp : T -> T) (one : T) (times : T -> T -> T)
-         (a : from_asg_laws T opp one times),
-    from_ag_laws
-      (AG.Pack
-
-                             (AG_input.FromAsg _ _ (from_asg_laws_to_ag_axiom _ _ _ _ a)) _ idfun _ idfun _ idfun)
-      one times.
-
-End RING_Factory.
-
 Check fun x : _ => times x one = x. (* _ is a RING.type *)
 
 Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
