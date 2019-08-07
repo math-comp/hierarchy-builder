@@ -32,12 +32,12 @@ Module Example1.
 
 Module ASG.
 
-Axiom laws : forall T, T -> (T -> T -> T) -> Prop.
-
 Record mixin_of A := Mixin {
   zero : A;
-  plus : A -> A -> A;
-  _ : laws A zero plus;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
   }.
 
 Section ClassOps.
@@ -63,7 +63,7 @@ Module Exports.
 
 Coercion sort : type >-> Sortclass.
 
-Definition plus {A : type} := plus _ (mixin _ (class A)).
+Definition add {A : type} := add _ (mixin _ (class A)).
 Definition zero {A : type} := zero _ (mixin _ (class A)).
 
 End Exports.
@@ -72,17 +72,20 @@ End ASG.
 
 Export ASG.Exports.
 
-Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
+Check fun x : _ => add x zero = x. (* _ is a ASG.type *)
 
 Module RING.
-
-Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> T -> (T -> T -> T) -> Prop.
 
 Record mixin_of (A : ASG.type) := Mixin {
   opp : A -> A;
   one : A;
-  times : A -> A -> A;
-  _ : from_asg_laws A opp one times;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
 
 Section ClassOps.
@@ -117,7 +120,7 @@ Notation Make T m := (pack T _ m _ idfun _ idfun).
 Module Exports.
 
 Definition opp {A : type} := opp _ (mixin _ (class A)).
-Definition times {A : type} := times _ (mixin _ (class A)).
+Definition mul {A : type} := mul _ (mixin _ (class A)).
 Definition one {A : type} := one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
@@ -131,18 +134,23 @@ End RING.
 
 Export RING.Exports.
 
-Check fun x : _ => times x one = x. (* _ is a RING.type *)
+Check fun x : _ => mul x one = x. (* _ is a RING.type *)
 
 (* requires the Canonical asgType. *)
-Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
+Check fun (r : RING.type) (x : r) => add x one = x. (* x is both in a ring and a group *)
 
-Axiom Z_asg : ASG.laws Z 0%Z Z.add.
-Canonical Z_asgType := ASG.Make Z (ASG.Mixin _ _ _ Z_asg).
+Definition Z_asg := ASG.Mixin Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
 
-Axiom Z_ring : RING.from_asg_laws _ Z.opp 1%Z Z.mul.
-Canonical Z_ringType := RING.Make Z (RING.Mixin _ _ _ _ Z_ring).
+Canonical Z_asgType := ASG.Make Z Z_asg.
 
-Check fun n : Z => plus 1%Z (times 0%Z n) = n.
+Definition Z_ring :=
+  RING.Mixin Z_asgType Z.opp 1%Z Z.mul
+             Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
+             Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Canonical Z_ringType := RING.Make Z Z_ring.
+
+Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
 End Example1.
 
@@ -153,12 +161,12 @@ Module Example1_meta.
 
 Module ASG_input.
 
-Axiom laws : forall T, T -> (T -> T -> T) -> Prop.
-
 Record from_type (A : TYPE.type) := FromType { (* from scratch *)
   zero : A;
-  plus : A -> A -> A;
-  _ : laws A zero plus;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
   }.
 
 End ASG_input.
@@ -167,7 +175,7 @@ Elpi build_structure
   ASG    (* new name*)
   TYPE   (* base *)
   ASG_input.from_type (* mixin *)
-  ASG_input.plus ASG_input.zero (* exported operations *).
+  ASG_input.add ASG_input.zero (* exported operations *).
 Export ASG.Exports.
 
 
@@ -205,7 +213,7 @@ Module Exports.
 
 Coercion sort : type >-> Sortclass.
 
-Definition plus {A : type} := ASG_input.plus _ (mixin _ (class A)).
+Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
 
 Coercion TYPE : type >-> TYPE.type.
@@ -222,25 +230,28 @@ End ASG_reference.
 
 (* declare_factory ASG_input.from_type *)
 
-Module ASG_Make.
+Module ASG_make.
 
   Notation from_type T m := (ASG.Pack T (ASG.Class _ _ m)).
 
-End ASG_Make.
+End ASG_make.
 
 (* test *)
-Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
+Check fun x : _ => add x zero = x. (* _ is a ASG.type *)
 
 
 Module RING_input.
 
-Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> T -> (T -> T -> T) -> Prop.
-
 Record from_asg (A : ASG.type) := FromAsg {
   opp : A -> A;
   one : A;
-  times : A -> A -> A;
-  _ : from_asg_laws A opp one times;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
 
 End RING_input.
@@ -273,7 +284,7 @@ End ClassOps.
 
 Module Exports.
 
-Definition times {A : type} := RING_input.times _ (mixin _ (class A)).
+Definition mul {A : type} := RING_input.mul _ (mixin _ (class A)).
 Definition one {A : type} := RING_input.one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
@@ -289,7 +300,7 @@ Export RING.Exports.
 
 (* declare_factory RING_input.from_asg *)
 
-Module RING_Make.
+Module RING_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : RING_input.from_asg asg) :=
   fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
@@ -302,20 +313,27 @@ Definition pack_from_asg (T : Type) (asg : ASG.type) (m : RING_input.from_asg as
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
-End RING_Make.
+End RING_make.
 
 
-Check fun x : _ => times x one = x. (* _ is a RING.type *)
+Check fun x : _ => mul x one = x. (* _ is a RING.type *)
 
-Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
+Check fun (r : RING.type) (x : r) => add x one = x. (* x is both in a ring and a group *)
 
-Axiom Z_asg : ASG_input.laws Z 0%Z Z.add.
-Canonical Z_asgType := ASG_Make.from_type Z (ASG_input.FromType _ _ _ Z_asg).
+Definition Z_asg :=
+  ASG_input.FromType _ 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
 
-Axiom Z_ring : RING_input.from_asg_laws _ Z.opp 1%Z Z.mul.
-Canonical Z_ringType := RING_Make.from_asg Z (RING_input.FromAsg _ _ _ _ Z_ring).
+Canonical Z_asgType := ASG_make.from_type Z Z_asg.
 
-Check fun n : Z => plus 1%Z (times 0%Z n) = n.
+Definition Z_ring :=
+  RING_input.FromAsg
+    Z_asgType Z.opp 1%Z Z.mul
+    Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
+    Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Canonical Z_ringType := RING_make.from_asg Z Z_ring.
+
+Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
 End Example1_meta.
 
@@ -326,15 +344,13 @@ Module Example2.
 Module ASG := Example1.ASG.
 Export ASG.Exports.
 
-Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
+Check fun x : _ => add x zero = x. (* _ is a ASG.type *)
 
 Module AG.
 
-Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> Prop.
-
 Record mixin_of (A : ASG.type) := Mixin {
   opp : A -> A;
-  _ : from_asg_laws A opp;
+  _ : left_inverse zero opp add;
   }.
 
 Section ClassOps.
@@ -381,16 +397,18 @@ End AG.
 
 Export AG.Exports.
 
-Check fun x : _ => plus x zero = opp (opp x). (* _ is a AG.type *)
+Check fun x : _ => add x zero = opp (opp x). (* _ is a AG.type *)
 
 Module RING.
 
-Axiom from_ag_laws : forall T : AG.type, T -> (T -> T -> T) -> Prop.
-
 Record mixin_of (A : AG.type) := Mixin {
   one : A;
-  times : A -> A -> A;
-  _ : from_ag_laws A one times;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
 
 Section ClassOps.
@@ -425,7 +443,7 @@ Notation Make T m := (pack T _ m _ idfun _ idfun).
 
 Module Exports.
 
-Definition times {A : type} := times _ (mixin _ (class A)).
+Definition mul {A : type} := mul _ (mixin _ (class A)).
 Definition one {A : type} := one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
@@ -441,21 +459,27 @@ End RING.
 
 Export RING.Exports.
 
-Check fun x : _ => times x one = x. (* _ is a RING.type *)
+Check fun x : _ => mul x one = x. (* _ is a RING.type *)
 
 (* requires the Canonical asgType. *)
-Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
+Check fun (r : RING.type) (x : r) => add x one = x. (* x is both in a ring and a group *)
 
-Axiom Z_asg : ASG.laws Z 0%Z Z.add.
-Canonical Z_asgType := ASG.Make Z (ASG.Mixin _ _ _ Z_asg).
+Definition Z_asg := ASG.Mixin Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
 
-Axiom Z_ag : AG.from_asg_laws _ Z.opp.
-Canonical Z_agType := AG.Make Z (AG.Mixin _ _ Z_ag).
+Canonical Z_asgType := ASG.Make Z Z_asg.
 
-Axiom Z_ring : RING.from_ag_laws _ 1%Z Z.mul.
-Canonical Z_ringType := RING.Make Z (RING.Mixin _ _ _ Z_ring).
+Definition Z_ag := AG.Mixin _ Z.opp Z.add_opp_diag_l.
 
-Check fun n : Z => plus 1%Z (times 0%Z n) = n.
+Canonical Z_agType := AG.Make Z Z_ag.
+
+Definition Z_ring :=
+  RING.Mixin _ 1%Z Z.mul
+             Z.mul_assoc Z.mul_1_l Z.mul_1_r
+             Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Canonical Z_ringType := RING.Make Z Z_ring.
+
+Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
 End Example2.
 
@@ -466,12 +490,12 @@ Module Example2_meta.
 
 Module ASG_input.
 
-Axiom laws : forall T, T -> (T -> T -> T) -> Prop.
-
 Record from_type A := FromType { (* from scratch *)
   zero : A;
-  plus : A -> A -> A;
-  _ : laws A zero plus;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
   }.
 
 End ASG_input.
@@ -502,7 +526,7 @@ Module Exports.
 
 Coercion sort : type >-> Sortclass.
 
-Definition plus {A : type} := ASG_input.plus _ (mixin _ (class A)).
+Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
 
 End Exports.
@@ -513,23 +537,21 @@ Export ASG.Exports.
 
 (* declare_factory ASG_input.from_type *)
 
-Module ASG_Make.
+Module ASG_make.
 
   Notation from_type T m := (ASG.Pack T (ASG.Class _ m)).
 
-End ASG_Make.
+End ASG_make.
 
 (* test *)
-Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
+Check fun x : _ => add x zero = x. (* _ is a ASG.type *)
 
 
 Module AG_input.
 
-Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> Prop.
-
 Record from_asg (A : ASG.type) := FromAsg {
   opp : A -> A;
-  _ : from_asg_laws A opp;
+  _ : left_inverse zero opp add;
   }.
 
 End AG_input.
@@ -577,7 +599,7 @@ Export AG.Exports.
 
 (* declare_factory AG_input.from_asg *)
 
-Module AG_Make.
+Module AG_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : AG_input.from_asg asg) :=
   fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
@@ -590,17 +612,19 @@ Definition pack_from_asg (T : Type) (asg : ASG.type) (m : AG_input.from_asg asg)
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
-End AG_Make.
+End AG_make.
 
 
 Module RING_input.
 
-Axiom from_ag_laws : forall T : AG.type, T -> (T -> T -> T) -> Prop.
-
 Record from_ag (A : AG.type) := FromAg {
   one : A;
-  times : A -> A -> A;
-  _ : from_ag_laws A one times;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
 
 End RING_input.
@@ -634,7 +658,7 @@ End ClassOps.
 
 Module Exports.
 
-Definition times {A : type} := RING_input.times _ (mixin _ (class A)).
+Definition mul {A : type} := RING_input.mul _ (mixin _ (class A)).
 Definition one {A : type} := RING_input.one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
@@ -652,7 +676,7 @@ Export RING.Exports.
 
 (* declare_factory RING_input.from_ag *)
 
-Module RING_Make.
+Module RING_make.
 
 Definition pack_from_ag (T : Type) (ag : AG.type) (m : RING_input.from_ag ag) :=
   fun ag' of phant_id (AG.sort ag') T =>  (* (T : Type) = (sort ag' : Type)                *)
@@ -665,55 +689,74 @@ Definition pack_from_ag (T : Type) (ag : AG.type) (m : RING_input.from_ag ag) :=
 
 Notation from_ag T m := (pack_from_ag T _ m _ idfun _ idfun _ idfun).
 
-End RING_Make.
+End RING_make.
 
-Module RING_Factory.
-Section RING_Factory.
+Module RING_factory.
+Section RING_factory.
 
 Variable (T : ASG.type).
 Let A : Type := T.
 Canonical A_ASG := ASG.Pack A (ASG.class T).
 
-Axiom from_asg_laws : (A -> A) -> A -> (A -> A -> A) -> Prop.
-
 Record from_asg := FromAsg {
   opp : A -> A;
   one : A;
-  times : A -> A -> A;
-  laws : from_asg_laws opp one times;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
-
-Axiom from_asg_laws_to_ag_axiom :
-  forall (opp : A -> A) (one : A) (times : A -> A -> A),
-    from_asg_laws opp one times -> AG_input.from_asg_laws A_ASG opp.
-
-
-Print AG_input.from_asg.
 
 Hypothesis A_ring_from_asg : from_asg.
 
-Definition from_asg_to_AG_from_asg : AG_input.from_asg (A_ASG) :=
-  @AG_input.FromAsg _ _ (from_asg_laws_to_ag_axiom _ _ _ (laws A_ring_from_asg)).
+Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
+  let: FromAsg opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
+  @AG_input.FromAsg _ opp addNr.
 
-Canonical A_AG := AG_Make.from_asg A from_asg_to_AG_from_asg.
+Canonical A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
 
-End RING_Factory.
-End RING_Factory.
+Definition from_asg_to_RING_mixin : RING_input.from_ag A_AG :=
+  let: FromAsg _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := A_ring_from_asg in
+  @RING_input.FromAg _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
-Check fun x : _ => times x one = x. (* _ is a RING.type *)
+Canonical A_RING := RING_make.from_ag A from_asg_to_RING_mixin.
 
-Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
+End RING_factory.
 
-Axiom Z_asg : ASG_input.laws Z 0%Z Z.add.
-Canonical Z_asgType := ASG_Make.from_type Z (ASG_input.FromType _ _ _ Z_asg).
+Module Exports.
 
-Axiom Z_ag : AG_input.from_asg_laws _ Z.opp.
-Canonical Z_agType := AG_Make.from_asg Z (AG_input.FromAsg _ _ Z_ag).
+Coercion from_asg_to_AG_mixin : from_asg >-> AG_input.from_asg.
+Coercion from_asg_to_RING_mixin : from_asg >-> RING_input.from_ag.
 
-Axiom Z_ring : RING_input.from_ag_laws _ 1%Z Z.mul.
-Canonical Z_ringType := RING_Make.from_ag Z (RING_input.FromAg _ _ _ Z_ring).
+End Exports.
 
-Check fun n : Z => plus 1%Z (times 0%Z n) = n.
+End RING_factory.
+
+Export RING_factory.Exports.
+
+Check fun x : _ => mul x one = x. (* _ is a RING.type *)
+
+Check fun (r : RING.type) (x : r) => add x one = x. (* x is both in a ring and a group *)
+
+Definition Z_asg :=
+  ASG_input.FromType _ 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
+
+Canonical Z_asgType := ASG_make.from_type Z Z_asg.
+
+Definition Z_ring :=
+  RING_factory.FromAsg
+    Z_asgType Z.opp 1%Z Z.mul
+    Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
+    Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Canonical Z_agType := AG_make.from_asg Z Z_ring.
+
+Canonical Z_ringType := RING_make.from_ag Z Z_ring.
+
+Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
 End Example2_meta.
 
@@ -724,21 +767,23 @@ Module Example3.
 Module ASG := Example2.ASG.
 Export ASG.Exports.
 
-Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
+Check fun x : _ => add x zero = x. (* _ is a ASG.type *)
 
 Module AG := Example2.AG.
 Export AG.Exports.
 
-Check fun x : _ => plus x zero = opp (opp x). (* _ is a AG.type *)
+Check fun x : _ => add x zero = opp (opp x). (* _ is a AG.type *)
 
 Module SRIG.
 
-Axiom from_asg_laws : forall T : ASG.type, T -> (T -> T -> T) -> Prop.
-
 Record mixin_of (A : ASG.type) := Mixin {
   one : A;
-  times : A -> A -> A;
-  _ : from_asg_laws A one times;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
 
 Section ClassOps.
@@ -772,7 +817,7 @@ Notation Make T m := (pack T _ m _ idfun _ idfun).
 
 Module Exports.
 
-Definition times {A : type} := times _ (mixin _ (class A)).
+Definition mul {A : type} := mul _ (mixin _ (class A)).
 Definition one {A : type} := one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
@@ -786,7 +831,7 @@ End SRIG.
 
 Export SRIG.Exports.
 
-Module Join_AG_SRIG.
+Module RING.
 
 Section ClassOps.
 
@@ -827,77 +872,12 @@ Module Exports.
 Coercion sort : type >-> Sortclass.
 
 Coercion asgType : type >-> ASG.type.
-Canonical asgType. (* Join_AG_SRIG.sort ? = ASG.sort ? *)
-Coercion agType : type >-> AG.type.
-Canonical agType. (* Join_AG_SRIG.sort ? = AG.sort ? *)
-Coercion srigType : type >-> SRIG.type.
-Canonical srigType. (* Join_AG_SRIG.sort ? = SRIG.sort ? *)
-Canonical ag_srigType. (* AG.sort ? = SRIG.sort ? *)
-
-End Exports.
-
-End Join_AG_SRIG.
-
-Export Join_AG_SRIG.Exports.
-
-Module RING.
-
-Axiom from_ag_srig_laws : Join_AG_SRIG.type -> Prop.
-
-Record mixin_of (A : Join_AG_SRIG.type) := Mixin {
-  _ : from_ag_srig_laws A;
-  }.
-
-Section ClassOps.
-
-Record class_of (A : Type) := Class {
-  base : Join_AG_SRIG.class_of A;
-  mixin : mixin_of (Join_AG_SRIG.Pack A base);
-  }.
-
-Structure type := Pack {
-  sort : Type;
-  _ : class_of sort
-  }.
-
-Local Coercion sort : type >-> Sortclass.
-
-Definition pack (T : Type) (ag_srig : Join_AG_SRIG.type) :=
-  fun b & phant_id (Join_AG_SRIG.class ag_srig) b =>
-  fun m => Pack T (Class T b m).
-
-Variable cT : type.
-
-Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
-
-Local Definition asgType : ASG.type :=
-  ASG.Pack cT (AG.base cT (Join_AG_SRIG.base cT (base cT class))).
-Local Definition agType : AG.type :=
-  AG.Pack cT (Join_AG_SRIG.base cT (base cT class)).
-Local Definition srigType : SRIG.type :=
-  SRIG.Pack cT (SRIG.Class
-                  _
-                  (AG.base cT (Join_AG_SRIG.base cT (base cT class)))
-                  (Join_AG_SRIG.srig_mixin cT (base cT class))).
-Local Definition ag_srigType : Join_AG_SRIG.type :=
-  Join_AG_SRIG.Pack cT (base cT class).
-
-End ClassOps.
-
-Notation Make T m := (pack T _ _ idfun m).
-
-Module Exports.
-
-Coercion sort : type >-> Sortclass.
-
-Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* RING.sort ? = ASG.sort ? *)
 Coercion agType : type >-> AG.type.
 Canonical agType. (* RING.sort ? = AG.sort ? *)
 Coercion srigType : type >-> SRIG.type.
 Canonical srigType. (* RING.sort ? = SRIG.sort ? *)
-Coercion ag_srigType : type >-> Join_AG_SRIG.type.
-Canonical ag_srigType. (* RING.sort ? = Join_AG_SRIG.sort ? *)
+Canonical ag_srigType. (* AG.sort ? = SRIG.sort ? *)
 
 End Exports.
 
@@ -905,26 +885,29 @@ End RING.
 
 Export RING.Exports.
 
-Check fun x : _ => times x one = opp (opp x). (* _ is a Join_AG_SRIG.type *)
+Check fun x : _ => mul x one = opp (opp x). (* _ is a RING.type *)
 
 (* requires the Canonical asgType. *)
-Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
+Check fun (r : RING.type) (x : r) => add x one = x. (* x is both in a ring and a group *)
 
-Axiom Z_asg : ASG.laws Z 0%Z Z.add.
-Canonical Z_asgType := ASG.Make Z (ASG.Mixin _ _ _ Z_asg).
+Definition Z_asg := ASG.Mixin Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
 
-Axiom Z_ag : AG.from_asg_laws _ Z.opp.
-Canonical Z_agType := AG.Make Z (AG.Mixin _ _ Z_ag).
+Canonical Z_asgType := ASG.Make Z Z_asg.
 
-Axiom Z_srig : SRIG.from_asg_laws _ 1%Z Z.mul.
-Canonical Z_srigType := SRIG.Make Z (SRIG.Mixin _ _ _ Z_srig).
+Definition Z_ag := AG.Mixin _ Z.opp Z.add_opp_diag_l.
 
-Canonical Z_ag_srigType := Join_AG_SRIG.Make Z.
+Canonical Z_agType := AG.Make Z Z_ag.
 
-Axiom Z_ring : RING.from_ag_srig_laws Z_ag_srigType.
-Canonical Z_ringType := RING.Make Z (RING.Mixin _ Z_ring).
+Definition Z_srig :=
+  SRIG.Mixin _ 1%Z Z.mul
+             Z.mul_assoc Z.mul_1_l Z.mul_1_r
+             Z.mul_add_distr_r Z.mul_add_distr_l.
 
-Check fun n : Z => plus 0%Z (times 1%Z n) = (opp (opp n)).
+Canonical Z_srigType := SRIG.Make Z Z_srig.
+
+Canonical Z_ringType := RING.Make Z.
+
+Check fun n : Z => add 0%Z (mul 1%Z n) = (opp (opp n)).
 
 End Example3.
 
@@ -934,12 +917,12 @@ Module Example3_meta.
 
 Module ASG_input.
 
-Axiom laws : forall T, T -> (T -> T -> T) -> Prop.
-
 Record from_type A := FromType { (* from scratch *)
   zero : A;
-  plus : A -> A -> A;
-  _ : laws A zero plus;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
   }.
 
 End ASG_input.
@@ -970,7 +953,7 @@ Module Exports.
 
 Coercion sort : type >-> Sortclass.
 
-Definition plus {A : type} := ASG_input.plus _ (mixin _ (class A)).
+Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
 
 End Exports.
@@ -981,23 +964,21 @@ Export ASG.Exports.
 
 (* declare_factory ASG_input.from_type *)
 
-Module ASG_Make.
+Module ASG_make.
 
-  Notation from_type T m := (ASG.Pack T (ASG.Class _ m)).
+Notation from_type T m := (ASG.Pack T (ASG.Class _ m)).
 
-End ASG_Make.
+End ASG_make.
 
 (* test *)
-Check fun x : _ => plus x zero = x. (* _ is a ASG.type *)
+Check fun x : _ => add x zero = x. (* _ is a ASG.type *)
 
 
 Module AG_input.
 
-Axiom from_asg_laws : forall T : ASG.type, (T -> T) -> Prop.
-
 Record from_asg (A : ASG.type) := FromAsg {
   opp : A -> A;
-  _ : from_asg_laws A opp;
+  _ : left_inverse zero opp add;
   }.
 
 End AG_input.
@@ -1045,7 +1026,7 @@ Export AG.Exports.
 
 (* declare_factory AG_input.from_asg *)
 
-Module AG_Make.
+Module AG_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : AG_input.from_asg asg) :=
   fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
@@ -1058,20 +1039,22 @@ Definition pack_from_asg (T : Type) (asg : ASG.type) (m : AG_input.from_asg asg)
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
-End AG_Make.
+End AG_make.
 
 (* test *)
-Check fun x : _ => plus x zero = opp (opp x). (* _ is a AG.type *)
+Check fun x : _ => add x zero = opp (opp x). (* _ is a AG.type *)
 
 
 Module SRIG_input.
 
-Axiom from_asg_laws : forall T : ASG.type, T -> (T -> T -> T) -> Prop.
-
 Record from_asg (A : ASG.type) := FromAsg {
   one : A;
-  times : A -> A -> A;
-  _ : from_asg_laws A one times;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
   }.
 
 End SRIG_input.
@@ -1104,7 +1087,7 @@ End ClassOps.
 
 Module Exports.
 
-Definition times {A : type} := SRIG_input.times _ (mixin _ (class A)).
+Definition mul {A : type} := SRIG_input.mul _ (mixin _ (class A)).
 Definition one {A : type} := SRIG_input.one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
@@ -1120,7 +1103,7 @@ Export SRIG.Exports.
 
 (* declare_factory SRIG_input.from_asg *)
 
-Module SRIG_Make.
+Module SRIG_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : SRIG_input.from_asg asg) :=
   fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
@@ -1133,12 +1116,30 @@ Definition pack_from_asg (T : Type) (asg : ASG.type) (m : SRIG_input.from_asg as
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
-End SRIG_Make.
+End SRIG_make.
+
+(*
+(* Flattening *)
+Section XX.
+Variable T : ASG.type.
+Let J : Type := T.
+Canonical asg := @ASG.Pack J (ASG.class T).
+Variables m1 : AG_input.from_asg asg.
+Variables m2 : SRIG_input.from_asg asg.
+Canonical xxx := AG_make.from_asg J m1.
+Canonical yyy := SRIG_make.from_asg J m2.
+Definition from_ag_srig_laws :=
+  forall x y : J, opp (mul x y) = mul (opp x) y.
+Record from_ag_srig  := FromAgSrig {
+  _ : from_ag_srig_laws;
+}.
+End XX.
+*)
 
 
 (* join_structure: AG SRIG *)
 
-Module Join_AG_SRIG.
+Module RING.
 
 Section ClassOps.
 
@@ -1172,117 +1173,12 @@ Module Exports.
 Coercion sort : type >-> Sortclass.
 
 Coercion asgType : type >-> ASG.type.
-Canonical asgType. (* Join_AG_SRIG.sort ? = ASG.sort ? *)
-Coercion agType : type >-> AG.type.
-Canonical agType. (* Join_AG_SRIG.sort ? = AG.sort ? *)
-Coercion srigType : type >-> SRIG.type.
-Canonical srigType. (* Join_AG_SRIG.sort ? = SRIG.sort ? *)
-Canonical ag_srigType. (* AG.sort ? = SRIG.sort ? *)
-
-End Exports.
-
-End Join_AG_SRIG.
-
-Export Join_AG_SRIG.Exports.
-
-Module Join_AG_SRIG_Make.
-
-(* TODO: rename *)
-
-Definition pack (T : Type) (ag : AG.type) (srig : SRIG.type) :=
-  fun b  & phant_id (AG.class ag) b =>
-  fun b' & phant_id (SRIG.mixin _ (SRIG.class srig)) b' =>
-  Join_AG_SRIG.Pack T (Join_AG_SRIG.Class T b b').
-
-Notation Make T := (pack T _ _ _ idfun _ idfun).
-
-End Join_AG_SRIG_Make.
-
-
-Module RING_input.
-
-Axiom from_ag_srig_laws : Join_AG_SRIG.type -> Prop.
-Record from_ag_srig A := FromAgSrig {
-  _ : from_ag_srig_laws A;
-}.
-
-
-(*
-Section XX.
-
-Variable T : ASG.type.
-Let J : Type := T. 
-Canonical asg := @ASG.Pack J (ASG.class T).
-Variables m1 : AG_input.from_asg asg.
-Variables m2 : SRIG_input.from_asg asg.
-Canonical xxx := AG_Make.from_asg J m1.
-Canonical yyy := SRIG_Make.from_asg J m2.
-
-Definition from_ag_srig_laws :=
-  forall x y : J, opp (times x y) = times (opp x) y.
-
-Record from_ag_srig  := FromAgSrig {
-  _ : from_ag_srig_laws;
-  }.
-
-  End XX.
-  *)
-End RING_input.
-
-Print RING_input.from_ag_srig.
-(* declare_structure base: Join_AG_SRIG mix: RING_input.from_ag_srig *)
-
-Module RING.
-
-Record class_of (A : Type) := Class { (*
-  mixin1 : ASG_input.from_type A;
-  mixin2 : AG_input.from_asg (ASG.Pack A (ASG.Class _ mixin1));
-  mixin3 : SRIG_input.from_asg (ASG.Pack A (ASG.Class _ mixin1)); *)
-  base : Join_AG_SRIG.class_of A; 
- 
- (* mixin_new : RING_input.from_ag_srig (ASG.Pack A (ASG.Class _ mixin1)) mixin2 mixin3 *)
-  mixin : RING_input.from_ag_srig (Join_AG_SRIG.Pack A base) 
-}.
-
-Section ClassOps.
-
-Structure type := Pack {
-  sort : Type;
-  _ : class_of sort
-  }.
-
-Local Coercion sort : type >-> Sortclass.
-
-Variable cT : type.
-
-Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
-
-Local Definition asgType : ASG.type :=
-  ASG.Pack cT (AG.base cT (Join_AG_SRIG.base cT (base cT class))).
-Local Definition agType : AG.type :=
-  AG.Pack cT (Join_AG_SRIG.base cT (base cT class)).
-Local Definition srigType : SRIG.type :=
-  SRIG.Pack cT (SRIG.Class
-                  _
-                  (AG.base cT (Join_AG_SRIG.base cT (base cT class)))
-                  (Join_AG_SRIG.srig_mixin cT (base cT class))).
-Local Definition ag_srigType : Join_AG_SRIG.type :=
-  Join_AG_SRIG.Pack cT (base cT class).
-
-End ClassOps.
-
-Module Exports.
-
-Coercion sort : type >-> Sortclass.
-
-Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* RING.sort ? = ASG.sort ? *)
 Coercion agType : type >-> AG.type.
 Canonical agType. (* RING.sort ? = AG.sort ? *)
 Coercion srigType : type >-> SRIG.type.
 Canonical srigType. (* RING.sort ? = SRIG.sort ? *)
-Coercion ag_srigType : type >-> Join_AG_SRIG.type.
-Canonical ag_srigType. (* RING.sort ? = Join_AG_SRIG.sort ? *)
+Canonical ag_srigType. (* AG.sort ? = SRIG.sort ? *)
 
 End Exports.
 
@@ -1290,45 +1186,88 @@ End RING.
 
 Export RING.Exports.
 
-(* declare_factory RING_input.from_ag_srig *)
+Module RING_make.
 
-Module RING_Make.
+(* TODO: rename *)
 
-Definition pack_from_ag_srig
-           (T : Type) (ag_srig : Join_AG_SRIG.type) (m : RING_input.from_ag_srig ag_srig) :=
-  fun ag_srig' of phant_id (Join_AG_SRIG.sort ag_srig') T =>
-                                          (* (T : Type) = (sort ag_srig' : Type)           *)
-  fun b' of phant_id (Join_AG_SRIG.class ag_srig') b' =>
-                                          (* (b' : class_of T)  = (class ag_srig' : class_of T) *)
-  fun m' of phant_id m m' =>              (* (m' : from_ag_srig ag_srig') = (m : from_ag_srig ag_srig)
-                                             because the C provided in the type of (m : frmo_ag_srig C)
-                                             may not be the canonical one, so we unify m and m' hence,
-                                             it will unify their types that contain ag_srig and ag_srig' *)
-    RING.Pack T (RING.Class _ b' m').
+Definition pack (T : Type) (ag : AG.type) (srig : SRIG.type) :=
+  fun b  & phant_id (AG.class ag) b =>
+  fun b' & phant_id (SRIG.mixin _ (SRIG.class srig)) b' =>
+  RING.Pack T (RING.Class T b b').
 
-Notation from_ag_srig T m := (pack_from_ag_srig T _ m _ idfun _ idfun _ idfun).
+Notation Make T := (pack T _ _ _ idfun _ idfun).
 
-End RING_Make.
+End RING_make.
 
+Module RING_factory.
+Section RING_factory.
 
-Check fun x : _ => times x one = x. (* _ is a RING.type *)
+Variable (T : ASG.type).
+Let A : Type := T.
+Canonical A_ASG := ASG.Pack A (ASG.class T).
 
-Check fun (r : RING.type) (x : r) => plus x one = x. (* x is both in a ring and a group *)
+Record from_asg := FromAsg {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
 
-Axiom Z_asg : ASG_input.laws Z 0%Z Z.add.
-Canonical Z_asgType := ASG_Make.from_type Z (ASG_input.FromType _ _ _ Z_asg).
+Hypothesis A_ring_from_asg : from_asg.
 
-Axiom Z_ag : AG_input.from_asg_laws _ Z.opp.
-Canonical Z_agType := AG_Make.from_asg Z (AG_input.FromAsg _ _ Z_ag).
+Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
+  let: FromAsg opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
+  @AG_input.FromAsg _ opp addNr.
 
-Axiom Z_srig : SRIG_input.from_asg_laws _ 1%Z Z.mul.
-Canonical Z_srigType := SRIG_Make.from_asg Z (SRIG_input.FromAsg _ _ _ Z_srig).
+Canonical A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
 
-Canonical Z_ag_srigType := Join_AG_SRIG_Make.Make Z.
+Definition from_asg_to_SRIG_mixin : SRIG_input.from_asg A_ASG :=
+  let: FromAsg _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := A_ring_from_asg in
+  @SRIG_input.FromAsg _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
-Axiom Z_ring : RING_input.from_ag_srig_laws Z_ag_srigType.
-Canonical Z_ringType := RING_Make.from_ag_srig Z (RING_input.FromAgSrig _ Z_ring).
+Canonical A_SRIG := SRIG_make.from_asg A from_asg_to_SRIG_mixin.
 
-Check fun n : Z => plus 1%Z (times 0%Z n) = n.
+Canonical A_RING := RING_make.Make A.
+
+End RING_factory.
+
+Module Exports.
+
+Coercion from_asg_to_AG_mixin : from_asg >-> AG_input.from_asg.
+Coercion from_asg_to_SRIG_mixin : from_asg >-> SRIG_input.from_asg.
+
+End Exports.
+
+End RING_factory.
+
+Export RING_factory.Exports.
+
+Check fun x : _ => mul x one = x. (* _ is a RING.type *)
+
+Check fun (r : RING.type) (x : r) => add x one = x. (* x is both in a ring and a group *)
+
+Definition Z_asg :=
+  ASG_input.FromType _ 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
+
+Canonical Z_asgType := ASG_make.from_type Z Z_asg.
+
+Definition Z_ring :=
+  RING_factory.FromAsg
+    Z_asgType Z.opp 1%Z Z.mul
+    Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
+    Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Canonical Z_agType := AG_make.from_asg Z Z_ring.
+
+Canonical Z_srigType := SRIG_make.from_asg Z Z_ring.
+
+Canonical Z_ringType := RING_make.Make Z.
+
+Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
 End Example3_meta.
