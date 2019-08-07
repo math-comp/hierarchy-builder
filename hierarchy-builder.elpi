@@ -105,9 +105,10 @@ pred build-structure
   i:@inductive,     % BASE.class_of
   i:@inductive,     % MIX.from_BASE.type
   i:list @constant, % all the MIX.op to export
-  o:list vernac.
+  o:list vernac,
+  o:list prop.      % clauses for hierarchy.db
 
-build-structure New BaseSort BasePack BaseClassOf Mix Ops  L :- do!-monad [
+build-structure New BaseSort BasePack BaseClassOf Mix Ops  L Clauses :- do!-monad [
   log1  interp-vernac (begin-module New),
   pure  (build-class_of BasePack BaseClassOf Mix C),
   log1  interp-vernac (declare-inductive C ClassOf),
@@ -126,7 +127,8 @@ build-structure New BaseSort BasePack BaseClassOf Mix Ops  L :- do!-monad [
 % TODO: export all coercions
 % TODO: declare all coercions as canonical
   log1  interp-vernac (end-module),
-  log1  interp-vernac (end-module)
+  log1  interp-vernac (end-module),
+  pure  (Clauses = [(pi Rest\ hierarchy.def (indt ClassOf) [indt Mix|Rest] :- hierarchy.def (indt BaseClassOf) Rest)])
 ] [] L.
 
 
@@ -178,8 +180,11 @@ main [str New, str BaseN, str MixN | OpsN] :- do! [
   assert! (std.map OpsN locate-constant Ops) "operations to export not found",
 
   % there we go
-  build-structure New GRsort GRC GRclass_of GRM Ops Vernacs,
+  build-structure New GRsort GRC GRclass_of GRM Ops Vernacs Clauses,
 
   % TODO: print properly
-  coq.say {std.rev Vernacs}
+  coq.say {std.rev Vernacs},
+
+  std.forall Clauses
+    (x\ coq.elpi.accumulate "hierarchy.db" (clause _ _ x))
 ].

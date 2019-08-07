@@ -3,16 +3,28 @@ Require Import ZArith.
 
 From elpi Require Import elpi.
 
-Elpi Command build_structure.
-Elpi Accumulate File "hierarchy-builder.elpi".
-Elpi Typecheck. 
-
 Module TYPE.
 Record class_of (A : Type) := Class {}.
 Structure type := Pack { sort : Type; _ : class_of sort }.
 End TYPE.
 Coercion TYPE.sort : TYPE.type >-> Sortclass.
 Canonical type_is_type (T : Type) : TYPE.type := TYPE.Pack T (TYPE.Class T).
+
+Elpi Db hierarchy.db lp:{{ 
+  namespace hierarchy {
+    pred dep i:gref, o:list gref.
+    pred def i:gref, o:list gref.
+
+    def TYPE [] :- coq.locate "TYPE.class_of" TYPE.
+  }
+}}.
+
+Elpi Command build_structure.
+Elpi Accumulate File "hierarchy-builder.elpi".
+Elpi Accumulate Db hierarchy.db.
+Elpi Typecheck. 
+
+Elpi Print build_structure "build_structure.html".
 
 (* 1 : ring and additive sg ================================================================= *)
 
@@ -158,6 +170,14 @@ Elpi build_structure
   ASG_input.plus ASG_input.zero (* exported operations *).
 Export ASG.Exports.
 
+
+Elpi Query build_structure lp:{{
+
+  coq.locate "ASG.class_of" GR,
+  hierarchy.def GR L,
+  coq.say L
+
+}}.
 
 Module ASG_reference.
 
