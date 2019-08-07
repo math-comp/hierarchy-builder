@@ -20,7 +20,7 @@ High level commands to declare a hierarchy based on packed classes
 
 ## mixins and classes
 
-Let `M` be the set of all possible mixins (which are **coq** records or definitions), every mixin may depend on other mixins, through its parameters. There is hence a dependency directed acyclic graph, and let us represent it with its transitive closure `dep ∈ set M → set M`. A class is necessarily a **coq** record that contains a set of mixins, so to every class `c` in `C` we associate the set of mixins `def c` it contains, such that the function `def ∈ C → set M` is injective (i.e. no two classes contain the same mixins) and such that `def c` closed under `dep`, i.e. `dep (def c) ⊆ def c`. The set of structures `S` is in bijection with the set of classes `C`, where every structure is simply a dependent record where the first projection is a (coercion to the) carrier (i.e. the last parameter of the class) and where the second projection is an instance of the class.
+Let `M` be the set of all possible mixins (which are **coq** records or definitions), every mixin may depend on other mixins, through its parameters. There is hence a dependency directed acyclic graph, and let us represent it with its transitive closure `dep ∈ (set M → set M)`. A class is necessarily a **coq** record that contains a set of mixins, so to every class `c` in `C` we associate the set of mixins `def c` it contains, such that the function `def ∈ (C → set M)` is injective (i.e. no two classes contain the same mixins) and such that `def c` closed under `dep`, i.e. `dep (def c) ⊆ def c`. The set of structures `S` is in bijection with the set of classes `C`, where every structure is simply a dependent record where the first projection is a (coercion to the) carrier (i.e. the last parameter of the class) and where the second projection is an instance of the class.
 
 For every pair of classes `c_super` (with associated structure `s_super`) and `c_sub` (resp. `s_sub`) such that `def c_super ⊆ def c_sub` we say `c_sub` is a subclass of `c_super` and `s_sub` is a substructure of `s_super` and there is:
 - a Coq coercion `c_super_from_sub` from `c_sub` to `c_super`,
@@ -33,7 +33,7 @@ Remark: In order to make the choice of `c_join` stable accross versions of the l
 
 ## factories
 
-The set of factories `F` (which are **coq** records) comes equipped with three functions `requires, provides ∈ F → set M` and `from ∈ F → M → term` which satisify:
+The set of factories `F` (which are **coq** records) comes equipped with three functions `requires, provides ∈ (F → set M)` and `from ∈ (F → M → term)` which satisify:
 - `∀ f ∈ F, dep (requires f) ⊆ requires f`, i.e. factory dependencies must be closed under mixin dependencies
 - `∀ f ∈ F, requires f ∩ provides f = ∅`, i.e. factories cannot provide replacements for what they require.
 - For all `f`, there is a class `c = factory_class f ∈ C` such that:
