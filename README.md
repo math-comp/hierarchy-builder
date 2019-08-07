@@ -37,8 +37,8 @@ The set of factories `F` (which are **coq** records) comes equipped with three f
 - `∀ f ∈ F, dep (requires f) ⊆ requires f`, i.e. factory dependencies must be closed under mixin dependencies
 - `∀ f ∈ F, requires f ∩ provides f = ∅`, i.e. factories cannot provide replacements for what they require.
 - For all `f`, there is a class `c = factory_class f ∈ C` such that:
-  + `def c = requires f ∪ provides f` i.e. every factory serves to build a class (and all necessary super classes)
-  + there is a set of class `C_req ⊆ C` such that `⋃_{c ∈ C_req} def c = requires f`, i.e. all the required mixins are covered by classes.
+  + `def c = requires f ∪ provides f` i.e. every factory is meant to build a class (and all necessary super classes)
+  + there is a set of classes `C_req ⊆ C` such that `⋃_{c ∈ C_req} def c = requires f`, i.e. all the required mixins are covered by classes.
 - For all `f` and every mixin `m` in `provides f`, the term `from f m` is in fact a **coq** function `from f m : forall [...], f [...] -> m [...]` parametrised by the mixins in `requires f` (and which is possibly a coercion if it happens to satisfy the uniform inheritance condition). We also extend `from f m` to all `m` in `requires f` by simply projecting the right parameter.
 
 Mixins and classes are trivial factories in the sense that:
