@@ -27,7 +27,7 @@ For every pair of classes `c_super` (with associated structure `s_super`) and `c
 - a Coq coercion `s_super_from_sub` from `s_sub` to `s_super`, (the "forgetful functor")
 - the result of `s_super_from_sub` is canonical.
 
-For every pair of classes `c₁` (with associated structure `s₁`) and `c₂` (resp `s₂`) such that `def c₁ ∩ def c₂ ≠ ∅`, let `c_join` (with associated structure `s_join`) be the smallest class such that `def c₁ ∪ def c₂ ⊆ def c_join`, then there is a canonical structure `i_join` that endows the carrier of `s₂` with a canonical structure of `s₁` using `X : s_join` as a parameter (hence it is in fact a canonical structure of `s₁` on the carrier of the coercion `s₂_from_join X`).
+For every pair of classes `c₁` (with associated structure `s₁`) and `c₂` (resp `s₂`) such that `def c₁ ∩ def c₂ ≠ ∅`, let `c_join` (with associated structure `s_join`) be the smallest class such that `def c₁ ∪ def c₂ ⊆ def c_join`, then there is a canonical instance `i_join` that endows the carrier of `s₂` with a canonical structure of `s₁` using `X : s_join` as a parameter (hence it is in fact a canonical structure of `s₁` on the carrier of the coercion `s₂_from_join X`).
 
 Remark: In order to make the choice of `c_join` stable accross versions of the library, we may want to have the following equality `def c₁ ∪ def c₂ = def c_join` (rather than just an inclusion), in which case we must create classes which may have no mathematical meaning (e.g. order + ring operations, without minimum compatibility between operations...)
 
