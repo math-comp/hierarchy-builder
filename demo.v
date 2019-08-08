@@ -10,14 +10,14 @@ End TYPE.
 Coercion TYPE.sort : TYPE.type >-> Sortclass.
 Canonical type_is_type (T : Type) : TYPE.type := TYPE.Pack T (TYPE.Class T).
 
-Elpi Db hierarchy.db lp:{{ 
+Elpi Db hierarchy.db " 
   namespace hierarchy {
     pred dep i:gref, o:list gref.
     pred def i:gref, o:list gref.
 
-    def TYPE [] :- coq.locate "TYPE.class_of" TYPE.
+    def TYPE [] :- coq.locate ""TYPE.class_of"" TYPE.
   }
-}}.
+".
 
 Elpi Command build_structure.
 Elpi Accumulate File "hierarchy-builder.elpi".
