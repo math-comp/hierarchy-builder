@@ -10,10 +10,31 @@ End TYPE.
 Coercion TYPE.sort : TYPE.type >-> Sortclass.
 Canonical type_is_type (T : Type) : TYPE.type := TYPE.Pack T (TYPE.Class T).
 
-Elpi Db hierarchy.db " 
+Elpi Db hierarchy.db "
   namespace hierarchy {
-    pred dep i:gref, o:list gref.
-    pred def i:gref, o:list gref.
+    
+    macro @mixin :- gref.
+    macro @class :- gref.
+/*
+    % example: params ""module"" 1
+    % example: params ""algebra"" 1
+    pred params i:@mixin, o:int. % maybe o:list term.
+
+    kind dep type.
+    type dep-param (term -> dep) -> dep.
+    type dep-mixin list (pair @mixin (list term)) -> dep.
+
+    % example: dep1 ""module""  (dep-mixin [pr ""zmod"" []])
+    %          dep1 ""algebra"" (dep-param x\ [""ring"", ""module"" x])
+    %          dep1 ""vspace""  (dep-param f\ [""zmod"",""module"" (app [""proj"",f])])
+*/
+    % but comparison should be set-like
+    pred dep1 i:@mixin,      o:set @mixin.
+    pred dep  i:set @mixin,  o:set @mixin.
+    pred def  i:@class,      o:set @mixin.
+    % each set gets an order by toposort on deps given by its parameters
+    % example:
+    % 
 
     def TYPE [] :- coq.locate ""TYPE.class_of"" TYPE.
   }
@@ -25,6 +46,63 @@ Elpi Accumulate Db hierarchy.db.
 Elpi Typecheck. 
 
 Elpi Print build_structure "build_structure.html".
+
+(* mockup 
+Module Input.
+
+  Section Virtual.
+  Variable param : nat.
+  Variable T : Type.
+
+  requires_factories T f1 f2 (f3 (S param)) (f4 param).
+
+  (* generated *)
+
+  Variable m1 : mixin1           T.
+  Variable m2 : mixin2           T m1.
+  Variable m3 : mixin3 (S param) T.
+  Variable m4 : mixin4 param     T m3.
+
+
+  (* declare_instanceS m1 m2 m3 m4 m5 *)
+  Canonical _ : packS1            T m1.
+  Canonical _ : packS2            T m2.
+  Canonical _ : packS3  (S param) T m3.
+  Canonical _ : packS4  param     T m4.
+  Canonical _ : packS13 param     T.
+
+  (* /generated *)
+
+  (* new mixin *)
+  Record from_whatver := { 
+    _ : forall x y : T, x * y = x;   (* notations from all factories are available *)
+  }
+
+End Input.
+
+  declare_mixin Input.from_whatever. (* declares a factory with the same name *)
+ 
+  (* generated *)
+ 
+  % elpi: populates DB of mixins "M" (dep/def) and factories "F"
+  % coq: class_of + structure (with an internal name) + factory
+  
+  (* /generated *)
+
+  declare_structure foo ":=" list of factories. (* this is the symbol for the factory, not the record above *)
+    - expand/close the mixins = M*
+    - if there is a class_of that contains exactly M* let be it, else
+      create a new class_of := M*
+    - create structure
+    - coercions/canonical stuff
+    - declares a factory for the new class
+
+  declare_factory function_to_get_a_simpler_factory_from_a_complex_one.
+    
+   % elpi: put f in "F"
+   % coq: declare smart-constructor for f: a function from f to the most rich "S" it can build with f
+
+*)
 
 (* 1 : ring and additive sg ================================================================= *)
 
