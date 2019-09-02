@@ -28,10 +28,14 @@ Elpi Db hierarchy.db "
     %          dep1 ""algebra"" (dep-param x\ [""ring"", ""module"" x])
     %          dep1 ""vspace""  (dep-param f\ [""zmod"",""module"" (app [""proj"",f])])
 */
+
+    % for now lists, later proper sets
+    macro @set X :- list X.
+
     % but comparison should be set-like
-    pred dep1 i:@mixin,      o:set @mixin.
-    pred dep  i:set @mixin,  o:set @mixin.
-    pred def  i:@class,      o:set @mixin.
+    pred dep1 i:@mixin,      o:@set @mixin.
+    pred dep  i:@set @mixin,  o:@set @mixin.
+    pred def  i:@class,      o:@set @mixin.
     % each set gets an order by toposort on deps given by its parameters
     % example:
     % 
