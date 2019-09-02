@@ -699,6 +699,18 @@ End AG_make.
 
 Module RING_input.
 
+Record from_asg (A : ASG.type) := FromAsg {
+  opp : A -> A;
+  one' : A;
+  mul' : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul';
+  _ : left_id one' mul';
+  _ : right_id one' mul';
+  _ : left_distributive mul' add;
+  _ : right_distributive mul' add;
+  }.
+
 Record from_ag (A : AG.type) := FromAg {
   one : A;
   mul : A -> A -> A;
@@ -776,42 +788,35 @@ End RING_make.
 Module RING_factory.
 Section RING_factory.
 
-Variable (T : ASG.type).
+Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
+
 Let A : Type := T.
-Canonical A_ASG := ASG.Pack A (ASG.class T).
+Let A_ASG := ASG.Pack A (ASG.class T).
 
-Record from_asg := FromAsg {
-  opp : A -> A;
-  one : A;
-  mul : A -> A -> A;
-  _ : left_inverse zero opp add;
-  _ : associative mul;
-  _ : left_id one mul;
-  _ : right_id one mul;
-  _ : left_distributive mul add;
-  _ : right_distributive mul add;
-  }.
-
-Hypothesis A_ring_from_asg : from_asg.
+Let A_ring_from_asg : RING_input.from_asg A_ASG :=
+  (let: ASG.Pack T _ := T
+   return RING_input.from_asg T ->
+          RING_input.from_asg (ASG.Pack T (ASG.class T))
+   in id)
+    T_ring_from_asg.
 
 Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
-  let: FromAsg opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
+  let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
   @AG_input.FromAsg _ opp addNr.
 
-Canonical A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
+Let A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
 
 Definition from_asg_to_RING_mixin : RING_input.from_ag A_AG :=
-  let: FromAsg _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := A_ring_from_asg in
-  @RING_input.FromAg _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
-
-Canonical A_RING := RING_make.from_ag A from_asg_to_RING_mixin.
+  let: RING_input.FromAsg _ _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr :=
+     A_ring_from_asg in
+  @RING_input.FromAg A_AG _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
 End RING_factory.
 
 Module Exports.
 
-Coercion from_asg_to_AG_mixin : from_asg >-> AG_input.from_asg.
-Coercion from_asg_to_RING_mixin : from_asg >-> RING_input.from_ag.
+Coercion from_asg_to_AG_mixin : RING_input.from_asg >-> AG_input.from_asg.
+Coercion from_asg_to_RING_mixin : RING_input.from_asg >-> RING_input.from_ag.
 
 End Exports.
 
@@ -829,7 +834,7 @@ Definition Z_asg :=
 Canonical Z_asgType := ASG_make.from_type Z Z_asg.
 
 Definition Z_ring :=
-  RING_factory.FromAsg
+  RING_input.FromAsg
     Z_asgType Z.opp 1%Z Z.mul
     Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
@@ -866,6 +871,8 @@ Record mixin_of (A : ASG.type) := Mixin {
   _ : right_id one mul;
   _ : left_distributive mul add;
   _ : right_distributive mul add;
+  _ : left_zero zero mul;
+  _ : right_zero zero mul;
   }.
 
 Section ClassOps.
@@ -983,7 +990,8 @@ Canonical Z_agType := AG.Make Z Z_ag.
 Definition Z_srig :=
   SRIG.Mixin _ 1%Z Z.mul
              Z.mul_assoc Z.mul_1_l Z.mul_1_r
-             Z.mul_add_distr_r Z.mul_add_distr_l.
+             Z.mul_add_distr_r Z.mul_add_distr_l
+             Z.mul_0_l Z.mul_0_r.
 
 Canonical Z_srigType := SRIG.Make Z Z_srig.
 
@@ -1043,6 +1051,15 @@ End Exports.
 End ASG.
 
 Export ASG.Exports.
+
+Lemma addrA {A : ASG.type} : associative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma addrC {A : ASG.type} : commutative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma add0r {A : ASG.type} : left_id (@zero A) add.
+Proof. by case: A => ? [[]]. Qed.
 
 (* declare_factory ASG_input.from_type *)
 
@@ -1106,6 +1123,9 @@ End AG.
 
 Export AG.Exports.
 
+Lemma addNr {A : AG.type} : left_inverse (@zero A) opp add.
+Proof. by case: A => ? [? []]. Qed.
+
 (* declare_factory AG_input.from_asg *)
 
 Module AG_make.
@@ -1137,6 +1157,8 @@ Record from_asg (A : ASG.type) := FromAsg {
   _ : right_id one mul;
   _ : left_distributive mul add;
   _ : right_distributive mul add;
+  _ : left_zero zero mul;
+  _ : right_zero zero mul;
   }.
 
 End SRIG_input.
@@ -1183,6 +1205,21 @@ End SRIG.
 
 Export SRIG.Exports.
 
+Lemma mulrA {A : SRIG.type} : associative (@mul A).
+Proof. by case: A => ? [? []]. Qed.
+Lemma mul1r {A : SRIG.type} : left_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulr1 {A : SRIG.type} : right_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDl {A : SRIG.type} : left_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDr {A : SRIG.type} : right_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mul0r {A : SRIG.type} : left_zero (@zero A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulr0 {A : SRIG.type} : right_zero (@zero A) mul.
+Proof. by case: A => ? [? []]. Qed.
+
 (* declare_factory SRIG_input.from_asg *)
 
 Module SRIG_make.
@@ -1218,6 +1255,21 @@ Record from_ag_srig  := FromAgSrig {
 End XX.
 *)
 
+Module RING_input.
+
+Record from_asg (A : ASG.type) := FromAsg {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
+
+End RING_input.
 
 (* join_structure: AG SRIG *)
 
@@ -1284,44 +1336,64 @@ End RING_make.
 Module RING_factory.
 Section RING_factory.
 
-Variable (T : ASG.type).
+Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
+
 Let A : Type := T.
-Canonical A_ASG := ASG.Pack A (ASG.class T).
+Let A_ASG := ASG.Pack A (ASG.class T).
 
-Record from_asg := FromAsg {
-  opp : A -> A;
-  one : A;
-  mul : A -> A -> A;
-  _ : left_inverse zero opp add;
-  _ : associative mul;
-  _ : left_id one mul;
-  _ : right_id one mul;
-  _ : left_distributive mul add;
-  _ : right_distributive mul add;
-  }.
-
-Hypothesis A_ring_from_asg : from_asg.
+Let A_ring_from_asg : RING_input.from_asg A_ASG :=
+  (let: ASG.Pack T _ := T
+   return RING_input.from_asg T ->
+          RING_input.from_asg (ASG.Pack T (ASG.class T))
+   in id)
+    T_ring_from_asg.
 
 Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
-  let: FromAsg opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
+  let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
   @AG_input.FromAsg _ opp addNr.
 
-Canonical A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
+Let A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
+
+Section from_asg_to_SRIG.
+
+Variables
+  (opp : A -> A) (mul : A -> A -> A) (addNr : left_inverse zero opp add)
+  (mulrDl : left_distributive mul add) (mulrDr : right_distributive mul add).
+
+Lemma mul0r : left_zero zero mul.
+Proof.
+move=> x.
+rewrite -[LHS]add0r addrC.
+rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
+by rewrite -mulrDl add0r addrC addNr.
+Qed.
+
+Lemma mulr0 : right_zero zero mul.
+Proof.
+move=> x.
+rewrite -[LHS]add0r addrC.
+rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
+by rewrite -mulrDr add0r addrC addNr.
+Qed.
+
+End from_asg_to_SRIG.
 
 Definition from_asg_to_SRIG_mixin : SRIG_input.from_asg A_ASG :=
-  let: FromAsg _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := A_ring_from_asg in
-  @SRIG_input.FromAsg _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+  let: RING_input.FromAsg _ _ _ _ addNr mulrA mul1r mulr1 mulrDl mulrDr :=
+     A_ring_from_asg in
+  @SRIG_input.FromAsg
+    _ _ _ mulrA mul1r mulr1 mulrDl mulrDr
+    (@mul0r _ _ addNr mulrDl)
+    (@mulr0 _ _ addNr mulrDr).
 
-Canonical A_SRIG := SRIG_make.from_asg A from_asg_to_SRIG_mixin.
-
-Canonical A_RING := RING_make.Make A.
+Let A_SRIG := SRIG_make.from_asg A from_asg_to_SRIG_mixin.
 
 End RING_factory.
 
 Module Exports.
 
-Coercion from_asg_to_AG_mixin : from_asg >-> AG_input.from_asg.
-Coercion from_asg_to_SRIG_mixin : from_asg >-> SRIG_input.from_asg.
+Coercion from_asg_to_AG_mixin : RING_input.from_asg >-> AG_input.from_asg.
+Coercion from_asg_to_SRIG_mixin : RING_input.from_asg >-> SRIG_input.from_asg.
 
 End Exports.
 
@@ -1339,7 +1411,7 @@ Definition Z_asg :=
 Canonical Z_asgType := ASG_make.from_type Z Z_asg.
 
 Definition Z_ring :=
-  RING_factory.FromAsg
+  RING_input.FromAsg
     Z_asgType Z.opp 1%Z Z.mul
     Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
