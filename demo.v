@@ -804,12 +804,14 @@ Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
   let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
   @AG_input.FromAsg _ opp addNr.
 
-Let A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
+Let A_AG := AG.Pack A (AG.Class _ _ from_asg_to_AG_mixin).
 
 Definition from_asg_to_RING_mixin : RING_input.from_ag A_AG :=
   let: RING_input.FromAsg _ _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr :=
      A_ring_from_asg in
   @RING_input.FromAg A_AG _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+
+Let A_RING := RING.Pack A (RING.Class _ _ from_asg_to_RING_mixin).
 
 End RING_factory.
 
@@ -1352,7 +1354,7 @@ Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
   let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
   @AG_input.FromAsg _ opp addNr.
 
-Let A_AG := AG_make.from_asg A from_asg_to_AG_mixin.
+Let A_AG := AG.Pack A (AG.Class _ _ from_asg_to_AG_mixin).
 
 Section from_asg_to_SRIG.
 
@@ -1386,7 +1388,7 @@ Definition from_asg_to_SRIG_mixin : SRIG_input.from_asg A_ASG :=
     (@mul0r _ _ addNr mulrDl)
     (@mulr0 _ _ addNr mulrDr).
 
-Let A_SRIG := SRIG_make.from_asg A from_asg_to_SRIG_mixin.
+Let A_SRIG := SRIG.Pack A (SRIG.Class _ _ from_asg_to_SRIG_mixin).
 
 End RING_factory.
 
