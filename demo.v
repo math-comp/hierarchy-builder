@@ -173,8 +173,8 @@ Record mixin_of (A : ASG.type) := Mixin {
 Section ClassOps.
 
 Record class_of (A : Type) := Class {
-  base : ASG.class_of A;
-  mixin : mixin_of (ASG.Pack A base)
+  asg_mixin : ASG.mixin_of A;
+  mixin : mixin_of (ASG.Pack A (ASG.Class A asg_mixin))
   }.
 
 Structure type := Pack {
@@ -185,15 +185,16 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition pack (T : Type) (asg : ASG.type) (m : mixin_of asg) :=
-  fun b of phant_id (ASG.class asg) b =>
+  fun m1 of phant_id (ASG.mixin _ (ASG.class asg)) m1 =>
   fun m' of phant_id m m' =>
-    Pack T (Class _ b m').
+    Pack T (Class _ m1 m').
 
 Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
 End ClassOps.
 
@@ -272,8 +273,7 @@ Elpi Query build_structure lp:{{
 Module ASG_reference.
 
 Record class_of (A : Type) := Class {
-  base : TYPE.class_of A;
-  mixin : ASG_input.from_type (TYPE.Pack A base) (* TODO: inline *)
+  mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A))
   }.
 
 Section ClassOps.
@@ -286,7 +286,7 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
-Definition TYPE (T : type) := @TYPE.Pack (sort T) (base _ (class T)).
+Definition TYPE (T : type) := @TYPE.Pack (sort T) (TYPE.Class T).
 
 End ClassOps.
 
@@ -385,12 +385,15 @@ Export RING.Exports.
 Module RING_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : RING_input.from_asg asg) :=
-  fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
-  fun b' of phant_id (ASG.class asg') b' => (* (b' : class_of T)  = (class asg' : class_of T) *)
-  fun m' of phant_id m m' =>                (* (m' : from_asg asg') = (m : from_asg asg)
-                                               because the C provided in the type of (m : frmo_asg C)
-                                               may not be the canonical one, so we unify m and m' hence,
-                                               it will unify their types that contain asg and asg' *)
+  fun asg' of phant_id (ASG.sort asg') T =>
+    (* (T : Type) = (sort asg' : Type)                *)
+  fun b' of phant_id (ASG.class asg') b' =>
+    (* (b' : class_of T)  = (class asg' : class_of T) *)
+  fun m' of phant_id m m' =>
+    (* (m' : from_asg asg') = (m : from_asg asg)
+       because the C provided in the type of (m : frmo_asg C)
+       may not be the canonical one, so we unify m and m' hence,
+       it will unify their types that contain asg and asg' *)
     RING.Pack T (RING.Class _ b' m').
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
@@ -438,8 +441,8 @@ Record mixin_of (A : ASG.type) := Mixin {
 Section ClassOps.
 
 Record class_of (A : Type) := Class {
-  base : ASG.class_of A;
-  mixin : mixin_of (ASG.Pack A base)
+  asg_mixin : ASG.mixin_of A;
+  mixin : mixin_of (ASG.Pack A (ASG.Class A asg_mixin))
   }.
 
 Structure type := Pack {
@@ -450,15 +453,16 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition pack (T : Type) (asg : ASG.type) (m : mixin_of asg) :=
-  fun b of phant_id (ASG.class asg) b =>
+  fun m1 of phant_id (ASG.mixin _ (ASG.class asg)) m1 =>
   fun m' of phant_id m m' =>
-    Pack T (Class _ b m').
+    Pack T (Class _ m1 m').
 
 Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
 End ClassOps.
 
@@ -496,8 +500,9 @@ Record mixin_of (A : AG.type) := Mixin {
 Section ClassOps.
 
 Record class_of (A : Type) := Class {
-  base : AG.class_of A;
-  mixin : mixin_of (AG.Pack A base)
+  asg_mixin : ASG.mixin_of A;
+  ag_mixin : AG.mixin_of (ASG.Pack A (ASG.Class A asg_mixin));
+  mixin : mixin_of (AG.Pack A (AG.Class A asg_mixin ag_mixin))
   }.
 
 Structure type := Pack {
@@ -508,20 +513,23 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition pack (T : Type) (ag : AG.type) (m : mixin_of ag) :=
-  fun b of phant_id (AG.class ag) b =>
+  fun m1 of phant_id (AG.asg_mixin _ (AG.class ag)) m1 =>
+  fun m2 of phant_id (AG.mixin _ (AG.class ag)) m2 =>
   fun m' of phant_id m m' =>
-    Pack T (Class _ b m').
+    Pack T (Class _ m1 m2 m').
 
 Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (AG.base cT (base cT class)).
-Local Definition agType : AG.type := AG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
+Local Definition agType : AG.type :=
+  AG.Pack cT (AG.Class cT (asg_mixin cT class) (ag_mixin cT class)).
 
 End ClassOps.
 
-Notation Make T m := (pack T _ m _ idfun _ idfun).
+Notation Make T m := (pack T _ m _ idfun _ idfun _ idfun).
 
 Module Exports.
 
@@ -572,7 +580,7 @@ Module Example2_meta.
 
 Module ASG_input.
 
-Record from_type A := FromType { (* from scratch *)
+Record from_type (A : TYPE.type) := FromType { (* from scratch *)
   zero : A;
   add : A -> A -> A;
   _ : associative add;
@@ -587,7 +595,7 @@ End ASG_input.
 Module ASG.
 
 Record class_of (A : Type) := Class {
-  mixin : ASG_input.from_type A (* TODO: inline *)
+  mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A)) (* TODO: inline *)
   }.
 
 Section ClassOps.
@@ -600,6 +608,7 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
+Definition TYPE (T : type) := @TYPE.Pack T (TYPE.Class _).
 
 End ClassOps.
 
@@ -610,6 +619,9 @@ Coercion sort : type >-> Sortclass.
 
 Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
+
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE.
 
 End Exports.
 
@@ -643,8 +655,8 @@ End AG_input.
 Module AG.
 
 Record class_of (A : Type) := Class {
-  base : ASG.class_of A;
-  mixin : AG_input.from_asg (ASG.Pack A base)
+  asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
+  mixin     : AG_input.from_asg   (ASG.Pack  A (ASG.Class A asg_mixin))
   }.
 
 Section ClassOps.
@@ -660,7 +672,8 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
 End ClassOps.
 
@@ -684,13 +697,18 @@ Export AG.Exports.
 Module AG_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : AG_input.from_asg asg) :=
-  fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
-  fun b' of phant_id (ASG.class asg') b' => (* (b' : class_of T)  = (class asg' : class_of T) *)
-  fun m' of phant_id m m' =>                (* (m' : from_asg asg') = (m : from_asg asg)
-                                               because the C provided in the type of (m : frmo_asg C)
-                                               may not be the canonical one, so we unify m and m' hence,
-                                               it will unify their types that contain asg and asg' *)
-    AG.Pack T (AG.Class _ b' m').
+  fun asg' of phant_id (ASG.sort asg') T =>
+    (* (T : Type) = (sort asg' : Type)                *)
+  fun m1 of phant_id (ASG.mixin _ (ASG.class asg')) m1 =>
+    (* (m1 : ASG_input.from_type T) = (ASG.mixin _ (ASG.class asg') : ASG_input.from_type asg') *)
+  fun m' of phant_id m m' =>
+    (* (m' : from_asg asg') = (m : from_asg asg)
+       because the C provided in the type of (m : frmo_asg C)
+       may not be the canonical one, so we unify m and m' hence,
+       it will unify their types that contain asg and asg' *)
+    AG.Pack T (AG.Class _ m1 m').
+
+Check pack_from_asg.
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
@@ -728,8 +746,9 @@ End RING_input.
 Module RING.
 
 Record class_of (A : Type) := Class {
-  base : AG.class_of A;
-  mixin : RING_input.from_ag (AG.Pack A base)
+  asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
+  ag_mixin : AG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin));
+  mixin : RING_input.from_ag (AG.Pack A (AG.Class A asg_mixin ag_mixin))
   }.
 
 Section ClassOps.
@@ -745,8 +764,10 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (AG.base cT (base cT class)).
-Local Definition agType : AG.type := AG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
+Local Definition agType : AG.type :=
+  AG.Pack cT (AG.Class cT (asg_mixin cT class) (ag_mixin cT class)).
 
 End ClassOps.
 
@@ -773,15 +794,20 @@ Export RING.Exports.
 Module RING_make.
 
 Definition pack_from_ag (T : Type) (ag : AG.type) (m : RING_input.from_ag ag) :=
-  fun ag' of phant_id (AG.sort ag') T =>  (* (T : Type) = (sort ag' : Type)                *)
-  fun b' of phant_id (AG.class ag') b' => (* (b' : class_of T)  = (class ag' : class_of T) *)
-  fun m' of phant_id m m' =>              (* (m' : from_ag ag') = (m : from_ag ag)
-                                             because the C provided in the type of (m : frmo_ag C)
-                                             may not be the canonical one, so we unify m and m' hence,
-                                             it will unify their types that contain ag and ag' *)
-    RING.Pack T (RING.Class _ b' m').
+  fun ag' of phant_id (AG.sort ag') T =>
+    (* (T : Type) = (sort ag' : Type)                *)
+  fun m1 of phant_id (AG.asg_mixin _ (AG.class ag')) m1 =>
+    (* (m1 : ASG_input.from_type T)  = (AG.asg_mixin _ (AG.class ag') : ASG_input.from_type ag') *)
+  fun m2 of phant_id (AG.mixin _ (AG.class ag')) m2 =>
+    (* (m2 : AG_input.from_asg T)  = (AG.mixin _ (AG.class ag') : AG_input.from_asg ag') *)
+  fun m' of phant_id m m' =>
+    (* (m' : from_ag ag') = (m : from_ag ag)
+       because the C provided in the type of (m : frmo_ag C)
+       may not be the canonical one, so we unify m and m' hence,
+       it will unify their types that contain ag and ag' *)
+    RING.Pack T (RING.Class _ m1 m2 m').
 
-Notation from_ag T m := (pack_from_ag T _ m _ idfun _ idfun _ idfun).
+Notation from_ag T m := (pack_from_ag T _ m _ idfun _ idfun _ idfun _ idfun).
 
 End RING_make.
 
@@ -791,12 +817,12 @@ Section RING_factory.
 Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
 
 Let A : Type := T.
-Let A_ASG := ASG.Pack A (ASG.class T).
+Let A_ASG := ASG.Pack A (ASG.Class A (ASG.mixin A (ASG.class T))).
 
 Let A_ring_from_asg : RING_input.from_asg A_ASG :=
-  (let: ASG.Pack T _ := T
+  (let: ASG.Pack T (ASG.Class _ _) := T
    return RING_input.from_asg T ->
-          RING_input.from_asg (ASG.Pack T (ASG.class T))
+          RING_input.from_asg (ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))))
    in id)
     T_ring_from_asg.
 
@@ -811,7 +837,7 @@ Definition from_asg_to_RING_mixin : RING_input.from_ag A_AG :=
      A_ring_from_asg in
   @RING_input.FromAg A_AG _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
-Let A_RING := RING.Pack A (RING.Class _ _ from_asg_to_RING_mixin).
+Let A_RING := RING.Pack A (RING.Class _ _ _ from_asg_to_RING_mixin).
 
 End RING_factory.
 
@@ -880,8 +906,8 @@ Record mixin_of (A : ASG.type) := Mixin {
 Section ClassOps.
 
 Record class_of (A : Type) := Class {
-  base : ASG.class_of A;
-  mixin : mixin_of (ASG.Pack A base)
+  asg_mixin : ASG.mixin_of A;
+  mixin : mixin_of (ASG.Pack A (ASG.Class A asg_mixin))
   }.
 
 Structure type := Pack {
@@ -892,15 +918,16 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition pack (T : Type) (asg : ASG.type) (m : mixin_of asg) :=
-  fun b of phant_id (ASG.class asg) b =>
+  fun m1 of phant_id (ASG.mixin _ (ASG.class asg)) m1 =>
   fun m' of phant_id m m' =>
-    Pack T (Class _ b m').
+    Pack T (Class _ m1 m').
 
 Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
 End ClassOps.
 
@@ -927,8 +954,9 @@ Module RING.
 Section ClassOps.
 
 Record class_of (A : Type) := Class {
-  base : AG.class_of A;
-  srig_mixin : SRIG.mixin_of (ASG.Pack A (AG.base A base));
+  asg_mixin : ASG.mixin_of A;
+  ag_mixin : AG.mixin_of (ASG.Pack A (ASG.Class A asg_mixin));
+  srig_mixin : SRIG.mixin_of (ASG.Pack A (ASG.Class A asg_mixin));
   }.
 
 Structure type := Pack {
@@ -939,24 +967,27 @@ Structure type := Pack {
 Local Coercion sort : type >-> Sortclass.
 
 Definition pack (T : Type) (ag : AG.type) (srig : SRIG.type) :=
-  fun b  & phant_id (AG.class ag) b =>
-  fun b' & phant_id (SRIG.mixin _ (SRIG.class srig)) b' =>
-  Pack T (Class T b b').
+  fun m1 & phant_id (AG.asg_mixin _ (AG.class ag)) m1 =>
+  fun m2 & phant_id (AG.mixin _ (AG.class ag)) m2 =>
+  fun m3 & phant_id (SRIG.mixin _ (SRIG.class srig)) m3 =>
+  Pack T (Class _ m1 m2 m3).
 
 Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (AG.base cT (base cT class)).
-Local Definition agType : AG.type := AG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
+Local Definition agType : AG.type :=
+  AG.Pack cT (AG.Class cT (asg_mixin cT class) (ag_mixin cT class)).
 Local Definition srigType : SRIG.type :=
-  SRIG.Pack cT (SRIG.Class _ (AG.base cT (base cT class)) (srig_mixin _ class)).
+  SRIG.Pack cT (SRIG.Class cT (asg_mixin cT class) (srig_mixin cT class)).
 Local Definition ag_srigType : SRIG.type :=
-  SRIG.Pack agType (SRIG.Class _ (AG.base cT (base cT class)) (srig_mixin _ class)).
+  SRIG.Pack agType (SRIG.Class cT (asg_mixin cT class) (srig_mixin cT class)).
 
 End ClassOps.
 
-Notation Make T := (pack T _ _ _ idfun _ idfun).
+Notation Make T := (pack T _ _ _ idfun _ idfun _ idfun).
 
 Module Exports.
 
@@ -1009,7 +1040,7 @@ Module Example3_meta.
 
 Module ASG_input.
 
-Record from_type A := FromType { (* from scratch *)
+Record from_type (A : TYPE.type) := FromType { (* from scratch *)
   zero : A;
   add : A -> A -> A;
   _ : associative add;
@@ -1024,7 +1055,7 @@ End ASG_input.
 Module ASG.
 
 Record class_of (A : Type) := Class {
-  mixin : ASG_input.from_type A (* TODO: inline *)
+  mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A)) (* TODO: inline *)
   }.
 
 Section ClassOps.
@@ -1089,8 +1120,8 @@ End AG_input.
 Module AG.
 
 Record class_of (A : Type) := Class {
-  base : ASG.class_of A;
-  mixin : AG_input.from_asg (ASG.Pack A base)
+  asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
+  mixin : AG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin))
   }.
 
 Section ClassOps.
@@ -1106,7 +1137,8 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
 End ClassOps.
 
@@ -1133,13 +1165,18 @@ Proof. by case: A => ? [? []]. Qed.
 Module AG_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : AG_input.from_asg asg) :=
-  fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
-  fun b' of phant_id (ASG.class asg') b' => (* (b' : class_of T)  = (class asg' : class_of T) *)
-  fun m' of phant_id m m' =>                (* (m' : from_asg asg') = (m : from_asg asg)
-                                               because the C provided in the type of (m : frmo_asg C)
-                                               may not be the canonical one, so we unify m and m' hence,
-                                               it will unify their types that contain asg and asg' *)
-    AG.Pack T (AG.Class _ b' m').
+  fun asg' of phant_id (ASG.sort asg') T =>
+    (* (T : Type) = (sort asg' : Type)                *)
+  fun m1 of phant_id (ASG.mixin _ (ASG.class asg')) m1 =>
+    (* (m1 : ASG_input.from_type T) = (ASG.mixin _ (ASG.class asg') : ASG_input.from_type asg') *)
+  fun m' of phant_id m m' =>
+    (* (m' : from_asg asg') = (m : from_asg asg)
+       because the C provided in the type of (m : frmo_asg C)
+       may not be the canonical one, so we unify m and m' hence,
+       it will unify their types that contain asg and asg' *)
+    AG.Pack T (AG.Class _ m1 m').
+
+Check pack_from_asg.
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
@@ -1170,8 +1207,8 @@ End SRIG_input.
 Module SRIG.
 
 Record class_of (A : Type) := Class {
-  base : ASG.class_of A;
-  mixin : SRIG_input.from_asg (ASG.Pack A base)
+  asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
+  mixin : SRIG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin))
   }.
 
 Section ClassOps.
@@ -1187,7 +1224,8 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
 End ClassOps.
 
@@ -1227,35 +1265,20 @@ Proof. by case: A => ? [? []]. Qed.
 Module SRIG_make.
 
 Definition pack_from_asg (T : Type) (asg : ASG.type) (m : SRIG_input.from_asg asg) :=
-  fun asg' of phant_id (ASG.sort asg') T => (* (T : Type) = (sort asg' : Type)                *)
-  fun b' of phant_id (ASG.class asg') b' => (* (b' : class_of T)  = (class asg' : class_of T) *)
-  fun m' of phant_id m m' =>                (* (m' : from_asg asg') = (m : from_asg asg)
-                                               because the C provided in the type of (m : frmo_asg C)
-                                               may not be the canonical one, so we unify m and m' hence,
-                                               it will unify their types that contain asg and asg' *)
-    SRIG.Pack T (SRIG.Class _ b' m').
+  fun asg' of phant_id (ASG.sort asg') T =>
+    (* (T : Type) = (sort asg' : Type)                *)
+  fun m1 of phant_id (ASG.mixin _ (ASG.class asg')) m1 =>
+    (* (b' : class_of T)  = (class asg' : class_of T) *)
+  fun m' of phant_id m m' =>
+    (* (m' : from_asg asg') = (m : from_asg asg)
+       because the C provided in the type of (m : frmo_asg C)
+       may not be the canonical one, so we unify m and m' hence,
+       it will unify their types that contain asg and asg' *)
+    SRIG.Pack T (SRIG.Class _ m1 m').
 
 Notation from_asg T m := (pack_from_asg T _ m _ idfun _ idfun _ idfun).
 
 End SRIG_make.
-
-(*
-(* Flattening *)
-Section XX.
-Variable T : ASG.type.
-Let J : Type := T.
-Canonical asg := @ASG.Pack J (ASG.class T).
-Variables m1 : AG_input.from_asg asg.
-Variables m2 : SRIG_input.from_asg asg.
-Canonical xxx := AG_make.from_asg J m1.
-Canonical yyy := SRIG_make.from_asg J m2.
-Definition from_ag_srig_laws :=
-  forall x y : J, opp (mul x y) = mul (opp x) y.
-Record from_ag_srig  := FromAgSrig {
-  _ : from_ag_srig_laws;
-}.
-End XX.
-*)
 
 Module RING_input.
 
@@ -1280,8 +1303,9 @@ Module RING.
 Section ClassOps.
 
 Record class_of (A : Type) := Class {
-  base : AG.class_of A;
-  srig_mixin : SRIG_input.from_asg (ASG.Pack A (AG.base A base));
+  asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
+  ag_mixin : AG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin));
+  srig_mixin : SRIG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin));
   }.
 
 Structure type := Pack {
@@ -1295,12 +1319,14 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
-Local Definition asgType : ASG.type := ASG.Pack cT (AG.base cT (base cT class)).
-Local Definition agType : AG.type := AG.Pack cT (base cT class).
+Local Definition asgType : ASG.type :=
+  ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
+Local Definition agType : AG.type :=
+  AG.Pack cT (AG.Class cT (asg_mixin cT class) (ag_mixin cT class)).
 Local Definition srigType : SRIG.type :=
-  SRIG.Pack cT (SRIG.Class _ (AG.base cT (base cT class)) (srig_mixin _ class)).
+  SRIG.Pack cT (SRIG.Class cT (asg_mixin cT class) (srig_mixin cT class)).
 Local Definition ag_srigType : SRIG.type :=
-  SRIG.Pack agType (SRIG.Class _ (AG.base cT (base cT class)) (srig_mixin _ class)).
+  SRIG.Pack agType (SRIG.Class cT (asg_mixin cT class) (srig_mixin cT class)).
 
 End ClassOps.
 
@@ -1327,11 +1353,12 @@ Module RING_make.
 (* TODO: rename *)
 
 Definition pack (T : Type) (ag : AG.type) (srig : SRIG.type) :=
-  fun b  & phant_id (AG.class ag) b =>
-  fun b' & phant_id (SRIG.mixin _ (SRIG.class srig)) b' =>
-  RING.Pack T (RING.Class T b b').
+  fun m1 & phant_id (AG.asg_mixin _ (AG.class ag)) m1 =>
+  fun m2 & phant_id (AG.mixin _ (AG.class ag)) m2 =>
+  fun m3 & phant_id (SRIG.mixin _ (SRIG.class srig)) m3 =>
+  RING.Pack T (RING.Class _ m1 m2 m3).
 
-Notation Make T := (pack T _ _ _ idfun _ idfun).
+Notation Make T := (pack T _ _ _ idfun _ idfun _ idfun).
 
 End RING_make.
 
@@ -1341,12 +1368,12 @@ Section RING_factory.
 Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
 
 Let A : Type := T.
-Let A_ASG := ASG.Pack A (ASG.class T).
+Let A_ASG := ASG.Pack A (ASG.Class A (ASG.mixin A (ASG.class T))).
 
 Let A_ring_from_asg : RING_input.from_asg A_ASG :=
-  (let: ASG.Pack T _ := T
+  (let: ASG.Pack T (ASG.Class _ _) := T
    return RING_input.from_asg T ->
-          RING_input.from_asg (ASG.Pack T (ASG.class T))
+          RING_input.from_asg (ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))))
    in id)
     T_ring_from_asg.
 
