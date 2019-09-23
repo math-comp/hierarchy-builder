@@ -14,11 +14,11 @@ type declare-instance gref -> vernac.
 
 % Vernacular commands interpreter
 pred interp-vernac i:vernac.
-interp-vernac (begin-module M)           :- coq.env.begin-module M _.
+interp-vernac (begin-module M)           :- coq.env.begin-module M none.
 interp-vernac (end-module)               :- coq.env.end-module _.
 interp-vernac (declare-inductive D I)    :- coq.env.add-indt D I.
 interp-vernac (declare-coercion C G)     :- coq.coercion.declare C G.
-interp-vernac (declare-constant N B T G) :- coq.env.add-const N B T ff G.
+interp-vernac (declare-constant N B T G) :- coq.env.add-const N B T ff _ G.
 interp-vernac (declare-instance GR)      :- coq.CS.declare-instance GR.
 interp-vernac  (declare-implicit GR L)    :- coq.arguments.set-implicit GR [L] tt.
 

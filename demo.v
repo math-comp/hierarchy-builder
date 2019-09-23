@@ -33,9 +33,9 @@ Elpi Db hierarchy.db "
     macro @set X :- list X.
 
     % but comparison should be set-like
-    pred dep1 i:@mixin,      o:@set @mixin.
-    pred dep  i:@set @mixin,  o:@set @mixin.
-    pred def  i:@class,      o:@set @mixin.
+    pred dep1 i:@mixin,      o:set @mixin.
+    pred dep  i:set @mixin,  o:set @mixin.
+    pred def  i:@class,      o:list @mixin.
     % each set gets an order by toposort on deps given by its parameters
     % example:
     % 
