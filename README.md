@@ -39,7 +39,7 @@ The set of factories `F` (which are **coq** records) comes equipped with three f
 - For all `f`, there is a class `c = factory_class f ∈ C` such that:
   + `def c = requires f ∪ provides f` i.e. every factory is meant to build a class (and all necessary super classes)
   + there is a set of classes `C_req ⊆ C` such that `⋃_{c ∈ C_req} def c = requires f`, i.e. all the required mixins are covered by classes.
-- For all `f` and every mixin `m` in `provides f`, the term `from f m` is in fact a **coq** function `from f m : forall [...], f [...] -> m [...]` parametrised by the mixins in `requires f` (and which is possibly a coercion if it happens to satisfy the uniform inheritance condition). We also extend `from f m` to all `m` in `requires f` by simply projecting the right parameter.
+- For all `f` and every mixin `m` in `provides f`, the term `from f m` is in fact a **coq** function `from f m : forall [...], f [...] -> m [...]` parametrised by the mixins in `requires f` (and which is possibly a coercion if it happens to satisfy the uniform inheritance condition). We also extend `from f m` to all `m` in `requires f` by simply projecting the right parameter. Implementation note: the last argument of the return type `m` is a structure that should be eta expanded for the various pack functions to work.
 
 Mixins and classes are trivial factories in the sense that:
 - `M ⊆ F` and for all `m ∈ M`, `requires m = dep {m}`, `provides m = {m}` and `from m m = id`, i.e. mixins are primitive factories
