@@ -299,10 +299,7 @@ Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
 
 Coercion TYPE : type >-> TYPE.type.
-Canonical TYPE.
-
-
-
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 
 End Exports.
 
@@ -621,7 +618,7 @@ Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
 
 Coercion TYPE : type >-> TYPE.type.
-Canonical TYPE.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 
 End Exports.
 
@@ -672,6 +669,7 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+Local Definition TYPE : TYPE.type := TYPE.Pack cT (TYPE.Class cT).
 Local Definition asgType : ASG.type :=
   ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
@@ -683,6 +681,8 @@ Definition opp {A : type} := AG_input.opp _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
 
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* AG.sort ? = ASG.sort ? *)
 
@@ -764,6 +764,7 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+Local Definition TYPE : TYPE.type := TYPE.Pack cT (TYPE.Class cT).
 Local Definition asgType : ASG.type :=
   ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 Local Definition agType : AG.type :=
@@ -778,6 +779,8 @@ Definition one {A : type} := RING_input.one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
 
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* RING.sort ? = ASG.sort ? *)
 Coercion agType : type >-> AG.type.
@@ -816,28 +819,21 @@ Section RING_factory.
 
 Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
 
-Let A : Type := T.
-Let A_ASG := ASG.Pack A (ASG.Class A (ASG.mixin A (ASG.class T))).
+Let T_ASG := ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))).
 
-Let A_ring_from_asg : RING_input.from_asg A_ASG :=
-  (let: ASG.Pack T (ASG.Class _ _) := T
-   return RING_input.from_asg T ->
-          RING_input.from_asg (ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))))
-   in id)
-    T_ring_from_asg.
+Definition from_asg_to_AG_mixin : AG_input.from_asg T_ASG :=
+  let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := T_ring_from_asg in
+  @AG_input.FromAsg T_ASG opp addNr.
 
-Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
-  let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
-  @AG_input.FromAsg _ opp addNr.
+Let T_AG := AG.Pack T (AG.Class _ _ from_asg_to_AG_mixin).
 
-Let A_AG := AG.Pack A (AG.Class _ _ from_asg_to_AG_mixin).
-
-Definition from_asg_to_RING_mixin : RING_input.from_ag A_AG :=
+Definition from_asg_to_RING_mixin :
+  RING_input.from_ag (AG.Pack T (AG.Class _ _ from_asg_to_AG_mixin)) :=
   let: RING_input.FromAsg _ _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr :=
-     A_ring_from_asg in
-  @RING_input.FromAg A_AG _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+     T_ring_from_asg in
+  @RING_input.FromAg T_AG _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
-Let A_RING := RING.Pack A (RING.Class _ _ _ from_asg_to_RING_mixin).
+Let T_RING := RING.Pack T (RING.Class _ _ _ from_asg_to_RING_mixin).
 
 End RING_factory.
 
@@ -1069,6 +1065,8 @@ Local Coercion sort : type >-> Sortclass.
 
 Definition class cT := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+Definition TYPE (T : type) := @TYPE.Pack (sort T) (TYPE.Class T).
+
 End ClassOps.
 
 
@@ -1078,6 +1076,9 @@ Coercion sort : type >-> Sortclass.
 
 Definition add {A : type} := ASG_input.add _ (mixin _ (class A)).
 Definition zero {A : type} := ASG_input.zero _ (mixin _ (class A)).
+
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 
 End Exports.
 
@@ -1137,6 +1138,7 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+Local Definition TYPE : TYPE.type := TYPE.Pack cT (TYPE.Class cT).
 Local Definition asgType : ASG.type :=
   ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
@@ -1148,6 +1150,8 @@ Definition opp {A : type} := AG_input.opp _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
 
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* AG.sort ? = ASG.sort ? *)
 
@@ -1224,6 +1228,7 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+Local Definition TYPE : TYPE.type := TYPE.Pack cT (TYPE.Class cT).
 Local Definition asgType : ASG.type :=
   ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 
@@ -1236,6 +1241,8 @@ Definition one {A : type} := SRIG_input.one _ (mixin _ (class A)).
 
 Coercion sort : type >-> Sortclass.
 
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* SRIG.sort ? = ASG.sort ? *)
 
@@ -1319,6 +1326,7 @@ Variable cT : type.
 
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 
+Local Definition TYPE : TYPE.type := TYPE.Pack cT (TYPE.Class cT).
 Local Definition asgType : ASG.type :=
   ASG.Pack cT (ASG.Class cT (asg_mixin cT class)).
 Local Definition agType : AG.type :=
@@ -1334,6 +1342,8 @@ Module Exports.
 
 Coercion sort : type >-> Sortclass.
 
+Coercion TYPE : type >-> TYPE.type.
+Canonical TYPE. (* AG.sort ? = TYPE.sort ? *)
 Coercion asgType : type >-> ASG.type.
 Canonical asgType. (* RING.sort ? = ASG.sort ? *)
 Coercion agType : type >-> AG.type.
@@ -1367,26 +1377,18 @@ Section RING_factory.
 
 Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
 
-Let A : Type := T.
-Let A_ASG := ASG.Pack A (ASG.Class A (ASG.mixin A (ASG.class T))).
+Let T_ASG := ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))).
 
-Let A_ring_from_asg : RING_input.from_asg A_ASG :=
-  (let: ASG.Pack T (ASG.Class _ _) := T
-   return RING_input.from_asg T ->
-          RING_input.from_asg (ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))))
-   in id)
-    T_ring_from_asg.
+Definition from_asg_to_AG_mixin : AG_input.from_asg T_ASG :=
+  let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := T_ring_from_asg in
+  @AG_input.FromAsg T_ASG opp addNr.
 
-Definition from_asg_to_AG_mixin : AG_input.from_asg A_ASG :=
-  let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := A_ring_from_asg in
-  @AG_input.FromAsg _ opp addNr.
-
-Let A_AG := AG.Pack A (AG.Class _ _ from_asg_to_AG_mixin).
+Let T_AG := AG.Pack T (AG.Class _ _ from_asg_to_AG_mixin).
 
 Section from_asg_to_SRIG.
 
 Variables
-  (opp : A -> A) (mul : A -> A -> A) (addNr : left_inverse zero opp add)
+  (opp : T -> T) (mul : T -> T -> T) (addNr : left_inverse zero opp add)
   (mulrDl : left_distributive mul add) (mulrDr : right_distributive mul add).
 
 Lemma mul0r : left_zero zero mul.
@@ -1407,15 +1409,15 @@ Qed.
 
 End from_asg_to_SRIG.
 
-Definition from_asg_to_SRIG_mixin : SRIG_input.from_asg A_ASG :=
+Definition from_asg_to_SRIG_mixin : SRIG_input.from_asg T_ASG :=
   let: RING_input.FromAsg _ _ _ _ addNr mulrA mul1r mulr1 mulrDl mulrDr :=
-     A_ring_from_asg in
+     T_ring_from_asg in
   @SRIG_input.FromAsg
-    _ _ _ mulrA mul1r mulr1 mulrDl mulrDr
+    T_AG _ _ mulrA mul1r mulr1 mulrDl mulrDr
     (@mul0r _ _ addNr mulrDl)
     (@mulr0 _ _ addNr mulrDr).
 
-Let A_SRIG := SRIG.Pack A (SRIG.Class _ _ from_asg_to_SRIG_mixin).
+Let T_SRIG := SRIG.Pack T (SRIG.Class _ _ from_asg_to_SRIG_mixin).
 
 End RING_factory.
 
