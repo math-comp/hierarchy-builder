@@ -1,0 +1,103 @@
+macro @mixin :- gref.
+macro @mixins :- coq.gref.set.
+
+macro @class :- gref.
+macro @factory :- gref.
+
+namespace hierarchy {
+
+/*
+    % example: params ""module"" 1
+    % example: params ""algebra"" 1
+    pred params i:@mixin, o:int. % maybe o:list term.
+
+    kind dep type.
+    type dep-param (term -> dep) -> dep.
+    type dep-mixin list (pair @mixin (list term)) -> dep.
+
+    % example: dep1 ""module""  (dep-mixin [pr ""zmod"" []])
+    %          dep1 ""algebra"" (dep-param x\ [""ring"", ""module"" x])
+    %          dep1 ""vspace""  (dep-param f\ [""zmod"",""module"" (app [""proj"",f])])
+*/
+
+    % for now lists, later proper sets
+
+pred def  i:@class,      o:list @mixin. % order matters
+
+
+% but comparison should be set-like
+pred dep1 i:@mixin,      o:list @mixin. % order matters
+
+pred dep  i:@mixins,     o:@mixins.
+dep MS Closure :- std.spy-do! [
+  coq.gref.set.elements MS ML,
+  std.fold ML {coq.gref.set.empty} dep.aux Closure
+].
+
+pred dep.aux i:gref, i:coq.gref.set, o:coq.gref.set.
+dep.aux M ACC ACC :- coq.gref.set.mem M ACC, !.
+dep.aux M ACC ACC1 :- std.spy-do! [
+  dep1 M ML,
+  std.fold ML {coq.gref.set.empty} coq.gref.set.add MS,
+  coq.gref.set.union ACC {coq.gref.set.union MS {dep MS}} ACC1
+].
+
+% [factory F Requires Provides]
+pred factory i:@factory, o:list @mixin, o:list @mixin. % FIXME: order irrelevant
+pred from i:factory, i:@mixin, o:term.
+
+
+fill-db P :-
+  term->gr {{ TYPE.class_of }} Class_TYPE,
+  term->gr {{ ASG.class_of }} Class_ASG,
+  term->gr {{ AG.class_of }} Class_AG,
+  term->gr {{ RING.class_of }} Class_RING,
+
+  term->gr {{ ASG_input.from_asg_to_ASG_mixin }} Asg_from_asg_to_ASG_mixin,
+
+  term->gr {{ ASG_input.from_type }} MIXIN_ASG,
+  term->gr {{ AG_input.from_asg }} MIXIN_AG,
+  term->gr {{ RING_input.from_ag }} MIXIN_RING,
+
+  term->gr {{ RING_input.from_asg }} FACTORY_ASG_RING,
+  term->gr {{ RING_factory.from_asg_to_RING_mixin }} Ring_from_asg_to_RING_mixin,
+  term->gr {{ RING_factory.from_asg_to_AG_mixin }} Ring_from_asg_to_AG_mixin,
+  term->gr {{ RING_factory.from_asg_to_ASG_mixin }} Ring_from_asg_to_ASG_mixin,
+
+
+
+  [
+  def Class_TYPE [],
+
+  def Class_ASG [ MIXIN_ASG ],
+  dep1 MIXIN_ASG [],
+  factory MIXIN_ASG [] [ MIXIN_ASG ], % added by declare_mixin
+  from MIXIN_ASG MIXIN_ASG From_asg_to_ASG_mixin,
+
+  def Class_AG [ MIXIN_ASG, MIXIN_AG ],
+  dep1 MIXIN_AG [ MIXIN_ASG ],
+  factory MIXIN_AG [ MIXIN_ASG ] [ MIXIN_AG ], % added by declare_mixin
+  % 2 missing from
+
+  def Class_RING [ MIXIN_ASG, MIXIN_AG, MIXIN_RING ],
+  dep1 MIXIN_RING [ MIXIN_ASG ],
+  factory MIXIN_RING [ MIXIN_ASG, MIXIN_AG ] [ MIXIN_RING ], % added by declare_mixin
+  % 3 missing from
+
+  % declare_factory takes terms such as Ring_from_asg_to_AG_mixin
+  % and Ring_from_asg_to_RING_mixin
+  from FACTORY_ASG_RING MIXIN_ASG  Ring_from_asg_to_ASG_mixin,      % synthesized and declared as part of command ... 
+  from FACTORY_ASG_RING MIXIN_AG   Ring_from_asg_to_AG_mixin,       % given
+  from FACTORY_ASG_RING MIXIN_RING Ring_from_asg_to_RING_mixin,     % given 
+  % factory FACTORY_ASG_RING [ MIXIN_ASG ] [ MIXIN_AG, MIXIN_RING ],  % inferred
+
+  ] => P.
+
+main _ :-
+  term->gr {{ RING_input.from_ag }} MIXIN,
+  coq.gref.set.empty E,
+  coq.gref.set.add MIXIN E START,
+  fill-db (dep START DEPS),
+  coq.say "deps=" DEPS.
+
+}

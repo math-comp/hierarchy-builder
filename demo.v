@@ -85,6 +85,7 @@ Module Input.
 End Input.
 
   declare_mixin Input.from_whatever. (* declares a factory with the same name *)
+  (* FEATURE: instead of using the required factories to compute the dependencies of the mixin, it should do it by hand because one may overshoot in the previous command *)
  
   (* generated *)
  
@@ -585,6 +586,8 @@ Record from_type (A : TYPE.type) := FromType { (* from scratch *)
   _ : left_id zero add;
   }.
 
+Definition from_asg_to_ASG_mixin A (m : from_type A) := m.
+
 End ASG_input.
 
 (* declare_structure ASG_input.mixin_of *)
@@ -729,7 +732,7 @@ Record from_asg (A : ASG.type) := FromAsg {
   _ : right_distributive mul' add;
   }.
 
-Record from_ag (A : AG.type) := FromAg {
+Record from_ag (A : ASG.type) := FromAg {
   one : A;
   mul : A -> A -> A;
   _ : associative mul;
@@ -748,9 +751,9 @@ Module RING.
 Record class_of (A : Type) := Class {
   asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
   ag_mixin : AG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin));
-  mixin : RING_input.from_ag (AG.Pack A (AG.Class A asg_mixin ag_mixin))
+  mixin : RING_input.from_ag (ASG.Pack A (ASG.Class A asg_mixin))
   }.
-
+  
 Section ClassOps.
 
 Structure type := Pack {
@@ -821,6 +824,8 @@ Variable (T : ASG.type) (T_ring_from_asg : RING_input.from_asg T).
 
 Let T_ASG := ASG.Pack T (ASG.Class T (ASG.mixin T (ASG.class T))).
 
+Definition from_asg_to_ASG_mixin := ASG.mixin T (ASG.class T).
+
 Definition from_asg_to_AG_mixin : AG_input.from_asg T_ASG :=
   let: RING_input.FromAsg _ opp one mul addNr _ _ _ _ _ := T_ring_from_asg in
   @AG_input.FromAsg T_ASG opp addNr.
@@ -869,7 +874,25 @@ Canonical Z_ringType := RING_make.from_ag Z Z_ring.
 
 Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
+
+
+Elpi Command test.
+Elpi Accumulate File "declare_factory.elpi".
+Elpi Accumulate " main Args :- hierarchy.main Args. ".
+Elpi Typecheck.
+Elpi test .
+
+
+
+
+
 End Example2_meta.
+
+
+
+
+
+
 
 (* 3 : ring, semi rig, additive group, and additive sg ====================================== *)
 
@@ -1456,3 +1479,4 @@ Canonical Z_ringType := RING_make.Make Z.
 Check fun n : Z => add 1%Z (mul 0%Z n) = n.
 
 End Example3_meta.
+
