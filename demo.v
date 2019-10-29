@@ -10,43 +10,8 @@ End TYPE.
 Coercion TYPE.sort : TYPE.type >-> Sortclass.
 Canonical type_is_type (T : Type) : TYPE.type := TYPE.Pack T (TYPE.Class T).
 
-Elpi Db hierarchy.db "
-  namespace hierarchy {
-    
-    macro @mixin :- gref.
-    macro @class :- gref.
-/*
-    % example: params ""module"" 1
-    % example: params ""algebra"" 1
-    pred params i:@mixin, o:int. % maybe o:list term.
-
-    kind dep type.
-    type dep-param (term -> dep) -> dep.
-    type dep-mixin list (pair @mixin (list term)) -> dep.
-
-    % example: dep1 ""module""  (dep-mixin [pr ""zmod"" []])
-    %          dep1 ""algebra"" (dep-param x\ [""ring"", ""module"" x])
-    %          dep1 ""vspace""  (dep-param f\ [""zmod"",""module"" (app [""proj"",f])])
-*/
-
-    % for now lists, later proper sets
-    macro @set X :- list X.
-
-    % but comparison should be set-like
-    pred dep1 i:@mixin,      o:set @mixin.
-    pred dep  i:set @mixin,  o:set @mixin.
-    pred def  i:@class,      o:list @mixin.
-    % each set gets an order by toposort on deps given by its parameters
-    % example:
-    % 
-
-    def TYPE [] :- coq.locate ""TYPE.class_of"" TYPE.
-  }
-".
-
 Elpi Command build_structure.
 Elpi Accumulate File "hierarchy-builder.elpi".
-Elpi Accumulate Db hierarchy.db.
 Elpi Typecheck. 
 
 Elpi Print build_structure "build_structure.html".
@@ -751,7 +716,7 @@ Module RING.
 Record class_of (A : Type) := Class {
   asg_mixin : ASG_input.from_type (TYPE.Pack A (TYPE.Class A));
   ag_mixin : AG_input.from_asg (ASG.Pack A (ASG.Class A asg_mixin));
-  mixin : RING_input.from_ag (ASG.Pack A (ASG.Class A asg_mixin))
+  mixin : RING_input.from_ag (AG.Pack A (AG.Class A asg_mixin ag_mixin))
   }.
   
 Section ClassOps.
@@ -880,11 +845,20 @@ Elpi Command test.
 Elpi Accumulate File "declare_factory.elpi".
 Elpi Accumulate " main Args :- hierarchy.main Args. ".
 Elpi Typecheck.
-Elpi test .
+Elpi test 1.
 
+Check RING_input.from_ag.
+Check AG_input.from_asg.
+(*
+Record foo (T : Type) : Type := mk_foo {
+  from_type : @ASG_input.from_type (TYPE.Pack T (TYPE.Class T));
+  from_asg : @AG_input.from_asg (ASG.Pack T (ASG.Class T from_type));
+  from_ag : @RING_input.from_ag (ASG.Pack T (ASG.Class T from_type));
+}.
+*)
 
-
-
+Elpi test RING_input.from_asg.
+Print class_of.
 
 End Example2_meta.
 
@@ -1477,6 +1451,49 @@ Canonical Z_srigType := SRIG_make.from_asg Z Z_ring.
 Canonical Z_ringType := RING_make.Make Z.
 
 Check fun n : Z => add 1%Z (mul 0%Z n) = n.
+
+Elpi Db hierarchy.db lp:{{ 
+
+  pred dep1 i:gref, o:list gref.
+
+}}.
+
+Elpi Command declare_mixin.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+
+pred gather-mixins i:term, i:list gref, o:list gref.
+gather-mixins (prod N S R) Acc Result :- !,
+  safe-dest-app S HD _,
+  if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
+  @pi-decl N S x\
+    gather-mixins (R x) Acc1 Result.
+gather-mixins (sort _) Acc Acc.
+gather-mixins Ty Acc Res :- whd1 Ty Ty1, !, gather-mixins Ty1 Acc Res.
+gather-mixins Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
+
+main [str M] :-
+  coq.locate M GR,
+  coq.env.typeof-gr GR Ty,
+  gather-mixins Ty [] Mix,
+  coq.say "adding" Mix,
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)).
+
+}}.
+Elpi Typecheck.
+Elpi declare_mixin ASG_input.from_type.
+Elpi declare_mixin AG_input.from_asg.
+Elpi declare_mixin SRIG_input.from_asg.
+
+Elpi Print declare_mixin.
+
+Elpi Command test2.
+Elpi Accumulate File "declare_factory.elpi".
+Elpi Accumulate " main Args :- hierarchy.main Args. ".
+Elpi Typecheck.
+
+Elpi test2 RING_input.from_asg.
+
 
 End Example3_meta.
 
