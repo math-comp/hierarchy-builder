@@ -13,8 +13,12 @@ Elpi Db hierarchy.db lp:{{
   macro @factory :- gref.
   macro @structure :- @inductive.
 
-  pred dep1 i:gref, o:list gref.
+  
+  pred dep1 i:@mixin, o:list @mixin.
+  
+  % factory, generated mixin, mean, eg mean : factory -> mixin
   pred from o:@factory, o:@mixin, o:term.
+  
   pred cdef o:@class,  o:@structure,    o:list @mixin. % order matters
 
 }}.
@@ -40,7 +44,10 @@ main [str M] :-
   coq.env.typeof-gr GR Ty,
   gather-mixins Ty [] Mix,
   coq.say "adding" Mix,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)).
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
+  % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
+  ID = {{ fun x : nat => x }},
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)).
 
 }}.
 Elpi Typecheck.
@@ -54,11 +61,12 @@ Elpi Accumulate lp:{{
 pred extract-mix i:prop, o:@mixin.
 extract-mix (from _ X _) X.
 
-pred generate i:@factory, o:list @mixin.
-generate Factory ML :- std.do! [
-  std.findall (from Factory _ _) All,
-  coq.say All,
-  std.map All extract-mix ML
+pred provides i:@factory, o:list @mixin.
+provides Factory ML :- std.do! [
+  std.findall (from Factory FOO_ BAR_) All,
+  coq.say "All factory declarations for" Factory "are" All,
+  std.map All extract-mix ML,
+  coq.say "All mixins provided by" Factory "are" ML
 ].
 
 pred field-for i:gref, o:term.
@@ -66,10 +74,11 @@ pred field-for i:gref, o:term.
 pred synthesize i:list @mixin, i:term, o:record-decl.
 synthesize [] _ end-record.
 synthesize [GR|ML] T (field ff Name Type Decl) :-
-  coq.gr->string GR LongName,
-  rex_replace "^.*\\.\\([^\\.]+\\)\\.[^\\.]+$" "\\1_mixin" LongName Name, % TODO: do better than crap
+  coq.gr->path GR L,
+  std.assert! (std.rev L [_,ModName|_]) "Mixin name is not qualified, please use Foo_input.bar",
+  Name is ModName ^ "_mixin",
   dep1 GR Deps,
-  cdef (indt ClassOf) Structure Deps,
+  std.spy(cdef (indt ClassOf) Structure Deps),
   coq.env.indt ClassOf _ _ _ _ [Class] _,
   coq.env.indt Structure _ _ _ _ [Pack] _,
   std.map Deps field-for Args,
@@ -81,13 +90,42 @@ synthesize [GR|ML] T (field ff Name Type Decl) :-
 pred toposort i:list @mixin, o:list @mixin.
 toposort X X. % TODO
 
-pred locate-str i:arg, o:string.
-locate-str (str S) GR :- coq.locate S GR.
-locate-str _ _ :- coq.error "not a string".
+pred locate-str i:argument, o:gref.
+locate-str (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+locate-str X _ :- coq.error "not a string:" X.
 
-main [str Module|FS] :-
+pred export-operation i:option @constant, i:@inductive, i:@constant, i:@constant, i:option @constant.
+export-operation _ _ _ _ none :- !. % not a projection
+export-operation (some P) S Psort Pclass (some OP) :- !,
+  Struct = global (indt S),
+  Operation = global (const OP),
+  Projection = global (const P),
+  Carrier = (x\ app[global (const Psort), x]),
+  Class = (x\ app[global (const Pclass), x]),
+  T = {{ fun x : lp:Struct =>
+            lp:Operation lp:(Carrier x) (lp:Projection lp:(Carrier x) lp:(Class x)) }},
+  coq.gr->id (const OP) Name,
+  coq.say {coq.term->string T},
+  % TODO: make Ty nice
+  coq.env.add-const Name T _ ff ff C,
+  coq.arguments.implicit (const C) [[maximal]].
+export-operation _ _ _ _ (some OP) :- coq.error "no mixin projection for operation" OP.
+
+pred export-operations i:@inductive, i:@constant, i:@constant, i:list @mixin, i:list (option @constant).
+export-operations _ _ _ [] [].
+export-operations S Psort Pclass [indt M|ML] [P|Projs] :- !,
+  coq.CS.canonical-projections M L,
+  coq.say L M S P,
+  std.forall L (export-operation P S Psort Pclass),
+  %maybe load context with P-M and use that if M' uses M ?
+  export-operations S Psort Pclass ML Projs.
+export-operations S P1 P2 [GR|ML] [_|Projs] :-
+  coq.say "not a record" GR "hence skipping opeerations from this mixin",
+  export-operations S P1 P2 ML Projs.
+
+main [str Module|FS] :- std.spy-do! [
   std.map FS locate-str GRFS,
-  std.map GRFS generate MLUnsortedL,
+  std.map GRFS provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
   toposort MLUnsorted ML,
   (pi T\ synthesize ML T (RDecl T)),
@@ -104,11 +142,19 @@ main [str Module|FS] :-
 
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
-      field tt "sort" {{ Type }} s\
-      field ff "_" (app [global (indt Class), s]) _\
+      field ff "sort" {{ Type }} s\
+      field ff "class" (app [global (indt Class), s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
-  coq.env.add-indt StructureDeclaration Struct,
+  coq.env.add-indt StructureDeclaration StructureName,
+
+  coq.env.begin-module "Exports" none,
+  coq.coercion.declare (coercion {coq.locate "sort"} 0 (indt StructureName) sortclass) tt,
+
+  % coq.CS.canonical-projections StructureName [some P1, some P2],
+  % export-operations StructureName P1 P2 ML Projs,
+
+  coq.env.end-module _,
 
   coq.env.end-module _,
 
@@ -116,15 +162,75 @@ main [str Module|FS] :-
     p = some P,
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (from (indt Class) m (global (const P))))),
   
-  coq.say "adding" Struct,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt Class) Struct ML)).
+  coq.say "adding" StructureName,
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt Class) StructureName ML)),
+
+].
 
 }}.
 Elpi Typecheck.
  
 Elpi declare_class "TYPE" .
 
+Module TestTYPE.
 Print Module TYPE.
+Import TYPE.Exports. Check forall T : TYPE.type, T -> T.
+End TestTYPE.
+
+Module ASG_input.
+ Import TYPE.Exports.
+ Record mixin_of (A :TYPE.type) := Mixin {
+  zero : A;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
+  }.
+End ASG_input.
+
+Elpi declare_mixin ASG_input.mixin_of.
+
+Elpi declare_class "ASG" ASG_input.mixin_of.
+
+Print Module ASG.
+
+Module RING_input.
+Import ASG.Exports.
+(* hack, NOTE: enforce the type *)
+Definition add {T : ASG.type} : T -> T -> T := ASG_input.add _ (ASG.ASG_input_mixin _ (ASG.class T)).
+Definition zero {T : ASG.type} : T := ASG_input.zero _ (ASG.ASG_input_mixin _ (ASG.class T)).
+
+Section xxx.
+Varianle A : Type.
+
+Elpi context A f1 f2.
+
+Variale m1_f1 : ...
+Canonical s1_m1 := S1.Pack (S1.Class m1 m2...)
+Canonical s2_m2 := f2 ...
+(* qui la funzione della factory non serve a niente *)
+
+Record mixin_of := Mixin {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
+
+End RING_input.
+
+Elpi declare_mixin RING_input.mixin_of.
+
+Elpi Print declare_class.
+
+Elpi declare_class "RING" ASG.class_of RING_input.mixin_of.
+
+
 
 Elpi Print declare_class.
 
