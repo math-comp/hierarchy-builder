@@ -21,6 +21,24 @@ Elpi Db hierarchy.db lp:{{
   
   pred cdef o:@class,  o:@structure,    o:list @mixin. % order matters
 
+pred extract-mix i:prop, o:@mixin.
+extract-mix (from _ X _) X.
+
+pred provides i:@factory, o:list @mixin.
+provides Factory ML :- std.do! [
+  std.findall (from Factory FOO_ BAR_) All,
+  coq.say "All factory declarations for" Factory "are" All,
+  std.map All extract-mix ML,
+  coq.say "All mixins provided by" Factory "are" ML
+].
+
+pred locate-factory i:argument, o:gref.
+locate-factory (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+locate-factory X _ :- coq.error "not a string:" X.
+
+pred toposort i:list @mixin, o:list @mixin.
+toposort X X. % TODO
+
 }}.
 
 (* ------------------------------------------------------------------------ *)
@@ -54,20 +72,75 @@ Elpi Typecheck.
 
 (* ------------------------------------------------------------------------ *)
 
+Elpi Command declare_context.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+
+pred mixin-for i:@mixin, o:@constant.
+
+pred declare-variable i:int, i:@mixin, o:prop.
+declare-variable N M (mixin-for M C):-
+  coq.env.typeof-gr M Ty,
+  Name is "m" ^ {std.any->string N},
+  coq.env.add-const Name _ Ty tt tt C.
+
+pred postulate-structures i:int, i:list prop, o:int, o:list prop.
+postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
+  std.map ML mixin-for MArgs, !, % we can build it
+  std.spy-do! [
+    N1 is N + 1,
+    the-type T,
+    coq.env.indt Struct _ 0 0 _ [KS] _,
+    coq.env.indt Class _ 1 1 _ [KC] _,
+    std.map MArgs (x\r\r = global (const x)) Args,
+    C = app[global (indc KC), global T| Args],
+    S = app[global (indc KS), global T, C],
+    coq.say {coq.term->string S},
+    coq.typecheck S STy,
+    Name is "s" ^ {std.any->string N},
+    coq.env.add-const Name S Sty ff ff CS, % Bug, should be local 
+    coq.CS.declare-instance (const CS),
+    postulate-structures N1 Rest M Rest1,
+  ].
+postulate-structures N [X|Rest] M [X|Rest1] :- postulate-structures N Rest M Rest1.
+postulate-structures N [] N [].
+
+pred postulate-all-structures i:list @mixin, i:int, i:list prop.
+postulate-all-structures [] N Structures :- postulate-structures N Structures _ _.
+postulate-all-structures [M|MS] N Structures :-
+  declare-variable N M P,
+  N1 is N + 1,
+  P => (
+    postulate-structures N1 Structures N2 StructuresLeft,
+    postulate-all-structures MS N2 StructuresLeft
+  ).
+
+pred the-type o:gref.
+
+main [str Variable|FS] :-
+  coq.locate Variable GR, 
+  the-type GR =>  
+  std.do! [
+    std.map FS locate-factory GRFS,
+    std.map GRFS provides MLUnsortedL,
+    std.flatten MLUnsortedL MLUnsorted,
+    toposort MLUnsorted ML, % needed?
+
+    std.findall (cdef C_ S_ MR_) AllStrctures,
+    postulate-all-structures ML 0 AllStrctures,
+  ].
+
+}}.
+Elpi Typecheck.
+
+
+
+(* ------------------------------------------------------------------------ *)
+
 Elpi Command declare_class.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-pred extract-mix i:prop, o:@mixin.
-extract-mix (from _ X _) X.
-
-pred provides i:@factory, o:list @mixin.
-provides Factory ML :- std.do! [
-  std.findall (from Factory FOO_ BAR_) All,
-  coq.say "All factory declarations for" Factory "are" All,
-  std.map All extract-mix ML,
-  coq.say "All mixins provided by" Factory "are" ML
-].
 
 pred field-for i:gref, o:term.
 
@@ -86,13 +159,6 @@ synthesize [GR|ML] T (field ff Name Type Decl) :-
   pi f\
     field-for GR f =>
     synthesize ML T (Decl f).
-
-pred toposort i:list @mixin, o:list @mixin.
-toposort X X. % TODO
-
-pred locate-str i:argument, o:gref.
-locate-str (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
-locate-str X _ :- coq.error "not a string:" X.
 
 pred export-operation i:option @constant, i:@inductive, i:@constant, i:@constant, i:option @constant.
 export-operation _ _ _ _ none :- !. % not a projection
@@ -124,7 +190,7 @@ export-operations S P1 P2 [GR|ML] [_|Projs] :-
   export-operations S P1 P2 ML Projs.
 
 main [str Module|FS] :- std.spy-do! [
-  std.map FS locate-str GRFS,
+  std.map FS locate-factory GRFS,
   std.map GRFS provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
   toposort MLUnsorted ML,
@@ -174,19 +240,24 @@ Elpi declare_class "TYPE" .
 
 Module TestTYPE.
 Print Module TYPE.
+Elpi Print declare_class.
 Import TYPE.Exports. Check forall T : TYPE.type, T -> T.
 End TestTYPE.
 
-Module ASG_input.
+Module ASG_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A.
+ (* Check (eq_refl _ : TYPE.sort _ = A). *)
  Import TYPE.Exports.
- Record mixin_of (A :TYPE.type) := Mixin {
+ Record mixin_of := Mixin {
   zero : A;
   add : A -> A -> A;
   _ : associative add;
   _ : commutative add;
   _ : left_id zero add;
   }.
-End ASG_input.
+End S. End ASG_input.
+Print Module ASG_input.
 
 Elpi declare_mixin ASG_input.mixin_of.
 
