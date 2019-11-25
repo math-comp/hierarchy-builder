@@ -151,11 +151,8 @@ synthesize [GR|ML] T (field ff Name Type Decl) :-
   std.assert! (std.rev L [_,ModName|_]) "Mixin name is not qualified, please use Foo_input.bar",
   Name is ModName ^ "_mixin",
   dep1 GR Deps,
-  std.spy(cdef (indt ClassOf) Structure Deps),
-  coq.env.indt ClassOf _ _ _ _ [Class] _,
-  coq.env.indt Structure _ _ _ _ [Pack] _,
   std.map Deps field-for Args,
-  Type = app[ global GR, app[global(indc Pack), T, app[global (indc Class), T | Args ] ] ],
+  Type = app[ global GR, T| Args ],
   pi f\
     field-for GR f =>
     synthesize ML T (Decl f).
