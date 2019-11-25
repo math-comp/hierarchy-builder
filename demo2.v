@@ -4,21 +4,21 @@ Require Import ZArith.
 
 From elpi Require Import elpi.
 
-Elpi Db hierarchy.db lp:{{ 
+Elpi Db hierarchy.db lp:{{
 
   macro @mixin :- gref.
   macro @mixins :- coq.gref.set.
-  
+
   macro @class :- gref.
   macro @factory :- gref.
   macro @structure :- @inductive.
 
-  
+
   pred dep1 i:@mixin, o:list @mixin.
-  
+
   % factory, generated mixin, mean, eg mean : factory -> mixin
   pred from o:@factory, o:@mixin, o:term.
-  
+
   pred cdef o:@class,  o:@structure,    o:list @mixin. % order matters
 
 pred extract-mix i:prop, o:@mixin.
@@ -105,7 +105,7 @@ postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
     coq.say "Canonical instance for" Struct "is" {coq.term->string S},
     coq.typecheck S STy,
     Name is "s" ^ {std.any->string N},
-    coq.env.add-const Name S Sty ff ff CS, % Bug, should be local 
+    coq.env.add-const Name S Sty ff ff CS, % Bug, should be local
     coq.CS.declare-instance (const CS),
     postulate-structures N1 Rest M Rest1,
   ].
@@ -125,8 +125,8 @@ postulate-all-structures [M|MS] N Structures :-
 pred the-type o:gref.
 
 main [str Variable|FS] :-
-  coq.locate Variable GR, 
-  the-type GR =>  
+  coq.locate Variable GR,
+  the-type GR =>
   std.do! [
     std.map FS locate-factory GRFS,
     std.map GRFS provides MLUnsortedL,
@@ -233,6 +233,7 @@ main [str Module|FS] :- std.spy-do! [
 
   coq.CS.canonical-projections StructureName [some P1, some P2],
   % TODO: filter ML, save in a DB the already exported ones
+  % TODO: remove this hack, this DB should be global
   std.map2 ML Projs (a\b\r\ r = proj-for-mix a b) ExtraKnowledge,
   ExtraKnowledge => export-operations StructureName P1 P2 ML Projs,
 
@@ -243,7 +244,7 @@ main [str Module|FS] :- std.spy-do! [
   std.forall2 ML Projs (m\ p\ sigma P\
     p = some P,
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (from (indt Class) m (global (const P))))),
-  
+
   coq.say "adding" StructureName,
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt Class) StructureName ML)),
 
@@ -251,7 +252,7 @@ main [str Module|FS] :- std.spy-do! [
 
 }}.
 Elpi Typecheck.
- 
+
 Elpi declare_class "TYPE" .
 Import TYPE.Exports.
 
@@ -287,8 +288,8 @@ Variable A : Type.
 Elpi declare_context A ASG_input.mixin_of.
 Print Canonical Projections.
 (*
-  Check (eq_refl _ : TYPE.sort _ = A). 
-  Check (eq_refl _ : ASG.sort _ = A). 
+  Check (eq_refl _ : TYPE.sort _ = A).
+  Check (eq_refl _ : ASG.sort _ = A).
 *)
 Record mixin_of := Mixin {
   opp : A -> A;
@@ -311,6 +312,4 @@ Elpi declare_class "RING" ASG.class_of RING_input.mixin_of.
 
 Print Module RING.
 Print Module RING.Exports.
-
-Elpi Print declare_class.
 
