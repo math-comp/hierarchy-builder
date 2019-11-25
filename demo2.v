@@ -159,7 +159,7 @@ synthesize [GR|ML] T (field ff Name Type Decl) :-
 
 pred export-operation i:option @constant, i:@inductive, i:@constant, i:@constant, i:option @constant.
 export-operation _ _ _ _ none :- !. % not a projection
-export-operation (some P) S Psort Pclass (some OP) :- !,
+export-operation (some P) S Psort Pclass (some OP) :- !, std.spy-do! [
   Struct = global (indt S),
   Operation = global (const OP),
   Projection = global (const P),
@@ -168,10 +168,11 @@ export-operation (some P) S Psort Pclass (some OP) :- !,
   T = {{ fun x : lp:Struct =>
             lp:Operation lp:(Carrier x) (lp:Projection lp:(Carrier x) lp:(Class x)) }},
   coq.gr->id (const OP) Name,
-  coq.say {coq.term->string T},
+  coq.say "The term I'm buildin is" T "====" {coq.term->string T},
   % TODO: make Ty nice
   coq.env.add-const Name T _ ff ff C,
-  coq.arguments.implicit (const C) [[maximal]].
+   coq.arguments.set-implicit (const C) [[maximal]] tt,
+].
 export-operation _ _ _ _ (some OP) :- coq.error "no mixin projection for operation" OP.
 
 pred export-operations i:@inductive, i:@constant, i:@constant, i:list @mixin, i:list (option @constant).
@@ -214,8 +215,8 @@ main [str Module|FS] :- std.spy-do! [
   coq.env.begin-module "Exports" none,
   coq.coercion.declare (coercion {coq.locate "sort"} 0 (indt StructureName) sortclass) tt,
 
-  % coq.CS.canonical-projections StructureName [some P1, some P2],
-  % export-operations StructureName P1 P2 ML Projs,
+  coq.CS.canonical-projections StructureName [some P1, some P2],
+  export-operations StructureName P1 P2 ML Projs,
 
   coq.env.end-module _,
 
@@ -260,7 +261,7 @@ Elpi declare_mixin ASG_input.mixin_of.
 
 Elpi declare_class "ASG" ASG_input.mixin_of.
 
-Print Module ASG.
+Print Module ASG.Exports.
 
 Module RING_input.
 Import ASG.Exports.
