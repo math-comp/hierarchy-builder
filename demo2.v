@@ -80,13 +80,20 @@ pred mixin-for i:@mixin, o:@constant.
 
 pred declare-variable i:int, i:@mixin, o:prop.
 declare-variable N M (mixin-for M C):-
-  coq.env.typeof-gr M Ty,
+  % coq.env.typeof-gr M Ty,
+  dep1 M Deps,
+  std.map Deps mixin-for MArgs,
+  std.map MArgs (x\r\r = global (const x)) Args,
+  Ty = app[global M, global {the-type}|Args],
   Name is "m" ^ {std.any->string N},
+  coq.say "declaring variable for mixin" M "with name" Name "has type" Ty,
+  coq.typecheck Ty _,
   coq.env.add-const Name _ Ty tt tt C.
 
 pred postulate-structures i:int, i:list prop, o:int, o:list prop.
 postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
   std.map ML mixin-for MArgs, !, % we can build it
+  coq.say "We can build" Struct,
   std.spy-do! [
     N1 is N + 1,
     the-type T,
@@ -95,7 +102,7 @@ postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
     std.map MArgs (x\r\r = global (const x)) Args,
     C = app[global (indc KC), global T| Args],
     S = app[global (indc KS), global T, C],
-    coq.say {coq.term->string S},
+    coq.say "Canonical instance for" Struct "is" {coq.term->string S},
     coq.typecheck S STy,
     Name is "s" ^ {std.any->string N},
     coq.env.add-const Name S Sty ff ff CS, % Bug, should be local 
@@ -157,30 +164,39 @@ synthesize [GR|ML] T (field ff Name Type Decl) :-
     field-for GR f =>
     synthesize ML T (Decl f).
 
-pred export-operation i:option @constant, i:@inductive, i:@constant, i:@constant, i:option @constant.
-export-operation _ _ _ _ none :- !. % not a projection
-export-operation (some P) S Psort Pclass (some OP) :- !, std.spy-do! [
+foo X C (some P) R :- R = app [ global(const P), X, C].
+
+pred export-operation i:option @constant, i:@inductive, i:@constant, i:@constant, i:list (option @constant), i:option @constant.
+export-operation _ _ _ _ _ none :- !. % not a projection
+export-operation (some P) S Psort Pclass PArgs (some OP) :- !, std.spy-do! [
   Struct = global (indt S),
   Operation = global (const OP),
   Projection = global (const P),
   Carrier = (x\ app[global (const Psort), x]),
   Class = (x\ app[global (const Pclass), x]),
-  T = {{ fun x : lp:Struct =>
-            lp:Operation lp:(Carrier x) (lp:Projection lp:(Carrier x) lp:(Class x)) }},
+  (pi x\ std.map PArgs (foo (Carrier x) (Class x)) (Args x)),
+  (pi x\ Bo x = app[Operation, Carrier x|Args x]),
+  T = {{ fun x : lp:Struct => lp:(Bo x) (lp:Projection lp:(Carrier x) lp:(Class x)) }},
   coq.gr->id (const OP) Name,
   coq.say "The term I'm buildin is" T "====" {coq.term->string T},
   % TODO: make Ty nice
   coq.env.add-const Name T _ ff ff C,
-   coq.arguments.set-implicit (const C) [[maximal]] tt,
+  coq.arguments.set-implicit (const C) [[maximal]] tt,
 ].
-export-operation _ _ _ _ (some OP) :- coq.error "no mixin projection for operation" OP.
+export-operation _ _ _ _ _ (some OP) :- coq.error "no mixin projection for operation" OP.
+
+pred proj-for-mix i:@mixin, o:option @constant.
 
 pred export-operations i:@inductive, i:@constant, i:@constant, i:list @mixin, i:list (option @constant).
 export-operations _ _ _ [] [].
 export-operations S Psort Pclass [indt M|ML] [P|Projs] :- !,
   coq.CS.canonical-projections M L,
-  coq.say L M S P,
-  std.forall L (export-operation P S Psort Pclass),
+  %coq.say L M S P,
+
+  dep1 (indt M) Deps,
+  std.map Deps proj-for-mix PDeps,
+
+  std.forall L (export-operation P S Psort Pclass PDeps),
   %maybe load context with P-M and use that if M' uses M ?
   export-operations S Psort Pclass ML Projs.
 export-operations S P1 P2 [GR|ML] [_|Projs] :-
@@ -216,7 +232,9 @@ main [str Module|FS] :- std.spy-do! [
   coq.coercion.declare (coercion {coq.locate "sort"} 0 (indt StructureName) sortclass) tt,
 
   coq.CS.canonical-projections StructureName [some P1, some P2],
-  export-operations StructureName P1 P2 ML Projs,
+  % TODO: filter ML, save in a DB the already exported ones
+  std.map2 ML Projs (a\b\r\ r = proj-for-mix a b) ExtraKnowledge,
+  ExtraKnowledge => export-operations StructureName P1 P2 ML Projs,
 
   coq.env.end-module _,
 
@@ -235,18 +253,18 @@ main [str Module|FS] :- std.spy-do! [
 Elpi Typecheck.
  
 Elpi declare_class "TYPE" .
+Import TYPE.Exports.
 
 Module TestTYPE.
 Print Module TYPE.
 Elpi Print declare_class.
-Import TYPE.Exports. Check forall T : TYPE.type, T -> T.
+Check forall T : TYPE.type, T -> T.
 End TestTYPE.
 
 Module ASG_input. Section S.
  Variable A : Type.
  Elpi declare_context A.
  (* Check (eq_refl _ : TYPE.sort _ = A). *)
- Import TYPE.Exports.
  Record mixin_of := Mixin {
   zero : A;
   add : A -> A -> A;
@@ -260,25 +278,18 @@ Print Module ASG_input.
 Elpi declare_mixin ASG_input.mixin_of.
 
 Elpi declare_class "ASG" ASG_input.mixin_of.
+Import ASG.Exports.
 
 Print Module ASG.Exports.
 
-Module RING_input.
-Import ASG.Exports.
-(* hack, NOTE: enforce the type *)
-Definition add {T : ASG.type} : T -> T -> T := ASG_input.add _ (ASG.ASG_input_mixin _ (ASG.class T)).
-Definition zero {T : ASG.type} : T := ASG_input.zero _ (ASG.ASG_input_mixin _ (ASG.class T)).
-
-Section xxx.
-Varianle A : Type.
-
-Elpi context A f1 f2.
-
-Variale m1_f1 : ...
-Canonical s1_m1 := S1.Pack (S1.Class m1 m2...)
-Canonical s2_m2 := f2 ...
-(* qui la funzione della factory non serve a niente *)
-
+Module RING_input. Section S.
+Variable A : Type.
+Elpi declare_context A ASG_input.mixin_of.
+Print Canonical Projections.
+(*
+  Check (eq_refl _ : TYPE.sort _ = A). 
+  Check (eq_refl _ : ASG.sort _ = A). 
+*)
 Record mixin_of := Mixin {
   opp : A -> A;
   one : A;
@@ -290,16 +301,16 @@ Record mixin_of := Mixin {
   _ : left_distributive mul add;
   _ : right_distributive mul add;
   }.
+End S. End RING_input.
 
-End RING_input.
+About RING_input.opp.
 
 Elpi declare_mixin RING_input.mixin_of.
 
-Elpi Print declare_class.
-
 Elpi declare_class "RING" ASG.class_of RING_input.mixin_of.
 
-
+Print Module RING.
+Print Module RING.Exports.
 
 Elpi Print declare_class.
 
