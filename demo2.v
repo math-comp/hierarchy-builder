@@ -74,14 +74,38 @@ Elpi Typecheck.
 
 (* ------------------------------------------------------------------------ *)
 
+(** This command populates the current section with canonical instances.
+
+  Input:
+    - the name of a section variable of type Type
+    - zero or more factories
+
+  Effect:
+
+    Variable m0 : m0.
+    Definition s0 := S0.Pack T (S0.Class T m0).
+    Canonical s0.
+    ..
+    Variable mn : mn dn.
+    Definition sm : SM.Pack T (SM.Class T m0 .. mn).
+    Canonical sm.
+
+  where:
+  - factories produce mixins m0 .. mn
+  - mixin mn depends on mixins dn
+  - all structures that can be generated out of the mixins are declared
+    as canonical
+
+*)
+
 Elpi Command declare_context.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
 pred mixin-for i:@mixin, o:@constant.
 
-pred declare-variable i:int, i:@mixin, o:prop.
-declare-variable N M (mixin-for M C):-
+pred postulate-mixin i:int, i:@mixin, o:@constant.
+postulate-mixin N M C :-
   % coq.env.typeof-gr M Ty,
   dep1 M Deps,
   std.map Deps mixin-for MArgs,
@@ -117,13 +141,14 @@ postulate-structures N [] N [].
 pred postulate-all-structures i:list @mixin, i:int, i:list prop.
 postulate-all-structures [] N Structures :- postulate-structures N Structures _ _.
 postulate-all-structures [M|MS] N Structures :-
-  declare-variable N M P,
+  postulate-mixin N M C,
   N1 is N + 1,
-  P => (
+  mixin-for M C => (
     postulate-structures N1 Structures N2 StructuresLeft,
     postulate-all-structures MS N2 StructuresLeft
   ).
 
+% to access the Type we are postulating about
 pred the-type o:gref.
 
 main [str Variable|FS] :-
@@ -133,7 +158,7 @@ main [str Variable|FS] :-
     std.map FS locate-factory GRFS,
     std.map GRFS provides MLUnsortedL,
     std.flatten MLUnsortedL MLUnsorted,
-    toposort MLUnsorted ML, % needed?
+    toposort MLUnsorted ML,
 
     std.findall (cdef C_ S_ MR_) AllStrctures,
     postulate-all-structures ML 0 AllStrctures,
@@ -141,8 +166,6 @@ main [str Variable|FS] :-
 
 }}.
 Elpi Typecheck.
-
-
 
 (* ------------------------------------------------------------------------ *)
 
