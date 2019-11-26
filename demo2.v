@@ -4,6 +4,13 @@ Require Import ZArith.
 
 From elpi Require Import elpi.
 
+(* ------------------------------------------------------------------------ *)
+
+(** This is the database of clauses that represent the hierarchy.
+    TODO: Decide where to put the description and the invariant, part of it
+    is in README, but it is currently outdated.
+*)
+
 Elpi Db hierarchy.db lp:{{
 
   macro @mixin :- gref.
@@ -45,6 +52,8 @@ toposort X X. % TODO
 
 (* ------------------------------------------------------------------------ *)
 
+(** This command registers a mixin inside Elpi's DB, its dependencies etc *)
+
 Elpi Command declare_mixin.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
@@ -63,11 +72,11 @@ main [str M] :-
   coq.locate M GR,
   coq.env.typeof-gr GR Ty,
   gather-mixins Ty [] Mix,
-  coq.say "adding" Mix,
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
   % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
   ID = {{ fun x : nat => x }},
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)).
+% TODO: usage message is called with more arguments
 
 }}.
 Elpi Typecheck.
@@ -102,58 +111,55 @@ Elpi Command declare_context.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-pred mixin-for i:@mixin, o:@constant.
-
-pred postulate-mixin i:int, i:@mixin, o:@constant.
-postulate-mixin N M C :-
-  % coq.env.typeof-gr M Ty,
+% Given a type T, a fresh number N, and a mixin M it postulates
+% a variable "mN" inhabiting M applied to T and
+% all its dependencies, previously postulated and associated
+% to the corresponding mixin using var-for-mixin
+pred postulate-mixin.var-for-mixin i:@mixin, o:term.
+pred postulate-mixin i:term, i:int, i:@mixin, o:@constant.
+postulate-mixin T N M C :-
   dep1 M Deps,
-  std.map Deps mixin-for MArgs,
-  std.map MArgs (x\r\r = global (const x)) Args,
-  Ty = app[global M, global {the-type}|Args],
+  std.map Deps postulate-mixin.var-for-mixin Args,
+  Ty = app[global M, T | Args],
   Name is "m" ^ {std.any->string N},
-  coq.say "declaring variable for mixin" M "with name" Name "has type" Ty,
   coq.typecheck Ty _,
-  coq.env.add-const Name _ Ty tt tt C.
+  coq.env.add-const Name _ Ty tt tt C. % no body, local -> a variable
 
-pred postulate-structures i:int, i:list prop, o:int, o:list prop.
-postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
-  std.map ML mixin-for MArgs, !, % we can build it
-  coq.say "We can build" Struct,
-  std.do! [
-    N1 is N + 1,
-    the-type T,
-    coq.env.indt Struct _ 0 0 _ [KS] _,
-    coq.env.indt Class _ 1 1 _ [KC] _,
-    std.map MArgs (x\r\r = global (const x)) Args,
-    C = app[global (indc KC), global T| Args],
-    S = app[global (indc KS), global T, C],
-    coq.say "Canonical instance for" Struct "is" {coq.term->string S},
-    coq.typecheck S STy,
-    Name is "s" ^ {std.any->string N},
-    coq.env.add-const Name S STy ff ff CS, % Bug, should be local
-    coq.CS.declare-instance (const CS),
-    postulate-structures N1 Rest M Rest1,
-  ].
-postulate-structures N [X|Rest] M [X|Rest1] :- postulate-structures N Rest M Rest1.
-postulate-structures N [] N [].
-
-pred postulate-all-structures i:list @mixin, i:int, i:list prop.
-postulate-all-structures [] N Structures :- postulate-structures N Structures _ _.
-postulate-all-structures [M|MS] N Structures :-
-  postulate-mixin N M C,
+% Given a type T, a fresh integer N, a list of class definition (cdef)
+% in consumes from the list all the classes for which all the dependencies
+% (mixins) were postulated so far, declares a local constant inhabiting
+% the corresponding structure and declares it canonical
+pred postulate-structures i:term, i:int, i:list prop, o:int, o:list prop.
+postulate-structures T N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
+  std.map ML postulate-mixin.var-for-mixin Args, !, % we can build it
   N1 is N + 1,
-  mixin-for M C => (
-    postulate-structures N1 Structures N2 StructuresLeft,
-    postulate-all-structures MS N2 StructuresLeft
-  ).
+  Name is "s" ^ {std.any->string N},
+  std.assert! (coq.env.indt Class _ 1 1 _ [KC] _) "not a packed class",
+  C = app[global (indc KC), T | Args],
+  std.assert! (coq.env.indt Struct _ 0 0 _ [KS] _) "not a packed structure",
+  S = app[global (indc KS), T, C],
+  coq.typecheck S STy,
+  coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
+  coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
+  postulate-structures T N1 Rest M Rest1.
+postulate-structures T N [X|Rest] M [X|Rest1] :- postulate-structures T N Rest M Rest1.
+postulate-structures _ N [] N [].
 
-% to access the Type we are postulating about
-pred the-type o:gref.
+% main loop: for each mixin it postulates it, then finds out all the
+% structures that can be built using that mixin (and the ones postulated)
+% so far.
+pred postulate-all-structures i:term, i:list @mixin, i:int, i:list prop.
+postulate-all-structures T [] N Structures :- postulate-structures T N Structures _ _.
+postulate-all-structures T [M|MS] N Structures :-
+  postulate-mixin T N M C,
+  N1 is N + 1,
+  postulate-mixin.var-for-mixin M (global (const C)) => (
+    postulate-structures T N1 Structures N2 StructuresLeft,
+    postulate-all-structures T MS N2 StructuresLeft
+  ).
 
 main [str Variable|FS] :-
   coq.locate Variable GR,
-  the-type GR =>
   std.do! [
     std.map FS locate-factory GRFS,
     std.map GRFS provides MLUnsortedL,
@@ -161,7 +167,7 @@ main [str Variable|FS] :-
     toposort MLUnsorted ML,
 
     std.findall (cdef C_ S_ MR_) AllStrctures,
-    postulate-all-structures ML 0 AllStrctures,
+    postulate-all-structures (global GR) ML 0 AllStrctures,
   ].
 
 }}.
@@ -330,6 +336,8 @@ main [str Module|FS] :- std.do! [
 
 }}.
 Elpi Typecheck.
+
+(* ---------------------------------------------------------------------- *)
 
 Elpi declare_structure "TYPE" .
 Import TYPE.Exports.
