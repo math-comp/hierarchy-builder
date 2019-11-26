@@ -36,9 +36,7 @@ extract-mix (from _ X _) X.
 pred provides i:@factory, o:list @mixin.
 provides Factory ML :- std.do! [
   std.findall (from Factory FOO_ BAR_) All,
-  coq.say "All factory declarations for" Factory "are" All,
   std.map All extract-mix ML,
-  coq.say "All mixins provided by" Factory "are" ML
 ].
 
 pred locate-factory i:argument, o:gref.
@@ -58,20 +56,20 @@ Elpi Command declare_mixin.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-pred gather-mixins i:term, i:list @mixin, o:list @mixin.
-gather-mixins (prod N S R) Acc Result :- !,
+pred gather-mixin-dendencies i:term, i:list @mixin, o:list @mixin.
+gather-mixin-dendencies (prod N S R) Acc Result :- !,
   safe-dest-app S HD _,
   if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
   @pi-decl N S x\
-    gather-mixins (R x) Acc1 Result.
-gather-mixins (sort _) Acc Acc.
-gather-mixins Ty Acc Res :- whd1 Ty Ty1, !, gather-mixins Ty1 Acc Res.
-gather-mixins Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
+    gather-mixin-dendencies (R x) Acc1 Result.
+gather-mixin-dendencies (sort _) Acc Acc.
+gather-mixin-dendencies Ty Acc Res :- whd1 Ty Ty1, !, gather-mixin-dendencies Ty1 Acc Res.
+gather-mixin-dendencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
 
 main [str M] :-
   coq.locate M GR,
   coq.env.typeof-gr GR Ty,
-  gather-mixins Ty [] Mix,
+  gather-mixin-dendencies Ty [] Mix,
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
   % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
   ID = {{ fun x : nat => x }},
