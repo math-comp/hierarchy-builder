@@ -21,6 +21,8 @@ Elpi Db hierarchy.db lp:{{
 
   pred cdef o:@class,  o:@structure,    o:list @mixin. % order matters
 
+  pred already-exported o:@mixin.
+
 pred extract-mix i:prop, o:@mixin.
 extract-mix (from _ X _) X.
 
@@ -94,7 +96,7 @@ pred postulate-structures i:int, i:list prop, o:int, o:list prop.
 postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
   std.map ML mixin-for MArgs, !, % we can build it
   coq.say "We can build" Struct,
-  std.spy-do! [
+  std.do! [
     N1 is N + 1,
     the-type T,
     coq.env.indt Struct _ 0 0 _ [KS] _,
@@ -105,7 +107,7 @@ postulate-structures N [cdef (indt Class) Struct ML|Rest] M Rest1 :-
     coq.say "Canonical instance for" Struct "is" {coq.term->string S},
     coq.typecheck S STy,
     Name is "s" ^ {std.any->string N},
-    coq.env.add-const Name S Sty ff ff CS, % Bug, should be local
+    coq.env.add-const Name S STy ff ff CS, % Bug, should be local
     coq.CS.declare-instance (const CS),
     postulate-structures N1 Rest M Rest1,
   ].
@@ -144,121 +146,175 @@ Elpi Typecheck.
 
 (* ------------------------------------------------------------------------ *)
 
-Elpi Command declare_class.
+(** This command declares a packed structure.
+
+  Input:
+  - a module name S, eg Equality
+  - zero or more factory names
+
+  Effect:
+    Module S.
+      Record class_of T := Class { m1_mixin : m1 T, mn_mixin : mn T dn }.
+      Record type := Pack { sort : Type; class : class_of sort }.
+      Module Exports.
+        Coercion sort : type >-> Sortclass.
+        Definition oij {x} : type := oj x (mi_mixin x (class x)) (di (class x))
+      End Exports.
+    End S.
+
+  where:
+  - factories produce mixins m1 .. mn
+  - mixin mn depends on mixins dn
+  - named fieds of mixins are oij are exported only if they were never
+    exported before.
+
+*)
+
+Elpi Command declare_structure.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-
-pred field-for i:gref, o:term.
-
-pred synthesize i:list @mixin, i:term, o:record-decl.
-synthesize [] _ end-record.
-synthesize [GR|ML] T (field ff Name Type Decl) :-
-  coq.gr->path GR L,
+% For each mixin we declare a field and apply the mixin to its dependencies
+% (that are previously declared fields recorded via field-for-mixin)
+pred synthesize-fields.field-for-mixin i:gref, o:term.
+pred synthesize-fields i:list @mixin, i:term, o:record-decl.
+synthesize-fields [] _ end-record.
+synthesize-fields [M|ML] T (field ff Name Type Decl) :-
+  coq.gr->path M L,
   std.assert! (std.rev L [_,ModName|_]) "Mixin name is not qualified, please use Foo_input.bar",
   Name is ModName ^ "_mixin",
-  dep1 GR Deps,
-  std.map Deps field-for Args,
-  Type = app[ global GR, T| Args ],
+  dep1 M Deps,
+  std.map Deps synthesize-fields.field-for-mixin Args,
+  Type = app[ global M, T| Args ],
   pi f\
-    field-for GR f =>
-    synthesize ML T (Decl f).
+    synthesize-fields.field-for-mixin M f =>
+    synthesize-fields ML T (Decl f).
 
-foo X C (some P) R :- R = app [ global(const P), X, C].
-
-pred export-operation i:option @constant, i:@inductive, i:@constant, i:@constant, i:list (option @constant), i:option @constant.
-export-operation _ _ _ _ _ none :- !. % not a projection
-export-operation (some P) S Psort Pclass PArgs (some OP) :- !, std.spy-do! [
-  Struct = global (indt S),
-  Operation = global (const OP),
-  Projection = global (const P),
-  Carrier = (x\ app[global (const Psort), x]),
-  Class = (x\ app[global (const Pclass), x]),
-  (pi x\ std.map PArgs (foo (Carrier x) (Class x)) (Args x)),
-  (pi x\ Bo x = app[Operation, Carrier x|Args x]),
-  T = {{ fun x : lp:Struct => lp:(Bo x) (lp:Projection lp:(Carrier x) lp:(Class x)) }},
-  coq.gr->id (const OP) Name,
+% given an operation (a mixin projection) we generate a constant projection the
+% same operation out of the package structure (out of the class field of the
+% structure). We also provide all the other mixin dependencies (other misins)
+% of the package structure.
+pred export-1-operation i:term, i:term, i:term, i:term, i:list term, i:option @constant.
+export-1-operation _ _ _ _ _ none :- !. % not a projection, no operation
+export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.do! [
+  coq.gr->id (const Poperation) Name,
+  Operation = global (const Poperation),
+  std.append Mdeps [Pmixin] AllMixins,
+  (pi x\ decl x `x` Struct =>
+    sigma Carrier Class Args\
+      Carrier = app[Psort, x],
+      Class = app[Pclass, x],
+      std.map AllMixins (a\ mk-app a [Carrier, Class]) Args,
+      Body x = app[Operation, Carrier | Args]),
+  T = fun `x` Struct Body,
   coq.say "The term I'm buildin is" T "====" {coq.term->string T},
   % TODO: make Ty nice
   coq.env.add-const Name T _ ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
 ].
-export-operation _ _ _ _ _ (some OP) :- coq.error "no mixin projection for operation" OP.
 
-pred proj-for-mix i:@mixin, o:option @constant.
+pred export-operations.proj-for-mixin i:@mixin, o:term.
 
-pred export-operations i:@inductive, i:@constant, i:@constant, i:list @mixin, i:list (option @constant).
-export-operations _ _ _ [] [].
-export-operations S Psort Pclass [indt M|ML] [P|Projs] :- !,
-  coq.CS.canonical-projections M L,
-  %coq.say L M S P,
+% Given a list of mixins, it exports all operations in there
+pred export-operations.aux i:term, i:term, i:term, i:list @mixin.
+export-operations.aux _ _ _ [].
+export-operations.aux Struct ProjSort ProjClass [indt M|ML] :- !, std.do! [
+  Mixin = indt M,
+  export-operations.proj-for-mixin Mixin ProjMixin,
 
-  dep1 (indt M) Deps,
-  std.map Deps proj-for-mix PDeps,
+  dep1 Mixin Deps,
+  std.map Deps export-operations.proj-for-mixin PDeps,
 
-  std.forall L (export-operation P S Psort Pclass PDeps),
-  %maybe load context with P-M and use that if M' uses M ?
-  export-operations S Psort Pclass ML Projs.
-export-operations S P1 P2 [GR|ML] [_|Projs] :-
-  coq.say "not a record" GR "hence skipping opeerations from this mixin",
-  export-operations S P1 P2 ML Projs.
+  coq.CS.canonical-projections M Poperations,
+  std.forall Poperations
+    (export-1-operation Struct ProjSort ProjClass ProjMixin PDeps),
+  export-operations.aux Struct ProjSort ProjClass ML
+].
+export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
+  coq.say GR "is not a record: skipping operations from this mixin",
+  export-operations.aux Struct ProjSort ProjClass ML.
 
-main [str Module|FS] :- std.spy-do! [
+% Given a list of mixins and the corresponding projections we keep the ones
+% that were not already exported and also generate the mapping proj-for-mixin
+% linking the first two arguments
+pred mixins-to-export i:list @mixin, i:list (option @constant), o:list @mixin, o:list prop.
+mixins-to-export [] [] [] [].
+mixins-to-export [M|MS] [some P|PS] ML1 [C|PL] :-
+  C = export-operations.proj-for-mixin M (global (const P)),
+  if (already-exported M) (ML1 = ML) (ML1 = [M|ML]),
+  mixins-to-export MS PS ML PL.
+mixins-to-export [_|MS] [none|PS] ML PL :- mixins-to-export MS PS ML PL.
+
+pred export-operations i:@inductive, i:@inductive, i:list @mixin, o:list @mixin.
+export-operations StructureName ClassName ML MLToExport :-
+  coq.CS.canonical-projections StructureName [some Psort, some Pclass],
+  coq.CS.canonical-projections ClassName Projs,
+  ProjSort = global (const Psort),
+  ProjClass = global (const Pclass),
+  Struct = global (indt StructureName),
+  mixins-to-export ML Projs MLToExport ProjMLMapping,
+  ProjMLMapping => export-operations.aux Struct ProjSort ProjClass MLToExport.
+
+
+main [str Module|FS] :- std.do! [
+  % compute all the mixins to be part of the structure
   std.map FS locate-factory GRFS,
   std.map GRFS provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
   toposort MLUnsorted ML,
-  (pi T\ synthesize ML T (RDecl T)),
-  ClassDeclaration =
-    (parameter `T` {{ Type }} T\
-      record "class_of" {{ Type }} "Class" (RDecl T)),
 
   coq.env.begin-module Module none,
 
+  % declare the class record
+  (pi T\ synthesize-fields ML T (RDecl T)),
+  ClassDeclaration =
+    (parameter `T` {{ Type }} T\
+      record "class_of" {{ Type }} "Class" (RDecl T)),
   coq.typecheck-indt-decl ClassDeclaration,
-  coq.env.add-indt ClassDeclaration Class,
-  coq.say "adding" Class,
-  coq.CS.canonical-projections Class Projs,
+  coq.env.add-indt ClassDeclaration ClassName,
 
+  % declare the type record
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
       field ff "sort" {{ Type }} s\
-      field ff "class" (app [global (indt Class), s]) _\
+      field ff "class" (app [global (indt ClassName), s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
   coq.env.add-indt StructureDeclaration StructureName,
 
+  % Exports module
   coq.env.begin-module "Exports" none,
+
   coq.coercion.declare (coercion {coq.locate "sort"} 0 (indt StructureName) sortclass) tt,
 
-  coq.CS.canonical-projections StructureName [some P1, some P2],
-  % TODO: filter ML, save in a DB the already exported ones
-  % TODO: remove this hack, this DB should be global
-  std.map2 ML Projs (a\b\r\ r = proj-for-mix a b) ExtraKnowledge,
-  ExtraKnowledge => export-operations StructureName P1 P2 ML Projs,
+  export-operations StructureName ClassName ML MLToExport,
 
   coq.env.end-module _,
 
   coq.env.end-module _,
 
+  % Register in Elpi's DB the new structure
+  coq.CS.canonical-projections ClassName Projs,
   std.forall2 ML Projs (m\ p\ sigma P\
     p = some P,
-    coq.elpi.accumulate "hierarchy.db" (clause _ _ (from (indt Class) m (global (const P))))),
+    coq.elpi.accumulate "hierarchy.db" (clause _ _ (from (indt ClassName) m (global (const P))))),
 
-  coq.say "adding" StructureName,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt Class) StructureName ML)),
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt ClassName) StructureName ML)),
+
+  std.forall MLToExport (x\
+    coq.elpi.accumulate "hierarchy.db" (clause _ _ (already-exported x))),
 
 ].
 
 }}.
 Elpi Typecheck.
 
-Elpi declare_class "TYPE" .
+Elpi declare_structure "TYPE" .
 Import TYPE.Exports.
 
 Module TestTYPE.
 Print Module TYPE.
-Elpi Print declare_class.
+Elpi Print declare_structure.
 Check forall T : TYPE.type, T -> T.
 End TestTYPE.
 
@@ -278,7 +334,7 @@ Print Module ASG_input.
 
 Elpi declare_mixin ASG_input.mixin_of.
 
-Elpi declare_class "ASG" ASG_input.mixin_of.
+Elpi declare_structure "ASG" ASG_input.mixin_of.
 Import ASG.Exports.
 
 Print Module ASG.Exports.
@@ -308,7 +364,7 @@ About RING_input.opp.
 
 Elpi declare_mixin RING_input.mixin_of.
 
-Elpi declare_class "RING" ASG.class_of RING_input.mixin_of.
+Elpi declare_structure "RING" ASG.class_of RING_input.mixin_of.
 
 Print Module RING.
 Print Module RING.Exports.
