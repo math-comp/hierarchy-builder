@@ -207,8 +207,7 @@ export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.
       std.map AllMixins (a\ mk-app a [Carrier, Class]) Args,
       Body x = app[Operation, Carrier | Args]),
   T = fun `x` Struct Body,
-  coq.say "The term I'm buildin is" T "====" {coq.term->string T},
-  % TODO: make Ty nice
+  % TODO: make the type of T nicer. Ask Cyril why the inferred one could be ugly
   coq.env.add-const Name T _ ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
 ].
