@@ -33,6 +33,7 @@ type (=>) list prop -> list prop -> prop.
 
 namespace et {
 
+% convert the list of edges into a map vertex -> neighbourhood
 pred deps i:list (pair int int), i:std.int.map (list int), o:std.int.map (list int).
 deps [pr B A|ES] M M2 :-
   std.int.map.find B M D,
@@ -40,11 +41,7 @@ deps [pr B A|ES] M M2 :-
   deps ES M1 M2.
 deps [] M M.
 
-pred vertex i:int, o:bool.
-
-pred allocate-vertex i:int, o:prop.
-allocate-vertex V (vertex V FRESH_).
-
+% CHR: we keep a pointer to the tail of the solution
 pred solution-tail-ptr o:list int.
 pred write-solution i:int.
 write-solution V :- declare_constraint (write-solution V) [_].
@@ -55,11 +52,12 @@ start-solution S :- declare_constraint (solution-tail-ptr S) [_].
 
 constraint write-solution solution-tail-ptr end-solution {
   rule \ (write-solution V) (solution-tail-ptr L) <=>
-    (L =[V|VS], declare_constraint (solution-tail-ptr VS) [_]).
+    (L =[V|VS], start-solution VS).
   rule \ end-solution (solution-tail-ptr L) <=>
     (L = []).
 }
 
+% The concurrent solvers, one per vertex
 pred suspend-on i:bool, i:prop.
 suspend-on T P :- declare_constraint P [T].
 
@@ -67,6 +65,11 @@ pred solve i:list bool, i:int.
 solve [] V :- write-solution V, vertex V tt.
 solve [T|TS] V :- var T, !, suspend-on T (solve TS V).
 solve [_|TS] V :- solve TS V.
+
+pred vertex i:int, o:bool.
+
+pred allocate-vertex i:int, o:prop.
+allocate-vertex V (vertex V TRIGGER_).
 
 pred compile-vertex i:std.int.map (list int), i:int, o:prop.
 compile-vertex M V (solve Triggers V) :-
