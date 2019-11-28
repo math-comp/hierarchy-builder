@@ -281,6 +281,43 @@ export-operations StructureName ClassName ML MLToExport :-
   mixins-to-export ML Projs MLToExport ProjMLMapping,
   ProjMLMapping => export-operations.aux Struct ProjSort ProjClass MLToExport.
 
+% generates, for each
+declare-coercion SortProj ClassProj (cdef (indt FC) FS _) (cdef (indt TC) TS TML) :- std.do! [
+  std.map TML (from (indt FC)) FC2TML,
+  std.assert! (coq.env.indt TC _ 1 1 _ [KC] _) "not a packed class",
+  (pi T c\ sigma Mixes\
+    std.map FC2TML (p\r\ r = app[p, T, c]) Mixes,
+    ClassCoercion T c = app[global (indc KC), T | Mixes]),
+  Class = global (indt FC),
+  CoeBody = {{ fun (T : Type) (c : lp:Class T) => lp:(ClassCoercion T c) }},
+  coq.typecheck CoeBody Ty,
+  coq.gr->path (indt FC)  PathF,
+  std.rev PathF [_,ModNameF|_],
+  coq.gr->path (indt TC)  PathT,
+  std.rev PathT [_,ModNameT|_],
+  Name is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
+  coq.env.add-const Name CoeBody Ty ff ff C,
+  coq.coercion.declare (coercion (const C) 1 (indt FC) (grefclass (indt TC))) tt,
+].
+
+sub-class? (cdef C1 S1 ML1) (cdef C2 S2 ML2) :-
+  std.forall ML2 (m2\ std.exists ML1 (m1\ m1 = m2)).
+
+% TODO: this works under the invariant: we never have two classes that
+% contain exactly the same mixins. declare_structure should enforce this
+% and eventually just alias the existing one rather than failing.
+% TODO: declare_structure should check we are not inserting the class
+% in the middle of existing ones. Possible fix: always declare all intermediate
+% possibilities but without proper names (requires the previous TODO about
+% aliasing already existing stuff).
+pred declare-unification-hints i:gref, i:gref, i:@inductive, i:@inductive, i:list @mixin.
+declare-unification-hints SortProj ClassProj StructureName ClassName ML :- std.do! [
+  CurrentClass = cdef (indt ClassName) StructureName ML,
+  std.findall (cdef Class_ Structure_ Mixins_) All,
+  std.filter All (sub-class? CurrentClass) AllSuper,
+  print "All Super:" AllSuper,
+  std.forall AllSuper (declare-coercion SortProj ClassProj CurrentClass),
+].
 
 main [str Module|FS] :- std.do! [
   % compute all the mixins to be part of the structure
@@ -308,6 +345,15 @@ main [str Module|FS] :- std.do! [
   coq.typecheck-indt-decl StructureDeclaration,
   coq.env.add-indt StructureDeclaration StructureName,
 
+  coq.locate "sort" SortProjection,
+  coq.locate "class" ClassProjection,
+
+  % We precompute "from"
+  coq.CS.canonical-projections ClassName Projs,
+  std.map2 ML Projs (m\ p\ r\ sigma P\
+    p = some P,
+    r = from (indt ClassName) m (global (const P))) FromClauses,
+
   % Exports module
   coq.env.begin-module "Exports" none,
 
@@ -315,15 +361,14 @@ main [str Module|FS] :- std.do! [
 
   export-operations StructureName ClassName ML MLToExport,
 
+  FromClauses => declare-unification-hints SortProjection ClassProjection StructureName ClassName ML,
+
   coq.env.end-module _,
 
   coq.env.end-module _,
 
   % Register in Elpi's DB the new structure
-  coq.CS.canonical-projections ClassName Projs,
-  std.forall2 ML Projs (m\ p\ sigma P\
-    p = some P,
-    coq.elpi.accumulate "hierarchy.db" (clause _ _ (from (indt ClassName) m (global (const P))))),
+  std.forall FromClauses (x\ coq.elpi.accumulate "hierarchy.db" (clause _ _ x)),
 
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt ClassName) StructureName ML)),
 
@@ -395,5 +440,6 @@ Elpi declare_mixin RING_input.mixin_of.
 Elpi declare_structure "RING" ASG.class_of RING_input.mixin_of.
 
 Print Module RING.
-Print Module RING.Exports.
-
+Import RING.Exports.
+Print Coercions.
+Check forall (R : RING.type) (x : R), add x zero = x.
