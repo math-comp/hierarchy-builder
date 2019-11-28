@@ -28,6 +28,8 @@ Elpi Db hierarchy.db lp:{{
 
   pred cdef o:@class,  o:@structure,    o:list @mixin. % order matters
 
+  pred join o:@class, o:@class, o:@class.
+
   pred already-exported o:@mixin.
 
 pred extract-mix i:prop, o:@mixin.
@@ -343,12 +345,43 @@ declare-coercion SortProj ClassProj (cdef (indt FC) FS _) (cdef (indt TC) TS TML
 sub-class? (cdef C1 S1 ML1) (cdef C2 S2 ML2) :-
   std.forall ML2 (m2\ std.exists ML1 (m1\ m1 = m2)).
 
-distinct-pairs AllSuper C1 C2 :-
+distinct-pairs CurrentClass AllSuper C1 C2 :-
+  C1 = cdef C1n _ _,
+  C2 = cdef C2n _ _ ,
+  if (join C1n C2n C3n)
+     (cdef C3n X Y,
+      std.assert! (sub-class? (cdef C3n X Y) CurrentClass) "You must declare this class before C3 TODO")
+     true,
   std.mem AllSuper C1, std.mem AllSuper C2,
   not(sub-class? C1 C2),
-  not(sub-class? C2 C1).
+  not(sub-class? C2 C1),
+  cmp_term C1 C2 lt.
 
-proj-cdef (distinct-pairs AllSuper C1 C2) (pr C1 C2).
+proj-cdef (distinct-pairs _ AllSuper C1 C2) (pr C1 C2).
+
+declare-join (cdef C3 S3 _) (pr (cdef C1 S1 _) (cdef C2 S2 _)) (join C1 C2 C3) :-
+  std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S2)) [pr S3_to_S2_gr _]) "no coercion",
+  std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S1)) [pr S3_to_S1_gr _]) "no coercion",
+  std.assert! (coq.CS.canonical-projections S1 [some S1_sort_cst, _]) "not a packed structure",
+  std.assert! (coq.CS.canonical-projections S2 [_, some S2_class_cst]) "not a packed structure",
+  std.assert! (coq.env.indt S2 _ 0 0 _ [KS2] _) "not a packed structure",
+  S2_Pack = global (indc KS2),
+  Structure3 = global (indt S3),
+  S3_to_S2 = global S3_to_S2_gr,
+  S3_to_S1 = global S3_to_S1_gr,
+  S1_sort = global (const S1_sort_cst),
+  S2_class = global (const S2_class_cst),
+  JoinBody = {{ fun s : lp:Structure3 =>
+                   lp:S2_Pack (lp:S1_sort (lp:S3_to_S1 s))
+                              (lp:S2_class (lp:S3_to_S2 s)) }},
+  coq.typecheck JoinBody Ty,
+  coq.gr->path (indt S1)  Path1,
+  std.rev Path1 [_,ModName1|_],
+  coq.gr->path (indt S2)  Path2,
+  std.rev Path2 [_,ModName2|_],
+  Name is ModName1 ^ "_to_" ^ ModName2,
+  coq.env.add-const Name JoinBody Ty ff ff J,
+  coq.CS.declare-instance (const J).
 
 % TODO: this works under the invariant: we never have two classes that
 % contain exactly the same mixins. declare_structure should enforce this
@@ -357,8 +390,8 @@ proj-cdef (distinct-pairs AllSuper C1 C2) (pr C1 C2).
 % in the middle of existing ones. Possible fix: always declare all intermediate
 % possibilities but without proper names (requires the previous TODO about
 % aliasing already existing stuff).
-pred declare-unification-hints i:gref, i:gref, i:@inductive, i:@inductive, i:list @mixin.
-declare-unification-hints SortProj ClassProj StructureName ClassName ML :- std.do! [
+pred declare-unification-hints i:gref, i:gref, i:@inductive, i:@inductive, i:list @mixin, o:list prop.
+declare-unification-hints SortProj ClassProj StructureName ClassName ML NewJoins :- std.do! [
   CurrentClass = cdef (indt ClassName) StructureName ML,
   std.findall (cdef Class_ Structure_ Mixins_) All,
   % TODO: toposort All putting small structure fisrt
@@ -366,9 +399,10 @@ declare-unification-hints SortProj ClassProj StructureName ClassName ML :- std.d
   std.filter All (sub-class? CurrentClass) AllSuper,
   std.forall AllSuper (declare-coercion SortProj ClassProj CurrentClass),
 
-  std.findall (distinct-pairs AllSuper C1 C2) JoinOf,
-  std.map JoinOf proj-cdef L,
-  coq.say CurrentClass "JoinOf" L
+  std.findall (distinct-pairs CurrentClass AllSuper C1 C2) JoinOf,
+  std.map JoinOf proj-cdef TodoJoins,
+
+  std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
 % How to compute unification hints for a structure S:
@@ -421,7 +455,7 @@ main [str Module|FS] :- std.do! [
 
   export-operations StructureName ClassName ML MLToExport,
 
-  FromClauses => declare-unification-hints SortProjection ClassProjection StructureName ClassName ML,
+  FromClauses => declare-unification-hints SortProjection ClassProjection StructureName ClassName ML NewJoins,
 
   coq.env.end-module _,
 
@@ -429,6 +463,7 @@ main [str Module|FS] :- std.do! [
 
   % Register in Elpi's DB the new structure
   std.forall FromClauses (x\ coq.elpi.accumulate "hierarchy.db" (clause _ _ x)),
+  std.forall NewJoins (x\ coq.elpi.accumulate "hierarchy.db" (clause _ _ x)),
 
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef (indt ClassName) StructureName ML)),
 
@@ -521,5 +556,5 @@ Elpi declare_structure "DISCRETERING" RING.class_of EQUALITY_input.mixin_of.
 
 Import DISCRETERING.Exports.
 
-(* Check  eq_op (add _ zero) one = true. *)
+Check  eq_op (add one zero) one = true.
 
