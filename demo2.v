@@ -21,7 +21,7 @@ Elpi Db hierarchy.db lp:{{
   macro @structure :- @inductive.
 
 
-  pred dep1 i:@mixin, o:list @mixin.
+  pred dep1 o:@mixin, o:list @mixin.
 
   % factory, generated mixin, mean, eg mean : factory -> mixin
   pred from o:@factory, o:@mixin, o:term.
@@ -43,8 +43,32 @@ pred locate-factory i:argument, o:gref.
 locate-factory (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
 locate-factory X _ :- coq.error "not a string:" X.
 
-pred toposort i:list @mixin, o:list @mixin.
-toposort X X. % TODO
+
+pred topovisit i: list (pair A A), i: A,      i: list A, i: list A, o: list A, o: list A.
+topovisit _ X VS PS VS PS :- std.mem PS X, !.
+topovisit _ X VS _ _ _ :- std.mem VS X, !, print "cycle detected.", fail.
+topovisit ES X VS PS VS' [X|PS'] :-
+  toporec ES {std.map {std.filter ES (e\ fst e X)} snd} [X|VS] PS VS' PS'.
+
+pred toporec   i: list (pair A A), i: list A, i: list A, i: list A, o: list A, o: list A.
+toporec _ [] VS PS VS PS.
+toporec ES [X|XS] VS PS VS'' PS'' :-
+  topovisit ES X VS PS VS' PS', toporec ES XS VS' PS' VS'' PS''.
+
+
+pred toposort i: list (pair A A), i: list A, o: list A.
+toposort ES XS XS' :- toporec ES XS [] [] _ XS'.
+
+pred mk-edge i:prop, o:list (pair @mixin @mixin).
+mk-edge (dep1 M Deps) L :-
+  std.map Deps (d\r\ r = pr d M) L.
+
+pred toposort-mixins i:list @mixin, o:list @mixin.
+toposort-mixins In Out :-
+  std.findall (dep1 M_ Deps_) AllMixins,
+  std.flatten {std.map AllMixins mk-edge} ES,
+  toposort ES In Out.
+
 
 }}.
 
@@ -162,7 +186,7 @@ main [str Variable|FS] :-
     std.map FS locate-factory GRFS,
     std.map GRFS provides MLUnsortedL,
     std.flatten MLUnsortedL MLUnsorted,
-    toposort MLUnsorted ML,
+    toposort-mixins MLUnsorted ML,
 
     std.findall (cdef C_ S_ MR_) AllStrctures,
     postulate-all-structures (global GR) ML 0 AllStrctures,
@@ -206,7 +230,7 @@ Elpi Accumulate lp:{{
 pred synthesize-fields.field-for-mixin i:gref, o:term.
 pred synthesize-fields i:list @mixin, i:term, o:record-decl.
 synthesize-fields [] _ end-record.
-synthesize-fields [M|ML] T (field ff Name Type Decl) :-
+synthesize-fields [M|ML] T (field ff Name Type Decl) :- std.do! [
   coq.gr->path M L,
   std.assert! (std.rev L [_,ModName|_]) "Mixin name is not qualified, please use Foo_input.bar",
   Name is ModName ^ "_mixin",
@@ -215,7 +239,8 @@ synthesize-fields [M|ML] T (field ff Name Type Decl) :-
   Type = app[ global M, T| Args ],
   pi f\
     synthesize-fields.field-for-mixin M f =>
-    synthesize-fields ML T (Decl f).
+    synthesize-fields ML T (Decl f)
+].
 
 % given an operation (a mixin projection) we generate a constant projection the
 % same operation out of the package structure (out of the class field of the
@@ -318,6 +343,13 @@ declare-coercion SortProj ClassProj (cdef (indt FC) FS _) (cdef (indt TC) TS TML
 sub-class? (cdef C1 S1 ML1) (cdef C2 S2 ML2) :-
   std.forall ML2 (m2\ std.exists ML1 (m1\ m1 = m2)).
 
+distinct-pairs AllSuper C1 C2 :-
+  std.mem AllSuper C1, std.mem AllSuper C2,
+  not(sub-class? C1 C2),
+  not(sub-class? C2 C1).
+
+proj-cdef (distinct-pairs AllSuper C1 C2) (pr C1 C2).
+
 % TODO: this works under the invariant: we never have two classes that
 % contain exactly the same mixins. declare_structure should enforce this
 % and eventually just alias the existing one rather than failing.
@@ -330,17 +362,29 @@ declare-unification-hints SortProj ClassProj StructureName ClassName ML :- std.d
   CurrentClass = cdef (indt ClassName) StructureName ML,
   std.findall (cdef Class_ Structure_ Mixins_) All,
   % TODO: toposort All putting small structure fisrt
+
   std.filter All (sub-class? CurrentClass) AllSuper,
-  print "All Super:" AllSuper,
   std.forall AllSuper (declare-coercion SortProj ClassProj CurrentClass),
+
+  std.findall (distinct-pairs AllSuper C1 C2) JoinOf,
+  std.map JoinOf proj-cdef L,
+  coq.say CurrentClass "JoinOf" L
 ].
+
+% How to compute unification hints for a structure S:
+% 
+% For all the pair (S1, S2) of strict superclasses of S:
+% - If S1 and S2 have their join S3, assert that S must inherit S3.
+% - If S1 and S2 have no join, S is their join.
+
+
 
 main [str Module|FS] :- std.do! [
   % compute all the mixins to be part of the structure
   std.map FS locate-factory GRFS,
   std.map GRFS provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
-  toposort MLUnsorted ML,
+  toposort-mixins MLUnsorted ML,
 
   coq.env.begin-module Module none,
 
@@ -431,7 +475,6 @@ Print Module ASG.Exports.
 Module RING_input. Section S.
 Variable A : Type.
 Elpi declare_context A ASG_input.mixin_of.
-Print Canonical Projections.
 (*
   Check (eq_refl _ : TYPE.sort _ = A).
   Check (eq_refl _ : ASG.sort _ = A).
@@ -457,4 +500,26 @@ Elpi declare_structure "RING" ASG.class_of RING_input.mixin_of.
 Print Module RING.
 Import RING.Exports.
 
-Check forall (R : RING.type) (x : R), add x zero = x.
+Check forall (R : RING.type) (x : R), add x zero = one.
+
+Require Import Bool.
+
+Module EQUALITY_input. Section S.
+Variable A : Type.
+Elpi declare_context A.
+Record mixin_of := Mixin {
+  eq_op : A -> A -> bool;
+  _ : forall x y, reflect (x = y) (eq_op x y);
+  }.
+End S. End EQUALITY_input.
+
+Elpi declare_mixin EQUALITY_input.mixin_of.
+Elpi declare_structure "EQUALITY" EQUALITY_input.mixin_of.
+Import EQUALITY.Exports.
+
+Elpi declare_structure "DISCRETERING" RING.class_of EQUALITY_input.mixin_of.
+
+Import DISCRETERING.Exports.
+
+(* Check  eq_op (add _ zero) one = true. *)
+
