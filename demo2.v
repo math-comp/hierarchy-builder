@@ -282,6 +282,7 @@ export-operations StructureName ClassName ML MLToExport :-
   ProjMLMapping => export-operations.aux Struct ProjSort ProjClass MLToExport.
 
 % generates, for each
+pred declare-coercion i:gref, i:gref, i:prop, i:prop.
 declare-coercion SortProj ClassProj (cdef (indt FC) FS _) (cdef (indt TC) TS TML) :- std.do! [
   std.map TML (from (indt FC)) FC2TML,
   std.assert! (coq.env.indt TC _ 1 1 _ [KC] _) "not a packed class",
@@ -295,9 +296,23 @@ declare-coercion SortProj ClassProj (cdef (indt FC) FS _) (cdef (indt TC) TS TML
   std.rev PathF [_,ModNameF|_],
   coq.gr->path (indt TC)  PathT,
   std.rev PathT [_,ModNameT|_],
-  Name is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
-  coq.env.add-const Name CoeBody Ty ff ff C,
+  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
+  coq.env.add-const CName CoeBody Ty ff ff C,
   coq.coercion.declare (coercion (const C) 1 (indt FC) (grefclass (indt TC))) tt,
+  Structure = global (indt FS),
+  std.assert! (coq.env.indt TS _ 0 0 _ [KTS] _) "not a packed structure",
+  Coercion = global (const C),
+  SortProjection = global SortProj,
+  ClassProjection = global ClassProj,
+  Pack = global (indc KTS),
+  SCoeBody = {{ fun s : lp:Structure =>
+     let T : Type := lp:SortProjection s in
+     lp:Pack T (lp:Coercion T (lp:ClassProjection s)) }},
+  coq.typecheck SCoeBody STy,
+  SName is ModNameF ^ "_to_" ^ ModNameT,
+  coq.env.add-const SName SCoeBody STy ff ff SC,
+  coq.coercion.declare (coercion (const SC) 0 (indt FS) (grefclass (indt TS))) tt,
+  coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
 
 sub-class? (cdef C1 S1 ML1) (cdef C2 S2 ML2) :-
@@ -314,6 +329,7 @@ pred declare-unification-hints i:gref, i:gref, i:@inductive, i:@inductive, i:lis
 declare-unification-hints SortProj ClassProj StructureName ClassName ML :- std.do! [
   CurrentClass = cdef (indt ClassName) StructureName ML,
   std.findall (cdef Class_ Structure_ Mixins_) All,
+  % TODO: toposort All putting small structure fisrt
   std.filter All (sub-class? CurrentClass) AllSuper,
   print "All Super:" AllSuper,
   std.forall AllSuper (declare-coercion SortProj ClassProj CurrentClass),
@@ -436,10 +452,9 @@ End S. End RING_input.
 About RING_input.opp.
 
 Elpi declare_mixin RING_input.mixin_of.
-
 Elpi declare_structure "RING" ASG.class_of RING_input.mixin_of.
 
 Print Module RING.
 Import RING.Exports.
-Print Coercions.
+
 Check forall (R : RING.type) (x : R), add x zero = x.
