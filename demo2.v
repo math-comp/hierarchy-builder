@@ -69,7 +69,8 @@ pred toposort-mixins i:list @mixin, o:list @mixin.
 toposort-mixins In Out :-
   std.findall (dep1 M_ Deps_) AllMixins,
   std.flatten {std.map AllMixins mk-edge} ES,
-  toposort ES In Out.
+  toposort ES In OutBroken,
+  std.filter OutBroken (std.mem In) Out. % TODO: fix properly
 
 
 }}.
@@ -346,16 +347,18 @@ sub-class? (cdef C1 S1 ML1) (cdef C2 S2 ML2) :-
   std.forall ML2 (m2\ std.exists ML1 (m1\ m1 = m2)).
 
 distinct-pairs CurrentClass AllSuper C1 C2 :-
-  C1 = cdef C1n _ _,
-  C2 = cdef C2n _ _ ,
-  if (join C1n C2n C3n)
-     (cdef C3n X Y,
-      std.assert! (sub-class? (cdef C3n X Y) CurrentClass) "You must declare this class before C3 TODO")
-     true,
-  std.mem AllSuper C1, std.mem AllSuper C2,
-  not(sub-class? C1 C2),
-  not(sub-class? C2 C1),
-  cmp_term C1 C2 lt.
+  std.mem AllSuper C1, std.mem AllSuper C2,  std.do! [
+    cmp_term C1 C2 lt,
+    C1 = cdef C1n _ _,
+    C2 = cdef C2n _ _ ,
+    not(sub-class? C1 C2),
+    not(sub-class? C2 C1),
+    if (join C1n C2n C3n)
+       (cdef C3n X Y,
+       std.assert! (sub-class? CurrentClass (cdef C3n X Y)) "You must declare this class before C3 TODO",
+        fail)
+       true,
+  ].
 
 proj-cdef (distinct-pairs _ AllSuper C1 C2) (pr C1 C2).
 
@@ -405,20 +408,15 @@ declare-unification-hints SortProj ClassProj StructureName ClassName ML NewJoins
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
-% How to compute unification hints for a structure S:
-% 
-% For all the pair (S1, S2) of strict superclasses of S:
-% - If S1 and S2 have their join S3, assert that S must inherit S3.
-% - If S1 and S2 have no join, S is their join.
-
-
-
 main [str Module|FS] :- std.do! [
   % compute all the mixins to be part of the structure
   std.map FS locate-factory GRFS,
   std.map GRFS provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
   toposort-mixins MLUnsorted ML,
+
+  % TODO: avoid redefining the same class
+  % TODO: check we never define the superclass of an exising class
 
   coq.env.begin-module Module none,
 
@@ -558,3 +556,4 @@ Import DISCRETERING.Exports.
 
 Check  eq_op (add one zero) one = true.
 
+Fail Elpi declare_structure "DISCRETEASG" ASG.class_of EQUALITY_input.mixin_of.
