@@ -4,7 +4,9 @@ Require Import ZArith.
 
 From elpi Require Import elpi.
 
-(* ------------------------------------------------------------------------ *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This is the database of clauses that represent the hierarchy.
     TODO: Decide where to put the description and the invariant, part of it
@@ -69,6 +71,13 @@ pred locate-factory i:argument, o:gref.
 locate-factory (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
 locate-factory X _ :- coq.error "not a string:" X.
 
+pred factories-provide-mixins i:list argument, o:list @mixinname.
+factories-provide-mixins FS ML :-
+  std.map FS locate-factory GRFS,
+  std.map GRFS provides MLUnsortedL,
+  std.flatten MLUnsortedL MLUnsorted,
+  toposort-mixins MLUnsorted ML.
+
 %%%%% Topological sortiing algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred topovisit i: list (pair A A), i: A,      i: list A, i: list A, o: list A, o: list A.
@@ -100,7 +109,9 @@ toposort-mixins In Out :-
 
 }}.
 
-(* ------------------------------------------------------------------------ *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command registers a mixin inside Elpi's DB, its dependencies etc *)
 
@@ -131,7 +142,9 @@ main [str M] :-
 }}.
 Elpi Typecheck.
 
-(* ------------------------------------------------------------------------ *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command populates the current section with canonical instances.
 
@@ -211,11 +224,7 @@ postulate-all-structures T [M|MS] N Structures :-
 main [str Variable|FS] :-
   coq.locate Variable GR,
   std.do! [
-    std.map FS locate-factory GRFS,
-    std.map GRFS provides MLUnsortedL,
-    std.flatten MLUnsortedL MLUnsorted,
-    toposort-mixins MLUnsorted ML,
-
+    factories-provide-mixins FS ML,
     findall-classes AllStrctures,
     postulate-all-structures (global GR) ML 0 AllStrctures,
   ].
@@ -223,7 +232,9 @@ main [str Variable|FS] :-
 }}.
 Elpi Typecheck.
 
-(* ------------------------------------------------------------------------ *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command declares a packed structure.
 
@@ -434,10 +445,7 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
 
 main [str Module|FS] :- std.do! [
   % compute all the mixins to be part of the structure
-  std.map FS locate-factory GRFS,
-  std.map GRFS provides MLUnsortedL,
-  std.flatten MLUnsortedL MLUnsorted,
-  toposort-mixins MLUnsorted ML,
+  factories-provide-mixins FS ML,
 
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
@@ -486,20 +494,26 @@ main [str Module|FS] :- std.do! [
   coq.env.end-module _,
 
   % Register in Elpi's DB the new structure
-  std.forall FromClauses (x\ coq.elpi.accumulate "hierarchy.db" (clause _ _ x)),
-  std.forall NewJoins (x\ coq.elpi.accumulate "hierarchy.db" (clause _ _ x)),
+  std.forall FromClauses (f\
+    coq.elpi.accumulate "hierarchy.db" (clause _ _ f)),
+
+  std.forall NewJoins (j\
+    coq.elpi.accumulate "hierarchy.db" (clause _ _ j)),
 
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef CurrentClass)),
 
-  std.forall MLToExport (x\
-    coq.elpi.accumulate "hierarchy.db" (clause _ _ (already-exported x))),
-
+  std.forall MLToExport (m\
+    coq.elpi.accumulate "hierarchy.db" (clause _ _ (already-exported m))),
 ].
 
 }}.
 Elpi Typecheck.
 
-(* ---------------------------------------------------------------------- *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(* quick test *)
 
 Elpi declare_structure "TYPE" .
 Import TYPE.Exports.
