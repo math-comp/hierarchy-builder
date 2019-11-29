@@ -13,38 +13,53 @@ From elpi Require Import elpi.
 
 Elpi Db hierarchy.db lp:{{
 
-  macro @mixin :- gref.
-  macro @mixins :- coq.gref.set.
+% TODO: once we are decided, remove these macros, most of the times we
+% whould work with records, like the class data type done there.
+macro @mixinname :- gref.
+macro @classname :- gref.
+macro @factoryname :- gref.
+macro @structurename :- @inductive.
 
-  macro @classname :- gref.
-  macro @factoryname :- gref.
-  macro @structurename :- @inductive.
+%%%%%% DB of mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO: document
+pred dep1 o:@mixinname, o:list @mixinname.
 
+%%%%%% DB of packed classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  pred dep1 o:@mixin, o:list @mixin.
+% (class C S ML) represents a class C packes in S containing micxins ML.
+% The order of ML is relevant.
+kind class type.
+type class @classname -> @structurename -> list @mixinname -> class.
 
-  % factory, generated mixin, mean, eg mean : factory -> mixin
-  pred from o:@factoryname, o:@mixin, o:term.
-
-  kind class type.
-  type class @classname -> @structurename -> list @mixin -> class. % oder matters
-
-  % cdef contains all the class ever declared
-  pred cdef o:class.
+% cdef contains all the classes ever declared
+pred cdef o:class.
 
 pred findall-classes o:list class.
 findall-classes L :-
   std.findall (cdef C_) All,
   std.map All (x\r\ x = cdef r) L.
 
-  pred join o:@classname, o:@classname, o:@classname.
+%%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO: document
+pred join o:@classname, o:@classname, o:@classname.
 
-  pred already-exported o:@mixin.
+%%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Operations (named mixin fields) need to be exported exactly once,
+% but the same mixin can be used in many structure, hence this memory
+% to keep the invariant.
 
-pred extract-mix i:prop, o:@mixin.
+pred already-exported o:@mixinname.
+
+%%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO: document
+
+% factory, generated mixin, mean, eg mean : factory -> mixin
+pred from o:@factoryname, o:@mixinname, o:term.
+
+pred extract-mix i:prop, o:@mixinname.
 extract-mix (from _ X _) X.
 
-pred provides i:@factoryname, o:list @mixin.
+pred provides i:@factoryname, o:list @mixinname.
 provides Factory ML :- std.do! [
   std.findall (from Factory FOO_ BAR_) All,
   std.map All extract-mix ML,
@@ -54,6 +69,7 @@ pred locate-factory i:argument, o:gref.
 locate-factory (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
 locate-factory X _ :- coq.error "not a string:" X.
 
+%%%%% Topological sortiing algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred topovisit i: list (pair A A), i: A,      i: list A, i: list A, o: list A, o: list A.
 topovisit _ X VS PS VS PS :- std.mem PS X, !.
@@ -70,11 +86,11 @@ toporec ES [X|XS] VS PS VS'' PS'' :-
 pred toposort i: list (pair A A), i: list A, o: list A.
 toposort ES XS XS' :- toporec ES XS [] [] _ XS'.
 
-pred mk-edge i:prop, o:list (pair @mixin @mixin).
+pred mk-edge i:prop, o:list (pair @mixinname @mixinname).
 mk-edge (dep1 M Deps) L :-
   std.map Deps (d\r\ r = pr d M) L.
 
-pred toposort-mixins i:list @mixin, o:list @mixin.
+pred toposort-mixins i:list @mixinname, o:list @mixinname.
 toposort-mixins In Out :-
   std.findall (dep1 M_ Deps_) AllMixins,
   std.flatten {std.map AllMixins mk-edge} ES,
@@ -92,7 +108,7 @@ Elpi Command declare_mixin.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-pred gather-mixin-dendencies i:term, i:list @mixin, o:list @mixin.
+pred gather-mixin-dendencies i:term, i:list @mixinname, o:list @mixinname.
 gather-mixin-dendencies (prod N S R) Acc Result :- !,
   safe-dest-app S HD _,
   if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
@@ -149,8 +165,8 @@ Elpi Accumulate lp:{{
 % a variable "mN" inhabiting M applied to T and
 % all its dependencies, previously postulated and associated
 % to the corresponding mixin using var-for-mixin
-pred postulate-mixin.var-for-mixin i:@mixin, o:term.
-pred postulate-mixin i:term, i:int, i:@mixin, o:@constant.
+pred postulate-mixin.var-for-mixin i:@mixinname, o:term.
+pred postulate-mixin i:term, i:int, i:@mixinname, o:@constant.
 postulate-mixin T N M C :-
   dep1 M Deps,
   std.map Deps postulate-mixin.var-for-mixin Args,
@@ -182,7 +198,7 @@ postulate-structures _ N [] N [].
 % main loop: for each mixin it postulates it, then finds out all the
 % structures that can be built using that mixin (and the ones postulated)
 % so far.
-pred postulate-all-structures i:term, i:list @mixin, i:int, i:list class.
+pred postulate-all-structures i:term, i:list @mixinname, i:int, i:list class.
 postulate-all-structures T [] N Structures :- postulate-structures T N Structures _ _.
 postulate-all-structures T [M|MS] N Structures :-
   postulate-mixin T N M C,
@@ -240,7 +256,7 @@ Elpi Accumulate lp:{{
 % For each mixin we declare a field and apply the mixin to its dependencies
 % (that are previously declared fields recorded via field-for-mixin)
 pred synthesize-fields.field-for-mixin i:gref, o:term.
-pred synthesize-fields i:list @mixin, i:term, o:record-decl.
+pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
 synthesize-fields [] _ end-record.
 synthesize-fields [M|ML] T (field ff Name Type Decl) :- std.do! [
   coq.gr->path M L,
@@ -276,10 +292,10 @@ export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.
   coq.arguments.set-implicit (const C) [[maximal]] tt,
 ].
 
-pred export-operations.proj-for-mixin i:@mixin, o:term.
+pred export-operations.proj-for-mixin i:@mixinname, o:term.
 
 % Given a list of mixins, it exports all operations in there
-pred export-operations.aux i:term, i:term, i:term, i:list @mixin.
+pred export-operations.aux i:term, i:term, i:term, i:list @mixinname.
 export-operations.aux _ _ _ [].
 export-operations.aux Struct ProjSort ProjClass [indt M|ML] :- !, std.do! [
   Mixin = indt M,
@@ -300,7 +316,7 @@ export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
 % Given a list of mixins and the corresponding projections we keep the ones
 % that were not already exported and also generate the mapping proj-for-mixin
 % linking the first two arguments
-pred mixins-to-export i:list @mixin, i:list (option @constant), o:list @mixin, o:list prop.
+pred mixins-to-export i:list @mixinname, i:list (option @constant), o:list @mixinname, o:list prop.
 mixins-to-export [] [] [] [].
 mixins-to-export [M|MS] [some P|PS] ML1 [C|PL] :-
   C = export-operations.proj-for-mixin M (global (const P)),
@@ -308,7 +324,7 @@ mixins-to-export [M|MS] [some P|PS] ML1 [C|PL] :-
   mixins-to-export MS PS ML PL.
 mixins-to-export [_|MS] [none|PS] ML PL :- mixins-to-export MS PS ML PL.
 
-pred export-operations i:@inductive, i:@inductive, i:list @mixin, o:list @mixin.
+pred export-operations i:@inductive, i:@inductive, i:list @mixinname, o:list @mixinname.
 export-operations StructureName ClassName ML MLToExport :-
   coq.CS.canonical-projections StructureName [some Psort, some Pclass],
   coq.CS.canonical-projections ClassName Projs,
