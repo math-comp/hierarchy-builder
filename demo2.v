@@ -70,6 +70,9 @@ factory-provides Factory ML :- std.do! [
   std.map All extract-mix ML,
 ].
 
+pred from i:@factoryname, i:@mixinname, o:term.
+from Factory Mixin Code :- factory-def (factory Factory Mixin Code).
+
 % TODO: generalize/rename when we support parameters
 pred locate-string-argument i:argument, o:gref.
 locate-string-argument (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
@@ -308,43 +311,28 @@ export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.
   coq.arguments.set-implicit (const C) [[maximal]] tt,
 ].
 
-pred export-operations.proj-for-mixin i:@mixinname, o:term.
-
 % Given a list of mixins, it exports all operations in there
-pred export-operations.aux i:term, i:term, i:term, i:list @mixinname.
-export-operations.aux _ _ _ [].
-export-operations.aux Struct ProjSort ProjClass [indt M|ML] :- !, std.do! [
+pred export-operations.aux i:term, i:term, i:term, i:@factoryname, i:list @mixinname.
+export-operations.aux _ _ _ _ [].
+export-operations.aux Struct ProjSort ProjClass ClassName [indt M|ML] :- !, std.do! [
   Mixin = indt M,
-  export-operations.proj-for-mixin Mixin ProjMixin,
-
+  from ClassName Mixin ProjMixin,
   dep1 Mixin Deps,
-  std.map Deps export-operations.proj-for-mixin PDeps,
+  std.map Deps (from ClassName) PDeps,
 
   coq.CS.canonical-projections M Poperations,
   std.forall Poperations
     (export-1-operation Struct ProjSort ProjClass ProjMixin PDeps),
-  export-operations.aux Struct ProjSort ProjClass ML
+  export-operations.aux Struct ProjSort ProjClass ClassName ML
 ].
-export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
+export-operations.aux Struct ProjSort ProjClass ClassName [GR|ML] :-
   coq.say GR "is not a record: skipping operations factory this mixin",
-  export-operations.aux Struct ProjSort ProjClass ML.
+  export-operations.aux Struct ProjSort ProjClass ClassName ML.
 
-% Given a list of mixins and the corresponding projections we keep the ones
-% that were not already exported and also generate the mapping proj-for-mixin
-% linking the first two arguments
-pred mixins-to-export i:list @mixinname, i:list (option @constant), o:list @mixinname, o:list prop.
-mixins-to-export [] [] [] [].
-mixins-to-export [M|MS] [some P|PS] ML1 [C|PL] :-
-  C = export-operations.proj-for-mixin M (global (const P)),
-  if (already-exported M) (ML1 = ML) (ML1 = [M|ML]),
-  mixins-to-export MS PS ML PL.
-mixins-to-export [_|MS] [none|PS] ML PL :- mixins-to-export MS PS ML PL.
-
-pred export-operations i:term, i:term, i:term, i:@inductive, i:list @mixinname, o:list @mixinname.
+pred export-operations i:term, i:term, i:term, i:@factoryname, i:list @mixinname, o:list @mixinname.
 export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
-  coq.CS.canonical-projections ClassName Projs,
-  mixins-to-export ML Projs MLToExport ProjMLMapping,
-  ProjMLMapping => export-operations.aux Structure ProjSort ProjClass MLToExport.
+  std.filter ML (m\not(already-exported m)) MLToExport,
+  export-operations.aux Structure ProjSort ProjClass ClassName MLToExport.
 
 % TODO: cleanup
 pred declare-coercion i:term, i:term, i:class, i:class.
@@ -449,8 +437,8 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
-pred declare-class i:list @mixinname, o:@inductive, o:term, o:list factory.
-declare-class ML ClassName (global (indt ClassName)) Factories :- std.do! [
+pred declare-class i:list @mixinname, o:@factoryname, o:term, o:list factory.
+declare-class ML (indt ClassName) (global (indt ClassName)) Factories :- std.do! [
   (pi T\ synthesize-fields ML T (RDecl T)),
   ClassDeclaration =
     (parameter `T` {{ Type }} T\
@@ -491,6 +479,8 @@ main [str Module|FS] :- std.do! [
   coq.env.begin-module Module none,
 
   declare-class ML  ClassName Class Factories,
+  std.map Factories (f\r\ r = factory-def f) ClausesFactories,
+
   declare-structure Class  StructureName Structure SortProjection ClassProjection,
 
   % Exports module
@@ -499,11 +489,10 @@ main [str Module|FS] :- std.do! [
   declare-sort-coercion StructureName SortProjection,
 
   % TODO: pass Factories here, since they are almost recomputed
-  export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
+  ClausesFactories => export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
 
   % compute clauses for factories, since we need them now
-  std.map Factories (f\r\ r = factory-def f) ClausesFactories,
-  CurrentClass = (class (indt ClassName) StructureName ML),
+  CurrentClass = (class ClassName StructureName ML),
   ClausesFactories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   coq.env.end-module _,
