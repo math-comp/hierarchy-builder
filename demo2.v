@@ -33,13 +33,13 @@ pred dep1 o:@mixinname, o:list @mixinname.
 kind class type.
 type class @classname -> @structurename -> list @mixinname -> class.
 
-% cdef contains all the classes ever declared
-pred cdef o:class.
+% class-def contains all the classes ever declared
+pred class-def o:class.
 
 pred findall-classes o:list class.
 findall-classes L :-
-  std.findall (cdef C_) All,
-  std.map All (x\r\ x = cdef r) L.
+  std.findall (class-def C_) All,
+  std.map All (x\r\ x = class-def r) L.
 
 %%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO: document
@@ -56,27 +56,32 @@ pred already-exported o:@mixinname.
 % TODO: document
 
 % factory, generated mixin, mean, eg mean : factory -> mixin
-pred from o:@factoryname, o:@mixinname, o:term.
+kind factory type.
+type factory @factoryname -> @mixinname -> term -> factory.
+
+pred factory-def o:factory.
 
 pred extract-mix i:prop, o:@mixinname.
-extract-mix (from _ X _) X.
+extract-mix (factory-def (factory _ X _)) X.
 
-pred provides i:@factoryname, o:list @mixinname.
-provides Factory ML :- std.do! [
-  std.findall (from Factory FOO_ BAR_) All,
+pred factory-provides i:@factoryname, o:list @mixinname.
+factory-provides Factory ML :- std.do! [
+  std.findall (factory-def (factory Factory FOO_ BAR_)) All,
   std.map All extract-mix ML,
 ].
 
-pred locate-factory i:argument, o:gref.
-locate-factory (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
-locate-factory X _ :- coq.error "not a string:" X.
+% TODO: generalize/rename when we support parameters
+pred locate-string-argument i:argument, o:gref.
+locate-string-argument (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+locate-string-argument X _ :- coq.error "not a string:" X.
 
 pred factories-provide-mixins i:list argument, o:list @mixinname.
-factories-provide-mixins FS ML :-
-  std.map FS locate-factory GRFS,
-  std.map GRFS provides MLUnsortedL,
+factories-provide-mixins FS ML :- std.do! [
+  std.map FS locate-string-argument GRFS,
+  std.map GRFS factory-provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
-  toposort-mixins MLUnsorted ML.
+  toposort-mixins MLUnsorted ML,
+].
 
 %%%%% Topological sortiing algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -136,7 +141,7 @@ main [str M] :-
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
   % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
   ID = {{ fun x : nat => x }},
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)).
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (factory-def (factory GR GR ID))).
 % TODO: usage message is called with more arguments
 
 }}.
@@ -189,7 +194,7 @@ postulate-mixin T N M C :-
   coq.env.add-const Name _ Ty tt tt C. % no body, local -> a variable
 
 % Given a type T, a fresh integer N, a list of class definition
-% in consumes from the list all the classes for which all the dependencies
+% in consumes factory the list all the classes for which all the dependencies
 % (mixins) were postulated so far, declares a local constant inhabiting
 % the corresponding structure and declares it canonical
 pred postulate-structures i:term, i:int, i:list class, o:int, o:list class.
@@ -321,7 +326,7 @@ export-operations.aux Struct ProjSort ProjClass [indt M|ML] :- !, std.do! [
   export-operations.aux Struct ProjSort ProjClass ML
 ].
 export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
-  coq.say GR "is not a record: skipping operations from this mixin",
+  coq.say GR "is not a record: skipping operations factory this mixin",
   export-operations.aux Struct ProjSort ProjClass ML.
 
 % Given a list of mixins and the corresponding projections we keep the ones
@@ -335,20 +340,16 @@ mixins-to-export [M|MS] [some P|PS] ML1 [C|PL] :-
   mixins-to-export MS PS ML PL.
 mixins-to-export [_|MS] [none|PS] ML PL :- mixins-to-export MS PS ML PL.
 
-pred export-operations i:@inductive, i:@inductive, i:list @mixinname, o:list @mixinname.
-export-operations StructureName ClassName ML MLToExport :-
-  coq.CS.canonical-projections StructureName [some Psort, some Pclass],
+pred export-operations i:term, i:term, i:term, i:@inductive, i:list @mixinname, o:list @mixinname.
+export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
   coq.CS.canonical-projections ClassName Projs,
-  ProjSort = global (const Psort),
-  ProjClass = global (const Pclass),
-  Struct = global (indt StructureName),
   mixins-to-export ML Projs MLToExport ProjMLMapping,
-  ProjMLMapping => export-operations.aux Struct ProjSort ProjClass MLToExport.
+  ProjMLMapping => export-operations.aux Structure ProjSort ProjClass MLToExport.
 
-% generates, for each
-pred declare-coercion i:gref, i:gref, i:class, i:class.
-declare-coercion SortProj ClassProj (class (indt FC) FS _) (class (indt TC) TS TML) :- std.do! [
-  std.map TML (from (indt FC)) FC2TML,
+% TODO: cleanup
+pred declare-coercion i:term, i:term, i:class, i:class.
+declare-coercion SortProjection ClassProjection (class (indt FC) FS _) (class (indt TC) TS TML) :- std.do! [
+  std.map TML (m\r\ factory-def (factory (indt FC) m r)) FC2TML,
   std.assert! (coq.env.indt TC _ 1 1 _ [KC] _) "not a packed class",
   (pi T c\ sigma Mixes\
     std.map FC2TML (p\r\ r = app[p, T, c]) Mixes,
@@ -366,8 +367,6 @@ declare-coercion SortProj ClassProj (class (indt FC) FS _) (class (indt TC) TS T
   Structure = global (indt FS),
   std.assert! (coq.env.indt TS _ 0 0 _ [KTS] _) "not a packed structure",
   Coercion = global (const C),
-  SortProjection = global SortProj,
-  ClassProjection = global ClassProj,
   Pack = global (indc KTS),
   SCoeBody = {{ fun s : lp:Structure =>
      let T : Type := lp:SortProjection s in
@@ -379,24 +378,32 @@ declare-coercion SortProj ClassProj (class (indt FC) FS _) (class (indt TC) TS T
   coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
 
+pred sub-class? i:class, i:class.
 sub-class? (class C1 S1 ML1) (class C2 S2 ML2) :-
   std.forall ML2 (m2\ std.exists ML1 (m1\ m1 = m2)).
 
+% we try to find C1 and C2 such that C1 != C2... TODO document together with findall helper down below
+pred distinct-pairs i:class, i:list class, o:class, o:class.
 distinct-pairs CurrentClass AllSuper C1 C2 :-
-  std.mem AllSuper C1, std.mem AllSuper C2,  std.do! [
+  std.mem AllSuper C1, std.mem AllSuper C2,
+  std.do! [
     cmp_term C1 C2 lt,
     C1 = class C1n _ _,
     C2 = class C2n _ _ ,
     not(sub-class? C1 C2),
     not(sub-class? C2 C1),
     if (join C1n C2n C3n)
-       (cdef (class C3n X Y),
+       (class-def (class C3n X Y),
        std.assert! (sub-class? CurrentClass (class C3n X Y)) "You must declare this class before C3 TODO",
         fail)
        true,
   ].
 
-proj-cdef (distinct-pairs _ AllSuper C1 C2) (pr C1 C2).
+findall-newjoins CurrentClass AllSuper TodoJoins :-
+  std.findall (distinct-pairs CurrentClass AllSuper C1 C2) JoinOf,
+  pi project\
+    (pi x y c1 c2\ project (distinct-pairs x y c1 c2) (pr c1 c2)) =>
+    std.map JoinOf project TodoJoins.
 
 declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
   std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S2)) [pr S3_to_S2_gr _]) "no coercion",
@@ -429,7 +436,7 @@ declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3
 % in the middle of existing ones. Possible fix: always declare all intermediate
 % possibilities but without proper names (requires the previous TODO about
 % aliasing already existing stuff).
-pred declare-unification-hints i:gref, i:gref, i:class, o:list prop.
+pred declare-unification-hints i:term, i:term, i:class, o:list prop.
 declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   findall-classes All,
   % TODO: toposort All putting small structure fisrt
@@ -437,70 +444,80 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.filter All (sub-class? CurrentClass) AllSuper,
   std.forall AllSuper (declare-coercion SortProj ClassProj CurrentClass),
 
-  std.findall (distinct-pairs CurrentClass AllSuper C1 C2) JoinOf,
-  std.map JoinOf proj-cdef TodoJoins,
+  findall-newjoins CurrentClass AllSuper TodoJoins,
 
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
-main [str Module|FS] :- std.do! [
-  % compute all the mixins to be part of the structure
-  factories-provide-mixins FS ML,
-
-  % TODO: avoid redefining the same class
-  % TODO: check we never define the superclass of an exising class
-
-  coq.env.begin-module Module none,
-
-  % declare the class record
+pred declare-class i:list @mixinname, o:@inductive, o:term, o:list factory.
+declare-class ML ClassName (global (indt ClassName)) Factories :- std.do! [
   (pi T\ synthesize-fields ML T (RDecl T)),
   ClassDeclaration =
     (parameter `T` {{ Type }} T\
       record "class_of" {{ Type }} "Class" (RDecl T)),
   coq.typecheck-indt-decl ClassDeclaration,
   coq.env.add-indt ClassDeclaration ClassName,
+  coq.CS.canonical-projections ClassName Projs,
+  std.map2 ML Projs (m\ p\ r\ sigma P\
+    p = some P,
+    r = factory (indt ClassName) m (global (const P))) Factories,
+].
 
-  % declare the type record
+declare-structure Class StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
       field ff "sort" {{ Type }} s\
-      field ff "class" (app [global (indt ClassName), s]) _\
+      field ff "class" (app [Class, s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
   coq.env.add-indt StructureDeclaration StructureName,
 
-  coq.locate "sort" SortProjection,
-  coq.locate "class" ClassProjection,
+  coq.CS.canonical-projections StructureName [some SortP, some ClassP],
+  SortProjection = global (const SortP),
+  ClassProjection = global (const ClassP),
+].
 
-  CurrentClass = (class (indt ClassName) StructureName ML),
+declare-sort-coercion StructureName (global Proj) :-
+  coq.coercion.declare (coercion Proj 0 (indt StructureName) sortclass) tt.
 
-  % We precompute "from"
-  coq.CS.canonical-projections ClassName Projs,
-  std.map2 ML Projs (m\ p\ r\ sigma P\
-    p = some P,
-    r = from (indt ClassName) m (global (const P))) FromClauses,
+
+main [str Module|FS] :- std.do! [
+  % compute all the mixins to be part of the structure
+  factories-provide-mixins FS  ML,
+
+  % TODO: avoid redefining the same class
+  % TODO: check we never define the superclass of an exising class
+
+  coq.env.begin-module Module none,
+
+  declare-class ML  ClassName Class Factories,
+  declare-structure Class  StructureName Structure SortProjection ClassProjection,
 
   % Exports module
   coq.env.begin-module "Exports" none,
 
-  coq.coercion.declare (coercion {coq.locate "sort"} 0 (indt StructureName) sortclass) tt,
+  declare-sort-coercion StructureName SortProjection,
 
-  export-operations StructureName ClassName ML MLToExport,
+  % TODO: pass Factories here, since they are almost recomputed
+  export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
 
-  FromClauses => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
+  % compute clauses for factories, since we need them now
+  std.map Factories (f\r\ r = factory-def f) ClausesFactories,
+  CurrentClass = (class (indt ClassName) StructureName ML),
+  ClausesFactories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   coq.env.end-module _,
 
   coq.env.end-module _,
 
   % Register in Elpi's DB the new structure
-  std.forall FromClauses (f\
+  std.forall ClausesFactories (f\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ f)),
 
   std.forall NewJoins (j\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ j)),
 
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (cdef CurrentClass)),
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (class-def CurrentClass)),
 
   std.forall MLToExport (m\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (already-exported m))),
