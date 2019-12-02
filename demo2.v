@@ -437,8 +437,8 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
-pred declare-class i:list @mixinname, o:@factoryname, o:term, o:list factory.
-declare-class ML (indt ClassName) (global (indt ClassName)) Factories :- std.do! [
+pred declare-class i:list @mixinname, o:@factoryname, o:list factory.
+declare-class ML (indt ClassName) Factories :- std.do! [
   (pi T\ synthesize-fields ML T (RDecl T)),
   ClassDeclaration =
     (parameter `T` {{ Type }} T\
@@ -451,11 +451,11 @@ declare-class ML (indt ClassName) (global (indt ClassName)) Factories :- std.do!
     r = factory (indt ClassName) m (global (const P))) Factories,
 ].
 
-declare-structure Class StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
+declare-structure ClassName StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
       field ff "sort" {{ Type }} s\
-      field ff "class" (app [Class, s]) _\
+      field ff "class" (app [global ClassName, s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
   coq.env.add-indt StructureDeclaration StructureName,
@@ -478,21 +478,19 @@ main [str Module|FS] :- std.do! [
 
   coq.env.begin-module Module none,
 
-  declare-class ML  ClassName Class Factories,
+  declare-class ML  ClassName Factories,
   std.map Factories (f\r\ r = factory-def f) ClausesFactories,
 
-  declare-structure Class  StructureName Structure SortProjection ClassProjection,
+  declare-structure ClassName  StructureName Structure SortProjection ClassProjection,
+  CurrentClass = (class ClassName StructureName ML),
 
   % Exports module
   coq.env.begin-module "Exports" none,
 
   declare-sort-coercion StructureName SortProjection,
 
-  % TODO: pass Factories here, since they are almost recomputed
   ClausesFactories => export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
 
-  % compute clauses for factories, since we need them now
-  CurrentClass = (class ClassName StructureName ML),
   ClausesFactories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   coq.env.end-module _,
