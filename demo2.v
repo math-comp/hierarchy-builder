@@ -54,24 +54,17 @@ pred already-exported o:@mixinname.
 
 %%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO: document
+pred from o:@factoryname, o:@mixinname, o:term.
 
 % factory, generated mixin, mean, eg mean : factory -> mixin
-kind factory type.
-type factory @factoryname -> @mixinname -> term -> factory.
-
-pred factory-def o:factory.
-
 pred extract-mix i:prop, o:@mixinname.
-extract-mix (factory-def (factory _ X _)) X.
+extract-mix (from _ X _) X.
 
 pred factory-provides i:@factoryname, o:list @mixinname.
 factory-provides Factory ML :- std.do! [
-  std.findall (factory-def (factory Factory FOO_ BAR_)) All,
+  std.findall (from Factory FOO_ BAR_) All,
   std.map All extract-mix ML,
 ].
-
-pred from i:@factoryname, i:@mixinname, o:term.
-from Factory Mixin Code :- factory-def (factory Factory Mixin Code).
 
 % TODO: generalize/rename when we support parameters
 pred locate-string-argument i:argument, o:gref.
@@ -144,7 +137,7 @@ main [str M] :-
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
   % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
   ID = {{ fun x : nat => x }},
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (factory-def (factory GR GR ID))).
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)).
 % TODO: usage message is called with more arguments
 
 }}.
@@ -337,7 +330,7 @@ export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
 % TODO: cleanup
 pred declare-coercion i:term, i:term, i:class, i:class.
 declare-coercion SortProjection ClassProjection (class (indt FC) FS _) (class (indt TC) TS TML) :- std.do! [
-  std.map TML (m\r\ factory-def (factory (indt FC) m r)) FC2TML,
+  std.map TML (m\r\ from (indt FC) m r) FC2TML,
   std.assert! (coq.env.indt TC _ 1 1 _ [KC] _) "not a packed class",
   (pi T c\ sigma Mixes\
     std.map FC2TML (p\r\ r = app[p, T, c]) Mixes,
@@ -387,12 +380,14 @@ distinct-pairs CurrentClass AllSuper C1 C2 :-
        true,
   ].
 
+pred findall-newjoins i:class, i:list class, o:list (pair class class).
 findall-newjoins CurrentClass AllSuper TodoJoins :-
   std.findall (distinct-pairs CurrentClass AllSuper C1 C2) JoinOf,
   pi project\
     (pi x y c1 c2\ project (distinct-pairs x y c1 c2) (pr c1 c2)) =>
     std.map JoinOf project TodoJoins.
 
+pred declare-join i:class, i:pair class class, o:prop.
 declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
   std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S2)) [pr S3_to_S2_gr _]) "no coercion",
   std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S1)) [pr S3_to_S1_gr _]) "no coercion",
@@ -437,7 +432,7 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
-pred declare-class i:list @mixinname, o:@factoryname, o:list factory.
+pred declare-class i:list @mixinname, o:@factoryname, o:list prop.
 declare-class ML (indt ClassName) Factories :- std.do! [
   (pi T\ synthesize-fields ML T (RDecl T)),
   ClassDeclaration =
@@ -448,9 +443,10 @@ declare-class ML (indt ClassName) Factories :- std.do! [
   coq.CS.canonical-projections ClassName Projs,
   std.map2 ML Projs (m\ p\ r\ sigma P\
     p = some P,
-    r = factory (indt ClassName) m (global (const P))) Factories,
+    r = from (indt ClassName) m (global (const P))) Factories,
 ].
 
+pred declare-structure i:@factoryname, o:@structurename, o:term, o:term, o:term.
 declare-structure ClassName StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
@@ -465,6 +461,7 @@ declare-structure ClassName StructureName (global (indt StructureName)) SortProj
   ClassProjection = global (const ClassP),
 ].
 
+pred declare-sort-coercion i:@structurename, o:term.
 declare-sort-coercion StructureName (global Proj) :-
   coq.coercion.declare (coercion Proj 0 (indt StructureName) sortclass) tt.
 
@@ -479,7 +476,6 @@ main [str Module|FS] :- std.do! [
   coq.env.begin-module Module none,
 
   declare-class ML  ClassName Factories,
-  std.map Factories (f\r\ r = factory-def f) ClausesFactories,
 
   declare-structure ClassName  StructureName Structure SortProjection ClassProjection,
   CurrentClass = (class ClassName StructureName ML),
@@ -489,16 +485,16 @@ main [str Module|FS] :- std.do! [
 
   declare-sort-coercion StructureName SortProjection,
 
-  ClausesFactories => export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
+  Factories => export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
 
-  ClausesFactories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
+  Factories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   coq.env.end-module _,
 
   coq.env.end-module _,
 
   % Register in Elpi's DB the new structure
-  std.forall ClausesFactories (f\
+  std.forall Factories (f\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ f)),
 
   std.forall NewJoins (j\
