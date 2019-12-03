@@ -107,6 +107,41 @@ toposort-mixins In Out :-
   toposort ES In OutBroken,
   std.filter OutBroken (std.mem In) Out. % TODO: fix properly
 
+%%%%% Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [get-structure-coercion S1 S2 F] finds the coecion F from the structure S1 to S2
+pred get-structure-coercion i:@structurename, i:@structurename, o:term.
+get-structure-coercion S T (global F) :-
+  coq.coercion.db-for (grefclass (indt S)) (grefclass (indt T)) L,
+  if (L = [pr F 0]) true (coq.error "No one step coercion from" S "to" T).
+
+pred get-structure-sort-projection i:@structurename, o:term.
+get-structure-sort-projection S (global (const P)) :-
+  coq.CS.canonical-projections S L,
+  if (L = [some P, _]) true (coq.error "No canonical sort projection for" S).
+
+pred get-structure-class-projection i:@structurename, o:term.
+get-structure-class-projection S (global (const P)) :-
+  coq.CS.canonical-projections S L,
+  if (L = [_, some P]) true (coq.error "No canonical class projection for" S).
+
+pred get-structure-constructor i:@structurename, o:term.
+get-structure-constructor S (global (indc K)) :-
+  if (coq.env.indt S _ 0 0 _ [K] _) true (coq.error "Not a packed structure" S).
+
+pred get-class-constructor i:@classname, o:term.
+get-class-constructor (indt S) (global (indc K)) :-
+  if (coq.env.indt S _ 1 1 _ [K] _) true (coq.error "Not a class" S).
+
+pred get-structure-modname i:@structurename, o:@id.
+get-structure-modname S ModName :-
+  coq.gr->path (indt S)  Path,
+  if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for structure" S).
+
+pred get-mixin-modname i:@mixinname, o:@id.
+get-mixin-modname S ModName :-
+  coq.gr->path S  Path,
+  if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for mixin" S).
 
 }}.
 
@@ -194,15 +229,17 @@ postulate-mixin T N M C :-
 % (mixins) were postulated so far, declares a local constant inhabiting
 % the corresponding structure and declares it canonical
 pred postulate-structures i:term, i:int, i:list class, o:int, o:list class.
-postulate-structures T N [class (indt Class) Struct ML|Rest] M Rest1 :-
+postulate-structures T N [class Class Struct ML|Rest] M Rest1 :-
   std.map ML postulate-mixin.var-for-mixin Args, !, % we can build it
   N1 is N + 1,
   Name is "s" ^ {std.any->string N},
-  std.assert! (coq.env.indt Class _ 1 1 _ [KC] _) "not a packed class",
-  C = app[global (indc KC), T | Args],
-  std.assert! (coq.env.indt Struct _ 0 0 _ [KS] _) "not a packed structure",
-  S = app[global (indc KS), T, C],
+
+  get-class-constructor Class KC,
+  get-structure-constructor Struct KS,
+
+  S = app[KS, T, app[KC, T | Args]],
   coq.typecheck S STy,
+
   coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
   postulate-structures T N1 Rest M Rest1.
@@ -265,17 +302,19 @@ Elpi Command declare_structure.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
+
 % For each mixin we declare a field and apply the mixin to its dependencies
 % (that are previously declared fields recorded via field-for-mixin)
 pred synthesize-fields.field-for-mixin i:gref, o:term.
 pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
 synthesize-fields [] _ end-record.
 synthesize-fields [M|ML] T (field ff Name Type Decl) :- std.do! [
-  coq.gr->path M L,
-  std.assert! (std.rev L [_,ModName|_]) "Mixin name is not qualified, please use Foo_input.bar",
+  get-mixin-modname M ModName,
   Name is ModName ^ "_mixin",
+
   dep1 M Deps,
   std.map Deps synthesize-fields.field-for-mixin Args,
+
   Type = app[ global M, T| Args ],
   pi f\
     synthesize-fields.field-for-mixin M f =>
@@ -327,33 +366,35 @@ export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
   std.filter ML (m\not(already-exported m)) MLToExport,
   export-operations.aux Structure ProjSort ProjClass ClassName MLToExport.
 
-% TODO: cleanup
+% [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
+% from C1 to C2 given P1 P2 the two projections from the structure of C1
 pred declare-coercion i:term, i:term, i:class, i:class.
-declare-coercion SortProjection ClassProjection (class (indt FC) FS _) (class (indt TC) TS TML) :- std.do! [
-  std.map TML (m\r\ from (indt FC) m r) FC2TML,
-  std.assert! (coq.env.indt TC _ 1 1 _ [KC] _) "not a packed class",
+declare-coercion SortProjection ClassProjection (class FC FS _) (class TC TS TML) :- std.do! [
+  get-structure-modname FS ModNameF,
+  get-structure-modname TS ModNameT,
+  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
+  SName is ModNameF ^ "_to_" ^ ModNameT,
+
+  std.map TML (m\r\ from FC m r) FC2TML,
+  get-class-constructor TC KC,
+  Class = global FC,
   (pi T c\ sigma Mixes\
     std.map FC2TML (p\r\ r = app[p, T, c]) Mixes,
-    ClassCoercion T c = app[global (indc KC), T | Mixes]),
-  Class = global (indt FC),
+    ClassCoercion T c = app[KC, T | Mixes]),
   CoeBody = {{ fun (T : Type) (c : lp:Class T) => lp:(ClassCoercion T c) }},
   coq.typecheck CoeBody Ty,
-  coq.gr->path (indt FC)  PathF,
-  std.rev PathF [_,ModNameF|_],
-  coq.gr->path (indt TC)  PathT,
-  std.rev PathT [_,ModNameT|_],
-  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
+
   coq.env.add-const CName CoeBody Ty ff ff C,
-  coq.coercion.declare (coercion (const C) 1 (indt FC) (grefclass (indt TC))) tt,
+  coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)) tt,
+
+  get-structure-constructor TS Pack,
   Structure = global (indt FS),
-  std.assert! (coq.env.indt TS _ 0 0 _ [KTS] _) "not a packed structure",
   Coercion = global (const C),
-  Pack = global (indc KTS),
   SCoeBody = {{ fun s : lp:Structure =>
      let T : Type := lp:SortProjection s in
      lp:Pack T (lp:Coercion T (lp:ClassProjection s)) }},
   coq.typecheck SCoeBody STy,
-  SName is ModNameF ^ "_to_" ^ ModNameT,
+
   coq.env.add-const SName SCoeBody STy ff ff SC,
   coq.coercion.declare (coercion (const SC) 0 (indt FS) (grefclass (indt TS))) tt,
   coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
@@ -387,28 +428,24 @@ findall-newjoins CurrentClass AllSuper TodoJoins :-
     (pi x y c1 c2\ project (distinct-pairs x y c1 c2) (pr c1 c2)) =>
     std.map JoinOf project TodoJoins.
 
+
 pred declare-join i:class, i:pair class class, o:prop.
 declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
-  std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S2)) [pr S3_to_S2_gr _]) "no coercion",
-  std.assert! (coq.coercion.db-for (grefclass (indt S3)) (grefclass (indt S1)) [pr S3_to_S1_gr _]) "no coercion",
-  std.assert! (coq.CS.canonical-projections S1 [some S1_sort_cst, _]) "not a packed structure",
-  std.assert! (coq.CS.canonical-projections S2 [_, some S2_class_cst]) "not a packed structure",
-  std.assert! (coq.env.indt S2 _ 0 0 _ [KS2] _) "not a packed structure",
-  S2_Pack = global (indc KS2),
-  Structure3 = global (indt S3),
-  S3_to_S2 = global S3_to_S2_gr,
-  S3_to_S1 = global S3_to_S1_gr,
-  S1_sort = global (const S1_sort_cst),
-  S2_class = global (const S2_class_cst),
+  get-structure-modname S1 ModName1,
+  get-structure-modname S2 ModName2,
+  Name is ModName1 ^ "_to_" ^ ModName2,
+
+  get-structure-coercion S3 S2 S3_to_S2,
+  get-structure-coercion S3 S1 S3_to_S1,
+  get-structure-sort-projection S1 S1_sort,
+  get-structure-class-projection S2 S2_class,
+  get-structure-constructor S2 S2_Pack,
+
   JoinBody = {{ fun s : lp:Structure3 =>
                    lp:S2_Pack (lp:S1_sort (lp:S3_to_S1 s))
                               (lp:S2_class (lp:S3_to_S2 s)) }},
+
   coq.typecheck JoinBody Ty,
-  coq.gr->path (indt S1)  Path1,
-  std.rev Path1 [_,ModName1|_],
-  coq.gr->path (indt S2)  Path2,
-  std.rev Path2 [_,ModName2|_],
-  Name is ModName1 ^ "_to_" ^ ModName2,
   coq.env.add-const Name JoinBody Ty ff ff J,
   coq.CS.declare-instance (const J).
 
@@ -432,6 +469,7 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
+% Builds the class_of record and the factories from this class to each mixin
 pred declare-class i:list @mixinname, o:@factoryname, o:list prop.
 declare-class ML (indt ClassName) Factories :- std.do! [
   (pi T\ synthesize-fields ML T (RDecl T)),
@@ -446,6 +484,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
     r = from (indt ClassName) m (global (const P))) Factories,
 ].
 
+% Builds the package record
 pred declare-structure i:@factoryname, o:@structurename, o:term, o:term, o:term.
 declare-structure ClassName StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
@@ -461,6 +500,7 @@ declare-structure ClassName StructureName (global (indt StructureName)) SortProj
   ClassProjection = global (const ClassP),
 ].
 
+% Declares "sort" as a coercion Structurename >-> Sortclass
 pred declare-sort-coercion i:@structurename, o:term.
 declare-sort-coercion StructureName (global Proj) :-
   coq.coercion.declare (coercion Proj 0 (indt StructureName) sortclass) tt.
