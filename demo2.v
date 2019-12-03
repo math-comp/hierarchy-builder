@@ -508,7 +508,7 @@ pred declare-sort-coercion i:@structurename, i:term.
 declare-sort-coercion StructureName (global Proj) :-
   coq.coercion.declare (coercion Proj 0 (indt StructureName) sortclass) tt.
 
-main [str Module|FS] :- std.do! [
+main [str Module|FS] :- !, std.do! [
   % compute all the mixins to be part of the structure
   factories-provide-mixins FS  ML,
 
@@ -547,6 +547,7 @@ main [str Module|FS] :- std.do! [
   std.forall MLToExport (m\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (already-exported m))),
 ].
+main _ :- coq.error "Usage: declare_structure <ModuleName> [<Factory>..]".
 
 }}.
 Elpi Typecheck.
