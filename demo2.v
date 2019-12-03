@@ -23,7 +23,9 @@ macro @factoryname :- gref.
 macro @structurename :- @inductive.
 
 %%%%%% DB of mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TODO: document
+
+% [dep1 M ML] means that mixin M depends (has as parameters) mixins ML in
+% that order
 pred dep1 o:@mixinname, o:list @mixinname.
 
 %%%%%% DB of packed classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,7 +44,8 @@ findall-classes L :-
   std.map All (x\r\ x = class-def r) L.
 
 %%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TODO: document
+
+% [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:@classname, o:@classname, o:@classname.
 
 %%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
