@@ -101,11 +101,12 @@ mk-edge (dep1 M Deps) L :-
   std.map Deps (d\r\ r = pr d M) L.
 
 pred toposort-mixins i:list @mixinname, o:list @mixinname.
-toposort-mixins In Out :-
+toposort-mixins In Out :- std.do! [
   std.findall (dep1 M_ Deps_) AllMixins,
   std.flatten {std.map AllMixins mk-edge} ES,
   toposort ES In OutBroken,
-  std.filter OutBroken (std.mem In) Out. % TODO: fix properly
+  std.filter OutBroken (std.mem In) Out, % TODO: fix properly
+].
 
 %%%%% Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -165,15 +166,16 @@ gather-mixin-dendencies (sort _) Acc Acc.
 gather-mixin-dendencies Ty Acc Res :- whd1 Ty Ty1, !, gather-mixin-dendencies Ty1 Acc Res.
 gather-mixin-dendencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
 
-main [str M] :-
+main [str M] :- !, std.do! [
   coq.locate M GR,
   coq.env.typeof-gr GR Ty,
   gather-mixin-dendencies Ty [] Mix,
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
   % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
   ID = {{ fun x : nat => x }},
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)).
-% TODO: usage message is called with more arguments
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)),
+].
+main _ :- coq.error "Usage: declare_mixin <mixin>".
 
 }}.
 Elpi Typecheck.
@@ -259,13 +261,14 @@ postulate-all-structures T [M|MS] N Structures :-
     postulate-all-structures T MS N2 StructuresLeft
   ).
 
-main [str Variable|FS] :-
+main [str Variable|FS] :- !,
   coq.locate Variable GR,
   std.do! [
     factories-provide-mixins FS ML,
     findall-classes AllStrctures,
     postulate-all-structures (global GR) ML 0 AllStrctures,
   ].
+main _ :- coeq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
 }}.
 Elpi Typecheck.
@@ -329,6 +332,7 @@ pred export-1-operation i:term, i:term, i:term, i:term, i:list term, i:option @c
 export-1-operation _ _ _ _ _ none :- !. % not a projection, no operation
 export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.do! [
   coq.gr->id (const Poperation) Name,
+
   Operation = global (const Poperation),
   std.append Mdeps [Pmixin] AllMixins,
   (pi x\ decl x `x` Struct =>
@@ -338,6 +342,7 @@ export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.
       std.map AllMixins (a\ mk-app a [Carrier, Class]) Args,
       Body x = app[Operation, Carrier | Args]),
   T = fun `x` Struct Body,
+
   % TODO: make the type of T nicer. Ask Cyril why the inferred one could be ugly
   coq.env.add-const Name T _ ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
@@ -351,7 +356,6 @@ export-operations.aux Struct ProjSort ProjClass ClassName [indt M|ML] :- !, std.
   from ClassName Mixin ProjMixin,
   dep1 Mixin Deps,
   std.map Deps (from ClassName) PDeps,
-
   coq.CS.canonical-projections M Poperations,
   std.forall Poperations
     (export-1-operation Struct ProjSort ProjClass ProjMixin PDeps),
@@ -428,7 +432,6 @@ findall-newjoins CurrentClass AllSuper TodoJoins :-
     (pi x y c1 c2\ project (distinct-pairs x y c1 c2) (pr c1 c2)) =>
     std.map JoinOf project TodoJoins.
 
-
 pred declare-join i:class, i:pair class class, o:prop.
 declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
   get-structure-modname S1 ModName1,
@@ -501,10 +504,9 @@ declare-structure ClassName StructureName (global (indt StructureName)) SortProj
 ].
 
 % Declares "sort" as a coercion Structurename >-> Sortclass
-pred declare-sort-coercion i:@structurename, o:term.
+pred declare-sort-coercion i:@structurename, i:term.
 declare-sort-coercion StructureName (global Proj) :-
   coq.coercion.declare (coercion Proj 0 (indt StructureName) sortclass) tt.
-
 
 main [str Module|FS] :- std.do! [
   % compute all the mixins to be part of the structure
