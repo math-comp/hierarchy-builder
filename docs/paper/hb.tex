@@ -135,8 +135,9 @@ Building the package:
 \newminted[elpi]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize}
 
 \begin{elpi}
+% Builds the package record
 pred declare-structure i:@factoryname, o:@structurename, o:term, o:term, o:term.
-declare-structure ClassName StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
+declare-structure ClassName StructureName Structure SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
       field ff "sort" {{ Type }} s\
@@ -146,6 +147,7 @@ declare-structure ClassName StructureName (global (indt StructureName)) SortProj
   coq.env.add-indt StructureDeclaration StructureName,
 
   coq.CS.canonical-projections StructureName [some SortP, some ClassP],
+  Structure = global (indt StructureName),
   SortProjection = global (const SortP),
   ClassProjection = global (const ClassP),
 ].
@@ -156,20 +158,22 @@ Synthesizing the record declaration for the class.
 \begin{elpi}
 % For each mixin we declare a field and apply the mixin to its dependencies
 % (that are previously declared fields recorded via field-for-mixin)
-pred synthesize-fields.field-for-mixin i:gref, o:term.
+pred synthesize-fields.field-for-mixin i:@mixinname, o:term.
 pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
-synthesize-fields [] _ end-record.
-synthesize-fields [M|ML] T (field ff Name Type Decl) :- std.do! [
+synthesize-fields [] _ Decl :- Decl = end-record.
+synthesize-fields [M|ML] T Decl :- std.do! [
   get-mixin-modname M ModName,
   Name is ModName ^ "_mixin",
 
   dep1 M Deps,
   std.map Deps synthesize-fields.field-for-mixin Args,
 
-  Type = app[ global M, T| Args ],
+  Type = app[ global M, T | Args ],
+  Decl = field ff Name Type Fields,
+
   pi f\
     synthesize-fields.field-for-mixin M f =>
-    synthesize-fields ML T (Decl f)
+    synthesize-fields ML T (Fields f)
 ].
 \end{elpi}
 
