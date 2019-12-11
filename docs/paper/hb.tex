@@ -1,6 +1,8 @@
 
 \documentclass[a4paper,UKenglish,cleveref, autoref]{lipics-v2019}
 \usepackage{hyperref}
+\usepackage{minted} % pip3 install pygments, pdflatex -shell-escape hb
+
 %This is a template for producing LIPIcs articles. 
 %See lipics-manual.pdf for further information.
 %for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
@@ -21,7 +23,7 @@
 \author{Cyril Cohen}{Inria, France}{Cyril.Cohen@inria.fr}{}{}
 \author{Kazuhiko Sakaguchi}{Tsukuba Univerity, Japan}{sakaguchi@coins.tsukuba.ac.jp}{}{}
 \author{Enrico Tassi}{Inria, France}{Enrico.Tassi@inria.fr}{}{}
-
+\authorrunning{C.\,Cohen and K.\,Sakaguchi and E.\,Tassi}
 % \author{John Q. Public}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional
 % \author{Joan R. Public\footnote{Optional footnote, e.g. to mark corresponding author}}{Department of Informatics, Dummy College, [optional: Address], Country}{joanrpublic@dummycollege.org}{[orcid]}{[funding]}
 % \authorrunning{J.\,Q. Public and J.\,R. Public}%TODO mandatory. First: Use abbreviated first/middle names. Second (only in severe cases): Use first author plus 'et al.'
@@ -30,7 +32,7 @@
 
 \ccsdesc[100]{General and reference~General literature}
 \ccsdesc[100]{General and reference}%TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
-
+\supplement{Source code of the Coq package: \url{https://github.com/math-comp/hierarchy-builder}}
 \keywords{Algebraic Hierarchy, Packed Classes, Coq, Elpi}%TODO mandatory; please add comma-separated list of keywords
 
 \category{}%optional, e.g. invited paper
@@ -74,6 +76,9 @@ to declare hierarchies of algebraic structures in Coq.
 
 \section{Introduction}
 Packed Classes bla bla Mathematical Components library.
+Initially in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}
+Later used in \cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}
+and MC analysis (paper? TR?)
 
 Packed Classes offer good performances compared to unbundled classes
 or telescopes and good expressiveness but are unwildy to master.
@@ -107,12 +112,59 @@ classes: instead of saying there is a CS, you say "ops from A and B should be co
 
 \section{The target language}
 an intro to packed classes
+\cite{DBLP:conf/itp/MahboubiT13}
+\cite{DBLP:conf/tphol/GarillotGMR09}
+\cite{DBLP:journals/jfp/GonthierZND13}
 
 \section{Compilation}
 this is the part of the readme that says "for each join declare a CS"
 
 \section{The implementation}
 this is about Elpi, Coq-Elpi and some code snippets
+
+Building the package:
+\newminted[elpi]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize}
+
+\begin{elpi}
+pred declare-structure i:@factoryname, o:@structurename, o:term, o:term, o:term.
+declare-structure ClassName StructureName (global (indt StructureName)) SortProjection ClassProjection :- std.do! [
+  StructureDeclaration =
+    record "type" {{ Type }} "Pack" (
+      field ff "sort" {{ Type }} s\
+      field ff "class" (app [global ClassName, s]) _\
+    end-record),
+  coq.typecheck-indt-decl StructureDeclaration,
+  coq.env.add-indt StructureDeclaration StructureName,
+
+  coq.CS.canonical-projections StructureName [some SortP, some ClassP],
+  SortProjection = global (const SortP),
+  ClassProjection = global (const ClassP),
+].
+\end{elpi}
+
+Synthesizing the record declaration for the class.
+
+\begin{elpi}
+% For each mixin we declare a field and apply the mixin to its dependencies
+% (that are previously declared fields recorded via field-for-mixin)
+pred synthesize-fields.field-for-mixin i:gref, o:term.
+pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
+synthesize-fields [] _ end-record.
+synthesize-fields [M|ML] T (field ff Name Type Decl) :- std.do! [
+  get-mixin-modname M ModName,
+  Name is ModName ^ "_mixin",
+
+  dep1 M Deps,
+  std.map Deps synthesize-fields.field-for-mixin Args,
+
+  Type = app[ global M, T| Args ],
+  pi f\
+    synthesize-fields.field-for-mixin M f =>
+    synthesize-fields ML T (Decl f)
+].
+\end{elpi}
+
+
 
 \section{Benchmark}
 if we can port ssralg, or not...
@@ -122,11 +174,10 @@ about packed classes: Garillot and co, say again what we improve.
 
 about describing a hierarchy, Cyril you should really give it a read and compare
 it with our language:
-Theory Presentation Combinators (OConnor , Carette) \url{https://arxiv.org/abs/1204.0053},
+Theory Presentation Combinators (OConnor , Carette) \cite{CaretteCombinators}
 
 about organizing knowledge (they are more focused on description rather than inference)
-MMT (Kolhase , co) \url{https://www.sciencedirect.com/science/article/pii/S0890540113000631}
-
+MMT (Kolhase , co) \cite{RABE20131}
 \section{Conclusion}
 
 we lower the barrier via a high level language and an implementation.
@@ -134,6 +185,9 @@ we lower the barrier via a high level language and an implementation.
 what can be used in other systems?
 
 maybe we should generate v code? at least declare instance has to be in vanilla Coq, PR opened.
+
+\bibliography{biblio}
+
 
 \end{document}
 
