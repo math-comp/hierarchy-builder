@@ -120,7 +120,16 @@ an intro to packed classes
 this is the part of the readme that says "for each join declare a CS"
 
 \section{The implementation}
-this is about Elpi, Coq-Elpi and some code snippets
+this is about Elpi, Coq-Elpi and some code snippets. Things that are covered:
+\begin{description}
+  \item[record ADT] for declaring records, with telescopic fields, see the LP binder for s
+  \item[quotations]  for Coq terms, here just Type for some level i
+  \item[api]  in the coq namespace (typecheck and declare) and CS (fetch generated projections)
+  \item[app/global term constructor] maybe use quotations here, mayby only in comment tp clarify (since later we need the raw syntax for app)
+  \item[dep1] DB for mixin dependencies, maybe rename hb.dep1
+  \item[pi and implication] for binder mobility
+\end{description}
+Consider using always X = stuff for an output X
 
 Building the package:
 \newminted[elpi]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize}
