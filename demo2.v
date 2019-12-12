@@ -98,7 +98,9 @@ toporec ES [X|XS] VS PS VS'' PS'' :-
 
 
 pred toposort i: list (pair A A), i: list A, o: list A.
-toposort ES XS XS' :- toporec ES XS [] [] _ XS'.
+toposort ES XS XS'' :-
+  toporec ES XS [] [] _ XS',
+  std.filter XS' (std.mem XS) XS''.
 
 pred mk-edge i:prop, o:list (pair @mixinname @mixinname).
 mk-edge (dep1 M Deps) L :-
@@ -108,8 +110,7 @@ pred toposort-mixins i:list @mixinname, o:list @mixinname.
 toposort-mixins In Out :- std.do! [
   std.findall (dep1 M_ Deps_) AllMixins,
   std.flatten {std.map AllMixins mk-edge} ES,
-  toposort ES In OutBroken,
-  std.filter OutBroken (std.mem In) Out, % TODO: fix properly
+  toposort ES In Out,
 ].
 
 %%%%% Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
