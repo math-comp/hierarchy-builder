@@ -562,9 +562,13 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(* quick test *)
+(******************************************************************************)
+(* Example 1                                                                  *)
+(******************************************************************************)
 
-Elpi declare_structure "TYPE" .
+Module Example1.
+
+Elpi declare_structure "TYPE".
 Import TYPE.Exports.
 
 Module TestTYPE.
@@ -622,27 +626,157 @@ Elpi declare_structure "RING" ASG.class_of RING_input.mixin_of.
 Print Module RING.
 Import RING.Exports.
 
-Check forall (R : RING.type) (x : R), add x zero = one.
+Check opp zero.
+Check add zero one.
 
-Require Import Bool.
+End Example1.
 
-Module EQUALITY_input. Section S.
-Variable A : Type.
-Elpi declare_context A.
-Record mixin_of := Mixin {
-  eq_op : A -> A -> bool;
-  _ : forall x y, reflect (x = y) (eq_op x y);
+(******************************************************************************)
+(* Example 2                                                                  *)
+(******************************************************************************)
+
+Module Example2.
+
+Elpi declare_structure "TYPE".
+Import TYPE.Exports.
+
+Module ASG_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A.
+ (* Check (eq_refl _ : TYPE.sort _ = A). *)
+ Record mixin_of := Mixin {
+  zero : A;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
   }.
-End S. End EQUALITY_input.
+End S. End ASG_input.
 
-Elpi declare_mixin EQUALITY_input.mixin_of.
-Elpi declare_structure "EQUALITY" EQUALITY_input.mixin_of.
-Import EQUALITY.Exports.
+Elpi declare_mixin ASG_input.mixin_of.
 
-Elpi declare_structure "DISCRETERING" RING.class_of EQUALITY_input.mixin_of.
+Elpi declare_structure "ASG" ASG_input.mixin_of.
+Import ASG.Exports.
 
-Import DISCRETERING.Exports.
+Print Module ASG.Exports.
 
-Check  eq_op (add one zero) one = true.
+Module AG_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A ASG_input.mixin_of.
+ Record mixin_of := Mixin {
+  opp : A -> A;
+  _ : left_inverse zero opp add;
+  }.
+End S. End AG_input.
 
-Fail Elpi declare_structure "DISCRETEASG" ASG.class_of EQUALITY_input.mixin_of.
+Elpi declare_mixin AG_input.mixin_of.
+
+Elpi declare_structure "AG" ASG_input.mixin_of AG_input.mixin_of.
+Import AG.Exports.
+
+Print Module AG.Exports.
+
+Check opp zero.
+
+Module RING_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A ASG_input.mixin_of.
+
+ Record mixin_of := Mixin {
+  one : A;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
+
+End S. End RING_input.
+
+Elpi declare_mixin RING_input.mixin_of.
+
+Elpi declare_structure "RING" ASG_input.mixin_of AG_input.mixin_of RING_input.mixin_of.
+Import RING.Exports.
+
+Print Module RING.Exports.
+
+Check add zero one.
+Check opp one.
+
+End Example2.
+
+(******************************************************************************)
+(* Example 3                                                                  *)
+(******************************************************************************)
+
+Module Example3.
+
+Elpi declare_structure "TYPE".
+Import TYPE.Exports.
+
+Module ASG_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A.
+ (* Check (eq_refl _ : TYPE.sort _ = A). *)
+ Record mixin_of := Mixin {
+  zero : A;
+  add : A -> A -> A;
+  _ : associative add;
+  _ : commutative add;
+  _ : left_id zero add;
+  }.
+End S. End ASG_input.
+
+Elpi declare_mixin ASG_input.mixin_of.
+
+Elpi declare_structure "ASG" ASG_input.mixin_of.
+Import ASG.Exports.
+
+Print Module ASG.Exports.
+
+Module AG_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A ASG_input.mixin_of.
+ Record mixin_of := Mixin {
+  opp : A -> A;
+  _ : left_inverse zero opp add;
+  }.
+End S. End AG_input.
+
+Elpi declare_mixin AG_input.mixin_of.
+
+Elpi declare_structure "AG" ASG_input.mixin_of AG_input.mixin_of.
+Import AG.Exports.
+
+Print Module AG.Exports.
+
+Module SRIG_input. Section S.
+ Variable A : Type.
+ Elpi declare_context A ASG_input.mixin_of.
+ Record mixin_of := Mixin {
+  one : A;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  _ : left_zero zero mul;
+  _ : right_zero zero mul;
+  }.
+End S. End SRIG_input.
+
+Elpi declare_mixin SRIG_input.mixin_of.
+
+Elpi declare_structure "SRIG" ASG_input.mixin_of SRIG_input.mixin_of.
+Import SRIG.Exports.
+
+Elpi declare_structure "RING" ASG_input.mixin_of AG_input.mixin_of SRIG_input.mixin_of.
+Import RING.Exports.
+
+Check opp zero. (* ASG.sort _ = AG.sort _ *)
+Check add zero one. (* ASG.sort _ = SRIG.sort _ *)
+Check opp one. (* AG.sort _ = SRIG.sort _ *)
+
+End Example3.
