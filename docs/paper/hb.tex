@@ -2,9 +2,9 @@
 \documentclass[a4paper,UKenglish,cleveref, autoref]{lipics-v2019}
 \usepackage{hyperref}
 \usepackage{minted} % pip3 install pygments, pdflatex -shell-escape hb
-\newminted[elpicode]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize}
+\newminted[elpicode]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize,escapeinside=\%\%}
 \newmintinline[elpi]{elpi.py:ElpiLexer -x}{fontsize=\small}
-\newminted[coqcode]{coq}{linenos=true,fontsize=\footnotesize}
+\newminted[coqcode]{coq}{linenos=true,fontsize=\footnotesize,mathescape}
 \newmintinline[coq]{coq}{fontsize=\small}
 
 %This is a template for producing LIPIcs articles. 
@@ -143,8 +143,7 @@ records, coercions, canonical structures, modules, implicit arguments, etc.
 Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
 of $\lambda$Prolog~\cite{Miller:2012:PHL:2331097}, an higher order
 logic programming language that makes it easy to manipulate abstract syntax
-tree with binders.\\
-Coq-Elpi takes full adavantage of this capability by representing
+tree with binders. Coq-Elpi takes full adavantage of this capability by representing
 Coq terms in HOAS style, reusing the binder of the programming language in order
 to reprent Coq's ones. Here an excerpt of the data type of Coq terms:
 
@@ -156,7 +155,7 @@ type app    list term -> term.               % eg: app [hd|args]
 ... % all other term constructors are omitted for brevity
 \end{elpicode}
 
-In this syntax the Coq term \verb+(fun x : nat => x x)+ becomes
+In this syntax the Coq term \coq{(fun x : nat => x x)} becomes
 \elpi{(fun (global ...) x\ app[x, x])} where \elpi{x\} binds \elpi{x} in
 what follows (the body of the function). The type \elpi{gref} decorates the
 name of global constants: inductive types, constructors and constants.
@@ -192,16 +191,15 @@ projections.
 TODO: @classname
 \begin{elpicode}
 pred declare-structure i:@factoryname, o:term, o:term, o:term.
+
 declare-structure ClassName Structure SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
       field ff "sort" {{ Type }} s\
       field ff "class" (app [global ClassName, s]) _\
     end-record),
-
   coq.typecheck-indt-decl StructureDeclaration,
   coq.env.add-indt StructureDeclaration StructureName,
-
   coq.CS.canonical-projections StructureName [some SortP, some ClassP],
   Structure = global (indt StructureName),
   SortProjection = global (const SortP),
@@ -229,7 +227,7 @@ The class record has one field per mixin and each of them
 can depend on the previous ones.
 In order to synthesize terms with binders in an inductive fashion (using
 a recursive predicate) $\lambda$Prolog lets one postulate fresh nominal
-constants using the \elpi{pi n\} operator and attach to the
+constants using the \elpi{pi} operator and attach to the
 nominal some knowledge in the form of a clause via the \elpi{=>} operator.
 This process is called binder mobility: the binder is moved from
 the data (that we are bilding) to the program (the context of the
@@ -238,24 +236,21 @@ This feature is key to in the following snippet that synthesizes the
 declaration of the fields of the class.
 
 \begin{elpicode}
-% For each mixin we declare a field and apply the mixin to its dependencies
-% (that are previously declared fields recorded via field-for-mixin)
 pred synthesize-fields.field-for-mixin i:@mixinname, o:term.
 pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
+
 synthesize-fields [] _ Decl :- Decl = end-record.
 synthesize-fields [M|ML] T Decl :- std.do! [
   get-mixin-modname M ModName,
-  Name is ModName ^ "_mixin",
-
-  dep1 M Deps,
-  std.map Deps synthesize-fields.field-for-mixin Args,
-
+  Name is ModName ^ "_mixin",                          %\label{craft:name}%
+  dep1 M Deps, %\label{deps:fetch}%
+  std.map Deps synthesize-fields.field-for-mixin Args, %\label{deps:satisfy}%
   Type = app[ global M, T | Args ],
-  Decl = (field ff Name Type f\ Fields f),
-
-  pi m\
-    synthesize-fields.field-for-mixin M m =>
-    synthesize-fields ML T (Fields m)
+  Decl = (field ff Name Type f\
+          Fields f),
+  pi m\                                                %\label{postulate:m}%
+    synthesize-fields.field-for-mixin M m =>           %\label{postulate:satisfy}%
+    synthesize-fields ML T (Fields m)                  %\label{rec:call}%
 ].
 \end{elpicode}
 
@@ -264,14 +259,19 @@ to link a mixin to a nominal that corresponds to the record field
 for that mixin.
 
 The second predicate recurses on the list of mixins. If the list contains
-one mixin \elpi{M} then it crafts a name for it \elpi{Name} (line X), fetches its dependencies (line Y) and
-finds the (previous) record arguments hoding these mixins (line XXX). For this reason
+one mixin \elpi{M} then it crafts a name for it \elpi{Name} (line \ref{craft:name}),
+fetches its dependencies (line \ref{deps:fetch}) and
+finds the (previous) record arguments hoding these mixins (line \ref{deps:satisfy}). For this reason
 the input mixin list must be topologically sorted.
 It the build the type of current field, being the mixin name applied
 to the type (sort) and all its dependencies.
 Note that the \elpi{Fields} variable is under the binder for \elpi{f} (the current field).
-In order to recurse under than binder and process \elpi{ML} we postulate a nominal
-\elpi{m} representing the current mixin (line Z). In this way line XXX will
+In order to recurse under that binder (line \ref{rec:call})
+and process \elpi{ML} we postulate a nominal
+\elpi{m} (line \ref{postulate:m}) representing the current mixin
+(line \ref{postulate:satisfy}) and we replace \elpi{f} by \elpi{m} in
+\elpi{Fields} writing \elpi{(Fields m)}.
+In this way line \ref{deps:satisfy} will
 be able to satisfy the dependencies of the following mixins in \elpi{ML} using
 \elpi{m}
 
