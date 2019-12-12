@@ -11,9 +11,10 @@
 
 import re
 
-from pygments.lexer import RegexLexer, bygroups
+from pygments.lexer import RegexLexer, bygroups, using
 from pygments.token import Text, Comment, Operator, Keyword, Name, String, \
     Number, Punctuation
+from pygments.lexers.theorem import CoqLexer
 
 __all__ = ['ElpiLexer']
 
@@ -33,6 +34,8 @@ class ElpiLexer(RegexLexer):
         'root': [
             (r'/\*', Comment.Multiline, 'nested-comment'),
             (r'%.*', Comment.Single),
+            # quotation
+            (r'({{)([^}]*)(}})', bygroups(Punctuation,using(CoqLexer),Punctuation)),
             # character literal
             (r'0\'.', String.Char),
             (r'0b[01]+', Number.Bin),
@@ -52,13 +55,14 @@ class ElpiLexer(RegexLexer):
             (r'(\^|<|>|=<|>=|==|=:=|=|/|//|\*|\+|-)(?=\s|[a-zA-Z0-9\[])',
              Keyword),
             (r'(mod|div|not)\b', Operator),
-            (r'(global|indt|field|record|end-record|const|app|some)\b(?!-)', Operator),
+            (r'(global|indt|indc|field|record|end-record|const|app|some|fun|sort)\b(?!-)', Operator),
             (r'_', Keyword),  # The don't-care variable
             (r'^\s*pred\s', Keyword),
+            (r'^\s*external pred\s', Keyword),
             (r'\s[io]:', Keyword),
-            (r'(:-|pi\b(?!-)|=>|\\|is\b(?!-)|!)', Keyword),
-            (r'(term|record-decl|@mixinname|@structurename|@factoryname|list|pair|gref)\b(?!-)', Name.Class),
-            (r'(std|coq|CS|env)(\.)', bygroups(Name.Builtin, Punctuation)),
+            (r'(:-|pi\b(?!-)|=>|\\|kind\b(?!-)|type\b(?!-)|is\b(?!-)|!)', Keyword),
+            (r'(term|record-decl|indt-decl|@mixinname|@structurename|@factoryname|universe|list|pair|gref)\b(?!-)', Name.Class),
+            (r'(std|coq|CS|env|elpi)(\.)', bygroups(Name.Builtin, Punctuation)),
             (u'([a-z\u00c0-\u1fff\u3040-\ud7ff\ue000-\uffef]'
              u'[\\w$\u00c0-\u1fff\u3040-\ud7ff\ue000-\uffef]*)'
              u'(\\s*)(:-|-->)',
