@@ -4,8 +4,8 @@
 \usepackage{minted} % pip3 install pygments, pdflatex -shell-escape hb
 \newminted[elpicode]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize,escapeinside=\%\%}
 \newmintinline[elpi]{elpi.py:ElpiLexer -x}{fontsize=\small}
-\newminted[coqcode]{coq}{linenos=true,fontsize=\footnotesize,mathescape}
-\newmintinline[coq]{coq}{fontsize=\small}
+\newminted[coqcode]{elpi.py:CoqElpiLexer -x}{linenos=true,fontsize=\footnotesize,mathescape}
+\newmintinline[coq]{elpi.py:CoqElpiLexer -x}{fontsize=\small}
 
 %This is a template for producing LIPIcs articles. 
 %See lipics-manual.pdf for further information.
@@ -139,39 +139,49 @@ extensive, high level, API to access and script the Coq system at the
 vernacular level.
 This API lives in the \elpi{coq.} namespace and lets one easily declare
 records, coercions, canonical structures, modules, implicit arguments, etc.
-
-Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
-of $\lambda$Prolog~\cite{Miller:2012:PHL:2331097}, an higher order
-logic programming language that makes it easy to manipulate abstract syntax
-tree with binders. Coq-Elpi takes full adavantage of this capability by representing
-Coq terms in HOAS style, reusing the binder of the programming language in order
-to reprent Coq's ones. Here an excerpt of the data type of Coq terms:
+The most basic Coq data type exposed to Elpi is the one of references to global
+declarations:
 
 \begin{elpicode}
-kind term type.
-type global gref -> term.                    % eg: nat, S, Nat.add ...
-type fun    term -> (term -> term) -> term.  % eg: fun x : t => b(x)
-type app    list term -> term.               % eg: app [hd|args]
-... % all other term constructors are omitted for brevity
-\end{elpicode}
-
-In this syntax the Coq term \coq{(fun x : nat => x x)} becomes
-\elpi{(fun (global ...) x\ app[x, x])} where \elpi{x\} binds \elpi{x} in
-what follows (the body of the function). The type \elpi{gref} decorates the
-name of global constants: inductive types, constructors and constants.
-
-\begin{elpicode}
-kind gref type.
+kind gref  type.
 type indt  @inductive -> gref.    % eg: Coq.Init.Datatypes.nat
 type indc  @constructor -> gref.  % eg: Coq.Init.Datatypes.O
 type const @constant -> gref.     % eg: Coq.Init.Peano.plus
 \end{elpicode}
 
-These names are opaque to Elpi, that can only use them via dedicated APIs.
-For example the following API lets one declare a record (more generally an
-inductive type) and returns its name. \elpi{external pred} documents a
-built in predicate by annotattin with \elpi{i:} (for input) and \elpi{o:}
-(for output) the type of the arguments.
+The arguments of the three constructors are opaque to Elpi, that can only use
+them via dedicated APIs. For example the API for declaring an inductive type
+will generate a value of type \elpi{@inductive} that would be printed
+as \elpi{«nat»}.
+
+Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
+of $\lambda$Prolog~\cite{Miller:2012:PHL:2331097}, an higher order
+logic programming language that makes it easy to manipulate abstract syntax
+tree with binders. Coq-Elpi takes full adavantage of this capability by
+representing Coq terms in HOAS style, reusing the binder of the programming
+language in order to reprent Coq's ones. Here an excerpt of the data
+type of Coq terms:
+
+\begin{elpicode}
+kind term type.
+type global gref -> term.                    % eg: nat, O, S, plus, ...
+type fun    term -> (term -> term) -> term.  % eg: fun x : t => b(x)
+type app    list term -> term.               % eg: app [hd|args]
+... % all other term constructors are omitted for brevity
+\end{elpicode}
+
+Notice that the \elpi{fun} constructor holds $\lambda$Prolog function.
+In this syntax the Coq term \coq{(fun x : nat => x x)} becomes
+\elpi{(fun (global (indt «nat»)) x\ app[x, x])} where \elpi{x\} binds \elpi{x}
+in the body of the function. Substitution of a bound variable for a term
+can be computed by applying a term (of function type) to an argument.
+
+Data types with binders are also used as input to high level APIs that build
+terms behind the scenes. For example a Coq record is just an inductive type
+and the API do declare one must allow the type of a field to depend on the
+fields that comes before it. Notice that the \elpi{field} constructor
+takes a coercion flag, the name of the field, its type and binds a term
+in the remaining record declaration.
 
 \begin{elpicode}
 kind indt-decl type.
@@ -184,10 +194,21 @@ external pred coq.env.add-indt i:indt-decl, o:@inductive.
 external pred coq.CS.canonical-projections i:@inductive, o:list (option @constant).
 \end{elpicode}
 
-We comment these two builtin predicates
-while looking at the code that declares the structure record given the
-name of the class and produces three terms: the structure and the two
-projections. TODO: @factoryname -> @classname
+The \elpi{pred} keyword documents a the type and modes (input or output) of the
+arguments of a predicate, while \elpi{external} signal the implementation is
+in OCaml (rather than $\lambda$Prolog), that is the predicate is a builtin one.
+
+We comment these two builtin predicates and the \elpi{indt-decl} type
+while looking at the code of \elpi{declare-structure} that is in charge
+of scripting the following Coq code (given as a parameter \coq{class_of}):
+
+\begin{coqcode}
+Record type : Type := Pack { sort : Type; class : class_of sort }.
+\end{coqcode}
+  
+The Elpi code builds the declaration, typechecks it, adds it to the
+Coq environment and returns the projections for the sort and the class
+fields (it is handy to have them in the rest of the code). TODO: @factoryname -> @classname
 
 \begin{elpicode}
 pred declare-structure i:@factoryname, o:term, o:term, o:term.
@@ -195,7 +216,7 @@ pred declare-structure i:@factoryname, o:term, o:term, o:term.
 declare-structure ClassName Structure SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
-      field ff "sort" {{ Type }} s\
+      field ff "sort" {{ Type }} s\                        %\label{binder:sort}%
       field ff "class" (app [global ClassName, s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
@@ -207,25 +228,18 @@ declare-structure ClassName Structure SortProjection ClassProjection :- std.do! 
 ].
 \end{elpicode}
 
-The code up to line \ref{record:decl} amounts to the following Coq code
-(when the value of the argument \elpi{ClassName} is \coq+class_of+):
-
-\begin{coqcode}
-Record type : Type := Pack { sort : Type; class : class_of sort }.
-\end{coqcode}
-
-Note that the binder \elpi{s\} at line 5 lets one mention the first field
-in the type of the second. The syntax \elpi{{{ Type }}} is a quotation: it lets
+Note that the binder \elpi{s\} at line \ref{binder:sort} lets one mention
+the first field in the type of the second.
+The syntax \elpi{{{ Type }}} is a quotation: it lets
 one use the sytnax of Coq to write an Elpi term of type \elpi{term}.
-When a record is declared Coq synthesizes the projections
-automatically: the API \elpi{coq.CS.canonical-projection} lets us find them.
-Finally, this program makes no use of backtraking and signal it using the
-\elpi{std.do!} builtin to declare that no choice point have to be kept.
+The API \elpi{coq.CS.canonical-projection} lets us find the projections
+of a record automatically generated by Coq.
+The last detail worth discussing is that this program makes no use of
+backtraking and it signat it by using the \elpi{std.do!} builtin.
 
-In this simple case the number of fields, and hence the number of
-binders, is fixed.
-The class record has one field per mixin and each of them
-can depend on the previous ones.
+In the simple case of the structure record the number of fields, and hence
+the number of binders, is fixed. On the contrary the class record has one
+field per mixin and each of them can depend on the previous ones.
 In order to synthesize terms with binders in an inductive fashion (using
 a recursive predicate) $\lambda$Prolog lets one postulate fresh nominal
 constants using the \elpi{pi} operator and attach to the
@@ -234,7 +248,7 @@ This process is called binder mobility: the binder is moved from
 the data (that we are bilding) to the program (the context of the
 current computation).
 This feature is key to in the following snippet that synthesizes the
-declaration of the fields of the class.
+declaration of the fields of the class record.
 
 \begin{elpicode}
 pred synthesize-fields.field-for-mixin i:@mixinname, o:term.
@@ -246,7 +260,7 @@ synthesize-fields [M|ML] T Decl :- std.do! [
   Name is ModName ^ "_mixin",                          %\label{craft:name}%
   dep1 M Deps, %\label{deps:fetch}%
   std.map Deps synthesize-fields.field-for-mixin Args, %\label{deps:satisfy}%
-  Type = app[ global M, T | Args ],
+  Type = app[ global M, T | Args ],                    %\label{build:type}%
   Decl = (field ff Name Type f\
           Fields f),
   pi m\                                                %\label{postulate:m}%
@@ -257,51 +271,60 @@ synthesize-fields [M|ML] T Decl :- std.do! [
 
 The first predicate \elpi{synthesize-fields.field-for-mixin} is used
 to link a mixin to a nominal that corresponds to the record field
-for that mixin.
+for that mixin. It has no clause in the base program but some clauses will
+are added dynamically by \elpi{synthesize-fields}.
 
-The second predicate recurses on the list of mixins. If the list contains
-one mixin \elpi{M} then it crafts a name for it \elpi{Name} (line \ref{craft:name}),
+The second predicate recurses on the (topologically sorted) list of mixins,
+and terminates when the list is empty. If the list contains one mixin \elpi{M}
+then it crafts a name for it \elpi{Name} (line \ref{craft:name}),
 fetches its dependencies (line \ref{deps:fetch}) and
-finds the (previous) record arguments hoding these mixins (line \ref{deps:satisfy}). For this reason
-the input mixin list must be topologically sorted.
-It the build the type of current field, being the mixin name applied
+finds the (previous) record arguments hoding these mixins (line \ref{deps:satisfy}).
+The \elpi{(std.map L1 P L2} predicate relates the two lists \elpi{L1} and
+\elpi{L2} pointwise using the predicate \elpi{P}.
+
+Line \ref{build:type} builds the type of the field to be the mixin name applied
 to the type (sort) and all its dependencies.
-Note that the \elpi{Fields} variable is under the binder for \elpi{f} (the current field).
+Notice that the \elpi{Fields} variable, representing the declaration of the
+yet to be built fields, is under the binder for \elpi{f} (the current field).
 In order to recurse under that binder (line \ref{rec:call})
-and process \elpi{ML} we postulate a nominal
-\elpi{m} (line \ref{postulate:m}) representing the current mixin
-(line \ref{postulate:satisfy}) and we replace \elpi{f} by \elpi{m} in
-\elpi{Fields} writing \elpi{(Fields m)}.
-In this way line \ref{deps:satisfy} will
-be able to satisfy the dependencies of the following mixins in \elpi{ML} using
-\elpi{m}
+and recursively process \elpi{ML} we postulate a nominal
+\elpi{m} (line \ref{postulate:m}) satisfying any future dependency on the
+current mixin (line \ref{postulate:satisfy}) and we replace \elpi{f} by
+\elpi{m} in \elpi{Fields} by writing \elpi{(Fields m)}.
 
+The code of \elpi{synthesize-fields} makes an idiomatic use
+of \elpi{=>} in $\lambda$Prolog: the current program is temporarily
+extended with a clause. The same operation, but with a persistent
+effect, is also made available by Coq-Elpi via a dedicated API to extend
+data bases. A data base is a named set of clauses and
+commands typically are built by accumulating specific clauses on top
+of a data base. Here an excerpt of the \verb+hierarchy.db+ data base and
+of the \elpi{declare_mixin} command. Text between \verb+lp:{{+ and \verb+}}+
+is Elpi code embedded in a Coq file, and all the vernacular commands beginning
+with \coq{Elpi} are provided by the Coq-Elpi plugin.
 
-Being a descendent of Prolog, Elpi is based on rules (clauses) that
-represent both the code of the program and preexisting knowledge, for
-example about the \elpi{class} predicate links the name of a class,
-the name of its structure and the list of mixins cmoposing the class,
-in other words the predicate holds for all the classes part of the hierarchy.
-Being made of clauses a program can be easily extended by adding extra
-clauses to it, and being Prolog a homoiconic language its programs can easily
-manipalte its own syntax and in particular syntesize new clauses.
+\begin{coqcode}
+Elpi Db hierarchy.db lp:{{
+  pred dep1 o:@mixinname, o:list @mixinname.
+  ... % for brevity we omit class and join
+}}.
+Elpi Command declare_mixin.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+  main [str S] :- !, std.do! [
+    coq.locate S M,
+    coq.env.typeof-gr M Ty,
+    gather-mixin-dendencies Ty [] ML,
+    coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
+    ...
+  ].
+  main _ :- coq.error "Usage: declare_mixin <mixin>".
+}}.
+\end{coqcode}
 
-The use of \elpi{=>} is just an occurrence of this. We use it for the DB
-as well, eg dep1 before. See the code for declare\_mixin
-
-\begin{elpicode}
-pred dep1 o:@mixinname, o:list @mixinname.
-main [str M] :- !, std.do! [
-  coq.locate M GR,
-  coq.env.typeof-gr GR Ty,
-  gather-mixin-dendencies Ty [] Mix,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
-  ...
-].
-\end{elpicode}
-
-Line XX crafs a clause \elpi{(dep1 GR Mix)} that is added to
-"hierarchy.db", a set of clauses used by all the commands part of \hb{}.
+Line 11 computes the dependencies of mixin \elpi{M} given
+its type and line 12 crafs a clause for \elpi{dep1} and
+adds it to the data base \elpi{"hierarchy.db"}.
 
 \section{Benchmark}
 if we can port ssralg, or not...

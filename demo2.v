@@ -170,14 +170,14 @@ gather-mixin-dendencies (sort _) Acc Acc.
 gather-mixin-dendencies Ty Acc Res :- whd1 Ty Ty1, !, gather-mixin-dendencies Ty1 Acc Res.
 gather-mixin-dendencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
 
-main [str M] :- !, std.do! [
-  coq.locate M GR,
-  coq.env.typeof-gr GR Ty,
-  gather-mixin-dendencies Ty [] Mix,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 GR Mix)),
-  % TODO: ID should be: fun m1..mn (x : GR m1 ..mn) => x
+main [str S] :- !, std.do! [
+  coq.locate S M,
+  coq.env.typeof-gr M Ty,
+  gather-mixin-dendencies Ty [] ML,
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
+  % TODO: ID should be: fun m1..mn (x : M m1 ..mn) => x
   ID = {{ fun x : nat => x }},
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from GR GR ID)),
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from M M ID)),
 ].
 main _ :- coq.error "Usage: declare_mixin <mixin>".
 
