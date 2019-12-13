@@ -112,18 +112,99 @@ a hierarchy not breaking user code. Then say "without our too it would break her
 
 this section should be readable by non packed classes expert.
 
-\section{The user language}
+\section{The user language of \hb{}}
 This is the contents of the readme, with high level invariants (not related to packed
 classes: instead of saying there is a CS, you say "ops from A and B should be compatible")
 
-\section{The target language}
-an intro to packed classes
-\cite{DBLP:conf/itp/MahboubiT13}
-\cite{DBLP:conf/tphol/GarillotGMR09}
-\cite{DBLP:journals/jfp/GonthierZND13}
+
+
+
+\section{The target language: Packed, flat, Classes}
+The language of packed classes were introduces in
+\cite{DBLP:conf/tphol/GarillotGMR09} and used directly to describe the
+algebraic hierarchy of the Mathematical Components library.
+It is based on a disciplined use of records and projections and on the extension
+mechanism of Canonical Structures.
+
+\subsection{Describing a structure}
+
+\begin{coqcode}
+Module S.
+  Record mixin A C := {
+    one : A;
+    op : A -> A -> A;
+    _ : forall x, C.op (op x) = one
+  }
+  Record class_of A := {
+    base : T.class_of A;
+    mix  : mixin A base
+  }.
+  Record type := Pack {
+    sort : Type;
+    class : class_of sort
+  }.
+  Module Exports.
+  Coercion sort : type >-> Sortclass.
+  Definition op {T : type} : T -> T -> T := ...
+  Definition one {T:  type} : T := ...
+  Infix "*" := op.
+  Infix "1" := one.
+  End Exports.
+End S.
+\end{coqcode}
+
+The module plays the role of a name space.
+Export submodule is there because... I don't know.
+
+\subsection{Linking structures and inferring instances}
+
+The mechanism of Canonical Structures~\cite{DBLP:conf/itp/MahboubiT13}
+lets the user extend the elaborator of the Coq prover. This software component
+takes in input a term as written by the user and has to infer all the missing
+piece of information that is necessary to make the term well typed.
+
+Example x + y * z
+
+Here + and * come respectively from, but we are mising them, so we have
+to find a common type that makes it work. This information comes from
+the hierarchy and the links between the structures. The low level mechanism
+is the unifier that compares p1 \_ = p2 \_ and has to find a common
+superstructure...
+
+The language lets us only write hints of the form p s = v, so we need two
+of them here: (p1 s1 = p2 x) and (p1 y = p2 s2) for any x y.
+
+Similarly one can apply an algebraic thoery to an instance (an example)
+of a structure. Eg 1 * 2 + 3. The same mechanism of CS let us
+extend the unifier to solve p1 \_ = nat.
+
+\subsection{The flatten variant}
+
+Describing a structure by proving a base class and a mixin is very conveniet
+if one does it by hand, since it is more concise that spelling out all the
+mixins by hand and is also closer to the user language one desires.
+
+Since we are going to synthesize code automatically the have the freedom
+to organize mixins as we wish while retaining a compact user language.
+We chose to generate classes from scartch, listing all the involved
+mixins since this more uniform.
+
+TODO: Example of a by had flatten class, maybe the one of the join.
+
+\subsection{Other target languages}
+
+We could have chosen nested records (pollack) or unbundled (spitters)
+but both have serious performance issue, the latter partially mitigated by
+the addition of primitive records. TC implementation in Coq is not as
+reliable as CS.
+
+It is a virtue of our work to provide a user language that is separate
+from the implementation one, so we could in principle target any other
+equally expressive language without the user noticing.
 
 \section{Compilation}
 this is the part of the readme that says "for each join declare a CS"
+
 
 \newpage
 \section{The implementation}
@@ -314,7 +395,7 @@ Elpi Accumulate lp:{{
   main [str S] :- !, std.do! [
     coq.locate S M,
     coq.env.typeof-gr M Ty,
-    gather-mixin-dendencies Ty [] ML,
+    gather-mixin-dendencies Ty [] ML, % implementation omitted for brevity
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
     ...
   ].
