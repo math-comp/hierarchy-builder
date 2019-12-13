@@ -184,11 +184,11 @@ external pred coq.env.add-indt i:indt-decl, o:@inductive.
 external pred coq.CS.canonical-projections i:@inductive, o:list (option @constant).
 \end{elpicode}
 
-We comment it while looking at the code that declares the structure record given the
+We comment these two builtin predicates
+while looking at the code that declares the structure record given the
 name of the class and produces three terms: the structure and the two
-projections.
+projections. TODO: @factoryname -> @classname
 
-TODO: @classname
 \begin{elpicode}
 pred declare-structure i:@factoryname, o:term, o:term, o:term.
 
@@ -199,7 +199,7 @@ declare-structure ClassName Structure SortProjection ClassProjection :- std.do! 
       field ff "class" (app [global ClassName, s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
-  coq.env.add-indt StructureDeclaration StructureName,
+  coq.env.add-indt StructureDeclaration StructureName,     %\label{record:decl}%
   coq.CS.canonical-projections StructureName [some SortP, some ClassP],
   Structure = global (indt StructureName),
   SortProjection = global (const SortP),
@@ -207,8 +207,8 @@ declare-structure ClassName Structure SortProjection ClassProjection :- std.do! 
 ].
 \end{elpicode}
 
-The code up to line 10 amounts to the following Coq code, assuming
-that the value of the argument \elpi{ClassName} is \coq+class_of+:
+The code up to line \ref{record:decl} amounts to the following Coq code
+(when the value of the argument \elpi{ClassName} is \coq+class_of+):
 
 \begin{coqcode}
 Record type : Type := Pack { sort : Type; class : class_of sort }.
@@ -222,7 +222,8 @@ automatically: the API \elpi{coq.CS.canonical-projection} lets us find them.
 Finally, this program makes no use of backtraking and signal it using the
 \elpi{std.do!} builtin to declare that no choice point have to be kept.
 
-In this simple case the number of fields, and hence binders, is fixed.
+In this simple case the number of fields, and hence the number of
+binders, is fixed.
 The class record has one field per mixin and each of them
 can depend on the previous ones.
 In order to synthesize terms with binders in an inductive fashion (using
