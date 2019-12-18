@@ -7,6 +7,9 @@
 \newminted[coqcode]{elpi.py:CoqElpiLexer -x}{linenos=true,fontsize=\footnotesize,mathescape}
 \newmintinline[coq]{elpi.py:CoqElpiLexer -x}{fontsize=\small}
 
+\newcommand{\coqelpi}{Coq-Elpi}
+\newcommand{\F}{\emph{Factory}}
+
 %This is a template for producing LIPIcs articles. 
 %See lipics-manual.pdf for further information.
 %for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
@@ -37,7 +40,7 @@
 \ccsdesc[100]{General and reference~General literature}
 \ccsdesc[100]{General and reference}%TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
 \supplement{Source code of the Coq package: \url{https://github.com/math-comp/hierarchy-builder}}
-\keywords{Algebraic Hierarchy, Packed Classes, Coq, Elpi}%TODO mandatory; please add comma-separated list of keywords
+\keywords{Algebraic Hierarchy, Packed Classes, Coq, Elpi, Metaprogramming, $\lambda$Prolog}%TODO mandatory; please add comma-separated list of keywords
 
 \category{}%optional, e.g. invited paper
 
@@ -68,7 +71,6 @@
 \ArticleNo{23}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newcommand{\hb}{Hierarchy Builder}
 
 \begin{document}
 
@@ -76,25 +78,39 @@
 
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
-In this paper we design and implement a high level language
-to declare hierarchies of algebraic structures in Coq.
+In this paper we design a high level language
+to declare hierarchies of algebraic structures in Coq and
+we provide an implementation base on the Elpi extension language.
 \end{abstract}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-Packed Classes bla bla Mathematical Components library.
-Initially in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}
-Later used in \cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}
+As of today The Mathematical Components library for the Coq system
+provides the richest formal hierarchy of algebraic structures available:
+groups, rings.... w/wo order, finite or countable, ...
+The hierarcy is used to organize a large corpus of formal proofs and
+is validate bu lange ones such as the 4CT and OOTHM.
+The hierarchy is based on the discipline of Packed Classes initially introduced
+in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13} and later also used in
+\cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}
 and MC analysis (paper? TR?)
 
-Packed Classes offer good performances compared to unbundled classes
-or telescopes and good expressiveness but are unwildy to master.
-To declare a hierarchy one does not only need to know all the details, but
-also to declare a coercions and CS instance in a number that is 
-quadratic in the size... and also error prone... Moreover changes to an
+We call Packed Classes a discpline, and not a language, because, in spite of
+its many virtues, it is unwidly to use. In particular it leaks to the user
+of the Coq system many of the technical details and compromises that were
+needed in order to have it work reliably and efficiently. As as result one
+needs to be an expert in order to master it, and even experts forget
+to adhere to the discipline as shown in KS paper at CoqWS portland + TR?
+
+Other approaches to declare hierarchies exist and were used in X y but
+apparently failed to scale. Eg coquelicot stanted like that and then felt.
+
+Moreover changes to an
 already published hierarchy almost certainly break the code users.
 
 In this paper we design a high level language for the Coq system to describe
-hierarchies. This language introduces the notion of \emph{factory} that is key
+hierarchies. We call this language \F{} (do you like it Cyril?)
+This language introduces the notion of \emph{factory} that is key
 to modify an existing hierarchy without breaking client code of the hierarchy.
 The language is elaborated in terms of records, coercions and canonical
 structure declarations, the same pillars on which packed classes stand on.
@@ -105,6 +121,7 @@ axioms of the structure instead of nesting previously declared classes
 into new ones.
 We implement this language using the ELPI extension language for Coq.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \section{Example: building and evolving a hierarchy}
 the more I think about it and the more I believe we should not 
 present packed classes here, but just our code and the evolution of
@@ -112,21 +129,23 @@ a hierarchy not breaking user code. Then say "without our too it would break her
 
 this section should be readable by non packed classes expert.
 
-\section{The user language of \hb{}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The user language of \F{}}
 This is the contents of the readme, with high level invariants (not related to packed
 classes: instead of saying there is a CS, you say "ops from A and B should be compatible")
 
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The target language: Packed, flat, Classes}
 The language of packed classes were introduces in
 \cite{DBLP:conf/tphol/GarillotGMR09} and used directly to describe the
 algebraic hierarchy of the Mathematical Components library.
-It is based on a disciplined use of records and projections and on the extension
-mechanism of Canonical Structures.
+It is based on a disciplined use of records and projections and
+on the possibility of extending the elaborator of Coq
+via the declaration of Canonical Structures instances.
 
-\subsection{Describing a structure}
+\subsection{Describing a structure with record and projections}
 
 \begin{coqcode}
 Module S.
@@ -144,11 +163,11 @@ Module S.
     class : class_of sort
   }.
   Module Exports.
-  Coercion sort : type >-> Sortclass.
-  Definition op {T : type} : T -> T -> T := ...
-  Definition one {T:  type} : T := ...
-  Infix "*" := op.
-  Infix "1" := one.
+    Coercion sort : type >-> Sortclass.
+    Definition op {T : type} : T -> T -> T := ...
+    Definition one {T:  type} : T := ...
+    Infix "*" := op.
+    Infix "1" := one.
   End Exports.
 End S.
 \end{coqcode}
@@ -156,7 +175,7 @@ End S.
 The module plays the role of a name space.
 Export submodule is there because... I don't know.
 
-\subsection{Linking structures and inferring instances}
+\subsection{Linking structures and instances via Canonical Structures}
 
 The mechanism of Canonical Structures~\cite{DBLP:conf/itp/MahboubiT13}
 lets the user extend the elaborator of the Coq prover. This software component
@@ -189,7 +208,7 @@ to organize mixins as we wish while retaining a compact user language.
 We chose to generate classes from scartch, listing all the involved
 mixins since this more uniform.
 
-TODO: Example of a by had flatten class, maybe the one of the join.
+TODO: Example of a by hand flatten class, maybe the one of the join.
 
 \subsection{Other target languages}
 
@@ -202,16 +221,17 @@ It is a virtue of our work to provide a user language that is separate
 from the implementation one, so we could in principle target any other
 equally expressive language without the user noticing.
 
-\section{Compilation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Compilation}\label{sec:compilation}
 this is the part of the readme that says "for each join declare a CS"
 
 
-\newpage
-\section{The implementation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The implementation}\label{sec:implementation}
 
 The implementation is based on the Elpi
 extension language for Coq. In this section we introduce the features of the
-programming language that came handy in the development of \hb{} and
+programming language that came handy in the development of \F{} and
 commenting a few code snippets.
 
 Coq-Elpi~\cite{CoqElpi} is a Coq plugin embedding
@@ -223,6 +243,11 @@ records, coercions, canonical structures, modules, implicit arguments, etc.
 The most basic Coq data type exposed to Elpi is the one of references to global
 declarations:
 
+\marginpar{it may worth cheting and removing the @ for this paper, so that
+all primitive types are simply in red, while the ones with an ADT in blue.
+At some point Elpi will support type abbreviations and no @ will be needed.
+Then we can put a footnote in case one peeks at the code.}
+
 \begin{elpicode}
 kind gref  type.
 type indt  @inductive -> gref.    % eg: Coq.Init.Datatypes.nat
@@ -231,9 +256,9 @@ type const @constant -> gref.     % eg: Coq.Init.Peano.plus
 \end{elpicode}
 
 The arguments of the three constructors are opaque to Elpi, that can only use
-them via dedicated APIs. For example the API for declaring an inductive type
-will generate a value of type \elpi{@inductive} that would be printed
-as \elpi{«nat»}.
+values of these types via dedicated APIs. For example the API for declaring
+an inductive type will generate a value of type \elpi{@inductive} that
+would be printed as, for example, \elpi{«nat»}.
 
 Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
 of $\lambda$Prolog~\cite{Miller:2012:PHL:2331097}, an higher order
@@ -276,8 +301,9 @@ external pred coq.CS.canonical-projections i:@inductive, o:list (option @constan
 \end{elpicode}
 
 The \elpi{pred} keyword documents a the type and modes (input or output) of the
-arguments of a predicate, while \elpi{external} signal the implementation is
-in OCaml (rather than $\lambda$Prolog), that is the predicate is a builtin one.
+arguments of a predicate, while \elpi{external} signals that the
+predicate is a builtin (in other words it is implemented in
+OCaml rather than $\lambda$Prolog).
 
 We comment these two builtin predicates and the \elpi{indt-decl} type
 while looking at the code of \elpi{declare-structure} that is in charge
@@ -286,10 +312,11 @@ of scripting the following Coq code (given as a parameter \coq{class_of}):
 \begin{coqcode}
 Record type : Type := Pack { sort : Type; class : class_of sort }.
 \end{coqcode}
-  
+
 The Elpi code builds the declaration, typechecks it, adds it to the
 Coq environment and returns the projections for the sort and the class
-fields (it is handy to have them in the rest of the code). TODO: @factoryname -> @classname
+fields (it is handy to have them in the rest of the code).
+TODO: @factoryname -> @classname
 
 \begin{elpicode}
 pred declare-structure i:@factoryname, o:term, o:term, o:term.
@@ -312,11 +339,11 @@ declare-structure ClassName Structure SortProjection ClassProjection :- std.do! 
 Note that the binder \elpi{s\} at line \ref{binder:sort} lets one mention
 the first field in the type of the second.
 The syntax \elpi{{{ Type }}} is a quotation: it lets
-one use the sytnax of Coq to write an Elpi term of type \elpi{term}.
+one use the sytnax of Coq to write an Elpi expression of type \elpi{term}.
 The API \elpi{coq.CS.canonical-projection} lets us find the projections
-of a record automatically generated by Coq.
+automatically generated by Coq for a given record.
 The last detail worth discussing is that this program makes no use of
-backtraking and it signat it by using the \elpi{std.do!} builtin.
+backtraking: the \elpi{std.do!} combinator signals that.
 
 In the simple case of the structure record the number of fields, and hence
 the number of binders, is fixed. On the contrary the class record has one
@@ -328,7 +355,7 @@ nominal some knowledge in the form of a clause via the \elpi{=>} operator.
 This process is called binder mobility: the binder is moved from
 the data (that we are bilding) to the program (the context of the
 current computation).
-This feature is key to in the following snippet that synthesizes the
+This feature is key to in the following code that synthesizes the
 declaration of the fields of the class record.
 
 \begin{elpicode}
@@ -339,7 +366,7 @@ synthesize-fields [] _ Decl :- Decl = end-record.
 synthesize-fields [M|ML] T Decl :- std.do! [
   get-mixin-modname M ModName,
   Name is ModName ^ "_mixin",                          %\label{craft:name}%
-  dep1 M Deps, %\label{deps:fetch}%
+  dep1 M Deps,                                         %\label{deps:fetch}%
   std.map Deps synthesize-fields.field-for-mixin Args, %\label{deps:satisfy}%
   Type = app[ global M, T | Args ],                    %\label{build:type}%
   Decl = (field ff Name Type f\
@@ -352,36 +379,38 @@ synthesize-fields [M|ML] T Decl :- std.do! [
 
 The first predicate \elpi{synthesize-fields.field-for-mixin} is used
 to link a mixin to a nominal that corresponds to the record field
-for that mixin. It has no clause in the base program but some clauses will
+for that mixin. It has no clauses in the base program but some clauses
 are added dynamically by \elpi{synthesize-fields}.
 
 The second predicate recurses on the (topologically sorted) list of mixins,
-and terminates when the list is empty. If the list contains one mixin \elpi{M}
+and terminates when the list is empty. If the list contains a mixin \elpi{M}
 then it crafts a name for it \elpi{Name} (line \ref{craft:name}),
 fetches its dependencies (line \ref{deps:fetch}) and
-finds the (previous) record arguments hoding these mixins (line \ref{deps:satisfy}).
+finds the (previous declared) record fields hoding these mixins
+(line \ref{deps:satisfy}).
 The \elpi{(std.map L1 P L2} predicate relates the two lists \elpi{L1} and
 \elpi{L2} pointwise using the predicate \elpi{P}.
 
-Line \ref{build:type} builds the type of the field to be the mixin name applied
+Line \ref{build:type} builds the type of the field: the mixin name applied
 to the type (sort) and all its dependencies.
 Notice that the \elpi{Fields} variable, representing the declaration of the
-yet to be built fields, is under the binder for \elpi{f} (the current field).
+next fields, is under the binder for \elpi{f} (the current field).
 In order to recurse under that binder (line \ref{rec:call})
 and recursively process \elpi{ML} we postulate a nominal
-\elpi{m} (line \ref{postulate:m}) satisfying any future dependency on the
-current mixin (line \ref{postulate:satisfy}) and we replace \elpi{f} by
-\elpi{m} in \elpi{Fields} by writing \elpi{(Fields m)}.
+\elpi{m} (line \ref{postulate:m}) that is a term satisfying any
+future dependency on the current mixin (line \ref{postulate:satisfy})
+and we replace \elpi{f} by \elpi{m} in \elpi{Fields} by writing
+\elpi{(Fields m)}.
 
 The code of \elpi{synthesize-fields} makes an idiomatic use
 of \elpi{=>} in $\lambda$Prolog: the current program is temporarily
 extended with a clause. The same operation, but with a persistent
-effect, is also made available by Coq-Elpi via a dedicated API to extend
+effect, is made available by Coq-Elpi via a dedicated API to extend
 data bases. A data base is a named set of clauses and
-commands typically are built by accumulating specific clauses on top
+commands are typically built by accumulating specific clauses on top
 of a data base. Here an excerpt of the \verb+hierarchy.db+ data base and
 of the \elpi{declare_mixin} command. Text between \verb+lp:{{+ and \verb+}}+
-is Elpi code embedded in a Coq file, and all the vernacular commands beginning
+is Elpi code embedded in a Coq file. All the vernacular commands beginning
 with \coq{Elpi} are provided by the Coq-Elpi plugin.
 
 \begin{coqcode}
@@ -407,28 +436,74 @@ Line 11 computes the dependencies of mixin \elpi{M} given
 its type and line 12 crafs a clause for \elpi{dep1} and
 adds it to the data base \elpi{"hierarchy.db"}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Benchmark}
-if we can port ssralg, or not...
+if we can port ssralg, or not... It would be nice, but maybe its a bit late.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related work}
 about packed classes: Garillot and co, say again what we improve.
 
-about describing a hierarchy, Cyril you should really give it a read and compare
-it with our language:
-Theory Presentation Combinators (OConnor , Carette) \cite{CaretteCombinators}
+In~\cite{CaretteCombinators} Carette and O'Connor describe the language of
+Theory Presentation Combinators that can be used to describe a hierarchy of
+algebraic structures.
+They focus on the categorical semantics of the language that is built upon
+the category of context.
+They don't describe any actual compilation to the language of a mainstream
+interactive prover, indeed they claim their language to be mostly type theory
+independent. We know they considered targeting type theory and the language
+of unification hints~\cite{10.1007/978-3-642-03359-9_8}
+(a superset of the one of Canonical Structures),
+but we could not find any written trace of that. Language wise they provides
+keywords such as \verb+combine+ and \verb+over+ to share (reuse) a property
+when defining a new structure. For example in order to avoid restating
+the commutativity property when defining abelian groups they combine
+a commutative monoid and a group focing the subjacent monoid to coincide:
+\begin{verbatim}
+CommutativeGroup := combine CommutativeMonoid , Group over Monoid
+\end{verbatim}
+In our language \F{} the same role is played by \emph{mixins}.
+A mixin lets one write once and forall a property and abstract it over types
+and operations so that it can be reused in all the structures that need it.
 
-about organizing knowledge (they are more focused on description rather than inference)
-MMT (Kolhase , co) \cite{RABE20131}
+The MMT system~\cite{RABE20131} provides a framework to describe formal
+languages in a logical framework, providing good support for binders and
+notations. It also provides an expressive module system to organize
+theories and express relations among them in the form of functors.
+At the time of writing
+it provides limited support for elaborating user input taking systematic
+advantage of the contents of the theories. The elborator can be extended
+by the user writing Scala code, and in principle use the contents of the
+libraries to make sense of an incomplete expressions, but no higher level
+language or mechanism is provided.
+
+There is also the Mizar thing~\cite{7733265}, but I need to read it first.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
+In this paper we design and implement \F{}, a high level language to describe
+hierarchies of algebraic structures. The implementation of \F{} is
+based on the Elpi excension language for the Coq system and is available
+at \url{https://github.com/math-comp/hierarchy-builder}.
 
-we lower the barrier via a high level language and an implementation.
+We believe the high level language is loosely tied to Coq or even Type Theory.
+It could hence be adopt without major changes in other tools. Indeed the
+properties and invariants that link factories, mixins and classes are key
+to rule out meaningless or ambiguous sentences and are not specific to the
+logic setting on which a prover stands.
 
-what can be used in other systems?
+The compilation scheme we present in section \ref{sec:compilation} is of
+course tied to dependent records
+and Canonical Structures, features that are tied to Coq but also available
+in other provers based on Type Theory such a Matita and Lean that provide
+unification hints, a strict superlanguage of Canonical Structures.
 
-maybe we should generate v code? at least declare instance has to be in vanilla Coq, PR opened.
+The implementation presented in section \ref{sec:implementation} is tied
+to the Coq-Elpi plugin, which provides both the Elpi language and a comprehensive
+set of APIs. While the APIs are tied to Coq, the Elpi programming language
+comes as an OCaml library and could, in principle, be linked to other provers.
 
 \bibliography{biblio}
-
 
 \end{document}
 
