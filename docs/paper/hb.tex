@@ -442,7 +442,14 @@ if we can port ssralg, or not... It would be nice, but maybe its a bit late.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related work}
-about packed classes: Garillot and co, say again what we improve.
+The closest work is the one about Packed Classes~\cite{DBLP:conf/tphol/GarillotGMR09} on which we
+build. The main differences are that \F{} is a higher level language
+that is compiled down to Flat Packed Classes. The systematic use of
+factories makes the user interface of a hierarchy stable under the insertion of
+intermediate structures in the hierarchy, a property that Packed Classes lacks.
+Finally many of the intricacy of Packed Classes are hidden to the user by
+the compilation step, making the language less error prone.
+\marginpar{ET: I guess you have more to say here}
 
 In~\cite{CaretteCombinators} Carette and O'Connor describe the language of
 Theory Presentation Combinators that can be used to describe a hierarchy of
@@ -477,7 +484,20 @@ by the user writing Scala code, and in principle use the contents of the
 libraries to make sense of an incomplete expressions, but no higher level
 language or mechanism is provided.
 
-There is also the Mizar thing~\cite{7733265}, but I need to read it first.
+The library of the Mizar system features a hierarchy of algebraic
+structures~\cite{7733265}. In spite of lacking dependent types, Mizar
+provides the concept of attributed types and adjectives
+that can be used to describe he signature of structures as one would
+do with a dependently typed record and their properties as
+one would define a conjunctive predicate.
+The Mizar language also provides the notation of cluster that is used
+to link structures: by showing that property $P$ implies property $Q$
+one can inform automation that structures characterized by $P$ are
+instances of structures characterized by $Q$. The foundational theory of Mizar
+is characterized by an extensional notion of equality that makes it easy
+to share the signature or the properties of structures by just requiring
+a proof of their equivalence that is in turn used by autmation to treat
+equivalent structures as equal.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
