@@ -83,9 +83,16 @@ locate-term-argument (trm T) T :- !, std.assert! (coq.typecheck T _) "not well t
 locate-term-argument X _ :- coq.error "not a term:" X.
 
 % TODO :document
-pred factories-provide-mixins i:list @factoryname, o:list @mixinname.
-factories-provide-mixins GRFS ML :- std.do! [
+pred mk-mixin-provided-by i:@factoryname, i:list @mixinname, o:list prop.
+mk-mixin-provided-by F ML CL :-
+  std.map ML (x\r\ r = factories-provide-mixins.mixin-provided-by F x) CL.
+
+pred factories-provide-mixins.mixin-provided-by i:@mixinname, o:@factoryname.
+pred factories-provide-mixins i:list @factoryname, o:list @mixinname, o:list prop.
+factories-provide-mixins GRFS ML Clauses :- std.do! [
   std.map GRFS factory-provides MLUnsortedL,
+  std.map2 GRFS MLUnsortedL mk-mixin-provided-by PL,
+  std.flatten PL Clauses,
   std.flatten MLUnsortedL MLUnsorted,
   toposort-mixins MLUnsorted ML,
 ].
@@ -293,7 +300,7 @@ main [str Variable|FS] :- !,
   std.map FS locate-string-argument GRFS,
 
   std.do! [
-    factories-provide-mixins GRFS ML,
+    factories-provide-mixins GRFS ML _,
     findall-classes AllStructures,
     postulate-all-structures (global GR) ML 0 AllStructures,
   ].
@@ -354,25 +361,41 @@ Elpi Typecheck.
 TODO : factor code with declare_context
 
 *)
-(*
+
 Elpi Command canonical_instance.
 Elpi Accumulate Db hierarchy.db.
+
+(*
+XXX var-for-mixin and def-for-mixin should be unified.
+XXX then def-for-mixin is not only an hypothetical clauses
+XXX used within declare_context but also added to the DB
+XXX so that craftmixin finds it 
+XXX as a bonus, declare_context can be written multiple times in a row.
+*)
+
 Elpi Accumulate lp:{{
 
 pred craft-mixin.def-for-mixin i:@mixinname, o:term.
 pred craft-mixin i:term, i:int, i:@mixinname, o:@constant.
-craft-mixin T N M C :-
-  dep1 M Deps,
+craft-mixin T N M C :- std.spy-do! [
+  factories-provide-mixins.mixin-provided-by M FN,
+  from FDeps FN M F,
 
-  from FArgs FN M F,
+
   factory-instance-for FN FI,
-  Body = app[F,Args,FI],
 
-  std.map Deps craft-mixin.def-for-mixin Args,
-  Ty = app[global M, T | Args],
+  std.map FDeps craft-mixin.def-for-mixin FArgs,
+  % dep1 M Deps,
+  % std.map Deps craft-mixin.def-for-mixin Args,
+  % Ty = app[global M, T | Args],
+  % coq.typecheck Ty _,
+
+  Body = app[ app[F, T | FArgs] , FI ],
+
   Name is "m" ^ {std.any->string N},
-  coq.typecheck Ty _,
-  coq.env.add-const Name TODO_BODY Ty tt tt C.
+  coq.say "BO = " {coq.term->string Body},
+  coq.typecheck Body _,
+  coq.env.add-const Name Body Ty tt tt C.
 
 pred declare-instances i:term, i:int, i:list class, o:int, o:list class.
 declare-instances T N [class Class Struct ML|Rest] M Rest1 :-
@@ -402,23 +425,27 @@ declare-all-instances T [M|MS] N Structures :-
     declare-all-instances T MS N2 StructuresLeft
   ).
 
+pred extract-factory-name i:term, o:gref.
 extract-factory-name T N :- safe-dest-app T (global N) _.
+
 pred factory-instance-for i:@factoryname, o:term.
-main Args :- !, std.do! [
+main [TS|Args] :- !, std.do! [
+  locate-term-argument TS T,
   std.map Args locate-term-argument FIL,
   std.map FIL coq.typecheck FITyL,
   std.map FITyL extract-factory-name FNL,
-  factories-provide-mixins FNL ML,
-  std.map2 FNL FIL (f\g\factory-instance-for f (global g)) Clauses,
+  factories-provide-mixins FNL ML MixinOrigin,
+  std.map2 FNL FIL (f\g\r\ r = factory-instance-for f g) FactoryInstance,
   findall-classes AllStructures,
-  Clauses =>
-  declare-all-instances  ML 0 AllStructures,
+  MixinOrigin =>
+  FactoryInstance =>
+    declare-all-instances T ML 0 AllStructures,
 ].
-main _ :- coq.error "Usage: canonical_instance <FactoryInstance>..".
+main _ :- coq.error "Usage: canonical_instance <T> <FactoryInstance>..".
 
 }}.
 Elpi Typecheck.
-*)
+
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -659,7 +686,7 @@ declare-sort-coercion (global StructureName) (global Proj) :-
 main [str Module|FS] :- !, std.do! [
   % compute all the mixins to be part of the structure
   std.map FS locate-string-argument GRFS,
-  factories-provide-mixins GRFS  ML,
+  factories-provide-mixins GRFS  ML _,
 
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
@@ -921,7 +948,7 @@ Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
 
 (* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
 it so that declare_factory_target knows about it. *)
-(* Elpi canonical_instance to_AG_of_ASG. *)
+(* Elpi canonical_instance A to_AG_of_ASG. *)
 Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
 
 (* Elpi declare_factory_target RING_of_AG foo *)
