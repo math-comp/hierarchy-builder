@@ -282,6 +282,37 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+(** This command declares a factory.
+
+*)
+
+Elpi Command declare_factory.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+
+pred gather-last-product i:term, i:option term, o:@factoryname, o:@mixinname.
+gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
+  pi x\
+  decl x N Src =>
+  gather-last-product (Tgt x) (some Src) R1 R2.
+gather-last-product End (some Last) LastGR EndGR :-
+  safe-dest-app End (global EndGR) _,
+  safe-dest-app Last (global LastGR) _.
+
+main [str S] :-
+  coq.locate S F,
+  coq.env.typeof-gr F Ty,
+  gather-last-product Ty none SrcMixin TgtMixin,
+  coq.say (from SrcMixin TgtMixin (global F)),
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from SrcMixin TgtMixin (global F))).
+
+}}.
+Elpi Typecheck.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** This command declares a packed structure.
 
   Input:
@@ -739,30 +770,36 @@ Record axioms := Axioms {
 Section Factories.
 Variable a : axioms.
 
-(* Elpi declare_factory_target AG_of_ASG foo *)
-Definition to_AG_of_ASG : AG_of_ASG.axioms A m0.
-by case: (a); econstructor; eauto.
-Defined.
+(* Elpi declare_factory_target A AG_of_ASG.axioms foo *)
+Program Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
+  AG_of_ASG.Axioms A _ (opp a) _.
+Next Obligation.
+by case: (a); eauto.
+Qed.
+About to_AG_of_ASG.
+
 
 (* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
-   it so that declare_factory_target knows about it. *)
+it so that declare_factory_target knows about it. *)
+(* Elpi canonical_instance to_AG_of_ASG. *)
 Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
 
 (* Elpi declare_factory_target SRIG_of_ASG foo *)
 Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0.
 case: (a) => opp one mul li ass lid rid ld rd; econstructor; eauto.
-  move=> x.
-  apply: (addrI _ (mul one x)).
-  rewrite -ld.
+move=> x.
+apply: (addrI _ (mul one x)).
+rewrite -ld.
 
 
-  (* rewrite -[in LHS](subrr x) *)
-     (* since A is canonically an AG thatnks to the previous factory *)
+(* rewrite -[in LHS](subrr x) *)
+(* since A is canonically an AG thatnks to the previous factory *)
 Admitted.
 
 (* Elpi declare_factory to_SRIG_of_ASG.  *)
 
 End Factories. End S. End RING_of_ASG.
+Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
 
 
 End Example2.
