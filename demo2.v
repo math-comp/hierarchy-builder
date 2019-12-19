@@ -395,7 +395,8 @@ craft-mixin T N M C :- std.spy-do! [
   Name is "m" ^ {std.any->string N},
   coq.say "BO = " {coq.term->string Body},
   coq.typecheck Body _,
-  coq.env.add-const Name Body Ty tt tt C.
+  coq.env.add-const Name Body Ty tt tt C
+].
 
 pred declare-instances i:term, i:int, i:list class, o:int, o:list class.
 declare-instances T N [class Class Struct ML|Rest] M Rest1 :-
