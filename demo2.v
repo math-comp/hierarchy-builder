@@ -58,15 +58,17 @@ pred already-exported o:@mixinname.
 
 %%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO: document
-pred from o:@factoryname, o:@mixinname, o:term.
+% [from LMN FN MN F] invariant: "F : forall T LMN, FN T .. -> MN T .." where
+% .. is a sub list of LMN
+pred from o:list @mixinname, o:@factoryname, o:@mixinname, o:term.
 
 % factory, generated mixin, mean, eg mean : factory -> mixin
 pred extract-mix i:prop, o:@mixinname.
-extract-mix (from _ X _) X.
+extract-mix (from _ _ X _) X.
 
 pred factory-provides i:@factoryname, o:list @mixinname.
 factory-provides Factory ML :- std.do! [
-  std.findall (from Factory FOO_ BAR_) All,
+  std.findall (from L_ Factory T_ F_) All,
   std.map All extract-mix ML,
 ].
 
@@ -171,14 +173,29 @@ gather-mixin-dendencies (sort _) Acc Acc.
 gather-mixin-dendencies Ty Acc Res :- whd1 Ty Ty1, !, gather-mixin-dendencies Ty1 Acc Res.
 gather-mixin-dendencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
 
+pred mk-id.arg-for-mixin i:@mixinname, o:term.
+pred mk-id i:term, i:list @mixinname, i:term, o:term.
+mk-id T [] M (fun `m` M x\x).
+mk-id T [A|AS] M (fun `a` AL R) :- std.do! [
+
+  dep1 A Deps,
+  std.map Deps mk-id.arg-for-mixin Args,
+  AL = app [ global A, T | Args],
+
+  pi a\
+    mk-id.arg-for-mixin A a =>
+    mk-id T AS {mk-app M [a]} (R a)
+].
+
 main [str S] :- !, std.do! [
   coq.locate S M,
   coq.env.typeof-gr M Ty,
   gather-mixin-dendencies Ty [] ML,
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
-  % TODO: ID should be: fun m1..mn (x : M m1 ..mn) => x
-  ID = {{ fun x : nat => x }},
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from M M ID)),
+  ID = (fun `t` {{ Type }} t\ {mk-id t ML {mk-app (global M) [t]} }),
+  coq.typecheck ID _,
+  coq.elpi.accumulate "hierarchy.db"
+    (clause _ _ (from ML M M ID)),
 ].
 main _ :- coq.error "Usage: declare_mixin <mixin>".
 
@@ -283,6 +300,8 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command declares a factory.
+ 
+TODO : docment
 
 *)
 
@@ -291,6 +310,8 @@ Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
 pred gather-last-product i:term, i:option term, o:@factoryname, o:@mixinname.
+gather-last-product T Last R1 R2 :- whd1 T T1, !, % unfold the type
+  gather-last-product T1 Last R1 R2.
 gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
   pi x\
   decl x N Src =>
@@ -298,17 +319,98 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
 gather-last-product End (some Last) LastGR EndGR :-
   safe-dest-app End (global EndGR) _,
   safe-dest-app Last (global LastGR) _.
+% TODO : whd1
 
-main [str S] :-
+main [str S] :- !, std.do! [
   coq.locate S F,
   coq.env.typeof-gr F Ty,
   gather-last-product Ty none SrcMixin TgtMixin,
-  coq.say (from SrcMixin TgtMixin (global F)),
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (from SrcMixin TgtMixin (global F))).
+  coq.elpi.accumulate "hierarchy.db"
+    (clause _ _ (from [
+      %TODO put all the other arguments
+      ]
+      SrcMixin TgtMixin
+       (global F))),
+].
+main _ :- coq.error "Usage: declare_factory <FactoryFunction>".
 
 }}.
 Elpi Typecheck.
 
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This command declares all the canonical instances the given factories
+    provides.
+
+TODO : factor code with declare_context
+
+*)
+(*
+Elpi Command canonical_instance.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+
+pred craft-mixin.def-for-mixin i:@mixinname, o:term.
+pred craft-mixin i:term, i:int, i:@mixinname, o:@constant.
+craft-mixin T N M C :-
+  dep1 M Deps,
+
+  from FN M Args F,
+  factory-instance-for FN FI,
+  Body = app[F,Args,FI],
+
+  std.map Deps craft-mixin.def-for-mixin Args,
+  Ty = app[global M, T | Args],
+  Name is "m" ^ {std.any->string N},
+  coq.typecheck Ty _,
+  coq.env.add-const Name TODO_BODY Ty tt tt C.
+
+pred declare-instances i:term, i:int, i:list class, o:int, o:list class.
+declare-instances T N [class Class Struct ML|Rest] M Rest1 :-
+  std.map ML craft-mixin.def-for-mixin Args, !, % we can build it
+  N1 is N + 1,
+  Name is "s" ^ {std.any->string N},
+
+  get-class-constructor Class KC,
+  get-structure-constructor Struct KS,
+
+  S = app[KS, T, app[KC, T | Args]],
+  coq.typecheck S STy,
+
+  coq.env.add-const Name S STy ff ff CS,
+  coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
+  declare-instances T N1 Rest M Rest1.
+declare-instances T N [X|Rest] M [X|Rest1] :- declare-instances T N Rest M Rest1.
+declare-instances _ N [] N [].
+
+pred declare-all-instances i:term, i:list @mixinname, i:int, i:list class.
+declare-all-instances T [] N Structures :- declare-instances T N Structures _ _.
+declare-all-instances T [M|MS] N Structures :-
+  craft-mixin T N M C,
+  N1 is N + 1,
+  craft-mixin.def-for-mixin M (global (const C)) => (
+    declare-instances T N1 Structures N2 StructuresLeft,
+    declare-all-instances T MS N2 StructuresLeft
+  ).
+
+main FIS :- !, std.do! [
+  std.map FIS locate-string FI,
+  std.map {std.map FIS coq.locate} coq.typeof-gr FSTy,
+  std.map FSTy extract-factory-name FS,
+  factories-provide-mixins FS ML,
+  % TODO: relate Fi to his Mixins
+  findall-classes AllStrctures,
+  %foreach FI
+  factory-instance-for FI FS =>
+  declare-all-instances  ML 0 AllStrctures,
+].
+main _ :- coq.error "Usage: canonical_instance <FactoryInstance>..".
+
+}}.
+Elpi Typecheck.
+*)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -391,9 +493,9 @@ pred export-operations.aux i:term, i:term, i:term, i:@factoryname, i:list @mixin
 export-operations.aux _ _ _ _ [].
 export-operations.aux Struct ProjSort ProjClass ClassName [indt M|ML] :- !, std.do! [
   Mixin = indt M,
-  from ClassName Mixin ProjMixin,
+  from _ ClassName Mixin ProjMixin,
   dep1 Mixin Deps,
-  std.map Deps (from ClassName) PDeps,
+  std.map Deps (x\y\ sigma tmp\ from tmp ClassName x y) PDeps,
   coq.CS.canonical-projections M Poperations,
   std.forall Poperations
     (export-1-operation Struct ProjSort ProjClass ProjMixin PDeps),
@@ -417,7 +519,7 @@ declare-coercion SortProjection ClassProjection (class FC StructureF _) (class T
   CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
   SName is ModNameF ^ "_to_" ^ ModNameT,
 
-  std.map TML (m\r\ from FC m r) FC2TML,
+  std.map TML (x\y\ sigma tmp\ from tmp FC x y) FC2TML,
   get-class-constructor TC KC,
   Class = global FC,
   (pi T c\ sigma Mixes\
@@ -521,7 +623,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
   coq.CS.canonical-projections ClassName Projs,
   std.map2 ML Projs (m\ p\ r\ sigma P\
     p = some P,
-    r = from (indt ClassName) m (global (const P))) Factories,
+    r = from [] (indt ClassName) m (global (const P))) Factories,
 ].
 
 % Builds the package record
