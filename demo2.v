@@ -770,6 +770,8 @@ Import ASG.Exports.
 
 Print Module ASG.Exports.
 
+(* TODO: could we generate the following lemmas together with `zero` and      *)
+(* `add` automatically? *)
 Lemma addrA {A : ASG.type} : associative (@add A).
 Proof. by case: A => ? [[]]. Qed.
 
@@ -1026,7 +1028,7 @@ Proof. by case: A => ? [? []]. Qed.
 Module SRIG_of_ASG. Section S.
  Variable A : Type.
  Elpi declare_context A ASG_of_TYPE.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
   _ : associative mul;
@@ -1080,26 +1082,11 @@ Module RING_of_AG. Section S.
   _ : right_distributive mul add;
   }.
 
-Section Factories.
-Variable a : axioms.
+Section SRIG_of_ASG.
 
-Let one := one a.
-Let mul := mul a.
-
-Lemma mulrA : associative mul.
-Proof. by rewrite /mul; case: a. Qed.
-
-Lemma mul1r : left_id one mul.
-Proof. by rewrite /one /mul; case: a. Qed.
-
-Lemma mulr1 : right_id one mul.
-Proof. by rewrite /one /mul; case: a. Qed.
-
-Lemma mulrDl : left_distributive mul add.
-Proof. by rewrite /mul; case: a. Qed.
-
-Lemma mulrDr : right_distributive mul add.
-Proof. by rewrite /mul; case: a. Qed.
+Variables
+  (mul : A -> A -> A)
+  (mulrDl : left_distributive mul add) (mulrDr : right_distributive mul add).
 
 Lemma mul0r : left_zero zero mul.
 Proof.
@@ -1117,11 +1104,17 @@ rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
 by rewrite -mulrDr add0r addrC addNr.
 Qed.
 
+End SRIG_of_ASG.
+
+Section Factories.
+Variable a : axioms.
+
 Check SRIG_of_ASG.Axioms.
 (* Elpi declare_factory_target SRIG_of_ASG foo *)
-Fail Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0 := (* TODO *)
+Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0 :=
   let: Axioms one mul mulA mul1x mulx1 mulDl mulDr := a in
-  @SRIG_of_ASG.Axioms A m0 one mul mulA mul1x mulx1 mulDl mulDr mul0r mulr0.
+  @SRIG_of_ASG.Axioms A m0 one mul mulA mul1x mulx1 mulDl mulDr
+                      (mul0r _ mulDl) (mulr0 _ mulDr).
 
 (* Elpi declare_factory to_SRIG_of_ASG. *)
 
