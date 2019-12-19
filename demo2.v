@@ -631,6 +631,15 @@ Import ASG.Exports.
 
 Print Module ASG.Exports.
 
+Lemma addrA {A : ASG.type} : associative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma addrC {A : ASG.type} : commutative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma add0r {A : ASG.type} : left_id (@zero A) add.
+Proof. by case: A => ? [[]]. Qed.
+
 Module RING_of_ASG. Section S.
 Variable A : Type.
 Elpi declare_context A ASG_of_TYPE.axioms.
@@ -661,6 +670,19 @@ Import RING.Exports.
 
 Check opp zero.
 Check add zero one.
+
+Lemma addNr {A : RING.type} : left_inverse (@zero A) opp add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrA {A : RING.type} : associative (@mul A).
+Proof. by case: A => ? [? []]. Qed.
+Lemma mul1r {A : RING.type} : left_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulr1 {A : RING.type} : right_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDl {A : RING.type} : left_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDr {A : RING.type} : right_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
 
 End Example1.
 
@@ -693,6 +715,15 @@ Import ASG.Exports.
 
 Print Module ASG.Exports.
 
+Lemma addrA {A : ASG.type} : associative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma addrC {A : ASG.type} : commutative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma add0r {A : ASG.type} : left_id (@zero A) add.
+Proof. by case: A => ? [[]]. Qed.
+
 Module AG_of_ASG. Section S.
  Variable A : Type.
  Elpi declare_context A ASG_of_TYPE.axioms.
@@ -711,7 +742,10 @@ Print Module AG.Exports.
 
 Check opp zero.
 
-Module SRIG_of_ASG. Section S.
+Lemma addNr {A : AG.type} : left_inverse (@zero A) opp add.
+Proof. by case: A => ? [? []]. Qed.
+
+Module RING_of_AG. Section S.
  Variable A : Type.
  Elpi declare_context A ASG_of_TYPE.axioms.
 
@@ -723,15 +757,13 @@ Module SRIG_of_ASG. Section S.
   _ : right_id one mul;
   _ : left_distributive mul add;
   _ : right_distributive mul add;
-  _ : left_zero zero mul;
-  _ : right_zero zero mul;
   }.
 
-End S. End SRIG_of_ASG.
+End S. End RING_of_AG.
 
-Elpi declare_mixin SRIG_of_ASG.axioms.
+Elpi declare_mixin RING_of_AG.axioms.
 
-Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms SRIG_of_ASG.axioms.
+Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms RING_of_AG.axioms.
 Import RING.Exports.
 
 Print Module RING.Exports.
@@ -739,15 +771,16 @@ Print Module RING.Exports.
 Check add zero one.
 Check opp one.
 
-Module Theory.
-Section AG_Theory.
-Variable A : AG.type.
-Lemma addrI : @right_injective A A A add.
-Admitted.
-End AG_Theory.
-End Theory.
-Import Theory.
-
+Lemma mulrA {A : RING.type} : associative (@mul A).
+Proof. by case: A => ? [? []]. Qed.
+Lemma mul1r {A : RING.type} : left_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulr1 {A : RING.type} : right_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDl {A : RING.type} : left_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDr {A : RING.type} : right_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
 
 (* To not break clients / provide shortcuts for users not interested in the
    new AG class. *)
@@ -770,37 +803,25 @@ Record axioms := Axioms {
 Section Factories.
 Variable a : axioms.
 
-(* Elpi declare_factory_target A AG_of_ASG.axioms foo *)
-Program Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
-  AG_of_ASG.Axioms A _ (opp a) _.
-Next Obligation.
-by case: (a); eauto.
-Qed.
-About to_AG_of_ASG.
-
+(* Elpi declare_factory_target AG_of_ASG foo *)
+Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
+  let: Axioms opp one mul addNr _ _ _ _ _ := a in
+  @AG_of_ASG.Axioms A m0 opp addNr.
 
 (* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
 it so that declare_factory_target knows about it. *)
 (* Elpi canonical_instance to_AG_of_ASG. *)
 Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
 
-(* Elpi declare_factory_target SRIG_of_ASG foo *)
-Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0.
-case: (a) => opp one mul li ass lid rid ld rd; econstructor; eauto.
-move=> x.
-apply: (addrI _ (mul one x)).
-rewrite -ld.
+(* Elpi declare_factory_target RING_of_AG foo *)
+Definition to_RING_of_AG : RING_of_AG.axioms A m0 :=
+  let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
+  @RING_of_AG.Axioms A m0 _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
-
-(* rewrite -[in LHS](subrr x) *)
-(* since A is canonically an AG thatnks to the previous factory *)
-Admitted.
-
-(* Elpi declare_factory to_SRIG_of_ASG.  *)
+(* Elpi declare_factory to_RING_of_AG.  *)
 
 End Factories. End S. End RING_of_ASG.
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
-
 
 End Example2.
 
@@ -830,9 +851,17 @@ Elpi declare_mixin ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
-Infix "+" := (@add _).
 
 Print Module ASG.Exports.
+
+Lemma addrA {A : ASG.type} : associative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma addrC {A : ASG.type} : commutative (@add A).
+Proof. by case: A => ? [[]]. Qed.
+
+Lemma add0r {A : ASG.type} : left_id (@zero A) add.
+Proof. by case: A => ? [[]]. Qed.
 
 Module AG_of_ASG. Section S.
  Variable A : Type.
@@ -849,6 +878,11 @@ Elpi declare_structure "AG" ASG_of_TYPE.axioms AG_of_ASG.axioms.
 Import AG.Exports.
 
 Print Module AG.Exports.
+
+Check opp zero.
+
+Lemma addNr {A : AG.type} : left_inverse (@zero A) opp add.
+Proof. by case: A => ? [? []]. Qed.
 
 Module SRIG_of_ASG. Section S.
  Variable A : Type.
@@ -877,5 +911,120 @@ Import RING.Exports.
 Check opp zero. (* ASG.sort _ = AG.sort _ *)
 Check add zero one. (* ASG.sort _ = SRIG.sort _ *)
 Check opp one. (* AG.sort _ = SRIG.sort _ *)
+
+Lemma mulrA {A : SRIG.type} : associative (@mul A).
+Proof. by case: A => ? [? []]. Qed.
+Lemma mul1r {A : SRIG.type} : left_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulr1 {A : SRIG.type} : right_id (@one A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDl {A : SRIG.type} : left_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulrDr {A : SRIG.type} : right_distributive (@mul A) add.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mul0r {A : SRIG.type} : left_zero (@zero A) mul.
+Proof. by case: A => ? [? []]. Qed.
+Lemma mulr0 {A : SRIG.type} : right_zero (@zero A) mul.
+Proof. by case: A => ? [? []]. Qed.
+
+Module RING_of_AG. Section S.
+ Variable A : Type.
+ Elpi declare_context A ASG_of_TYPE.axioms AG_of_ASG.axioms.
+
+ Record axioms := Axioms {
+  one : A;
+  mul : A -> A -> A;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
+
+Section Factories.
+Variable a : axioms.
+
+Let one := one a.
+Let mul := mul a.
+
+Lemma mulrA : associative mul.
+Proof. by rewrite /mul; case: a. Qed.
+
+Lemma mul1r : left_id one mul.
+Proof. by rewrite /one /mul; case: a. Qed.
+
+Lemma mulr1 : right_id one mul.
+Proof. by rewrite /one /mul; case: a. Qed.
+
+Lemma mulrDl : left_distributive mul add.
+Proof. by rewrite /mul; case: a. Qed.
+
+Lemma mulrDr : right_distributive mul add.
+Proof. by rewrite /mul; case: a. Qed.
+
+Lemma mul0r : left_zero zero mul.
+Proof.
+move=> x.
+rewrite -[LHS]add0r addrC.
+rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
+by rewrite -mulrDl add0r addrC addNr.
+Qed.
+
+Lemma mulr0 : right_zero zero mul.
+Proof.
+move=> x.
+rewrite -[LHS]add0r addrC.
+rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
+by rewrite -mulrDr add0r addrC addNr.
+Qed.
+
+Check SRIG_of_ASG.Axioms.
+(* Elpi declare_factory_target SRIG_of_ASG foo *)
+Fail Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0 := (* TODO *)
+  let: Axioms one mul mulA mul1x mulx1 mulDl mulDr := a in
+  @SRIG_of_ASG.Axioms A m0 one mul mulA mul1x mulx1 mulDl mulDr mul0r mulr0.
+
+(* Elpi declare_factory to_SRIG_of_ASG. *)
+
+End Factories. End S. End RING_of_AG.
+
+(* To not break clients / provide shortcuts for users not interested in the
+   new AG class. *)
+Module RING_of_ASG. Section S.
+Variable A : Type.
+Elpi declare_context A ASG_of_TYPE.axioms.
+
+Record axioms := Axioms {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
+
+Section Factories.
+Variable a : axioms.
+
+(* Elpi declare_factory_target AG_of_ASG foo *)
+Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
+  let: Axioms opp one mul addNr _ _ _ _ _ := a in
+  @AG_of_ASG.Axioms A m0 opp addNr.
+
+(* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
+   it so that declare_factory_target knows about it. *)
+Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
+
+(* Elpi declare_factory_target RING_of_AG foo *)
+Definition to_RING_of_AG : RING_of_AG.axioms A m0 :=
+  let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
+  @RING_of_AG.Axioms A m0 _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+
+(* Elpi declare_factory to_RING_of_AG.  *)
+
+End Factories. End S. End RING_of_ASG.
 
 End Example3.
