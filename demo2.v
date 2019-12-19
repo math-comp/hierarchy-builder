@@ -77,9 +77,14 @@ pred locate-string-argument i:argument, o:gref.
 locate-string-argument (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
 locate-string-argument X _ :- coq.error "not a string:" X.
 
-pred factories-provide-mixins i:list argument, o:list @mixinname.
-factories-provide-mixins FS ML :- std.do! [
-  std.map FS locate-string-argument GRFS,
+pred locate-term-argument i:argument, o:term.
+locate-term-argument (str S) (global GR) :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+locate-term-argument (trm T) T :- !, std.assert! (coq.typecheck T _) "not well typed term".
+locate-term-argument X _ :- coq.error "not a term:" X.
+
+% TODO :document
+pred factories-provide-mixins i:list @factoryname, o:list @mixinname.
+factories-provide-mixins GRFS ML :- std.do! [
   std.map GRFS factory-provides MLUnsortedL,
   std.flatten MLUnsortedL MLUnsorted,
   toposort-mixins MLUnsorted ML,
@@ -285,10 +290,12 @@ postulate-all-structures T [M|MS] N Structures :-
 
 main [str Variable|FS] :- !,
   coq.locate Variable GR,
+  std.map FS locate-string-argument GRFS,
+
   std.do! [
-    factories-provide-mixins FS ML,
-    findall-classes AllStrctures,
-    postulate-all-structures (global GR) ML 0 AllStrctures,
+    factories-provide-mixins GRFS ML,
+    findall-classes AllStructures,
+    postulate-all-structures (global GR) ML 0 AllStructures,
   ].
 main _ :- coq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
@@ -357,7 +364,7 @@ pred craft-mixin i:term, i:int, i:@mixinname, o:@constant.
 craft-mixin T N M C :-
   dep1 M Deps,
 
-  from FN M Args F,
+  from FArgs FN M F,
   factory-instance-for FN FI,
   Body = app[F,Args,FI],
 
@@ -395,16 +402,17 @@ declare-all-instances T [M|MS] N Structures :-
     declare-all-instances T MS N2 StructuresLeft
   ).
 
-main FIS :- !, std.do! [
-  std.map FIS locate-string FI,
-  std.map {std.map FIS coq.locate} coq.typeof-gr FSTy,
-  std.map FSTy extract-factory-name FS,
-  factories-provide-mixins FS ML,
-  % TODO: relate Fi to his Mixins
-  findall-classes AllStrctures,
-  %foreach FI
-  factory-instance-for FI FS =>
-  declare-all-instances  ML 0 AllStrctures,
+extract-factory-name T N :- safe-dest-app T (global N) _.
+pred factory-instance-for i:@factoryname, o:term.
+main Args :- !, std.do! [
+  std.map Args locate-term-argument FIL,
+  std.map FIL coq.typecheck FITyL,
+  std.map FITyL extract-factory-name FNL,
+  factories-provide-mixins FNL ML,
+  std.map2 FNL FIL (f\g\factory-instance-for f (global g)) Clauses,
+  findall-classes AllStructures,
+  Clauses =>
+  declare-all-instances  ML 0 AllStructures,
 ].
 main _ :- coq.error "Usage: canonical_instance <FactoryInstance>..".
 
@@ -650,7 +658,8 @@ declare-sort-coercion (global StructureName) (global Proj) :-
 
 main [str Module|FS] :- !, std.do! [
   % compute all the mixins to be part of the structure
-  factories-provide-mixins FS  ML,
+  std.map FS locate-string-argument GRFS,
+  factories-provide-mixins GRFS  ML,
 
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
