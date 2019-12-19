@@ -543,6 +543,7 @@ main [str Module|FS] :- !, std.do! [
   coq.env.end-module _,
 
   % Register in Elpi's DB the new structure
+  % TODO : coq-elpi: attach these to the Exports module (currently not possible)
   std.forall Factories (f\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ f)),
 
@@ -578,35 +579,35 @@ Elpi Print declare_structure.
 Check forall T : TYPE.type, T -> T.
 End TestTYPE.
 
-Module ASG_input. Section S.
+Module ASG_of_TYPE. Section S.
  Variable A : Type.
  Elpi declare_context A.
  (* Check (eq_refl _ : TYPE.sort _ = A). *)
- Record mixin_of := Mixin {
+ Record axioms := Axioms {
   zero : A;
   add : A -> A -> A;
   _ : associative add;
   _ : commutative add;
   _ : left_id zero add;
   }.
-End S. End ASG_input.
-Print Module ASG_input.
+End S. End ASG_of_TYPE.
+Print Module ASG_of_TYPE.
 
-Elpi declare_mixin ASG_input.mixin_of.
+Elpi declare_mixin ASG_of_TYPE.axioms.
 
-Elpi declare_structure "ASG" ASG_input.mixin_of.
+Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
 
 Print Module ASG.Exports.
 
-Module RING_input. Section S.
+Module RING_of_ASG. Section S.
 Variable A : Type.
-Elpi declare_context A ASG_input.mixin_of.
+Elpi declare_context A ASG_of_TYPE.axioms.
 (*
   Check (eq_refl _ : TYPE.sort _ = A).
   Check (eq_refl _ : ASG.sort _ = A).
 *)
-Record mixin_of := Mixin {
+Record axioms := Axioms {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -617,12 +618,12 @@ Record mixin_of := Mixin {
   _ : left_distributive mul add;
   _ : right_distributive mul add;
   }.
-End S. End RING_input.
+End S. End RING_of_ASG.
 
-About RING_input.opp.
+About RING_of_ASG.opp.
 
-Elpi declare_mixin RING_input.mixin_of.
-Elpi declare_structure "RING" ASG.class_of RING_input.mixin_of.
+Elpi declare_mixin RING_of_ASG.axioms.
+Elpi declare_structure "RING" ASG.class_of RING_of_ASG.axioms.
 
 Print Module RING.
 Import RING.Exports.
@@ -641,49 +642,49 @@ Module Example2.
 Elpi declare_structure "TYPE".
 Import TYPE.Exports.
 
-Module ASG_input. Section S.
+Module ASG_of_TYPE. Section S.
  Variable A : Type.
  Elpi declare_context A.
  (* Check (eq_refl _ : TYPE.sort _ = A). *)
- Record mixin_of := Mixin {
+ Record axioms := Axioms {
   zero : A;
   add : A -> A -> A;
   _ : associative add;
   _ : commutative add;
   _ : left_id zero add;
   }.
-End S. End ASG_input.
+End S. End ASG_of_TYPE.
 
-Elpi declare_mixin ASG_input.mixin_of.
+Elpi declare_mixin ASG_of_TYPE.axioms.
 
-Elpi declare_structure "ASG" ASG_input.mixin_of.
+Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
 
 Print Module ASG.Exports.
 
-Module AG_input. Section S.
+Module AG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_input.mixin_of.
- Record mixin_of := Mixin {
+ Elpi declare_context A ASG_of_TYPE.axioms.
+ Record axioms := Axioms {
   opp : A -> A;
   _ : left_inverse zero opp add;
   }.
-End S. End AG_input.
+End S. End AG_of_ASG.
 
-Elpi declare_mixin AG_input.mixin_of.
+Elpi declare_mixin AG_of_ASG.axioms.
 
-Elpi declare_structure "AG" ASG_input.mixin_of AG_input.mixin_of.
+Elpi declare_structure "AG" ASG_of_TYPE.axioms AG_of_ASG.axioms.
 Import AG.Exports.
 
 Print Module AG.Exports.
 
 Check opp zero.
 
-Module RING_input. Section S.
+Module SRIG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_input.mixin_of.
+ Elpi declare_context A ASG_of_TYPE.axioms.
 
- Record mixin_of := Mixin {
+ Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
   _ : associative mul;
@@ -691,19 +692,78 @@ Module RING_input. Section S.
   _ : right_id one mul;
   _ : left_distributive mul add;
   _ : right_distributive mul add;
+  _ : left_zero zero mul;
+  _ : right_zero zero mul;
   }.
 
-End S. End RING_input.
+End S. End SRIG_of_ASG.
 
-Elpi declare_mixin RING_input.mixin_of.
+Elpi declare_mixin SRIG_of_ASG.axioms.
 
-Elpi declare_structure "RING" ASG_input.mixin_of AG_input.mixin_of RING_input.mixin_of.
+Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms SRIG_of_ASG.axioms.
 Import RING.Exports.
 
 Print Module RING.Exports.
 
 Check add zero one.
 Check opp one.
+
+Module Theory.
+Section AG_Theory.
+Variable A : AG.type.
+Lemma addrI : @right_injective A A A add.
+Admitted.
+End AG_Theory.
+End Theory.
+Import Theory.
+
+
+(* To not break clients / provide shortcuts for users not interested in the
+   new AG class. *)
+Module RING_of_ASG. Section S.
+Variable A : Type.
+Elpi declare_context A ASG_of_TYPE.axioms.
+
+Record axioms := Axioms {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  _ : left_inverse zero opp add;
+  _ : associative mul;
+  _ : left_id one mul;
+  _ : right_id one mul;
+  _ : left_distributive mul add;
+  _ : right_distributive mul add;
+  }.
+
+Section Factories.
+Variable a : axioms.
+
+(* Elpi declare_factory_target AG_of_ASG foo *)
+Definition to_AG_of_ASG : AG_of_ASG.axioms A m0.
+by case: (a); econstructor; eauto.
+Defined.
+
+(* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
+   it so that declare_factory_target knows about it. *)
+Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
+
+(* Elpi declare_factory_target SRIG_of_ASG foo *)
+Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0.
+case: (a) => opp one mul li ass lid rid ld rd; econstructor; eauto.
+  move=> x.
+  apply: (addrI _ (mul one x)).
+  rewrite -ld.
+
+
+  (* rewrite -[in LHS](subrr x) *)
+     (* since A is canonically an AG thatnks to the previous factory *)
+Admitted.
+
+(* Elpi declare_factory to_SRIG_of_ASG.  *)
+
+End Factories. End S. End RING_of_ASG.
+
 
 End Example2.
 
@@ -716,46 +776,47 @@ Module Example3.
 Elpi declare_structure "TYPE".
 Import TYPE.Exports.
 
-Module ASG_input. Section S.
+Module ASG_of_TYPE. Section S.
  Variable A : Type.
  Elpi declare_context A.
  (* Check (eq_refl _ : TYPE.sort _ = A). *)
- Record mixin_of := Mixin {
+ Record axioms := Axioms {
   zero : A;
   add : A -> A -> A;
   _ : associative add;
   _ : commutative add;
   _ : left_id zero add;
   }.
-End S. End ASG_input.
+End S. End ASG_of_TYPE.
 
-Elpi declare_mixin ASG_input.mixin_of.
+Elpi declare_mixin ASG_of_TYPE.axioms.
 
-Elpi declare_structure "ASG" ASG_input.mixin_of.
+Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
+Infix "+" := (@add _).
 
 Print Module ASG.Exports.
 
-Module AG_input. Section S.
+Module AG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_input.mixin_of.
- Record mixin_of := Mixin {
+ Elpi declare_context A ASG_of_TYPE.axioms.
+ Record axioms := Axioms {
   opp : A -> A;
   _ : left_inverse zero opp add;
   }.
-End S. End AG_input.
+End S. End AG_of_ASG.
 
-Elpi declare_mixin AG_input.mixin_of.
+Elpi declare_mixin AG_of_ASG.axioms.
 
-Elpi declare_structure "AG" ASG_input.mixin_of AG_input.mixin_of.
+Elpi declare_structure "AG" ASG_of_TYPE.axioms AG_of_ASG.axioms.
 Import AG.Exports.
 
 Print Module AG.Exports.
 
-Module SRIG_input. Section S.
+Module SRIG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_input.mixin_of.
- Record mixin_of := Mixin {
+ Elpi declare_context A ASG_of_TYPE.axioms.
+Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
   _ : associative mul;
@@ -766,14 +827,14 @@ Module SRIG_input. Section S.
   _ : left_zero zero mul;
   _ : right_zero zero mul;
   }.
-End S. End SRIG_input.
+End S. End SRIG_of_ASG.
 
-Elpi declare_mixin SRIG_input.mixin_of.
+Elpi declare_mixin SRIG_of_ASG.axioms.
 
-Elpi declare_structure "SRIG" ASG_input.mixin_of SRIG_input.mixin_of.
+Elpi declare_structure "SRIG" ASG_of_TYPE.axioms SRIG_of_ASG.axioms.
 Import SRIG.Exports.
 
-Elpi declare_structure "RING" ASG_input.mixin_of AG_input.mixin_of SRIG_input.mixin_of.
+Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms SRIG_of_ASG.axioms.
 Import RING.Exports.
 
 Check opp zero. (* ASG.sort _ = AG.sort _ *)
