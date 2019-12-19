@@ -1,8 +1,5 @@
 {withEmacs ? false,
- nixpkgs ?  (fetchTarball {
-  url = "https://github.com/CohenCyril/nixpkgs/archive/e731156350702dc9c4ebda66674f70cca773421c.tar.gz";
-  sha256 = "0vzzmyyrc7rvw80b3rckwcm56536wjiysmghpdnjcr6g5d5b9c7x";
-  }),
+ nixpkgs ? <coq-elpi>,
  coq-version ? "8.10",
  print-env ? false
 }:
