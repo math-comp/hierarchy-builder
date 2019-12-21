@@ -1,4 +1,3 @@
-
 Require Import ssreflect ssrfun.
 Require Import ZArith.
 
@@ -166,8 +165,28 @@ get-mixin-modname S ModName :-
 %% database for locally available mixins
 pred term-for-mixin i:term, i:@mixinname, o:term.
 
-%% database for locally defined structures
-pred local-structure i:term, o:term.
+%% finding for locally defined structures
+pred cs-structure i:cs-instance, o:term.
+cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
+    coq.env.typeof-gr Inst InstTy,
+    safe-dest-app InstTy Struct _
+    ].
+
+pred has-cs-instance i:gref, i:cs-instance.
+has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
+
+pred local-structures i:term, o:list term.
+local-structures TyTrm StructL :- std.do! [
+  safe-dest-app TyTrm (global GTy) _,
+  coq.CS.db DB,
+  std.filter DB (has-cs-instance GTy) DBGTyL,
+  std.map DBGTyL cs-structure StructL,
+].
+
+pred local-structure i:term, i:term.
+local-structure TyTerm Struct :-
+  local-structures TyTerm StructL,
+  std.mem! StructL Struct.
 }}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -291,7 +310,6 @@ postulate-structures T [class Class Struct ML|Rest] Rest1 :-
 
   coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (local-structure T Struct)),
   postulate-structures T Rest Rest1.
 postulate-structures T [X|Rest] [X|Rest1] :- postulate-structures T Rest Rest1.
 postulate-structures _ [] [].
@@ -411,8 +429,6 @@ craft-mixin T M C :- std.do! [
 pred declare-instances i:term, i:list class, o:list class.
 declare-instances T [class Class Struct ML|Rest] Rest1 :-
   std.map ML (term-for-mixin T) Args, % we can build it
-  % change the following test not to rely on an ad-hoc database,
-  % but to rely on the CS database instead.
   not (local-structure T Struct), % not already built
   !,
 
@@ -427,7 +443,6 @@ declare-instances T [class Class Struct ML|Rest] Rest1 :-
 
   coq.env.add-const Name S STy ff ff CS,
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (local-structure T Struct)),
   declare-instances T Rest Rest1.
 declare-instances T [X|Rest] [X|Rest1] :- declare-instances T Rest Rest1.
 declare-instances _ [] [].
