@@ -82,7 +82,7 @@ locate-term-argument (str S) (global GR) :- !, std.assert! (coq.locate S GR) "ca
 locate-term-argument (trm T) T :- !, std.assert! (coq.typecheck T _) "not well typed term".
 locate-term-argument X _ :- coq.error "not a term:" X.
 
-% TODO :document
+% TODO: document
 pred mk-mixin-provided-by i:@factoryname, i:list @mixinname, o:list prop.
 mk-mixin-provided-by F ML CL :-
   std.map ML (x\r\ r = factories-provide-mixins.mixin-provided-by F x) CL.
@@ -163,6 +163,11 @@ get-mixin-modname S ModName :-
   coq.gr->path S  Path,
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for mixin" S).
 
+%% database for locally available mixins
+pred term-for-mixin i:term, i:@mixinname, o:term.
+
+%% database for locally defined structures
+pred local-structure i:term, o:term.
 }}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -187,7 +192,7 @@ gather-mixin-dendencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mix
 
 pred mk-id.arg-for-mixin i:@mixinname, o:term.
 pred mk-id i:term, i:list @mixinname, i:term, o:term.
-mk-id T [] M (fun `m` M x\x).
+mk-id _ [] M (fun `m` M x\x).
 mk-id T [A|AS] M (fun `a` AL R) :- std.do! [
 
   dep1 A Deps,
@@ -205,7 +210,12 @@ main [str S] :- !, std.do! [
   gather-mixin-dendencies Ty [] ML,
   coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
   ID = (fun `t` {{ Type }} t\ {mk-id t ML {mk-app (global M) [t]} }),
-  coq.typecheck ID _,
+  coq.typecheck ID _TyID,
+  get-mixin-modname M ModName,
+  Name is ModName ^ "_factory",
+  % TODO: if we store `ID` directly, then subsequent uses of this term
+  % throw an anomaly "Universe demo2.xxx undefined"... why?
+  coq.env.add-const Name ID TyID ff ff C,
   coq.elpi.accumulate "hierarchy.db"
     (clause _ _ (from ML M M ID)),
 ].
@@ -249,14 +259,14 @@ Elpi Accumulate lp:{{
 % Given a type T, a fresh number N, and a mixin M it postulates
 % a variable "mN" inhabiting M applied to T and
 % all its dependencies, previously postulated and associated
-% to the corresponding mixin using var-for-mixin
-pred postulate-mixin.var-for-mixin i:@mixinname, o:term.
-pred postulate-mixin i:term, i:int, i:@mixinname, o:@constant.
-postulate-mixin T N M C :-
+% to the corresponding mixin using term-for-mixin
+pred postulate-mixin i:term, i:@mixinname, o:@constant.
+postulate-mixin T M C :-
   dep1 M Deps,
-  std.map Deps postulate-mixin.var-for-mixin Args,
+  std.map Deps (term-for-mixin T) Args,
   Ty = app[global M, T | Args],
-  Name is "m" ^ {std.any->string N},
+  get-mixin-modname M ModName,
+  Name is "mixin_" ^ ModName,
   coq.typecheck Ty _,
   coq.env.add-const Name _ Ty tt tt C. % no body, local -> a variable
 
@@ -264,11 +274,14 @@ postulate-mixin T N M C :-
 % in consumes factory the list all the classes for which all the dependencies
 % (mixins) were postulated so far, declares a local constant inhabiting
 % the corresponding structure and declares it canonical
-pred postulate-structures i:term, i:int, i:list class, o:int, o:list class.
-postulate-structures T N [class Class Struct ML|Rest] M Rest1 :-
-  std.map ML postulate-mixin.var-for-mixin Args, !, % we can build it
-  N1 is N + 1,
-  Name is "s" ^ {std.any->string N},
+pred postulate-structures i:term, i:list class, o:list class.
+postulate-structures T [class Class Struct ML|Rest] Rest1 :-
+  std.map ML (term-for-mixin T) Args, % we can build it
+  not (local-structure T Struct), % not already built
+  !,
+
+  get-structure-modname Struct ModName,
+  Name is "struct_" ^ ModName,
 
   get-class-constructor Class KC,
   get-structure-constructor Struct KS,
@@ -278,22 +291,24 @@ postulate-structures T N [class Class Struct ML|Rest] M Rest1 :-
 
   coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  postulate-structures T N1 Rest M Rest1.
-postulate-structures T N [X|Rest] M [X|Rest1] :- postulate-structures T N Rest M Rest1.
-postulate-structures _ N [] N [].
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (local-structure T Struct)),
+  postulate-structures T Rest Rest1.
+postulate-structures T [X|Rest] [X|Rest1] :- postulate-structures T Rest Rest1.
+postulate-structures _ [] [].
 
 % main loop: for each mixin it postulates it, then finds out all the
 % structures that can be built using that mixin (and the ones postulated)
 % so far.
-pred postulate-all-structures i:term, i:list @mixinname, i:int, i:list class.
-postulate-all-structures T [] N Structures :- postulate-structures T N Structures _ _.
-postulate-all-structures T [M|MS] N Structures :-
-  postulate-mixin T N M C,
-  N1 is N + 1,
-  postulate-mixin.var-for-mixin M (global (const C)) => (
-    postulate-structures T N1 Structures N2 StructuresLeft,
-    postulate-all-structures T MS N2 StructuresLeft
-  ).
+pred postulate-all-structures i:term, i:list @mixinname, i:list class.
+postulate-all-structures T [] Structures :- postulate-structures T Structures _.
+postulate-all-structures T [M|MS] Structures :-
+  postulate-mixin T M C,
+  TermForMixin = term-for-mixin T M (global (const C)),
+  TermForMixin => (
+    postulate-structures T Structures StructuresLeft,
+    postulate-all-structures T MS StructuresLeft
+  ), !,
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ TermForMixin).
 
 main [str Variable|FS] :- !,
   coq.locate Variable GR,
@@ -302,7 +317,7 @@ main [str Variable|FS] :- !,
   std.do! [
     factories-provide-mixins GRFS ML _,
     findall-classes AllStructures,
-    postulate-all-structures (global GR) ML 0 AllStructures,
+    postulate-all-structures (global GR) ML AllStructures,
   ].
 main _ :- coq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
@@ -314,7 +329,7 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command declares a factory.
- 
+
 TODO : docment
 
 *)
@@ -323,6 +338,9 @@ Elpi Command declare_factory.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
+% TODO: generalize so that if the target is a factory, then we accumulate
+% several `from` declaration: one for each mixin the target factory allows to
+% generate.
 pred gather-last-product i:term, i:option term, o:@factoryname, o:@mixinname.
 gather-last-product T Last R1 R2 :- whd1 T T1, !, % unfold the type
   gather-last-product T1 Last R1 R2.
@@ -365,44 +383,42 @@ TODO : factor code with declare_context
 Elpi Command canonical_instance.
 Elpi Accumulate Db hierarchy.db.
 
-(*
-XXX var-for-mixin and def-for-mixin should be unified.
-XXX then def-for-mixin is not only an hypothetical clauses
-XXX used within declare_context but also added to the DB
-XXX so that craftmixin finds it 
-XXX as a bonus, declare_context can be written multiple times in a row.
-*)
-
 Elpi Accumulate lp:{{
 
-pred craft-mixin.def-for-mixin i:@mixinname, o:term.
-pred craft-mixin i:term, i:int, i:@mixinname, o:@constant.
-craft-mixin T N M C :- std.spy-do! [
-  factories-provide-mixins.mixin-provided-by M FN,
-  from FDeps FN M F,
+% TODO: refactor craft-mixin and postulate-mixin?
+pred craft-mixin i:term, i:@mixinname, o:@constant.
+craft-mixin T M C :- std.do! [
 
-
-  factory-instance-for FN FI,
-
-  std.map FDeps craft-mixin.def-for-mixin FArgs,
+  %% unnecessary computation of the mixin type
   % dep1 M Deps,
-  % std.map Deps craft-mixin.def-for-mixin Args,
+  % std.map Deps term-for-mixin Args,
   % Ty = app[global M, T | Args],
   % coq.typecheck Ty _,
 
+  factories-provide-mixins.mixin-provided-by M FN,
+  from FDeps FN M F,
+  factory-instance-for FN FI,
+  std.map FDeps (term-for-mixin T) FArgs,
   Body = app[ app[F, T | FArgs] , FI ],
 
-  Name is "m" ^ {std.any->string N},
-  coq.say "BO = " {coq.term->string Body},
+  get-mixin-modname M ModName,
+  Name is "mixin_" ^ ModName,
+
   coq.typecheck Body _,
-  coq.env.add-const Name Body Ty tt tt C
+  coq.env.add-const Name Body _Ty ff ff C
 ].
 
-pred declare-instances i:term, i:int, i:list class, o:int, o:list class.
-declare-instances T N [class Class Struct ML|Rest] M Rest1 :-
-  std.map ML craft-mixin.def-for-mixin Args, !, % we can build it
-  N1 is N + 1,
-  Name is "s" ^ {std.any->string N},
+% TODO: refactor declare-instances and postulate-structures
+pred declare-instances i:term, i:list class, o:list class.
+declare-instances T [class Class Struct ML|Rest] Rest1 :-
+  std.map ML (term-for-mixin T) Args, % we can build it
+  % change the following test not to rely on an ad-hoc database,
+  % but to rely on the CS database instead.
+  not (local-structure T Struct), % not already built
+  !,
+
+  get-structure-modname Struct ModName,
+  Name is "struct_" ^ ModName,
 
   get-class-constructor Class KC,
   get-structure-constructor Struct KS,
@@ -412,19 +428,22 @@ declare-instances T N [class Class Struct ML|Rest] M Rest1 :-
 
   coq.env.add-const Name S STy ff ff CS,
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  declare-instances T N1 Rest M Rest1.
-declare-instances T N [X|Rest] M [X|Rest1] :- declare-instances T N Rest M Rest1.
-declare-instances _ N [] N [].
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ (local-structure T Struct)),
+  declare-instances T Rest Rest1.
+declare-instances T [X|Rest] [X|Rest1] :- declare-instances T Rest Rest1.
+declare-instances _ [] [].
 
-pred declare-all-instances i:term, i:list @mixinname, i:int, i:list class.
-declare-all-instances T [] N Structures :- declare-instances T N Structures _ _.
-declare-all-instances T [M|MS] N Structures :-
-  craft-mixin T N M C,
-  N1 is N + 1,
-  craft-mixin.def-for-mixin M (global (const C)) => (
-    declare-instances T N1 Structures N2 StructuresLeft,
-    declare-all-instances T MS N2 StructuresLeft
-  ).
+% TODO: refactor declare-all-instances and postulate-all-structures
+pred declare-all-instances i:term, i:list @mixinname, i:list class.
+declare-all-instances T [] Structures :- declare-instances T Structures _.
+declare-all-instances T [M|MS] Structures :-
+  craft-mixin T M C,
+  TermForMixin = term-for-mixin T M (global (const C)),
+  TermForMixin => (
+    declare-instances T Structures StructuresLeft,
+    declare-all-instances T MS StructuresLeft
+  ), !,
+  coq.elpi.accumulate "hierarchy.db" (clause _ _ TermForMixin).
 
 pred extract-factory-name i:term, o:gref.
 extract-factory-name T N :- safe-dest-app T (global N) _.
@@ -440,7 +459,7 @@ main [TS|Args] :- !, std.do! [
   findall-classes AllStructures,
   MixinOrigin =>
   FactoryInstance =>
-    declare-all-instances T ML 0 AllStructures,
+    declare-all-instances T ML AllStructures,
 ].
 main _ :- coq.error "Usage: canonical_instance <T> <FactoryInstance>..".
 
@@ -713,7 +732,7 @@ main [str Module|FS] :- !, std.do! [
   coq.env.end-module _,
 
   % Register in Elpi's DB the new structure
-  % TODO : coq-elpi: attach these to the Exports module (currently not possible)
+  % TODO: coq-elpi: attach these to the Exports module (currently not possible)
   std.forall Factories (f\
     coq.elpi.accumulate "hierarchy.db" (clause _ _ f)),
 
@@ -944,25 +963,23 @@ Record axioms := Axioms {
 Section Factories.
 Variable a : axioms.
 
-(* Elpi declare_factory_target AG_of_ASG foo *)
-Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
+(* Elpi declare_factory_target AG_of_ASG AG_of_ASG_axioms *)
+Notation AG_of_ASG_axioms := (AG_of_ASG.axioms A mixin_ASG_of_TYPE). (*generated*)
+Definition to_AG_of_ASG : AG_of_ASG_axioms :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
-  @AG_of_ASG.Axioms A m0 opp addNr.
+  @AG_of_ASG.Axioms A _ opp addNr.
 
-(* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
-it so that declare_factory_target knows about it. *)
-(* Elpi canonical_instance A to_AG_of_ASG. *)
-Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
+Elpi canonical_instance A to_AG_of_ASG.
 
-(* Elpi declare_factory_target RING_of_AG foo *)
-Definition to_RING_of_AG : RING_of_AG.axioms A m0 :=
+(* Elpi declare_factory_target RING_of_AG RING_of_AG_axioms *)
+Notation RING_of_AG_axioms := (RING_of_AG.axioms A mixin_ASG_of_TYPE). (*generated*)
+Definition to_RING_of_AG : RING_of_AG_axioms :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
-  @RING_of_AG.Axioms A m0 _ _ mulrA mul1r mulr1 mulrDl mulrDr.
-
-(* Elpi declare_factory to_RING_of_AG.  *)
+  @RING_of_AG.Axioms A mixin_ASG_of_TYPE _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
 End Factories. End S. End RING_of_ASG.
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
+Elpi declare_factory RING_of_ASG.to_RING_of_AG.
 
 End Example2.
 
@@ -1111,14 +1128,13 @@ Variable a : axioms.
 
 Check SRIG_of_ASG.Axioms.
 (* Elpi declare_factory_target SRIG_of_ASG foo *)
-Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A m0 :=
+Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A mixin_ASG_of_TYPE :=
   let: Axioms one mul mulA mul1x mulx1 mulDl mulDr := a in
-  @SRIG_of_ASG.Axioms A m0 one mul mulA mul1x mulx1 mulDl mulDr
+  @SRIG_of_ASG.Axioms A _ one mul mulA mul1x mulx1 mulDl mulDr
                       (mul0r _ mulDl) (mulr0 _ mulDr).
 
-(* Elpi declare_factory to_SRIG_of_ASG. *)
-
 End Factories. End S. End RING_of_AG.
+Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
    new AG class. *)
@@ -1142,21 +1158,21 @@ Section Factories.
 Variable a : axioms.
 
 (* Elpi declare_factory_target AG_of_ASG foo *)
-Definition to_AG_of_ASG : AG_of_ASG.axioms A m0 :=
+Definition to_AG_of_ASG : AG_of_ASG.axioms A mixin_ASG_of_TYPE :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
-  @AG_of_ASG.Axioms A m0 opp addNr.
+  @AG_of_ASG.Axioms A _ opp addNr.
 
-(* Elpi declare_factory to_AG_of_ASG / also makes a AG canonical and registers
-   it so that declare_factory_target knows about it. *)
-Canonical xxx := AG.Pack A (AG.Class A m0 to_AG_of_ASG).
+Elpi canonical_instance A to_AG_of_ASG.
 
 (* Elpi declare_factory_target RING_of_AG foo *)
-Definition to_RING_of_AG : RING_of_AG.axioms A m0 :=
+Definition to_RING_of_AG : RING_of_AG.axioms A mixin_ASG_of_TYPE :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
-  @RING_of_AG.Axioms A m0 _ _ mulrA mul1r mulr1 mulrDl mulrDr.
-
-(* Elpi declare_factory to_RING_of_AG.  *)
+  @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
 End Factories. End S. End RING_of_ASG.
+
+Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
+Elpi declare_factory RING_of_ASG.to_RING_of_AG.
+
 
 End Example3.
