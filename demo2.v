@@ -726,22 +726,21 @@ main [str Module|FS] :- !, std.do! [
 
   Factories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
+  % Register in Elpi's DB the new structure
   std.forall MLToExport (m\
     coq.elpi.accumulate current "hierarchy.db" (clause _ _ (already-exported m))),
 
-  coq.env.end-module _,
-
-  coq.env.end-module _,
-
-  % Register in Elpi's DB the new structure
-  % TODO: coq-elpi: attach these to the Exports module (currently not possible)
   std.forall Factories (f\
-    coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ f)),
+    coq.elpi.accumulate current "hierarchy.db" (clause _ _ f)),
 
   std.forall NewJoins (j\
-    coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ j)),
+    coq.elpi.accumulate current "hierarchy.db" (clause _ _ j)),
 
-  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (class-def CurrentClass)),
+  coq.elpi.accumulate current "hierarchy.db" (clause _ _ (class-def CurrentClass)),
+
+  coq.env.end-module _,
+
+  coq.env.end-module _,
 
 ].
 main _ :- coq.error "Usage: declare_structure <ModuleName> [<Factory>..]".
