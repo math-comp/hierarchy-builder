@@ -208,7 +208,7 @@ main [str S] :- !, std.do! [
   coq.locate S M,
   coq.env.typeof-gr M Ty,
   gather-mixin-dendencies Ty [] ML,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
+  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (dep1 M ML)),
   ID = (fun `t` {{ Type }} t\ {mk-id t ML {mk-app (global M) [t]} }),
   coq.typecheck ID _TyID,
   get-mixin-modname M ModName,
@@ -216,7 +216,7 @@ main [str S] :- !, std.do! [
   % TODO: if we store `ID` directly, then subsequent uses of this term
   % throw an anomaly "Universe demo2.xxx undefined"... why?
   coq.env.add-const Name ID TyID ff ff C,
-  coq.elpi.accumulate "hierarchy.db"
+  coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (from ML M M ID)),
 ].
 main _ :- coq.error "Usage: declare_mixin <mixin>".
@@ -291,7 +291,7 @@ postulate-structures T [class Class Struct ML|Rest] Rest1 :-
 
   coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (local-structure T Struct)),
+  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (local-structure T Struct)),
   postulate-structures T Rest Rest1.
 postulate-structures T [X|Rest] [X|Rest1] :- postulate-structures T Rest Rest1.
 postulate-structures _ [] [].
@@ -308,7 +308,7 @@ postulate-all-structures T [M|MS] Structures :-
     postulate-structures T Structures StructuresLeft,
     postulate-all-structures T MS StructuresLeft
   ), !,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ TermForMixin).
+  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ TermForMixin).
 
 main [str Variable|FS] :- !,
   coq.locate Variable GR,
@@ -351,13 +351,12 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
 gather-last-product End (some Last) LastGR EndGR :-
   safe-dest-app End (global EndGR) _,
   safe-dest-app Last (global LastGR) _.
-% TODO : whd1
 
 main [str S] :- !, std.do! [
   coq.locate S F,
   coq.env.typeof-gr F Ty,
   gather-last-product Ty none SrcMixin TgtMixin,
-  coq.elpi.accumulate "hierarchy.db"
+  coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (from [
       %TODO put all the other arguments
       ]
@@ -428,7 +427,7 @@ declare-instances T [class Class Struct ML|Rest] Rest1 :-
 
   coq.env.add-const Name S STy ff ff CS,
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (local-structure T Struct)),
+  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (local-structure T Struct)),
   declare-instances T Rest Rest1.
 declare-instances T [X|Rest] [X|Rest1] :- declare-instances T Rest Rest1.
 declare-instances _ [] [].
@@ -443,7 +442,7 @@ declare-all-instances T [M|MS] Structures :-
     declare-instances T Structures StructuresLeft,
     declare-all-instances T MS StructuresLeft
   ), !,
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ TermForMixin).
+  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ TermForMixin).
 
 pred extract-factory-name i:term, o:gref.
 extract-factory-name T N :- safe-dest-app T (global N) _.
@@ -727,6 +726,9 @@ main [str Module|FS] :- !, std.do! [
 
   Factories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
+  std.forall MLToExport (m\
+    coq.elpi.accumulate current "hierarchy.db" (clause _ _ (already-exported m))),
+
   coq.env.end-module _,
 
   coq.env.end-module _,
@@ -734,15 +736,13 @@ main [str Module|FS] :- !, std.do! [
   % Register in Elpi's DB the new structure
   % TODO: coq-elpi: attach these to the Exports module (currently not possible)
   std.forall Factories (f\
-    coq.elpi.accumulate "hierarchy.db" (clause _ _ f)),
+    coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ f)),
 
   std.forall NewJoins (j\
-    coq.elpi.accumulate "hierarchy.db" (clause _ _ j)),
+    coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ j)),
 
-  coq.elpi.accumulate "hierarchy.db" (clause _ _ (class-def CurrentClass)),
+  coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (class-def CurrentClass)),
 
-  std.forall MLToExport (m\
-    coq.elpi.accumulate "hierarchy.db" (clause _ _ (already-exported m))),
 ].
 main _ :- coq.error "Usage: declare_structure <ModuleName> [<Factory>..]".
 
