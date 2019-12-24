@@ -752,6 +752,46 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+(** This command helps crafting the statement of factories
+
+  Input:
+    a term of the form (Structure.axioms T)
+
+  Effect:
+    Local Notation Structure_axioms := (Structure.axioms T m1 .. mn)
+
+  where
+  - T is a type variable on which a declare_context command was issued
+  - m1 .. mn are the mixins on which Structure.axioms depend and that
+    were postulated by declare_context
+
+*)
+
+Elpi Command complete_factory_target.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+
+main [trm Term] :- !, std.do! [
+  std.assert! (coq.typecheck Term _) "Not well typed",
+  std.assert! (Term = app [global Axioms, T]) "Not an applied mixin",
+  coq.gr->path Axioms Path,
+  std.rev Path [Ax,Mod|_],
+  Name is Mod ^ "_" ^ Ax,
+  dep1 Axioms Deps,
+  std.map Deps (term-for-mixin T) Args,
+  Body = app [ global Axioms, T | Args],
+  coq.notation.add-abbreviation Name 0 Body ff tt,
+].
+main _ :- coq.error "Usage: complete_factory_target (<Mixin> <Typ>)".
+
+}}.
+Elpi Typecheck.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+
 (******************************************************************************)
 (* Example 1                                                                  *)
 (******************************************************************************)
@@ -962,16 +1002,14 @@ Record axioms := Axioms {
 Section Factories.
 Variable a : axioms.
 
-(* Elpi declare_factory_target AG_of_ASG AG_of_ASG_axioms *)
-Notation AG_of_ASG_axioms := (AG_of_ASG.axioms A mixin_ASG_of_TYPE). (*generated*)
+Elpi complete_factory_target (AG_of_ASG.axioms A).
 Definition to_AG_of_ASG : AG_of_ASG_axioms :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
 Elpi canonical_instance A to_AG_of_ASG.
 
-(* Elpi declare_factory_target RING_of_AG RING_of_AG_axioms *)
-Notation RING_of_AG_axioms := (RING_of_AG.axioms A mixin_ASG_of_TYPE). (*generated*)
+Elpi complete_factory_target (RING_of_AG.axioms A).
 Definition to_RING_of_AG : RING_of_AG_axioms :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
   @RING_of_AG.Axioms A mixin_ASG_of_TYPE _ _ mulrA mul1r mulr1 mulrDl mulrDr.
@@ -1126,13 +1164,14 @@ Section Factories.
 Variable a : axioms.
 
 Check SRIG_of_ASG.Axioms.
-(* Elpi declare_factory_target SRIG_of_ASG foo *)
-Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A mixin_ASG_of_TYPE :=
+Elpi complete_factory_target (SRIG_of_ASG.axioms A).
+Definition to_SRIG_of_ASG : SRIG_of_ASG_axioms :=
   let: Axioms one mul mulA mul1x mulx1 mulDl mulDr := a in
   @SRIG_of_ASG.Axioms A _ one mul mulA mul1x mulx1 mulDl mulDr
                       (mul0r _ mulDl) (mulr0 _ mulDr).
 
 End Factories. End S. End RING_of_AG.
+Elpi declare_mixin RING_of_AG.axioms.
 Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
@@ -1156,15 +1195,15 @@ Record axioms := Axioms {
 Section Factories.
 Variable a : axioms.
 
-(* Elpi declare_factory_target AG_of_ASG foo *)
-Definition to_AG_of_ASG : AG_of_ASG.axioms A mixin_ASG_of_TYPE :=
+Elpi complete_factory_target (AG_of_ASG.axioms A).
+Definition to_AG_of_ASG : AG_of_ASG_axioms :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
 Elpi canonical_instance A to_AG_of_ASG.
 
-(* Elpi declare_factory_target RING_of_AG foo *)
-Definition to_RING_of_AG : RING_of_AG.axioms A mixin_ASG_of_TYPE :=
+Elpi complete_factory_target (RING_of_AG.axioms A).
+Definition to_RING_of_AG : RING_of_AG_axioms :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
   @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
