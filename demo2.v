@@ -183,7 +183,8 @@ get-mixin-modname S ModName :-
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for mixin" S).
 
 %% database for locally available mixins
-pred term-for-mixin i:term, i:@mixinname, o:term.
+% [term-for-mixin T M X] means [X] has type [M T]
+pred term-for-mixin o:term, o:@mixinname, o:term.
 
 %% finding for locally defined structures
 pred cs-structure i:cs-instance, o:term.
@@ -220,18 +221,18 @@ local-structure TyTerm Struct :-
 pred mixin-first-class o:@mixinname, o:@classname.
 
 %%%%%%% Finding and instantiating mixin arguments%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [gather-mixin-dependencies Ty [] ML] states that ML is the list of
+% [gather-mixin-dependencies Ty ML] states that ML is the list of
 % mixins which the type Ty rely on, i.e.
 % Ty = forall M_0 ... M_n, _ and ML = [M_0, .., M_n]
-pred gather-mixin-dependencies i:term, i:list @mixinname, o:list @mixinname.
-gather-mixin-dependencies (prod N S R) Acc ML :- !,
-  safe-dest-app S HD _,
-  if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
+pred gather-mixin-dependencies i:term, o:list @mixinname.
+gather-mixin-dependencies (prod N S R) ML' :- !,
   @pi-decl N S x\
-    gather-mixin-dependencies (R x) Acc1 ML.
-gather-mixin-dependencies Ty Acc ML :-
-  whd1 Ty Ty1, !, gather-mixin-dependencies Ty1 Acc ML.
-gather-mixin-dependencies _Ty Acc Acc.
+    gather-mixin-dependencies (R x) ML,
+    safe-dest-app S HD _,
+    if (HD = global GR, dep1 GR _) (ML' = [GR|ML]) (ML' = ML).
+gather-mixin-dependencies Ty ML :-
+  whd1 Ty Ty1, !, gather-mixin-dependencies Ty1 ML.
+gather-mixin-dependencies _Ty [].
 
 % [find-all-classes Mixins Classes] states that Classes is a list of classes
 %   which contain all the mixins in Mixins.
@@ -249,31 +250,67 @@ find-all-classes [M|Mixins] [C|Classes] :-
   ].
 find-all-classes [_|_] _ :- std.fatal-error "cannot find class for mixin".
 
-% [eta-mixin T F ML EtaF] states that EtaF is the eta-expansion of F
-% where F is assumed to have a type of the following shape:
-% forall (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik), _
-% where M_0 .. M_n are mixins
-% and hence EtaF has the following shape:
-% fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => F m_0 .. m_n
-pred eta-mixin i:term, i:term, i:list @mixinname, o:term.
-eta-mixin _T F [] F.
-eta-mixin T F [M|ML] (fun `m` MTXL FmML) :- std.do! [
-  std.map {dep1 M} (term-for-mixin T) XL,
-  mk-app (global M) [T|XL] MTXL,
-  pi m \ sigma Fm\ term-for-mixin T M m =>
-    mk-app F [m] Fm,
-    eta-mixin T Fm ML (FmML m)
+kind mterm type.
+type mtrm list @mixinname -> term -> mterm.
+
+pred subst-mfun i:list term, i:mterm, o:mterm.
+subst-mfun Xs (mtrm ML F) (mtrm ML FXs) :- subst-fun Xs F FXs.
+
+% [mk-mterm ML F MF] states that
+% if F has a type of the following shape:
+% forall xs (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) ys, _
+% where ML = [M_0, .., M_n] are mixins,
+% then MF has the following shape:
+% mtrm ML (fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys => F xs m_0 .. m_n ys)
+pred mk-mterm i:list @mixinname, i:term, o:mterm.
+mk-mterm ML F (mtrm ML EtaF) :- std.do! [coq.typecheck F Ty, mk-eta (-1) Ty F EtaF].
+
+% [subst-mixin M_i X_i F TFX] states that
+% if    F  := fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
+%            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
+% then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
+%            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
+% thus instanciating an abstraction on mixin M_i with X_i
+pred subst-mixin i:@mixinname, i:term, i:term, o:term.
+subst-mixin M X (fun _ Tm F) (F X):- safe-dest-app Tm (global M) _, !.
+subst-mixin M X (fun N T F) (fun N T FX) :- !,
+  pi m\ subst-mixin M X (F m) (FX m).
+subst-mixin _ _ F F.
+
+% [subst-mixins T MF TFX] assumes that MF is a mterm (in eta-expanded form)
+% (mtrm ML F) and perform the substitution as above
+% for every term-for-mixin entry out of the list ML = [M_0, .., M_n].
+pred subst-mixins i:term, i:mterm, o:term.
+subst-mixins _T (mtrm [] F) F :- !.
+subst-mixins T (mtrm [M|ML] F) SFX :- std.do! [
+  subst-mixin M {term-for-mixin T M} F FX,
+  subst-mixins T (mtrm ML FX) SFX
 ].
 
-% [subst-mixin F M X TFX] assumes that F is in an eta expanded form above
-% and states that if M = M_i, then TFX is equal to
-% fun m_0 .. m_{i-1} m_{i+1} .. m_n => F m_0 .. m_{i-1} X m_{i+1} .. m_n
-% thus instanciating an abstraction on mixin M by X
-pred subst-mixin i:term, i:@mixinname, i:term, o:term.
-subst-mixin (fun _ Tm F) M X (F X) :-
-  safe-dest-app Tm (global M) _, dep1 M _, !.
-subst-mixin (fun N T F) M X (fun N T FX) :- !,
-  pi m \ subst-mixin (F m) M X (FX m).
+pred mterm-of-from i:prop, o:prop.
+mterm-of-from (from ML _ Tgt F) (mterm-for-mixin Tgt MF) :- mk-mterm ML F MF.
+
+% [current-factory-src X] states we are building everything from X.
+pred current-factory-src o:term.
+% [mterm-for-mixin M MF] states that
+% the mterm MF can be used to instanciate mixin M,
+% by applying it to T, several mixins and the current factory source.
+pred mterm-for-mixin o:@mixinname, o:mterm.
+% rebuilding a term-for-mixin from a mterm-for-mixin.
+term-for-mixin T M X :- mterm-for-mixin M MF, subst-mixins T MF F, !,
+  subst-fun [T, {current-factory-src}] F X.
+
+% [under-mixins T ML Pred F] states that F is of the shape
+% fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => Body m_0 .. m_n
+% where ML = [M_0, .., M_n]
+% and Body is such that [..,term-for-mixin T M_i m_i,..] => Pred Body
+pred under-mixins i:term, i:list @mixinname, i:(term -> prop), o:term.
+under-mixins _T [] Pred Body :- !, Pred Body.
+under-mixins T [M|ML] Pred (fun `m` MTXL FLG) :- std.do! [
+  std.map {dep1 M} (term-for-mixin T) XL,
+  mk-app (global M) [T|XL] MTXL,
+  pi m\ term-for-mixin T M m => under-mixins T ML Pred (FLG m)
+].
 
 % Notations /à la/ *pack* are always of the shape
 % [Notation N x_0 .. x_n := C x_0 .. _ _ id .. x_i .. _ id _ _ id]
@@ -341,7 +378,7 @@ mk-phant-struct T SI PF (phant-trm [implicit-arg, unify-arg|AL] UF) :-
   get-structure-sort-projection SI Sort,
   pi s\ PF s = phant-trm AL (F s),
   UF = {{fun (s : lp:SI) (u : lib:hb.unify lp:T (lp:Sort s)
-      (lib:hb.some ("is not canonically a"%string, lp:SI))) => lp:(F s)}}.
+    (lib:hb.none (* "is not canonically a"%string, lp:SI *))) => lp:(F s)}}.
 
 % [mk-phant-struct T CN PF PCF] states that PSF is a phant-term
 % which postulate a structure [s : SI] such that [T = sort s]
@@ -372,7 +409,7 @@ mk-phant-mixins.class-mixins T CN C [] PF UPF :- !,
     mk-phant-unify C (app [K, T | CmL]) PF UPF.
 mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML) LamPFmmL :- !,
     (pi m\ term-for-mixin T M m => sigma FmML\
-      subst-mixin FMML M m FmML, !,
+      subst-mixin M m FMML FmML, !,
       mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML) (PFmmL m)),
     mk-phant-implicit `m` (app [global M, T]) PFmmL LamPFmmL.
 
@@ -383,14 +420,16 @@ mk-phant-mixins.class T CN PF SCF :- !,
 
 pred mk-phant-mixins i:term, o:phant-term.
 mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
-  gather-mixin-dependencies {coq.typecheck F} [] ML,
-  toposort-mixins ML MLSorted,
+  coq.typecheck F FTy,
+  gather-mixin-dependencies FTy ML,
+  mk-eta (-1) FTy F EtaF,
+%  toposort-mixins ML MLSorted,
+  ML = MLSorted, % Assumes we give them already sorted in dep order.
   std.rev MLSorted MLSortedRev,
   find-all-classes MLSortedRev CNL,
-  pi t\ sigma FML PML\
-    eta-mixin t {mk-app F [t]} ML FML,
-    std.fold CNL (phant-trm [] FML) (mk-phant-mixins.class t)
-      (phant-trm AL (CFML t))
+  (@pi-decl T {{Type}} t\ sigma FML PML\
+    std.fold CNL (phant-trm [] {subst-fun [t] EtaF}) (mk-phant-mixins.class t)
+      (phant-trm AL (CFML t)))
 ].
 
 % Database for abbreviatation of terms applied to mixins
@@ -438,14 +477,15 @@ main [str S] :- !, std.do! [
   mk-phant-abbrev PhantAbbrevName PhM PhC,
   coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (phant-abbrev M (const PhC) PhantAbbrevName)),
-  gather-mixin-dependencies Ty [] ML,
+  gather-mixin-dependencies Ty ML,
   coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (dep1 M ML)),
-  ID = (fun `t` {{ Type }} t\ {mk-id t ML {mk-app (global M) [t]} }),
+  Ty = prod T TTy _,
+  ID = (fun T TTy t\ {mk-id t ML {mk-app (global M) [t]} }),
   coq.typecheck ID _TyID,
   Name is ModName ^ "_factory",
   % TODO: if we store `ID` directly, then subsequent uses of this term
   % throw an anomaly "Universe demo2.xxx undefined"... why?
-  coq.env.add-const Name ID _TyID ff ff _C,
+  coq.env.add-const Name ID _TyID ff ff _CID,
   coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (from ML M M ID)),
 ].
@@ -581,10 +621,39 @@ gather-last-product End (some Last) LastGR EndGR :-
   safe-dest-app End (global EndGR) _,
   safe-dest-app Last (global LastGR) _.
 
+pred factory-comp i:term, i:mterm, i:mterm, i:mterm, o:term.
+factory-comp T MSrc MF MG (fun `x` Src InnerBody) :-
+  subst-mixins T MSrc Src,
+  @pi-decl `x` Src x\ sigma F G\
+    current-factory-src x => std.do! [subst-mixins T MF F, subst-mixins T MG G],
+    mk-app G [{mk-app F [x]}] (InnerBody x).
+
+
+% [declare-factory-from ML Src F (from ML' Mid Tgt G)]
+% declares a factory by composing F and G.
+pred declare-factory-from i:list @mixinname, i:gref, i:term, i:prop,
+  i:list prop, o:list prop.
+declare-factory-from ML Src F (from MLG _Mid Tgt G) PI PO :- PI => std.do! [
+  std.map2 [ML, ML, MLG] [global Src, F, G] mk-mterm [MSrc, MF, MG],
+  (@pi-decl `T` {{Type}} t\ sigma MSrct MFt MGt\ std.do! [
+    std.map [MSrc, MF, MG] (subst-mfun [t]) [MSrct, MFt, MGt],
+    (under-mixins t ML (factory-comp t MSrct MFt MGt) (GoFt t))
+  ]),
+  GoF = fun `T` {{Type}} GoFt,
+  coq.typecheck GoF GoFTy_,
+  get-mixin-modname Src ModNameSrc,
+  get-mixin-modname Tgt ModNameTgt,
+  Name is ModNameSrc ^ "_to_" ^ ModNameTgt,
+  coq.env.add-const Name GoF _ ff ff GoFC,
+  coq.elpi.accumulate execution-site "hierarchy.db"
+    (clause _ _ (from ML Src Tgt (global (const GoFC)))),
+  PO = [mterm-for-mixin Tgt {mk-mterm ML (global (const GoFC))}|PI]
+].
+
 main [str S] :- !, std.do! [
   coq.locate S F,
   coq.env.typeof-gr F Ty,
-  gather-last-product Ty none Src Tgt,
+  gather-last-product Ty none Src Mid,
   get-mixin-modname Src ModName,
   if (not (phant-abbrev Src _ _)) (std.do! [
     mk-phant-mixins (global Src) PhSrc,
@@ -593,12 +662,11 @@ main [str S] :- !, std.do! [
     coq.elpi.accumulate execution-site "hierarchy.db"
       (clause _ _ (phant-abbrev Src (const PhC) PhantAbbrevName))
   ]) true,
-  coq.elpi.accumulate execution-site "hierarchy.db"
-    (clause _ _ (from [
-      %TODO put all the other arguments
-      ]
-      Src Tgt
-       (global F))),
+  gather-mixin-dependencies Ty ML,
+  std.findall (from ML_ Src Mid_ G_) FromSrc,
+  std.map FromSrc mterm-of-from PI,
+  std.findall (from ML'_ Mid Tgt'_ G'_) FromMid,
+  std.fold FromMid PI (declare-factory-from ML Src (global F)) _PO
 ].
 main _ :- coq.error "Usage: declare_factory <FactoryFunction>".
 
@@ -1208,6 +1276,7 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
   @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
 End Factories. End S. End RING_of_ASG.
+
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
 Elpi declare_factory RING_of_ASG.to_RING_of_AG.
 
@@ -1368,6 +1437,8 @@ Definition to_SRIG_of_ASG : SRIG_of_ASG_axioms A :=
                       (mul0r _ mulDl) (mulr0 _ mulDr).
 
 End Factories. End S. End RING_of_AG.
+Elpi Print debug.
+Check RING_of_AG.to_SRIG_of_ASG.
 Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
