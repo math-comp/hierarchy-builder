@@ -2,18 +2,17 @@ Require Import String ssreflect ssrfun.
 Require Import ZArith.
 
 (* From /Canonical Structures for the working Coq user/ Mahboubi Tassi *)
-Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option string) :=
+Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
   phantom T1 t1 -> phantom T2 t2.
-(* Notation "’Error_cannot_unify: t1 t2" := (unify t1 t2 None)
-  (at level 0, format "’Error_cannot_unify:  t1  t2", only printing).
-Notation "’Error: t msg" := (unify t _ (Some msg))
-  (at level 0, format "’Error:  t  msg", only printing).
+Notation "’Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
+  (at level 0, format "’Error_cannot_unify:  t1  'with'  t2", only printing).
+Notation "’Error: t msg T" := (unify t _ (Some (msg%string, T)))
+  (at level 0, msg, T at level 0, format "’Error:  t  msg  T", only printing).
 
 Notation "[find v | t1 ∼ t2 ] rest" :=
   (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing).
 Notation "[find v | t1 ∼ t2 | msg ] rest" :=
 (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing).
- *)
 
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 
@@ -200,12 +199,33 @@ local-structure TyTerm Struct :-
 %%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
-% to keep the invariant. We remember which is the first class/structure
-% that exports a given mixin.
-
+% to keep the invariant.
+% Also we remember which is the first class/structure that includes
+% a given mixin, assuming the invariant that this first class is also
+% the minimal class that includes this mixin.
+% [mixin-first-class M C] states that C is the first/minimal class
+% that contains the mixin M
 pred mixin-first-class o:@mixinname, o:@classname.
 
-% assumes Mixins are reversed topologically sorted.
+%%%%%%% Finding and instantiating mixin arguments%%%%%%%%%%%%%%%%%%%%%%%%%%
+% [gather-mixin-dependencies Ty [] ML] states that ML is the list of
+% mixins which the type Ty rely on, i.e.
+% Ty = forall M_0 ... M_n, _ and ML = [M_0, .., M_n]
+pred gather-mixin-dependencies i:term, i:list @mixinname, o:list @mixinname.
+gather-mixin-dependencies (prod N S R) Acc ML :- !,
+  safe-dest-app S HD _,
+  if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
+  @pi-decl N S x\
+    gather-mixin-dependencies (R x) Acc1 ML.
+gather-mixin-dependencies Ty Acc ML :-
+  whd1 Ty Ty1, !, gather-mixin-dependencies Ty1 Acc ML.
+gather-mixin-dependencies _Ty Acc Acc.
+
+% [find-all-classes Mixins Classes] states that Classes is a list of classes
+%   which contain all the mixins in Mixins.
+% Although it is not strictly necessary, but desirable for debugging,
+% we use a heuristic that tries to minimize the number
+% of classes by assuming Mixins are reversed topologically sorted.
 pred find-all-classes i:list @mixinname, o:list @classname.
 find-all-classes [] [].
 find-all-classes [M|Mixins] [C|Classes] :-
@@ -217,6 +237,12 @@ find-all-classes [M|Mixins] [C|Classes] :-
   ].
 find-all-classes [_|_] _ :- std.fatal-error "cannot find class for mixin".
 
+% [eta-mixin T F ML EtaF] states that EtaF is the eta-expansion of F
+% where F is assumed to have a type of the following shape:
+% forall (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik), _
+% where M_0 .. M_n are mixins
+% and hence EtaF has the following shape:
+% fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => F m_0 .. m_n
 pred eta-mixin i:term, i:term, i:list @mixinname, o:term.
 eta-mixin _T F [] F.
 eta-mixin T F [M|ML] (fun `m` MTXL FmML) :- std.do! [
@@ -227,6 +253,10 @@ eta-mixin T F [M|ML] (fun `m` MTXL FmML) :- std.do! [
     eta-mixin T Fm ML (FmML m)
 ].
 
+% [subst-mixin F M X TFX] assumes that F is in an eta expanded form above
+% and states that if M = M_i, then TFX is equal to
+% fun m_0 .. m_{i-1} m_{i+1} .. m_n => F m_0 .. m_{i-1} X m_{i+1} .. m_n
+% thus instanciating an abstraction on mixin M by X
 pred subst-mixin i:term, i:@mixinname, i:term, o:term.
 subst-mixin (fun _ Tm F) M X TFX :-
   safe-dest-app Tm (global M) _, !,
@@ -234,98 +264,115 @@ subst-mixin (fun _ Tm F) M X TFX :-
 subst-mixin (fun N T F) M X (fun N T FX) :- !,
   pi m \ subst-mixin (F m) M X (FX m).
 
+% Notations /à la/ *pack* are always of the shape
+% [Notation N x_0 .. x_n := C x_0 .. _ _ id .. x_i .. _ id _ _ id]
+% with a variable number of [_] between each [id], and where
+% - [x_i] is given by the user
+% - [_]   correspond to arguments that are left implicit,
+% - [id]  trigger unification as described in
+% /Canonical Structures for the working Coq user/ by Mahboubi and Tassi
+%
+% phant-arg encore these three kind of arguments
+% - [x_i] is encoded using [real-arg x_i]
+% - [_]              using [implicit-arg]
+% - [id]             using [unify-arg]
 kind phant-arg type.
-type real-arg @name -> term -> phant-arg.
+type real-arg @name -> phant-arg.
 type implicit-arg phant-arg.
 type unify-arg phant-arg.
 
+% phant-term is a pair of a list of argument kinds together with a term
 kind phant-term type.
 type phant-trm list phant-arg -> term -> phant-term.
 
-pred fun-with-class-mixins i:term, i:@classname, i:term,
+% A *pack* notation can be easiliy produced from a phant-term using
+% [mk-phant-abbrev N PT C], which states that C is a new constant
+% which name is N_const, and which produces a simple notation
+% with name N using the data of the phant-term PT to reconstruct a notation
+% [Notation N args := C args _ _ id _ id _ _ id] as described above.
+pred mk-phant-abbrev.term i:int, i:term, i:list phant-arg, o:int, o:term.
+mk-phant-abbrev.term K F [] K F.
+mk-phant-abbrev.term K F [real-arg N|AL] K'' (fun N _ AbbrevFx) :- !,
+  pi x\ mk-phant-abbrev.term K {mk-app F [x]} AL K' (AbbrevFx x),
+  K'' is K' + 1.
+mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
+  mk-phant-abbrev.term K {mk-app F [_]} AL K' FAbbrev.
+mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
+  mk-phant-abbrev.term K {mk-app F [{{id_phant}}]} AL K' FAbbrev.
+
+pred mk-phant-abbrev i:string, i:phant-term, o:@constant.
+mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
+  coq.typecheck T _TyT,
+  NC is N ^ "const",
+  coq.env.add-const NC T _ ff ff C,
+  mk-phant-abbrev.term 0 (global (const C)) AL NParams Abbrev,
+  coq.notation.add-abbreviation N NParams Abbrev tt ff
+].
+
+% [mk-phant-mixins F PF] states that if F = fun T m_0 .. m_n => _
+% then PF = phant-term
+%   [real-arg T, implicit-arg, unify-arg, implicit-arg, unify-arg,
+%                implicit-arg, .., implicit-arg, unify-arg, ...,
+%                implicit-arg, unify-arg, implicit-arg, unify-arg,
+%                implicit-arg, .., implicit-arg, unify-arg]
+%   {{fun T => [find s_0 | T ~ s_0] [find c_0 | s_0 ~ SK T c_0]
+%              [find m_0_0 .. m_0_n0 | c_0 = CK m_0_0 .. m_0_n0] ...
+%              [find s_k | T ~ s_k] [find c_k | s_k ~ SK T c_k]
+%              [find m_k_0 .. m_k_nk | c_k = CK m_k_0 .. m_k_nk]
+%                F T m_i0_j0 .. m_il_jl}}
+pred mk-phant-mixins.class-mixins i:term, i:@classname, i:term,
   i:list @mixinname, i:phant-term, o:phant-term.
-fun-with-class-mixins T CN C [] (phant-trm NL F)
-    (phant-trm [unify-arg|NL] UF) :-
+mk-phant-mixins.class-mixins T CN C [] (phant-trm AL F)
+    (phant-trm [unify-arg|AL] UF) :-
   std.do! [
     get-class-constructor CN K,
     class-def (class CN _ CML),
     std.map CML (term-for-mixin T) CmL,
     UF = fun `u` (app [{{@unify}}, _, _, C, app [K, T | CmL], {{None}}]) _\ F
   ].
-fun-with-class-mixins T CN C [M|ML] (phant-trm NL FMML)
-    (phant-trm [implicit-arg|NL'] (fun `m` (app [global M, T]) FmmL)) :-
+mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML)
+    (phant-trm [implicit-arg|AL'] (fun `m` (app [global M, T]) FmmL)) :-
   std.do! [
     pi m\ term-for-mixin T M m => sigma FmML \
       subst-mixin FMML M m FmML, !,
-      fun-with-class-mixins T CN C ML (phant-trm NL FmML)
-        (phant-trm NL' (FmmL m))
+      mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML)
+        (phant-trm AL' (FmmL m))
   ].
 
-pred fun-with-class i:term, i:@classname, i:phant-term, o:phant-term.
-fun-with-class T CN (phant-trm NL F)
-    (phant-trm [implicit-arg, unify-arg, implicit-arg, unify-arg|NL'] SCF) :-
+pred mk-phant-mixins.class i:term, i:@classname, i:phant-term, o:phant-term.
+mk-phant-mixins.class T CN (phant-trm AL F)
+    (phant-trm [implicit-arg, unify-arg, implicit-arg, unify-arg|AL'] SCF) :-
   std.do! [
     class-def (class CN SI CML),
     get-structure-sort-projection SI Sort,
     get-structure-constructor SI SK,
-    (pi c\ fun-with-class-mixins T CN c CML (phant-trm NL F)
-       (phant-trm NL' (Body c))),
+    (pi c\ mk-phant-mixins.class-mixins T CN c CML (phant-trm AL F)
+       (phant-trm AL' (Body c))),
     SCF = fun `s` SI s \
-          fun `_` (app [{{@unify}}, _, _, T, app [Sort, s], {{None}}]) _\
+          fun `_` (app [{{@unify}}, _, _, T, app [Sort, s],
+            app [{{@Some}}, _,
+              app [{{@pair}}, _, _, {{"is not canonically a"%string}}, SI]]]) _\
           fun `c` (app [global CN, T]) c \
           fun `_` (app [{{@unify}}, _, _, s, app [SK, T, c], {{None}}]) _\
           Body c
   ].
 
-pred fun-with-mixins i:term, i:list @mixinname, o:phant-term.
-fun-with-mixins F ML (phant-trm [real-arg T Ty|NL] (fun T Ty CFML)) :-
-  std.do! [
-    toposort-mixins ML MLSorted,
-    std.rev MLSorted MLSortedRev,
-    find-all-classes MLSortedRev CNL,
-    Ty = {{Type}},
-    pi t\ sigma FML PML\
-      eta-mixin t {mk-app F [t]} ML FML,
-      std.fold CNL (phant-trm [] FML) (fun-with-class t)
-        (phant-trm NL (CFML t))
-  ].
-
-pred gather-mixin-dependencies i:term, i:list @mixinname, o:list @mixinname.
-gather-mixin-dependencies (prod N S R) Acc Result :- !,
-  safe-dest-app S HD _,
-  if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
-  @pi-decl N S x\
-    gather-mixin-dependencies (R x) Acc1 Result.
-gather-mixin-dependencies (sort _) Acc Acc.
-gather-mixin-dependencies Ty Acc Res :- whd1 Ty Ty1, !, gather-mixin-dependencies Ty1 Acc Res.
-gather-mixin-dependencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
-
-pred term-with-mixins i:term, o:phant-term.
-term-with-mixins T F :- std.do! [
-  gather-mixin-dependencies {coq.typecheck T} [] ML,
-  fun-with-mixins T ML F
+pred mk-phant-mixins i:term, o:phant-term.
+mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
+  gather-mixin-dependencies {coq.typecheck F} [] ML,
+  toposort-mixins ML MLSorted,
+  std.rev MLSorted MLSortedRev,
+  find-all-classes MLSortedRev CNL,
+  pi t\ sigma FML PML\
+    eta-mixin t {mk-app F [t]} ML FML,
+    std.fold CNL (phant-trm [] FML) (mk-phant-mixins.class t)
+      (phant-trm AL (CFML t))
 ].
 
-pred mk-phant-term i:int, i:term, i:list phant-arg, o:int, o:term.
-mk-phant-term K F [] K F.
-mk-phant-term K F [real-arg N Ty|NL] K'' (fun N Ty AbbrevFx) :- !,
-  pi x\ mk-phant-term K {mk-app F [x]} NL K' (AbbrevFx x),
-  K'' is K' + 1.
-mk-phant-term K F [implicit-arg|NL] K' FAbbrev :- !,
-  mk-phant-term K {mk-app F [_]} NL K' FAbbrev.
-mk-phant-term K F [unify-arg|NL] K' FAbbrev :- !,
-  mk-phant-term K {mk-app F [{{id_phant}}]} NL K' FAbbrev.
-
-pred const-and-abbrev i:string, i:string, i:phant-term, o:@constant.
-const-and-abbrev NC NA (phant-trm NL T) C :- std.do! [
-  coq.typecheck T _TyT,
-  coq.env.add-const NC T _ ff ff C,
-  mk-phant-term 0 (global (const C)) NL NParams Abbrev,
-  coq.notation.add-abbreviation NA NParams Abbrev tt ff
-].
-
-% database for abbreviatation of terms applied to mixins
-% phant-abbrev Original PhantCst PhantAbbrev
+% Database for abbreviatation of terms applied to mixins
+% [phant-abbrev Original PhantCst PhantAbbrev]
+% states that there is an abbreviation /à la/ *pack* for Original,
+% that it is called PhantAbbrev and the underlying constant is PhantCst.
 pred phant-abbrev o:gref, o:gref, o:string.
 
 }}.
@@ -362,10 +409,9 @@ main [str S] :- !, std.do! [
   coq.locate S M,
   coq.env.typeof-gr M Ty,
   get-mixin-modname M ModName,
-  term-with-mixins (global M) PhM,
-  PhantCstName is ModName ^ "_axioms_of",
+  mk-phant-mixins (global M) PhM,
   PhantAbbrevName is ModName ^ "_axioms",
-  const-and-abbrev PhantCstName PhantAbbrevName PhM PhC,
+  mk-phant-abbrev PhantAbbrevName PhM PhC,
   coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (phant-abbrev M (const PhC) PhantAbbrevName)),
   gather-mixin-dependencies Ty [] ML,
@@ -517,10 +563,9 @@ main [str S] :- !, std.do! [
   gather-last-product Ty none Src Tgt,
   get-mixin-modname Src ModName,
   if (not (phant-abbrev Src _ _)) (std.do! [
-    term-with-mixins (global Src) PhSrc,
-    PhantCstName is ModName ^ "_axioms_of",
+    mk-phant-mixins (global Src) PhSrc,
     PhantAbbrevName is ModName ^ "_axioms",
-    const-and-abbrev PhantCstName PhantAbbrevName PhSrc PhC,
+    mk-phant-abbrev PhantAbbrevName PhSrc PhC,
     coq.elpi.accumulate execution-site "hierarchy.db"
       (clause _ _ (phant-abbrev Src (const PhC) PhantAbbrevName))
   ]) true,
@@ -617,9 +662,9 @@ main [TS|Args] :- !, std.do! [
   locate-term-argument TS T,
   std.map Args locate-term-argument FIL,
   std.map FIL coq.typecheck FITyL,
-  std.map FITyL extract-factory-name FNL,
-  factories-provide-mixins FNL ML MixinOrigin,
-  std.map2 FNL FIL (f\g\r\ r = factory-instance-for f g) FactoryInstance,
+  std.map FITyL extract-factory-name FAL,
+  factories-provide-mixins FAL ML MixinOrigin,
+  std.map2 FAL FIL (f\g\r\ r = factory-instance-for f g) FactoryInstance,
   findall-classes AllStructures,
   MixinOrigin =>
   FactoryInstance =>
@@ -1111,6 +1156,7 @@ Proof. by case: A => ? [? []]. Qed.
    new AG class. *)
 Module RING_of_ASG. Section S.
 Variable A : Type.
+
 Elpi declare_context A ASG_of_TYPE.axioms.
 
 Record axioms := Axioms {
@@ -1247,7 +1293,12 @@ Proof. by case: A => ? [? []]. Qed.
 
 Module RING_of_AG. Section S.
  Variable A : Type.
+
+ Fail Goal AG_of_ASG_axioms A. (* Failure with error message *)
+
  Elpi declare_context A ASG_of_TYPE.axioms AG_of_ASG.axioms.
+
+ Goal AG_of_ASG_axioms A. Abort. (* Success of mk-phant-mixin *)
 
  Record axioms := Axioms {
   one : A;
@@ -1299,6 +1350,7 @@ Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
    new AG class. *)
 Module RING_of_ASG. Section S.
 Variable A : Type.
+
 Elpi declare_context A ASG_of_TYPE.axioms.
 
 Record axioms := Axioms {
