@@ -1,22 +1,34 @@
 Require Import String ssreflect ssrfun.
 Require Import ZArith.
+From elpi Require Import elpi.
 
 (* From /Canonical Structures for the working Coq user/ Mahboubi Tassi *)
 Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
   phantom T1 t1 -> phantom T2 t2.
-Notation "’Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
-  (at level 0, format "’Error_cannot_unify:  t1  'with'  t2", only printing).
-Notation "’Error: t msg T" := (unify t _ (Some (msg%string, T)))
-  (at level 0, msg, T at level 0, format "’Error:  t  msg  T", only printing).
+Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
+  (at level 0, format "`Error_cannot_unify:  t1  'with'  t2", only printing) :
+  form_scope.
+Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
+  (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
+  form_scope.
 
 Notation "[find v | t1 ∼ t2 ] rest" :=
-  (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing).
+  (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
+  form_scope.
+Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
+  (fun v1 .. vn => fun (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
+  form_scope.
 Notation "[find v | t1 ∼ t2 | msg ] rest" :=
-(fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing).
-
+  (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
+  form_scope.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 
-From elpi Require Import elpi.
+Register unify as phant.unify.
+Register id_phant as phant.id.
+Register Coq.Init.Datatypes.None as elpi.none.
+Register Coq.Init.Datatypes.Some as elpi.some.
+Register Coq.Init.Datatypes.pair as elpi.pair.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -298,7 +310,7 @@ mk-phant-abbrev.term K F [real-arg N|AL] K'' (fun N _ AbbrevFx) :- !,
 mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
   mk-phant-abbrev.term K {mk-app F [_]} AL K' FAbbrev.
 mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
-  mk-phant-abbrev.term K {mk-app F [{{id_phant}}]} AL K' FAbbrev.
+  mk-phant-abbrev.term K {mk-app F [{{lib:@phant.id _ _}}]} AL K' FAbbrev.
 
 pred mk-phant-abbrev i:string, i:phant-term, o:@constant.
 mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
@@ -316,9 +328,9 @@ mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
 %                implicit-arg, unify-arg, implicit-arg, unify-arg,
 %                implicit-arg, .., implicit-arg, unify-arg]
 %   {{fun T => [find s_0 | T ~ s_0] [find c_0 | s_0 ~ SK T c_0]
-%              [find m_0_0 .. m_0_n0 | c_0 = CK m_0_0 .. m_0_n0] ...
+%              [find m_0_0, .., m_0_n0 | c_0 ~ CK m_0_0 .. m_0_n0] ...
 %              [find s_k | T ~ s_k] [find c_k | s_k ~ SK T c_k]
-%              [find m_k_0 .. m_k_nk | c_k = CK m_k_0 .. m_k_nk]
+%              [find m_k_0, .., m_k_nk | c_k ~ CK m_k_0 .. m_k_nk]
 %                F T m_i0_j0 .. m_il_jl}}
 pred mk-phant-mixins.class-mixins i:term, i:@classname, i:term,
   i:list @mixinname, i:phant-term, o:phant-term.
@@ -328,7 +340,8 @@ mk-phant-mixins.class-mixins T CN C [] (phant-trm AL F)
     get-class-constructor CN K,
     class-def (class CN _ CML),
     std.map CML (term-for-mixin T) CmL,
-    UF = fun `u` (app [{{@unify}}, _, _, C, app [K, T | CmL], {{None}}]) _\ F
+    UF = fun `u` (app [{{lib:@phant.unify}}, _, _, C, app [K, T | CmL],
+     app [{{lib:@elpi.none}}, _]]) _\ F
   ].
 mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML)
     (phant-trm [implicit-arg|AL'] (fun `m` (app [global M, T]) FmmL)) :-
@@ -350,11 +363,13 @@ mk-phant-mixins.class T CN (phant-trm AL F)
        (phant-trm AL' (Body c))),
     % TODO: replace with a big {{}} and `[find _ | _ ~ _]` or generate using a ELPI predicate 
     SCF = fun `s` SI s \
-          fun `_` (app [{{@unify}}, _, _, T, app [Sort, s],
-            app [{{@Some}}, _,
-              app [{{@pair}}, _, _, {{"is not canonically a"%string}}, SI]]]) _\
+          fun `_` (app [{{lib:@phant.unify}}, _, _, T, app [Sort, s],
+            app [{{lib:@elpi.some}}, _,
+              app [{{lib:@elpi.pair}}, _, _,
+               {{"is not canonically a"%string}}, SI]]]) _\
           fun `c` (app [global CN, T]) c \
-          fun `_` (app [{{@unify}}, _, _, s, app [SK, T, c], {{None}}]) _\
+          fun `_` (app [{{lib:@phant.unify}}, _, _, s, app [SK, T, c],
+           app [{{lib:@elpi.none}}, _]]) _\
           Body c
   ].
 
@@ -378,7 +393,7 @@ pred phant-abbrev o:gref, o:gref, o:string.
 
 }}.
 
-Elpi Command test.
+Elpi Command debug.
 Elpi Accumulate Db hierarchy.db.
 Elpi Typecheck.
 
