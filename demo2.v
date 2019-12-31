@@ -23,11 +23,11 @@ Notation "[find v | t1 ∼ t2 | msg ] rest" :=
   form_scope.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 
-Register unify as phant.unify.
-Register id_phant as phant.id.
-Register Coq.Init.Datatypes.None as elpi.none.
-Register Coq.Init.Datatypes.Some as elpi.some.
-Register Coq.Init.Datatypes.pair as elpi.pair.
+Register unify as hb.unify.
+Register id_phant as hb.id.
+Register Coq.Init.Datatypes.None as hb.none.
+Register Coq.Init.Datatypes.Some as hb.some.
+Register Coq.Init.Datatypes.pair as hb.pair.
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -270,9 +270,8 @@ eta-mixin T F [M|ML] (fun `m` MTXL FmML) :- std.do! [
 % fun m_0 .. m_{i-1} m_{i+1} .. m_n => F m_0 .. m_{i-1} X m_{i+1} .. m_n
 % thus instanciating an abstraction on mixin M by X
 pred subst-mixin i:term, i:@mixinname, i:term, o:term.
-subst-mixin (fun _ Tm F) M X TFX :-
-  safe-dest-app Tm (global M) _, !,
-  pi m\ copy m X => copy (F m) TFX.
+subst-mixin (fun _ Tm F) M X (F X) :-
+  safe-dest-app Tm (global M) _, dep1 M _, !.
 subst-mixin (fun N T F) M X (fun N T FX) :- !,
   pi m \ subst-mixin (F m) M X (FX m).
 
@@ -311,7 +310,7 @@ mk-phant-abbrev.term K F [real-arg N|AL] K'' (fun N _ AbbrevFx) :- !,
 mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
   mk-phant-abbrev.term K {mk-app F [_]} AL K' FAbbrev.
 mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
-  mk-phant-abbrev.term K {mk-app F [{{lib:@phant.id _ _}}]} AL K' FAbbrev.
+  mk-phant-abbrev.term K {mk-app F [{{lib:@hb.id _ _}}]} AL K' FAbbrev.
 
 pred mk-phant-abbrev i:string, i:phant-term, o:@constant.
 mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
@@ -326,7 +325,7 @@ mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
 % is starts with unifing X1 and X2 and then outputs PF.
 pred mk-phant-unify i:term, i:term, i:phant-term, o:phant-term.
 mk-phant-unify X1 X2 (phant-trm AL F) (phant-trm [unify-arg|AL] UF) :-
-  UF = {{fun u : lib:phant.unify lp:X1 lp:X2 lib:elpi.none => lp:F}}.
+  UF = {{fun u : lib:hb.unify lp:X1 lp:X2 lib:hb.none => lp:F}}.
 
 % [mk-phant-implicit N Ty PF PUF] states that PUF is a phant-term
 % which quantifies [PF x] over [x : Ty] (with name N)
@@ -341,8 +340,8 @@ pred mk-phant-struct i:term, i:term, i:(term -> phant-term), o:phant-term.
 mk-phant-struct T SI PF (phant-trm [implicit-arg, unify-arg|AL] UF) :-
   get-structure-sort-projection SI Sort,
   pi s\ PF s = phant-trm AL (F s),
-  UF = {{fun (s : lp:SI) (u : lib:phant.unify lp:T (lp:Sort s)
-      (lib:elpi.some ("is not canonically a"%string, lp:SI))) => lp:(F s)}}.
+  UF = {{fun (s : lp:SI) (u : lib:hb.unify lp:T (lp:Sort s)
+      (lib:hb.some ("is not canonically a"%string, lp:SI))) => lp:(F s)}}.
 
 % [mk-phant-struct T CN PF PCF] states that PSF is a phant-term
 % which postulate a structure [s : SI] such that [T = sort s]
