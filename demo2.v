@@ -299,9 +299,10 @@ type phant-trm list phant-arg -> term -> phant-term.
 
 % A *pack* notation can be easiliy produced from a phant-term using
 % [mk-phant-abbrev N PT C], which states that C is a new constant
-% which name is N_const, and which produces a simple notation
+% which name is phant_N, and which produces a simple notation
 % with name N using the data of the phant-term PT to reconstruct a notation
-% [Notation N args := C args _ _ id _ id _ _ id] as described above.
+% [Notation N x0 .. xn := C x0 _ _ id .. xi .. _ id _ _ id]
+% as described above.
 pred mk-phant-abbrev.term i:int, i:term, i:list phant-arg, o:int, o:term.
 mk-phant-abbrev.term K F [] K F.
 mk-phant-abbrev.term K F [real-arg N|AL] K'' (fun N _ AbbrevFx) :- !,
@@ -686,9 +687,9 @@ main [TS|Args] :- !, std.do! [
   locate-term-argument TS T,
   std.map Args locate-term-argument FIL,
   std.map FIL coq.typecheck FITyL,
-  std.map FITyL extract-factory-name FAL,
-  factories-provide-mixins FAL ML MixinOrigin,
-  std.map2 FAL FIL (f\g\r\ r = factory-instance-for f g) FactoryInstance,
+  std.map FITyL extract-factory-name FNL,
+  factories-provide-mixins FNL ML MixinOrigin,
+  std.map2 FNL FIL (f\g\r\ r = factory-instance-for f g) FactoryInstance,
   findall-classes AllStructures,
   MixinOrigin =>
   FactoryInstance =>
