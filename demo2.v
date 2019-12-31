@@ -272,7 +272,7 @@ subst-mixin (fun N T F) M X (fun N T FX) :- !,
 % - [id]  trigger unification as described in
 % /Canonical Structures for the working Coq user/ by Mahboubi and Tassi
 %
-% phant-arg encore these three kind of arguments
+% phant-arg encode these three kind of arguments
 % - [x_i] is encoded using [real-arg x_i]
 % - [_]              using [implicit-arg]
 % - [id]             using [unify-arg]
@@ -303,7 +303,7 @@ mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
 pred mk-phant-abbrev i:string, i:phant-term, o:@constant.
 mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
   coq.typecheck T _TyT,
-  NC is N ^ "const",
+  NC is "phant_" ^ N,
   coq.env.add-const NC T _ ff ff C,
   mk-phant-abbrev.term 0 (global (const C)) AL NParams Abbrev,
   coq.notation.add-abbreviation N NParams Abbrev tt ff
@@ -348,6 +348,7 @@ mk-phant-mixins.class T CN (phant-trm AL F)
     get-structure-constructor SI SK,
     (pi c\ mk-phant-mixins.class-mixins T CN c CML (phant-trm AL F)
        (phant-trm AL' (Body c))),
+    % TODO: replace with a big {{}} and `[find _ | _ ~ _]` or generate using a ELPI predicate 
     SCF = fun `s` SI s \
           fun `_` (app [{{@unify}}, _, _, T, app [Sort, s],
             app [{{@Some}}, _,
