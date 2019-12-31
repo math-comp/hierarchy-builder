@@ -321,6 +321,38 @@ mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
   coq.notation.add-abbreviation N NParams Abbrev tt ff
 ].
 
+% [mk-phant-unify X1 X2 PF PUF] states that PUF is a phant-term that
+% is starts with unifing X1 and X2 and then outputs PF.
+pred mk-phant-unify i:term, i:term, i:phant-term, o:phant-term.
+mk-phant-unify X1 X2 (phant-trm AL F) (phant-trm [unify-arg|AL] UF) :-
+  UF = {{fun u : lib:phant.unify lp:X1 lp:X2 lib:elpi.none => lp:F}}.
+
+% [mk-phant-implicit N Ty PF PUF] states that PUF is a phant-term
+% which quantifies [PF x] over [x : Ty] (with name N)
+pred mk-phant-implicit i:@name, i:term, i:(term -> phant-term), o:phant-term.
+mk-phant-implicit N Ty PF (phant-trm [implicit-arg|AL] (fun N Ty F)) :- !,
+  pi t\ PF t = phant-trm AL (F t).
+
+% [mk-phant-struct T SI PF PSF] states that PSF is a phant-term
+% which postulate a structure [s : SI] such that [T = sort s]
+% and then outputs [PF s]
+pred mk-phant-struct i:term, i:term, i:(term -> phant-term), o:phant-term.
+mk-phant-struct T SI PF (phant-trm [implicit-arg, unify-arg|AL] UF) :-
+  get-structure-sort-projection SI Sort,
+  pi s\ PF s = phant-trm AL (F s),
+  UF = {{fun (s : lp:SI) (u : lib:phant.unify lp:T (lp:Sort s)
+      (lib:elpi.some ("is not canonically a"%string, lp:SI))) => lp:(F s)}}.
+
+% [mk-phant-struct T CN PF PCF] states that PSF is a phant-term
+% which postulate a structure [s : SI] such that [T = sort s]
+% and a class [c : CN T] such that [s = CK T c] and then outputs [PF c]
+pred mk-phant-class i:term, i:@classname, i:(term -> phant-term), o:phant-term.
+mk-phant-class T CN PF PSF :-
+    class-def (class CN SI _CML), get-structure-constructor SI SK,
+    PSF = {mk-phant-struct T SI s\
+            {mk-phant-implicit `c` (app [global CN, T]) c\
+              {mk-phant-unify s (app [SK, T, c]) (PF c)} } }.
+
 % [mk-phant-mixins F PF] states that if F = fun T m_0 .. m_n => _
 % then PF = phant-term
 %   [real-arg T, implicit-arg, unify-arg, implicit-arg, unify-arg,
@@ -334,44 +366,20 @@ mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
 %                F T m_i0_j0 .. m_il_jl}}
 pred mk-phant-mixins.class-mixins i:term, i:@classname, i:term,
   i:list @mixinname, i:phant-term, o:phant-term.
-mk-phant-mixins.class-mixins T CN C [] (phant-trm AL F)
-    (phant-trm [unify-arg|AL] UF) :-
-  std.do! [
-    get-class-constructor CN K,
-    class-def (class CN _ CML),
+mk-phant-mixins.class-mixins T CN C [] PF UPF :- !,
+    get-class-constructor CN K, class-def (class CN _ CML),
     std.map CML (term-for-mixin T) CmL,
-    UF = fun `u` (app [{{lib:@phant.unify}}, _, _, C, app [K, T | CmL],
-     app [{{lib:@elpi.none}}, _]]) _\ F
-  ].
-mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML)
-    (phant-trm [implicit-arg|AL'] (fun `m` (app [global M, T]) FmmL)) :-
-  std.do! [
-    pi m\ term-for-mixin T M m => sigma FmML \
+    mk-phant-unify C (app [K, T | CmL]) PF UPF.
+mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML) LamPFmmL :- !,
+    (pi m\ term-for-mixin T M m => sigma FmML\
       subst-mixin FMML M m FmML, !,
-      mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML)
-        (phant-trm AL' (FmmL m))
-  ].
+      mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML) (PFmmL m)),
+    mk-phant-implicit `m` (app [global M, T]) PFmmL LamPFmmL.
 
 pred mk-phant-mixins.class i:term, i:@classname, i:phant-term, o:phant-term.
-mk-phant-mixins.class T CN (phant-trm AL F)
-    (phant-trm [implicit-arg, unify-arg, implicit-arg, unify-arg|AL'] SCF) :-
-  std.do! [
-    class-def (class CN SI CML),
-    get-structure-sort-projection SI Sort,
-    get-structure-constructor SI SK,
-    (pi c\ mk-phant-mixins.class-mixins T CN c CML (phant-trm AL F)
-       (phant-trm AL' (Body c))),
-    % TODO: replace with a big {{}} and `[find _ | _ ~ _]` or generate using a ELPI predicate 
-    SCF = fun `s` SI s \
-          fun `_` (app [{{lib:@phant.unify}}, _, _, T, app [Sort, s],
-            app [{{lib:@elpi.some}}, _,
-              app [{{lib:@elpi.pair}}, _, _,
-               {{"is not canonically a"%string}}, SI]]]) _\
-          fun `c` (app [global CN, T]) c \
-          fun `_` (app [{{lib:@phant.unify}}, _, _, s, app [SK, T, c],
-           app [{{lib:@elpi.none}}, _]]) _\
-          Body c
-  ].
+mk-phant-mixins.class T CN PF SCF :- !,
+    class-def (class CN _SI CML),
+    SCF = {mk-phant-class T CN c\ {mk-phant-mixins.class-mixins T CN c CML PF} }.
 
 pred mk-phant-mixins i:term, o:phant-term.
 mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
