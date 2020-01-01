@@ -1,7 +1,34 @@
-Require Import ssreflect ssrfun.
+Require Import String ssreflect ssrfun.
 Require Import ZArith.
-
 From elpi Require Import elpi.
+
+(* From /Canonical Structures for the working Coq user/ Mahboubi Tassi *)
+Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
+  phantom T1 t1 -> phantom T2 t2.
+Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
+  (at level 0, format "`Error_cannot_unify:  t1  'with'  t2", only printing) :
+  form_scope.
+Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
+  (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
+  form_scope.
+
+Notation "[find v | t1 ∼ t2 ] rest" :=
+  (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
+  form_scope.
+Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
+  (fun v1 .. vn => fun (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
+  form_scope.
+Notation "[find v | t1 ∼ t2 | msg ] rest" :=
+  (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
+  form_scope.
+Definition id_phant {T} {t : T} (x : phantom T t) := x.
+
+Register unify as hb.unify.
+Register id_phant as hb.id.
+Register Coq.Init.Datatypes.None as hb.none.
+Register Coq.Init.Datatypes.Some as hb.some.
+Register Coq.Init.Datatypes.pair as hb.pair.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -19,7 +46,7 @@ Elpi Db hierarchy.db lp:{{
 macro @mixinname :- gref.
 macro @classname :- gref.
 macro @factoryname :- gref.
-macro @structurename :- @inductive.
+macro @structureind :- @inductive.
 macro @structure :- term.
 
 %%%%%% DB of mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -47,13 +74,6 @@ findall-classes L :-
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:@classname, o:@classname, o:@classname.
-
-%%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Operations (named mixin fields) need to be exported exactly once,
-% but the same mixin can be used in many structure, hence this memory
-% to keep the invariant.
-
-pred already-exported o:@mixinname.
 
 %%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO: document
@@ -187,7 +207,203 @@ pred local-structure i:term, i:term.
 local-structure TyTerm Struct :-
   local-structures TyTerm StructL,
   std.mem! StructL Struct.
+
+%%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Operations (named mixin fields) need to be exported exactly once,
+% but the same mixin can be used in many structure, hence this memory
+% to keep the invariant.
+% Also we remember which is the first class/structure that includes
+% a given mixin, assuming the invariant that this first class is also
+% the minimal class that includes this mixin.
+% [mixin-first-class M C] states that C is the first/minimal class
+% that contains the mixin M
+pred mixin-first-class o:@mixinname, o:@classname.
+
+%%%%%%% Finding and instantiating mixin arguments%%%%%%%%%%%%%%%%%%%%%%%%%%
+% [gather-mixin-dependencies Ty [] ML] states that ML is the list of
+% mixins which the type Ty rely on, i.e.
+% Ty = forall M_0 ... M_n, _ and ML = [M_0, .., M_n]
+pred gather-mixin-dependencies i:term, i:list @mixinname, o:list @mixinname.
+gather-mixin-dependencies (prod N S R) Acc ML :- !,
+  safe-dest-app S HD _,
+  if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
+  @pi-decl N S x\
+    gather-mixin-dependencies (R x) Acc1 ML.
+gather-mixin-dependencies Ty Acc ML :-
+  whd1 Ty Ty1, !, gather-mixin-dependencies Ty1 Acc ML.
+gather-mixin-dependencies _Ty Acc Acc.
+
+% [find-all-classes Mixins Classes] states that Classes is a list of classes
+%   which contain all the mixins in Mixins.
+% Although it is not strictly necessary, but desirable for debugging,
+% we use a heuristic that tries to minimize the number
+% of classes by assuming Mixins are reversed topologically sorted.
+pred find-all-classes i:list @mixinname, o:list @classname.
+find-all-classes [] [].
+find-all-classes [M|Mixins] [C|Classes] :-
+  mixin-first-class M C,
+  std.do! [
+    class-def (class C _ ML),
+    std.filter Mixins (x\ not (std.mem! ML x)) Mixins',
+    find-all-classes Mixins' Classes
+  ].
+find-all-classes [_|_] _ :- std.fatal-error "cannot find class for mixin".
+
+% [eta-mixin T F ML EtaF] states that EtaF is the eta-expansion of F
+% where F is assumed to have a type of the following shape:
+% forall (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik), _
+% where M_0 .. M_n are mixins
+% and hence EtaF has the following shape:
+% fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => F m_0 .. m_n
+pred eta-mixin i:term, i:term, i:list @mixinname, o:term.
+eta-mixin _T F [] F.
+eta-mixin T F [M|ML] (fun `m` MTXL FmML) :- std.do! [
+  std.map {dep1 M} (term-for-mixin T) XL,
+  mk-app (global M) [T|XL] MTXL,
+  pi m \ sigma Fm\ term-for-mixin T M m =>
+    mk-app F [m] Fm,
+    eta-mixin T Fm ML (FmML m)
+].
+
+% [subst-mixin F M X TFX] assumes that F is in an eta expanded form above
+% and states that if M = M_i, then TFX is equal to
+% fun m_0 .. m_{i-1} m_{i+1} .. m_n => F m_0 .. m_{i-1} X m_{i+1} .. m_n
+% thus instanciating an abstraction on mixin M by X
+pred subst-mixin i:term, i:@mixinname, i:term, o:term.
+subst-mixin (fun _ Tm F) M X (F X) :-
+  safe-dest-app Tm (global M) _, dep1 M _, !.
+subst-mixin (fun N T F) M X (fun N T FX) :- !,
+  pi m \ subst-mixin (F m) M X (FX m).
+
+% Notations /à la/ *pack* are always of the shape
+% [Notation N x_0 .. x_n := C x_0 .. _ _ id .. x_i .. _ id _ _ id]
+% with a variable number of [_] between each [id], and where
+% - [x_i] is given by the user
+% - [_]   correspond to arguments that are left implicit,
+% - [id]  trigger unification as described in
+% /Canonical Structures for the working Coq user/ by Mahboubi and Tassi
+%
+% phant-arg encode these three kind of arguments
+% - [x_i] is encoded using [real-arg x_i]
+% - [_]              using [implicit-arg]
+% - [id]             using [unify-arg]
+kind phant-arg type.
+type real-arg @name -> phant-arg.
+type implicit-arg phant-arg.
+type unify-arg phant-arg.
+
+% phant-term is a pair of a list of argument kinds together with a term
+kind phant-term type.
+type phant-trm list phant-arg -> term -> phant-term.
+
+% A *pack* notation can be easiliy produced from a phant-term using
+% [mk-phant-abbrev N PT C], which states that C is a new constant
+% which name is phant_N, and which produces a simple notation
+% with name N using the data of the phant-term PT to reconstruct a notation
+% [Notation N x0 .. xn := C x0 _ _ id .. xi .. _ id _ _ id]
+% as described above.
+pred mk-phant-abbrev.term i:int, i:term, i:list phant-arg, o:int, o:term.
+mk-phant-abbrev.term K F [] K F.
+mk-phant-abbrev.term K F [real-arg N|AL] K'' (fun N _ AbbrevFx) :- !,
+  pi x\ mk-phant-abbrev.term K {mk-app F [x]} AL K' (AbbrevFx x),
+  K'' is K' + 1.
+mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
+  mk-phant-abbrev.term K {mk-app F [_]} AL K' FAbbrev.
+mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
+  mk-phant-abbrev.term K {mk-app F [{{lib:@hb.id _ _}}]} AL K' FAbbrev.
+
+pred mk-phant-abbrev i:string, i:phant-term, o:@constant.
+mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
+  coq.typecheck T _TyT,
+  NC is "phant_" ^ N,
+  coq.env.add-const NC T _ ff ff C,
+  mk-phant-abbrev.term 0 (global (const C)) AL NParams Abbrev,
+  coq.notation.add-abbreviation N NParams Abbrev tt ff
+].
+
+% [mk-phant-unify X1 X2 PF PUF] states that PUF is a phant-term that
+% is starts with unifing X1 and X2 and then outputs PF.
+pred mk-phant-unify i:term, i:term, i:phant-term, o:phant-term.
+mk-phant-unify X1 X2 (phant-trm AL F) (phant-trm [unify-arg|AL] UF) :-
+  UF = {{fun u : lib:hb.unify lp:X1 lp:X2 lib:hb.none => lp:F}}.
+
+% [mk-phant-implicit N Ty PF PUF] states that PUF is a phant-term
+% which quantifies [PF x] over [x : Ty] (with name N)
+pred mk-phant-implicit i:@name, i:term, i:(term -> phant-term), o:phant-term.
+mk-phant-implicit N Ty PF (phant-trm [implicit-arg|AL] (fun N Ty F)) :- !,
+  pi t\ PF t = phant-trm AL (F t).
+
+% [mk-phant-struct T SI PF PSF] states that PSF is a phant-term
+% which postulate a structure [s : SI] such that [T = sort s]
+% and then outputs [PF s]
+pred mk-phant-struct i:term, i:term, i:(term -> phant-term), o:phant-term.
+mk-phant-struct T SI PF (phant-trm [implicit-arg, unify-arg|AL] UF) :-
+  get-structure-sort-projection SI Sort,
+  pi s\ PF s = phant-trm AL (F s),
+  UF = {{fun (s : lp:SI) (u : lib:hb.unify lp:T (lp:Sort s)
+      (lib:hb.some ("is not canonically a"%string, lp:SI))) => lp:(F s)}}.
+
+% [mk-phant-struct T CN PF PCF] states that PSF is a phant-term
+% which postulate a structure [s : SI] such that [T = sort s]
+% and a class [c : CN T] such that [s = CK T c] and then outputs [PF c]
+pred mk-phant-class i:term, i:@classname, i:(term -> phant-term), o:phant-term.
+mk-phant-class T CN PF PSF :-
+    class-def (class CN SI _CML), get-structure-constructor SI SK,
+    PSF = {mk-phant-struct T SI s\
+            {mk-phant-implicit `c` (app [global CN, T]) c\
+              {mk-phant-unify s (app [SK, T, c]) (PF c)} } }.
+
+% [mk-phant-mixins F PF] states that if F = fun T m_0 .. m_n => _
+% then PF = phant-term
+%   [real-arg T, implicit-arg, unify-arg, implicit-arg, unify-arg,
+%                implicit-arg, .., implicit-arg, unify-arg, ...,
+%                implicit-arg, unify-arg, implicit-arg, unify-arg,
+%                implicit-arg, .., implicit-arg, unify-arg]
+%   {{fun T => [find s_0 | T ~ s_0] [find c_0 | s_0 ~ SK T c_0]
+%              [find m_0_0, .., m_0_n0 | c_0 ~ CK m_0_0 .. m_0_n0] ...
+%              [find s_k | T ~ s_k] [find c_k | s_k ~ SK T c_k]
+%              [find m_k_0, .., m_k_nk | c_k ~ CK m_k_0 .. m_k_nk]
+%                F T m_i0_j0 .. m_il_jl}}
+pred mk-phant-mixins.class-mixins i:term, i:@classname, i:term,
+  i:list @mixinname, i:phant-term, o:phant-term.
+mk-phant-mixins.class-mixins T CN C [] PF UPF :- !,
+    get-class-constructor CN K, class-def (class CN _ CML),
+    std.map CML (term-for-mixin T) CmL,
+    mk-phant-unify C (app [K, T | CmL]) PF UPF.
+mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML) LamPFmmL :- !,
+    (pi m\ term-for-mixin T M m => sigma FmML\
+      subst-mixin FMML M m FmML, !,
+      mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML) (PFmmL m)),
+    mk-phant-implicit `m` (app [global M, T]) PFmmL LamPFmmL.
+
+pred mk-phant-mixins.class i:term, i:@classname, i:phant-term, o:phant-term.
+mk-phant-mixins.class T CN PF SCF :- !,
+    class-def (class CN _SI CML),
+    SCF = {mk-phant-class T CN c\ {mk-phant-mixins.class-mixins T CN c CML PF} }.
+
+pred mk-phant-mixins i:term, o:phant-term.
+mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
+  gather-mixin-dependencies {coq.typecheck F} [] ML,
+  toposort-mixins ML MLSorted,
+  std.rev MLSorted MLSortedRev,
+  find-all-classes MLSortedRev CNL,
+  pi t\ sigma FML PML\
+    eta-mixin t {mk-app F [t]} ML FML,
+    std.fold CNL (phant-trm [] FML) (mk-phant-mixins.class t)
+      (phant-trm AL (CFML t))
+].
+
+% Database for abbreviatation of terms applied to mixins
+% [phant-abbrev Original PhantCst PhantAbbrev]
+% states that there is an abbreviation /à la/ *pack* for Original,
+% that it is called PhantAbbrev and the underlying constant is PhantCst.
+pred phant-abbrev o:gref, o:gref, o:string.
+
 }}.
+
+Elpi Command debug.
+Elpi Accumulate Db hierarchy.db.
+Elpi Typecheck.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -198,16 +414,6 @@ local-structure TyTerm Struct :-
 Elpi Command declare_mixin.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
-
-pred gather-mixin-dendencies i:term, i:list @mixinname, o:list @mixinname.
-gather-mixin-dendencies (prod N S R) Acc Result :- !,
-  safe-dest-app S HD _,
-  if (HD = global GR, dep1 GR _) (Acc1 = [GR|Acc]) (Acc1 = Acc),
-  @pi-decl N S x\
-    gather-mixin-dendencies (R x) Acc1 Result.
-gather-mixin-dendencies (sort _) Acc Acc.
-gather-mixin-dendencies Ty Acc Res :- whd1 Ty Ty1, !, gather-mixin-dendencies Ty1 Acc Res.
-gather-mixin-dendencies Ty _ _ :- coq.error {coq.term->string Ty} "has not a mixin shape".
 
 pred mk-id.arg-for-mixin i:@mixinname, o:term.
 pred mk-id i:term, i:list @mixinname, i:term, o:term.
@@ -226,15 +432,20 @@ mk-id T [A|AS] M (fun `a` AL R) :- std.do! [
 main [str S] :- !, std.do! [
   coq.locate S M,
   coq.env.typeof-gr M Ty,
-  gather-mixin-dendencies Ty [] ML,
+  get-mixin-modname M ModName,
+  mk-phant-mixins (global M) PhM,
+  PhantAbbrevName is ModName ^ "_axioms",
+  mk-phant-abbrev PhantAbbrevName PhM PhC,
+  coq.elpi.accumulate execution-site "hierarchy.db"
+    (clause _ _ (phant-abbrev M (const PhC) PhantAbbrevName)),
+  gather-mixin-dependencies Ty [] ML,
   coq.elpi.accumulate execution-site "hierarchy.db" (clause _ _ (dep1 M ML)),
   ID = (fun `t` {{ Type }} t\ {mk-id t ML {mk-app (global M) [t]} }),
   coq.typecheck ID _TyID,
-  get-mixin-modname M ModName,
   Name is ModName ^ "_factory",
   % TODO: if we store `ID` directly, then subsequent uses of this term
   % throw an anomaly "Universe demo2.xxx undefined"... why?
-  coq.env.add-const Name ID TyID ff ff C,
+  coq.env.add-const Name ID _TyID ff ff _C,
   coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (from ML M M ID)),
 ].
@@ -373,12 +584,20 @@ gather-last-product End (some Last) LastGR EndGR :-
 main [str S] :- !, std.do! [
   coq.locate S F,
   coq.env.typeof-gr F Ty,
-  gather-last-product Ty none SrcMixin TgtMixin,
+  gather-last-product Ty none Src Tgt,
+  get-mixin-modname Src ModName,
+  if (not (phant-abbrev Src _ _)) (std.do! [
+    mk-phant-mixins (global Src) PhSrc,
+    PhantAbbrevName is ModName ^ "_axioms",
+    mk-phant-abbrev PhantAbbrevName PhSrc PhC,
+    coq.elpi.accumulate execution-site "hierarchy.db"
+      (clause _ _ (phant-abbrev Src (const PhC) PhantAbbrevName))
+  ]) true,
   coq.elpi.accumulate execution-site "hierarchy.db"
     (clause _ _ (from [
       %TODO put all the other arguments
       ]
-      SrcMixin TgtMixin
+      Src Tgt
        (global F))),
 ].
 main _ :- coq.error "Usage: declare_factory <FactoryFunction>".
@@ -576,7 +795,7 @@ export-operations.aux Struct ProjSort ProjClass ClassName [GR|ML] :-
 
 pred export-operations i:term, i:term, i:term, i:@factoryname, i:list @mixinname, o:list @mixinname.
 export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
-  std.filter ML (m\not(already-exported m)) MLToExport,
+  std.filter ML (m\not(mixin-first-class m _)) MLToExport,
   export-operations.aux Structure ProjSort ProjClass ClassName MLToExport.
 
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
@@ -743,7 +962,8 @@ main [str Module|FS] :- !, std.do! [
 
   % Register in Elpi's DB the new structure
   std.forall MLToExport (m\
-    coq.elpi.accumulate current "hierarchy.db" (clause _ _ (already-exported m))),
+    coq.elpi.accumulate current "hierarchy.db"
+      (clause _ _ (mixin-first-class m ClassName))),
 
   std.forall Factories (f\
     coq.elpi.accumulate current "hierarchy.db" (clause _ _ f)),
@@ -960,6 +1180,7 @@ Proof. by case: A => ? [? []]. Qed.
    new AG class. *)
 Module RING_of_ASG. Section S.
 Variable A : Type.
+
 Elpi declare_context A ASG_of_TYPE.axioms.
 
 Record axioms := Axioms {
@@ -976,20 +1197,15 @@ Record axioms := Axioms {
 
 Section Factories.
 Variable a : axioms.
-
-(* Elpi declare_factory_target AG_of_ASG AG_of_ASG_axioms *)
-Notation AG_of_ASG_axioms := (AG_of_ASG.axioms A mixin_ASG_of_TYPE). (*generated*)
-Definition to_AG_of_ASG : AG_of_ASG_axioms :=
+Definition to_AG_of_ASG : AG_of_ASG_axioms A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
 Elpi canonical_instance A to_AG_of_ASG.
 
-(* Elpi declare_factory_target RING_of_AG RING_of_AG_axioms *)
-Notation RING_of_AG_axioms := (RING_of_AG.axioms A mixin_ASG_of_TYPE). (*generated*)
-Definition to_RING_of_AG : RING_of_AG_axioms :=
+Definition to_RING_of_AG : RING_of_AG_axioms A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
-  @RING_of_AG.Axioms A mixin_ASG_of_TYPE _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+  @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
 End Factories. End S. End RING_of_ASG.
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
@@ -1101,7 +1317,12 @@ Proof. by case: A => ? [? []]. Qed.
 
 Module RING_of_AG. Section S.
  Variable A : Type.
+
+ Fail Goal AG_of_ASG_axioms A. (* Failure with error message *)
+
  Elpi declare_context A ASG_of_TYPE.axioms AG_of_ASG.axioms.
+
+ Goal AG_of_ASG_axioms A. Abort. (* Success of mk-phant-mixin *)
 
  Record axioms := Axioms {
   one : A;
@@ -1141,8 +1362,7 @@ Section Factories.
 Variable a : axioms.
 
 Check SRIG_of_ASG.Axioms.
-(* Elpi declare_factory_target SRIG_of_ASG foo *)
-Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms A mixin_ASG_of_TYPE :=
+Definition to_SRIG_of_ASG : SRIG_of_ASG_axioms A :=
   let: Axioms one mul mulA mul1x mulx1 mulDl mulDr := a in
   @SRIG_of_ASG.Axioms A _ one mul mulA mul1x mulx1 mulDl mulDr
                       (mul0r _ mulDl) (mulr0 _ mulDr).
@@ -1154,6 +1374,7 @@ Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
    new AG class. *)
 Module RING_of_ASG. Section S.
 Variable A : Type.
+
 Elpi declare_context A ASG_of_TYPE.axioms.
 
 Record axioms := Axioms {
@@ -1171,15 +1392,13 @@ Record axioms := Axioms {
 Section Factories.
 Variable a : axioms.
 
-(* Elpi declare_factory_target AG_of_ASG foo *)
-Definition to_AG_of_ASG : AG_of_ASG.axioms A mixin_ASG_of_TYPE :=
+Definition to_AG_of_ASG : AG_of_ASG_axioms A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
 Elpi canonical_instance A to_AG_of_ASG.
 
-(* Elpi declare_factory_target RING_of_AG foo *)
-Definition to_RING_of_AG : RING_of_AG.axioms A mixin_ASG_of_TYPE :=
+Definition to_RING_of_AG : RING_of_AG_axioms A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
   @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
@@ -1187,6 +1406,5 @@ End Factories. End S. End RING_of_ASG.
 
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
 Elpi declare_factory RING_of_ASG.to_RING_of_AG.
-
 
 End Example3.
