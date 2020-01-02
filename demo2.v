@@ -69,11 +69,6 @@ type class @classname -> @structure -> list @mixinname -> class.
 % class-def contains all the classes ever declared
 pred class-def o:class.
 
-pred findall-classes o:list class.
-findall-classes L :-
-  std.findall (class-def C_) All,
-  std.map All (x\r\ x = class-def r) L.
-
 %%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
@@ -81,17 +76,17 @@ pred join o:@classname, o:@classname, o:@classname.
 
 %%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO: document
-% [from LMN FN MN F] invariant: "F : forall T LMN, FN T .. -> MN T .." where
+% [from LMN FN MN (mtrm ML F)] invariant: "F : forall T LMN, FN T .. -> MN T .." where
 % .. is a sub list of LMN
-pred from o:list @mixinname, o:@factoryname, o:@mixinname, o:term.
+pred from o:@factoryname, o:@mixinname, o:mterm.
 
 % factory, generated mixin, mean, eg mean : factory -> mixin
 pred extract-mix i:prop, o:@mixinname.
-extract-mix (from _ _ X _) X.
+extract-mix (from _ X _) X.
 
 pred factory-provides i:@factoryname, o:list @mixinname.
 factory-provides Factory ML :- std.do! [
-  std.findall (from L_ Factory T_ F_) All,
+  std.findall (from Factory T_ MF_) All,
   std.map All extract-mix ML,
 ].
 
@@ -133,21 +128,39 @@ toporec _ [] VS PS VS PS.
 toporec ES [X|XS] VS PS VS'' PS'' :-
   topovisit ES X VS PS VS' PS', toporec ES XS VS' PS' VS'' PS''.
 
-
 pred toposort i: list (pair A A), i: list A, o: list A.
 toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
   std.filter XS' (std.mem XS) XS''.
 
-pred mk-edge i:prop, o:list (pair @mixinname @mixinname).
-mk-edge (mixin-deps M Deps) L :-
+pred mk-mixin-edge i:prop, o:list (pair @mixinname @mixinname).
+mk-mixin-edge (mixin-deps M Deps) L :-
   std.map Deps (d\r\ r = pr d M) L.
 
 pred toposort-mixins i:list @mixinname, o:list @mixinname.
 toposort-mixins In Out :- std.do! [
   std.findall (mixin-deps M_ Deps_) AllMixins,
-  std.flatten {std.map AllMixins mk-edge} ES,
+  std.flatten {std.map AllMixins mk-mixin-edge} ES,
   toposort ES In Out,
+].
+
+pred sub-class o:class, o:class.
+
+pred mk-class-edge i:prop, o:pair class class.
+mk-class-edge (sub-class C1 C2) (pr C2 C1).
+
+pred toposort-classes i:list class, o:list class.
+toposort-classes In Out :- std.do! [
+  std.findall (sub-class C1_ C2_) SubClasses,
+  std.map SubClasses mk-class-edge ES,
+  toposort ES In Out,
+].
+
+pred findall-classes o:list class.
+findall-classes CLSorted :- std.do! [
+  std.findall (class-def C_) All,
+  std.map All (x\r\ x = class-def r) CL,
+  toposort-classes CL CLSorted
 ].
 
 %%%%% Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -176,17 +189,78 @@ pred get-class-constructor i:@classname, o:term.
 get-class-constructor (indt S) (global (indc K)) :-
   if (coq.env.indt S _ 1 1 _ [K] _) true (coq.error "Not a class" S).
 
-pred gref-modname i:@mixinname, o:@id.
-gref-modname GR ModName :-
+pred gref->modname i:@mixinname, o:@id.
+gref->modname GR ModName :-
   coq.gr->path GR Path,
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for " GR).
 
-pred term-modname i:@structure, o:@id.
-term-modname T ModName :- gref-modname {term->gr T} ModName.
+pred term->modname i:@structure, o:@id.
+term->modname T ModName :- gref->modname {term->gr T} ModName.
+
+
+% A mterm is always of the form [mtrm ML F], which is a pair of
+% a list of mixins ML that should be substituted in F and a term F
+kind mterm type.
+type mtrm list @mixinname -> term -> mterm.
+
+pred mixin->mterm i:@mixinname, o:mterm.
+mixin->mterm M (mtrm ML (global M)):- !, mixin-deps M ML.
+
+% substitution under mtrm
+pred subst-mfun i:list term, i:mterm, o:mterm.
+subst-mfun Xs (mtrm ML F) (mtrm ML FXs) :- subst-fun Xs F FXs.
+
+% [msubst T F M_i TFX] where mixin-for T M_i X_i states that
+% if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
+%            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
+% then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
+%            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
+% thus instanciating an abstraction on mixin M_i with X_i
+pred msubst i:term, i:@mixinname, i:term, o:term.
+msubst T M (fun _ Tm F) (F X) :-
+  safe-dest-app Tm (global M) _, !, mixin-for T M X, !.
+msubst T M (fun N T F) (fun N T FX) :- !, pi m\ msubst T M (F m) (FX m).
+msubst _ _ F F.
+
+% [msubsts T MF TFX] assumes that MF is a mterm (in eta-expanded form)
+% (mtrm ML F) and perform the substitution as above
+% for every mixin-for entry out of the list ML = [M_0, .., M_n].
+pred msubsts i:term, i:mterm, o:term.
+msubsts T (mtrm ML F) SFX :- std.do![
+  coq.typecheck F Ty,
+  mk-eta (-1) Ty F EtaF,
+  subst-fun [T] EtaF FT,
+  std.fold ML FT (msubst T) SFX
+].
 
 %% database for locally available mixins
-% [term-for-mixin T M X] means [X] has type [M T]
-pred term-for-mixin o:term, o:@mixinname, o:term.
+% [mixin-src T M X] states that X can be used to reconstruct
+% an instance of the mixin [M T ...], directly or through a factory.
+pred mixin-src o:term, o:@mixinname, o:term.
+
+% [mixin-srcs T X MSL] states that MSL is a list of [mixin-src T m X]
+% where m ranges all the mixins that the factory Src can provide,
+% where Src is the type of X.
+pred mixin-srcs i:term, i:term, o:list prop.
+mixin-srcs T X MSL :- std.do! [
+  coq.typecheck X XTy,
+  term->gr XTy Src,
+  factory-provides Src ML,
+  std.map ML (m\r\ r = mixin-src T m X) MSL
+].
+
+% [mixin-for T M X] states that X has type [M T ...]
+% it is reconstructed from two databases [mixin-src] and [from]
+pred mixin-for o:term, o:@mixinname, o:term.
+mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
+  coq.typecheck Tm Ty,
+  term->gr Ty Src,
+  if (M = Src) (MI = Tm) (
+      from Src M MF,
+      msubsts T MF F,
+      subst-fun [Tm] F MI
+  )
+].
 
 %% finding for locally defined structures
 pred cs-structure i:cs-instance, o:term.
@@ -221,17 +295,27 @@ local-structure TyTerm Struct :-
 pred mixin-first-class o:@mixinname, o:@classname.
 
 %%%%%%% Finding and instantiating mixin arguments%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [deps Ty ML] states that ML is the list of
+% [ty-deps Ty ML] states that ML is the list of
 % mixins which the type Ty rely on, i.e.
-% Ty = forall M_0 ... M_n, _ and ML = [M_0, .., M_n]
-pred deps i:term, o:list @mixinname.
-deps (prod N S R) ML' :- !,
+% Ty = forall (m_0 : M_0 T) ... (m_n : M_n T ..), _ and ML = [M_0, .., M_n]
+pred ty-deps i:term, o:list @mixinname.
+ty-deps (prod N S R) ML' :- !,
   @pi-decl N S x\
-    deps (R x) ML,
+    ty-deps (R x) ML,
     safe-dest-app S HD _,
     if (HD = global GR, mixin-deps GR _) (ML' = [GR|ML]) (ML' = ML).
-deps Ty ML :- whd1 Ty Ty1, !, deps Ty1 ML.
-deps _Ty [].
+ty-deps Ty ML :- whd1 Ty Ty1, !, ty-deps Ty1 ML.
+ty-deps _Ty [].
+
+% [term-deps T ML] states that ML is the list of
+% mixins which the term T rely on, i.e. T has type
+% forall (m_0 : M_0 T) ... (m_n : M_n T ..), _ and ML = [M_0, .., M_n]
+pred term-deps i:term, o:list @mixinname.
+term-deps T ML :- coq.typecheck T Ty, ty-deps Ty ML.
+
+% shorthand for gref.
+pred gr-deps i:gref, o:list @mixinname.
+gr-deps GR ML :- term-deps (global GR) ML.
 
 % [find-all-classes Mixins Classes] states that Classes is a list of classes
 %   which contain all the mixins in Mixins.
@@ -249,69 +333,15 @@ find-all-classes [M|Mixins] [C|Classes] :-
   ].
 find-all-classes [_|_] _ :- std.fatal-error "cannot find class for mixin".
 
-% A mterm is always of the form [mtrm ML F], which is a pair of
-% - a list of mixins ML that should be substituted in F
-% - a term F which is eta expanded
-kind mterm type.
-type mtrm list @mixinname -> term -> mterm.
-
-% substitution under mtrm
-pred subst-mfun i:list term, i:mterm, o:mterm.
-subst-mfun Xs (mtrm ML F) (mtrm ML FXs) :- subst-fun Xs F FXs.
-
-% [mk-mterm ML F MF] states that
-% if F had type forall xs (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) ys, _
-% where ML = [M_0, .., M_n] are mixins,
-% then MF = mtrm ML (fun xs m_0 .. m_n ys => F xs m_0 .. m_n ys)
-pred mk-mterm i:list @mixinname, i:term, o:mterm.
-mk-mterm ML F (mtrm ML EtaF) :- std.do! [coq.typecheck F Ty, mk-eta (-1) Ty F EtaF].
-
-% [subst-mixin M_i X_i F TFX] states that
-% if    F  := fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
-%            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
-% then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
-%            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
-% thus instanciating an abstraction on mixin M_i with X_i
-pred subst-mixin i:@mixinname, i:term, i:term, o:term.
-subst-mixin M X (fun _ Tm F) (F X) :- safe-dest-app Tm (global M) _, !.
-subst-mixin M X (fun N T F) (fun N T FX) :- !,
-  pi m\ subst-mixin M X (F m) (FX m).
-subst-mixin _ _ F F.
-
-% [subst-mixins T MF TFX] assumes that MF is a mterm (in eta-expanded form)
-% (mtrm ML F) and perform the substitution as above
-% for every term-for-mixin entry out of the list ML = [M_0, .., M_n].
-pred subst-mixins i:term, i:mterm, o:term.
-subst-mixins _T (mtrm [] F) F :- !.
-subst-mixins T (mtrm [M|ML] F) SFX :- std.do! [
-  subst-mixin M {term-for-mixin T M} F FX,
-  subst-mixins T (mtrm ML FX) SFX
-].
-
-% TODO: refactor this with "craft-mixin" together with a global from declaration...
-pred mterm-of-from i:prop, o:prop.
-mterm-of-from (from ML _ Tgt F) (mterm-for-mixin Tgt MF) :- mk-mterm ML F MF.
-
-% [current-factory-src X] states we are building everything from X.
-pred current-factory-src o:term.
-% [mterm-for-mixin M MF] states that
-% the mterm MF can be used to instanciate mixin M,
-% by applying it to T, several mixins and the current factory source.
-pred mterm-for-mixin o:@mixinname, o:mterm.
-% rebuilding a term-for-mixin from a mterm-for-mixin.
-term-for-mixin T M X :- mterm-for-mixin M MF, subst-mixins T MF F, !,
-  subst-fun [T, {current-factory-src}] F X.
-
-% [under-mixins T ML Pred F] states that F is of the shape
+% [under-mixins T ML Pred F] states that F has type
 % fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => Body m_0 .. m_n
 % where ML = [M_0, .., M_n]
-% and Body is such that [..,term-for-mixin T M_i m_i,..] => Pred Body
-pred under-mixins i:term, i:list @mixinname, i:(term -> prop), o:term.
+% and Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
+pred under-mixins i:term, i:list gref, i:(term -> prop), o:term.
 under-mixins _T [] Pred Body :- !, Pred Body.
-under-mixins T [M|ML] Pred (fun `m` MTXL FLG) :- std.do! [
-  std.map {mixin-deps M} (term-for-mixin T) XL,
-  mk-app (global M) [T|XL] MTXL,
-  pi m\ term-for-mixin T M m => under-mixins T ML Pred (FLG m)
+under-mixins T [M|ML] Pred (fun `m` MTy FLG) :- std.do! [
+  msubsts T {mixin->mterm M} MTy,
+  @pi-decl `m` MTy m\ mixin-src T M m => under-mixins T ML Pred (FLG m)
 ].
 
 % Notations /à la/ *pack* are always of the shape
@@ -364,7 +394,7 @@ mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
 pred acc-phant-axioms i:gref.
 acc-phant-axioms GR :-
   mk-phant-mixins (global GR) PhGR,
-  PhantAbbrevName is {gref-modname GR} ^ "_axioms",
+  PhantAbbrevName is {gref->modname GR} ^ "_axioms",
   mk-phant-abbrev PhantAbbrevName PhGR PhC,
   acc execution-site
     (clause _ _ (phant-abbrev GR (const PhC) PhantAbbrevName)).
@@ -414,15 +444,16 @@ mk-phant-class T CN PF PSF :-
 %                F T m_i0_j0 .. m_il_jl}}
 pred mk-phant-mixins.class-mixins i:term, i:@classname, i:term,
   i:list @mixinname, i:phant-term, o:phant-term.
-mk-phant-mixins.class-mixins T CN C [] PF UPF :- !,
+mk-phant-mixins.class-mixins T CN C [] PF UPF :- !, std.do![
     get-class-constructor CN K, class-def (class CN _ CML),
-    std.map CML (term-for-mixin T) CmL,
-    mk-phant-unify C (app [K, T | CmL]) PF UPF.
+    msubsts T (mtrm CML K) KCML,
+    mk-phant-unify C KCML PF UPF].
 mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML) LamPFmmL :- !,
-    (pi m\ term-for-mixin T M m => sigma FmML\
-      subst-mixin M m FMML FmML, !,
+    msubsts T {mixin->mterm M} MTy,
+    (@pi-decl `m` MTy m\ mixin-src T M m => sigma FmML\
+      msubst T M FMML FmML,
       mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML) (PFmmL m)),
-    mk-phant-implicit `m` (app [global M, T]) PFmmL LamPFmmL.
+    mk-phant-implicit `m` MTy PFmmL LamPFmmL.
 
 pred mk-phant-mixins.class i:term, i:@classname, i:phant-term, o:phant-term.
 mk-phant-mixins.class T CN PF SCF :- !,
@@ -432,7 +463,7 @@ mk-phant-mixins.class T CN PF SCF :- !,
 pred mk-phant-mixins i:term, o:phant-term.
 mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
   coq.typecheck F FTy,
-  deps FTy ML,
+  ty-deps FTy ML,
   mk-eta (-1) FTy F EtaF,
 %  toposort-mixins ML MLSorted,
   ML = MLSorted, % Assumes we give them already sorted in dep order.
@@ -449,6 +480,30 @@ mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
 % that it is called PhantAbbrev and the underlying constant is PhantCst.
 pred phant-abbrev o:gref, o:gref, o:string.
 
+
+% Given a type T, a list of class definition
+% in consumes the list all the classes for which all the dependencies
+% (mixins) were postulated so far, declares a local constant inhabiting
+% the corresponding structure and declares it canonical
+pred declare-instances i:term, i:list class.
+declare-instances T [class Class Struct ML|Rest] :-
+  std.map ML (mixin-for T) Args, % we can build it
+  not (local-structure T Struct), % not already built
+  !,
+
+  Name is "struct_" ^ {term->modname Struct},
+
+  get-class-constructor Class KC,
+  get-structure-constructor Struct KS,
+
+  S = app[KS, T, app[KC, T | Args]],
+  coq.typecheck S STy,
+
+  coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
+  coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
+  declare-instances T Rest.
+declare-instances T [_|Rest] :- declare-instances T Rest.
+declare-instances _ [].
 }}.
 
 Elpi Command debug.
@@ -470,7 +525,7 @@ pred mk-id i:term, i:list @mixinname, i:term, o:term.
 mk-id _ [] M (fun `m` M x\x).
 mk-id T [A|AS] M (fun `a` AL R) :- std.do! [
 
-  mixin-deps A Deps,
+  gr-deps A Deps,
   std.map Deps mk-id.arg-for-mixin Args,
   AL = app [ global A, T | Args],
 
@@ -485,15 +540,15 @@ main [str S] :- !, std.do! [
   acc-phant-axioms M,
   % register mixin
   coq.env.typeof-gr M Ty,
-  deps Ty ML,
+  ty-deps Ty ML,
   acc execution-site (clause _ _ (mixin-deps M ML)),
   % register factory
   Ty = prod T TTy _,
   ID = (fun T TTy t\ {mk-id t ML {mk-app (global M) [t]} }),
   coq.typecheck ID _TyID,
-  FName is {gref-modname M} ^ "_factory",
+  FName is {gref->modname M} ^ "_factory",
   coq.env.add-const FName ID _TyID ff ff _CID,
-  acc execution-site (clause _ _ (from ML M M ID)),
+  acc execution-site (clause _ _ (from M M (mtrm ML ID))),
 ].
 main _ :- coq.error "Usage: declare_mixin <mixin>".
 
@@ -535,62 +590,25 @@ Elpi Accumulate lp:{{
 % Given a type T, a fresh number N, and a mixin M it postulates
 % a variable "mN" inhabiting M applied to T and
 % all its dependencies, previously postulated and associated
-% to the corresponding mixin using term-for-mixin
-pred postulate-mixin i:term, i:@mixinname, o:@constant.
-postulate-mixin T M C :-
-  mixin-deps M Deps,
-  std.map Deps (term-for-mixin T) Args,
-  Ty = app[global M, T | Args],
-  Name is "mixin_" ^ {gref-modname M},
+% to the corresponding mixin using mixin-for
+pred postulate-mixin i:term, i:@mixinname, i:list prop, o:list prop.
+postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
+  msubsts T {mixin->mterm M} Ty,
+  Name is "mixin_" ^ {gref->modname M},
   coq.typecheck Ty _,
-  coq.env.add-const Name _ Ty tt tt C. % no body, local -> a variable
-
-% Given a type T, a fresh integer N, a list of class definition
-% in consumes factory the list all the classes for which all the dependencies
-% (mixins) were postulated so far, declares a local constant inhabiting
-% the corresponding structure and declares it canonical
-pred postulate-structures i:term, i:list class, o:list class.
-postulate-structures T [class Class Struct ML|Rest] Rest1 :-
-  std.map ML (term-for-mixin T) Args, % we can build it
-  not (local-structure T Struct), % not already built
-  !,
-
-  Name is "struct_" ^ {term-modname Struct},
-
-  get-class-constructor Class KC,
-  get-structure-constructor Struct KS,
-
-  S = app[KS, T, app[KC, T | Args]],
-  coq.typecheck S STy,
-
-  coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
-  coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  postulate-structures T Rest Rest1.
-postulate-structures T [X|Rest] [X|Rest1] :- postulate-structures T Rest Rest1.
-postulate-structures _ [] [].
-
-% main loop: for each mixin it postulates it, then finds out all the
-% structures that can be built using that mixin (and the ones postulated)
-% so far.
-pred postulate-all-structures i:term, i:list @mixinname, i:list class.
-postulate-all-structures T [] Structures :- postulate-structures T Structures _.
-postulate-all-structures T [M|MS] Structures :-
-  postulate-mixin T M C,
-  TermForMixin = term-for-mixin T M (global (const C)),
-  TermForMixin => (
-    postulate-structures T Structures StructuresLeft,
-    postulate-all-structures T MS StructuresLeft
-  ), !,
-  acc execution-site (clause _ _ TermForMixin).
+  coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
+].
 
 main [str Variable|FS] :- !,
   coq.locate Variable GR,
+  T = global GR,
   std.map FS locate-string-argument GRFS,
 
   std.do! [
     factories-provide-mixins GRFS ML _,
-    findall-classes AllStructures,
-    postulate-all-structures (global GR) ML AllStructures,
+    std.fold ML [] (postulate-mixin T) MSL,
+    MSL => declare-instances T {findall-classes},
+    std.forall MSL (ms\ acc execution-site (clause _ _ ms)),
   ].
 main _ :- coq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
@@ -621,31 +639,33 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
 gather-last-product End (some Last) LastGR EndGR :-
   term->gr End EndGR, term->gr Last LastGR.
 
-pred factory-comp i:term, i:mterm, i:mterm, i:mterm, o:term.
-factory-comp T MSrc MF MG (fun `x` Src InnerBody) :-
-  subst-mixins T MSrc Src,
-  @pi-decl `x` Src x\ sigma F G\
-    current-factory-src x => std.do! [subst-mixins T MF F, subst-mixins T MG G],
-    mk-app G [{mk-app F [x]}] (InnerBody x).
+pred factory-comp i:term, i:list @mixinname, i:gref, i:term, i:gref, i:gref, o:term.
+factory-comp T ML Src FF Mid Tgt (fun `src` SrcTy GoF) :- std.do![
+  from Mid Tgt MG,
+  msubsts T (mtrm ML (global Src)) SrcTy,
+  @pi-decl `src` SrcTy src\ sigma MSL G F\
+    mixin-srcs T src MSL,
+    MSL => (std.do! [
+      msubsts T MG G,
+      msubsts T (mtrm ML FF) F,
+      subst-fun [{subst-fun [src] F}] G (GoF src)
+    ])
+].
 
-% [declare-factory-from ML Src F (from ML' Mid Tgt G)]
+% [declare-factory-from ML Src F Mid Tgt FromI FromO]
 % declares a factory by composing F and G.
-pred declare-factory-from i:list @mixinname, i:gref, i:term, i:prop,
-  i:list prop, o:list prop.
-declare-factory-from ML Src F (from MLG _Mid Tgt G) PI PO :- PI => std.do! [
-  std.map2 [ML, ML, MLG] [global Src, F, G] mk-mterm [MSrc, MF, MG],
-  (@pi-decl `T` {{Type}} t\ sigma MSrct MFt MGt\ std.do! [
-    std.map [MSrc, MF, MG] (subst-mfun [t]) [MSrct, MFt, MGt],
-    (under-mixins t ML (factory-comp t MSrct MFt MGt) (GoFt t))
-  ]),
+pred declare-factory-from i:list @mixinname, i:gref, i:term,
+  i:gref, i:gref, i:list prop, o:list prop.
+declare-factory-from ML Src F Mid Tgt FromI [NewFrom|FromI] :- FromI => std.do! [
+  (@pi-decl `T` {{Type}} t\ sigma MLSrc\
+    under-mixins t ML (factory-comp t ML Src F Mid Tgt) (GoFt t)
+  ),
   GoF = fun `T` {{Type}} GoFt,
   coq.typecheck GoF GoFTy_,
-  Name is {gref-modname Src} ^ "_to_" ^ {gref-modname Tgt},
+  Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
   coq.env.add-const Name GoF _ ff ff GoFC,
-  acc execution-site (clause _ _ (from ML Src Tgt (global (const GoFC)))),
-  % TODO: when we refactor "mterm-of-from" and "craft-mixin"
-  % mterm-for-mixin should simply be replaced by the from clause above
-  PO = [mterm-for-mixin Tgt {mk-mterm ML (global (const GoFC))}|PI]
+  NewFrom = from Src Tgt (mtrm ML (global (const GoFC))),
+  acc execution-site (clause _ _ NewFrom)
 ].
 
 main [str S] :- !, std.do! [
@@ -655,14 +675,9 @@ main [str S] :- !, std.do! [
   % declare phantom notation
   if (not (phant-abbrev Src _ _)) (acc-phant-axioms Src) true,
   % make the factory
-  deps Ty ML,
-  % TODO: when we refactor "mterm-of-from" and "craft-mixin"
-  % PI Can be empty and the two lines above can be removed
-  std.findall (from ML_ Src Mid_ G_) FromSrc,
-  std.map FromSrc mterm-of-from PI,
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  std.findall (from ML'_ Mid Tgt'_ G'_) FromMid,
-  std.fold FromMid PI (declare-factory-from ML Src (global F)) _PO
+  ty-deps Ty ML,
+  factory-provides Mid Tgts,
+  std.fold Tgts [] (declare-factory-from ML Src (global F) Mid) _PO
 ].
 main _ :- coq.error "Usage: declare_factory <FactoryFunction>".
 
@@ -685,73 +700,14 @@ Elpi Accumulate Db hierarchy.db.
 
 Elpi Accumulate lp:{{
 
-% TODO: refactor craft-mixin and postulate-mixin?
-pred craft-mixin i:term, i:@mixinname, o:@constant.
-craft-mixin T M C :- std.do! [
-
-  %% unnecessary computation of the mixin type
-  % mixin-deps M Deps,
-  % std.map Deps term-for-mixin Args,
-  % Ty = app[global M, T | Args],
-  % coq.typecheck Ty _,
-
-  factories-provide-mixins.mixin-provided-by M FN,
-  from FDeps FN M F,
-  factory-instance-for FN FI,
-  std.map FDeps (term-for-mixin T) FArgs,
-  Body = app[ app[F, T | FArgs] , FI ],
-
-  Name is "mixin_" ^ {gref-modname M},
-
-  coq.typecheck Body _,
-  coq.env.add-const Name Body _Ty ff ff C
-].
-
-% TODO: refactor declare-instances and postulate-structures
-pred declare-instances i:term, i:list class, o:list class.
-declare-instances T [class Class Struct ML|Rest] Rest1 :-
-  std.map ML (term-for-mixin T) Args, % we can build it
-  not (local-structure T Struct), % not already built
-  !,
-
-  Name is "struct_" ^ {term-modname Struct},
-
-  get-class-constructor Class KC,
-  get-structure-constructor Struct KS,
-
-  S = app[KS, T, app[KC, T | Args]],
-  coq.typecheck S STy,
-
-  coq.env.add-const Name S STy ff ff CS,
-  coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  declare-instances T Rest Rest1.
-declare-instances T [X|Rest] [X|Rest1] :- declare-instances T Rest Rest1.
-declare-instances _ [] [].
-
-% TODO: refactor declare-all-instances and postulate-all-structures
-pred declare-all-instances i:term, i:list @mixinname, i:list class.
-declare-all-instances T [] Structures :- declare-instances T Structures _.
-declare-all-instances T [M|MS] Structures :-
-  craft-mixin T M C,
-  TermForMixin = term-for-mixin T M (global (const C)),
-  TermForMixin => (
-    declare-instances T Structures StructuresLeft,
-    declare-all-instances T MS StructuresLeft
-  ), !,
-  acc execution-site (clause _ _ TermForMixin).
-
 pred factory-instance-for i:@factoryname, o:term.
 main [TS|Args] :- !, std.do! [
   locate-term-argument TS T,
   std.map Args locate-term-argument FIL,
-  std.map FIL coq.typecheck FITyL,
-  std.map FITyL term->gr FNL,
-  factories-provide-mixins FNL ML MixinOrigin,
-  std.map2 FNL FIL (f\g\r\ r = factory-instance-for f g) FactoryInstance,
-  findall-classes AllStructures,
-  MixinOrigin =>
-  FactoryInstance =>
-    declare-all-instances T ML AllStructures,
+  std.map FIL (mixin-srcs T) MSLL,
+  std.flatten MSLL MSL,
+  MSL => declare-instances T {findall-classes},
+  std.forall MSL (ms\ acc execution-site (clause _ _ ms))
 ].
 main _ :- coq.error "Usage: canonical_instance <T> <FactoryInstance>..".
 
@@ -797,7 +753,7 @@ pred synthesize-fields.field-for-mixin i:@mixinname, o:term.
 pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
 synthesize-fields [] _ Decl :- Decl = end-record.
 synthesize-fields [M|ML] T Decl :- std.do! [
-  Name is {gref-modname M} ^ "_mixin",
+  Name is {gref->modname M} ^ "_mixin",
 
   mixin-deps M Deps,
   std.map Deps synthesize-fields.field-for-mixin Args,
@@ -839,9 +795,9 @@ pred export-operations.aux i:term, i:term, i:term, i:@factoryname, i:list @mixin
 export-operations.aux _ _ _ _ [].
 export-operations.aux Struct ProjSort ProjClass ClassName [indt M|ML] :- !, std.do! [
   Mixin = indt M,
-  from _ ClassName Mixin ProjMixin,
+  from ClassName Mixin (mtrm _ ProjMixin),
   mixin-deps Mixin Deps,
-  std.map Deps (x\y\ sigma tmp\ from tmp ClassName x y) PDeps,
+  std.map Deps (x\y\ sigma tmp\ from ClassName x (mtrm tmp y)) PDeps,
   coq.CS.canonical-projections M Poperations,
   std.forall Poperations
     (export-1-operation Struct ProjSort ProjClass ProjMixin PDeps),
@@ -859,13 +815,17 @@ export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
 pred declare-coercion i:term, i:term, i:class, i:class.
-declare-coercion SortProjection ClassProjection (class FC StructureF _) (class TC StructureT TML) :- std.do! [
-  term-modname StructureF ModNameF,
-  term-modname StructureT ModNameT,
+declare-coercion SortProjection ClassProjection
+    (class FC StructureF _ as FCDef) (class TC StructureT TML as TCDef) :- std.do! [
+
+  acc current (clause _ _ (sub-class FCDef TCDef)),
+
+  term->modname StructureF ModNameF,
+  term->modname StructureT ModNameT,
   CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
   SName is ModNameF ^ "_to_" ^ ModNameT,
 
-  std.map TML (x\y\ sigma tmp\ from tmp FC x y) FC2TML,
+  std.map TML (x\y\ sigma tmp\ from FC x (mtrm tmp y)) FC2TML,
   get-class-constructor TC KC,
   Class = global FC,
   (pi T c\ sigma Mixes\
@@ -919,7 +879,7 @@ findall-newjoins CurrentClass AllSuper TodoJoins :-
 
 pred declare-join i:class, i:pair class class, o:prop.
 declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
-  Name is {term-modname S1} ^ "_to_" ^ {term-modname S2},
+  Name is {term->modname S1} ^ "_to_" ^ {term->modname S2},
 
   get-structure-coercion S3 S2 S3_to_S2,
   get-structure-coercion S3 S1 S3_to_S1,
@@ -945,7 +905,6 @@ declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3
 pred declare-unification-hints i:term, i:term, i:class, o:list prop.
 declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   findall-classes All,
-  % TODO: toposort All putting small structure fisrt
 
   std.filter All (sub-class? CurrentClass) AllSuper,
   std.forall AllSuper (declare-coercion SortProj ClassProj CurrentClass),
@@ -967,7 +926,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
   coq.CS.canonical-projections ClassName Projs,
   std.map2 ML Projs (m\ p\ r\ sigma P\
     p = some P,
-    r = from [] (indt ClassName) m (global (const P))) Factories,
+    r = from (indt ClassName) m (mtrm [] (global (const P)))) Factories,
 ].
 
 % Builds the package record
