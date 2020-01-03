@@ -55,9 +55,9 @@ macro @structure :- term.
 
 %%%%%% DB of mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [factory-requires M ML] means that mixin M depends (has as parameters) mixins ML in
-% that order
-pred factory-requires o:gref, o:list @mixinname.
+% [factory-requires M ML] means that factory M depends on
+% (i.e. has parameters among) mixins ML.
+pred factory-requires o:@factoryname, o:list @mixinname.
 
 %%%%%% DB of packed classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
