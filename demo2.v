@@ -86,11 +86,11 @@ pred from o:@factoryname, o:@mixinname, o:term.
 pred extract-mix i:prop, o:@mixinname.
 extract-mix (from _ X _) X.
 
-% [factory->mterm Src Tgt MF] provides a mterm to transform
-% Src into Tgt.
-pred factory->mterm i:gref, i:@mixinname, o:mterm.
-factory->mterm Src Tgt (mtrm ML F) :- !,
-  from Src Tgt F, !, factory-requires Src ML.
+% [factory-fun->term T Src Tgt MF] provides a term which is
+% a function to transform Src into Tgt under the right mixin-src.
+pred factory-fun->term i:term, i:@factoryname, i:@mixinname, o:term.
+factory-fun->term T Src Tgt FT :- !, std.do! [
+  from Src Tgt F, factory-requires Src ML, mterm->term T (mtrm ML F) FT].
 
 % [factory-provides F ML] states that the factory ML
 % provides instances of ML
@@ -217,33 +217,37 @@ term->modname T ModName :- gref->modname {term->gr T} ModName.
 kind mterm type.
 type mtrm list @mixinname -> term -> mterm.
 
-pred mixin->mterm i:@mixinname, o:mterm.
-mixin->mterm M (mtrm ML (global M)):- !, factory-requires M ML.
-
-% [msubst T F M_i TFX] where mixin-for T M_i X_i states that
+% [instanciate-mixin T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
 %            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
 % then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
 %            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
 % thus instanciating an abstraction on mixin M_i with X_i
-pred msubst i:term, i:@mixinname, i:term, o:term.
-msubst T M (fun _ Tm F) (F X) :-
+pred instanciate-mixin i:term, i:@mixinname, i:term, o:term.
+instanciate-mixin T M (fun _ Tm F) (F X) :-
   safe-dest-app Tm (global TmGR) _,
   factory-alias TmGR M, !,
   mixin-for T M X, !.
-msubst T M (fun N T F) (fun N T FX) :- !, pi m\ msubst T M (F m) (FX m).
-msubst _ _ F F.
+instanciate-mixin T M (fun N T F) (fun N T FX) :- !, pi m\ instanciate-mixin T M (F m) (FX m).
+instanciate-mixin _ _ F F.
 
-% [msubsts T MF TFX] assumes that MF is a mterm
+% [mterm->term T MF TFX] assumes that MF is a mterm
 % (mtrm ML F) and perform the substitution as above
 % for every mixin-for entry out of the list ML = [M_0, .., M_n].
-pred msubsts i:term, i:mterm, o:term.
-msubsts T (mtrm ML F) SFX :- std.do![
+pred mterm->term i:term, i:mterm, o:term.
+mterm->term T (mtrm ML F) SFX :- std.do![
   coq.typecheck F Ty,
   mk-eta (-1) Ty F EtaF,
   subst-fun [T] EtaF FT,
-  std.fold ML FT (msubst T) SFX
+  std.fold ML FT (instanciate-mixin T) SFX
 ].
+
+% [mgref->term T GR X] computes the dependencies of GR in mixins,
+% (through factory-requires if it exist, otherwise gr-deps)
+% and instanciates all of them through mixin-src, and fails if it cannot.
+pred mgref->term i:term, i:gref, o:term.
+mgref->term T GR X :- factory-requires GR ML, !, mterm->term T (mtrm ML (global GR)) X.
+mgref->term T GR X :- !, gr-deps GR ML, !, mterm->term T (mtrm ML (global GR)) X.
 
 %% database for locally available mixins
 % [mixin-src T M X] states that X can be used to reconstruct
@@ -274,8 +278,7 @@ mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
   term->gr Ty Src,
   factory-alias Src Factory,
   if (M = Factory) (MI = Tm) (
-      factory->mterm Src M MF,
-      msubsts T MF F,
+      factory-fun->term T Src M F,
       subst-fun [Tm] F MI
   )
 ].
@@ -359,7 +362,7 @@ find-max-classes [M|_] _ :- coq.error "cannot find a class containing mixin" M.
 pred under-mixins i:term, i:list gref, i:(term -> prop), o:term.
 under-mixins _T [] Pred Body :- !, Pred Body.
 under-mixins T [M|ML] Pred (fun `m` MTy FLG) :- std.do! [
-  msubsts T {mixin->mterm M} MTy,
+  mgref->term T M MTy,
   @pi-decl `m` MTy m\ mixin-src T M m => under-mixins T ML Pred (FLG m)
 ].
 
@@ -416,9 +419,9 @@ acc-factory-aliases GR Aliases :-
   mk-phant-mixins (global GR) PhGR,
   PhantAbbrevName is {gref->modname GR} ^ "_axioms",
   mk-phant-abbrev PhantAbbrevName PhGR PhC,
-  acc execution-site (clause _ _ (phant-abbrev GR PhantAbbrevName)),
+  acc current (clause _ _ (phant-abbrev GR PhantAbbrevName)),
   Aliases = [factory-alias GR GR, factory-alias (const PhC) GR],
-  std.forall Aliases a\ acc execution-site (clause _ _ a).
+  std.forall Aliases a\ acc current (clause _ _ a).
 
 % [mk-phant-unify X1 X2 PF PUF] states that PUF is a phant-term that
 % is starts with unifing X1 and X2 and then outputs PF.
@@ -468,12 +471,12 @@ pred mk-phant-mixins.class-mixins i:term, i:@classname, i:term,
   i:list @mixinname, i:phant-term, o:phant-term.
 mk-phant-mixins.class-mixins T CN C [] PF UPF :- !, std.do![
     get-class-constructor CN K, class-def (class CN _ CML),
-    msubsts T (mtrm CML K) KCML,
+    mterm->term T (mtrm CML K) KCML,
     mk-phant-unify C KCML PF UPF].
 mk-phant-mixins.class-mixins T CN C [M|ML] (phant-trm AL FMML) LamPFmmL :- !,
-    msubsts T {mixin->mterm M} MTy,
+    mgref->term T M MTy,
     (@pi-decl `m` MTy m\ mixin-src T M m => sigma FmML\
-      msubst T M FMML FmML,
+      instanciate-mixin T M FMML FmML,
       mk-phant-mixins.class-mixins T CN C ML (phant-trm AL FmML) (PFmmL m)),
     mk-phant-implicit `m` MTy PFmmL LamPFmmL.
 
@@ -527,24 +530,22 @@ declare-instances T [class Class Struct ML|Rest] :-
 declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
 
-pred main-mixin-requires i:gref, i:list @factoryname.
-main-mixin-requires GR GRFS :- !, std.do! [
+pred main-mixin-requires i:gref, i:list @factoryname, o:list prop.
+main-mixin-requires GR GRFS PO :- !, std.do! [
   factories-provide-mixins GRFS ML _,
-  acc execution-site (clause _ _ (factory-requires GR ML)),
+  FactoryRequires = factory-requires GR ML,
+  acc current (clause _ _ FactoryRequires),
   % make and register phant-abbrev
-  acc-factory-aliases GR _,
+  acc-factory-aliases GR Aliases,
   % register factory
-  coq.env.typeof-gr GR Ty,
-  Ty = prod T TTy _,
-  (@pi-decl T TTy t\ under-mixins t ML (body\ sigma MTy\
-      msubsts t (mtrm ML (global GR)) MTy,
-      body = fun `x` MTy x\x) (IDBody t)
-  ),
-  ID = fun T TTy IDBody,
-  coq.typecheck ID _TyID,
-  FName is {gref->modname GR} ^ "_id_factory",
-  coq.env.add-const FName ID _TyID ff ff _CID,
-  acc execution-site (clause _ _ (from GR GR ID))
+  FactoryRequires => Aliases => std.do! [
+    coq.env.typeof-gr GR (prod T TTy _),
+    @pi-decl T TTy t\ under-mixins t ML (body\ sigma MTy\
+        mgref->term t GR MTy,
+        body = fun `x` MTy x\x) (IDBody t)],
+  From = from GR GR (fun T TTy IDBody),
+  acc current (clause _ _ From),
+  std.append [FactoryRequires] {std.append Aliases [From]} PO
 ].
 
 % Given a type T, a fresh number N, and a mixin M it postulates
@@ -553,18 +554,18 @@ main-mixin-requires GR GRFS :- !, std.do! [
 % to the corresponding mixin using mixin-for
 pred postulate-mixin i:term, i:@mixinname, i:list prop, o:list prop.
 postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
-  msubsts T {mixin->mterm M} Ty,
+  mgref->term T M Ty,
   Name is "mixin_" ^ {gref->modname M},
   coq.typecheck Ty _,
   coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
 ].
 
-pred main-declare-context i:term, i:list @factoryname.
-main-declare-context T GRFS :-  std.do! [
+pred main-declare-context i:term, i:list @factoryname, o:list prop.
+main-declare-context T GRFS MSL :-  std.do! [
     factories-provide-mixins GRFS ML _,
     std.fold ML [] (postulate-mixin T) MSL,
     MSL => declare-instances T {findall-classes},
-    std.forall MSL (ms\ acc execution-site (clause _ _ ms)),
+    std.forall MSL (ms\ acc current (clause _ _ ms)),
   ].
 
 }}.
@@ -586,7 +587,7 @@ Elpi Accumulate lp:{{
 main [str S|FS] :- !, std.do! [
   coq.locate S GR,
   std.map FS locate-string-argument GRFS,
-  main-mixin-requires GR GRFS
+  main-mixin-requires GR GRFS _
 ].
 main _ :- coq.error "Usage: mixin_requires <mixin> <Factories>..".
 
@@ -630,7 +631,7 @@ Elpi Accumulate lp:{{
 main [str S|FS] :- !,
   coq.locate S GR,
   std.map FS locate-string-argument GRFS,
-  main-declare-context (global GR) GRFS.
+  main-declare-context (global GR) GRFS _.
 main _ :- coq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
 }}.
@@ -713,15 +714,14 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
 gather-last-product End (some Last) LastGR EndGR :-
   term->gr End EndGR, term->gr Last LastGR.
 
-pred factory-comp i:term, i:list @mixinname, i:gref, i:term, i:gref, i:gref, o:term.
-factory-comp T ML Src FF Mid Tgt (fun `src` SrcTy GoF) :- std.do![
-  factory->mterm Mid Tgt MG,
-  msubsts T (mtrm ML (global Src)) SrcTy,
+pred factory-comp i:term, i:gref, i:mterm, i:gref, i:gref, o:term.
+factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- std.do![
+  mgref->term T Src SrcTy,
   @pi-decl `src` SrcTy src\ sigma MSL G F\
     mixin-srcs T src MSL, !,
     MSL => (std.do! [
-      msubsts T MG G,
-      msubsts T (mtrm ML FF) F,
+      factory-fun->term T Mid Tgt G,
+      mterm->term T MF F,
       subst-fun [{subst-fun [src] F}] G (GoF src)
     ])
 ].
@@ -733,14 +733,14 @@ pred declare-factory-from
 declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- FromI => std.do! [
   factory-requires Src ML,
   (@pi-decl `T` {{Type}} t\
-    under-mixins t ML (factory-comp t ML Src F Mid Tgt) (GoFt t)
+    under-mixins t ML (factory-comp t Src (mtrm ML F) Mid Tgt) (GoFt t)
   ),
   GoF = fun `T` {{Type}} GoFt,
   coq.typecheck GoF GoFTy_,
   Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
   coq.env.add-const Name GoF _ ff ff GoFC,
   NewFrom = from Src Tgt (global (const GoFC)),
-  acc execution-site (clause _ _ NewFrom)
+  acc current (clause _ _ NewFrom)
 ].
 
 main [str S] :- !, std.do! [
@@ -778,7 +778,7 @@ main [TS|Args] :- !, std.do! [
   std.map FIL (mixin-srcs T) MSLL,
   std.flatten MSLL MSL,
   MSL => declare-instances T {findall-classes},
-  std.forall MSL (ms\ acc execution-site (clause _ _ ms))
+  std.forall MSL (ms\ acc current (clause _ _ ms))
 ].
 main _ :- coq.error "Usage: declare_canonical <T> <FactoryInstance>..".
 
@@ -831,7 +831,7 @@ export-1-operation Struct Psort Pclass M Deps (some Poperation) :- !, std.do! [
       Carrier = app[Psort, s],
       Class = app[Pclass, s],
       mixin-srcs Carrier Class MSL,
-      MSL => msubsts Carrier (mtrm DepsM Operation) (Body s)
+      MSL => mterm->term Carrier (mtrm DepsM Operation) (Body s)
     ]
   ),
   T = fun `x` Struct Body,
@@ -968,7 +968,7 @@ pred synthesize-fields i:term, i:list @mixinname,o:record-decl.
 synthesize-fields _T []     end-record.
 synthesize-fields T  [M|ML] (field ff Name MTy Fields) :- std.do! [
   Name is {gref->modname M} ^ "_mixin",
-  msubsts T {mixin->mterm M} MTy,
+  mgref->term T M MTy,
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
 
@@ -1052,7 +1052,7 @@ main [str Module|FS] :- !, std.do! [
   coq.env.end-module Exports,
 
   coq.env.end-module _,
-  coq.env.import-module Exports,
+  coq.env.export-module Exports,
 
 ].
 main _ :- coq.error "Usage: declare_structure <ModuleName> [<Factory>..]".
