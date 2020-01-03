@@ -55,9 +55,9 @@ macro @structure :- term.
 
 %%%%%% DB of mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [mixin-deps M ML] means that mixin M depends (has as parameters) mixins ML in
+% [factory-requires M ML] means that mixin M depends (has as parameters) mixins ML in
 % that order
-pred mixin-deps o:@mixinname, o:list @mixinname.
+pred factory-requires o:gref, o:list @mixinname.
 
 %%%%%% DB of packed classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -85,10 +85,6 @@ pred from o:@factoryname, o:@mixinname, o:term.
 % factory, generated mixin, mean, eg mean : factory -> mixin
 pred extract-mix i:prop, o:@mixinname.
 extract-mix (from _ X _) X.
-
-% [factory-requires F ML] states that the factory ML
-% requires instances of ML to provide new mixins
-pred factory-requires o:@factoryname, o:list @mixinname.
 
 % [factory->mterm Src Tgt MF] provides a mterm to transform
 % Src into Tgt.
@@ -152,12 +148,12 @@ toposort ES XS XS'' :-
   std.filter XS' (std.mem XS) XS''.
 
 pred mk-mixin-edge i:prop, o:list (pair @mixinname @mixinname).
-mk-mixin-edge (mixin-deps M Deps) L :-
+mk-mixin-edge (factory-requires M Deps) L :-
   std.map Deps (d\r\ r = pr d M) L.
 
 pred toposort-mixins i:list @mixinname, o:list @mixinname.
 toposort-mixins In Out :- std.do! [
-  std.findall (mixin-deps M_ Deps_) AllMixins,
+  std.findall (factory-requires M_ Deps_) AllMixins,
   std.flatten {std.map AllMixins mk-mixin-edge} ES,
   toposort ES In Out,
 ].
@@ -222,7 +218,7 @@ kind mterm type.
 type mtrm list @mixinname -> term -> mterm.
 
 pred mixin->mterm i:@mixinname, o:mterm.
-mixin->mterm M (mtrm ML (global M)):- !, mixin-deps M ML.
+mixin->mterm M (mtrm ML (global M)):- !, factory-requires M ML.
 
 % [msubst T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
@@ -325,7 +321,7 @@ ty-deps (prod N S R) ML' :- !,
   @pi-decl N S x\
     ty-deps (R x) ML,
     safe-dest-app S HD _,
-    if (HD = global GR, mixin-deps GR _, factory-alias GR F)
+    if (HD = global GR, factory-requires GR _, factory-alias GR F)
       (ML' = [F|ML]) (ML' = ML).
 ty-deps Ty ML :- whd1 Ty Ty1, !, ty-deps Ty1 ML.
 ty-deps _Ty [].
@@ -542,8 +538,7 @@ Elpi Typecheck.
 
 (** This command registers a mixin inside Elpi's DB, its dependencies etc *)
 
-(* TODO: rename current declare_mixin to mixin_requires with the same signature as factory_requires *)
-(* FEATURE REQUEST:  merge declare_mixin with declare_context: open a module, a section...
+(* FEATURE REQUEST:  merge mixin_requires with declare_context: open a module, a section...
 
   Syntax suggestion:
 
@@ -573,42 +568,31 @@ Elpi Typecheck.
 
 *)
 
-Elpi Command declare_mixin.
+Elpi Command mixin_requires.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-pred mk-id.arg-for-mixin i:@mixinname, o:term.
-pred mk-id i:term, i:list @mixinname, i:term, o:term.
-mk-id _ [] M (fun `m` M x\x).
-mk-id T [A|AS] M (fun `a` AL R) :- std.do! [
-
-  gr-deps A Deps,
-  std.map Deps mk-id.arg-for-mixin Args,
-  AL = app [ global A, T | Args],
-
-  pi a\
-    mk-id.arg-for-mixin A a =>
-    mk-id T AS {mk-app M [a]} (R a)
-].
-
-main [str S] :- !, std.do! [
-  coq.locate S M,
+main [str S|FS] :- !, std.do! [
+  coq.locate S GR,
+  std.map FS locate-string-argument GRFS,
+  factories-provide-mixins GRFS ML _,
+  acc execution-site (clause _ _ (factory-requires GR ML)),
   % make and register phant-abbrev
-  acc-factory-aliases M _,
-  % register mixin
-  coq.env.typeof-gr M Ty,
-  ty-deps Ty ML,
-  acc execution-site (clause _ _ (mixin-deps M ML)),
+  acc-factory-aliases GR _,
   % register factory
+  coq.env.typeof-gr GR Ty,
   Ty = prod T TTy _,
-  ID = (fun T TTy t\ {mk-id t ML {mk-app (global M) [t]} }),
+  (@pi-decl T TTy t\ under-mixins t ML (body\ sigma MTy\
+      msubsts t (mtrm ML (global GR)) MTy,
+      body = fun `x` MTy x\x) (IDBody t)
+  ),
+  ID = fun T TTy IDBody,
   coq.typecheck ID _TyID,
-  FName is {gref->modname M} ^ "_id_factory",
+  FName is {gref->modname GR} ^ "_id_factory",
   coq.env.add-const FName ID _TyID ff ff _CID,
-  acc execution-site (clause _ _ (factory-requires M ML)),
-  acc execution-site (clause _ _ (from M M ID)),
+  acc execution-site (clause _ _ (from GR GR ID)),
 ].
-main _ :- coq.error "Usage: declare_mixin <mixin>".
+main _ :- coq.error "Usage: mixin_requires <mixin> <Factories>..".
 
 }}.
 Elpi Typecheck.
@@ -693,7 +677,7 @@ main [str S|FS] :- !, std.do! [
   acc current (clause _ _ (factory-requires GR ML)),
   acc-factory-aliases GR _,
 ].
-main _ :- coq.error "Usage: factory_requires <Factories>..".
+main _ :- coq.error "Usage: factory_requires <Factory> <Factories>..".
 
 }}.
 Elpi Typecheck.
@@ -776,7 +760,7 @@ Elpi Typecheck.
 
 *)
 
-Elpi Command canonical_instance.
+Elpi Command declare_canonical.
 Elpi Accumulate Db hierarchy.db.
 
 Elpi Accumulate lp:{{
@@ -789,7 +773,7 @@ main [TS|Args] :- !, std.do! [
   MSL => declare-instances T {findall-classes},
   std.forall MSL (ms\ acc execution-site (clause _ _ ms))
 ].
-main _ :- coq.error "Usage: canonical_instance <T> <FactoryInstance>..".
+main _ :- coq.error "Usage: declare_canonical <T> <FactoryInstance>..".
 
 }}.
 Elpi Typecheck.
@@ -826,71 +810,48 @@ Elpi Command declare_structure.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-
-% For each mixin we declare a field and apply the mixin to its dependencies
-% (that are previously declared fields recorded via field-for-mixin)
-pred synthesize-fields.field-for-mixin i:@mixinname, o:term.
-pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
-synthesize-fields [] _ Decl :- Decl = end-record.
-synthesize-fields [M|ML] T Decl :- std.do! [
-  Name is {gref->modname M} ^ "_mixin",
-
-  mixin-deps M Deps,
-  std.map Deps synthesize-fields.field-for-mixin Args,
-
-  Type = app[ global M, T | Args ],
-  Decl = field ff Name Type Fields,
-
-  pi f\
-    synthesize-fields.field-for-mixin M f =>
-    synthesize-fields ML T (Fields f)
-].
-
 % given an operation (a mixin projection) we generate a constant projection the
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
 % of the package structure.
-pred export-1-operation i:term, i:term, i:term, i:term, i:list term, i:option @constant.
+pred export-1-operation i:term, i:term, i:term, i:@mixinname, i:list @mixinname, i:option @constant.
 export-1-operation _ _ _ _ _ none :- !. % not a projection, no operation
-export-1-operation Struct Psort Pclass Pmixin Mdeps (some Poperation) :- !, std.do! [
+export-1-operation Struct Psort Pclass M Deps (some Poperation) :- !, std.do! [
   coq.gr->id (const Poperation) Name,
-
   Operation = global (const Poperation),
-  std.append Mdeps [Pmixin] AllMixins,
-  (pi x\ decl x `x` Struct =>
-    sigma Carrier Class Args\
-      Carrier = app[Psort, x],
-      Class = app[Pclass, x],
-      std.map AllMixins (a\ mk-app a [Carrier, Class]) Args,
-      Body x = app[Operation, Carrier | Args]),
+  std.append Deps [M] DepsM,
+  (@pi-decl `s` Struct s\ sigma Carrier Class MSL\ std.do! [
+      Carrier = app[Psort, s],
+      Class = app[Pclass, s],
+      mixin-srcs Carrier Class MSL,
+      MSL => msubsts Carrier (mtrm DepsM Operation) (Body s)
+    ]
+  ),
   T = fun `x` Struct Body,
-
   % TODO: make the type of T nicer. Ask Cyril why the inferred one could be ugly
   coq.env.add-const Name T _ ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
 ].
 
 % Given a list of mixins, it exports all operations in there
-pred export-operations.aux i:term, i:term, i:term, i:@factoryname, i:list @mixinname.
-export-operations.aux _ _ _ _ [].
-export-operations.aux Struct ProjSort ProjClass ClassName [indt M|ML] :- !, std.do! [
-  Mixin = indt M,
-  from ClassName Mixin ProjMixin,
-  mixin-deps Mixin Deps,
-  std.map Deps (from ClassName) PDeps,
-  coq.CS.canonical-projections M Poperations,
+pred export-operations.aux i:term, i:term, i:term, i:list @mixinname.
+export-operations.aux _ _ _ [].
+export-operations.aux Struct ProjSort ProjClass [M|ML] :- !, std.do! [
+  factory-requires M Deps,
+  M = indt MInd,
+  coq.CS.canonical-projections MInd Poperations,
   std.forall Poperations
-    (export-1-operation Struct ProjSort ProjClass ProjMixin PDeps),
-  export-operations.aux Struct ProjSort ProjClass ClassName ML
+    (export-1-operation Struct ProjSort ProjClass M Deps),
+  export-operations.aux Struct ProjSort ProjClass ML
 ].
-export-operations.aux Struct ProjSort ProjClass ClassName [GR|ML] :-
+export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
   coq.say GR "is not a record: skipping operations factory this mixin",
-  export-operations.aux Struct ProjSort ProjClass ClassName ML.
+  export-operations.aux Struct ProjSort ProjClass ML.
 
-pred export-operations i:term, i:term, i:term, i:@factoryname, i:list @mixinname, o:list @mixinname.
-export-operations Structure ProjSort ProjClass ClassName ML MLToExport :-
+pred export-operations i:term, i:term, i:term, i:list @mixinname, o:list @mixinname.
+export-operations Structure ProjSort ProjClass ML MLToExport :-
   std.filter ML (m\not(mixin-first-class m _)) MLToExport,
-  export-operations.aux Structure ProjSort ProjClass ClassName MLToExport.
+  export-operations.aux Structure ProjSort ProjClass MLToExport.
 
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
@@ -994,13 +955,23 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
+% For each mixin we declare a field and apply the mixin to its dependencies
+% (that are previously declared fields recorded via field-for-mixin)
+pred synthesize-fields i:term, i:list @mixinname,o:record-decl.
+synthesize-fields _T []     end-record.
+synthesize-fields T  [M|ML] (field ff Name MTy Fields) :- std.do! [
+  Name is {gref->modname M} ^ "_mixin",
+  msubsts T {mixin->mterm M} MTy,
+  @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
+].
+
 % Builds the axioms record and the factories from this class to each mixin
 pred declare-class i:list @mixinname, o:@factoryname, o:list prop.
 declare-class ML (indt ClassName) Factories :- std.do! [
-  (pi T\ synthesize-fields ML T (RDecl T)),
+  (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
-    (parameter `T` {{ Type }} T\
-      record "axioms" {{ Type }} "Axioms" (RDecl T)),
+    (parameter `T` {{ Type }} t\
+      record "axioms" {{ Type }} "Axioms" (RDecl t)),
   coq.typecheck-indt-decl ClassDeclaration,
   coq.env.add-indt ClassDeclaration ClassName,
   coq.CS.canonical-projections ClassName Projs,
@@ -1042,6 +1013,8 @@ main [str Module|FS] :- !, std.do! [
   coq.env.begin-module Module none,
 
   declare-class ML  ClassName Factories,
+  ClassRequires = factory-requires (ClassName) [],
+  ClassAlias = (factory-alias ClassName ClassName),
 
   declare-structure ClassName  Structure SortProjection ClassProjection,
   CurrentClass = (class ClassName Structure ML),
@@ -1051,16 +1024,19 @@ main [str Module|FS] :- !, std.do! [
 
   declare-sort-coercion Structure SortProjection,
 
-  Factories => export-operations Structure SortProjection ClassProjection ClassName ML MLToExport,
+  ClassAlias => ClassRequires => Factories =>
+    export-operations Structure SortProjection ClassProjection ML MLToExport,
 
-  Factories => declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
+  ClassAlias => ClassRequires => Factories => 
+    declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   % Register in Elpi's DB the new structure
   std.forall MLToExport (m\
-    acc current (clause _ _ (mixin-first-class m ClassName))),
+     acc current (clause _ _ (mixin-first-class m ClassName))),
 
   std.forall Factories (f\ acc current (clause _ _ f)),
-  acc current (clause _ _ (factory-requires (ClassName) [])),
+  acc current (clause _ _ ClassRequires),
+  acc current (clause _ _ ClassAlias),
 
   std.forall NewJoins (j\acc current (clause _ _ j)),
 
@@ -1109,7 +1085,7 @@ Module ASG_of_TYPE. Section S.
 End S. End ASG_of_TYPE.
 Print Module ASG_of_TYPE.
 
-Elpi declare_mixin ASG_of_TYPE.axioms.
+Elpi mixin_requires ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
@@ -1149,7 +1125,7 @@ End S. End RING_of_ASG.
 
 About RING_of_ASG.opp.
 
-Elpi declare_mixin RING_of_ASG.axioms.
+Elpi mixin_requires RING_of_ASG.axioms ASG.axioms.
 Elpi declare_structure "RING" ASG.axioms RING_of_ASG.axioms.
 
 Print Module RING.
@@ -1195,7 +1171,7 @@ Module ASG_of_TYPE. Section S.
   }.
 End S. End ASG_of_TYPE.
 
-Elpi declare_mixin ASG_of_TYPE.axioms.
+Elpi mixin_requires ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
@@ -1220,7 +1196,7 @@ Module AG_of_ASG. Section S.
   }.
 End S. End AG_of_ASG.
 
-Elpi declare_mixin AG_of_ASG.axioms.
+Elpi mixin_requires AG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
 Import AG.Exports.
@@ -1234,7 +1210,7 @@ Proof. by case: A => ? [? []]. Qed.
 
 Module RING_of_AG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG.axioms.
+ Elpi declare_context A AG.axioms.
 
  Record axioms := Axioms {
   one : A;
@@ -1248,7 +1224,7 @@ Module RING_of_AG. Section S.
 
 End S. End RING_of_AG.
 
-Elpi declare_mixin RING_of_AG.axioms.
+Elpi mixin_requires RING_of_AG.axioms AG.axioms.
 
 Elpi declare_structure "RING" AG.axioms RING_of_AG.axioms.
 Import RING.Exports.
@@ -1259,15 +1235,15 @@ Check add zero one.
 Check opp one.
 
 Lemma mulrA {A : RING.type} : associative (@mul A).
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mul1r {A : RING.type} : left_id (@one A) mul.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulr1 {A : RING.type} : right_id (@one A) mul.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulrDl {A : RING.type} : left_distributive (@mul A) add.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulrDr {A : RING.type} : right_distributive (@mul A) add.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 
 (* To not break clients / provide shortcuts for users not interested in the
    new AG class. *)
@@ -1294,7 +1270,7 @@ Definition to_AG_of_ASG : AG_of_ASG_axioms A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
-Elpi canonical_instance A to_AG_of_ASG.
+Elpi declare_canonical A to_AG_of_ASG.
 
 Definition to_RING_of_AG : RING_of_AG_axioms A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
@@ -1330,7 +1306,7 @@ Module ASG_of_TYPE. Section S.
   }.
 End S. End ASG_of_TYPE.
 
-Elpi declare_mixin ASG_of_TYPE.axioms.
+Elpi mixin_requires ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
 Import ASG.Exports.
@@ -1348,14 +1324,14 @@ Proof. by case: A => ? [[]]. Qed.
 
 Module AG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_of_TYPE.axioms.
+ Elpi declare_context A ASG.axioms.
  Record axioms := Axioms {
   opp : A -> A;
   _ : left_inverse zero opp add;
   }.
 End S. End AG_of_ASG.
 
-Elpi declare_mixin AG_of_ASG.axioms.
+Elpi mixin_requires AG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
 Import AG.Exports.
@@ -1383,7 +1359,7 @@ Module SRIG_of_ASG. Section S.
   }.
 End S. End SRIG_of_ASG.
 
-Elpi declare_mixin SRIG_of_ASG.axioms.
+Elpi mixin_requires SRIG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
 Import SRIG.Exports.
@@ -1484,7 +1460,7 @@ Definition to_AG_of_ASG : AG_of_ASG_axioms A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
-Elpi canonical_instance A to_AG_of_ASG.
+Elpi declare_canonical A to_AG_of_ASG.
 
 Definition to_RING_of_AG : RING_of_AG_axioms A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
@@ -1521,7 +1497,7 @@ Module SG_of_TYPE. Section S.
   }.
 End S. End SG_of_TYPE.
 
-Elpi declare_mixin SG_of_TYPE.axioms.
+Elpi mixin_requires SG_of_TYPE.axioms.
 Elpi declare_structure "SG" SG_of_TYPE.axioms.
 Import SG.Exports.
 
@@ -1543,7 +1519,7 @@ Module ASG_of_SG. Section S.
   }.
 End S. End ASG_of_SG.
 
-Elpi declare_mixin ASG_of_SG.axioms.
+Elpi mixin_requires ASG_of_SG.axioms SG.axioms.
 
 Elpi declare_structure "ASG" SG.axioms ASG_of_SG.axioms.
 Import ASG.Exports.
@@ -1571,11 +1547,11 @@ Module ASG_of_TYPE. Section S.
 
   Definition to_SG_of_TYPE : SG_of_TYPE_axioms A :=
     SG_of_TYPE.Axioms _ (zero a) (add a) (addA a) (addr0 a) add0r.
-  Elpi canonical_instance A to_SG_of_TYPE.
+  Elpi declare_canonical A to_SG_of_TYPE.
 
   Definition to_ASG_of_SG : ASG_of_SG_axioms A :=
     ASG_of_SG.Axioms _ _ (addC a : commutative SG.Exports.add).
-  Elpi canonical_instance A to_ASG_of_SG.
+  Elpi declare_canonical A to_ASG_of_SG.
 
   End Factories.
 End S. End ASG_of_TYPE.
@@ -1593,7 +1569,7 @@ Module AG_of_ASG. Section S.
   }.
 End S. End AG_of_ASG.
 
-Elpi declare_mixin AG_of_ASG.axioms.
+Elpi mixin_requires AG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
 Import AG.Exports.
@@ -1603,7 +1579,7 @@ Print Module AG.Exports.
 Check opp zero.
 
 Lemma addNr {A : AG.type} : left_inverse (@zero A) opp add.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 
 Module SRIG_of_ASG. Section S.
  Variable A : Type.
@@ -1621,7 +1597,7 @@ Module SRIG_of_ASG. Section S.
   }.
 End S. End SRIG_of_ASG.
 
-Elpi declare_mixin SRIG_of_ASG.axioms.
+Elpi mixin_requires SRIG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
 Import SRIG.Exports.
@@ -1634,19 +1610,19 @@ Check add zero one. (* ASG.sort _ = SRIG.sort _ *)
 Check opp one. (* AG.sort _ = SRIG.sort _ *)
 
 Lemma mulrA {A : SRIG.type} : associative (@mul A).
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mul1r {A : SRIG.type} : left_id (@one A) mul.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulr1 {A : SRIG.type} : right_id (@one A) mul.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulrDl {A : SRIG.type} : left_distributive (@mul A) add.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulrDr {A : SRIG.type} : right_distributive (@mul A) add.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mul0r {A : SRIG.type} : left_zero (@zero A) mul.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 Lemma mulr0 {A : SRIG.type} : right_zero (@zero A) mul.
-Proof. by case: A => ? [? []]. Qed.
+Proof. by case: A => ? [? ? []]. Qed.
 
 Module RING_of_AG. Section S.
  Variable A : Type.
@@ -1721,7 +1697,7 @@ Definition to_AG_of_ASG : AG_of_ASG_axioms A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
 
-Elpi canonical_instance A to_AG_of_ASG.
+Elpi declare_canonical A to_AG_of_ASG.
 
 Definition to_RING_of_AG : RING_of_AG_axioms A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
