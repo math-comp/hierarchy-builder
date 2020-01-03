@@ -131,6 +131,10 @@ factories-provide-mixins GRFS ML Clauses :- std.do! [
 
 %%%%% Topological sortiing algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% TODO: pred toposort i:(A -> A -> prop), i:list A, o:list A.
+%       pred edge? i:int, i:int.
+%       toposort edge? [1,2,3,4] TopoList
+
 pred topovisit i: list (pair A A), i: A,      i: list A, i: list A, o: list A, o: list A.
 topovisit _ X VS PS VS PS :- std.mem PS X, !.
 topovisit _ X VS _ _ _ :- std.mem VS X, !, print "cycle detected.", fail.
@@ -220,10 +224,6 @@ type mtrm list @mixinname -> term -> mterm.
 pred mixin->mterm i:@mixinname, o:mterm.
 mixin->mterm M (mtrm ML (global M)):- !, mixin-deps M ML.
 
-% substitution under mtrm
-pred subst-mfun i:list term, i:mterm, o:mterm.
-subst-mfun Xs (mtrm ML F) (mtrm ML FXs) :- subst-fun Xs F FXs.
-
 % [msubst T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
 %            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
@@ -238,7 +238,7 @@ msubst T M (fun _ Tm F) (F X) :-
 msubst T M (fun N T F) (fun N T FX) :- !, pi m\ msubst T M (F m) (FX m).
 msubst _ _ F F.
 
-% [msubsts T MF TFX] assumes that MF is a mterm (in eta-expanded form)
+% [msubsts T MF TFX] assumes that MF is a mterm
 % (mtrm ML F) and perform the substitution as above
 % for every mixin-for entry out of the list ML = [M_0, .., M_n].
 pred msubsts i:term, i:mterm, o:term.
@@ -354,7 +354,7 @@ find-max-classes [M|Mixins] [C|Classes] :-
     std.filter Mixins (x\ not (std.mem! ML x)) Mixins',
     find-max-classes Mixins' Classes
   ].
-find-max-classes [_|_] _ :- std.fatal-error "cannot find class for mixin".
+find-max-classes [M|_] _ :- coq.error "cannot find a class containing mixin" M.
 
 % [under-mixins T ML Pred F] states that F has type
 % fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => Body m_0 .. m_n
@@ -507,10 +507,10 @@ mk-phant-mixins F (phant-trm [real-arg T|AL] (fun T _ CFML)) :- std.do! [
 pred phant-abbrev o:gref, o:string.
 
 
-% Given a type T, a list of class definition
-% in consumes the list all the classes for which all the dependencies
-% (mixins) were postulated so far, declares a local constant inhabiting
-% the corresponding structure and declares it canonical
+% Given a type T, a list of class definition in topological order (from least dep to most)
+% it consumes the list all the classes for which all the dependencies
+% (mixins) were postulated so far (skips the rest) and declares a local
+% constant inhabiting the corresponding structure and declares it canonical.
 pred declare-instances i:term, i:list class.
 declare-instances T [class Class Struct ML|Rest] :-
   std.map ML (mixin-for T) Args, % we can build it
@@ -541,6 +541,37 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command registers a mixin inside Elpi's DB, its dependencies etc *)
+
+(* TODO: rename current declare_mixin to mixin_requires with the same signature as factory_requires *)
+(* FEATURE REQUEST:  merge declare_mixin with declare_context: open a module, a section...
+
+  Syntax suggestion:
+
+  declare_mixin (p1 : P1) .. (pm : Pm) A of Foo.axioms A pi & Bar.axioms A pj pk :
+    M.axioms := M.Axioms {
+
+    f1 : bla A;
+    f2 : bla A;
+
+  }.
+
+  Module M. Section M.
+  Variables p1 : P1 .. pm : Pm.
+  Variable A : Type.
+  declare_context A (Foo.axioms A pi) (Bar.axioms A pj pk).
+  Record axioms := {
+
+    f1 : bla A;
+    f2 : bla A;
+
+  }.
+
+  ... user...
+
+  End. End.
+  mixin_requires M.axioms Foo.axioms Bar.axioms.
+
+*)
 
 Elpi Command declare_mixin.
 Elpi Accumulate Db hierarchy.db.
@@ -710,8 +741,8 @@ pred declare-factory-from
   i:gref, i:term, i:gref, i:gref, i:list prop, o:list prop.
 declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- FromI => std.do! [
   factory-requires Src ML,
-  (@pi-decl `T` {{Type}} t\ sigma MLSrc\
-    under-mixins t ML (x\ (factory-comp t ML Src F Mid Tgt x)) (GoFt t)
+  (@pi-decl `T` {{Type}} t\
+    under-mixins t ML (factory-comp t ML Src F Mid Tgt) (GoFt t)
   ),
   GoF = fun `T` {{Type}} GoFt,
   coq.typecheck GoF GoFTy_,
