@@ -626,11 +626,11 @@ Elpi Typecheck.
   Effect:
 
     Variable m0 : m0.
-    Definition s0 := S0.Pack T (S0.Class T m0).
+    Definition s0 := S0.Pack T (S0.Axioms T m0).
     Canonical s0.
     ..
     Variable mn : mn dn.
-    Definition sm : SM.Pack T (SM.Class T m0 .. mn).
+    Definition sm : SM.Pack T (SM.Axioms T m0 .. mn).
     Canonical sm.
 
   where:
@@ -806,8 +806,8 @@ Elpi Typecheck.
 
   Effect:
     Module S.
-      Record class_of T := Class { m1_mixin : m1 T, mn_mixin : mn T dn }.
-      Record type := Pack { sort : Type; class : class_of sort }.
+      Record axioms T := Axioms { m1_mixin : m1 T, mn_mixin : mn T dn }.
+      Record type := Pack { sort : Type; class : axioms sort }.
       Module Exports.
         Coercion sort : type >-> Sortclass.
         Definition oij {x} : type := oj x (mi_mixin x (class x)) (di (class x))
@@ -994,13 +994,13 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
-% Builds the class_of record and the factories from this class to each mixin
+% Builds the axioms record and the factories from this class to each mixin
 pred declare-class i:list @mixinname, o:@factoryname, o:list prop.
 declare-class ML (indt ClassName) Factories :- std.do! [
   (pi T\ synthesize-fields ML T (RDecl T)),
   ClassDeclaration =
     (parameter `T` {{ Type }} T\
-      record "class_of" {{ Type }} "Class" (RDecl T)),
+      record "axioms" {{ Type }} "Axioms" (RDecl T)),
   coq.typecheck-indt-decl ClassDeclaration,
   coq.env.add-indt ClassDeclaration ClassName,
   coq.CS.canonical-projections ClassName Projs,
@@ -1129,7 +1129,7 @@ Proof. by case: A => ? [[]]. Qed.
 
 Module RING_of_ASG. Section S.
 Variable A : Type.
-Elpi declare_context A ASG_of_TYPE.axioms.
+Elpi declare_context A ASG.axioms.
 (*
   Check (eq_refl _ : TYPE.sort _ = A).
   Check (eq_refl _ : ASG.sort _ = A).
@@ -1150,7 +1150,7 @@ End S. End RING_of_ASG.
 About RING_of_ASG.opp.
 
 Elpi declare_mixin RING_of_ASG.axioms.
-Elpi declare_structure "RING" ASG.class_of RING_of_ASG.axioms.
+Elpi declare_structure "RING" ASG.axioms RING_of_ASG.axioms.
 
 Print Module RING.
 Import RING.Exports.
@@ -1213,7 +1213,7 @@ Proof. by case: A => ? [[]]. Qed.
 
 Module AG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_of_TYPE.axioms.
+ Elpi declare_context A ASG.axioms.
  Record axioms := Axioms {
   opp : A -> A;
   _ : left_inverse zero opp add;
@@ -1222,7 +1222,7 @@ End S. End AG_of_ASG.
 
 Elpi declare_mixin AG_of_ASG.axioms.
 
-Elpi declare_structure "AG" ASG_of_TYPE.axioms AG_of_ASG.axioms.
+Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
 Import AG.Exports.
 
 Print Module AG.Exports.
@@ -1234,7 +1234,7 @@ Proof. by case: A => ? [? []]. Qed.
 
 Module RING_of_AG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_of_TYPE.axioms.
+ Elpi declare_context A ASG.axioms.
 
  Record axioms := Axioms {
   one : A;
@@ -1250,7 +1250,7 @@ End S. End RING_of_AG.
 
 Elpi declare_mixin RING_of_AG.axioms.
 
-Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms RING_of_AG.axioms.
+Elpi declare_structure "RING" AG.axioms RING_of_AG.axioms.
 Import RING.Exports.
 
 Print Module RING.Exports.
@@ -1274,7 +1274,7 @@ Proof. by case: A => ? [? []]. Qed.
 Module RING_of_ASG. Section S.
 Variable A : Type.
 
-Elpi declare_context A ASG_of_TYPE.axioms.
+Elpi declare_context A ASG.axioms.
 
 Record axioms := Axioms {
   opp : A -> A;
@@ -1302,7 +1302,7 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
 
 End Factories. End S. End RING_of_ASG.
 
-Elpi factory_requires RING_of_ASG.axioms ASG_of_TYPE.axioms.
+Elpi factory_requires RING_of_ASG.axioms ASG.axioms.
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
 Elpi declare_factory RING_of_ASG.to_RING_of_AG.
 
@@ -1357,7 +1357,7 @@ End S. End AG_of_ASG.
 
 Elpi declare_mixin AG_of_ASG.axioms.
 
-Elpi declare_structure "AG" ASG_of_TYPE.axioms AG_of_ASG.axioms.
+Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
 Import AG.Exports.
 
 Print Module AG.Exports.
@@ -1369,7 +1369,7 @@ Proof. by case: A => ? [? []]. Qed.
 
 Module SRIG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_of_TYPE.axioms.
+ Elpi declare_context A ASG.axioms.
  Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
@@ -1385,10 +1385,10 @@ End S. End SRIG_of_ASG.
 
 Elpi declare_mixin SRIG_of_ASG.axioms.
 
-Elpi declare_structure "SRIG" ASG_of_TYPE.axioms SRIG_of_ASG.axioms.
+Elpi declare_structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
 Import SRIG.Exports.
 
-Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms SRIG_of_ASG.axioms.
+Elpi declare_structure "RING" AG.axioms SRIG_of_ASG.axioms.
 Import RING.Exports.
 
 Check opp zero. (* ASG.sort _ = AG.sort _ *)
@@ -1415,7 +1415,7 @@ Module RING_of_AG. Section S.
 
  Fail Goal AG_of_ASG_axioms A. (* Failure with error message *)
 
- Elpi declare_context A ASG_of_TYPE.axioms AG_of_ASG.axioms.
+ Elpi declare_context A AG.axioms.
  Print AG_of_ASG_axioms.
  Goal AG_of_ASG_axioms A. Abort. (* Success of mk-phant-mixin *)
 
@@ -1455,7 +1455,7 @@ End Factories. End S. End RING_of_AG.
 
 Check RING_of_AG.to_SRIG_of_ASG.
 
-Elpi factory_requires RING_of_AG.axioms ASG_of_TYPE.axioms AG_of_ASG.axioms.
+Elpi factory_requires RING_of_AG.axioms AG.axioms.
 Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
@@ -1463,7 +1463,7 @@ Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 Module RING_of_ASG. Section S.
 Variable A : Type.
 
-Elpi declare_context A ASG_of_TYPE.axioms.
+Elpi declare_context A ASG.axioms.
 
 Record axioms := Axioms {
   opp : A -> A;
@@ -1492,7 +1492,7 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
 
 End Factories. End S. End RING_of_ASG.
 
-Elpi factory_requires RING_of_ASG.axioms ASG_of_TYPE.axioms.
+Elpi factory_requires RING_of_ASG.axioms ASG.axioms.
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
 Elpi declare_factory RING_of_ASG.to_RING_of_AG.
 
@@ -1536,7 +1536,7 @@ Proof. by case: A => ? [[]]. Qed.
 
 Module ASG_of_SG. Section S.
  Variable A : Type.
- Elpi declare_context A SG_of_TYPE.axioms.
+ Elpi declare_context A SG.axioms.
  (* Check (eq_refl _ : TYPE.sort _ = A). *)
  Record axioms := Axioms {
   _ : commutative (add : A -> A -> A);
@@ -1545,7 +1545,7 @@ End S. End ASG_of_SG.
 
 Elpi declare_mixin ASG_of_SG.axioms.
 
-Elpi declare_structure "ASG" SG.class_of ASG_of_SG.axioms.
+Elpi declare_structure "ASG" SG.axioms ASG_of_SG.axioms.
 Import ASG.Exports.
 
 Lemma addrC {A : ASG.type} : commutative (@add A).
@@ -1586,7 +1586,7 @@ Elpi declare_factory ASG_of_TYPE.to_ASG_of_SG.
 
 Module AG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_of_TYPE.axioms.
+ Elpi declare_context A ASG.axioms.
  Record axioms := Axioms {
   opp : A -> A;
   _ : left_inverse zero opp add;
@@ -1595,7 +1595,7 @@ End S. End AG_of_ASG.
 
 Elpi declare_mixin AG_of_ASG.axioms.
 
-Elpi declare_structure "AG" ASG_of_TYPE.axioms AG_of_ASG.axioms.
+Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
 Import AG.Exports.
 
 Print Module AG.Exports.
@@ -1607,7 +1607,7 @@ Proof. by case: A => ? [? []]. Qed.
 
 Module SRIG_of_ASG. Section S.
  Variable A : Type.
- Elpi declare_context A ASG_of_TYPE.axioms.
+ Elpi declare_context A ASG.axioms.
  Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
@@ -1623,10 +1623,10 @@ End S. End SRIG_of_ASG.
 
 Elpi declare_mixin SRIG_of_ASG.axioms.
 
-Elpi declare_structure "SRIG" ASG_of_TYPE.axioms SRIG_of_ASG.axioms.
+Elpi declare_structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
 Import SRIG.Exports.
 
-Elpi declare_structure "RING" ASG_of_TYPE.axioms AG_of_ASG.axioms SRIG_of_ASG.axioms.
+Elpi declare_structure "RING" AG.axioms SRIG_of_ASG.axioms.
 Import RING.Exports.
 
 Check opp zero. (* ASG.sort _ = AG.sort _ *)
@@ -1653,7 +1653,7 @@ Module RING_of_AG. Section S.
 
  Fail Goal AG_of_ASG_axioms A. (* Failure with error message *)
 
- Elpi declare_context A ASG_of_TYPE.axioms AG_of_ASG.axioms.
+ Elpi declare_context A ASG.axioms AG_of_ASG.axioms.
 
  Goal AG_of_ASG_axioms A. Abort. (* Success of mk-phant-mixin *)
 
@@ -1692,7 +1692,7 @@ Definition to_SRIG_of_ASG : SRIG_of_ASG_axioms A :=
 End Factories. End S. End RING_of_AG.
 
 Check RING_of_AG.to_SRIG_of_ASG.
-Elpi factory_requires RING_of_AG.axioms ASG_of_TYPE.axioms AG_of_ASG.axioms.
+Elpi factory_requires RING_of_AG.axioms AG.axioms.
 Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
@@ -1700,7 +1700,7 @@ Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
 Module RING_of_ASG. Section S.
 Variable A : Type.
 
-Elpi declare_context A ASG_of_TYPE.axioms.
+Elpi declare_context A ASG.axioms.
 
 Record axioms := Axioms {
   opp : A -> A;
@@ -1729,7 +1729,7 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
 
 End Factories. End S. End RING_of_ASG.
 
-Elpi factory_requires RING_of_ASG.axioms ASG_of_TYPE.axioms.
+Elpi factory_requires RING_of_ASG.axioms ASG.axioms.
 Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
 Elpi declare_factory RING_of_ASG.to_RING_of_AG.
 
