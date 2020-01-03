@@ -101,14 +101,14 @@ factory-provides Factory ML :- std.do! [
 ].
 
 % TODO: generalize/rename when we support parameters
-pred locate-string-argument i:argument, o:gref.
-locate-string-argument (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
-locate-string-argument X _ :- coq.error "not a string:" X.
+pred argument->gref i:argument, o:gref.
+argument->gref (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+argument->gref X _ :- coq.error "not a string:" X.
 
-pred locate-term-argument i:argument, o:term.
-locate-term-argument (str S) (global GR) :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
-locate-term-argument (trm T) T :- !, std.assert! (coq.typecheck T _) "not well typed term".
-locate-term-argument X _ :- coq.error "not a term:" X.
+pred argument->term i:argument, o:term.
+argument->term (str S) (global GR) :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+argument->term (trm T) T :- !, std.assert! (coq.typecheck T _) "not well typed term".
+argument->term X _ :- coq.error "not a term:" X.
 
 % TODO: document
 pred mk-mixin-provided-by i:@factoryname, i:list @mixinname, o:list prop.
@@ -588,11 +588,8 @@ Elpi Command mixin_requires.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-main [str S|FS] :- !, std.do! [
-  coq.locate S GR,
-  std.map FS locate-string-argument GRFS,
-  main-mixin-requires GR GRFS _
-].
+main [S|FS] :- std.map [S|FS] argument->gref [GR|GRFS], !,
+  main-mixin-requires GR GRFS _.
 main _ :- coq.error "Usage: mixin_requires <mixin> <Factories>..".
 
 }}.
@@ -632,10 +629,10 @@ Elpi Command declare_context.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-main [str S|FS] :- !,
-  coq.locate S GR,
-  std.map FS locate-string-argument GRFS,
-  main-declare-context (global GR) GRFS _.
+main [S|FS] :-
+  argument->term S T,
+  std.map FS argument->gref GRFS, !,
+  main-declare-context T GRFS _.
 main _ :- coq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
 }}.
@@ -670,6 +667,14 @@ Elpi Typecheck.
   mixin_requires M.axioms Foo.axioms Bar.axioms.
 
 *)
+(*
+Elpi Command declare_mixin_begin.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+main [str T|FS] :- std.map FS argument->gref _GRFS, !
+main _ :- coq.error "Usage: declare_mixin_begin <Type> <Factories>..".
+}}.
+Elpi Typecheck. *)
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -682,9 +687,7 @@ Elpi Typecheck.
 Elpi Command factory_requires.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
-main [str S|FS] :- !, std.do! [
-  coq.locate S GR,
-  std.map FS locate-string-argument GRFS,
+main [S|FS] :- std.map [S|FS] argument->gref [GR|GRFS], !, std.do! [
   factories-provide-mixins GRFS ML _,
   % TODO: ensure these acc are located in an export module
   acc current (clause _ _ (factory-requires GR ML)),
@@ -749,15 +752,12 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- FromI => std.do! [
   acc current (clause _ _ NewFrom)
 ].
 
-main [str S] :- !, std.do! [
-  coq.locate S F,
-  coq.env.typeof-gr F Ty,
+main [S] :- argument->term S F, !, std.do! [
+  coq.typecheck F Ty,
   gather-last-product Ty none Src MidAlias,
   factory-alias MidAlias Mid,
-  std.do! [
-    factory-provides Mid Tgts,
-    std.fold Tgts [] (declare-factory-from Src (global F) Mid) _PO
-  ]
+  factory-provides Mid Tgts,
+  std.fold Tgts [] (declare-factory-from Src F Mid) _PO
 ].
 main _ :- coq.error "Usage: declare_factory_fun <FactoryFunction>".
 
@@ -778,9 +778,7 @@ Elpi Accumulate Db hierarchy.db.
 
 Elpi Accumulate lp:{{
 
-main [TS|Args] :- !, std.do! [
-  locate-term-argument TS T,
-  std.map Args locate-term-argument FIL,
+main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !, std.do! [
   std.map FIL (mixin-srcs T) MSLL,
   std.flatten MSLL MSL,
   MSL => declare-instances T {findall-classes},
@@ -1015,14 +1013,12 @@ pred declare-sort-coercion i:term, i:term.
 declare-sort-coercion (global StructureName) (global Proj) :-
   coq.coercion.declare (coercion Proj 0 StructureName sortclass) tt.
 
-main [str Module|FS] :- !, std.do! [
+main [str Module|FS] :- std.map FS argument->gref GRFS, !, std.do! [
   % compute all the mixins to be part of the structure
-  std.map FS locate-string-argument GRFS,
   factories-provide-mixins GRFS  ML _,
 
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
-
   coq.env.begin-module Module none,
 
   declare-class ML  ClassName Factories,
@@ -1059,8 +1055,8 @@ main [str Module|FS] :- !, std.do! [
   coq.env.end-module Exports,
 
   coq.env.end-module _,
-  coq.env.export-module Exports,
 
+  coq.env.export-module Exports,
 ].
 main _ :- coq.error "Usage: declare_structure <ModuleName> [<Factory>..]".
 
