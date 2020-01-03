@@ -419,8 +419,10 @@ acc-factory-aliases GR Aliases :-
   mk-phant-mixins (global GR) PhGR,
   PhantAbbrevName is {gref->modname GR} ^ "_axioms",
   mk-phant-abbrev PhantAbbrevName PhGR PhC,
+  % TODO: ensure these acc are located in an export module
   acc current (clause _ _ (phant-abbrev GR PhantAbbrevName)),
   Aliases = [factory-alias GR GR, factory-alias (const PhC) GR],
+  % TODO: ensure these acc are located in an export module
   std.forall Aliases a\ acc current (clause _ _ a).
 
 % [mk-phant-unify X1 X2 PF PUF] states that PUF is a phant-term that
@@ -534,6 +536,7 @@ pred main-mixin-requires i:gref, i:list @factoryname, o:list prop.
 main-mixin-requires GR GRFS PO :- !, std.do! [
   factories-provide-mixins GRFS ML _,
   FactoryRequires = factory-requires GR ML,
+  % TODO: ensure these acc are located in an export module
   acc current (clause _ _ FactoryRequires),
   % make and register phant-abbrev
   acc-factory-aliases GR Aliases,
@@ -544,6 +547,7 @@ main-mixin-requires GR GRFS PO :- !, std.do! [
         mgref->term t GR MTy,
         body = fun `x` MTy x\x) (IDBody t)],
   From = from GR GR (fun T TTy IDBody),
+  % TODO: ensure these acc are located in an export module
   acc current (clause _ _ From),
   std.append [FactoryRequires] {std.append Aliases [From]} PO
 ].
@@ -682,6 +686,7 @@ main [str S|FS] :- !, std.do! [
   coq.locate S GR,
   std.map FS locate-string-argument GRFS,
   factories-provide-mixins GRFS ML _,
+  % TODO: ensure these acc are located in an export module
   acc current (clause _ _ (factory-requires GR ML)),
   acc-factory-aliases GR _,
 ].
@@ -740,6 +745,7 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- FromI => std.do! [
   Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
   coq.env.add-const Name GoF _ ff ff GoFC,
   NewFrom = from Src Tgt (global (const GoFC)),
+  % TODO: ensure these acc are located in an export module
   acc current (clause _ _ NewFrom)
 ].
 
@@ -865,7 +871,7 @@ export-operations Structure ProjSort ProjClass ML MLToExport :-
 pred declare-coercion i:term, i:term, i:class, i:class.
 declare-coercion SortProjection ClassProjection
     (class FC StructureF _ as FCDef) (class TC StructureT TML as TCDef) :- std.do! [
-
+  % TODO: ensure these acc are located in an export module
   acc current (clause _ _ (sub-class FCDef TCDef)),
 
   term->modname StructureF ModNameF,
@@ -1038,6 +1044,7 @@ main [str Module|FS] :- !, std.do! [
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   % Register in Elpi's DB the new structure
+  % NOT TODO: All these acc are correctly locaed in an Export Module
   std.forall MLToExport (m\
      acc current (clause _ _ (mixin-first-class m ClassName))),
 
@@ -1045,7 +1052,7 @@ main [str Module|FS] :- !, std.do! [
   acc current (clause _ _ ClassRequires),
   acc current (clause _ _ ClassAlias),
 
-  std.forall NewJoins (j\acc current (clause _ _ j)),
+  std.forall NewJoins (j\ acc current (clause _ _ j)),
 
   acc current (clause _ _ (class-def CurrentClass)),
 
