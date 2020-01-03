@@ -526,55 +526,9 @@ declare-instances T [class Class Struct ML|Rest] :-
   declare-instances T Rest.
 declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
-}}.
 
-Elpi Command debug.
-Elpi Accumulate Db hierarchy.db.
-Elpi Typecheck.
-
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
-(** This command registers a mixin inside Elpi's DB, its dependencies etc *)
-
-(* FEATURE REQUEST:  merge mixin_requires with declare_context: open a module, a section...
-
-  Syntax suggestion:
-
-  declare_mixin (p1 : P1) .. (pm : Pm) A of Foo.axioms A pi & Bar.axioms A pj pk :
-    M.axioms := M.Axioms {
-
-    f1 : bla A;
-    f2 : bla A;
-
-  }.
-
-  Module M. Section M.
-  Variables p1 : P1 .. pm : Pm.
-  Variable A : Type.
-  declare_context A (Foo.axioms A pi) (Bar.axioms A pj pk).
-  Record axioms := {
-
-    f1 : bla A;
-    f2 : bla A;
-
-  }.
-
-  ... user...
-
-  End. End.
-  mixin_requires M.axioms Foo.axioms Bar.axioms.
-
-*)
-
-Elpi Command mixin_requires.
-Elpi Accumulate Db hierarchy.db.
-Elpi Accumulate lp:{{
-
-main [str S|FS] :- !, std.do! [
-  coq.locate S GR,
-  std.map FS locate-string-argument GRFS,
+pred main-mixin-requires i:gref, i:list @factoryname.
+main-mixin-requires GR GRFS :- !, std.do! [
   factories-provide-mixins GRFS ML _,
   acc execution-site (clause _ _ (factory-requires GR ML)),
   % make and register phant-abbrev
@@ -590,7 +544,49 @@ main [str S|FS] :- !, std.do! [
   coq.typecheck ID _TyID,
   FName is {gref->modname GR} ^ "_id_factory",
   coq.env.add-const FName ID _TyID ff ff _CID,
-  acc execution-site (clause _ _ (from GR GR ID)),
+  acc execution-site (clause _ _ (from GR GR ID))
+].
+
+% Given a type T, a fresh number N, and a mixin M it postulates
+% a variable "mN" inhabiting M applied to T and
+% all its dependencies, previously postulated and associated
+% to the corresponding mixin using mixin-for
+pred postulate-mixin i:term, i:@mixinname, i:list prop, o:list prop.
+postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
+  msubsts T {mixin->mterm M} Ty,
+  Name is "mixin_" ^ {gref->modname M},
+  coq.typecheck Ty _,
+  coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
+].
+
+pred main-declare-context i:term, i:list @factoryname.
+main-declare-context T GRFS :-  std.do! [
+    factories-provide-mixins GRFS ML _,
+    std.fold ML [] (postulate-mixin T) MSL,
+    MSL => declare-instances T {findall-classes},
+    std.forall MSL (ms\ acc execution-site (clause _ _ ms)),
+  ].
+
+}}.
+
+Elpi Command debug.
+Elpi Accumulate Db hierarchy.db.
+Elpi Typecheck.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This command registers a mixin inside Elpi's DB, its dependencies etc *)
+
+Elpi Command mixin_requires.
+Elpi Accumulate Db hierarchy.db.
+Elpi Accumulate lp:{{
+
+main [str S|FS] :- !, std.do! [
+  coq.locate S GR,
+  std.map FS locate-string-argument GRFS,
+  main-mixin-requires GR GRFS
 ].
 main _ :- coq.error "Usage: mixin_requires <mixin> <Factories>..".
 
@@ -631,33 +627,44 @@ Elpi Command declare_context.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
-% Given a type T, a fresh number N, and a mixin M it postulates
-% a variable "mN" inhabiting M applied to T and
-% all its dependencies, previously postulated and associated
-% to the corresponding mixin using mixin-for
-pred postulate-mixin i:term, i:@mixinname, i:list prop, o:list prop.
-postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
-  msubsts T {mixin->mterm M} Ty,
-  Name is "mixin_" ^ {gref->modname M},
-  coq.typecheck Ty _,
-  coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
-].
-
-main [str Variable|FS] :- !,
-  coq.locate Variable GR,
-  T = global GR,
+main [str S|FS] :- !,
+  coq.locate S GR,
   std.map FS locate-string-argument GRFS,
-
-  std.do! [
-    factories-provide-mixins GRFS ML _,
-    std.fold ML [] (postulate-mixin T) MSL,
-    MSL => declare-instances T {findall-classes},
-    std.forall MSL (ms\ acc execution-site (clause _ _ ms)),
-  ].
+  main-declare-context (global GR) GRFS.
 main _ :- coq.error "Usage: declare_context <TypeVariable> [<Factory>..]".
 
 }}.
 Elpi Typecheck.
+
+(* FEATURE REQUEST:
+  declare_mixin combines mixin_requires and declare_context
+  Future syntax suggestion:
+
+  declare_mixin (p1 : P1) .. (pm : Pm) A of Foo.axioms A pi & Bar.axioms A pj pk :
+    M.axioms := M.Axioms {
+
+    f1 : bla A;
+    f2 : bla A;
+
+  }.
+
+  Module M. Section M.
+  Variables p1 : P1 .. pm : Pm.
+  Variable A : Type.
+  declare_context A (Foo.axioms A pi) (Bar.axioms A pj pk).
+  Record axioms := {
+
+    f1 : bla A;
+    f2 : bla A;
+
+  }.
+
+  ... user...
+
+  End. End.
+  mixin_requires M.axioms Foo.axioms Bar.axioms.
+
+*)
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -686,13 +693,13 @@ Elpi Typecheck.
 
 TODO : docment
 
-% TODO: check that declare_factory can declare only function that
+% TODO: check that declare_factory_fun can declare only function that
 % - require elements from {factory_requires} and
 % - provide elements not from {factory_requires}
 
 *)
 
-Elpi Command declare_factory.
+Elpi Command declare_factory_fun.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
 
@@ -746,7 +753,7 @@ main [str S] :- !, std.do! [
     std.fold Tgts [] (declare-factory-from Src (global F) Mid) _PO
   ]
 ].
-main _ :- coq.error "Usage: declare_factory <FactoryFunction>".
+main _ :- coq.error "Usage: declare_factory_fun <FactoryFunction>".
 
 }}.
 Elpi Typecheck.
@@ -1027,7 +1034,7 @@ main [str Module|FS] :- !, std.do! [
   ClassAlias => ClassRequires => Factories =>
     export-operations Structure SortProjection ClassProjection ML MLToExport,
 
-  ClassAlias => ClassRequires => Factories => 
+  ClassAlias => ClassRequires => Factories =>
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
 
   % Register in Elpi's DB the new structure
@@ -1042,9 +1049,10 @@ main [str Module|FS] :- !, std.do! [
 
   acc current (clause _ _ (class-def CurrentClass)),
 
-  coq.env.end-module _,
+  coq.env.end-module Exports,
 
   coq.env.end-module _,
+  coq.env.import-module Exports,
 
 ].
 main _ :- coq.error "Usage: declare_structure <ModuleName> [<Factory>..]".
@@ -1063,7 +1071,6 @@ Elpi Typecheck.
 Module Example1.
 
 Elpi declare_structure "TYPE".
-Import TYPE.Exports.
 
 Module TestTYPE.
 Print Module TYPE.
@@ -1088,7 +1095,6 @@ Print Module ASG_of_TYPE.
 Elpi mixin_requires ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
-Import ASG.Exports.
 
 Print Module ASG.Exports.
 
@@ -1129,7 +1135,6 @@ Elpi mixin_requires RING_of_ASG.axioms ASG.axioms.
 Elpi declare_structure "RING" ASG.axioms RING_of_ASG.axioms.
 
 Print Module RING.
-Import RING.Exports.
 
 Check opp zero.
 Check add zero one.
@@ -1156,7 +1161,6 @@ End Example1.
 Module Example2.
 
 Elpi declare_structure "TYPE".
-Import TYPE.Exports.
 
 Module ASG_of_TYPE. Section S.
  Variable A : Type.
@@ -1174,7 +1178,6 @@ End S. End ASG_of_TYPE.
 Elpi mixin_requires ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
-Import ASG.Exports.
 
 Print Module ASG.Exports.
 
@@ -1199,7 +1202,6 @@ End S. End AG_of_ASG.
 Elpi mixin_requires AG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
-Import AG.Exports.
 
 Print Module AG.Exports.
 
@@ -1227,7 +1229,6 @@ End S. End RING_of_AG.
 Elpi mixin_requires RING_of_AG.axioms AG.axioms.
 
 Elpi declare_structure "RING" AG.axioms RING_of_AG.axioms.
-Import RING.Exports.
 
 Print Module RING.Exports.
 
@@ -1279,8 +1280,8 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
 End Factories. End S. End RING_of_ASG.
 
 Elpi factory_requires RING_of_ASG.axioms ASG.axioms.
-Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
-Elpi declare_factory RING_of_ASG.to_RING_of_AG.
+Elpi declare_factory_fun RING_of_ASG.to_AG_of_ASG.
+Elpi declare_factory_fun RING_of_ASG.to_RING_of_AG.
 
 End Example2.
 
@@ -1291,7 +1292,6 @@ End Example2.
 Module Example3.
 
 Elpi declare_structure "TYPE".
-Import TYPE.Exports.
 
 Module ASG_of_TYPE. Section S.
  Variable A : Type.
@@ -1309,7 +1309,6 @@ End S. End ASG_of_TYPE.
 Elpi mixin_requires ASG_of_TYPE.axioms.
 
 Elpi declare_structure "ASG" ASG_of_TYPE.axioms.
-Import ASG.Exports.
 
 Print Module ASG.Exports.
 
@@ -1334,7 +1333,6 @@ End S. End AG_of_ASG.
 Elpi mixin_requires AG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
-Import AG.Exports.
 
 Print Module AG.Exports.
 
@@ -1362,10 +1360,8 @@ End S. End SRIG_of_ASG.
 Elpi mixin_requires SRIG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
-Import SRIG.Exports.
 
 Elpi declare_structure "RING" AG.axioms SRIG_of_ASG.axioms.
-Import RING.Exports.
 
 Check opp zero. (* ASG.sort _ = AG.sort _ *)
 Check add zero one. (* ASG.sort _ = SRIG.sort _ *)
@@ -1432,7 +1428,7 @@ End Factories. End S. End RING_of_AG.
 Check RING_of_AG.to_SRIG_of_ASG.
 
 Elpi factory_requires RING_of_AG.axioms AG.axioms.
-Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
+Elpi declare_factory_fun RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
    new AG class. *)
@@ -1469,8 +1465,8 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
 End Factories. End S. End RING_of_ASG.
 
 Elpi factory_requires RING_of_ASG.axioms ASG.axioms.
-Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
-Elpi declare_factory RING_of_ASG.to_RING_of_AG.
+Elpi declare_factory_fun RING_of_ASG.to_AG_of_ASG.
+Elpi declare_factory_fun RING_of_ASG.to_RING_of_AG.
 
 End Example3.
 
@@ -1482,7 +1478,6 @@ End Example3.
 Module Example4.
 
 Elpi declare_structure "TYPE".
-Import TYPE.Exports.
 
 Module SG_of_TYPE. Section S.
  Variable S : Type.
@@ -1499,7 +1494,6 @@ End S. End SG_of_TYPE.
 
 Elpi mixin_requires SG_of_TYPE.axioms.
 Elpi declare_structure "SG" SG_of_TYPE.axioms.
-Import SG.Exports.
 
 Lemma addrA {A : SG.type} : associative (@add A).
 Proof. by case: A => ? [[]]. Qed.
@@ -1522,7 +1516,6 @@ End S. End ASG_of_SG.
 Elpi mixin_requires ASG_of_SG.axioms SG.axioms.
 
 Elpi declare_structure "ASG" SG.axioms ASG_of_SG.axioms.
-Import ASG.Exports.
 
 Lemma addrC {A : ASG.type} : commutative (@add A).
 Proof. by case: A => ? [[? ? ? ? ?] []]. Qed.
@@ -1557,8 +1550,8 @@ Module ASG_of_TYPE. Section S.
 End S. End ASG_of_TYPE.
 
 Elpi factory_requires ASG_of_TYPE.axioms.
-Elpi declare_factory ASG_of_TYPE.to_SG_of_TYPE.
-Elpi declare_factory ASG_of_TYPE.to_ASG_of_SG.
+Elpi declare_factory_fun ASG_of_TYPE.to_SG_of_TYPE.
+Elpi declare_factory_fun ASG_of_TYPE.to_ASG_of_SG.
 
 Module AG_of_ASG. Section S.
  Variable A : Type.
@@ -1572,7 +1565,6 @@ End S. End AG_of_ASG.
 Elpi mixin_requires AG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "AG" ASG.axioms AG_of_ASG.axioms.
-Import AG.Exports.
 
 Print Module AG.Exports.
 
@@ -1600,10 +1592,8 @@ End S. End SRIG_of_ASG.
 Elpi mixin_requires SRIG_of_ASG.axioms ASG.axioms.
 
 Elpi declare_structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
-Import SRIG.Exports.
 
 Elpi declare_structure "RING" AG.axioms SRIG_of_ASG.axioms.
-Import RING.Exports.
 
 Check opp zero. (* ASG.sort _ = AG.sort _ *)
 Check add zero one. (* ASG.sort _ = SRIG.sort _ *)
@@ -1669,7 +1659,7 @@ End Factories. End S. End RING_of_AG.
 
 Check RING_of_AG.to_SRIG_of_ASG.
 Elpi factory_requires RING_of_AG.axioms AG.axioms.
-Elpi declare_factory RING_of_AG.to_SRIG_of_ASG.
+Elpi declare_factory_fun RING_of_AG.to_SRIG_of_ASG.
 
 (* To not break clients / provide shortcuts for users not interested in the
    new AG class. *)
@@ -1706,7 +1696,7 @@ Definition to_RING_of_AG : RING_of_AG_axioms A :=
 End Factories. End S. End RING_of_ASG.
 
 Elpi factory_requires RING_of_ASG.axioms ASG.axioms.
-Elpi declare_factory RING_of_ASG.to_AG_of_ASG.
-Elpi declare_factory RING_of_ASG.to_RING_of_AG.
+Elpi declare_factory_fun RING_of_ASG.to_AG_of_ASG.
+Elpi declare_factory_fun RING_of_ASG.to_RING_of_AG.
 
 End Example4.
