@@ -1544,24 +1544,13 @@ Elpi hb.declare BiNearRing_of_AddMonoid A AddMonoid.axioms.
 Elpi hb.end "mixin".
 Elpi hb.structure "BiNearRing" AddMonoid.axioms BiNearRing_of_AddMonoid.axioms.
 
+(* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
+(* we alias it for backward compatilibity and uniformity purposes *)
 Elpi hb.declare SemiRing_of_AddComoid A AddComoid.axioms.
- Record axioms := Axioms {
-  one : A;
-  mul : A -> A -> A;
-  mulrA : associative mul;
-  mul1r : left_id one mul;
-  mulr1 : right_id one mul;
-  mulrDl : left_distributive mul add;
-  mulrDr : right_distributive mul add;
-  mul0r : left_zero zero mul;
-  mulr0 : right_zero zero mul;
-  }.
-
+  Definition axioms := BiNearRing_of_AddMonoid.axioms_ A.
+  Definition Axioms := @BiNearRing_of_AddMonoid.Axioms A.
   Variables (a : axioms).
-
-  Definition to_BiNearRing_of_AddMonoid : BiNearRing_of_AddMonoid.axioms_ A :=
-  let: Axioms one mul p1 p2 p3 p4 p5 p6 p7 := a in
-  BiNearRing_of_AddMonoid.Axioms _ _ one mul p1 p2 p3 p4 p5 p6 p7.
+  Definition to_BiNearRing_of_AddMonoid : BiNearRing_of_AddMonoid.axioms_ A := a.
 Elpi hb.end "factory" to_BiNearRing_of_AddMonoid.
 
 (* End changes *)
