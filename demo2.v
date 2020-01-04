@@ -55,6 +55,9 @@ macro @structure :- term.
 
 %%%%%% DB of mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% [is-mixin GR] means that GR is a mixin
+pred is-mixin o:gref.
+
 % [factory-requires M ML] means that factory M depends on
 % (i.e. has parameters among) mixins ML.
 pred factory-requires o:@factoryname, o:list @mixinname.
@@ -324,7 +327,7 @@ ty-deps (prod N S R) ML' :- !,
   @pi-decl N S x\
     ty-deps (R x) ML,
     safe-dest-app S HD _,
-    if (HD = global GR, factory-requires GR _, factory-alias GR F)
+    if (HD = global GR, factory-alias GR F, is-mixin GR)
       (ML' = [F|ML]) (ML' = ML).
 ty-deps Ty ML :- whd1 Ty Ty1, !, ty-deps Ty1 ML.
 ty-deps _Ty [].
@@ -547,9 +550,11 @@ main-mixin-requires GR GRFS PO :- !, std.do! [
         mgref->term t GR MTy,
         body = fun `x` MTy x\x) (IDBody t)],
   From = from GR GR (fun T TTy IDBody),
+  IsMixin = is-mixin GR,
   % TODO: ensure these acc are located in an export module
   acc current (clause _ _ From),
-  std.append [FactoryRequires] {std.append Aliases [From]} PO
+  acc current (clause _ _ IsMixin),
+  std.append [FactoryRequires, From, IsMixin] Aliases PO
 ].
 
 % Given a type T, a fresh number N, and a mixin M it postulates
