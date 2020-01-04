@@ -593,12 +593,9 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI]
     under-mixins t ML (factory-comp t Src (mtrm ML F) Mid Tgt) (GoFt t)
   ),
   GoF = fun TName TTy GoFt,
-  % TODO BUGFIX: Why is this making coq-elpi make Coq raise an anomaly?
-  % the bug suddenly appeared while changing sections during an elpi program.
-  %
-  % Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
-  % coq.env.add-const Name GoF _GoFTy ff ff GoFC,
-  NewFrom = from Src Tgt GoF, % (global (const GoFC)),
+  Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
+  coq.env.add-const Name GoF _GoFTy ff ff GoFC,
+  NewFrom = from Src Tgt (global (const GoFC)),
 ].
 
 pred main-declare-factory-fun i:term, i:list prop, o:list prop.
