@@ -1098,7 +1098,7 @@ Check add zero zero.
 Check add0r.
 
 Elpi hb.declare RING_of_ASG A ASG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -1108,7 +1108,7 @@ Record axioms := Axioms {
   mulr1 : right_id one mul;
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
-  }.
+ }.
 Elpi hb.end "mixin" .
 Elpi hb.structure "RING" ASG.axioms RING_of_ASG.axioms.
 
@@ -1143,6 +1143,7 @@ Elpi hb.end "mixin" .
 Elpi hb.structure "ASG" ASG_of_TYPE.axioms.
 
 Print Module ASG.Exports.
+
 Elpi hb.declare AG_of_ASG A ASG.axioms.
  Record axioms := Axioms {
   opp : A -> A;
@@ -1175,7 +1176,7 @@ Check mulrA.
 (* To not break clients / provide shortcuts for users not interested in the
    new AG class. *)
 Elpi hb.declare RING_of_ASG A ASG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -1187,14 +1188,14 @@ Record axioms := Axioms {
   _ : right_distributive mul add;
   }.
 
-Variable a : axioms.
+ Variable a : axioms.
 
-Definition to_AG_of_ASG : AG_of_ASG.axioms_ A :=
+ Definition to_AG_of_ASG : AG_of_ASG.axioms_ A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
-Elpi hb.canonical A to_AG_of_ASG.
+ Elpi hb.canonical A to_AG_of_ASG.
 
-Definition to_RING_of_AG : RING_of_AG.axioms_ A :=
+ Definition to_RING_of_AG : RING_of_AG.axioms_ A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
   @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
@@ -1251,7 +1252,7 @@ Check opp one. (* AG.sort _ = SRIG.sort _ *)
 Check mul0r.
 
 Elpi hb.declare RING_of_AG A AG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -1259,34 +1260,34 @@ Record axioms := Axioms {
   mul1r : right_id one mul;
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
-}.
+ }.
 
-Variable (a : axioms).
+ Variable (a : axioms).
 
-Fact mul0r : left_zero zero (mul a).
-Proof.
-move=> x; rewrite -[LHS]add0r addrC.
-rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
-by rewrite -mulrDl add0r addrC addNr.
-Qed.
+ Fact mul0r : left_zero zero (mul a).
+ Proof.
+ move=> x; rewrite -[LHS]add0r addrC.
+ rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
+ by rewrite -mulrDl add0r addrC addNr.
+ Qed.
 
-Fact mulr0 : right_zero zero (mul a).
-Proof.
-move=> x; rewrite -[LHS]add0r addrC.
-rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
-by rewrite -mulrDr add0r addrC addNr.
-Qed.
+ Fact mulr0 : right_zero zero (mul a).
+ Proof.
+ move=> x; rewrite -[LHS]add0r addrC.
+ rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
+ by rewrite -mulrDr add0r addrC addNr.
+ Qed.
 
-Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms_ A :=
-  @SRIG_of_ASG.Axioms A _ (one a) (mul a) (mulrA a) (mulr1 a) (mul1r a)
-     (mulrDl a) (mulrDr a) (mul0r) (mulr0).
+ Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms_ A :=
+   @SRIG_of_ASG.Axioms A _ (one a) (mul a) (mulrA a) (mulr1 a) (mul1r a)
+      (mulrDl a) (mulrDr a) (mul0r) (mulr0).
 
 Elpi hb.end "factory" to_SRIG_of_ASG.
 
 Check RING_of_AG.to_SRIG_of_ASG.
 
 Elpi hb.declare RING_of_ASG A ASG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -1298,14 +1299,14 @@ Record axioms := Axioms {
   _ : right_distributive mul add;
   }.
 
-Variable a : axioms.
+ Variable a : axioms.
 
-Definition to_AG_of_ASG : AG_of_ASG.axioms_ A :=
+ Definition to_AG_of_ASG : AG_of_ASG.axioms_ A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
-Elpi hb.canonical A to_AG_of_ASG.
+ Elpi hb.canonical A to_AG_of_ASG.
 
-Definition to_RING_of_AG : RING_of_AG.axioms_ A :=
+ Definition to_RING_of_AG : RING_of_AG.axioms_ A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
   @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
@@ -1322,7 +1323,6 @@ Module Example4.
 Elpi hb.structure "TYPE".
 
 Elpi hb.declare SG_of_TYPE S.
- (* Check (eq_refl _ : TYPE.sort _ = S). *)
  Record axioms := Axioms {
   zero : S;
   add : S -> S -> S;
@@ -1334,7 +1334,6 @@ Elpi hb.end "mixin" .
 Elpi hb.structure "SG" SG_of_TYPE.axioms.
 
 Elpi hb.declare ASG_of_SG A SG.axioms.
- (* Check (eq_refl _ : TYPE.sort _ = A). *)
  Record axioms := Axioms {
   addrC : commutative (add : A -> A -> A);
   }.
@@ -1342,39 +1341,38 @@ Elpi hb.end "mixin" .
 Elpi hb.structure "ASG" SG.axioms ASG_of_SG.axioms.
 
 Elpi hb.declare ASG_of_TYPE A.
-(* Check (eq_refl _ : TYPE.sort _ = A). *)
-Record axioms := Axioms {
+ Record axioms := Axioms {
   zero : A;
   add : A -> A -> A;
   addA : associative add;
   addC : commutative add;
   addr0 : left_id zero add;
-}.
+ }.
 
-Variable (a : axioms).
+ Variable (a : axioms).
 
-Fact add0r : right_id (zero a) (add a).
-Proof. by move=> x; rewrite addC addr0. Qed.
+ Fact add0r : right_id (zero a) (add a).
+ Proof. by move=> x; rewrite addC addr0. Qed.
 
-Definition to_SG_of_TYPE : SG_of_TYPE.axioms_ A :=
+ Definition to_SG_of_TYPE : SG_of_TYPE.axioms_ A :=
   SG_of_TYPE.Axioms _ (zero a) (add a) (addA a) (addr0 a) add0r.
-Elpi hb.canonical A to_SG_of_TYPE.
+ Elpi hb.canonical A to_SG_of_TYPE.
 
-Definition to_ASG_of_SG : ASG_of_SG.axioms_ A :=
+ Definition to_ASG_of_SG : ASG_of_SG.axioms_ A :=
   ASG_of_SG.Axioms _ _ (addC a : commutative SG.Exports.add).
 
 Elpi hb.end "factory" to_SG_of_TYPE to_ASG_of_SG.
 
 Elpi hb.declare AG_of_ASG A ASG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   opp : A -> A;
   addNr : left_inverse zero opp add;
-}.
+  }.
 Elpi hb.end "mixin" .
 Elpi hb.structure "AG" ASG.axioms AG_of_ASG.axioms.
 
 Elpi hb.declare SRIG_of_ASG A ASG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -1390,7 +1388,7 @@ Elpi hb.structure "SRIG" ASG.axioms SRIG_of_ASG.axioms.
 Elpi hb.structure "RING" AG.axioms SRIG_of_ASG.axioms.
 
 Elpi hb.declare RING_of_AG A AG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -1398,32 +1396,32 @@ Record axioms := Axioms {
   mul1r : right_id one mul;
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
-}.
+ }.
 
-Variable (a : axioms).
+ Variable (a : axioms).
 
-Fact mul0r : left_zero zero (mul a).
-Proof.
-move=> x; rewrite -[LHS]add0r addrC.
-rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
-by rewrite -mulrDl add0r addrC addNr.
-Qed.
+ Fact mul0r : left_zero zero (mul a).
+ Proof.
+ move=> x; rewrite -[LHS]add0r addrC.
+ rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
+ by rewrite -mulrDl add0r addrC addNr.
+ Qed.
 
-Fact mulr0 : right_zero zero (mul a).
-Proof.
-move=> x; rewrite -[LHS]add0r addrC.
-rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
-by rewrite -mulrDr add0r addrC addNr.
-Qed.
+ Fact mulr0 : right_zero zero (mul a).
+ Proof.
+ move=> x; rewrite -[LHS]add0r addrC.
+ rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
+ by rewrite -mulrDr add0r addrC addNr.
+ Qed.
 
-Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms_ A :=
-  @SRIG_of_ASG.Axioms A _ (one a) (mul a) (mulrA a) (mulr1 a) (mul1r a)
-     (mulrDl a) (mulrDr a) (mul0r) (mulr0).
+ Definition to_SRIG_of_ASG : SRIG_of_ASG.axioms_ A :=
+   @SRIG_of_ASG.Axioms A _ (one a) (mul a) (mulrA a) (mulr1 a) (mul1r a)
+      (mulrDl a) (mulrDr a) (mul0r) (mulr0).
 
 Elpi hb.end "factory" to_SRIG_of_ASG.
 
 Elpi hb.declare RING_of_ASG A ASG.axioms.
-Record axioms := Axioms {
+ Record axioms := Axioms {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -1435,14 +1433,14 @@ Record axioms := Axioms {
   _ : right_distributive mul add;
   }.
 
-Variable a : axioms.
+ Variable a : axioms.
 
-Definition to_AG_of_ASG : AG_of_ASG.axioms_ A :=
+ Definition to_AG_of_ASG : AG_of_ASG.axioms_ A :=
   let: Axioms opp one mul addNr _ _ _ _ _ := a in
   @AG_of_ASG.Axioms A _ opp addNr.
-Elpi hb.canonical A to_AG_of_ASG.
+ Elpi hb.canonical A to_AG_of_ASG.
 
-Definition to_RING_of_AG : RING_of_AG.axioms_ A :=
+ Definition to_RING_of_AG : RING_of_AG.axioms_ A :=
   let: Axioms _ _ _ _ mulrA mul1r mulr1 mulrDl mulrDr := a in
   @RING_of_AG.Axioms A _ _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
