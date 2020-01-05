@@ -1,0 +1,143 @@
+\mode<presentation>
+
+%
+% some figures.
+% *************
+
+% logoup
+% ------
+
+% there is 2 possibles sizes for logoup:
+%   1- the one from beamer
+%\pgfdeclareimage[width=4cm]{logoup}{figures-inria/custom/tabup10x-en}
+%   2- the one from "Chartre" 
+%\pgfdeclareimage[width=0.2\paperwidth]{logoup}{figures-inria/custom/tabup10x-en} 
+
+\pgfdeclareimage[width=4cm]{logoup}{figures-inria/custom/tabup10x-en-infomaths} % size from official template
+
+% backgound
+% ---------
+
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-red}% 1
+{figures-inria/custom/background-red} 
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-blue}% 2
+{figures-inria/custom/background-blue} 
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-orange}% 3
+{figures-inria/custom/background-orange} 
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-darkblue}% 4
+{figures-inria/custom/background-darkblue}  
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-violet}% 5
+{figures-inria/custom/background-violet} 
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-pastelgreen}% 6
+{figures-inria/custom/background-pastelgreen} 
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-grey}% 7
+{figures-inria/custom/background-grey} 
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{figbackground-green}% 8
+{figures-inria/custom/background-green} 
+
+\pgfaliasimage{figbackground}{figbackground-red}
+
+% footline figures
+% ----------------
+
+% used in partpage, see also "beamerouterthemeinria.sty"
+\pgfdeclareimage[width=\paperwidth,height=31pt]{figfootline-white}%
+{figures-inria/custom/bannerbottom-white} 
+
+
+% definitions
+% ***********
+
+% Itemize items, default
+% ----------------------
+
+\defbeamertemplate*{itemize item}{inria theme}{\scriptsize\raise1.25pt\hbox{\donotcoloroutermaths$\bullet$}}
+\defbeamertemplate*{itemize subitem}{inria theme}{\tiny\raise1.5pt\hbox{-}}
+\defbeamertemplate*{itemize subsubitem}{inria theme}{\tiny\raise1.5pt\hbox{-}}
+
+% blocks
+% ------
+
+\setbeamertemplate{blocks}[rounded][shadow=true]
+
+% title page
+% ----------
+
+\defbeamertemplate*{title page}{inria theme}
+{%
+% for the horizontal offset see
+% see section "7.2.2 or 8.2.2 The Sidebars" of the beamer user guide
+\hspace*{-\Gm@lmargin}%
+\begin{tikzpicture}
+   \useasboundingbox(0,0)rectangle(\paperwidth,\paperheight);
+   \draw(0,0)node [anchor=south west,outer sep=0pt, inner sep=0pt ]{\pgfuseimage{figbackground}};
+   \draw (1cm,\paperheight)
+    node [anchor=north west,outer sep=0pt, inner sep=0pt ]{\pgfuseimage{logoup}};
+   \draw (0.05 \paperwidth,0.286\paperheight)
+   node [anchor=south west,text width=0.83\paperwidth]{
+     \usebeamerfont{title in titlepage} \usebeamercolor[fg]{title} \inserttitle};
+   \draw (0.09 \paperwidth,0.28\paperheight)  
+   node [anchor=north west,text width=0.83\paperwidth]{
+     \usebeamerfont{subtitle in titlepage} \usebeamercolor[fg]{subtitle} \insertsubtitle};
+   \draw (0.09 \paperwidth,0.15\paperheight)
+   node [anchor=north west,text width=0.93\paperwidth]{
+     \usebeamerfont{author in titlepage} \usebeamercolor[fg]{author} \insertauthor};
+   \draw (0.09 \paperwidth,0.28\paperheight)
+   node [anchor=north west,text width=0.93\paperwidth]{
+     \usebeamerfont{date in titlepage} \usebeamercolor[fg]{date} \insertdate};
+\end{tikzpicture}%
+\hspace*{-\beamer@rightmargin}
+}
+
+% part page
+% ---------
+
+\defbeamertemplate*{part page}{inria theme}
+{%
+  % for the horizontal offset see
+  % see section "8.2.2 The Sidebars" of the beamer user guide
+\hspace*{-\Gm@lmargin}%
+\begin{tikzpicture}
+   \useasboundingbox(0,0)rectangle(\paperwidth,\paperheight);
+   \draw(0,0)node [anchor=south west,outer sep=0pt, inner sep=0pt ]{\pgfuseimage{figbackground}};
+   \draw(0,0)node [anchor=south west,outer sep=0pt, inner sep=0pt ]{\pgfuseimage{figfootline-white}};
+   %
+   \draw (0.02\paperwidth,0)
+   node [anchor=south west,outer sep=0pt, inner sep=0pt ]{ \pgfuseimage{logobastrans}};
+   \draw(0.145\paperwidth,7pt)
+   node [anchor=south west,outer sep=0pt, inner sep=0pt]
+   { \usebeamerfont{footline}{
+     \usebeamercolor[fg]{footline in partpage}{ 
+    \insertshortauthor
+    \ifx\insertshorttitle\@empty%
+    \else\ -- \insertshorttitle
+    \fi
+    \ifx\insertshortdate\@empty%
+    \else\ -- \insertshortdate
+    \fi
+    }}
+  };
+  \draw (\paperwidth - 0.05 \paperheight,7pt)
+  node [anchor=south east,outer sep=0pt, inner sep=0pt]
+  { \usebeamerfont{footline}
+    \usebeamercolor[fg]{footline in partpage}
+    \insertframenumber};
+  % the content
+  % Warning: position and sizes are not good.
+  \draw (0.145\paperwidth,0.286\paperheight)
+  node [anchor=south west,text width=0.83\paperwidth]{
+    \usebeamerfont{title in titlepage} \usebeamercolor[fg]{title}%
+    {\resizebox{2.0cm}{!}{\arabic{section}}\\[0.5cm] % the big number
+    \insertsectionhead}};      % the title
+\end{tikzpicture}%
+\hspace*{-\beamer@rightmargin}
+}
+
+% table of contents
+% -----------------
+
+\setbeamertemplate{sections/subsections in toc}[sections numbered]
+
+
+\mode
+<all>
