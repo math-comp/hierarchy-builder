@@ -26,4 +26,4 @@ matrix:
     script:
     - eval $(opam env)
     - opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y
-    - coqc demo2
+    - make
