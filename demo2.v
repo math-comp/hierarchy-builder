@@ -593,6 +593,7 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI]
     under-mixins t ML (factory-comp t Src (mtrm ML F) Mid Tgt) (GoFt t)
   ),
   GoF = fun TName TTy GoFt,
+  coq.typecheck GoF _GoFTy,
   Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
   coq.env.add-const Name GoF _GoFTy ff ff GoFC,
   NewFrom = from Src Tgt (global (const GoFC)),
