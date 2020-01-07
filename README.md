@@ -45,10 +45,10 @@ Mixins and classes are trivial factories in the sense that:
 - `M ⊆ F` and for all `m ∈ M`, `requires m = dep {m}`, `provides m = {m}` and `from m m = id`, i.e. mixins are primitive factories
 - `C ⊆ F` and for all `c ∈ C`, `requires c = ∅`, `provides c = def c` and `from c m` is the field of `c` with return type `m`, i.e. classes are complete factories
 
-# Commands
+# Commands (outdated)
 
-The command `declare_structure` takes a set of mixins `M₀ ⊆ M` as arguments:
-- closes it under `dep`, such that `M₀*` is the smallest superset of `M₀` such that `dep M₀* ⊆ M₀*`,
+The command `declare_structure` takes a set of factories, which produce a set of mixin `M₀ ⊆ M`:
+- checks it is closed un der dep, or closes it under `dep`, such that `M₀*` is the smallest superset of `M₀` such that `dep M₀* ⊆ M₀*`),
 - creates a class `c₀` such that `def c₀ = M₀*` and the structure `s₀` associated to it
 - creates all the missing coercions `c_super_from_sub`, `s_super_from_sub` and make the latter canonical as well as the missing `i_join` from above
 
