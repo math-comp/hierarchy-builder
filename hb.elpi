@@ -411,8 +411,9 @@ declare-instances T [class Class Struct ML|Rest] :-
   mterm->term T (mtrm ML KC) KCApp, % we can build it
   not (local-structure T Struct), % not already built
   !,
-
-  Name is "struct_" ^ {term->modname Struct},
+  term->gr T TGR,
+  coq.gr->id TGR TID,
+  Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
   get-structure-constructor Struct KS,
   S = app[KS, T, KCApp],
