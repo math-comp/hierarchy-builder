@@ -42,21 +42,20 @@ Elpi Db hb.db lp:{{
 
 % TODO: once we are decided, remove these macros, most of the times we
 % whould work with records, like the class data type done there.
-macro @mixinname :- gref.
-macro @classname :- gref.
-macro @factoryname :- gref.
-macro @structureind :- @inductive.
-macro @structure :- term.
+typeabbrev mixinname gref.
+typeabbrev classname gref.
+typeabbrev factoryname gref.
+typeabbrev structure term.
 
 % (class C S ML) represents a class C packed in S containing mixins ML.
 % The order of ML is relevant.
 kind class type.
-type class @classname -> @structure -> list @mixinname -> class.
+type class classname -> structure -> list mixinname -> class.
 
 %%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
-pred join o:@classname, o:@classname, o:@classname.
+pred join o:classname, o:classname, o:classname.
 
 %%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % [from FN MN F] invariant:
@@ -64,11 +63,11 @@ pred join o:@classname, o:@classname, o:@classname.
 %  - .. is a sub list of LMN
 % - [factory-requires FN LMN]
 % [from _ M _] tests whether M is a declared mixin.
-pred from o:@factoryname, o:@mixinname, o:term.
+pred from o:factoryname, o:mixinname, o:term.
 
 % [factory-requires M ML] means that factory M depends on
 % (i.e. has parameters among) mixins ML.
-pred factory-requires o:@factoryname, o:list @mixinname.
+pred factory-requires o:factoryname, o:list mixinname.
 
 % class-def contains all the classes ever declared
 pred class-def o:class.
@@ -76,7 +75,7 @@ pred class-def o:class.
 %% database for locally available mixins
 % [mixin-src T M X] states that X can be used to reconstruct
 % an instance of the mixin [M T ...], directly or through a factory.
-pred mixin-src o:term, o:@mixinname, o:term.
+pred mixin-src o:term, o:mixinname, o:term.
 
 % [factory-alias Alias Factory]
 % Stores all the aliases factories
@@ -94,10 +93,10 @@ pred sub-class o:class, o:class.
 % the minimal class that includes this mixin.
 % [mixin-first-class M C] states that C is the first/minimal class
 % that contains the mixin M
-pred mixin-first-class o:@mixinname, o:@classname.
+pred mixin-first-class o:mixinname, o:classname.
 
 % [to-export Module] means that Module must be exported in the end
-pred to-export o:@modpath.
+pred to-export o:modpath.
 
 % [current-decl D] states that we are currently declaring a
 % | mixin   if D = mixin-decl
