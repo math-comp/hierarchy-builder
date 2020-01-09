@@ -34,7 +34,7 @@ install: |
     opam repo list
     opam list
     sudo chown -R coq:coq /home/coq/${CONTRIB_NAME}
-    opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y
+    opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y --ignore-constraints-on "coq,coq-elpi"
     "
 
 script:
