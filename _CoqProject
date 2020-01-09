@@ -9,5 +9,6 @@ demo1/stage5.v
 
 demo2/classical.v
 demo2/stage10.v
+demo2/stage11.v
 
 -R . hb
