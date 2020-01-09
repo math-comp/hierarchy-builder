@@ -22,7 +22,7 @@ Elpi hb.declare_mixin AddComoid_of_TYPE A.
 Elpi hb.end.
 Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     one : A;

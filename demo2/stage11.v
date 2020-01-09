@@ -83,7 +83,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-Elpi hb.declare_mixin Ring_of_AddAG A AddAG.axioms.
+Elpi hb.declare_mixin Ring_of_AddAG A AddAG.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;
@@ -318,19 +318,18 @@ Section TAddAGUniform.
 End TAddAGUniform.
 
 Elpi hb.structure Uniform_TAddAG_unjoined
-  TAddAG_wo_Uniform.axioms Uniform_wo_Topology.axioms.
+  TAddAG_wo_Uniform.class_of Uniform_wo_Topology.axioms.
   (* should be created automatically *)
 Elpi hb.declare_mixin Join_TAddAG_Uniform T
-     Uniform_TAddAG_unjoined.axioms.
+     Uniform_TAddAG_unjoined.class_of.
   Record axioms := Axioms {
       entourageE :
       entourage = (TAddAG_entourage _ : set (set (TAddAG T * TAddAG T)))
   }.
 Elpi hb.end.
-Print Join_TAddAG_Uniform.phant_axioms_.
 
 (* TODO: should be subsumed by the type alias TAddAG *)
-Elpi hb.declare_factory TAddAG_Uniform U TAddAG_wo_Uniform.axioms.
+Elpi hb.declare_factory TAddAG_Uniform U TAddAG_wo_Uniform.class_of.
   Definition axioms :=
     let _ := Topological.axioms_ U in
     let _ :=  AddAG_of_TYPE.axioms_ U in
@@ -351,7 +350,7 @@ Elpi hb.end.
 
 Elpi hb.structure TAddAG
    TAddAG_Uniform.axioms (* TODO: should be replaced by type alias TAddAG *)
-   TAddAG_wo_Uniform.axioms. (* TODO: should be omitted *)
+   TAddAG_wo_Uniform.class_of. (* TODO: should be omitted *)
 
 Elpi hb.declare_factory JoinTAddAG T
     AddAG_of_TYPE.axioms Topological.axioms.
@@ -375,8 +374,6 @@ Example test1 (m n : Z) : (m + n) - n + 0 = m.
 Proof. by rewrite addrK addr0. Qed.
 
 Require Import Qcanon.
-Search _ Qc "plus" "opp".
-
 Lemma Qcplus_opp_l q : - q + q = 0.
 Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
 

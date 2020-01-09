@@ -80,7 +80,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-Elpi hb.declare_mixin Ring_of_AddAG A AddAG.axioms.
+Elpi hb.declare_mixin Ring_of_AddAG A AddAG.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;

@@ -22,7 +22,7 @@ Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
 
 (* Begin change *)
 
-Elpi hb.declare_mixin AddAG_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_mixin AddAG_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     addNr : left_inverse zero opp add;
@@ -51,7 +51,7 @@ Elpi hb.declare_factory AddAG_of_TYPE A.
 Elpi hb.end.
 Elpi hb.structure AddAG AddAG_of_TYPE.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddAG A AddAG.axioms.
+Elpi hb.declare_mixin Ring_of_AddAG A AddAG.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;
@@ -62,7 +62,7 @@ Elpi hb.declare_mixin Ring_of_AddAG A AddAG.axioms.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     one : A;

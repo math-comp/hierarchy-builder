@@ -22,7 +22,7 @@ Elpi hb.declare_mixin AddMonoid_of_TYPE S.
 Elpi hb.end.
 Elpi hb.structure AddMonoid AddMonoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin AddComoid_of_AddMonoid A AddMonoid.axioms.
+Elpi hb.declare_mixin AddComoid_of_AddMonoid A AddMonoid.class_of.
   Record axioms := Axioms {
     addrC : commutative (add : A -> A -> A);
   }.
@@ -51,7 +51,7 @@ Elpi hb.declare_factory AddComoid_of_TYPE A.
 Elpi hb.end.
 Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin AddAG_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_mixin AddAG_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     addNr : left_inverse zero opp add;
@@ -82,7 +82,7 @@ Elpi hb.structure AddAG AddAG_of_TYPE.axioms.
 
 (* Begin changes *)
 
-Elpi hb.declare_mixin BiNearRing_of_AddMonoid A AddMonoid.axioms.
+Elpi hb.declare_mixin BiNearRing_of_AddMonoid A AddMonoid.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;
@@ -95,11 +95,11 @@ Elpi hb.declare_mixin BiNearRing_of_AddMonoid A AddMonoid.axioms.
     mulr0 : right_zero zero mul;
   }.
 Elpi hb.end.
-Elpi hb.structure BiNearRing AddMonoid.axioms BiNearRing_of_AddMonoid.axioms.
+Elpi hb.structure BiNearRing AddMonoid.class_of BiNearRing_of_AddMonoid.axioms.
 
 (* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
 (* we alias it for backward compatilibity and uniformity purposes *)
-Elpi hb.declare_factory SemiRing_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_factory SemiRing_of_AddComoid A AddComoid.class_of.
   Definition axioms := BiNearRing_of_AddMonoid.axioms_ A.
   Definition Axioms := @BiNearRing_of_AddMonoid.Axioms.
   Variables (a : axioms).
@@ -110,9 +110,9 @@ Elpi hb.end.
 
 (* End changes *)
 
-Elpi hb.structure SemiRing AddComoid.axioms SemiRing_of_AddComoid.axioms.
+Elpi hb.structure SemiRing AddComoid.class_of SemiRing_of_AddComoid.axioms.
 
-Elpi hb.declare_factory Ring_of_AddAG A AddAG.axioms.
+Elpi hb.declare_factory Ring_of_AddAG A AddAG.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;
@@ -146,7 +146,7 @@ Elpi hb.declare_factory Ring_of_AddAG A AddAG.axioms.
 
 Elpi hb.end.
 
-Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     one : A;

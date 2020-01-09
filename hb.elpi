@@ -697,7 +697,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
   (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
     (parameter `T` {{ Type }} t\
-      record "axioms" {{ Type }} "Axioms" (RDecl t)),
+      record "class_of" {{ Type }} "Class" (RDecl t)),
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
   coq.env.add-indt ClassDeclaration ClassName,
   coq.CS.canonical-projections ClassName Projs,
