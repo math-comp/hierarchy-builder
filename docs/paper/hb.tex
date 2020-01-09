@@ -423,7 +423,7 @@ Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
   main [str S] :- !, std.do! [
     coq.locate S M,
-    coq.env.typeof-gr M Ty,
+    coq.env.typeof M Ty,
     gather-mixin-dendencies Ty [] ML, % implementation omitted for brevity
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
     ...

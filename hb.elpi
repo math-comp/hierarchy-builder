@@ -217,7 +217,7 @@ mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
 %% finding for locally defined structures
 pred cs-structure i:cs-instance, o:term.
 cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
-    coq.env.typeof-gr Inst InstTy,
+    coq.env.typeof Inst InstTy,
     safe-dest-app InstTy Struct _
     ].
 
@@ -437,7 +437,7 @@ main-mixin-requires GR GRFS [From|PO] :- !, std.do! [
   main-factory-requires GR GRFS PO,
   % register factory
   PO => std.do! [
-    coq.env.typeof-gr GR (prod T TTy _),
+    coq.env.typeof GR (prod T TTy _),
     @pi-decl T TTy t\ under-mixins t {factory-requires GR} (body\ sigma MTy\
         mgref->term t GR MTy,
         body = fun `x` MTy x\x) (IDBody t)],
