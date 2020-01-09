@@ -243,21 +243,16 @@ records, coercions, canonical structures, modules, implicit arguments, etc.
 The most basic Coq data type exposed to Elpi is the one of references to global
 declarations:
 
-\marginpar{it may worth cheting and removing the @ for this paper, so that
-all primitive types are simply in red, while the ones with an ADT in blue.
-At some point Elpi will support type abbreviations and no @ will be needed.
-Then we can put a footnote in case one peeks at the code.}
-
 \begin{elpicode}
 kind gref  type.
-type indt  @inductive -> gref.    % eg: Coq.Init.Datatypes.nat
-type indc  @constructor -> gref.  % eg: Coq.Init.Datatypes.O
-type const @constant -> gref.     % eg: Coq.Init.Peano.plus
+type indt  inductive -> gref.    % eg: Coq.Init.Datatypes.nat
+type indc  constructor -> gref.  % eg: Coq.Init.Datatypes.O
+type const constant -> gref.     % eg: Coq.Init.Peano.plus
 \end{elpicode}
 
 The arguments of the three constructors are opaque to Elpi, that can only use
 values of these types via dedicated APIs. For example the API for declaring
-an inductive type will generate a value of type \elpi{@inductive} that
+an inductive type will generate a value of type \elpi{inductive} that
 would be printed as, for example, \elpi{«nat»}.
 
 Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
@@ -296,8 +291,8 @@ type field       bool -> string -> term -> (term -> record-decl) -> record-decl.
 type end-record  record-decl.
 ... % constructors for non-record inductive types are omitted for brevity
 
-external pred coq.env.add-indt i:indt-decl, o:@inductive.
-external pred coq.CS.canonical-projections i:@inductive, o:list (option @constant).
+external pred coq.env.add-indt i:indt-decl, o:inductive.
+external pred coq.CS.canonical-projections i:inductive, o:list (option constant).
 \end{elpicode}
 
 The \elpi{pred} keyword documents a the type and modes (input or output) of the
@@ -316,10 +311,10 @@ Record type : Type := Pack { sort : Type; class : class_of sort }.
 The Elpi code builds the declaration, typechecks it, adds it to the
 Coq environment and returns the projections for the sort and the class
 fields (it is handy to have them in the rest of the code).
-TODO: @factoryname -> @classname
+TODO: factoryname -> @classname
 
 \begin{elpicode}
-pred declare-structure i:@factoryname, o:term, o:term, o:term.
+pred declare-structure i:factoryname, o:term, o:term, o:term.
 
 declare-structure ClassName Structure SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
@@ -359,8 +354,8 @@ This feature is key to in the following code that synthesizes the
 declaration of the fields of the class record.
 
 \begin{elpicode}
-pred synthesize-fields.field-for-mixin i:@mixinname, o:term.
-pred synthesize-fields i:list @mixinname, i:term, o:record-decl.
+pred synthesize-fields.field-for-mixin i:mixinname, o:term.
+pred synthesize-fields i:list mixinname, i:term, o:record-decl.
 
 synthesize-fields [] _ Decl :- Decl = end-record.
 synthesize-fields [M|ML] T Decl :- std.do! [
@@ -415,7 +410,7 @@ with \coq{Elpi} are provided by the Coq-Elpi plugin.
 
 \begin{coqcode}
 Elpi Db hierarchy.db lp:{{
-  pred dep1 o:@mixinname, o:list @mixinname.
+  pred dep1 o:mixinname, o:list mixinname.
   ... % for brevity we omit class and join
 }}.
 Elpi Command declare_mixin.
