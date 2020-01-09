@@ -166,7 +166,8 @@ instanciate-mixin T M (fun _ Tm F) (F X) :-
   safe-dest-app Tm (global TmGR) _,
   factory-alias TmGR M, !,
   mixin-for T M X, !.
-instanciate-mixin T M (fun N T F) (fun N T FX) :- !, pi m\ instanciate-mixin T M (F m) (FX m).
+instanciate-mixin T M (fun N Ty F) (fun N Ty FX) :- !,
+  pi m\ instanciate-mixin T M (F m) (FX m).
 instanciate-mixin _ _ F F.
 
 % [mterm->term T MF TFX] assumes that MF is a mterm
@@ -810,8 +811,11 @@ map11 XS [] _ F _ ZS :- !, std.map XS F ZS.
 map11 [] YS _ _ F ZS :- !, std.map YS F ZS.
 map11 [X|XS] [Y|YS] F G H [Z|ZS] :- !, F X Y Z, map11 XS YS F G H ZS.
 
-pred main-end-declare i:list term.
-main-end-declare TS :- std.do! [
+pred extract-local-factory i:prop, o:term.
+extract-local-factory (local-factory F) F.
+
+pred main-end-declare.
+main-end-declare :- std.do! [
   current-decl Decl,
   std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
   std.map AllPostulatedMixins mixin-src-name ML,
@@ -820,8 +824,13 @@ main-end-declare TS :- std.do! [
 
   coq.env.end-section,
 
-  if (Decl = mixin-decl) (TS = [], !, main-mixin-requires GR ML Props, Clauses = []) (
+  mk-phant-mixins (global GRK) PhGRK,
+  mk-phant-abbrev "Axioms_" PhGRK _,
+
+  if (Decl = mixin-decl) (!, main-mixin-requires GR ML Props, Clauses = []) (
     Decl = factory-decl, !,
+    std.findall (local-factory F_) LFIL,
+    std.map LFIL extract-local-factory TS,
     main-factory-requires GR ML Props,
     Props => std.fold TS [] main-declare-factory-fun Clauses
   ),

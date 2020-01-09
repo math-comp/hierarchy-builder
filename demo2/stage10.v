@@ -1,4 +1,5 @@
-Require Import String ssreflect ssrfun ssrbool ZArith hb classical.
+Require Import String ssreflect ssrfun ssrbool hb classical.
+Require Import ZArith QArith.
 From elpi Require Import elpi.
 
 Declare Scope hb_scope.
@@ -44,8 +45,38 @@ Proof. by move=> x; rewrite addrC addNr. Qed.
 Lemma subrr x : x - x = 0.
 Proof. by rewrite addrN. Qed.
 
-Lemma addrNK x y : x + y - y = x.
-Proof. by rewrite -addrA subrr addr0. Qed.
+Lemma addrK : right_loop (@opp A) (@add A).
+Proof. by move=> x y; rewrite -addrA subrr addr0. Qed.
+
+Lemma addKr : left_loop (@opp A) (@add A).
+Proof. by move=> x y; rewrite addrA addNr add0r. Qed.
+
+Lemma addrNK : rev_right_loop (@opp A) (@add A).
+Proof. by move=> y x; rewrite -addrA addNr addr0. Qed.
+
+Lemma addNKr : rev_left_loop (@opp A) (@add A).
+Proof. by move=> x y; rewrite addrA subrr add0r. Qed.
+
+Lemma addrAC : right_commutative (@add A).
+Proof. by move=> x y z; rewrite -!addrA [y + z]addrC. Qed.
+
+Lemma addrCA : left_commutative (@add A).
+Proof. by move=> x y z; rewrite !addrA [x + y]addrC. Qed.
+
+Lemma addrACA : interchange (@add A) add.
+Proof. by move=> x y z t; rewrite !addrA [x + y + z]addrAC. Qed.
+
+Lemma opprK : involutive (@opp A).
+Proof. by move=> x; apply: (can_inj (addrK (- x))); rewrite addNr addrN. Qed.
+
+Lemma opprD x y : - (x + y) = - x - y.
+Proof.
+apply: (can_inj (addKr (x + y))).
+by rewrite subrr addrACA !subrr addr0.
+Qed.
+
+Lemma opprB x y : - (x - y) = y - x.
+Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
@@ -79,13 +110,15 @@ Elpi hb.declare_factory Ring_of_TYPE A.
   }.
 
   Variable a : axioms.
-  Definition to_AddAG_of_TYPE : AddAG_of_TYPE.axioms_ A :=
-    AddAG_of_TYPE.Axioms _ _ _ (addrA a) (addrC a) (add0r a) (addNr a).
+  Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Axioms_ A
+    _ _ _ (addrA a) (addrC a) (add0r a) (addNr a).
   Elpi hb.canonical A to_AddAG_of_TYPE.
-  Definition to_Ring_of_AddAG : Ring_of_AddAG.axioms_ A :=
+  Definition to_Ring_of_AddAG :=
     Ring_of_AddAG.Axioms _ _ (mulrA a) (mul1r a)
-      (mulr1 a) (mulrDl a : left_distributive _ (@AddAG.Exports.add _)) (mulrDr a).
-Elpi hb.end to_AddAG_of_TYPE to_Ring_of_AddAG.
+      (mulr1 a)
+      (mulrDl a : left_distributive _ (@AddAG.Exports.add _)) (mulrDr a).
+  Elpi hb.canonical A to_Ring_of_AddAG.
+Elpi hb.end.
 
 Elpi hb.structure Ring Ring_of_TYPE.axioms.
 
@@ -117,8 +150,7 @@ Elpi hb.declare_factory TopologicalBase T.
   Definition open_of :=
     [set A | exists2 D, D `<=` open_base a & A = \bigcup_(X in D) X].
 
-  Lemma open_of_setT : open_of setT.
-  Proof.
+  Lemma open_of_setT : open_of setT.  Proof.
   exists (open_base a); rewrite // predeqE => x; split=> // _.
   by apply: open_base_covers.
   Qed.
@@ -130,10 +162,11 @@ Elpi hb.declare_factory TopologicalBase T.
   Lemma open_of_cap X Y : open_of X -> open_of Y -> open_of (X `&` Y).
   Proof. Admitted.
 
-  Definition to_Topological : Topological.axioms_ T :=
+  Definition to_Topological :=
     Topological.Axioms _ open_of_setT (@open_of_bigcup) open_of_cap.
+  Elpi hb.canonical T to_Topological.
 
-Elpi hb.end to_Topological.
+Elpi hb.end.
 
 Section ProductTopology.
   Variables (T1 T2 : TopologicalSpace.type).
@@ -162,7 +195,7 @@ Section ProductTopology.
   by split => // [[x1 x2] [[/=Ax1 Bx1] [/=Ax2 Bx2]]].
   Qed.
 
-  Definition prod_topology : TopologicalBase.axioms_ (T1 * T2)%type :=
+  Definition prod_topology :=
     TopologicalBase.Axioms _ prod_open_base_covers prod_open_base_setU.
   Elpi hb.canonical (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type prod_topology.
 
@@ -174,21 +207,21 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-Elpi hb.declare_mixin TopologicalAddAG_of_AddAG_and_Topological
+Elpi hb.declare_mixin JoinTAddAG
   T AddAG_of_TYPE.axioms Topological.axioms.
-Record axioms := Axioms {
-  add_continuous : continuous2 (add : T -> T -> T);
-  opp_continuous : continuous (opp : T -> T)
-}.
+  Record axioms := Axioms {
+    add_continuous : continuous2 (add : T -> T -> T);
+    opp_continuous : continuous (opp : T -> T)
+  }.
 Elpi hb.end.
 
-Elpi hb.structure TopologicalAddAG
+Elpi hb.structure TAddAG
   Topological.axioms AddAG_of_TYPE.axioms
-  TopologicalAddAG_of_AddAG_and_Topological.axioms.
+  JoinTAddAG.axioms.
 
 (* Instance *)
 
-Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
+Definition Z_ring_axioms :=
   Ring_of_TYPE.Axioms 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
@@ -196,6 +229,40 @@ Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
 Elpi hb.canonical Z Z_ring_axioms.
 
 Example test1 (m n : Z) : (m + n) - n + 0 = m.
-Proof. by rewrite addrNK addr0. Qed.
+Proof. by rewrite addrK addr0. Qed.
+
+Require Import Qcanon.
+Search _ Qc "plus" "opp".
+
+Lemma Qcplus_opp_l q : - q + q = 0.
+Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
+
+Definition Qc_ring_axioms :=
+  Ring_of_TYPE.Axioms 0%Qc 1%Qc Qcplus Qcopp Qcmult
+    Qcplus_assoc Qcplus_comm Qcplus_0_l Qcplus_opp_l
+    Qcmult_assoc Qcmult_1_l Qcmult_1_r
+    Qcmult_plus_distr_l Qcmult_plus_distr_r.
+Elpi hb.canonical Qc Qc_ring_axioms.
+
+Obligation Tactic := idtac.
+Definition Qcopen_base : set (set Qc) := 
+  [set A | exists a b : Qc, forall z, A z <-> a < z /\ z < b].
+Program Definition QcTopological := TopologicalBase.Axioms_ Qc Qcopen_base _ _.
+Next Obligation.
+move=> x _; exists [set y | x - 1 < y < x + 1].
+  by exists (x - 1), (x + 1).
+split; rewrite Qclt_minus_iff.
+  by rewrite -[_ + _]/(x - (x - 1))%G opprB addrCA subrr.
+by rewrite -[_ + _]/(x + 1 - x)%G addrAC subrr.
+Qed.
+Next Obligation.
+move=> X Y [aX [bX Xeq]] [aY [bY Yeq]] z [/Xeq [aXz zbX] /Yeq [aYz zbY]].
+Admitted.
+Elpi hb.canonical Qc QcTopological.
+
+Program Definition QcJoinTAddAG := JoinTAddAG.Axioms_ Qc _ _.
+Next Obligation. Admitted.
+Next Obligation. Admitted.
+Elpi hb.canonical Qc QcJoinTAddAG.
 
 End Stage10.

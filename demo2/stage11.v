@@ -38,17 +38,48 @@ Section AddAGTheory.
   Variable A : AddAG.type.
   Implicit Type (x : A).
 
-  Lemma addr0 : right_id (@zero A) add.
-  Proof. by move=> x; rewrite addrC add0r. Qed.
 
-  Lemma addrN : right_inverse (@zero A) opp add.
-  Proof. by move=> x; rewrite addrC addNr. Qed.
+Lemma addr0 : right_id (@zero A) add.
+Proof. by move=> x; rewrite addrC add0r. Qed.
 
-  Lemma subrr x : x - x = 0.
-  Proof. by rewrite addrN. Qed.
+Lemma addrN : right_inverse (@zero A) opp add.
+Proof. by move=> x; rewrite addrC addNr. Qed.
 
-  Lemma addrNK x y : x + y - y = x.
-  Proof. by rewrite -addrA subrr addr0. Qed.
+Lemma subrr x : x - x = 0.
+Proof. by rewrite addrN. Qed.
+
+Lemma addrK : right_loop (@opp A) (@add A).
+Proof. by move=> x y; rewrite -addrA subrr addr0. Qed.
+
+Lemma addKr : left_loop (@opp A) (@add A).
+Proof. by move=> x y; rewrite addrA addNr add0r. Qed.
+
+Lemma addrNK : rev_right_loop (@opp A) (@add A).
+Proof. by move=> y x; rewrite -addrA addNr addr0. Qed.
+
+Lemma addNKr : rev_left_loop (@opp A) (@add A).
+Proof. by move=> x y; rewrite addrA subrr add0r. Qed.
+
+Lemma addrAC : right_commutative (@add A).
+Proof. by move=> x y z; rewrite -!addrA [y + z]addrC. Qed.
+
+Lemma addrCA : left_commutative (@add A).
+Proof. by move=> x y z; rewrite !addrA [x + y]addrC. Qed.
+
+Lemma addrACA : interchange (@add A) add.
+Proof. by move=> x y z t; rewrite !addrA [x + y + z]addrAC. Qed.
+
+Lemma opprK : involutive (@opp A).
+Proof. by move=> x; apply: (can_inj (addrK (- x))); rewrite addNr addrN. Qed.
+
+Lemma opprD x y : - (x + y) = - x - y.
+Proof.
+apply: (can_inj (addKr (x + y))).
+by rewrite subrr addrACA !subrr addr0.
+Qed.
+
+Lemma opprB x y : - (x - y) = y - x.
+Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
@@ -82,13 +113,15 @@ Elpi hb.declare_factory Ring_of_TYPE A.
   }.
 
   Variable a : axioms.
-  Definition to_AddAG_of_TYPE : AddAG_of_TYPE.axioms_ A :=
-    AddAG_of_TYPE.Axioms _ _ _ (addrA a) (addrC a) (add0r a) (addNr a).
-  Elpi hb.canonical A to_AddAG_of_TYPE.
-  Definition to_Ring_of_AddAG : Ring_of_AddAG.axioms_ A :=
-    Ring_of_AddAG.Axioms _ _ (mulrA a) (mul1r a)
-      (mulr1 a) (mulrDl a : left_distributive _ (@AddAG.Exports.add _)) (mulrDr a).
-Elpi hb.end to_AddAG_of_TYPE to_Ring_of_AddAG.
+  Definition to_AddAG := AddAG_of_TYPE.Axioms_ A
+    _ _ _ (addrA a) (addrC a) (add0r a) (addNr a).
+  Elpi hb.canonical A to_AddAG.
+
+  Definition to_Ring := Ring_of_AddAG.Axioms_ A
+    _ _ (mulrA a) (mul1r a) (mulr1 a) (mulrDl a :
+     left_distributive _ (@AddAG.Exports.add _)) (mulrDr a).
+  Elpi hb.canonical A to_Ring.
+Elpi hb.end.
 
 Elpi hb.structure Ring Ring_of_TYPE.axioms.
 
@@ -133,11 +166,11 @@ Elpi hb.declare_factory TopologicalBase T.
   Lemma open_of_cap X Y : open_of X -> open_of Y -> open_of (X `&` Y).
   Proof. Admitted.
 
-  Definition to_Topological : Topological.axioms_ T :=
+  Definition to_Topological :=
     Topological.Axioms _ open_of_setT (@open_of_bigcup) open_of_cap.
   Elpi hb.canonical T to_Topological.
 
-Elpi hb.end to_Topological. (* TODO: infer factories from canonical *)
+Elpi hb.end.
 
 Section ProductTopology.
   Variables (T1 T2 : TopologicalSpace.type).
@@ -166,7 +199,7 @@ Section ProductTopology.
   by split => // [[x1 x2] [[/=Ax1 Bx1] [/=Ax2 Bx2]]].
   Qed.
 
-  Definition prod_topology : TopologicalBase.axioms_ (T1 * T2)%type :=
+  Definition prod_topology :=
     TopologicalBase.Axioms _ prod_open_base_covers prod_open_base_setU.
 
   (* TODO: make elpi insert coercions! *)
@@ -181,7 +214,7 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-Elpi hb.declare_mixin TAddAG_of_AddAG_Topology_wo_Uniform
+Elpi hb.declare_mixin JoinTAddAG_wo_Uniform
   T AddAG_of_TYPE.axioms Topological.axioms.
   Record axioms := Axioms {
     add_continuous : continuous2 (add : T -> T -> T);
@@ -191,7 +224,7 @@ Elpi hb.end.
 
 Elpi hb.structure TAddAG_wo_Uniform
   Topological.axioms AddAG_of_TYPE.axioms
-  TAddAG_of_AddAG_Topology_wo_Uniform.axioms.
+  JoinTAddAG_wo_Uniform.axioms.
 
 Elpi hb.declare_mixin Uniform_wo_Topology U.
   Record axioms := Axioms {
@@ -220,7 +253,7 @@ Section Uniform_Topology.
      uniform_open X -> uniform_open Y -> uniform_open (setI X Y).
   Admitted.
 
-  Definition uniform_topology : Topological.axioms_ U :=
+  Definition uniform_topology :=
     Topological.Axioms _ uniform_open_setT (@uniform_open_bigcup) uniform_open_setI.
   Elpi hb.canonical (uniform (UniformSpace_wo_Topology.sort U)) uniform_topology.
 
@@ -240,7 +273,8 @@ Elpi hb.declare_factory Uniform_Topology U Uniform_wo_Topology.axioms.
   Definition Axioms : axioms := I.
 
   Definition to_Topological : Topological.axioms_ U := (uniform_topology _).
-Elpi hb.end to_Topological.
+  Elpi hb.canonical U to_Topological.
+Elpi hb.end.
 
 Elpi hb.structure UniformSpace
    Uniform_Topology.axioms     (* should be replaced by typealias uniform *)
@@ -264,7 +298,7 @@ Section TAddAGUniform.
       exists2 B, TAddAG_entourage B & graph_comp B B `<=` A.
   Admitted.
 
-  Definition TAddAG_uniform : Uniform_wo_Topology.axioms_ TT :=
+  Definition TAddAG_uniform :=
     Uniform_wo_Topology.Axioms _ filter_TAddAG_entourage TAddAG_entourage_sub
       TAddAG_entourage_sym TAddAG_entourage_split.
   Elpi hb.canonical (TAddAG (TAddAG_wo_Uniform.sort T)) TAddAG_uniform.
@@ -286,7 +320,6 @@ End TAddAGUniform.
 Elpi hb.structure Uniform_TAddAG_unjoined
   TAddAG_wo_Uniform.axioms Uniform_wo_Topology.axioms.
   (* should be created automatically *)
-
 Elpi hb.declare_mixin Join_TAddAG_Uniform T
      Uniform_TAddAG_unjoined.axioms.
   Record axioms := Axioms {
@@ -301,7 +334,7 @@ Elpi hb.declare_factory TAddAG_Uniform U TAddAG_wo_Uniform.axioms.
   Definition axioms :=
     let _ := Topological.axioms_ U in
     let _ :=  AddAG_of_TYPE.axioms_ U in
-    let _ := TAddAG_of_AddAG_Topology_wo_Uniform.axioms_ U in
+    let _ := JoinTAddAG_wo_Uniform.axioms_ U in
     True. (* fix bug *)
   Definition Axioms : axioms := I.
 
@@ -310,21 +343,28 @@ Elpi hb.declare_factory TAddAG_Uniform U TAddAG_wo_Uniform.axioms.
   Definition to_Join_Uniform_Topology : Join_Uniform_Topology.axioms_ U :=
     (TAddAG_Join_Uniform_Topology _).
   Elpi hb.canonical U to_Join_Uniform_Topology.
-  Definition to_Join_TAddAG_Uniform : Join_TAddAG_Uniform.axioms_ U :=
-    (Join_TAddAG_Uniform.Axioms (TAddAG_entourageE _)).
+  Definition to_Join_TAddAG_Uniform :=
+    (Join_TAddAG_Uniform.Axioms_ U (TAddAG_entourageE _)).
   Elpi hb.canonical U to_Join_TAddAG_Uniform.
 
-Elpi hb.end to_Uniform_wo_Topology to_Join_Uniform_Topology
-  to_Join_TAddAG_Uniform.
+Elpi hb.end.
 
 Elpi hb.structure TAddAG
    TAddAG_Uniform.axioms (* TODO: should be replaced by type alias TAddAG *)
-   TAddAG_wo_Uniform.axioms (* TODO: should be omitted *)
-   TAddAG_of_AddAG_Topology_wo_Uniform.axioms. (* TODO: should be omitted *)
+   TAddAG_wo_Uniform.axioms. (* TODO: should be omitted *)
+
+Elpi hb.declare_factory JoinTAddAG T
+    AddAG_of_TYPE.axioms Topological.axioms.
+  Definition axioms := JoinTAddAG_wo_Uniform.axioms_ T.
+  Definition Axioms := JoinTAddAG_wo_Uniform.Axioms_ T.
+  Variable (a : axioms).
+  Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform.axioms_ T := a.
+  Definition to_Uniform := TAddAG_Uniform.Axioms_ T.
+Elpi hb.end.
 
 (* Instance *)
 
-Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
+Definition Z_ring_axioms :=
   Ring_of_TYPE.Axioms 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
@@ -332,6 +372,42 @@ Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
 Elpi hb.canonical Z Z_ring_axioms.
 
 Example test1 (m n : Z) : (m + n) - n + 0 = m.
-Proof. by rewrite addrNK addr0. Qed.
+Proof. by rewrite addrK addr0. Qed.
+
+Require Import Qcanon.
+Search _ Qc "plus" "opp".
+
+Lemma Qcplus_opp_l q : - q + q = 0.
+Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
+
+Definition Qc_ring_axioms :=
+  Ring_of_TYPE.Axioms 0%Qc 1%Qc Qcplus Qcopp Qcmult
+    Qcplus_assoc Qcplus_comm Qcplus_0_l Qcplus_opp_l
+    Qcmult_assoc Qcmult_1_l Qcmult_1_r
+    Qcmult_plus_distr_l Qcmult_plus_distr_r.
+Elpi hb.canonical Qc Qc_ring_axioms.
+
+Obligation Tactic := idtac.
+Definition Qcopen_base : set (set Qc) := 
+  [set A | exists a b : Qc, forall z, A z <-> a < z /\ z < b].
+Program Definition QcTopological := TopologicalBase.Axioms_ Qc Qcopen_base _ _.
+  Next Obligation.
+  move=> x _; exists [set y | x - 1 < y < x + 1].
+    by exists (x - 1), (x + 1).
+  split; rewrite Qclt_minus_iff.
+    by rewrite -[_ + _]/(x - (x - 1))%G opprB addrCA subrr.
+  by rewrite -[_ + _]/(x + 1 - x)%G addrAC subrr.
+  Qed.
+  Next Obligation.
+  move=> X Y [aX [bX Xeq]] [aY [bY Yeq]] z [/Xeq [aXz zbX] /Yeq [aYz zbY]].
+  Admitted.
+Elpi hb.canonical Qc QcTopological.
+
+Program Definition QcJoinTAddAG := JoinTAddAG.Axioms_ Qc _ _.
+  Next Obligation. Admitted.
+  Next Obligation. Admitted.
+Elpi hb.canonical Qc QcJoinTAddAG.
+
+Check (entourage : set (set (Qc * Qc))).
 
 End Stage11.
