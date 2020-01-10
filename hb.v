@@ -187,7 +187,7 @@ Elpi Typecheck.
    ..
    Definition to_Baz : Baz.axioms_ A := ..
    Elpi hb.canonical to_Baw.
-   Elpi hb.end to_Baw .. to_Baz.
+   Elpi hb.end.
 *)
 
 Elpi Command hb.declare_mixin.
