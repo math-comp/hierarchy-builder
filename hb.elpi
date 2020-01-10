@@ -51,9 +51,21 @@ pred argument->gref i:argument, o:gref.
 argument->gref (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
 argument->gref X _ :- coq.error "not a string:" X.
 
+accumulate "../../LPCIC/coq-elpi/engine/elaborator".
+% Very specific rule for sort coercions
+pred compile-coercions i:list coercion, o:list prop.
+compile-coercions [coercion GR 0 GRIn sortclass|CS]
+  [(pi T S R\ coerced (global GRIn) (sort S) T R :- R = app[global GR,T])| RCS] :-
+  compile-coercions CS RCS.
+compile-coercions [coercion _ _ _ _|CS] RCS :- compile-coercions CS RCS.
+compile-coercions [] [].
+
 pred argument->term i:argument, o:term.
 argument->term (str S) (global GR) :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
-argument->term (trm T) T :- !, std.assert-ok! (coq.typecheck T _) "not well typed term".
+argument->term (trm T) T1 :- !,
+  compile-coercions {coq.coercion.db} Clauses,
+  get-option "of:coerce" tt => Clauses => std.assert! (of T _ T1) "not well typed term".
+  %std.assert-ok! (coq.typecheck T _) "not well typed term".
 argument->term X _ :- coq.error "not a term:" X.
 
 % TODO: document

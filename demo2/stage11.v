@@ -169,8 +169,7 @@ Section ProductTopology.
   Definition prod_topology : TopologicalBase.axioms_ (T1 * T2)%type :=
     TopologicalBase.Axioms _ prod_open_base_covers prod_open_base_setU.
 
-  (* TODO: make elpi insert coercions! *)
-  Elpi hb.canonical (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type prod_topology.
+  Elpi hb.canonical (T1 * T2)%type prod_topology.
 
 End ProductTopology.
 
