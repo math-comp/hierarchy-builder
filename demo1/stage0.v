@@ -62,8 +62,8 @@ End Theory.
 
 (* Instance *)
 
-Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
-  Ring_of_TYPE.Axioms 0%Z 1%Z Z.add Z.opp Z.mul
+Definition Z_ring_axioms :=
+  Ring_of_TYPE.Axioms_ Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.

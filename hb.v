@@ -105,6 +105,9 @@ kind declaration type.
 type mixin-decl declaration.
 type factory-decl declaration.
 pred current-decl o:declaration.
+
+pred local-factory o:term.
+
 }}.
 
 Elpi Command debug.
@@ -213,8 +216,8 @@ Elpi Command hb.end.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main FS :- std.map FS argument->term TS, !,  main-end-declare TS.
-main _ :- coq.error "Usage: hb.end (\"mixin\"|\"factory\" <FactoryGRs>*)".
+main [] :- main-end-declare.
+main _ :- coq.error "Usage: hb.end.".
 }}.
 Elpi Typecheck.
 
@@ -233,6 +236,7 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !, std.do! [
+  std.forall FIL (f\ acc current (clause _ _ (local-factory f))),
   std.map FIL (mixin-srcs T) MSLL,
   canonical-mixins T CMSL,
   std.flatten [CMSL|MSLL] MSL,

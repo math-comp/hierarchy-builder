@@ -22,7 +22,7 @@ Elpi hb.declare_mixin AddComoid_of_TYPE A.
 Elpi hb.end.
 Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     one : A;
@@ -55,14 +55,15 @@ Elpi hb.declare_factory Ring_of_TYPE A.
   }.
 
   Variable a : axioms.
-  Definition to_AddComoid_of_TYPE : AddComoid_of_TYPE.axioms_ A :=
-    AddComoid_of_TYPE.Axioms (zero a) (add a) (addrA _) (addrC _) (add0r _).
+  Definition to_AddComoid_of_TYPE :=
+    AddComoid_of_TYPE.Axioms_ A (zero a) (add a) (addrA _) (addrC _) (add0r _).
   Elpi hb.canonical A to_AddComoid_of_TYPE.
 
-  Definition to_Ring_of_AddComoid : Ring_of_AddComoid.axioms_ A :=
-    Ring_of_AddComoid.Axioms _ _ _ (addNr _) (mulrA _) (mul1r _)
+  Definition to_Ring_of_AddComoid :=
+    Ring_of_AddComoid.Axioms_ A _ _ _ (addNr _) (mulrA _) (mul1r _)
       (mulr1 _) (mulrDl _) (mulrDr _).
-Elpi hb.end to_AddComoid_of_TYPE to_Ring_of_AddComoid.
+  Elpi hb.canonical A to_Ring_of_AddComoid.
+Elpi hb.end.
 
 (* End change *)
 
@@ -102,8 +103,8 @@ End Theory.
 
 (* Instance *)
 
-Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
-  Ring_of_TYPE.Axioms 0%Z 1%Z Z.add Z.opp Z.mul
+Definition Z_ring_axioms :=
+  Ring_of_TYPE.Axioms_ Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.

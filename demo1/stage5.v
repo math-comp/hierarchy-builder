@@ -22,7 +22,7 @@ Elpi hb.declare_mixin AddMonoid_of_TYPE S.
 Elpi hb.end.
 Elpi hb.structure AddMonoid AddMonoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin AddComoid_of_AddMonoid A AddMonoid.axioms.
+Elpi hb.declare_mixin AddComoid_of_AddMonoid A AddMonoid.class_of.
   Record axioms := Axioms {
     addrC : commutative (add : A -> A -> A);
   }.
@@ -41,17 +41,17 @@ Elpi hb.declare_factory AddComoid_of_TYPE A.
   Fact addr0 : right_id (zero a) (add a).
   Proof. by move=> x; rewrite addrC add0r. Qed.
 
-  Definition to_AddMonoid_of_TYPE : AddMonoid_of_TYPE.axioms_ A :=
-    AddMonoid_of_TYPE.Axioms (zero a) (add a) (addrA a) (add0r a) addr0.
-  Elpi hb.canonical A to_AddMonoid_of_TYPE.
+  Definition to_AddMonoid := AddMonoid_of_TYPE.Axioms_ A
+    (zero a) (add a) (addrA a) (add0r a) addr0.
+  Elpi hb.canonical A to_AddMonoid.
 
-  Definition to_AddComoid_of_AddMonoid : AddComoid_of_AddMonoid.axioms_ A :=
-    AddComoid_of_AddMonoid.Axioms (addrC a : commutative AddMonoid.Exports.add).
-
-Elpi hb.end to_AddMonoid_of_TYPE to_AddComoid_of_AddMonoid.
+  Definition to_AddComoid := AddComoid_of_AddMonoid.Axioms_ A
+    (addrC a : commutative AddMonoid.Exports.add).
+  Elpi hb.canonical A to_AddComoid.
+Elpi hb.end.
 Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin AddAG_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_mixin AddAG_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     addNr : left_inverse zero opp add;
@@ -70,18 +70,19 @@ Elpi hb.declare_factory AddAG_of_TYPE A.
 
   Variable a : axioms.
 
-  Definition to_AddComoid_of_TYPE : AddComoid_of_TYPE.axioms_ A :=
-    AddComoid_of_TYPE.Axioms (zero a) (add a) (addrA _) (addrC _) (add0r _).
+  Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Axioms_ A
+    (zero a) (add a) (addrA _) (addrC _) (add0r _).
   Elpi hb.canonical A to_AddComoid_of_TYPE.
 
-  Definition to_AddAG_of_AddComoid : AddAG_of_AddComoid.axioms_ A :=
-    AddAG_of_AddComoid.Axioms _ (addNr a).
-Elpi hb.end to_AddComoid_of_TYPE to_AddAG_of_AddComoid.
+  Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms_ A _ (addNr a).
+  Elpi hb.canonical A to_AddAG_of_AddComoid.
+
+Elpi hb.end.
 Elpi hb.structure AddAG AddAG_of_TYPE.axioms.
 
 (* Begin changes *)
 
-Elpi hb.declare_mixin BiNearRing_of_AddMonoid A AddMonoid.axioms.
+Elpi hb.declare_mixin BiNearRing_of_AddMonoid A AddMonoid.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;
@@ -94,22 +95,24 @@ Elpi hb.declare_mixin BiNearRing_of_AddMonoid A AddMonoid.axioms.
     mulr0 : right_zero zero mul;
   }.
 Elpi hb.end.
-Elpi hb.structure BiNearRing AddMonoid.axioms BiNearRing_of_AddMonoid.axioms.
+Elpi hb.structure BiNearRing AddMonoid.class_of BiNearRing_of_AddMonoid.axioms.
 
 (* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
 (* we alias it for backward compatilibity and uniformity purposes *)
-Elpi hb.declare_factory SemiRing_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_factory SemiRing_of_AddComoid A AddComoid.class_of.
   Definition axioms := BiNearRing_of_AddMonoid.axioms_ A.
   Definition Axioms := @BiNearRing_of_AddMonoid.Axioms.
   Variables (a : axioms).
-  Definition to_BiNearRing_of_AddMonoid : BiNearRing_of_AddMonoid.axioms_ A := a.
-Elpi hb.end to_BiNearRing_of_AddMonoid.
+  Definition to_BiNearRing_of_AddMonoid :
+     BiNearRing_of_AddMonoid.axioms_ A := a.
+  Elpi hb.canonical A to_BiNearRing_of_AddMonoid.
+Elpi hb.end.
 
 (* End changes *)
 
-Elpi hb.structure SemiRing AddComoid.axioms SemiRing_of_AddComoid.axioms.
+Elpi hb.structure SemiRing AddComoid.class_of SemiRing_of_AddComoid.axioms.
 
-Elpi hb.declare_factory Ring_of_AddAG A AddAG.axioms.
+Elpi hb.declare_factory Ring_of_AddAG A AddAG.class_of.
   Record axioms := Axioms {
     one : A;
     mul : A -> A -> A;
@@ -136,13 +139,14 @@ Elpi hb.declare_factory Ring_of_AddAG A AddAG.axioms.
   by rewrite -mulrDr add0r addrC addNr.
   Qed.
 
-  Definition to_SemiRing_of_AddComoid : SemiRing_of_AddComoid.axioms_ A :=
-    SemiRing_of_AddComoid.Axioms _ (mul a) (mulrA a) (mulr1 a) (mul1r a)
-      (mulrDl a) (mulrDr a) (mul0r) (mulr0).
+  Definition to_SemiRing_of_AddComoid := SemiRing_of_AddComoid.Axioms_ A
+    _ (mul a) (mulrA a) (mulr1 a) (mul1r a)
+    (mulrDl a) (mulrDr a) (mul0r) (mulr0).
+  Elpi hb.canonical A to_SemiRing_of_AddComoid.
 
-Elpi hb.end to_SemiRing_of_AddComoid.
+Elpi hb.end.
 
-Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.axioms.
+Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.class_of.
   Record axioms := Axioms {
     opp : A -> A;
     one : A;
@@ -157,14 +161,14 @@ Elpi hb.declare_factory Ring_of_AddComoid A AddComoid.axioms.
 
   Variable a : axioms.
 
-  Definition to_AddAG_of_AddComoid : AddAG_of_AddComoid.axioms_ A :=
-    AddAG_of_AddComoid.Axioms _ (addNr a).
+  Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms_ A _ (addNr a).
   Elpi hb.canonical A to_AddAG_of_AddComoid.
 
-  Definition to_Ring_of_AddAG : Ring_of_AddAG.axioms_ A :=
-    Ring_of_AddAG.Axioms _ _ (mulrA a) (mul1r a) (mulr1 a) (mulrDl a) (mulrDr a).
+  Definition to_Ring_of_AddAG := Ring_of_AddAG.Axioms_ A
+    _ _ (mulrA a) (mul1r a) (mulr1 a) (mulrDl a) (mulrDr a).
+  Elpi hb.canonical A to_Ring_of_AddAG.
 
-Elpi hb.end to_AddAG_of_AddComoid to_Ring_of_AddAG.
+Elpi hb.end.
 
 Elpi hb.declare_factory Ring_of_TYPE A.
   Record axioms := Axioms {
@@ -185,14 +189,14 @@ Elpi hb.declare_factory Ring_of_TYPE A.
   }.
 
   Variable a : axioms.
-  Definition to_AddComoid_of_TYPE : AddComoid_of_TYPE.axioms_ A :=
-    AddComoid_of_TYPE.Axioms (zero a) (add a) (addrA _) (addrC _) (add0r _).
+  Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Axioms_ A
+    (zero a) (add a) (addrA _) (addrC _) (add0r _).
   Elpi hb.canonical A to_AddComoid_of_TYPE.
 
-  Definition to_Ring_of_AddComoid : Ring_of_AddComoid.axioms_ A :=
-    Ring_of_AddComoid.Axioms _ _ _ (addNr _) (mulrA _) (mul1r _)
-      (mulr1 _) (mulrDl _) (mulrDr _).
-Elpi hb.end to_AddComoid_of_TYPE to_Ring_of_AddComoid.
+  Definition to_Ring_of_AddComoid := Ring_of_AddComoid.Axioms_ A
+    _ _ _ (addNr _) (mulrA _) (mul1r _) (mulr1 _) (mulrDl _) (mulrDr _).
+  Elpi hb.canonical A to_Ring_of_AddComoid.
+Elpi hb.end.
 
 Elpi hb.structure Ring Ring_of_TYPE.axioms.
 
@@ -231,8 +235,8 @@ End Theory.
 
 (* Instance *)
 
-Definition Z_ring_axioms : Ring_of_TYPE.axioms_ Z :=
-  Ring_of_TYPE.Axioms 0%Z 1%Z Z.add Z.opp Z.mul
+Definition Z_ring_axioms :=
+  Ring_of_TYPE.Axioms_ Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
