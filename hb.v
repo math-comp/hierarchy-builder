@@ -98,6 +98,8 @@ pred mixin-first-class o:mixinname, o:classname.
 % [to-export Module] means that Module must be exported in the end
 pred to-export o:modpath.
 
+pred locally-exporting.
+
 % [current-decl D] states that we are currently declaring a
 % | mixin   if D = mixin-decl
 % | factory if D = factory-decl
@@ -107,6 +109,8 @@ type factory-decl declaration.
 pred current-decl o:declaration.
 
 pred local-factory o:term.
+
+pred exported-op o:constant, o:constant.
 
 }}.
 
@@ -235,13 +239,8 @@ Elpi Command hb.canonical.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !, std.do! [
-  std.forall FIL (f\ acc current (clause _ _ (local-factory f))),
-  std.map FIL (mixin-srcs T) MSLL,
-  canonical-mixins T CMSL,
-  std.flatten [CMSL|MSLL] MSL,
-  MSL => declare-instances T {findall-classes},
-].
+main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !, 
+  main-declare-canonical T FIL.
 main _ :- coq.error "Usage: hb.canonical <CarrierTerm> <FactoryInstanceTerm>*".
 
 }}.
