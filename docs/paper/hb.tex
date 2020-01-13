@@ -8,7 +8,7 @@
 \newmintinline[coq]{elpi.py:CoqElpiLexer -x}{fontsize=\small}
 
 \newcommand{\coqelpi}{Coq-Elpi}
-\newcommand{\F}{\emph{Factory}}
+\newcommand{\HB}{\ensuremath{\mathcal{HB}}}
 
 %This is a template for producing LIPIcs articles. 
 %See lipics-manual.pdf for further information.
@@ -23,9 +23,9 @@
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
 
-\title{Packed, Flat, Classes for the masses: algebraic~hierarchies made easy with Coq-Elpi} %TODO Please add
+\title{Hierarchy Builder: algebraic~hierarchies made easy with Coq-Elpi} %TODO Please add
 
-\titlerunning{Packed, Flat, Classes with Coq-Elpi}%optional, please use if title is longer than one line
+\titlerunning{Hierarchy Builder}%optional, please use if title is longer than one line
 
 \author{Cyril Cohen}{Inria, France}{Cyril.Cohen@inria.fr}{}{}
 \author{Kazuhiko Sakaguchi}{University of Tsukuba, Japan}{sakaguchi@coins.tsukuba.ac.jp}{}{}
@@ -80,7 +80,7 @@
 \begin{abstract}
 In this paper we design a high level language
 to declare hierarchies of algebraic structures in Coq and
-we provide an implementation base on the Elpi extension language.
+we provide an implementation based on the Elpi extension language.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -109,7 +109,7 @@ Moreover changes to an
 already published hierarchy almost certainly break the code users.
 
 In this paper we design a high level language for the Coq system to describe
-hierarchies. We call this language \F{} (do you like it Cyril?)
+hierarchies. We call this language \HB{}
 This language introduces the notion of \emph{factory} that is key
 to modify an existing hierarchy without breaking client code of the hierarchy.
 The language is elaborated in terms of records, coercions and canonical
@@ -130,10 +130,17 @@ a hierarchy not breaking user code. Then say "without our too it would break her
 this section should be readable by non packed classes expert.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The user language of \F{}}
+\section{The user language of \HB{}}
 This is the contents of the readme, with high level invariants (not related to packed
 classes: instead of saying there is a CS, you say "ops from A and B should be compatible")
 
+\begin{coqcode}
+hb.declare_mixin FactoryModuleName TypeName Factories.
+hb.declare_factory FactoryModuleName TypeName Factories.
+hb.end Functions.
+hb.structure ModuleName Factories.
+hb.instance Carrier Factories.
+\end{coqcode}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -231,7 +238,7 @@ this is the part of the readme that says "for each join declare a CS"
 
 The implementation is based on the Elpi
 extension language for Coq. In this section we introduce the features of the
-programming language that came handy in the development of \F{} and
+programming language that came handy in the development of \HB{} and
 commenting a few code snippets.
 
 Coq-Elpi~\cite{CoqElpi} is a Coq plugin embedding
@@ -383,7 +390,7 @@ then it crafts a name for it \elpi{Name} (line \ref{craft:name}),
 fetches its dependencies (line \ref{deps:fetch}) and
 finds the (previous declared) record fields hoding these mixins
 (line \ref{deps:satisfy}).
-The \elpi{(std.map L1 P L2} predicate relates the two lists \elpi{L1} and
+The \elpi{(std.map L1 P L2)} predicate relates the two lists \elpi{L1} and
 \elpi{L2} pointwise using the predicate \elpi{P}.
 
 Line \ref{build:type} builds the type of the field: the mixin name applied
@@ -438,7 +445,7 @@ if we can port ssralg, or not... It would be nice, but maybe its a bit late.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related work}
 The closest work is the one about Packed Classes~\cite{DBLP:conf/tphol/GarillotGMR09} on which we
-build. The main differences are that \F{} is a higher level language
+build. The main differences are that \HB{} is a higher level language
 that is compiled down to Flat Packed Classes. The systematic use of
 factories makes the user interface of a hierarchy stable under the insertion of
 intermediate structures in the hierarchy, a property that Packed Classes lacks.
@@ -464,7 +471,7 @@ a commutative monoid and a group focing the subjacent monoid to coincide:
 \begin{verbatim}
 CommutativeGroup := combine CommutativeMonoid , Group over Monoid
 \end{verbatim}
-In our language \F{} the same role is played by \emph{mixins}.
+In our language \HB{} the same role is played by \emph{mixins}.
 A mixin lets one write once and forall a property and abstract it over types
 and operations so that it can be reused in all the structures that need it.
 
@@ -496,8 +503,8 @@ equivalent structures as equal.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
-In this paper we design and implement \F{}, a high level language to describe
-hierarchies of algebraic structures. The implementation of \F{} is
+In this paper we design and implement \HB{}, a high level language to describe
+hierarchies of algebraic structures. The implementation of \HB{} is
 based on the Elpi excension language for the Coq system and is available
 at \url{https://github.com/math-comp/hierarchy-builder}.
 

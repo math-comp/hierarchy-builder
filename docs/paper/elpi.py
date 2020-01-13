@@ -60,8 +60,8 @@ class ElpiLexer(RegexLexer):
             (r'^\s*external pred\s', Keyword),
             (r'\s[io]:', Keyword),
             (r'(:-|pi\b(?!-)|=>|\\|kind\b(?!-)|type\b(?!-)|is\b(?!-)|!)', Keyword),
-            (r'(term|record-decl|indt-decl|@mixinname|@structurename|@factoryname|universe|list|pair|gref)\b(?!-)', Name.Class),
-            (r'(string|bool|@constant|@inductive|@constructor)\b', String.Atom),
+            (r'(term|record-decl|indt-decl|mixinname|structurename|factoryname|universe|list|pair|gref)\b(?!-)', Name.Class),
+            (r'(string|bool|constant|inductive|constructor)\b', String.Atom),
             (r'(std|coq|CS|env|elpi)(\.)', bygroups(Name.Builtin, Punctuation)),
             (u'([a-z\u00c0-\u1fff\u3040-\ud7ff\ue000-\uffef]'
              u'[\\w$\u00c0-\u1fff\u3040-\ud7ff\ue000-\uffef]*)'
