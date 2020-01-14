@@ -3,7 +3,7 @@
 # hierarchy-builder
 High level commands to declare a hierarchy based on packed classes.
 
-:warn: This software is under active development, don't use it right now.
+:warning: This software is under active development, don't use it right now.
 
 The user level commands are defined and documented in [hb](hb.v),
 look for `Elpi Command hb...`
