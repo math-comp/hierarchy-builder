@@ -129,6 +129,10 @@ a hierarchy not breaking user code. Then say "without our too it would break her
 
 this section should be readable by non packed classes expert.
 
+use the picture with the puzzle
+
+stage0 + stage1 of demo1
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The user language of \HB{}}
 This is the contents of the readme, with high level invariants (not related to packed
@@ -159,7 +163,7 @@ Module S.
   Record mixin A C := {
     one : A;
     op : A -> A -> A;
-    _ : forall x, C.op (op x) = one
+    opK : forall x, op (op x) = one
   }
   Record class_of A := {
     base : T.class_of A;
@@ -173,6 +177,7 @@ Module S.
     Coercion sort : type >-> Sortclass.
     Definition op {T : type} : T -> T -> T := ...
     Definition one {T:  type} : T := ...
+    Definition opK {T:  type} : forall x, op (op x) = one := ...
     Infix "*" := op.
     Infix "1" := one.
   End Exports.
@@ -217,24 +222,13 @@ mixins since this more uniform.
 
 TODO: Example of a by hand flatten class, maybe the one of the join.
 
-\subsection{Other target languages}
-
-We could have chosen nested records (pollack) or unbundled (spitters)
-but both have serious performance issue, the latter partially mitigated by
-the addition of primitive records. TC implementation in Coq is not as
-reliable as CS.
-
-It is a virtue of our work to provide a user language that is separate
-from the implementation one, so we could in principle target any other
-equally expressive language without the user noticing.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compilation}\label{sec:compilation}
 this is the part of the readme that says "for each join declare a CS"
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The implementation}\label{sec:implementation}
+\section{The implementation in Coq-Elpi}\label{sec:implementation}
 
 The implementation is based on the Elpi
 extension language for Coq. In this section we introduce the features of the
@@ -474,6 +468,7 @@ CommutativeGroup := combine CommutativeMonoid , Group over Monoid
 In our language \HB{} the same role is played by \emph{mixins}.
 A mixin lets one write once and forall a property and abstract it over types
 and operations so that it can be reused in all the structures that need it.
+TODO: cyril fix this sentence
 
 The MMT system~\cite{RABE20131} provides a framework to describe formal
 languages in a logical framework, providing good support for binders and
@@ -500,6 +495,21 @@ is characterized by an extensional notion of equality that makes it easy
 to share the signature or the properties of structures by just requiring
 a proof of their equivalence that is in turn used by autmation to treat
 equivalent structures as equal.
+
+TODO: the word factory comes from "the gang of four" design patterns, we
+could cite it. Cyril sees a similarity between the AbstractFactory design
+pattern and our notion of factory.
+
+\subsection{Other target languages}
+
+We could have chosen nested records (pollack) or unbundled (spitters)
+but both have serious performance issue, the latter partially mitigated by
+the addition of primitive records. TC implementation in Coq is not as
+reliable as CS.
+
+It is a virtue of our work to provide a user language that is separate
+from the implementation one, so we could in principle target any other
+equally expressive language without the user noticing.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
