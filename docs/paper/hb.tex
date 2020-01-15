@@ -4,7 +4,7 @@
 \usepackage{minted} % pip3 install pygments, pdflatex -shell-escape hb
 \newminted[elpicode]{elpi.py:ElpiLexer -x}{linenos=true,fontsize=\footnotesize,escapeinside=\%\%}
 \newmintinline[elpi]{elpi.py:ElpiLexer -x}{fontsize=\small}
-\newminted[coqcode]{elpi.py:CoqElpiLexer -x}{linenos=true,fontsize=\footnotesize,mathescape}
+\newminted[coqcode]{elpi.py:CoqElpiLexer -x}{linenos=true,fontsize=\footnotesize,mathescape,escapeinside=\#\#}
 \newmintinline[coq]{elpi.py:CoqElpiLexer -x}{fontsize=\small}
 
 \newcommand{\coqelpi}{Coq-Elpi}
@@ -123,15 +123,233 @@ We implement this language using the ELPI extension language for Coq.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \section{Example: building and evolving a hierarchy}
-the more I think about it and the more I believe we should not 
-present packed classes here, but just our code and the evolution of
-a hierarchy not breaking user code. Then say "without our too it would break here".
 
-this section should be readable by non packed classes expert.
+We begin by building our first ``hierarchy''. It features only two
+structures: \coq{TYPE} (a carrier with no properties) and \coq{Ring}.
 
-use the picture with the puzzle
+\begin{coqcode}
+Elpi hb.structure TYPE.                            #\label{demo:structure:type}#
 
-stage0 + stage1 of demo1
+Elpi hb.declare_mixin Ring_of_TYPE A.           #\label{demo:declare_mixin:rot}#
+  Record axioms := Axioms {
+    zero : A;
+    one : A;
+    add : A -> A -> A;
+    opp : A -> A;
+    mul : A -> A -> A;
+    addrA : associative add;
+    addrC : commutative add;
+    add0r : left_id zero add;
+    addNr : left_inverse zero opp add;
+    mulrA : associative mul;
+    mul1r : left_id one mul;
+    mulr1 : right_id one mul;
+    mulrDl : left_distributive mul add;
+    mulrDr : right_distributive mul add;
+  }.
+Elpi hb.end.                                #\label{demo:declare_mixin:rot:end}#
+Elpi hb.structure Ring Ring_of_TYPE.axioms.
+\end{coqcode}
+
+The \coq{hb.structure} command takes in input a name S and a possibly
+empty list of assets. It registers a structure S in the hierarchy placing
+any definition specific to that structure inside a Coq module named \coq{S}.
+
+Line~\ref{demo:structure:type} hence forges a the empty structure
+that is going to be the root of the hierarchy.
+
+In order to build a non empty structure we need to declare some assets and
+later assemble them. One kind of asset supported by \HB{} is called
+\emph{mixin} and is embodied by a record, by convention named \coq{axioms},
+that packs operations and properties.
+Mixins are declared via the \coq{hb.declare_mixin} command
+that takes a module name,
+a type variable name and a possibly empty list of assets for that type.
+The code between lines~\ref{demo:declare_mixin:rot}
+and~\ref{demo:declare_mixin:rot:end} declares a mixin that can turn a naked
+type into a ring, hence we chose the module name to be \coq{Ring_of_TYPE}.
+
+The last line declares the structure \coq{Ring} to hold the asset that
+was just declared. We can now inspect the contents of the hierarchy and then
+proceed to build a theory about abstract rings,
+register examples (instances) of ring structures
+and finally use the abstract theory on these examples.
+
+\begin{coqcode}
+Print Ring.type. (* Record type := { sort : Type;  class : Ring.class_of sort } *) #\label{demo:theory:print:type}#
+Check @add. (* forall R : Ring.type, R -> R -> R *)                #\label{demo:theory:check:zero}#
+Check @add0r. (* forall R : Ring.type, left_id zero add *)   #\label{demo:theory:check:add0r}#
+
+Lemma addr0 : forall R : Ring.type, right_id (@zero R) add. #\label{demo:theory:state:addr0}#
+Proof. by move=> x; rewrite addrC add0r. Qed.
+
+Definition Z_ring_axioms :=                               #\label{demo:theory:zaxioms}#
+  Ring_of_TYPE.Axioms Z 0%Z 1%Z Z.add Z.opp Z.mul
+    Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
+    Z.mul_assoc Z.mul_1_l Z.mul_1_r
+    Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Elpi hb.canonical Z Z_ring_axioms.                        #\label{demo:theory:zaxioms:canonical}#
+
+Lemma exercise (m n : Z) : - n + (n + m) + 0 = m.
+Proof. rewrite addrA addNr add0r addr0. Qed.
+\end{coqcode}
+
+Line~\ref{demo:theory:print:type} prints the type for rings as forged by \HB{}.
+It packs a carrier, called \coq{sort}, and the collection of operation and
+properties, called \coq{class}.
+Lines~\ref{demo:theory:check:zero} and~\ref{demo:theory:check:add0r}
+show the type of two constants synthesized by \HB{} out of the hierarchy
+declaration. Note that while the names of the constants come from the
+the names of the mixin fields, their types differ.
+In particular they are quantified over a \coq{Ring.type}, and not
+a simple type as in the mixin. Moreover we evince that
+the \coq{sort} projection is declared as a coercion and is automatically
+inserted in order to make \coq{R -> R -> R} a meaningful type for binary
+operations on the carrier of \coq{R}.
+
+We then prove lemma \coq{addr0}, line~\ref{demo:theory:state:addr0}, that is
+a trivial consequence of the ring axioms. Albeit simple this example shows
+we can populate the theory of rings with new results.
+
+Line~\ref{demo:theory:zaxioms} uses the \coq{Ring_of_TYPE.Axioms}
+\emph{packager} to build an instance of the \coq{Ring} structure for \coq{Z}.
+Line~\ref{demo:theory:zaxioms:canonical} registers that
+ring instance as the canonical one on \coq{Z}.
+From now on the theory of rings applies to
+integers, as shown in lemma \coq{exercise}.
+\marginpar{I sue Axiom and not Axioms\_ everywhere, I think we should name
+Axioms\_ the low level constructor, and Axioms the one with phantoms}.
+
+\subsection{Evolution of the hierarchy}
+
+We now proceed by changing the hierarchy to accomodate the intermediate
+structure \coq{AddComoid} of commutative monoids.
+
+\begin{coqcode}
+Elpi hb.structure TYPE.
+
+Elpi hb.declare_mixin AddComoid_of_TYPE A.
+  Record axioms := Axioms {
+    zero : A;
+    add : A -> A -> A;
+    addrA : associative add;
+    addrC : commutative add;
+    add0r : left_id zero add;
+  }.
+Elpi hb.end.
+Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
+
+Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.class_of. #\label{demo2:mixin:ring}#
+  Record axioms := Axioms {
+    opp : A -> A;
+    one : A;
+    mul : A -> A -> A;
+    addNr : left_inverse zero opp add;
+    mulrA : associative mul;
+    mul1r : left_id one mul;
+    mulr1 : right_id one mul;
+    mulrDl : left_distributive mul add;
+    mulrDr : right_distributive mul add;
+  }.
+Elpi hb.end.
+Elpi hb.structure Ring AddComoid_of_TYPE.axioms Ring_of_AddComoid.axioms. #\label{demo2:structure:ring}#
+\end{coqcode}
+
+Line~\ref{demo2:mixin:ring} declares a mixin for a type \coq{A}. This
+time \coq{A} is not a naked type, but rather a type for which the
+the assets of a commutative monoid\marginpar{kill class\_of} are available.
+Indeed the operation \coq{add} is in scope and can be used
+together with new operations such as \coq{opp} to state properties,
+e.g. \coq{addNr}.
+Line~\ref{demo2:structure:ring} declares the ring structure.
+
+With the new hierarchy as declared so far some code we previously wrote
+works but not all of it. For example the simple proof of \coq{addr0} works
+but the declaration of the canonical ring over the integers fails, if only
+because we don't have a \coq{Ring_of_TYPE.Axiom} anymore.
+% Similarly we had to
+% change the previously existing declaration of the ring structure.
+
+The problem is depicted in figure~\ref{fig:puzzle} where three versions
+of the hierarchy are depicted, the current one being the one in the middle.
+
+\begin{figure}[!h]
+\begin{center}
+\includegraphics[width=\textwidth]{puzzle.pdf}
+\end{center}
+\caption{\label{fig:puzzle}The evolution of the hierarchy. V3 is backward compatible with V1, while V2 is not.}
+\end{figure}
+
+The key to make a hierarchy evolve without breaking user code is the second
+kind of assets \HB{} provides: \emph{factories}.
+
+Factories, like mixins, are packages for operations and properties but are
+not directly used in the definition of structures. Instead a factory is
+equipped with \emph{builders}: user provided pieces of code that extract
+from the factory the contents of mixins, so that packagers can be used.
+
+We can make out new hierarchy compatible with pre exisintg user code by
+declaring a \coq{Ring_of_TYPE} factory, that, from the user point of view,
+will look indistinguishable from the old \coq{Ring_of_TYPE} mixin.
+
+\begin{coqcode}
+Elpi hb.declare_factory Ring_of_TYPE A.
+  Record axioms := Axioms {
+    zero : A;
+    one : A;
+    add : A -> A -> A;
+    opp : A -> A;
+    mul : A -> A -> A;
+    addrA : associative add;
+    addrC : commutative add;
+    add0r : left_id zero add;
+    addNr : left_inverse zero opp add;
+    mulrA : associative mul;
+    mul1r : left_id one mul;
+    mulr1 : right_id one mul;
+    mulrDl : left_distributive mul add;
+    mulrDr : right_distributive mul add;
+  }.
+
+  Variable a : axioms.
+  Definition to_AddComoid_of_TYPE :=
+    AddComoid_of_TYPE.Axioms A (zero a) (add a) (addrA _) (addrC _) (add0r _).
+  Elpi hb.canonical A to_AddComoid_of_TYPE.
+
+  Definition to_Ring_of_AddComoid :=
+    Ring_of_AddComoid.Axioms A _ _ _ (addNr _) (mulrA _) (mul1r _)
+      (mulr1 _) (mulrDl _) (mulrDr _).
+  Elpi hb.canonical A to_Ring_of_AddComoid.
+Elpi hb.end.
+\end{coqcode}
+
+The construction \coq{to_AddComoid_of_TYPE}
+explain how to build a \coq{AddComoid} structure out of the factory
+axioms (named \coq{a}). This construction is registered as canonical for \coq{A},
+so that the next construction \coq{to_Ring_of_AddComoid} can call
+the \coq{Ring_of_AddComoid.Axioms} packager (that requires \coq{A} to be
+an \coq{AddComoid}). In this simple example the two constructions are just
+partitioning the contents of factory, but in practice they often involve
+interactive proofs that the properties held by the factories imply the
+ones held by the mixins characterizing the structures tha are built.
+
+Once the factory is declared one can replace
+\coq{Elpi hb.structure Ring AddComoid_of_TYPE.axioms Ring_of_AddComoid.axioms}
+with \coq{Elpi hb.structure Ring Ring_of_TYPE.axioms}, since the two commands
+are now equivalent.
+
+The new version of the hierarchy is now backward compatible with the initial one.
+Indeed the user can declared \coq{Z} to be an instance
+of a ring using the \coq{Ring_of_TYPE.axioms} factory. The associated
+builder is going to generate behind the scenese instances of the
+\coq{Ring_of_AddComoid.axioms} and \coq{AddComoid_of_TYPE.axioms} mixins
+that in turn are used to build instances of the \coq{AddComoid} and \coq{Ring}
+structures. The command \coq{Elpi hb.canonical Z Z_ring_axioms} is going
+make \coq{Z} an instance of both structures. Indeed the
+proof of \coq{example} now requires \coq{Z} not only to be a ring,
+but also a \coq{AddComoid} since, for example, \coq{addrA} is a
+property of that structure.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The user language of \HB{}}
