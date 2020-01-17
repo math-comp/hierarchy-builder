@@ -155,8 +155,7 @@ Elpi hb.structure Ring Ring_of_TYPE.axioms.
 The \coq{hb.structure} command takes in input a name S and a possibly
 empty list of assets. It registers a structure S in the hierarchy placing
 any definition specific to that structure inside a Coq module named \coq{S}.
-Line~\ref{demo:structure:type} hence forges a the empty structure
-that is going to be the root of the hierarchy.
+Line~\ref{demo:structure:type} hence forges a the empty structure \coq{TYPE}.
 
 In order to build a non empty structure we need to declare some assets and
 later assemble them. One kind of asset supported by \HB{} is called
@@ -176,9 +175,9 @@ register examples (instances) of ring structures
 and finally use the abstract theory on these examples.
 
 \begin{coqcode}
-Print Ring.type. (* Record type := { sort : Type;  class : Ring.class_of sort } *) #\label{demo:theory:print:type}#
-Check @add. (* forall R : Ring.type, R -> R -> R *)                #\label{demo:theory:check:zero}#
-Check @add0r. (* forall R : Ring.type, left_id zero add *)   #\label{demo:theory:check:add0r}#
+Print Ring.type. (* Ring.type  :=  { sort : Type;  class : Ring.class_of sort } *) #\label{demo:theory:print:type}#
+Check @add.      (* add        :   forall R : Ring.type, R -> R -> R            *) #\label{demo:theory:check:zero}#
+Check @add0r.    (* add0r      :   forall R : Ring.type, left_id zero add       *) #\label{demo:theory:check:add0r}#
 
 Lemma addr0 : forall R : Ring.type, right_id (@zero R) add. #\label{demo:theory:state:addr0}#
 Proof. by move=> x; rewrite addrC add0r. Qed.
@@ -760,6 +759,30 @@ set of APIs. While the APIs are tied to Coq, the Elpi programming language
 comes as an OCaml library and could, in principle, be linked to other provers.
 
 \bibliography{biblio}
+
+\appendix
+
+\section{Coq reference}
+
+\begin{coqcode}
+Section OperationProperties.
+Variable T : Type.
+Variable e : T.
+Variable inv : T -> T.
+Variable op : T -> T -> T.
+Variable add : T -> T -> T.
+
+Definition left_id  := forall x, op e x = x.
+Definition right_id := forall x, op x e = x.
+
+Definition left_inverse := forall x, op (inv x) x = e.
+
+Definition commutative := forall x y, op x y = op y x.
+Definition associative := forall x y z, op x (op y z) = op (op x y) z.
+
+Definition left_distributive  := forall x y z, op (add x y) z = add (op x z) (op y z).
+Definition right_distributive := forall x y z, op x (add y z) = add (op x y) (op x z).
+\end{coqcode}
 
 \end{document}
 

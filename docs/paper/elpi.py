@@ -178,6 +178,7 @@ class CoqElpiLexer(RegexLexer):
             (r'\s+', Text),
             (r'false|true|\(\)|\[\]', Name.Builtin.Pseudo),
             (r'\(\*', Comment, 'comment'),
+            (r'Implicit Type', Keyword.Namespace),
             (words(keywords1, prefix=r'\b', suffix=r'\b'), Keyword.Namespace),
             (words(keywords2, prefix=r'\b', suffix=r'\b'), Keyword),
             (words(keywords3, prefix=r'\b', suffix=r'\b'), Keyword.Type),
