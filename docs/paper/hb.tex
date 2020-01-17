@@ -124,8 +124,9 @@ We implement this language using the ELPI extension language for Coq.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \section{Example: building and evolving a hierarchy}
 
-We begin by building our first ``hierarchy''. It features only two
-structures: \coq{TYPE} (a carrier with no properties) and \coq{Ring}.
+The first version of our hierarchy (that we name V1) features only two
+structures: \coq{TYPE}, a naked carrier type without any properties, and
+\coq{Ring}.
 
 \begin{coqcode}
 Elpi hb.structure TYPE.                            #\label{demo:structure:type}#
@@ -154,7 +155,6 @@ Elpi hb.structure Ring Ring_of_TYPE.axioms.
 The \coq{hb.structure} command takes in input a name S and a possibly
 empty list of assets. It registers a structure S in the hierarchy placing
 any definition specific to that structure inside a Coq module named \coq{S}.
-
 Line~\ref{demo:structure:type} hence forges a the empty structure
 that is going to be the root of the hierarchy.
 
@@ -195,13 +195,12 @@ Lemma exercise (m n : Z) : - n + (n + m) + 0 = m.
 Proof. rewrite addrA addNr add0r addr0. Qed.
 \end{coqcode}
 
-Line~\ref{demo:theory:print:type} prints the type for rings as forged by \HB{}.
+We can print the type for rings as forged by \HB{} (line~\ref{demo:theory:print:type}).
 It packs a carrier, called \coq{sort}, and the collection of operation and
-properties, called \coq{class}.
-Lines~\ref{demo:theory:check:zero} and~\ref{demo:theory:check:add0r}
-show the type of two constants synthesized by \HB{} out of the hierarchy
-declaration. Note that while the names of the constants come from the
-the names of the mixin fields, their types differ.
+properties, called \coq{class}.  We can also look at the type of two
+constants synthesized by \HB{} out of the hierarchy declaration. Remark that
+while the names of the constants come from the the names of the mixin fields,
+their types differ.
 In particular they are quantified over a \coq{Ring.type}, and not
 a simple type as in the mixin. Moreover we evince that
 the \coq{sort} projection is declared as a coercion and is automatically
@@ -212,13 +211,13 @@ We then prove lemma \coq{addr0}, line~\ref{demo:theory:state:addr0}, that is
 a trivial consequence of the ring axioms. Albeit simple this example shows
 we can populate the theory of rings with new results.
 
-Line~\ref{demo:theory:zaxioms} uses the \coq{Ring_of_TYPE.Axioms}
-\emph{packager} to build an instance of the \coq{Ring} structure for \coq{Z}.
-Line~\ref{demo:theory:zaxioms:canonical} registers that
-ring instance as the canonical one on \coq{Z}.
+We use the \coq{Ring_of_TYPE.Axioms} \emph{packager} (line~\ref{demo:theory:zaxioms})
+in order to build an instance of the \coq{Ring} structure for \coq{Z}.
+We then register that ring instance as the canonical one on \coq{Z}
+(line~\ref{demo:theory:zaxioms:canonical}).
 From now on the theory of rings applies to
 integers, as shown in lemma \coq{exercise}.
-\marginpar{I sue Axiom and not Axioms\_ everywhere, I think we should name
+\marginpar{I use Axiom and not Axioms\_ everywhere, I think we should name
 Axioms\_ the low level constructor, and Axioms the one with phantoms}.
 
 \subsection{Evolution of the hierarchy}
@@ -256,29 +255,30 @@ Elpi hb.end.
 Elpi hb.structure Ring AddComoid_of_TYPE.axioms Ring_of_AddComoid.axioms. #\label{demo2:structure:ring}#
 \end{coqcode}
 
-Line~\ref{demo2:mixin:ring} declares a mixin for a type \coq{A}. This
-time \coq{A} is not a naked type, but rather a type for which the
-the assets of a commutative monoid\marginpar{kill class\_of} are available.
-Indeed the operation \coq{add} is in scope and can be used
-together with new operations such as \coq{opp} to state properties,
-e.g. \coq{addNr}.
-Line~\ref{demo2:structure:ring} declares the ring structure.
+The first interesting line is~\ref{demo2:mixin:ring} where we declare a mixin
+for a type variable \coq{A}. This time \coq{A} is not a naked type, but rather
+a type for which the the assets of a commutative monoid are available.
+\marginpar{we did not show class\_of, it would be much nicer to have an axioms (from type) thing}
+This is why the operation \coq{add} is in scope and can be used
+together with new operations such as \coq{opp} to state properties, for
+example \coq{addNr}.
+We conclude by declaring the ring structure as the structure featuring both
+mixins declared so far.
 
-With the new hierarchy as declared so far some code we previously wrote
-works but not all of it. For example the simple proof of \coq{addr0} works
+With this new version of the hierarchy, that we name V2, some code written
+for version V1 breaks. For example the simple proof of \coq{addr0} works
 but the declaration of the canonical ring over the integers fails, if only
-because we don't have a \coq{Ring_of_TYPE.Axiom} anymore.
-% Similarly we had to
-% change the previously existing declaration of the ring structure.
+because we don't have a \coq{Ring_of_TYPE.Axiom} packager anymore.
 
-The problem is depicted in figure~\ref{fig:puzzle} where three versions
-of the hierarchy are depicted, the current one being the one in the middle.
+Our objective is to obtain a version of the hierarchy, say V3, that does
+not only feature commutative monoids but that is also backward compatible
+with V1.
 
 \begin{figure}[!h]
-\begin{center}
-\includegraphics[width=\textwidth]{puzzle.pdf}
-\end{center}
-\caption{\label{fig:puzzle}The evolution of the hierarchy. V3 is backward compatible with V1, while V2 is not.}
+  \begin{center}
+    \includegraphics[width=\textwidth]{puzzle.pdf}
+  \end{center}
+  \caption{\label{fig:puzzle}The evolution of the hierarchy. V3 is backward compatible with V1, while V2 is not.}
 \end{figure}
 
 The key to make a hierarchy evolve without breaking user code is the second
@@ -289,9 +289,11 @@ not directly used in the definition of structures. Instead a factory is
 equipped with \emph{builders}: user provided pieces of code that extract
 from the factory the contents of mixins, so that packagers can be used.
 
-We can make out new hierarchy compatible with pre exisintg user code by
-declaring a \coq{Ring_of_TYPE} factory, that, from the user point of view,
-will look indistinguishable from the old \coq{Ring_of_TYPE} mixin.
+As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
+by declaring a \coq{Ring_of_TYPE} factory, that, from the user point of view,
+will look indistinguishable from the old \coq{Ring_of_TYPE} mixin
+and hence grant backward compatibility between this last version V3 and the
+initial one V1.
 
 \begin{coqcode}
 Elpi hb.declare_factory Ring_of_TYPE A.
@@ -312,44 +314,48 @@ Elpi hb.declare_factory Ring_of_TYPE A.
     mulrDr : right_distributive mul add;
   }.
 
-  Variable a : axioms.
+  Variable f : axioms.                            #\label{demo3:variable:f}#
+
   Definition to_AddComoid_of_TYPE :=
-    AddComoid_of_TYPE.Axioms A (zero a) (add a) (addrA _) (addrC _) (add0r _).
+    AddComoid_of_TYPE.Axioms A (zero f) (add f) (addrA f) (addrC f) (add0r f).
   Elpi hb.canonical A to_AddComoid_of_TYPE.
 
   Definition to_Ring_of_AddComoid :=
-    Ring_of_AddComoid.Axioms A _ _ _ (addNr _) (mulrA _) (mul1r _)
-      (mulr1 _) (mulrDl _) (mulrDr _).
+    Ring_of_AddComoid.Axioms A _ _ _ (addNr f) (mulrA f) (mul1r f) #\label{demo3:phantom}#
+      (mulr1 f) (mulrDl f) (mulrDr f).
   Elpi hb.canonical A to_Ring_of_AddComoid.
 Elpi hb.end.
 \end{coqcode}
 
-The construction \coq{to_AddComoid_of_TYPE}
+The record \coq{Ring_of_TYPE.axioms} is the same we declared as a mixin
+in version V1. In order to make a factory out of it we equip it with
+two constructions. The first is \coq{to_AddComoid_of_TYPE} and
 explain how to build a \coq{AddComoid} structure out of the factory
-axioms (named \coq{a}). This construction is registered as canonical for \coq{A},
+axioms (named \coq{f}, line~\ref{demo3:variable:f}).
+This construction is also registered as canonical for \coq{A},
 so that the next construction \coq{to_Ring_of_AddComoid} can call
 the \coq{Ring_of_AddComoid.Axioms} packager (that requires \coq{A} to be
-an \coq{AddComoid}). In this simple example the two constructions are just
-partitioning the contents of factory, but in practice they often involve
-interactive proofs that the properties held by the factories imply the
-ones held by the mixins characterizing the structures tha are built.
+an \coq{AddComoid} in order to fill in the three \coq{_} at
+line~\ref{demo3:phantom}). In this simple example the two constructions are just
+partitioning the contents of the factory \coq{f}, but in practice they
+often involve interactive proofs that the properties held by the factory
+imply the ones held by the mixins characterizing the structures that are
+being constructed.
 
-Once the factory is declared one can replace
-\coq{Elpi hb.structure Ring AddComoid_of_TYPE.axioms Ring_of_AddComoid.axioms}
-with \coq{Elpi hb.structure Ring Ring_of_TYPE.axioms}, since the two commands
-are now equivalent.
+Once the factory is declared we can declare the \coq{Ring} structure
+as we were doing in version V1, namely \coq{Elpi hb.structure Ring Ring_of_TYPE.axioms}.
 
-The new version of the hierarchy is now backward compatible with the initial one.
-Indeed the user can declared \coq{Z} to be an instance
-of a ring using the \coq{Ring_of_TYPE.axioms} factory. The associated
-builder is going to generate behind the scenese instances of the
+Moreover we can declared \coq{Z} to be an instance
+of a ring using the \coq{Ring_of_TYPE.axioms} factory.
+The associated builder generats, behind the scenese, instances of the
 \coq{Ring_of_AddComoid.axioms} and \coq{AddComoid_of_TYPE.axioms} mixins
 that in turn are used to build instances of the \coq{AddComoid} and \coq{Ring}
-structures. The command \coq{Elpi hb.canonical Z Z_ring_axioms} is going
-make \coq{Z} an instance of both structures. Indeed the
-proof of \coq{example} now requires \coq{Z} not only to be a ring,
-but also a \coq{AddComoid} since, for example, \coq{addrA} is a
-property of that structure.
+structures. Indeed the command \coq{Elpi hb.canonical Z Z_ring_axioms}
+makes \coq{Z} an instance of both structures.
+Thanks to that the proof of \coq{example} can use the theory of
+both structures, for example \coq{addr0} holds on rings, while \coq{addrA} holds
+on commutative monoids. As a result the very same proof works on both
+version V1 and V3.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The user language of \HB{}}
