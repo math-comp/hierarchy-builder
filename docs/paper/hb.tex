@@ -128,6 +128,9 @@ The first version of our hierarchy (that we name V1) features only two
 structures: \coq{TYPE}, a naked carrier type without any properties, and
 \coq{Ring}.
 
+% TODO: remove TYPE, TYPE -> Type
+% TOD: try TYPE -> Monoid
+
 \begin{coqcode}
 Elpi hb.structure TYPE.                            #\label{demo:structure:type}#
 
@@ -211,6 +214,7 @@ We then prove lemma \coq{addr0}, line~\ref{demo:theory:state:addr0}, that is
 a trivial consequence of the ring axioms. Albeit simple this example shows
 we can populate the theory of rings with new results.
 
+% TODO: packager: clarify the use of phantoms, not just a regular constructor
 We use the \coq{Ring_of_TYPE.Axioms} \emph{packager} (line~\ref{demo:theory:zaxioms})
 in order to build an instance of the \coq{Ring} structure for binary integers \coq{ZArith.BinInt.Z}.
 We then register that ring instance as the canonical one on \coq{Z}
@@ -274,6 +278,12 @@ Our objective is to obtain a version of the hierarchy, say V3, that does
 not only feature commutative monoids but that is also backward compatible
 with V1.
 
+% TODO: Write glossary
+% remove distinction
+% TODO: Structure -> Class
+% TODO: packager -> ClassBuilder
+% TODO: Builder -> Builder
+% Factories ( primitive / general ) ; kill mixin
 \begin{figure}[!h]
   \begin{center}
     \includegraphics[width=\textwidth]{puzzle.pdf}
