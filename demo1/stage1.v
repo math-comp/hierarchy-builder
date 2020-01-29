@@ -1,4 +1,4 @@
-Require Import String ssreflect ssrfun ZArith hb.
+Require Import ssreflect ssrfun ZArith hb.
 From elpi Require Import elpi.
 
 (**************************************************************************)

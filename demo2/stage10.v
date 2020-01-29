@@ -1,4 +1,4 @@
-Require Import String ssreflect ssrfun ssrbool hb classical.
+Require Import ssreflect ssrfun ssrbool hb classical.
 Require Import ZArith QArith.
 From elpi Require Import elpi.
 

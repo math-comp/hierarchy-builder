@@ -1,4 +1,4 @@
-Require Import String ssreflect ssrfun ssrbool ZArith hb classical.
+Require Import ssreflect ssrfun ssrbool ZArith hb classical.
 From elpi Require Import elpi.
 
 Declare Scope hb_scope.
