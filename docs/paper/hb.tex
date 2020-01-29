@@ -380,6 +380,169 @@ hb.structure ModuleName Factories.
 hb.instance Carrier Factories.
 \end{coqcode}
 
+\marginpar[]{This is the README in latex. I think we should separate the
+coq part from the math part, eg M is a set of record NAMES. Then, in the
+implementation part, say that these records have that specific form}
+
+\newcommand{\mixin}{primitive factory}
+\newcommand{\mixins}{primitive factories}
+\newcommand{\M}{\ensuremath{\mathcal{M}}}
+\newcommand{\factory}{factory}
+\newcommand{\factories}{factories}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+
+\begin{definition}[\M{}, \mixin{}]
+\label{def:mixin}
+A \mixin{} \coq{m} \(\in \M{}\) is a Coq record with one of more parameters.
+The first parameter must be a \coq{(A : Type)}, while the other parameters are
+are \mixins{} applied to \coq{A} and possibly other \mixins{}. E.g.
+\coq{Record m3 (A : Type) (p1 : m1 A) (p2 : m2 A p1) := { ... }.}
+for \coq{m1}, \coq{m2} and \coq{m3} \(\in \M{}\).
+\end{definition}
+
+\newcommand{\depx}{\ensuremath{d}}
+\newcommand{\dep}{\ensuremath{dep}}
+\newcommand{\depone}{\ensuremath{dep_1}}
+\newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
+
+\begin{definition}[\(\depx \in \M{} \to \powerset\M{}\)]
+\label{def:depx}
+Given \(m \in \M{}\), \(\depx (m)\) is the set of all \mixins{} that
+occur as parameters of \(m\).
+\end{definition}
+
+\begin{definition}[\(\dep \in \powerset{\M{}} \to \powerset\M{}\)]
+\label{def:depxs}
+\(
+  \dep{}(M) = \bigcup_{m \in M} \depx (m)
+\)
+\end{definition}
+
+\begin{proposition}[]
+\label{prop:dep:trclosed}
+\depx{} and \dep{} are transitively closed since records in \M{}
+are well typed.
+\end{proposition}
+
+\begin{proposition}[]
+\label{prop:dep:dag}
+ \dep{} described a DAG (directed acyclic graph) since Coq does not
+ admit circular definitions.
+\end{proposition}
+
+\begin{definition}[\(\depone{} \in \M{} \to \powerset\M{}\)]
+\label{def:dep}
+\(\depone{}(m) = \dep{}(\{m\})\)
+\end{definition}
+
+\newcommand{\C}{\ensuremath{\mathcal{C}}}
+\newcommand{\class}{class}
+\newcommand{\classes}{classes}
+
+\begin{definition}[\C{}, \class{}]
+\label{def:class}
+A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
+\coq{(A : Type)}. The type of each field is a \mixin{} in \M{} applied to
+\coq{A} and, if needed, any number of other fields. E.g.
+\coq{Class c (A : Type) := { f1 : m1 A; ...; f3 : m3 A f1 f2; f4 : m2 A }.}
+\end{definition}
+
+\newcommand{\cdef}{\ensuremath{def}}
+
+\begin{definition}[\(\cdef{} \in \C \to \powerset\M{}\)]
+\label{def:def}
+\(\cdef{}(c)\) is the set of \mixins{} mentioned in the fields of the \class{}.
+\end{definition}
+
+\begin{proposition}[]
+\label{prop:def:depclosed}
+ \(\forall c \in \C{},~ \dep{}(\cdef{}(c)) \subseteq \cdef{}(c)\)
+\end{proposition}
+
+\theoremstyle{definition}
+\newtheorem{requirement}[theorem]{Requirement}
+
+\begin{requirement}[\cdef{} is injective]
+No two \classes{} contain the same set of \mixins{}.
+\end{requirement}
+
+\newcommand{\Str}{\ensuremath{\mathcal{S}}}
+\newcommand{\structure}{structure}
+\newcommand{\structures}{structures}
+
+\begin{definition}[\Str{}, \structure{}]
+\label{def:structure}
+A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters.
+Its first field is \coq{(sort : Type)} and its second field is
+\coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
+\end{definition}
+
+\begin{requirement}[\C{} and \Str{} are in bijection]
+For each \class{} there is one and only one \structure{}.
+\end{requirement}
+
+\newcommand{\issubclass}{\ensuremath{sub}}
+\newcommand{\subclass}{subclass}
+
+\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]
+\label{def:subclass}
+\(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
+\end{definition}
+
+
+\newcommand{\join}{\ensuremath{join}}
+
+\begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]
+\label{def:join}
+if \(c1, c2 \in \C{}\) and \(\cdef{}(c1) \cap \cdef{}(c2) \neq \emptyset\)
+then \(\join{}(c1,c2)\) is the smallest \class{} \(c\) such that
+\(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\).
+\end{definition}
+
+\begin{remark}[]
+\(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
+\end{remark}
+
+\newcommand{\requires}{\ensuremath{requires}}
+\newcommand{\provides}{\ensuremath{provides}}
+\newcommand{\from}{\ensuremath{from}}
+
+\begin{definition}[\F{}, \factory{}]
+\label{def:factory}
+A \factory{} \coq{f} \(\in \F{}\) is a Coq record with one or more parameters.
+The first parameter must be a \coq{(A : Type)}, while the other parameters are
+are \factories{} (or \mixins) applied to \coq{A} and possibly other
+\factories{} (or \mixins).
+\end{definition}
+
+The set \F{} comes equipped with the following functions:
+\begin{itemize}
+\item\(\requires{} \in \F{} \to \powerset\M{}\)
+\item\(\provides{} \in \F{} \to \powerset\M{}\)
+\item\(\from{} \in \F{} \times \M{} \to Coq\)
+\end{itemize}
+
+\begin{requirement} validate the following properties:
+\begin{itemize}
+\item\( \forall f \in \F{},~ \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
+\item\( \forall f \in \F{},~ \requires{}(f) \cap \provides{}(f) = \emptyset \)
+\item\( \forall f \in \F{},~\exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
+\item\( \forall f \in \F{},~\exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
+\item\( \forall f \in \F{},~\forall m \in \provides{}(f),~ \from{}(f,m) = t \) then t : f to m
+\end{itemize}
+\end{requirement}
+
+\begin{proposition}[\( \M{} \subseteq \F{} \)]
+since \(requires{}(m) = \depone{}(m)\)
+and \(provides{}(m) = \{m\} \)
+and \(from{}(m,m) = id \)
+\end{proposition}
+
+\begin{proposition}[\( \C{} \subseteq \F{} \)]
+  since \(requires{}(c) = \emptyset \)
+  and \(provides{}(c) = \cdef{}(c) \)
+  and \(from{}(c,m) = proj \)
+  \end{proposition}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The target language: Packed, flat, Classes}
