@@ -138,15 +138,16 @@ Elpi hb.declare_mixin Ring_of_TYPE A.           #\label{demo:declare_mixin:rot}#
     add : A -> A -> A;
     opp : A -> A;
     mul : A -> A -> A;
-    addrA : associative add;
-    addrC : commutative add;
-    add0r : left_id zero add;
-    addNr : left_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
+    addrA : associative add;             (* `add` is associative. *)
+    addrC : commutative add;             (* `add` is commutative. *)
+    add0r : left_id zero add;            (* `zero` is a (left) absorbing element *)
+                                         (* w.r.t. `add`. *)
+    addNr : left_inverse zero opp add;   (* `opp x` is the additive inverse of `x`. *)
+    mulrA : associative mul;             (* `mul` is associative. *)
+    mul1r : left_id one mul;             (* `one` is the left and right identity *)
+    mulr1 : right_id one mul;            (* element w.r.t. `mul`. *)
+    mulrDl : left_distributive mul add;  (* `mul` is left and right distributive over *)
+    mulrDr : right_distributive mul add; (* `add`. *)
   }.
 Elpi hb.end.                                #\label{demo:declare_mixin:rot:end}#
 Elpi hb.structure Ring Ring_of_TYPE.axioms.
@@ -202,7 +203,7 @@ while the names of the constants come from the the names of the mixin fields,
 their types differ.
 In particular they are quantified over a \coq{Ring.type}, and not
 a simple type as in the mixin. Moreover we evince that
-the \coq{sort} projection is declared as a coercion and is automatically
+the \coq{sort} projection is declared as an implicit coercion~\cite{Saibi97} and is automatically
 inserted in order to make \coq{R -> R -> R} a meaningful type for binary
 operations on the carrier of \coq{R}.
 
@@ -211,7 +212,7 @@ a trivial consequence of the ring axioms. Albeit simple this example shows
 we can populate the theory of rings with new results.
 
 We use the \coq{Ring_of_TYPE.Axioms} \emph{packager} (line~\ref{demo:theory:zaxioms})
-in order to build an instance of the \coq{Ring} structure for \coq{Z}.
+in order to build an instance of the \coq{Ring} structure for binary integers \coq{ZArith.BinInt.Z}.
 We then register that ring instance as the canonical one on \coq{Z}
 (line~\ref{demo:theory:zaxioms:canonical}).
 From now on the theory of rings applies to
@@ -222,7 +223,7 @@ Axioms\_ the low level constructor, and Axioms the one with phantoms}.
 \subsection{Evolution of the hierarchy}
 
 We now proceed by changing the hierarchy to accomodate the intermediate
-structure \coq{AddComoid} of commutative monoids.
+structure \coq{AddComoid} of additive commutative monoids.
 
 \begin{coqcode}
 Elpi hb.structure TYPE.
