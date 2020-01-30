@@ -134,7 +134,7 @@ structures: \coq{TYPE}, a naked carrier type without any properties, and
 \begin{coqcode}
 Elpi hb.structure TYPE.                            #\label{demo:structure:type}#
 
-Elpi hb.declare_mixin Ring_of_TYPE A.           #\label{demo:declare_mixin:rot}#
+Elpi hb.declare_primitive_factory Ring_of_TYPE A.           #\label{demo:declare_primitive_factory:rot}#
   Record axioms := Axioms {
     zero : A;
     one : A;
@@ -152,7 +152,7 @@ Elpi hb.declare_mixin Ring_of_TYPE A.           #\label{demo:declare_mixin:rot}#
     mulrDl : left_distributive mul add;  (* `mul` is left and right distributive over *)
     mulrDr : right_distributive mul add; (* `add`. *)
   }.
-Elpi hb.end.                                #\label{demo:declare_mixin:rot:end}#
+Elpi hb.end.                                #\label{demo:declare_primitive_factory:rot:end}#
 Elpi hb.structure Ring Ring_of_TYPE.axioms.
 \end{coqcode}
 
@@ -165,11 +165,11 @@ In order to build a non empty structure we need to declare some assets and
 later assemble them. One kind of asset supported by \HB{} is called
 \emph{mixin} and is embodied by a record, by convention named \coq{axioms},
 that packs operations and properties.
-Mixins are declared via the \coq{hb.declare_mixin} command
+Mixins are declared via the \coq{hb.declare_primitive_factory} command
 that takes a module name,
 a type variable name and a possibly empty list of assets for that type.
-The code between lines~\ref{demo:declare_mixin:rot}
-and~\ref{demo:declare_mixin:rot:end} declares a mixin that can turn a naked
+The code between lines~\ref{demo:declare_primitive_factory:rot}
+and~\ref{demo:declare_primitive_factory:rot:end} declares a mixin that can turn a naked
 type into a ring, hence we chose the module name to be \coq{Ring_of_TYPE}.
 
 The last line declares the structure \coq{Ring} to hold the asset that
@@ -232,7 +232,7 @@ structure \coq{AddComoid} of additive commutative monoids.
 \begin{coqcode}
 Elpi hb.structure TYPE.
 
-Elpi hb.declare_mixin AddComoid_of_TYPE A.
+Elpi hb.declare_primitive_factory AddComoid_of_TYPE A.
   Record axioms := Axioms {
     zero : A;
     add : A -> A -> A;
@@ -243,7 +243,7 @@ Elpi hb.declare_mixin AddComoid_of_TYPE A.
 Elpi hb.end.
 Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.class_of. #\label{demo2:mixin:ring}#
+Elpi hb.declare_primitive_factory Ring_of_AddComoid A AddComoid.class_of. #\label{demo2:mixin:ring}#
   Record axioms := Axioms {
     opp : A -> A;
     one : A;
@@ -368,132 +368,150 @@ on commutative monoids. As a result the very same proof works on both
 version V1 and V3.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The user language of \HB{}}
-This is the contents of the readme, with high level invariants (not related to packed
-classes: instead of saying there is a CS, you say "ops from A and B should be compatible")
-
-\begin{coqcode}
-hb.declare_mixin FactoryModuleName TypeName Factories.
-hb.declare_factory FactoryModuleName TypeName Factories.
-hb.end Functions.
-hb.structure ModuleName Factories.
-hb.instance Carrier Factories.
-\end{coqcode}
-
-\marginpar[]{This is the README in latex. I think we should separate the
-coq part from the math part, eg M is a set of record NAMES. Then, in the
-implementation part, say that these records have that specific form}
-
+\newcommand{\Lang}{\ensuremath{\Lambda}}
+\newcommand{\term}{term}
 \newcommand{\mixin}{primitive factory}
 \newcommand{\mixins}{primitive factories}
 \newcommand{\M}{\ensuremath{\mathcal{M}}}
 \newcommand{\factory}{factory}
 \newcommand{\factories}{factories}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
-
-\begin{definition}[\M{}, \mixin{}]
-\label{def:mixin}
-A \mixin{} \coq{m} \(\in \M{}\) is a Coq record with one of more parameters.
-The first parameter must be a \coq{(A : Type)}, while the other parameters are
-are \mixins{} applied to \coq{A} and possibly other \mixins{}. E.g.
-\coq{Record m3 (A : Type) (p1 : m1 A) (p2 : m2 A p1) := { ... }.}
-for \coq{m1}, \coq{m2} and \coq{m3} \(\in \M{}\).
-\end{definition}
-
 \newcommand{\depx}{\ensuremath{d}}
 \newcommand{\dep}{\ensuremath{dep}}
 \newcommand{\depone}{\ensuremath{dep_1}}
 \newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
+\newcommand{\C}{\ensuremath{\mathcal{C}}}
+\newcommand{\class}{class}
+\newcommand{\classes}{classes}
+\newcommand{\cdef}{\ensuremath{def}}
+\newcommand{\Str}{\ensuremath{\mathcal{S}}}
+\newcommand{\structure}{structure}
+\newcommand{\structures}{structures}
+\newcommand{\issubclass}{\ensuremath{sub}}
+\newcommand{\subclass}{subclass}
+\newcommand{\join}{\ensuremath{join}}
+\newcommand{\requires}{\ensuremath{requires}}
+\newcommand{\provides}{\ensuremath{provides}}
+\newcommand{\from}{\ensuremath{\mathsf{from}}}
+\newcommand{\proj}[2]{\ensuremath{#1[#2]}}
+\newtheoremstyle{implem}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
+{$\blacktriangleright$ \thmname{#1}\thmnumber{ #2}\thmnote{ #3}}
 
-\begin{definition}[\(\depx \in \M{} \to \powerset\M{}\)]
-\label{def:depx}
-Given \(m \in \M{}\), \(\depx (m)\) is the set of all \mixins{} that
-occur as parameters of \(m\).
-\end{definition}
+\theoremstyle{implem}
+\newtheorem*{implementation}{Implementation of}
 
-\begin{definition}[\(\dep \in \powerset{\M{}} \to \powerset\M{}\)]
-\label{def:depxs}
+\theoremstyle{implem}
+\newtheorem*{invariant}{Programming invariant for}
+
+\newcounter{axiomcounter}
+\def\axiomcounterautorefname~#1\null{%
+  Axiom~#1\null
+}
+\theoremstyle{axiom}
+\newtheorem{axiom}[axiomcounter]{Axiom}
+
+\newtheoremstyle{abscommand}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
+{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
+\theoremstyle{abscommand}
+\newtheorem*{abscommand}{Abstract command}
+
+\newtheoremstyle{command}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
+{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
+\theoremstyle{command}
+\newtheorem*{command}{Command}
+
+% ---------------------------------
+\section{An abstract presentation of \HB{}}
+
+The user language of \HB{} is not tied to Coq and imposes very mild requirements
+on the formal language to which it compiles to. We hence present \HB{} in an
+abstracting setting.
+
+\subsection{Preliminaries}
+
+\begin{axiom}[\Lang{}, tagret language]\label{def:universe}
+  \Lang{} is a set of names denoting terms of an target language.
+  The language must feature projections. When
+  a projection from $n$ to $m$ exists we write it \proj{n}{m}.
+  The identity projection \proj{x}{x} always exists.
+\end{axiom}
+
+\begin{axiom}[(\M{}, \depx{}), \mixin{}]\label{def:mixin}
+\( \M{} \subseteq \Lang{} \) is the finite set of \mixins{} and
+\( \depx \in \M{} \to \powerset\M{} \) is a function expressing
+dependencies among \mixins{}.
+(\M{}, \depx{}) forms a Directed Acyclig Graph (DAG) and
+\depx{} is transitively closed.
+If \(m \in \depx{}(n) \) then \( \proj{n}{m} \in \Lang{} \)
+\end{axiom}
+
+\begin{definition}[\(\dep \in \powerset{\M{}} \to \powerset\M{}\)]\label{def:depxs}
 \(
   \dep{}(M) = \bigcup_{m \in M} \depx (m)
 \)
 \end{definition}
 
-\begin{proposition}[]
-\label{prop:dep:trclosed}
-\depx{} and \dep{} are transitively closed since records in \M{}
-are well typed.
-\end{proposition}
-
-\begin{proposition}[]
-\label{prop:dep:dag}
- \dep{} described a DAG (directed acyclic graph) since Coq does not
- admit circular definitions.
-\end{proposition}
-
-\begin{definition}[\(\depone{} \in \M{} \to \powerset\M{}\)]
-\label{def:dep}
+\begin{definition}[\(\depone{} \in \M{} \to \powerset\M{}\)]\label{def:dep}
 \(\depone{}(m) = \dep{}(\{m\})\)
 \end{definition}
 
-\newcommand{\C}{\ensuremath{\mathcal{C}}}
-\newcommand{\class}{class}
-\newcommand{\classes}{classes}
+\begin{axiom}[(\C{}, \cdef{}), \class{}]\label{def:class}
+\(\C{} \subseteq \Lang{}\) is the finite set of names for \classes{}.
+\(\cdef{} \in \C \to \powerset\M{}\) is a function associating to
+each \class{} a set of \mixins{}
+such that \(\forall c \in \C{},~ \dep{}(\cdef{}(c)) \subseteq \cdef{}(c)\).
+If \(m \in \cdef{}(c) \) then \( \proj{c}{m} \in \Lang{} \).
+\cdef{} is injective (no two \classes{} contain the same set of \mixins{}).
+\end{axiom}
 
-\begin{definition}[\C{}, \class{}]
-\label{def:class}
-A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
-\coq{(A : Type)}. The type of each field is a \mixin{} in \M{} applied to
-\coq{A} and, if needed, any number of other fields. E.g.
-\coq{Class c (A : Type) := { f1 : m1 A; ...; f3 : m3 A f1 f2; f4 : m2 A }.}
-\end{definition}
+\begin{axiom}[\Str{}, \structure{}]\label{def:structure}
+\(\Str{} \subseteq \Lang{} \) is the finite set of names for \structures{}
+and for each \class{} in \C{} there is one and only one \structure{}
+in \Str{}.
+\end{axiom}\marginpar{frankly, at this level of abstraction I don't see what
+structures bring. Can't we talk about structures only when we package (in the
+tgt lang?)}
 
-\newcommand{\cdef}{\ensuremath{def}}
+\begin{axiom}[(\F{}, \requires{}, \provides{}, \from{}), \factory{}]\label{def:factory}
+  \(\F{} \subseteq \Lang{} \) is the finite set of names for \factories{}.
+  It is equipped with the three functions
+  \begin{itemize}
+    \item\( \requires{} \in \F{} \to \powerset\M{} \)
+    \item\( \provides{} \in \F{} \to \powerset\M{} \)
+    \item\( \from{} \in \F{} \times \M{} \to \Lang{} \)
+  \end{itemize}
+  that validate the following properties
+  \begin{itemize}
+    \item\( \forall f \in \F{},~ \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
+    \item\( \forall f \in \F{},~ \requires{}(f) \cap \provides{}(f) = \emptyset \)
+    \item\( \forall f \in \F{},~\exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
+    \item\( \forall f \in \F{},~\exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
+    \item\( \forall f \in \F{},~\forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
+  \end{itemize}
+\end{axiom}
 
-\begin{definition}[\(\cdef{} \in \C \to \powerset\M{}\)]
-\label{def:def}
-\(\cdef{}(c)\) is the set of \mixins{} mentioned in the fields of the \class{}.
-\end{definition}
-
-\begin{proposition}[]
-\label{prop:def:depclosed}
- \(\forall c \in \C{},~ \dep{}(\cdef{}(c)) \subseteq \cdef{}(c)\)
+\begin{proposition}[\( \M{} \subseteq \F{} \)]
+  since \(\requires{}(m) = \depone{}(m)\)
+  and \(\provides{}(m) = \{m\} \)
+  and \(\from{}(m,m) = \proj{m}{m} \)
 \end{proposition}
 
-\theoremstyle{definition}
-\newtheorem{requirement}[theorem]{Requirement}
+\begin{proposition}[\( \C{} \subseteq \F{} \)]
+  since \(\requires{}(c) = \emptyset \)
+  and \(\provides{}(c) = \cdef{}(c) \)
+  and \(\from{}(c,m) = \proj{c}{m} \)
+\end{proposition}
 
-\begin{requirement}[\cdef{} is injective]
-No two \classes{} contain the same set of \mixins{}.
-\end{requirement}
+\subsection{extra}
+THESE could be moved to the next subsection, since they don't help much here.
+They only make sense after (or in) the chapter about Packed Classes, since
+there you talk about joins.
 
-\newcommand{\Str}{\ensuremath{\mathcal{S}}}
-\newcommand{\structure}{structure}
-\newcommand{\structures}{structures}
-
-\begin{definition}[\Str{}, \structure{}]
-\label{def:structure}
-A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters.
-Its first field is \coq{(sort : Type)} and its second field is
-\coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
-\end{definition}
-
-\begin{requirement}[\C{} and \Str{} are in bijection]
-For each \class{} there is one and only one \structure{}.
-\end{requirement}
-
-\newcommand{\issubclass}{\ensuremath{sub}}
-\newcommand{\subclass}{subclass}
-
-\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]
-\label{def:subclass}
+\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
 \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
 \end{definition}
 
-
-\newcommand{\join}{\ensuremath{join}}
-
-\begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]
-\label{def:join}
+\begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
 if \(c1, c2 \in \C{}\) and \(\cdef{}(c1) \cap \cdef{}(c2) \neq \emptyset\)
 then \(\join{}(c1,c2)\) is the smallest \class{} \(c\) such that
 \(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\).
@@ -503,49 +521,43 @@ then \(\join{}(c1,c2)\) is the smallest \class{} \(c\) such that
 \(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
 \end{remark}
 
-\newcommand{\requires}{\ensuremath{requires}}
-\newcommand{\provides}{\ensuremath{provides}}
-\newcommand{\from}{\ensuremath{from}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The user language of \HB{}}
 
-\begin{definition}[\F{}, \factory{}]
-\label{def:factory}
-A \factory{} \coq{f} \(\in \F{}\) is a Coq record with one or more parameters.
-The first parameter must be a \coq{(A : Type)}, while the other parameters are
-are \factories{} (or \mixins) applied to \coq{A} and possibly other
-\factories{} (or \mixins).
-\end{definition}
+\begin{abscommand}[declare_primitive_factory] (fs : $\powerset\F{}$) (t : \Lang{}).\\
+Declare a term t as a \mixin{}, adding it to \M{}, and defines
+\( \dep{}(t) = \bigcup_{f \in fs} \requires{}(f) \).
+\end{abscommand}
 
-The set \F{} comes equipped with the following functions:
+\begin{abscommand}[declare_factory] (fs : $\powerset\F{}$) (t : \Lang{}) (bs : $\powerset\Lang{}$).\\
+Declare a term t as a \factory{}, adding it to \F{}, and defines
 \begin{itemize}
-\item\(\requires{} \in \F{} \to \powerset\M{}\)
-\item\(\provides{} \in \F{} \to \powerset\M{}\)
-\item\(\from{} \in \F{} \times \M{} \to Coq\)
+\item \( \requires{}(t) = \bigcup_{f \in fs} \requires{}(f) \)
+\item \( \provides{}(t) = HELP \)
+\item \( \from{}(t,m) = b_m \)
 \end{itemize}
+\end{abscommand}
 
-\begin{requirement} validate the following properties:
-\begin{itemize}
-\item\( \forall f \in \F{},~ \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
-\item\( \forall f \in \F{},~ \requires{}(f) \cap \provides{}(f) = \emptyset \)
-\item\( \forall f \in \F{},~\exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
-\item\( \forall f \in \F{},~\exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
-\item\( \forall f \in \F{},~\forall m \in \provides{}(f),~ \from{}(f,m) = t \) then t : f to m
-\end{itemize}
-\end{requirement}
+\begin{abscommand}[declare_structure] (fs : $\powerset\F{}$).\\
+crafs a class $c \in \C{}$ where $\cdef{}(c) = HELP$ and its companion $s \in \Str{}$.
+\end{abscommand}
 
-\begin{proposition}[\( \M{} \subseteq \F{} \)]
-since \(requires{}(m) = \depone{}(m)\)
-and \(provides{}(m) = \{m\} \)
-and \(from{}(m,m) = id \)
-\end{proposition}
+\begin{abscommand}[instance] (c : $\Lang{}$) (fs : $\powerset\F{}$).\\
+synthesizes terms in $\Lang{}$ corresponding to all the \mixins{} $MS$
+that can be build with \from{} and all the \classes{} / \structures{}
+for which \( \cdef{}(c) \subseteq MS \).
+\end{abscommand}
 
-\begin{proposition}[\( \C{} \subseteq \F{} \)]
-  since \(requires{}(c) = \emptyset \)
-  and \(provides{}(c) = \cdef{}(c) \)
-  and \(from{}(c,m) = proj \)
-  \end{proposition}
+When applied to a concrete \Lang{} the commands also take care of
+accessory declarations, for example notations or inference directives.
+In particular all operations of class c1 must be usable on c2 when
+$c2~\issubclass{}~c1$, as well as points in c1 are also in c2.
+The more these operations are implicit to the suser, the better.
+
+For this reason we pick as a target language packed classes.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The target language: Packed, flat, Classes}
+\section{The target language: Coq with Packed, flat, Classes}
 The language of packed classes were introduces in
 \cite{DBLP:conf/tphol/GarillotGMR09} and used directly to describe the
 algebraic hierarchy of the Mathematical Components library.
@@ -620,8 +632,77 @@ mixins since this more uniform.
 TODO: Example of a by hand flatten class, maybe the one of the join.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Compilation}\label{sec:compilation}
+\section{\HB{} in Coq}\label{sec:compilation}
 this is the part of the readme that says "for each join declare a CS"
+
+\begin{implementation}[\autoref{def:universe}]
+We take the language of Coq as an implementation of \Lang{}.
+\end{implementation}
+
+\begin{implementation}[\autoref{def:mixin}]
+A \mixin{} \coq{m} \(\in \M{}\) is a Coq record with one of more parameters.
+The first parameter must be a \coq{(A : Type)}, while the other parameters are
+are \mixins{} applied to \coq{A} and possibly other \mixins{}. E.g.
+\begin{coqcode}
+Record m3 (A : Type) (p1 : m1 A) (p2 : m2 A p1) := { ... }.
+\end{coqcode}
+for \coq{m1}, \coq{m2} and \coq{m3} \(\in \M{}\).
+Given \(m \in \M{}\), \(\depx (m)\) is the set of all
+\mixins{} that occur as parameters of \(m\).
+\depx{} is trnasitively closed since records are well types
+in the empty context and describes a DAG since Coq does not
+admit circular definitions.
+Projections for parameters are trivially defineable.
+\end{implementation}
+
+\begin{implementation}[\autoref{def:class}]
+A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
+\coq{(A : Type)}. The type of each field is a \mixin{} in \M{} applied to
+\coq{A} and, if needed, any number of other fields. E.g.
+\begin{coqcode}
+Class c (A : Type) := { f1 : m1 A; ...; f3 : m3 A f1 f2; f4 : m2 A }.
+\end{coqcode}
+\(\cdef{}(c)\) is the set of \mixins{} mentioned in the fields of the \class{}.
+Given that \class{} records are well typed in the empty context
+the set of \mixin{} records is closed transitively.
+Projections for parameters are trivially defineable.
+\end{implementation}
+
+\begin{invariant}[\autoref{req:class:inj}]
+The implementation enforces that no two
+\class{} records contains the same set of
+\mixin{} (disregarding the order of the fields).
+\end{invariant}
+
+\begin{implementation}[\autoref{def:structure}]
+A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters.
+Its first field is \coq{(sort : Type)} and its second field is
+\coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
+\end{implementation}
+
+\begin{implementation}[\autoref{def:factory}]
+A \factory{} \coq{f} \(\in \F{}\) is a Coq record with one or more parameters.
+The first parameter must be a \coq{(A : Type)}, while the other parameters are
+are \factories{} (or \mixins) applied to \coq{A} and possibly other
+\factories{} (or \mixins).
+\end{implementation}
+
+\begin{command}[hb.declare_primitive_factory M A FS R := { .. } ]
+registers in a db R...
+\end{command}
+\begin{command}[hb.declare_factory M A FS R := {... }. bs hb.end]
+we split into two since the bs are hand and can be done interactively.
+populates the context with...
+the user labels the bs via isntance.
+\end{command}
+\begin{command}[hb.declare_structure]
+declares many records/modules/coercions, for each join... exports operations,
+theory submodule....
+\end{command}
+\begin{command}[hb.instance]
+very close to the abstract one, but instruments CS inference with
+the synthesizedterms.
+\end{command}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -802,7 +883,7 @@ effect, is made available by Coq-Elpi via a dedicated API to extend
 data bases. A data base is a named set of clauses and
 commands are typically built by accumulating specific clauses on top
 of a data base. Here an excerpt of the \verb+hierarchy.db+ data base and
-of the \elpi{declare_mixin} command. Text between \verb+lp:{{+ and \verb+}}+
+of the \elpi{declare_primitive_factory} command. Text between \verb+lp:{{+ and \verb+}}+
 is Elpi code embedded in a Coq file. All the vernacular commands beginning
 with \coq{Elpi} are provided by the Coq-Elpi plugin.
 
@@ -811,7 +892,7 @@ Elpi Db hierarchy.db lp:{{
   pred dep1 o:mixinname, o:list mixinname.
   ... % for brevity we omit class and join
 }}.
-Elpi Command declare_mixin.
+Elpi Command declare_primitive_factory.
 Elpi Accumulate Db hierarchy.db.
 Elpi Accumulate lp:{{
   main [str S] :- !, std.do! [
@@ -821,7 +902,7 @@ Elpi Accumulate lp:{{
     coq.elpi.accumulate "hierarchy.db" (clause _ _ (dep1 M ML)),
     ...
   ].
-  main _ :- coq.error "Usage: declare_mixin <mixin>".
+  main _ :- coq.error "Usage: declare_primitive_factory <mixin>".
 }}.
 \end{coqcode}
 
@@ -830,8 +911,8 @@ its type and line 12 crafs a clause for \elpi{dep1} and
 adds it to the data base \elpi{"hierarchy.db"}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Benchmark}
-if we can port ssralg, or not... It would be nice, but maybe its a bit late.
+%\section{Benchmark}
+%if we can port ssralg, or not... It would be nice, but maybe its a bit late.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related work}
@@ -915,11 +996,11 @@ hierarchies of algebraic structures. The implementation of \HB{} is
 based on the Elpi excension language for the Coq system and is available
 at \url{https://github.com/math-comp/hierarchy-builder}.
 
-We believe the high level language is loosely tied to Coq or even Type Theory.
+The high level language is not tied to Coq or even Type Theory.
 It could hence be adopt without major changes in other tools. Indeed the
-properties and invariants that link factories, mixins and classes are key
-to rule out meaningless or ambiguous sentences and are not specific to the
-logic setting on which a prover stands.
+properties and invariants that link \factories{}, \mixins{} and \classes{}
+are key to rule out meaningless or ambiguous sentences and are not
+specific to the logic setting on which a prover stands.
 
 The compilation scheme we present in section \ref{sec:compilation} is of
 course tied to dependent records
@@ -927,10 +1008,20 @@ and Canonical Structures, features that are tied to Coq but also available
 in other provers based on Type Theory such a Matita and Lean that provide
 unification hints, a strict superlanguage of Canonical Structures.
 
-The implementation presented in section \ref{sec:implementation} is tied
-to the Coq-Elpi plugin, which provides both the Elpi language and a comprehensive
-set of APIs. While the APIs are tied to Coq, the Elpi programming language
-comes as an OCaml library and could, in principle, be linked to other provers.
+We leave to future work:
+\begin{itemize}
+\item derive the type/definition of morphisms between structures part of the
+      hierarchy, this requires assuming more on \Lang{} (eg operations,
+      equality)
+\item support structures indexed by other structures, eg modules over as ring.
+      SAY MORE, hintat the fact that these indexes must be organized in a
+      hierarchy themselves
+\end{itemize}
+
+%The implementation presented in section \ref{sec:implementation} is tied
+%to the Coq-Elpi plugin, which provides both the Elpi language and a comprehensive
+%set of APIs. While the APIs are tied to Coq, the Elpi programming language
+%comes as an OCaml library and could, in principle, be linked to other provers.
 
 \bibliography{biblio}
 
