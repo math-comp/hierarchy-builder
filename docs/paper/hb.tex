@@ -413,12 +413,12 @@ version V1 and V3.
 \newtheoremstyle{abscommand}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
 {$\blacktriangleright$ \thmname{#1}\coq{ #3}}
 \theoremstyle{abscommand}
-\newtheorem*{abscommand}{Abstract command}
+\newtheorem*{abscommand}{Command signature}
 
 \newtheoremstyle{command}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
 {$\blacktriangleright$ \thmname{#1}\coq{ #3}}
 \theoremstyle{command}
-\newtheorem*{command}{Command}
+\newtheorem*{command}{Coq command}
 
 % ---------------------------------
 \section{An abstract presentation of \HB{}}
@@ -654,6 +654,7 @@ Given \(m \in \M{}\), \(\depx{}(m)\) is the set of all
 in the empty context and describes a DAG since Coq does not
 admit circular definitions.
 Projections for parameters are trivially defineable.
+In the packed classes lingo, this is a mixin.
 \end{implementation}
 
 \begin{implementation}[\autoref{def:class}]
@@ -668,13 +669,11 @@ i.e. \{m1,m2,m3\}.
 Given that \class{} records are well typed in the empty context
 the set of \mixin{} records is closed transitively.
 Projections for parameters are trivially defineable.
-\end{implementation}
-
-\begin{invariant}[\autoref{req:class:inj}]
 The implementation enforces that no two
 \class{} records contains the same set of
 \mixin{} (disregarding the order of the fields).
-\end{invariant}
+In the packed classeslingo, this is a flat class.
+\end{implementation}
 
 \begin{implementation}[\autoref{def:structure}]
 A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters
@@ -682,6 +681,7 @@ and two fields. Its first field is \coq{(sort : Type)} and its second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
 A structure is just a class closed with a sigma type on its parameter, hence
 they are in bijection.
+In the packed classes lingo, this is a structure.
 \end{implementation}
 
 \begin{implementation}[\autoref{def:factory}]
@@ -689,7 +689,9 @@ A \factory{} \coq{f} \(\in \F{}\) is a Coq record with one or more parameters.
 The first parameter must be a \coq{(A : Type)}, while the other parameters are
 are \factories{} (or \mixins) applied to \coq{A} and possibly other
 \factories{} (or \mixins).
+
 MORE
+In the packed classes lingo, these are packagers.
 \end{implementation}
 
 \begin{command}[hb.declare_primitive_factory M A FS R := { .. } ]
