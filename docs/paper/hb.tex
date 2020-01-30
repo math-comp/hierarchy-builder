@@ -647,9 +647,10 @@ are \mixins{} applied to \coq{A} and possibly other \mixins{}. E.g.
 Record m3 (A : Type) (p1 : m1 A) (p2 : m2 A p1) := { ... }.
 \end{coqcode}
 for \coq{m1}, \coq{m2} and \coq{m3} \(\in \M{}\).
-Given \(m \in \M{}\), \(\depx (m)\) is the set of all
-\mixins{} that occur as parameters of \(m\).
-\depx{} is trnasitively closed since records are well types
+Given \(m \in \M{}\), \(\depx{}(m)\) is the set of all
+\mixins{} that occur as parameters of \(m\), eg
+\depx{}(\coq{m3}) = \{\coq{m2,m1}\} and \depx{}(\coq{m2}) = \{\coq{m1}\}.
+\depx{} is transitively closed since records are well typed
 in the empty context and describes a DAG since Coq does not
 admit circular definitions.
 Projections for parameters are trivially defineable.
@@ -662,7 +663,8 @@ A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
 \begin{coqcode}
 Class c (A : Type) := { f1 : m1 A; ...; f3 : m3 A f1 f2; f4 : m2 A }.
 \end{coqcode}
-\(\cdef{}(c)\) is the set of \mixins{} mentioned in the fields of the \class{}.
+\(\cdef{}(c)\) is the set of \mixins{} mentioned in the fields of the \class{},
+i.e. \{m1,m2,m3\}.
 Given that \class{} records are well typed in the empty context
 the set of \mixin{} records is closed transitively.
 Projections for parameters are trivially defineable.
@@ -675,9 +677,11 @@ The implementation enforces that no two
 \end{invariant}
 
 \begin{implementation}[\autoref{def:structure}]
-A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters.
-Its first field is \coq{(sort : Type)} and its second field is
+A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters
+and two fields. Its first field is \coq{(sort : Type)} and its second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
+A structure is just a class closed with a sigma type on its parameter, hence
+they are in bijection.
 \end{implementation}
 
 \begin{implementation}[\autoref{def:factory}]
@@ -685,6 +689,7 @@ A \factory{} \coq{f} \(\in \F{}\) is a Coq record with one or more parameters.
 The first parameter must be a \coq{(A : Type)}, while the other parameters are
 are \factories{} (or \mixins) applied to \coq{A} and possibly other
 \factories{} (or \mixins).
+MORE
 \end{implementation}
 
 \begin{command}[hb.declare_primitive_factory M A FS R := { .. } ]
