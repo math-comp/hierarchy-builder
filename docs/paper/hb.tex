@@ -157,41 +157,61 @@ extension language.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-As of today The Mathematical Components library for the Coq system
-provides the richest formal hierarchy of algebraic structures available:
-groups, rings.... w/wo order, finite or countable, ...
-The hierarcy is used to organize a large corpus of formal proofs and
-is validate bu lange ones such as the 4CT and OOTHM.
-The hierarchy is based on the discipline of Packed Classes initially introduced
-in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13} and later also used in
-\cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}
-and MC analysis (paper? TR?)
 
-We call Packed Classes a discpline, and not a language, because, in spite of
-its many virtues, it is unwidly to use. In particular it leaks to the user
-of the Coq system many of the technical details and compromises that were
-needed in order to have it work reliably and efficiently. As as result one
-needs to be an expert in order to master it, and even experts forget
-to adhere to the discipline as shown in KS paper at CoqWS portland + TR?
+Modern libraries of machine checked proofs are organized around
+hierarchies of algebraic structures~\cite{10.1145/3372885.3373824,mathclasses,DBLP:journals/mics/BoldoLM15,DBLP:conf/mpc/AffeldtNS19}.
+For example the Mathematical Components library for the Coq system~\cite{Coq:manual}
+provides a very rich, ever growing, hierarchy of structures, from
+groups, to rings, modules, lattices, \ldots\marginpar{YOU NAME IT}
+The hierarchy does not only serve the purpose of organizing knowledge, but
+also to make it easy to find it. Indeed the the interactive prover can
+take advantage of the structure of the library and the relation between
+its concepts in order to infer part of information usually left implicit
+by the user. This feature turned out to be a key ingredient to tame
+the complexity and size of formal proofs such as the Odd Order
+Theorem~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
 
-Other approaches to declare hierarchies exist and were used in X y but
-apparently failed to scale. Eg coquelicot stanted like that and then felt.
+The hierarchy of the Mathematical Components library
+is based on the discipline of Packed Classes initially introduced
+in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13} and later also adopted in
+\cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}.
+We call Packed Classes a discipline, and not a language, because, in spite of
+its many virtues, it is unwieldy to use. In particular it leaks to the user
+many of the technical details of the Coq system. As as result one
+needs to be a Coq expert in order to build or modify a hierarchy, and even
+experts make mistakes when doing that as shown in~\cite{KSdraft}.
+Another inconvenience of the Packed Classes discipline is that even
+simple changes to the hierarchy, such as splitting a structure into
+two simpler ones, breaks user code. Last, because of the low level details
+that leak to the user, that discipline has always been described in the context
+of the Coq system, while most of it could in principle be applied to other
+systems based on (even simple) type theories.
 
-Moreover changes to an
-already published hierarchy almost certainly break the code users.
+In this paper we describe \HB{}, a high level language
+to \emph{build} hierarchies of algebraic structures and to make these hierarchies
+\emph{evolve} without breaking user code. The key concept is the one of
+\emph{\factory{}} that lets the hierarchy developer describe an actual
+interface for his library. Behind that interface the developer can provide
+appropriate code to ensure retro compatibility.
+We implement the \HB{} language in the \hb{} addon for the Coq.
+We write this addon using using the Elpi~\cite{DBLP:conf/lpar/DunchevGCT15,CoqElpi}
+extension language for Coq.
 
-In this paper we design a high level language for the Coq system to describe
-hierarchies. We call this language \HB{}
-This language introduces the notion of \emph{factory} that is key
-to modify an existing hierarchy without breaking client code of the hierarchy.
-The language is elaborated in terms of records, coercions and canonical
-structure declarations, the same pillars on which packed classes stand on.
-In order to simplify the elaboration
-we chose to represent classes by simpler,
- \emph{flat}, records that regroup all the
-axioms of the structure instead of nesting previously declared classes
-into new ones.
-We implement this language using the ELPI extension language for Coq.
+The main contributions of the paper are the following ones:
+\begin{itemize}
+\item the \HB{} language, not tied to Coq, providing linguistic tools to
+build a hierarchy and make it evolve without breaking user code
+\item an compilation of \HB{} to a variant of the Packed Classes discipline
+that we call \emph{flat}
+\item the \hb{} addon for Coq implementing \HB{}
+\end{itemize}
+
+The paper is organized as follows. Via an example in Coq we introduce
+\HB{} and its key ideas. We then provide a formal description of
+\HB{}, independent of Coq or type theory. We then describe the discipline
+of Packed Classes and we describe how \HB{} can be compiled to it.
+We then discuss the implementation of the Coq addon via the Elpi extension
+language and we position \HB{} in the literature.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \section{Example: building and evolving a hierarchy}
