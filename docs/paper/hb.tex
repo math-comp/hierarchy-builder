@@ -76,9 +76,13 @@
 \newcommand{\term}{term}
 \newcommand{\mixin}{primitive factory}
 \newcommand{\mixins}{primitive factories}
+\newcommand{\Mixins}{Primitive factories}
 \newcommand{\M}{\ensuremath{\mathcal{M}}}
 \newcommand{\factory}{factory}
 \newcommand{\factories}{factories}
+\newcommand{\Factories}{Factories}
+\newcommand{\packager}{packager}
+\newcommand{\builder}{builder}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
 \newcommand{\depx}{\ensuremath{d}}
 \newcommand{\dep}{\ensuremath{dep}}
@@ -146,8 +150,9 @@ clint code is even harder, according to our experience~\cite{KSdraft}.
 
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
-\emph{evolve} without breaking user code. The key concept is the one of
-\emph{\factory{}} that lets the hierarchy developer describe an actual
+\emph{evolve} without breaking user code. The key concepts are the ones of
+\emph{\factory{}} and \emph{\packager{}} that lets the hierarchy developer
+describe an actual
 interface for his library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language in the \hb{} addon for the Coq
@@ -249,19 +254,19 @@ Elpi hb.structure Ring Ring_of_TYPE.axioms.
 \end{coqcode}
 
 The \coq{hb.structure} command takes in input a name S and a possibly
-empty list of assets. It registers a structure S in the hierarchy placing
+empty list of \factories{}. It registers a structure S in the hierarchy placing
 any definition specific to that structure inside a Coq module named \coq{S}.
 Line~\ref{demo:structure:type} hence forges a the empty structure \coq{TYPE}.
 
-In order to build a non empty structure we need to declare some assets and
+In order to build a non empty structure we need to declare some \factories{} and
 later assemble them. One kind of asset supported by \HB{} is called
-\emph{mixin} and is embodied by a record, by convention named \coq{axioms},
+\mixin{} and is embodied by a record, by convention named \coq{axioms},
 that packs operations and properties.
-Mixins are declared via the \coq{hb.declare_primitive_factory} command
+\Mixins{} are declared via the \coq{hb.declare_primitive_factory} command
 that takes a module name,
-a type variable name and a possibly empty list of assets for that type.
+a type variable name and a possibly empty list of \factories{} for that type.
 The code between lines~\ref{demo:declare_primitive_factory:rot}
-and~\ref{demo:declare_primitive_factory:rot:end} declares a mixin that can turn a naked
+and~\ref{demo:declare_primitive_factory:rot:end} declares a \mixin{} that can turn a naked
 type into a ring, hence we chose the module name to be \coq{Ring_of_TYPE}.
 
 The last line declares the structure \coq{Ring} to hold the asset that
@@ -294,7 +299,7 @@ We can print the type for rings as forged by \HB{} (line~\ref{demo:theory:print:
 It packs a carrier, called \coq{sort}, and the collection of operation and
 properties, called \coq{class}.  We can also look at the type of two
 constants synthesized by \HB{} out of the hierarchy declaration. Remark that
-while the names of the constants come from the the names of the mixin fields,
+while the names of the constants come from the the names of the \mixin{} fields,
 their types differ.
 In particular they are quantified over a \coq{Ring.type}, and not
 a simple type as in the mixin. Moreover we evince that
@@ -318,7 +323,7 @@ Axioms\_ the low level constructor, and Axioms the one with phantoms}.
 
 \subsection{Evolution of the hierarchy}
 
-We now proceed by changing the hierarchy to accomodate the intermediate
+We now proceed by changing the hierarchy to accommodate the intermediate
 structure \coq{AddComoid} of additive commutative monoids.
 
 \begin{coqcode}
@@ -351,15 +356,15 @@ Elpi hb.end.
 Elpi hb.structure Ring AddComoid_of_TYPE.axioms Ring_of_AddComoid.axioms. #\label{demo2:structure:ring}#
 \end{coqcode}
 
-The first interesting line is~\ref{demo2:mixin:ring} where we declare a mixin
+The first interesting line is~\ref{demo2:mixin:ring} where we declare a \mixin{}
 for a type variable \coq{A}. This time \coq{A} is not a naked type, but rather
-a type for which the the assets of a commutative monoid are available.
+a type for which the \factories{} of a commutative monoid are available.
 \marginpar{we did not show class\_of, it would be much nicer to have an axioms (from type) thing}
 This is why the operation \coq{add} is in scope and can be used
 together with new operations such as \coq{opp} to state properties, for
 example \coq{addNr}.
 We conclude by declaring the ring structure as the structure featuring both
-mixins declared so far.
+\mixins{} declared so far.
 
 With this new version of the hierarchy, that we name V2, some code written
 for version V1 breaks. For example the simple proof of \coq{addr0} works
@@ -384,12 +389,12 @@ with V1.
 \end{figure}
 
 The key to make a hierarchy evolve without breaking user code is the second
-kind of assets \HB{} provides: \emph{factories}.
+kind of \factories{} \HB{} provides: \emph{factories}.
 
-Factories, like mixins, are packages for operations and properties but are
-not directly used in the definition of structures. Instead a factory is
+\Factories{}, like \mixins{}, are packages for operations and properties but are
+not directly used in the definition of structures. Instead a \factory{} is
 equipped with \emph{builders}: user provided pieces of code that extract
-from the factory the contents of mixins, so that packagers can be used.
+from the \factory{} the contents of \mixins{}, so that packagers can be used.
 
 As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_TYPE} factory, that, from the user point of view,
@@ -430,7 +435,7 @@ Elpi hb.end.
 \end{coqcode}
 
 The record \coq{Ring_of_TYPE.axioms} is the same we declared as a mixin
-in version V1. In order to make a factory out of it we equip it with
+in version V1. In order to make a \factory{} out of it we equip it with
 two constructions. The first is \coq{to_AddComoid_of_TYPE} and
 explain how to build a \coq{AddComoid} structure out of the factory
 axioms (named \coq{f}, line~\ref{demo3:variable:f}).
@@ -439,18 +444,18 @@ so that the next construction \coq{to_Ring_of_AddComoid} can call
 the \coq{Ring_of_AddComoid.Axioms} packager (that requires \coq{A} to be
 an \coq{AddComoid} in order to fill in the three \coq{_} at
 line~\ref{demo3:phantom}). In this simple example the two constructions are just
-partitioning the contents of the factory \coq{f}, but in practice they
+partitioning the contents of the \factory{} \coq{f}, but in practice they
 often involve interactive proofs that the properties held by the factory
-imply the ones held by the mixins characterizing the structures that are
+imply the ones held by the \mixins{} characterizing the structures that are
 being constructed.
 
-Once the factory is declared we can declare the \coq{Ring} structure
+Once the \factory{} is declared we can declare the \coq{Ring} structure
 as we were doing in version V1, namely \coq{Elpi hb.structure Ring Ring_of_TYPE.axioms}.
 
 Moreover we can declared \coq{Z} to be an instance
 of a ring using the \coq{Ring_of_TYPE.axioms} factory.
-The associated builder generats, behind the scenese, instances of the
-\coq{Ring_of_AddComoid.axioms} and \coq{AddComoid_of_TYPE.axioms} mixins
+The associated builder generates, behind the scenes, instances of the
+\coq{Ring_of_AddComoid.axioms} and \coq{AddComoid_of_TYPE.axioms} \mixins{}
 that in turn are used to build instances of the \coq{AddComoid} and \coq{Ring}
 structures. Indeed the command \coq{Elpi hb.canonical Z Z_ring_axioms}
 makes \coq{Z} an instance of both structures.
@@ -659,14 +664,14 @@ extend the unifier to solve p1 \_ = nat.
 
 \subsection{The flatten variant}
 
-Describing a structure by proving a base class and a mixin is very conveniet
+Describing a structure by proving a base class and a \mixin{} is very conveniet
 if one does it by hand, since it is more concise that spelling out all the
-mixins by hand and is also closer to the user language one desires.
+\mixins{} by hand and is also closer to the user language one desires.
 
 Since we are going to synthesize code automatically the have the freedom
-to organize mixins as we wish while retaining a compact user language.
+to organize \mixins{} as we wish while retaining a compact user language.
 We chose to generate classes from scartch, listing all the involved
-mixins since this more uniform.
+\mixins{} since this more uniform.
 
 TODO: Example of a by hand flatten class, maybe the one of the join.
 
@@ -867,7 +872,7 @@ backtraking: the \elpi{std.do!} combinator signals that.
 
 In the simple case of the structure record the number of fields, and hence
 the number of binders, is fixed. On the contrary the class record has one
-field per mixin and each of them can depend on the previous ones.
+field per \mixin{} and each of them can depend on the previous ones.
 In order to synthesize terms with binders in an inductive fashion (using
 a recursive predicate) $\lambda$Prolog lets one postulate fresh nominal
 constants using the \elpi{pi} operator and attach to the
@@ -898,12 +903,12 @@ synthesize-fields [M|ML] T Decl :- std.do! [
 \end{elpicode}
 
 The first predicate \elpi{synthesize-fields.field-for-mixin} is used
-to link a mixin to a nominal that corresponds to the record field
+to link a \mixin{} to a nominal that corresponds to the record field
 for that mixin. It has no clauses in the base program but some clauses
 are added dynamically by \elpi{synthesize-fields}.
 
 The second predicate recurses on the (topologically sorted) list of mixins,
-and terminates when the list is empty. If the list contains a mixin \elpi{M}
+and terminates when the list is empty. If the list contains a \mixin{} \elpi{M}
 then it crafts a name for it \elpi{Name} (line \ref{craft:name}),
 fetches its dependencies (line \ref{deps:fetch}) and
 finds the (previous declared) record fields hoding these mixins
@@ -911,14 +916,14 @@ finds the (previous declared) record fields hoding these mixins
 The \elpi{(std.map L1 P L2)} predicate relates the two lists \elpi{L1} and
 \elpi{L2} pointwise using the predicate \elpi{P}.
 
-Line \ref{build:type} builds the type of the field: the mixin name applied
+Line \ref{build:type} builds the type of the field: the \mixin{} name applied
 to the type (sort) and all its dependencies.
 Notice that the \elpi{Fields} variable, representing the declaration of the
 next fields, is under the binder for \elpi{f} (the current field).
 In order to recurse under that binder (line \ref{rec:call})
 and recursively process \elpi{ML} we postulate a nominal
 \elpi{m} (line \ref{postulate:m}) that is a term satisfying any
-future dependency on the current mixin (line \ref{postulate:satisfy})
+future dependency on the current \mixin{} (line \ref{postulate:satisfy})
 and we replace \elpi{f} by \elpi{m} in \elpi{Fields} by writing
 \elpi{(Fields m)}.
 
@@ -952,7 +957,7 @@ Elpi Accumulate lp:{{
 }}.
 \end{coqcode}
 
-Line 11 computes the dependencies of mixin \elpi{M} given
+Line 11 computes the dependencies of \mixin{} \elpi{M} given
 its type and line 12 crafs a clause for \elpi{dep1} and
 adds it to the data base \elpi{"hierarchy.db"}.
 
@@ -965,7 +970,7 @@ adds it to the data base \elpi{"hierarchy.db"}.
 The closest work is the one about Packed Classes~\cite{DBLP:conf/tphol/GarillotGMR09} on which we
 build. The main differences are that \HB{} is a higher level language
 that is compiled down to Flat Packed Classes. The systematic use of
-factories makes the user interface of a hierarchy stable under the insertion of
+\factories{} makes the user interface of a hierarchy stable under the insertion of
 intermediate structures in the hierarchy, a property that Packed Classes lacks.
 Finally many of the intricacy of Packed Classes are hidden to the user by
 the compilation step, making the language less error prone.
@@ -990,7 +995,7 @@ a commutative monoid and a group focing the subjacent monoid to coincide:
 CommutativeGroup := combine CommutativeMonoid , Group over Monoid
 \end{verbatim}
 In our language \HB{} the same role is played by \emph{mixins}.
-A mixin lets one write once and forall a property and abstract it over types
+A \mixin{} lets one write once and forall a property and abstract it over types
 and operations so that it can be reused in all the structures that need it.
 TODO: cyril fix this sentence
 
@@ -1020,7 +1025,7 @@ to share the signature or the properties of structures by just requiring
 a proof of their equivalence that is in turn used by autmation to treat
 equivalent structures as equal.
 
-TODO: the word factory comes from "the gang of four" design patterns, we
+TODO: the word \factory{} comes from "the gang of four" design patterns, we
 could cite it. Cyril sees a similarity between the AbstractFactory design
 pattern and our notion of factory.
 
