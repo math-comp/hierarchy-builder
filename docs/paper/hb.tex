@@ -393,8 +393,8 @@ kind of \factories{} \HB{} provides: \emph{factories}.
 
 \Factories{}, like \mixins{}, are packages for operations and properties but are
 not directly used in the definition of structures. Instead a \factory{} is
-equipped with \emph{builders}: user provided pieces of code that extract
-from the \factory{} the contents of \mixins{}, so that packagers can be used.
+equipped with \emph{\builder{}s}: user provided pieces of code that extract
+from the \factory{} the contents of \mixins{}, so that \packager{}s  can be used.
 
 As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_TYPE} factory, that, from the user point of view,
@@ -452,7 +452,7 @@ being constructed.
 Once the \factory{} is declared we can declare the \coq{Ring} structure
 as we were doing in version V1, namely \coq{Elpi hb.structure Ring Ring_of_TYPE.axioms}.
 
-Moreover we can declared \coq{Z} to be an instance
+Moreover we can declare \coq{Z} to be an instance
 of a ring using the \coq{Ring_of_TYPE.axioms} factory.
 The associated builder generates, behind the scenes, instances of the
 \coq{Ring_of_AddComoid.axioms} and \coq{AddComoid_of_TYPE.axioms} \mixins{}
@@ -463,6 +463,18 @@ Thanks to that the proof of \coq{example} can use the theory of
 both structures, for example \coq{addr0} holds on rings, while \coq{addrA} holds
 on commutative monoids. As a result the very same proof works on both
 version V1 and V3.
+
+Maybe we should be explicit here and say
+\begin{itemize}
+\item you only mention axioms, what goes on behind the scenes is not your concern, all thethings to makeinference work are taken care by HB (actually by its compilation in terms of PC discipline)
+\item structures: they never disappear, but their composition may change
+\item factories: you don't care if they are primitive or not
+\item item you always use packagers that are generated, they could be trivial
+record constructors or not
+\item operations and properties: you don't care to which structure they belong.
+If you used them on X, they can be moved anywhere else as log as X is a substructure.\marginpar{nothing talks about that in HB}
+\end{itemize}
+In some sense the user
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{An abstract presentation of \HB{}}
@@ -735,7 +747,7 @@ are \factories{} (or \mixins) applied to \coq{A} and possibly other
 \factories{} (or \mixins).
 
 MORE
-In the packed classes lingo, these are packagers.
+In the packed classes lingo, these are \packager{}s.
 \end{implementation}
 
 \begin{command}[hb.declare_primitive_factory M A FS R := { .. } ]
