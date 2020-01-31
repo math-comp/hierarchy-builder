@@ -9,6 +9,7 @@
 
 \newcommand{\coqelpi}{Coq-Elpi}
 \newcommand{\HB}{\ensuremath{\mathcal{HB}}}
+\newcommand{\hb}{\coq{hierarchy-builder}}
 
 %This is a template for producing LIPIcs articles. 
 %See lipics-manual.pdf for further information.
@@ -23,7 +24,7 @@
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
 
-\title{Hierarchy Builder: algebraic~hierarchies made easy with Coq-Elpi} %TODO Please add
+\title{Hierarchy Builder: algebraic~hierarchies made easy in Coq with Elpi} %TODO Please add
 
 \titlerunning{Hierarchy Builder}%optional, please use if title is longer than one line
 
@@ -71,6 +72,57 @@
 \ArticleNo{23}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newcommand{\Lang}{\ensuremath{\Lambda}}
+\newcommand{\term}{term}
+\newcommand{\mixin}{primitive factory}
+\newcommand{\mixins}{primitive factories}
+\newcommand{\M}{\ensuremath{\mathcal{M}}}
+\newcommand{\factory}{factory}
+\newcommand{\factories}{factories}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\depx}{\ensuremath{d}}
+\newcommand{\dep}{\ensuremath{dep}}
+\newcommand{\depone}{\ensuremath{dep_1}}
+\newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
+\newcommand{\C}{\ensuremath{\mathcal{C}}}
+\newcommand{\class}{class}
+\newcommand{\classes}{classes}
+\newcommand{\cdef}{\ensuremath{def}}
+\newcommand{\Str}{\ensuremath{\mathcal{S}}}
+\newcommand{\structure}{structure}
+\newcommand{\structures}{structures}
+\newcommand{\issubclass}{\ensuremath{sub}}
+\newcommand{\subclass}{subclass}
+\newcommand{\join}{\ensuremath{join}}
+\newcommand{\requires}{\ensuremath{requires}}
+\newcommand{\provides}{\ensuremath{provides}}
+\newcommand{\from}{\ensuremath{\mathsf{from}}}
+\newcommand{\proj}[2]{\ensuremath{#1[#2]}}
+\newtheoremstyle{implem}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
+{$\blacktriangleright$ \thmname{#1}\thmnumber{ #2}\thmnote{ #3}}
+
+\theoremstyle{implem}
+\newtheorem*{implementation}{Implementation of}
+
+\theoremstyle{implem}
+\newtheorem*{invariant}{Programming invariant for}
+
+\newcounter{axiomcounter}
+\def\axiomcounterautorefname~#1\null{%
+  Axiom~#1\null
+}
+\theoremstyle{axiom}
+\newtheorem{axiom}[axiomcounter]{Axiom}
+
+\newtheoremstyle{abscommand}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
+{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
+\theoremstyle{abscommand}
+\newtheorem*{abscommand}{Command signature}
+
+\newtheoremstyle{command}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
+{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
+\theoremstyle{command}
+\newtheorem*{command}{Coq command}
 
 \begin{document}
 
@@ -78,9 +130,32 @@
 
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
-In this paper we design a high level language
-to declare hierarchies of algebraic structures in Coq and
-we provide an implementation based on the Elpi extension language.
+It is nowadays customary to organize libraries of machine checked
+proofs around hierarchies of algrbraic
+structures~\cite{10.1145/3372885.3373824,mathclasses,DBLP:journals/mics/BoldoLM15,DBLP:conf/mpc/AffeldtNS19}.
+One influential example is the Mathematial Components library on top
+of which the long and intricated proof of the Odd Order
+Theorem could be fully formalized~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
+
+Still, building algebraic hierarchies in a proof assistant such as Coq~\cite{Coq:manual}
+requires a lot of manual labor and often a deep expertise in the internals of
+the prover~\cite{DBLP:conf/tphol/GarillotGMR09,DBLP:conf/itp/MahboubiT13,KSdraft}.
+Moreover, like any piece of software,
+hierarchies evolve other time. For example new structures are added, of
+existing ones are split into the combination of simpler ones. As formal
+proofs grows in size and complexity, it becomes more and more important
+that the libraries they depend on can evolve without causing too much
+breakage.
+
+In this paper we describe \HB{}: a high level language
+to \emph{build} hierarchies of algebraic structures and to make these hierarchies
+\emph{evolve} without breaking user code. The key concept is the one of
+\emph{\factory{}} that lets the hierarchy developer describe an actual
+interface for his library. Behind that interface the developer can provide
+appropriate code to ensure retro compatibility.
+We implement the \HB{} language in the \hb{} add on for the Coq
+system using the Elpi~\cite{DBLP:conf/lpar/DunchevGCT15,CoqElpi}
+extension language.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -368,59 +443,6 @@ on commutative monoids. As a result the very same proof works on both
 version V1 and V3.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\Lang}{\ensuremath{\Lambda}}
-\newcommand{\term}{term}
-\newcommand{\mixin}{primitive factory}
-\newcommand{\mixins}{primitive factories}
-\newcommand{\M}{\ensuremath{\mathcal{M}}}
-\newcommand{\factory}{factory}
-\newcommand{\factories}{factories}
-\newcommand{\F}{\ensuremath{\mathcal{F}}}
-\newcommand{\depx}{\ensuremath{d}}
-\newcommand{\dep}{\ensuremath{dep}}
-\newcommand{\depone}{\ensuremath{dep_1}}
-\newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
-\newcommand{\C}{\ensuremath{\mathcal{C}}}
-\newcommand{\class}{class}
-\newcommand{\classes}{classes}
-\newcommand{\cdef}{\ensuremath{def}}
-\newcommand{\Str}{\ensuremath{\mathcal{S}}}
-\newcommand{\structure}{structure}
-\newcommand{\structures}{structures}
-\newcommand{\issubclass}{\ensuremath{sub}}
-\newcommand{\subclass}{subclass}
-\newcommand{\join}{\ensuremath{join}}
-\newcommand{\requires}{\ensuremath{requires}}
-\newcommand{\provides}{\ensuremath{provides}}
-\newcommand{\from}{\ensuremath{\mathsf{from}}}
-\newcommand{\proj}[2]{\ensuremath{#1[#2]}}
-\newtheoremstyle{implem}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
-{$\blacktriangleright$ \thmname{#1}\thmnumber{ #2}\thmnote{ #3}}
-
-\theoremstyle{implem}
-\newtheorem*{implementation}{Implementation of}
-
-\theoremstyle{implem}
-\newtheorem*{invariant}{Programming invariant for}
-
-\newcounter{axiomcounter}
-\def\axiomcounterautorefname~#1\null{%
-  Axiom~#1\null
-}
-\theoremstyle{axiom}
-\newtheorem{axiom}[axiomcounter]{Axiom}
-
-\newtheoremstyle{abscommand}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
-{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
-\theoremstyle{abscommand}
-\newtheorem*{abscommand}{Command signature}
-
-\newtheoremstyle{command}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
-{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
-\theoremstyle{command}
-\newtheorem*{command}{Coq command}
-
-% ---------------------------------
 \section{An abstract presentation of \HB{}}
 
 The user language of \HB{} is not tied to Coq and imposes very mild requirements
