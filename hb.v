@@ -216,7 +216,7 @@ Elpi Command hb.end.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- main-end-declare.
+main [] :- !, main-end-declare.
 main _ :- coq.error "Usage: hb.end.".
 }}.
 Elpi Typecheck.
