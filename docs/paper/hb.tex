@@ -128,6 +128,8 @@
 \theoremstyle{command}
 \newtheorem*{command}{Coq command}
 
+\newcommand{\boldclaim}[1]{#1}
+
 \begin{document}
 
 \maketitle
@@ -169,11 +171,11 @@ For example the Mathematical Components library for the Coq system~\cite{Coq:man
 provides a very rich, ever growing, hierarchy of structures, from
 groups, to rings, modules, lattices, \ldots\marginpar{YOU NAME IT}
 The hierarchy does not only serve the purpose of organizing knowledge, but
-also to make it easy to find it. Indeed the the interactive prover can
+also to make it easy to find it. Indeed the interactive prover can
 take advantage of the structure of the library and the relation between
 its concepts in order to infer part of information usually left implicit
 by the user. This feature turned out to be a key ingredient to tame
-the complexity and size of formal proofs such as the Odd Order
+the complexity and size of formal proofs such as the one of the Odd Order
 Theorem~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
 
 The hierarchy of the Mathematical Components library
@@ -187,15 +189,15 @@ needs to be a Coq expert in order to build or modify a hierarchy, and even
 experts make mistakes when doing that as shown in~\cite{KSdraft}.
 Another inconvenience of the Packed Classes discipline is that even
 simple changes to the hierarchy, such as splitting a structure into
-two simpler ones, breaks user code. Last, because of the low level details
+two simpler ones, break user code. \boldclaim{Last, because of the low level details
 that leak to the user, that discipline has always been described in the context
 of the Coq system, while most of it could in principle be applied to other
-systems based on (even simple) type theories.
+systems based on (even simple) type theories.}
 
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
 \emph{evolve} without breaking user code. The key concept is the one of
-\emph{\factory{}} that lets the hierarchy developer describe an actual
+\emph{\factory{}} and \emph{\packager{}} that lets the hierarchy developer describe an actual
 interface for his library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language in the \hb{} addon for the Coq.
@@ -204,7 +206,7 @@ extension language for Coq.
 
 The main contributions of the paper are the following ones:
 \begin{itemize}
-\item the \HB{} language, not tied to Coq, providing linguistic tools to
+\item the \HB{} language \boldclaim{, not tied to Coq,} providing linguistic tools to
 build a hierarchy and make it evolve without breaking user code
 \item an compilation of \HB{} to a variant of the Packed Classes discipline
 that we call \emph{flat}
@@ -213,7 +215,7 @@ that we call \emph{flat}
 
 The paper is organized as follows. Via an example in Coq we introduce
 \HB{} and its key ideas. We then provide a formal description of
-\HB{}, independent of Coq or type theory. We then describe the discipline
+\HB{}\boldclaim{, independent of Coq or type theory}. We then describe the discipline
 of Packed Classes and we describe how \HB{} can be compiled to it.
 We then discuss the implementation of the Coq addon via the Elpi extension
 language and we position \HB{} in the literature.
@@ -479,9 +481,9 @@ In some sense the user
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{An abstract presentation of \HB{}}
 
-The user language of \HB{} is not tied to Coq and imposes very mild requirements
+\boldclaim{The user language of \HB{} is not tied to Coq and imposes very mild requirements
 on the formal language to which it compiles to. We hence present \HB{} in an
-abstracting setting.
+abstracting setting.}
 
 \subsection{Preliminaries}
 
