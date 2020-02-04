@@ -300,12 +300,14 @@ Proof. by move=> x; rewrite addrC addNr. Qed.
 Definition Z_Monoid_axioms :=                                                   #\label{demo:theory:z:monoid:axioms}#
   Monoid_of_Type.Axioms Z 0 Z.add
     Z.add_assoc Z.add_0_l Z.add_0_r.
+
 Elpi hb.canonical Z Z_Monoid_axioms.                                            #\label{demo:theory:z:monoid:canonical}#
 
 Definition Z_Ring_axioms :=                                                     #\label{demo:theory:z:ring:axioms}#
   Ring_of_Monoid.Axioms Z 1 Z.opp Z.mul
     Z.add_comm Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
+
 Elpi hb.canonical Z Z_Ring_axioms.                                              #\label{demo:theory:z:ring:canonical}#
 
 Lemma exercise (m n : Z) : (n + m) - n + 0 = m.
@@ -337,7 +339,7 @@ we can populate the theory of rings with new results.
 We use the \coq{Monoid_of_Type.Axioms} \emph{\packager{}}
 (line~\ref{demo:theory:z:monoid:axioms})
 in order to build an instance of the \coq{Monoid}
-structure for binary integers \coq{ZArith.BinInt.Z}.
+structure for binary integers \coq{Z}.
 We then register that ring instance as the canonical one on \coq{Z}
 (line~\ref{demo:theory:z:monoid:canonical}) via the \HB{} command
 \coq{hb.canonical}.
@@ -444,12 +446,14 @@ Elpi hb.declare_factory Ring_of_Monoid A.
   Variable f : axioms.                                                          #\label{demo3:variable:f}#
 
   Definition to_AbelianGroup_of_Monoid :=
-    AbelianGroup_of_Monoid.Axioms A (opp f) (addrC f) (addNr f).
+    AbelianGroup_of_Monoid.Axioms A (opp f) (addrC f) (addNr f)
+
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A (one f) (mul f)
       (mulrA f) (mul1r f) (mulr1 f) (mulrDl f) (mulrDr f).
+
   Elpi hb.canonical A to_Ring_of_AbelianGroup.
 
 Elpi hb.end.
