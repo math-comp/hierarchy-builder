@@ -346,11 +346,14 @@ We then register that ring instance as the canonical one on \coq{Z}
 We can similarly declare that \coq{Z} forms a ring by using
 the \coq{Ring_of_Monoid.Axioms} \packager{}
 (lines~\ref{demo:theory:z:ring:axioms} and~\ref{demo:theory:z:ring:canonical}).
+Note that the \coq{Ring_of_Monoid.Axioms} \packager{} is not
+a plain record constructor for \coq{Ring_of_Monoid.axioms}, since that
+would require more arguments, namely the monoid ones. The
+\packager{} synthesized by \HB{} infers them automatically thanks to the
+\coq{hb.canonical} declaration given just above.
 
 From now on the axioms as well as the abstract theory of rings apply to
 integers, as shown in lemma \coq{exercise}.
-\marginpar{I use Axiom and not Axioms\_ everywhere, I think we should name
-Axioms\_ the low level constructor, and Axioms the one with phantoms}
 
 \subsection{Evolution of the hierarchy}
 
@@ -393,12 +396,10 @@ for rings is now called \coq{Ring_of_AbelianGroup} (instead of \coq{Ring_of_Mono
 since it expects the type \coq{A} to be already an Abelian group and hence
 gathers fewer axioms.
 
-\marginpar{we did not show class\_of, it would be much nicer to have an axioms (from type) thing}
-
 With this new version of the hierarchy, that we name V2, some code written
 for version V1 breaks. For example the simple proof of \coq{addrN} works
 but the declaration of the canonical ring over the integers fails, if only
-because we don't have a \coq{Ring_of_Monoid.Axiom} \packager{} anymore.
+because we don't have a \coq{Ring_of_Monoid.Axioms} \packager{} anymore.
 
 Our objective is to obtain a version of the hierarchy, say V3, that does
 not only feature commutative monoids but that is also backward compatible
@@ -843,7 +844,7 @@ type app    list term -> term.               % eg: app [hd|args]
 ... % all other term constructors are omitted for brevity
 \end{elpicode}
 
-Notice that the \elpi{fun} constructor holds $\lambda$Prolog function.
+Note that the \elpi{fun} constructor holds $\lambda$Prolog function.
 In this syntax the Coq term \coq{(fun x : nat => x x)} becomes
 \elpi{(fun (global (indt «nat»)) x\ app[x, x])} where \elpi{x\} binds \elpi{x}
 in the body of the function. Substitution of a bound variable for a term
@@ -852,7 +853,7 @@ can be computed by applying a term (of function type) to an argument.
 Data types with binders are also used as input to high level APIs that build
 terms behind the scenes. For example a Coq record is just an inductive type
 and the API do declare one must allow the type of a field to depend on the
-fields that comes before it. Notice that the \elpi{field} constructor
+fields that comes before it. Note that the \elpi{field} constructor
 takes a coercion flag, the name of the field, its type and binds a term
 in the remaining record declaration.
 
@@ -959,7 +960,7 @@ The \elpi{(std.map L1 P L2)} predicate relates the two lists \elpi{L1} and
 
 Line~\ref{build:type} builds the type of the field: the \mixin{} name applied
 to the type (sort) and all its dependencies.
-Notice that the \elpi{Fields} variable, representing the declaration of the
+Note that the \elpi{Fields} variable, representing the declaration of the
 next fields, is under the binder for \elpi{f} (the current field).
 In order to make the recursive call under that binder (line~\ref{rec:call})
 and recursively process \elpi{ML} we postulate a nominal
