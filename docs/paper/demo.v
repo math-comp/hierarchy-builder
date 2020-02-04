@@ -64,7 +64,7 @@ Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.axioms.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.structure Ring Monoid.axioms AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
+Elpi hb.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 
 Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
   Record axioms := {
@@ -130,12 +130,12 @@ End Theory.
 
 (* Instance *)
 
-Definition Z_monoid_axioms :=
+Definition Z_monoid_axioms : Monoid_of_Type.axioms Z :=
   Monoid_of_Type.Axioms Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
 
 Elpi hb.canonical Z Z_monoid_axioms.
 
-Definition Z_ring_axioms :=
+Definition Z_ring_axioms : Ring_of_Monoid.axioms Z _ :=
   Ring_of_Monoid.Axioms Z 1%Z Z.opp Z.mul
     Z.add_comm Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
