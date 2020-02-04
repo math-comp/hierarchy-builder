@@ -18,7 +18,7 @@ Elpi hb.declare_mixin Ring_of_Monoid A Monoid.class_of.
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
-    addrC : commutative (add : A -> A -> A);
+    addrC : commutative (S := A) add;
     addNr : left_inverse zero opp add;
     mulrA : associative mul;
     mul1r : left_id one mul;
@@ -44,19 +44,19 @@ Elpi hb.declare_mixin Monoid_of_Type A.
 Elpi hb.end.
 Elpi hb.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin CoMoid_of_Monoid A Monoid.class_of.
+Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.class_of.
   Record axioms := Axioms {
+    opp : A -> A;
     addrC : commutative (add : A -> A -> A);
+    addNr : left_inverse zero opp add;
   }.
 Elpi hb.end.
-Elpi hb.structure CoMoid Monoid.class_of CoMoid_of_Monoid.axioms.
+Elpi hb.structure AbelianGroup Monoid.class_of AbelianGroup_of_Monoid.axioms.
 
-Elpi hb.declare_mixin Ring_of_CoMoid A CoMoid.class_of.
+Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.class_of.
   Record axioms := Axioms {
     one : A;
-    opp : A -> A;
     mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
     mulrA : associative mul;
     mul1r : left_id one mul;
     mulr1 : right_id one mul;
@@ -64,7 +64,7 @@ Elpi hb.declare_mixin Ring_of_CoMoid A CoMoid.class_of.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.structure Ring Monoid.class_of CoMoid.class_of Ring_of_CoMoid.axioms.
+Elpi hb.structure Ring Monoid.class_of AbelianGroup.class_of Ring_of_AbelianGroup.axioms.
 
 Elpi hb.declare_factory Ring_of_Monoid A Monoid.class_of.
   Record axioms := Axioms {
@@ -81,20 +81,20 @@ Elpi hb.declare_factory Ring_of_Monoid A Monoid.class_of.
   }.
 
   Variable a : axioms.
-  Definition to_CoMoid_of_Monoid :=
-    CoMoid_of_Monoid.Axioms_ A (addrC a).
-  Elpi hb.canonical A to_CoMoid_of_Monoid.
+  Definition to_AbelianGroup_of_Monoid :=
+    AbelianGroup_of_Monoid.Axioms_ A (opp a) (addrC a) (addNr a).
+  Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
-  Definition to_Ring_of_CoMoid :=
-    Ring_of_CoMoid.Axioms_ A (one a) (opp a) (mul a)
-      (addNr a) (mulrA a) (mul1r a) (mulr1 a) (mulrDl a) (mulrDr a).
-  Elpi hb.canonical A to_Ring_of_CoMoid.
+  Definition to_Ring_of_AbelianGroup :=
+    Ring_of_AbelianGroup.Axioms_ A (one a) (mul a)
+      (mulrA a) (mul1r a) (mulr1 a) (mulrDl a) (mulrDr a).
+  Elpi hb.canonical A to_Ring_of_AbelianGroup.
 
 Elpi hb.end.
 
 End V3.
 
-Import V3.
+Import V1.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -142,3 +142,6 @@ Definition Z_ring_axioms :=
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
 Elpi hb.canonical Z Z_ring_axioms.
+
+Lemma exercise (m n : Z) : (n + m) - n + 0 = m.
+Proof. by rewrite (addrC n) -(addrA m) addrN !addr0. Qed.
