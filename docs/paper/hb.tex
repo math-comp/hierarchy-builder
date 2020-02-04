@@ -334,8 +334,6 @@ We then prove lemma \coq{addrN}, line~\ref{demo:theory:state:addrN}, that is
 a trivial consequence of the ring axioms. Albeit simple this example shows
 we can populate the theory of rings with new results.
 
-% TODO: packager: clarify the use of phantoms, not just a regular constructor
-
 We use the \coq{Monoid_of_Type.Axioms} \emph{\packager{}}
 (line~\ref{demo:theory:z:monoid:axioms})
 in order to build an instance of the \coq{Monoid}
@@ -349,8 +347,9 @@ the \coq{Ring_of_Monoid.Axioms} \packager{}
 Note that the \coq{Ring_of_Monoid.Axioms} \packager{} is not
 a plain record constructor for \coq{Ring_of_Monoid.axioms}, since that
 would require more arguments, namely the monoid ones. The
-\packager{} synthesized by \HB{} infers them automatically thanks to the
-\coq{hb.canonical} declaration given just above.
+\packager{} synthesized by \HB{} infers them automatically
+(as in~\cite[Section 7]{DBLP:conf/itp/MahboubiT13}) thanks to the \coq{hb.canonical}
+declaration given just above.
 
 From now on the axioms as well as the abstract theory of rings apply to
 integers, as shown in lemma \coq{exercise}.
