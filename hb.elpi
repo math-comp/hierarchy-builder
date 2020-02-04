@@ -165,7 +165,7 @@ pred instanciate-mixin i:term, i:mixinname, i:term, o:term.
 instanciate-mixin T M (fun _ Tm F) (F X) :-
   safe-dest-app Tm (global TmGR) _,
   factory-alias TmGR M, !,
-  std.assert! (mixin-for T M X) "Cyril?", !.
+  mixin-for T M X, !.
 instanciate-mixin T M (fun N Ty F) (fun N Ty FX) :- !,
   pi m\ instanciate-mixin T M (F m) (FX m).
 instanciate-mixin _ _ F F.
