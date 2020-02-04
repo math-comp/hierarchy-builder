@@ -11,7 +11,8 @@ demo2/classical.v
 demo2/stage10.v
 demo2/stage11.v
 
+demo3/stage20.v
+
 docs/paper/demo.v
-docs/paper/demo2.v
 
 -R . hb
