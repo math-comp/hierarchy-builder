@@ -151,9 +151,10 @@ Theorem could be fully formalized~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
 Still, building algebraic hierarchies in a proof assistant such as Coq~\cite{Coq:manual}
 requires a lot of manual labor and often a deep expertise in the internals of
 the prover~\cite{DBLP:conf/tphol/GarillotGMR09,DBLP:conf/itp/MahboubiT13}.
-Moreover, making a hierarchy evolve, e.g. splitting a structure into two
-simpler ones, without causing breakage in client code is even harder,
-according to our experience~\cite{KSdraft}.
+Moreover, according to our experience~\cite{KSdraft},
+making a hierarchy evolve without causing breakage in client code equally tricky:
+Even a simple refactoring such as splitting a structure into two simpler ones
+is hard to get right.
 
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
