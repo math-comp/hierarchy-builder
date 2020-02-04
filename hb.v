@@ -169,7 +169,7 @@ Elpi Typecheck.
   Current syntax to create a mixin "Module.axioms"
   with requirements "Foo.axioms" .. "Bar.axioms":
    Elpi hb.declare.mixin Module A Foo.axioms .. Bar.axioms.
-   Record axioms := Axioms {
+   Record axioms := {
      ..
    }
    Elpi hb.end.
@@ -178,7 +178,7 @@ Elpi Typecheck.
    which requires "Foo.axioms" .. "Bar.axioms"
    and provides "Baw.axioms" .. "Baz.axioms".
    Elpi hb.declare.mixin Module A Foo.axioms .. Bar.axioms.
-   Record axioms := Axioms {
+   Record axioms := {
      ..
    }
    Variable (a : axioms).
@@ -188,6 +188,9 @@ Elpi Typecheck.
    Definition to_Baz : Baz.axioms_ A := ..
    Elpi hb.canonical to_Baw.
    Elpi hb.end.
+
+   Packagers are called "Axioms" unless the record constructor
+   is already "Axioms" and in that case they are called "Axioms_".
 *)
 
 Elpi Command hb.declare_mixin.

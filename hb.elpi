@@ -697,13 +697,13 @@ declare-class ML (indt ClassName) Factories :- std.do! [
   (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
     (parameter `T` {{ Type }} t\
-      record "class_of" {{ Type }} "Class" (RDecl t)),
+      record "axioms" {{ Type }} "Class" (RDecl t)),
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
   coq.env.add-indt ClassDeclaration ClassName,
   coq.CS.canonical-projections ClassName Projs,
   std.map2 ML Projs (m\ p\ r\ sigma P\
     p = some P,
-    r = from (indt ClassName) m (global (const P))) Factories,
+    r = from (indt ClassName) m (global (const P))) Factories
 ].
 
 % Builds the package record
@@ -819,13 +819,20 @@ main-end-declare :- std.do! [
   current-decl Decl,
   std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
   std.map AllPostulatedMixins mixin-src-name ML,
-  coq.locate "axioms" GR, % assumes the name of the mixin is "axioms".
-  coq.locate "Axioms" GRK, % assumes the name of the mixin constructor is "Axioms".
+  std.assert! (coq.locate "axioms" GR)
+    "you must define a term named axioms, typically a record",
+  if (GR = indt AxiomsRecord)
+    (std.assert! (coq.env.indt AxiomsRecord _ _ _ _ [K] _)
+      "axioms should be a record, not a general inductive",
+     GRK = indc K)
+    (std.assert! (coq.locate "Axioms" GRK)
+      "axioms is not a record and no Axioms pseudo constructor is defined"),
+  if (coq.gr->id GRK "Axioms") (PackagerName = "Axioms_") (PackagerName = "Axioms"),
 
   coq.env.end-section,
 
   mk-phant-mixins (global GRK) PhGRK,
-  mk-phant-abbrev "Axioms_" PhGRK _,
+  mk-phant-abbrev PackagerName PhGRK _,
 
   if (Decl = mixin-decl) (!, main-mixin-requires GR ML Props, Clauses = []) (
     Decl = factory-decl, !,

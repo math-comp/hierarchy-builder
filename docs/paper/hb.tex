@@ -173,12 +173,12 @@ extension language.
 Modern libraries of machine checked proofs are organized around
 hierarchies of algebraic structures~\cite{10.1145/3372885.3373824,mathclasses,DBLP:journals/mics/BoldoLM15,DBLP:conf/mpc/AffeldtNS19}.
 For example the Mathematical Components library for the Coq system~\cite{Coq:manual}
-provides a very rich, ever growing, hierarchy of structures, from
-groups, to rings, modules, lattices, \ldots\marginpar{YOU NAME IT}
+provides a very rich, ever growing, hierarchy of structures such as
+group, ring, module, algebra, field, pre-order, order, lattice\ldots
 The hierarchy does not only serve the purpose of organizing knowledge, but
-also to make it easy to find it. Indeed the interactive prover can
+also to make it easy to exploit it. Indeed the interactive prover can
 take advantage of the structure of the library and the relation between
-its concepts in order to infer part of information usually left implicit
+its concepts to infer part of information usually left implicit
 by the user. This feature turned out to be a key ingredient to tame
 the complexity and size of formal proofs such as the one of the Odd Order
 Theorem~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
@@ -230,7 +230,7 @@ structures: \coq{Monoid} and \coq{Ring}.
 
 \begin{coqcode}
 Elpi hb.declare_mixin Monoid_of_Type A.                       #\label{demo:mixin:mot}#
-  Record axioms := Axioms {
+  Record axioms := {
     zero : A;
     add : A -> A -> A;
     addrA : associative add;              (* `add` is associative.                  *)
@@ -240,8 +240,8 @@ Elpi hb.declare_mixin Monoid_of_Type A.                       #\label{demo:mixin
 Elpi hb.end.                                              #\label{demo:mixin:mot:end}#
 Elpi hb.structure Monoid Monoid_of_Type.axioms.        #\label{demo:structure:monoid}#
 
-Elpi hb.declare_mixin Ring_of_Monoid A Monoid.class_of.       #\label{demo:mixin:rom}#
-  Record axioms := Axioms {
+Elpi hb.declare_mixin Ring_of_Monoid A Monoid.axioms.       #\label{demo:mixin:rom}#
+  Record axioms := {
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
@@ -254,21 +254,21 @@ Elpi hb.declare_mixin Ring_of_Monoid A Monoid.class_of.       #\label{demo:mixin
     mulrDr : right_distributive mul add; (*   over `add`.                           *)
   }.
 Elpi hb.end.
-Elpi hb.structure Ring Monoid.class_of Ring_of_Monoid.axioms. #\label{demo:structure:ring}#
+Elpi hb.structure Ring Monoid.axioms Ring_of_Monoid.axioms. #\label{demo:structure:ring}#
 
 \end{coqcode}
 
 In order to build a structure we need to declare some \factories{} and
-later assemble them. One kind of \factories{} supported by \HB{}, the simplest
+later assemble them. One kind of \factory{} supported by \HB{}, the simplest
 one, is called \mixin{} and is embodied by a record, by convention named
-\coq{axioms}, that packs operations and properties.
+\coq{axioms}, that gathers operations and properties.
 
 \Mixins{} are declared via the \coq{hb.declare_mixin} command
 that takes a module name,
 a type variable name and a possibly empty list of \factories{} for that type.
 The code between lines~\ref{demo:mixin:mot}
 and~\ref{demo:mixin:mot:end} declares a \mixin{} that can turn a naked
-type into a monoid, hence we chose the module name to be \coq{Monoid_of_Type}.
+type \coq{A} into a monoid, hence we chose the module name to be \coq{Monoid_of_Type}.
 
 The \coq{hb.structure} command takes in input a name S and a possibly
 empty list of \factories{}
@@ -279,7 +279,7 @@ Line~\ref{demo:structure:monoid} hence forges a the structure \coq{Monoid}.
 Line~\ref{demo:mixin:rom} declares a second \mixin{} collecting the operations
 and properties that are needed in order to enrich a monoid to a ring, hence
 the name \coq{Ring_of_Monoid}. Indeed this time the type variable \coq{A}
-is followd by \coq{Monoid.class_of}\marginpar{should be axioms} that enriches
+is followd by \coq{Monoid.axioms} that enriches
 \coq{A} with the operations and properties of monoids. As a consequence
 \coq{add} and \coq{zero} can be used to express the new properties.
 
@@ -298,12 +298,12 @@ Lemma addrN : forall R : Ring.type, right_inverse zero opp add.                 
 Proof. by move=> x; rewrite addrC addNr. Qed.
 
 Definition Z_Monoid_axioms :=                                                   #\label{demo:theory:z:monoid:axioms}#
-  Monoid_of_Type.Axioms_ Z 0 Z.add
+  Monoid_of_Type.Axioms Z 0 Z.add
     Z.add_assoc Z.add_0_l Z.add_0_r.
 Elpi hb.canonical Z Z_Monoid_axioms.                                            #\label{demo:theory:z:monoid:canonical}#
 
 Definition Z_Ring_axioms :=                                                     #\label{demo:theory:z:ring:axioms}#
-  Ring_of_Monoid.Axioms_ Z 1 Z.opp Z.mul
+  Ring_of_Monoid.Axioms Z 1 Z.opp Z.mul
     Z.add_comm Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 Elpi hb.canonical Z Z_Ring_axioms.                                              #\label{demo:theory:z:ring:canonical}#
@@ -334,7 +334,7 @@ we can populate the theory of rings with new results.
 
 % TODO: packager: clarify the use of phantoms, not just a regular constructor
 
-We use the \coq{Monoid_of_Type.Axioms_} \emph{\packager{}}
+We use the \coq{Monoid_of_Type.Axioms} \emph{\packager{}}
 (line~\ref{demo:theory:z:monoid:axioms})
 in order to build an instance of the \coq{Monoid}
 structure for binary integers \coq{ZArith.BinInt.Z}.
@@ -342,7 +342,7 @@ We then register that ring instance as the canonical one on \coq{Z}
 (line~\ref{demo:theory:z:monoid:canonical}) via the \HB{} command
 \coq{hb.canonical}.
 We can similarly declare that \coq{Z} forms a ring by using
-the \coq{Ring_of_Monoid.Axioms_} \packager{}
+the \coq{Ring_of_Monoid.Axioms} \packager{}
 (lines~\ref{demo:theory:z:ring:axioms} and~\ref{demo:theory:z:ring:canonical}).
 
 From now on the axioms as well as the abstract theory of rings apply to
@@ -357,21 +357,21 @@ structure \coq{AbelianGroup}.
 
 \begin{coqcode}
 Elpi hb.declare_mixin Monoid_of_Type A.
-  Record axioms := Axioms { ... (* unchanged *) ... }.
+  Record axioms := { ... (* unchanged *) ... }.
 Elpi hb.end.
 Elpi hb.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.class_of.
-  Record axioms := Axioms {
+Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.axioms.
+  Record axioms := {
     opp : A -> A;
     addrC : commutative (S := A) add;
     addNr : left_inverse zero opp add;
   }.
 Elpi hb.end.
-Elpi hb.structure AbelianGroup Monoid.class_of AbelianGroup_of_Monoid.axioms.
+Elpi hb.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
 
-Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.class_of.
-  Record axioms := Axioms {
+Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.axioms.
+  Record axioms := {
     one : A;
     mul : A -> A -> A;
     mulrA : associative mul;
@@ -381,7 +381,7 @@ Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.class_of.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.structure Ring Monoid.class_of AbelianGroup.class_of Ring_of_AbelianGroup.axioms.
+Elpi hb.structure Ring Monoid.axioms AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 \end{coqcode}
 
 Some operations and properties were moved from the old \mixin{} for rings
@@ -428,7 +428,7 @@ initial one V1.
 
 \begin{coqcode}
 Elpi hb.declare_factory Ring_of_Monoid A.
-  Record axioms := Axioms {
+  Record axioms := {
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
@@ -444,11 +444,11 @@ Elpi hb.declare_factory Ring_of_Monoid A.
   Variable f : axioms.                                                          #\label{demo3:variable:f}#
 
   Definition to_AbelianGroup_of_Monoid :=
-    AbelianGroup_of_Monoid.Axioms_ A (opp f) (addrC f) (addNr f).
+    AbelianGroup_of_Monoid.Axioms A (opp f) (addrC f) (addNr f).
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
-    Ring_of_AbelianGroup.Axioms_ A (one f) (mul f)
+    Ring_of_AbelianGroup.Axioms A (one f) (mul f)
       (mulrA f) (mul1r f) (mulr1 f) (mulrDl f) (mulrDr f).
   Elpi hb.canonical A to_Ring_of_AbelianGroup.
 
@@ -463,7 +463,7 @@ explain how to build an \coq{AbelianGroup} structure out of the \factory{}
 axioms (named \coq{f}, line~\ref{demo3:variable:f}).
 This construction is also registered as canonical for \coq{A},
 so that the next construction \coq{to_Ring_of_AbelianGroup} can call
-the \coq{Ring_of_AbelianGroup.Axioms_} \packager{} that requires \coq{A} to be
+the \coq{Ring_of_AbelianGroup.Axioms} \packager{} that requires \coq{A} to be
 an \coq{AbelianGroup}. In this simple example the two \builder{}s are just
 partitioning the contents of the \factory{} \coq{f}, but in practice they
 often involve proofs that the properties held by the factory
@@ -471,7 +471,7 @@ imply the ones held by the \mixins{} characterizing the structures that are
 being constructed.
 
 Thanks to this \factory{} we can now declare \coq{Z} to be an instance
-of a ring using the \coq{Ring_of_Monoid.Axioms_} \packager{}.
+of a ring using the \coq{Ring_of_Monoid.Axioms} \packager{}.
 The associated \builder{}s generates, behind the scenes, instances of the
 \coq{Ring_of_AbelianGroup.axioms} and \coq{AbelianGroup_of_Monoid.axioms} \mixins{}
 that in turn are used to build instances of the \coq{AbelianGroup} and \coq{Ring}
@@ -487,8 +487,8 @@ two lines equivalent. In particular the former one, used in V1 to declare
 the structure of rings, unfolds to the last one behind the scenes.
 
 \begin{coqcode}
-  Elpi hb.structure Ring Monoid.class_of Ring_of_Monoid.axioms.
-  Elpi hb.structure Ring Monoid.class_of AbelianGroup.class_of Ring_of_AbelianGroup.axioms.
+  Elpi hb.structure Ring Monoid.axioms Ring_of_Monoid.axioms.
+  Elpi hb.structure Ring Monoid.axioms AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 \end{coqcode}
 
 This is another example of client code that would not break when the hierarchy
@@ -659,13 +659,13 @@ Module S.
     op : A -> A -> A;
     opK : forall x, op (op x) = one
   }
-  Record class_of A := {
-    base : T.class_of A;
+  Record axioms A := {
+    base : T.axioms A;
     mix  : mixin A base
   }.
   Record type := Pack {
     sort : Type;
-    class : class_of sort
+    class : axioms sort
   }.
   Module Exports.
     Coercion sort : type >-> Sortclass.
@@ -870,10 +870,10 @@ OCaml rather than $\lambda$Prolog).
 
 We comment these two builtin predicates and the \elpi{indt-decl} type
 while looking at the code of \elpi{declare-structure} that is in charge
-of scripting the following Coq code (given as a parameter \coq{class_of}):
+of scripting the following Coq code (given as a parameter \coq{axioms}):
 
 \begin{coqcode}
-Record type : Type := Pack { sort : Type; class : class_of sort }.
+Record type : Type := Pack { sort : Type; class : axioms sort }.
 \end{coqcode}
 
 The Elpi code builds the declaration, type checks it, adds it to the

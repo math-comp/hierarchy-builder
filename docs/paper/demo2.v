@@ -13,7 +13,7 @@ Elpi hb.declare_mixin MulMonoid_of_Type A.
 Elpi hb.end.
 Elpi hb.structure MulMonoid MulMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin Ring_of_MulMonoid A MulMonoid.class_of.
+Elpi hb.declare_mixin Ring_of_MulMonoid A MulMonoid.axioms.
   Record axioms := Axioms {
     zero : A;
     add : A -> A -> A;
@@ -27,7 +27,7 @@ Elpi hb.declare_mixin Ring_of_MulMonoid A MulMonoid.class_of.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.structure Ring MulMonoid.class_of Ring_of_MulMonoid.axioms.
+Elpi hb.structure Ring MulMonoid.axioms Ring_of_MulMonoid.axioms.
 
 End V1.
 
@@ -55,7 +55,7 @@ Elpi hb.declare_mixin AddMonoid_of_Type A.
 Elpi hb.end.
 Elpi hb.structure AddMonoid AddMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddMulMonoid A MulMonoid.class_of AddMonoid.class_of.
+Elpi hb.declare_mixin Ring_of_AddMulMonoid A MulMonoid.axioms AddMonoid.axioms.
   Record axioms := Axioms {
     opp : A -> A;
     addrC : commutative (add : A -> A -> A);
@@ -64,9 +64,9 @@ Elpi hb.declare_mixin Ring_of_AddMulMonoid A MulMonoid.class_of AddMonoid.class_
     mulrDr : right_distributive mul (add : A -> A -> A);
   }.
 Elpi hb.end.
-Elpi hb.structure Ring MulMonoid.class_of AddMonoid.class_of Ring_of_AddMulMonoid.axioms.
+Elpi hb.structure Ring MulMonoid.axioms AddMonoid.axioms Ring_of_AddMulMonoid.axioms.
 
-Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.class_of.
+Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
   Record axioms := Axioms {
     zero : A;
     add : A -> A -> A;
@@ -120,24 +120,24 @@ Elpi hb.declare_mixin AddMonoid_of_Type A.
 Elpi hb.end.
 Elpi hb.structure AddMonoid AddMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AbGroup_of_AddMonoid A AddMonoid.class_of.
+Elpi hb.declare_mixin AbGroup_of_AddMonoid A AddMonoid.axioms.
   Record axioms := Axioms {
     opp : A -> A;
     addrC : commutative (add : A -> A -> A);
     addNr : left_inverse zero opp add;
 }.
 Elpi hb.end.
-Elpi hb.structure AbGroup AddMonoid.class_of AbGroup_of_AddMonoid.axioms.
+Elpi hb.structure AbGroup AddMonoid.axioms AbGroup_of_AddMonoid.axioms.
 
-Elpi hb.declare_mixin Ring_of_AbGroupMulMonoid A MulMonoid.class_of AbGroup.class_of.
+Elpi hb.declare_mixin Ring_of_AbGroupMulMonoid A MulMonoid.axioms AbGroup.axioms.
   Record axioms := Axioms {
     mulrDl : left_distributive mul (add : A -> A -> A);
     mulrDr : right_distributive mul (add : A -> A -> A);
   }.
 Elpi hb.end.
-Elpi hb.structure Ring MulMonoid.class_of AbGroup.class_of Ring_of_AbGroupMulMonoid.axioms.
+Elpi hb.structure Ring MulMonoid.axioms AbGroup.axioms Ring_of_AbGroupMulMonoid.axioms.
 
-Elpi hb.declare_factory Ring_of_AddMulMonoid A MulMonoid.class_of AddMonoid.class_of.
+Elpi hb.declare_factory Ring_of_AddMulMonoid A MulMonoid.axioms AddMonoid.axioms.
   Record axioms := Axioms {
     opp : A -> A;
     addrC : commutative (add : A -> A -> A);
@@ -158,11 +158,11 @@ Elpi hb.declare_factory Ring_of_AddMulMonoid A MulMonoid.class_of AddMonoid.clas
 
   Elpi hb.canonical A to_Ring_of_AbGroupMulMonoid.
 
-Elpi hb.end. (* mixin-for (global (const «A»)) (indt «MulMonoid_of_Type.axioms») *)
+Fail Elpi hb.end. (* mixin-for (global (const «A»)) (indt «MulMonoid_of_Type.axioms») *)
 
+(*
 
-
-Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.class_of.
+Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
   Record axioms := Axioms {
     zero : A;
     add : A -> A -> A;
@@ -194,12 +194,15 @@ Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.class_of.
   Elpi hb.canonical A to_Ring_of_AddMulMonoid.
 
 Elpi hb.end.
+*)
 
-End V2.
+End Ring_of_AddMulMonoid.
+End Ring_of_AddMulMonoid.
+End V3.
 
+(*
 
-
-Import V2.
+Import V3.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -247,3 +250,5 @@ Definition Z_ring_axioms :=
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
 Elpi hb.canonical Z Z_ring_axioms.
+
+*)

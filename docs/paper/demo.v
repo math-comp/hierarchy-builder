@@ -3,7 +3,7 @@ Require Import hb ssreflect ssrfun ZArith.
 Module V1.
 
 Elpi hb.declare_mixin Monoid_of_Type A.
-  Record axioms := Axioms {
+  Record axioms := {
     zero : A;
     add : A -> A -> A;
     addrA : associative add;
@@ -13,8 +13,8 @@ Elpi hb.declare_mixin Monoid_of_Type A.
 Elpi hb.end.
 Elpi hb.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin Ring_of_Monoid A Monoid.class_of.
-  Record axioms := Axioms {
+Elpi hb.declare_mixin Ring_of_Monoid A Monoid.axioms.
+  Record axioms := {
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
@@ -27,14 +27,14 @@ Elpi hb.declare_mixin Ring_of_Monoid A Monoid.class_of.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.structure Ring Monoid.class_of Ring_of_Monoid.axioms.
+Elpi hb.structure Ring Monoid.axioms Ring_of_Monoid.axioms.
 
 End V1.
 
 Module V3.
 
 Elpi hb.declare_mixin Monoid_of_Type A.
-  Record axioms := Axioms {
+  Record axioms := {
     zero : A;
     add : A -> A -> A;
     addrA : associative add;
@@ -44,17 +44,17 @@ Elpi hb.declare_mixin Monoid_of_Type A.
 Elpi hb.end.
 Elpi hb.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.class_of.
-  Record axioms := Axioms {
+Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.axioms.
+  Record axioms := {
     opp : A -> A;
     addrC : commutative (add : A -> A -> A);
     addNr : left_inverse zero opp add;
   }.
 Elpi hb.end.
-Elpi hb.structure AbelianGroup Monoid.class_of AbelianGroup_of_Monoid.axioms.
+Elpi hb.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
 
-Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.class_of.
-  Record axioms := Axioms {
+Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.axioms.
+  Record axioms := {
     one : A;
     mul : A -> A -> A;
     mulrA : associative mul;
@@ -64,10 +64,10 @@ Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.class_of.
     mulrDr : right_distributive mul add;
   }.
 Elpi hb.end.
-Elpi hb.structure Ring Monoid.class_of AbelianGroup.class_of Ring_of_AbelianGroup.axioms.
+Elpi hb.structure Ring Monoid.axioms AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 
-Elpi hb.declare_factory Ring_of_Monoid A Monoid.class_of.
-  Record axioms := Axioms {
+Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
+  Record axioms := {
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
@@ -82,11 +82,11 @@ Elpi hb.declare_factory Ring_of_Monoid A Monoid.class_of.
 
   Variable a : axioms.
   Definition to_AbelianGroup_of_Monoid :=
-    AbelianGroup_of_Monoid.Axioms_ A (opp a) (addrC a) (addNr a).
+    AbelianGroup_of_Monoid.Axioms A (opp a) (addrC a) (addNr a).
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
-    Ring_of_AbelianGroup.Axioms_ A (one a) (mul a)
+    Ring_of_AbelianGroup.Axioms A (one a) (mul a)
       (mulrA a) (mul1r a) (mulr1 a) (mulrDl a) (mulrDr a).
   Elpi hb.canonical A to_Ring_of_AbelianGroup.
 
@@ -131,12 +131,12 @@ End Theory.
 (* Instance *)
 
 Definition Z_monoid_axioms :=
-  Monoid_of_Type.Axioms_ Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
+  Monoid_of_Type.Axioms Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
 
 Elpi hb.canonical Z Z_monoid_axioms.
 
 Definition Z_ring_axioms :=
-  Ring_of_Monoid.Axioms_ Z 1%Z Z.opp Z.mul
+  Ring_of_Monoid.Axioms Z 1%Z Z.opp Z.mul
     Z.add_comm Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
