@@ -29,7 +29,7 @@
 \titlerunning{Hierarchy Builder}%optional, please use if title is longer than one line
 
 \author{Cyril Cohen}{Inria, France}{Cyril.Cohen@inria.fr}{}{}
-\author{Kazuhiko Sakaguchi}{University of Tsukuba, Japan}{sakaguchi@coins.tsukuba.ac.jp}{}{}
+\author{Kazuhiko Sakaguchi}{University of Tsukuba, Japan}{sakaguchi@logic.cs.tsukuba.ac.jp}{}{}
 \author{Enrico Tassi}{Inria, France}{Enrico.Tassi@inria.fr}{}{}
 \authorrunning{C.\,Cohen and K.\,Sakaguchi and E.\,Tassi}
 % \author{John Q. Public}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional
@@ -225,6 +225,7 @@ language and we position \HB{} in the literature.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \section{\HB{} by examples: building and evolving a hierarchy}
+\label{sec:example}
 
 The first version of our hierarchy (that we name V1) features only two
 structures: \coq{Monoid} and \coq{Ring}.
@@ -235,7 +236,7 @@ Elpi hb.declare_mixin Monoid_of_Type A.                       #\label{demo:mixin
     zero : A;
     add : A -> A -> A;
     addrA : associative add;              (* `add` is associative.                  *)
-    add0r : left_id zero add;             (* `zero` is a left and right             *)
+    add0r : left_id zero add;             (* `zero` is the left and right           *)
     addr0 : right_id zero add;            (*   absorbing element w.r.t. `add`.      *)
 }.
 Elpi hb.end.                                              #\label{demo:mixin:mot:end}#
@@ -432,7 +433,7 @@ As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_Monoid} \factory{}, that, from the user point of view,
 will look indistinguishable from the old \coq{Ring_of_Monoid} \mixin{}
 and hence grant backward compatibility between this last version V3 and the
-initial one V1.
+initial one V1.\marginpar{KS: the following \coq{axioms} record is the same as the second \coq{axioms} record in Sect.~2. We may omit its details.}
 
 \begin{coqcode}
 Elpi hb.declare_factory Ring_of_Monoid A.
@@ -652,6 +653,7 @@ then \(\join{}(c1,c2)\) is the smallest \class{} \(c\) such that
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The target language: Coq with Packed, flat, Classes}
+\label{sec:target-lang}
 
 The language of packed classes were introduces in
 \cite{DBLP:conf/tphol/GarillotGMR09} and used directly to describe the
