@@ -89,6 +89,7 @@
 \newcommand{\factories}{factories}
 \newcommand{\Factories}{Factories}
 \newcommand{\packager}{packager}
+\newcommand{\Packager}{packager}
 \newcommand{\builder}{builder}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
 \newcommand{\depx}{\ensuremath{d}}
@@ -199,8 +200,8 @@ two simpler ones, break user code.
 
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
-\emph{evolve} without breaking user code. The key concept is the one of
-\emph{\factory{}} and \emph{\packager{}} that lets the hierarchy developer describe an actual
+\emph{evolve} without breaking user code. The key concepts are the ones of
+\emph{\factory{}} and \emph{\packager{}} that let the hierarchy developer describe an actual
 interface for his library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language in the \hb{} addon for the Coq.
@@ -211,12 +212,12 @@ The main contributions of the paper are the following ones:
 \begin{itemize}
 \item the \HB{} language providing linguistic tools to
 build a hierarchy and make it evolve without breaking user code
-\item an compilation of \HB{} to a variant of the Packed Classes discipline
+\item the compilation of \HB{} to a variant of the Packed Classes discipline
 that we call \emph{flat}
 \item the \hb{} addon for Coq implementing \HB{}
 \end{itemize}
 
-The paper is organized as follows. Via an example in Coq we introduce
+The paper is organized as follows. Via an example we introduce
 \HB{} and its key ideas. We then provide a formal description of
 \HB{}. We then describe the discipline
 of Packed Classes and we describe how \HB{} can be compiled to it.
@@ -229,7 +230,7 @@ language and we position \HB{} in the literature.
 
 The first version of our hierarchy (that we name V1) features only two
 structures: \coq{Monoid} and \coq{Ring}.
-
+\marginpar{remove hb.end for mixins, use next release of coq elpi}
 \begin{coqcode}
 Elpi hb.declare_mixin Monoid_of_Type A.                       #\label{demo:mixin:mot}#
   Record axioms := {
@@ -262,7 +263,7 @@ Elpi hb.structure Ring Monoid.axioms Ring_of_Monoid.axioms. #\label{demo:structu
 
 In order to build a structure we need to declare some \factories{} and
 later assemble them. One kind of \factory{} supported by \HB{}, the simplest
-one, is called \mixin{} and is embodied by a record, by convention named
+one, is called \emph{\mixin{}} and is embodied by a record, by convention named
 \coq{axioms}, that gathers operations and properties.
 
 \Mixins{} are declared via the \coq{hb.declare_mixin} command
@@ -297,7 +298,7 @@ Check @add.        (* add          :   forall M : Monoid.type, M -> M -> M      
 Check @addNr.      (* addNr        :   forall R : Ring.type, left_inverse zero opp add *) #\label{demo:theory:check:addNr}#
 
 Lemma addrN : forall R : Ring.type, right_inverse zero opp add.                 #\label{demo:theory:state:addrN}#
-Proof. by move=> x; rewrite addrC addNr. Qed.
+Proof. by move=> R; rewrite addrC addNr. Qed.
 
 Definition Z_Monoid_axioms : Monoid_of_Type.axioms Z :=                         #\label{demo:theory:z:monoid:axioms}#
   Monoid_of_Type.Axioms Z 0 Z.add
@@ -320,16 +321,16 @@ We can print the type for monoids as forged by \HB{} (line~\ref{demo:theory:prin
 It packs a carrier, called \coq{sort}, and the collection of operation and
 properties that we omit for brevity.  We can also look at the type of two
 constants synthesized by \HB{} out of the hierarchy declaration. Remark that
-while the names of the constants come from the the names of the \mixin{} fields,
+while the names of the constants come from the the names of \mixin{} fields,
 their types differ.
 In particular they are quantified over a \coq{Monoid.type} or \coq{Ring.type},
-and not a simple type as in the mixin. Moreover we evince that
+and not a simple type \coq{A} as in the \mixins{}. Moreover we evince that
 the \coq{sort} projection is declared as an implicit coercion~\cite{Saibi97}
 and is automatically inserted in order to make \coq{M -> M -> M} a meaningful
 type for binary operations on the carrier of \coq{M}. Last, we see that
-properties are quantified on (hence apply to) the structure they belong but
+properties are quantified on (hence apply to) the structure they belong to but
 use, in their statements, operations belonging to simpler structures.
-Indeed \coq{addNr} is a property of rings and its statement mentions \coq{add},\
+For example \coq{addNr} is a property of a ring but  its statement mentions \coq{add},\
 the operation of the underlying monoid.
 
 We then prove lemma \coq{addrN}, line~\ref{demo:theory:state:addrN}, that is
@@ -340,8 +341,8 @@ We use the \coq{Monoid_of_Type.Axioms} \emph{\packager{}}
 (line~\ref{demo:theory:z:monoid:axioms})
 in order to build an instance of the \coq{Monoid}
 structure for binary integers \coq{Z}.
-We then register that ring instance as the canonical one on \coq{Z}
-(line~\ref{demo:theory:z:monoid:canonical}) via the \HB{} command
+We then register that monoid instance as the canonical one on \coq{Z}
+(line~\ref{demo:theory:z:monoid:canonical}) via the command
 \coq{hb.canonical}.
 We can similarly declare that \coq{Z} forms a ring by using
 the \coq{Ring_of_Monoid.Axioms} \packager{}
@@ -357,7 +358,7 @@ declaration given just above.
 From now on the axioms as well as the abstract theory of rings apply to
 integers, as shown in lemma \coq{exercise}. The details of the proof
 don't matter here, what is worth pointing out is that in a single
-statement we mix monoid and ring operations and in the
+statement we mix monoid (e.g. \coq{+}) and ring (e.g. \coq{-}) operations and in the
 proof we use monoid axioms (e.g. \coq{addrA}), ring axioms
 (e.g. \coq{addrC}) and ring lemmas (e.g. \coq{addrN}), all seamlessly.
 
@@ -403,12 +404,13 @@ since it expects the type \coq{A} to be already an Abelian group and hence
 gathers fewer axioms.
 
 With this new version of the hierarchy, that we name V2, some code written
-for version V1 breaks. For example the simple proof of \coq{addrN} works
+for version V1 works but some other code breaks.
+For example the simple proof of \coq{addrN} works
 but the declaration of the canonical ring over the integers fails, if only
 because we don't have a \coq{Ring_of_Monoid.Axioms} \packager{} anymore.
 
-Our objective is to obtain a version of the hierarchy, say V3, that does
-not only feature commutative monoids but that is also backward compatible
+Our objective is to obtain a version of the hierarchy, that we name V3, that does
+not only feature Abelian groups but that is also backward compatible
 with V1.
 
 \subsection{The missing puzzle piece}
@@ -424,10 +426,11 @@ The key to make a hierarchy evolve without breaking user code is the full
 fledged notion of \emph{\factory{}} (the \mixins{} seen so far are degenerate,
 trivial, \factories{}).
 
-\factories{}, like \mixins{}, are packages for operations and properties but are
+\Factories{}, like \mixins{}, are packages for operations and properties but are
 not directly used in the definition of structures. Instead a \factory{} is
 equipped with \emph{\builder{}s}: user provided pieces of code that extract
-from the \factory{} the contents of \mixins{}, so that \packager{}s can be used.
+from the \factory{} the contents of \mixins{}, so that existing
+\packager{}s can be used.
 
 As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_Monoid} \factory{}, that, from the user point of view,
@@ -483,11 +486,13 @@ being constructed.
 
 Thanks to this \factory{} we can now declare \coq{Z} to be an instance
 of a ring using the \coq{Ring_of_Monoid.Axioms} \packager{}.
-The associated \builder{}s generates, behind the scenes, instances of the
+The associated \builder{}s generate, behind the scenes, instances of the
 \coq{Ring_of_AbelianGroup.axioms} and \coq{AbelianGroup_of_Monoid.axioms} \mixins{}
 that in turn are used to build instances of the \coq{AbelianGroup} and \coq{Ring}
-structures. Indeed the command \coq{Elpi hb.canonical Z Z_Ring_axioms}
-makes \coq{Z} an instance of both structures.
+structures. Indeed, when used in the context of the hierarchy version V3,
+the command \coq{Elpi hb.canonical Z Z_Ring_axioms}
+makes \coq{Z} an instance of \emph{both} structures, and not just the \coq{Ring}
+one as in version V1.
 Thanks to that the proof of \coq{example} can use the theory of
 both structures, for example \coq{addrN} holds on rings, while \coq{addrA} holds
 on Abelian groups. As a result the very same proof works on both
@@ -503,13 +508,14 @@ Elpi hb.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 \end{coqcode}
 
 This is another example of client code that would not break when the hierarchy
-moves from V1 to V3: indeed the client of the hierarchy can declare new
-structures on top of existing ones as well.
+moves from V1 to V3. The client of the hierarchy is allowed to declare new
+structures on top of existing ones, and these declarations are part fo the
+user code we don't want to break.
 
 \subsection{\HB{} in a nutshell}
 
 \HB{} provides an indirection so that the client can refer to operations,
-properties and packages thereof now matter in where and how they are actually
+properties and packages thereof no matter where and how they are actually
 defined:
 
 \begin{itemize}
@@ -519,12 +525,12 @@ defined:
 \item Structures never disappear but the way they are built may change.
       The hierarchy designer is free to split structures into smaller
       ones in order to better factor and reuse parts of the hierarchy.
-\item \packager{}s and \mixins{} never disappear but can change considerably
+\item \Packager{}s and \mixins{} never disappear but can change considerably
       in their implementation. A simple \mixin{} can becomes a full fledged
       \factory{} equipped with \builder{}s to ensure retro compatibility.
 \item \HB{} high level commands compile into
       the discipline of Packed Classes, that is Coq records, coercions
-      and Canonical Structures declarations. This removes a considerable burden
+      and Canonical Structures declarations. \HB{} removes a considerable burden
       from the shoulders of the hierarchy designer and the final user.
 \end{itemize}
 
@@ -584,14 +590,14 @@ tgt lang?)}
     \item\( \provides{} \in \F{} \to \powerset\M{} \)
     \item\( \from{} \in \F{} \times \M{} \to \Lang{} \)
   \end{itemize}
-  that validate the following properties
-  \begin{itemize}
-    \item\( \forall f \in \F{},~ \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
-    \item\( \forall f \in \F{},~ \requires{}(f) \cap \provides{}(f) = \emptyset \)
-    \item\( \forall f \in \F{},~\exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
-    \item\( \forall f \in \F{},~\exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
-    \item\( \forall f \in \F{},~\forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
-  \end{itemize}
+  that validate the following properties for all \(f \in \F{}\):
+  \begin{enumerate}
+    \item\( \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
+    \item\( \requires{}(f) \cap \provides{}(f) = \emptyset \)
+    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
+    \item\( \exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
+    \item\( \forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
+  \end{enumerate}
 \end{axiom}
 
 \begin{proposition}[\( \M{} \subseteq \F{} \)]
@@ -623,10 +629,11 @@ Declare a term t as a \factory{}, adding it to \F{}, and defines
 \end{itemize}
 \end{abscommand}
 
-\begin{abscommand}[hb.declare_structure] (fs : $\powerset\F{}$).\\
+\begin{abscommand}[hb.structure] (fs : $\powerset\F{}$).\\
 crafs a class $c \in \C{}$ where $\cdef{}(c) = HELP$ and its companion $s \in \Str{}$.
 \end{abscommand}
 
+\marginpar{This command has not this signature}
 \begin{abscommand}[hb.instance] (c : $\Lang{}$) (fs : $\powerset\F{}$).\\
 synthesizes terms in $\Lang{}$ corresponding to all the \mixins{} $MS$
 that can be build with \from{} and all the \classes{} / \structures{}
@@ -643,7 +650,7 @@ A few more preliminaries are required in order to implement these signatures.
 
 \begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
 if \(c1, c2 \in \C{}\) and \(\cdef{}(c1) \cap \cdef{}(c2) \neq \emptyset\)
-then \(\join{}(c1,c2)\) is the smallest \class{} \(c\) such that
+then \(\join{}(c1,c2)\) is the smallest, w.r.t. set inclusion, \class{} \(c\) such that
 \(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\).
 \end{definition}
 
@@ -801,7 +808,7 @@ theory submodule....
 \end{command}
 \begin{command}[hb.instance]
 very close to the abstract one, but instruments CS inference with
-the synthesizedterms.
+the synthesized terms.
 \end{command}
 
 
@@ -810,14 +817,14 @@ the synthesizedterms.
 
 The implementation is based on the Elpi
 extension language for Coq. In this section we introduce the features of the
-programming language that come handy in the development of \HB{} and
+programming language that came handy in the development of \HB{} and
 comment a few code snippets.
 
 Coq-Elpi~\cite{CoqElpi} is a Coq plugin embedding
 Elpi and providing an
 extensive, high level, API to access and script the Coq system at the
 vernacular level.
-This API lives in the \elpi{coq.} namespace and lets one easily declare
+This API lives in the \elpi{coq} namespace and lets one easily declare
 records, coercions, canonical structures, modules, implicit arguments, etc.
 The most basic Coq data type exposed to Elpi is the one of references to global
 declarations:
@@ -831,8 +838,8 @@ type const constant -> gref.     % eg: Coq.Init.Peano.plus
 
 The arguments of the three constructors are opaque to Elpi, that can only use
 values of these types via dedicated APIs. For example the API for declaring
-an inductive type will generate a value of type \elpi{inductive} that
-is printed as, for example, \elpi{«nat»}.
+an inductive type will generate a value of type \elpi{inductive} that,
+in the case of the type of natural numbers, is printed as \elpi{«nat»}.
 
 Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
 of $\lambda$Prolog~\cite{Miller:2012:PHL:2331097}, an higher order
@@ -851,7 +858,7 @@ type app    list term -> term.               % eg: app [hd|args]
 ... % all other term constructors are omitted for brevity
 \end{elpicode}
 
-Note that the \elpi{fun} constructor holds $\lambda$Prolog function.
+Note that the \elpi{fun} constructor holds a $\lambda$Prolog function.
 In this syntax the Coq term \coq{(fun x : nat => x x)} becomes
 \elpi{(fun (global (indt «nat»)) x\ app[x, x])} where \elpi{x\} binds \elpi{x}
 in the body of the function. Substitution of a bound variable for a term
@@ -888,17 +895,17 @@ of scripting the following Coq code (given as a parameter \coq{axioms}):
 Record type : Type := Pack { sort : Type; class : axioms sort }.
 \end{coqcode}
 
-The Elpi code builds the declaration, type checks it, adds it to the
-Coq environment and returns the projections for the sort and the class
+The following Elpi code builds the declaration, type checks it, adds it to the
+Coq environment and finally returns the projections for the sort and the class
 fields (it is handy to have them in the rest of the code).
 
 \begin{elpicode}
-pred declare-structure i:factoryname, o:term, o:term, o:term.
+pred declare-structure i:gref, o:term, o:term, o:term.
 
 declare-structure ClassName Structure SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
-      field ff "sort" {{ Type }} s\                        %\label{binder:sort}%
+      field tt "sort" {{ Type }} s\                        %\label{binder:sort}%
       field ff "class" (app [global ClassName, s]) _\
     end-record),
   coq.typecheck-indt-decl StructureDeclaration,
@@ -916,7 +923,7 @@ The syntax \elpi{{{ Type }}} is a quotation: it lets
 one use the syntax of Coq to write an Elpi expression of type \elpi{term}.
 The API \elpi{coq.CS.canonical-projection} lets us find the projections
 automatically generated by Coq for a given record.
-The last detail worth discussing is that this program makes no use of
+The last detail worth mentioning is that this program makes no use of
 backtraking: the \elpi{std.do!} combinator signals that.
 
 In the simple case of the structure record the number of fields, and hence
@@ -929,7 +936,7 @@ nominal some knowledge in the form of a clause via the \elpi{=>} operator.
 This process is called binder mobility: the binder is moved from
 the data (that we are building) to the program (the context of the
 current computation).
-This feature is key to in the following code that synthesizes the
+This feature is key to the following code that synthesizes the
 declaration of the fields of the class record.
 
 \begin{elpicode}
@@ -958,9 +965,9 @@ are added dynamically by \elpi{synthesize-fields}.
 
 The second predicate proceeds by recursion on the (topologically sorted) list of \mixins{},
 and terminates when the list is empty. If the list contains a \mixin{} \elpi{M}
-then it crafts a name for it \elpi{Name} (line~\ref{craft:name}),
+then it crafts a \elpi{Name} for it (line~\ref{craft:name}),
 fetches its dependencies (line~\ref{deps:fetch}) and
-finds the (previous declared) record fields holding these \mixins{}
+finds the (previously declared) record fields holding these \mixins{}
 (line~\ref{deps:satisfy}).
 The \elpi{(std.map L1 P L2)} predicate relates the two lists \elpi{L1} and
 \elpi{L2} point wise using the predicate \elpi{P}.
@@ -1018,13 +1025,13 @@ adds it to the data base \elpi{"hierarchy.db"}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related work}
-The closest work is the one about Packed Classes~\cite{DBLP:conf/tphol/GarillotGMR09} on which we
+The most closely related work is the one about Packed Classes~\cite{DBLP:conf/tphol/GarillotGMR09} on which we
 build. The main differences are that \HB{} is a higher level language
-that is compiled down to Flat Packed Classes. The systematic use of
+that is compiled down to (flat) Packed Classes. The systematic use of
 \factories{} makes the user interface of a hierarchy stable under the insertion of
-intermediate structures in the hierarchy, a property that Packed Classes lacks.
+structures, a property that Packed Classes lacks.
 Finally many of the intricacy of Packed Classes are hidden to the user by
-the compilation step, making the language less error prone.
+the compilation step.
 \marginpar{ET: I guess you have more to say here}
 
 In~\cite{CaretteCombinators} Carette and O'Connor describe the language of
@@ -1064,14 +1071,14 @@ language or mechanism is provided.
 The library of the Mizar system features a hierarchy of algebraic
 structures~\cite{7733265}. In spite of lacking dependent types, Mizar
 provides the concept of attributed types and adjectives
-that can be used to describe he signature of structures as one would
+that can be used to describe the signature of structures as one would
 do with a dependently typed record and their properties as
 one would define a conjunctive predicate.
-The Mizar language also provides the notation of cluster that is used
+The Mizar language also provides the notion of cluster that is used
 to link structures: by showing that property $P$ implies property $Q$
 one can inform automation that structures characterized by $P$ are
 instances of structures characterized by $Q$. The foundational theory of Mizar
-is characterized by an extensional notion of equality that makes it easy
+features by an extensional notion of equality that makes it easy
 to share the signature or the properties of structures by just requiring
 a proof of their equivalence that is in turn used by automation to treat
 equivalent structures as equal.
@@ -1091,10 +1098,12 @@ in order to represent structures in these ways.
 
 At the same time the Mathematical Components library, given the size and
 the depth of the hierarchy, adopts Packed Classes because they offer a good
-compromise between flexibility and performance, and is our objective to
-adopt \HB{} in that context as soon as possible. At the same time one
-can imagine a future were the Coq system will provide competitive
-performances on unbundled classes.
+compromise between flexibility and performance. See~\cite[Section 8]{DBLP:conf/itp/MahboubiT13}
+for a comparison.
+% , and is our objective to adopt \HB{} in that context as soon as possible.
+At the same time one
+can imagine a future were the Coq system will provide comparable
+performances for unbundled classes.
 It is a virtue of our work to provide a user language that is separate
 from the implementation one, so we could in principle target any other
 equally expressive language without the user noticing.
@@ -1107,10 +1116,12 @@ based on the Elpi extension language for the Coq system and is available
 at \url{https://github.com/math-comp/hierarchy-builder}.
 
 The high level language is only loosely tied to Coq or even Type Theory.
-It could probably be adopt without major changes in other tools. Indeed the
+It could probably be adopted without major changes in other tools. Indeed the
 properties and invariants that link \factories{}, \mixins{} and \classes{}
 are key to rule out meaningless or ambiguous sentences and are not
-specific to the logic setting on which a prover stands.
+specific to the logic setting on which a prover stands. Moreover
+most logics feature packing construction similar to records and corresponding
+projections.
 
 The compilation scheme we present in \autoref{sec:compilation} is of
 course tied to dependent records
