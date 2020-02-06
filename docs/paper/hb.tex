@@ -89,7 +89,7 @@
 \newcommand{\factories}{factories}
 \newcommand{\Factories}{Factories}
 \newcommand{\packager}{packager}
-\newcommand{\Packager}{packager}
+\newcommand{\Packager}{Packager}
 \newcommand{\builder}{builder}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
 \newcommand{\depx}{\ensuremath{d}}
@@ -523,26 +523,27 @@ structures on top of existing ones.
 
 \subsection{\HB{} in a nutshell}
 
-\HB{} provides an indirection so that the client can refer to operations,
-properties and packages thereof no matter where and how they are actually
-defined:
+By using \HB{} the hierarchy designer has the following freedoms and advantages.
 
 \begin{itemize}
 \item Operations and properties (axioms) are made available to the user
       as soon as they are used in a structure The hierarchy designer
-      is free to move them from one to another.
+      is free to move them from one to another and replace an axiom
+      by a lemma and vice versa.
 \item Structures cannot disappear but the way they are built may change.
       The hierarchy designer is free to split structures into smaller
       ones in order to better factor and reuse parts of the hierarchy
       and the library that follows it.
-\item \Packager{}s and \mixins{} cannot disappear but can change considerably
+\item \Mixins{} cannot disappear but can change considerably
       in their implementation. A simple \mixin{} can becomes a full fledged
       \factory{} equipped with \builder{}s to ensure retro compatibility.
-\item \HB{} high level commands compile into
-      the discipline of Packed Classes, that is Coq records, coercions
-      and Canonical Structures declarations. This lifts a considerable
+\item \HB{} high level commands compile to
+      the discipline of Packed Classes (Coq modules, records, coercions,
+      implicit arguments, canonical structure instances, notations,
+      \packager{}s).
+      This process lifts a considerable
       burden from the shoulders of the hierarchy designer and the final user
-      that are no longer required to master the Packed Classes discipline.
+      that are no longer required to master the details of Packed Classes.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
