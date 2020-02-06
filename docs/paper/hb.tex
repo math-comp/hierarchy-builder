@@ -162,7 +162,7 @@ to \emph{build} hierarchies of algebraic structures and to make these hierarchie
 \emph{evolve} without breaking user code. The key concepts are the ones of
 \emph{\factory{}} and \emph{\packager{}} that lets the hierarchy developer
 describe an actual
-interface for his library. Behind that interface the developer can provide
+interface for their library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language in the \hb{} addon for the Coq
 system using the Elpi~\cite{DBLP:conf/lpar/DunchevGCT15,CoqElpi}
@@ -176,7 +176,7 @@ Modern libraries of machine checked proofs are organized around
 hierarchies of algebraic structures~\cite{10.1145/3372885.3373824,mathclasses,DBLP:journals/mics/BoldoLM15,DBLP:conf/mpc/AffeldtNS19}.
 For example the Mathematical Components library for the Coq system~\cite{Coq:manual}
 provides a very rich, ever growing, hierarchy of structures such as
-group, ring, module, algebra, field, pre-order, order, lattice\ldots
+group, ring, module, algebra, field, partial order, order, lattice\ldots
 The hierarchy does not only serve the purpose of organizing knowledge, but
 also to make it easy to exploit it. Indeed the interactive prover can
 take advantage of the structure of the library and the relation between
@@ -191,7 +191,7 @@ in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13} and later also adopted in
 \cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}.
 We call Packed Classes a discipline, and not a language, because, in spite of
 its many virtues, it is unwieldy to use. In particular it leaks to the user
-many of the technical details of the Coq system. As as result one
+many of the technical details of the Coq system. As a result, one
 needs to be a Coq expert in order to build or modify a hierarchy, and even
 experts make mistakes when doing that as shown in~\cite{KSdraft}.
 Another inconvenience of the Packed Classes discipline is that even
@@ -202,7 +202,7 @@ In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
 \emph{evolve} without breaking user code. The key concepts are the ones of
 \emph{\factory{}} and \emph{\packager{}} that let the hierarchy developer describe an actual
-interface for his library. Behind that interface the developer can provide
+interface for their library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language by compiling it
 to a variant of the Packed Classes discipline, that we call \emph{flat},
@@ -551,8 +551,8 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 
 \subsection{Preliminaries}
 
-\begin{axiom}[\Lang{}, tagret language]\label{def:universe}
-  \Lang{} is a set of names denoting terms of an target language.
+\begin{axiom}[\Lang{}, target language]\label{def:universe}
+  \Lang{} is a set of terms of an target language.
   The language must feature projections. When
   a projection from $n$ to $m$ exists we write it \proj{n}{m}.
   The identity projection \proj{x}{x} always exists.
@@ -872,7 +872,7 @@ registers in a db R...
 \begin{command}[hb.declare_factory M A FS R := {... }. bs hb.end]
 we split into two since the bs are hand and can be done interactively.
 populates the context with...
-the user labels the bs via isntance.
+the user labels the bs via instance.
 \end{command}
 \begin{command}[hb.declare_structure]
 declares many records/modules/coercions, for each join... exports operations,
