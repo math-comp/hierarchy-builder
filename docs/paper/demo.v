@@ -76,7 +76,6 @@ Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.axioms.
     opp : A -> A;
     addrC : commutative (add : A -> A -> A);
     addNr : left_inverse zero opp add;
-    addrN : right_inverse zero opp add;
   }.
 Elpi hb.end.
 Elpi hb.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
@@ -103,6 +102,9 @@ Infix "+" := (@add _) : hb_scope.
 Notation "- x" := (@opp _ x) : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
 Notation "x - y" := (x + - y) : hb_scope.
+
+Lemma addrN {R : Ring.type} : right_inverse (zero : R) opp add.
+Proof. by move=>x; rewrite addrC addNr. Qed.
 
 Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
   Record axioms := {
@@ -136,7 +138,7 @@ Qed.
 
 
   Definition to_AbelianGroup_of_Monoid :=
-    AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f) (addrN f).
+    AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f).
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
