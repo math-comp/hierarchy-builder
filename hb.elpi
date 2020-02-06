@@ -501,7 +501,8 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI]
   ),
   GoF = fun TName TTy GoFt,
   std.assert-ok! (coq.typecheck GoF _GoFTy) "declare-factory-from: GoF illtyped",
-  Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt},
+  new_int XXX, term_to_string XXX Suffix,
+  Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt} ^ Suffix,
   coq.env.add-const Name GoF _GoFTy ff ff GoFC,
   NewFrom = from Src Tgt (global (const GoFC)),
 ].

@@ -151,16 +151,14 @@ Elpi hb.declare_factory Ring_of_AddMulMonoid A MulMonoid.axioms AddMonoid.axioms
   Definition to_AbGroup_of_AddMonoid :=
     AbGroup_of_AddMonoid.Axioms_ A (opp a) (addrC a) (addNr a).
 
-  Elpi hb.canonical to_AbGroup_of_AddMonoid.
+  Elpi hb.canonical A to_AbGroup_of_AddMonoid.
 
   Definition to_Ring_of_AbGroupMulMonoid :=
   Ring_of_AbGroupMulMonoid.Axioms_ A (mulrDl a) (mulrDr a).
 
   Elpi hb.canonical A to_Ring_of_AbGroupMulMonoid.
 
-Fail Elpi hb.end. (* mixin-for (global (const «A»)) (indt «MulMonoid_of_Type.axioms») *)
-
-(*
+Elpi hb.end. 
 
 Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
   Record axioms := Axioms {
@@ -186,7 +184,7 @@ Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
   Definition to_AbGroup_of_AddMonoid :=
     AbGroup_of_AddMonoid.Axioms_ A (opp a) (addrC a) (addNr a).
 
-  Elpi hb.canonical to_AbGroup_of_AddMonoid.
+  Elpi hb.canonical A to_AbGroup_of_AddMonoid.
 
   Definition to_Ring_of_AddMulMonoid :=
     Ring_of_AddMulMonoid.Axioms_ A (opp a) (addrC a) (addNr a) (mulrDl a) (mulrDr a).
@@ -194,10 +192,7 @@ Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
   Elpi hb.canonical A to_Ring_of_AddMulMonoid.
 
 Elpi hb.end.
-*)
 
-End Ring_of_AddMulMonoid.
-End Ring_of_AddMulMonoid.
 End V3.
 
 (*
