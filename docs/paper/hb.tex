@@ -248,8 +248,8 @@ Elpi hb.declare_mixin Ring_of_Monoid A Monoid.axioms.       #\label{demo:mixin:r
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
-    addrC : commutative (S := A) add;    (* `add` is commutative.                   *)
-    addNr : left_inverse zero opp add;   (* `opp x` is the additive inverse of `x`. *)
+    addNr : left_inverse zero opp add;   (* `opp x` is the right and left additive  *)
+    addrN : right_inverse zero opp add;  (*   inverse of `x`.                       *)
     mulrA : associative mul;             (* `mul` is associative.                   *)
     mul1r : left_id one mul;             (* `one` is the left and right identity    *)
     mulr1 : right_id one mul;            (*   element w.r.t. `mul`.                 *)
@@ -297,8 +297,8 @@ Print Monoid.type. (* Monoid.type  :=  { sort : Type;  ... }                    
 Check @add.        (* add          :   forall M : Monoid.type, M -> M -> M             *) #\label{demo:theory:check:add}#
 Check @addNr.      (* addNr        :   forall R : Ring.type, left_inverse zero opp add *) #\label{demo:theory:check:addNr}#
 
-Lemma addrN : forall R : Ring.type, right_inverse zero opp add.                 #\label{demo:theory:state:addrN}#
-Proof. by move=> R; rewrite addrC addNr. Qed.
+Lemma addrC : forall R : Ring.type, commutative (@add R).                       #\label{demo:theory:state:addrC}#
+Proof. (* Proof by Hankel 1867, omitted for brevity *) Qed.
 
 Definition Z_Monoid_axioms : Monoid_of_Type.axioms Z :=                         #\label{demo:theory:z:monoid:axioms}#
   Monoid_of_Type.Axioms Z 0 Z.add
@@ -308,13 +308,13 @@ Elpi hb.canonical Z Z_Monoid_axioms.                                            
 
 Definition Z_Ring_axioms : Ring_of_Monoid.axioms Z _ :=                        #\label{demo:theory:z:ring:axioms}#
   Ring_of_Monoid.Axioms Z 1 Z.opp Z.mul
-    Z.add_comm Z.add_opp_diag_l Z.mul_assoc Z.mul_1_l Z.mul_1_r
+    Z.add_opp_diag_l Z.add_opp_diag_r Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
 Elpi hb.canonical Z Z_Ring_axioms.                                              #\label{demo:theory:z:ring:canonical}#
 
-Lemma exercise (m n : Z) : (n + m) - n + 0 = m.
-Proof. by rewrite (addrC n) -(addrA m) addrN !addr0. Qed.
+Lemma exercise (m n : Z) : (n + m) - n * 1 = m.
+Proof. by rewrite mulr1 (addrC n) -(addrA m) addrN addr0. Qed.
 \end{coqcode}
 
 We can print the type for monoids as forged by \HB{} (line~\ref{demo:theory:print:type}).
@@ -333,9 +333,10 @@ use, in their statements, operations belonging to simpler structures.
 For example \coq{addNr} is a property of a ring but  its statement mentions \coq{add},\
 the operation of the underlying monoid.
 
-We then prove lemma \coq{addrN}, line~\ref{demo:theory:state:addrN}, that is
-a trivial consequence of the ring axioms. Albeit simple this example shows
-we can populate the theory of rings with new results.
+We then follow the proof of Hankel~\cite{nearrings} to show that
+ring axioms imply the commutativity of the underlying monoid
+(line~\ref{demo:theory:state:addrC}). This simple example shows we can
+populate the theory of abstract rings with new results.
 
 We use the \coq{Monoid_of_Type.Axioms} \emph{\packager{}}
 (line~\ref{demo:theory:z:monoid:axioms})
@@ -360,9 +361,9 @@ integers, as shown in lemma \coq{exercise}. The details of the proof
 don't matter here, what is worth pointing out is that in a single
 statement we mix monoid (e.g. \coq{+}) and ring (e.g. \coq{-}) operations and in the
 proof we use monoid axioms (e.g. \coq{addrA}), ring axioms
-(e.g. \coq{addrC}) and ring lemmas (e.g. \coq{addrN}), all seamlessly.
+(e.g. \coq{addrN}) and ring lemmas (e.g. \coq{addrC}), all seamlessly.
 
-\subsection{Evolution of the hierarchy}
+\subsection{Evolution of the hierarchy}\label{subsec:evolution}
 
 We now proceed by changing the hierarchy to accommodate the intermediate
 structure of Abelian groups.
@@ -394,6 +395,9 @@ Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.axioms.
   }.
 Elpi hb.end.
 Elpi hb.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
+
+Lemma addrN {R : AbelianGroup.type} : right_inverse zero opp add.               #\label{demo2:proof:addrN}#
+Proof. by move=>x; rewrite addrC addNr. Qed.
 \end{coqcode}
 
 Some operations and properties were moved from the old \mixin{} for rings
@@ -401,12 +405,17 @@ into a newborn \mixin{} \coq{AbelianGroup_of_Monoid} that gathers the
 axioms needed to turn a monoid into an Abelian group. Consequently the \mixin{}
 for rings is now called \coq{Ring_of_AbelianGroup} (instead of \coq{Ring_of_Monoid})
 since it expects the type \coq{A} to be already an Abelian group and hence
-gathers fewer axioms.
+gathers fewer axioms. \\
+While operations moved from one structure to another, some properties
+undergo a deep change in their status.
+The lemma \coq{addrC} part of the abstract theory of
+rings is now an axiom of Abelian groups, while \coq{addrN} is no more
+an axiom of rings, but rather tha theorem of the abstract theory of Abelian
+Groups.
 
-With this new version of the hierarchy, that we name V2, some code written
-for version V1 works but some other code breaks.
-For example the simple proof of \coq{addrN} works
-but the declaration of the canonical ring over the integers fails, if only
+With this new version of the hierarchy, that we name V2, code written
+for version V1 breaks. For example the declaration of the canonical ring over 
+the integers fails, if only
 because we don't have a \coq{Ring_of_Monoid.Axioms} \packager{} anymore.
 
 Our objective is to obtain a version of the hierarchy, that we name V3, that does
@@ -439,13 +448,13 @@ and hence grant backward compatibility between this last version V3 and the
 initial one V1.\marginpar{KS: the following \coq{axioms} record is the same as the second \coq{axioms} record in Sect.~2. We may omit its details.}
 
 \begin{coqcode}
-Elpi hb.declare_factory Ring_of_Monoid A.
+Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
   Record axioms := {
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
-    addrC : commutative (add : A -> A ->A);
     addNr : left_inverse zero opp add;
+    addrN : right_inverse zero opp add;
     mulrA : associative mul;
     mul1r : left_id one mul;
     mulr1 : right_id one mul;
@@ -455,15 +464,16 @@ Elpi hb.declare_factory Ring_of_Monoid A.
 
   Variable f : axioms.                                                          #\label{demo3:variable:f}#
 
-  Definition to_AbelianGroup_of_Monoid :=
-    AbelianGroup_of_Monoid.Axioms A (opp f) (addrC f) (addNr f)
+  Lemma addrC : commutative add.
+  Proof. (* Same proof as before *) Qed.
 
+  Definition to_AbelianGroup_of_Monoid :=
+    AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f). (* addrN unused *)
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A (one f) (mul f)
       (mulrA f) (mul1r f) (mulr1 f) (mulrDl f) (mulrDr f).
-
   Elpi hb.canonical A to_Ring_of_AbelianGroup.
 
 Elpi hb.end.
@@ -478,11 +488,12 @@ axioms (named \coq{f}, line~\ref{demo3:variable:f}).
 This construction is also registered as canonical for \coq{A},
 so that the next construction \coq{to_Ring_of_AbelianGroup} can call
 the \coq{Ring_of_AbelianGroup.Axioms} \packager{} that requires \coq{A} to be
-an \coq{AbelianGroup}. In this simple example the two \builder{}s are just
-partitioning the contents of the \factory{} \coq{f}, but in practice they
-often involve proofs that the properties held by the factory
-imply the ones held by the \mixins{} characterizing the structures that are
-being constructed.
+an \coq{AbelianGroup}.
+It is worth pointing out that the proof of \coq{addrC} we had in V1 is now
+required in order to write the \builder{} for Abelian groups, while
+the \coq{addrN} field is not used (the same statement is already part of
+the theory of Abelian groups, see line~\ref{demo2:proof:addrN} of the previous
+code snippet).
 
 Thanks to this \factory{} we can now declare \coq{Z} to be an instance
 of a ring using the \coq{Ring_of_Monoid.Axioms} \packager{}.
@@ -494,8 +505,9 @@ the command \coq{Elpi hb.canonical Z Z_Ring_axioms}
 makes \coq{Z} an instance of \emph{both} structures, and not just the \coq{Ring}
 one as in version V1.
 Thanks to that the proof of \coq{example} can use the theory of
-both structures, for example \coq{addrN} holds on rings, while \coq{addrA} holds
-on Abelian groups. As a result the very same proof works on both
+both structures, for example \coq{addrC} holds on Abelian groups,
+\coq{addrA} holds on monoids, while \coq{addr1} holds on rings.
+As a result the very same proof works on both
 version V1 and V3.
 
 Last, it is worth pointing out that the new factory makes the following
@@ -508,9 +520,8 @@ Elpi hb.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 \end{coqcode}
 
 This is another example of client code that would not break when the hierarchy
-moves from V1 to V3. The client of the hierarchy is allowed to declare new
-structures on top of existing ones, and these declarations are part fo the
-user code we don't want to break.
+moves from V1 to V3: the client of the hierarchy is allowed to declare new
+structures on top of existing ones.
 
 \subsection{\HB{} in a nutshell}
 
@@ -1055,7 +1066,10 @@ CommutativeGroup := combine CommutativeMonoid , Group over Monoid
 In our language \HB{} the same role is played by \emph{\mixins{}}.
 A \mixin{} lets one write once and forall a property and abstract it over types
 and operations so that it can be reused in all the structures that need it.
-\marginpar{cyril fix this sentence}
+One operation \HB{} allows for but that does not seem to be possible in the
+setting of Presentation Combinators is the one of replacing an axioms with a
+lemma and vice versa. As shown in \autoref{subsec:evolution} \HB{} supports
+that.
 
 The MMT system~\cite{RABE20131} provides a framework to describe formal
 languages in a logical framework, providing good support for binders and

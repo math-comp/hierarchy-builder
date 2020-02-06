@@ -103,7 +103,7 @@ Notation "- x" := (@opp _ x) : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
 Notation "x - y" := (x + - y) : hb_scope.
 
-Lemma addrN {R : Ring.type} : right_inverse (zero : R) opp add.
+Lemma addrN {R : AbelianGroup.type} : right_inverse (zero : R) opp add.
 Proof. by move=>x; rewrite addrC addNr. Qed.
 
 Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
@@ -165,5 +165,5 @@ Definition Z_ring_axioms : Ring_of_Monoid.axioms Z _ :=
 
 Elpi hb.canonical Z Z_ring_axioms.
 
-Lemma exercise (m n : Z) : (n + m) - n + 0 = m.
-Proof. by rewrite (addrC n) -(addrA m) addrN !addr0. Qed.
+Lemma exercise (m n : Z) : (n + m) - n * 1 = m.
+Proof. by rewrite mulr1 (addrC n) -(addrA m) addrN addr0. Qed.
