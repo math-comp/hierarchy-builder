@@ -232,6 +232,8 @@ Elpi Typecheck.
 (** This command declares all the canonical instances the given factories
     provides.
 
+   TODO: sanity check for arguments
+
 *)
 
 Elpi Command hb.canonical.
