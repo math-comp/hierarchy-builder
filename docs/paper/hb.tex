@@ -181,12 +181,12 @@ The hierarchy does not only serve the purpose of organizing knowledge, but
 also to make it easy to exploit it. Indeed the interactive prover can
 take advantage of the structure of the library and the relation between
 its concepts to infer part of information usually left implicit
-by the user. This feature turned out to be a key ingredient to tame
-the complexity and size of formal proofs such as the one of the Odd Order
+by the user, a capability that turned out to be key to tame
+the complexity and size of the formal proof of the Odd Order
 Theorem~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
 
 The hierarchy of the Mathematical Components library
-is based on the discipline of Packed Classes initially introduced
+is implemented following the discipline of Packed Classes initially introduced
 in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13} and later also adopted in
 \cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}.
 We call Packed Classes a discipline, and not a language, because, in spite of
@@ -204,23 +204,21 @@ to \emph{build} hierarchies of algebraic structures and to make these hierarchie
 \emph{\factory{}} and \emph{\packager{}} that let the hierarchy developer describe an actual
 interface for his library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
-We implement the \HB{} language in the \hb{} addon for the Coq.
-We write this addon using using the Elpi~\cite{DBLP:conf/lpar/DunchevGCT15,CoqElpi}
-extension language for Coq.
+We implement the \HB{} language by compiling it
+to a variant of the Packed Classes discipline, that we call \emph{flat},
+in the \hb{} addon for Coq. We write this addon using using the
+Elpi~\cite{DBLP:conf/lpar/DunchevGCT15,CoqElpi} extension language.\\
 
-The main contributions of the paper are the following ones:
+\noindent To sum up, the main contributions of the paper are:
 \begin{itemize}
-\item the \HB{} language providing linguistic tools to
-build a hierarchy and make it evolve without breaking user code
-\item the compilation of \HB{} to a variant of the Packed Classes discipline
-that we call \emph{flat}
-\item the \hb{} addon for Coq implementing \HB{}
+\item the design of the \HB{} language
+\item the compilation of \HB{} to the (flat) Packed Classes discipline
+\item the implementation of \HB{} in the \hb{} addon for Coq
 \end{itemize}
-
 The paper is organized as follows. Via an example we introduce
-\HB{} and its key ideas. We then provide a formal description of
-\HB{}. We then describe the discipline
-of Packed Classes and we describe how \HB{} can be compiled to it.
+\HB{} and its key ideas. %We then provide a formal description of \HB{}.
+We then describe the discipline
+of Packed Classes and we show how \HB{} can be compiled to it.
 We then discuss the implementation of the Coq addon via the Elpi extension
 language and we position \HB{} in the literature.
 
@@ -530,19 +528,21 @@ properties and packages thereof no matter where and how they are actually
 defined:
 
 \begin{itemize}
-\item Operations and properties (axioms) are exported once the first time they
-      are used in a structure. The hierarchy designer is free to move them from
-      one to another.
-\item Structures never disappear but the way they are built may change.
+\item Operations and properties (axioms) are made available to the user
+      as soon as they are used in a structure The hierarchy designer
+      is free to move them from one to another.
+\item Structures cannot disappear but the way they are built may change.
       The hierarchy designer is free to split structures into smaller
-      ones in order to better factor and reuse parts of the hierarchy.
-\item \Packager{}s and \mixins{} never disappear but can change considerably
+      ones in order to better factor and reuse parts of the hierarchy
+      and the library that follows it.
+\item \Packager{}s and \mixins{} cannot disappear but can change considerably
       in their implementation. A simple \mixin{} can becomes a full fledged
       \factory{} equipped with \builder{}s to ensure retro compatibility.
 \item \HB{} high level commands compile into
       the discipline of Packed Classes, that is Coq records, coercions
-      and Canonical Structures declarations. \HB{} removes a considerable burden
-      from the shoulders of the hierarchy designer and the final user.
+      and Canonical Structures declarations. This lifts a considerable
+      burden from the shoulders of the hierarchy designer and the final user
+      that are no longer required to master the Packed Classes discipline.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
