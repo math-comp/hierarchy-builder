@@ -234,9 +234,9 @@ Elpi hb.declare_mixin Monoid_of_Type A.                       #\label{demo:mixin
   Record axioms := {
     zero : A;
     add : A -> A -> A;
-    addrA : associative add;              (* `add` is associative.                  *)
-    add0r : left_id zero add;             (* `zero` is the left and right           *)
-    addr0 : right_id zero add;            (*   absorbing element w.r.t. `add`.      *)
+    addrA : associative add;             (* `add` is associative.                   *)
+    add0r : left_id zero add;            (* `zero` is the left and right absorbing  *)
+    addr0 : right_id zero add;           (*   element with respect to `add`.        *)
 }.
 Elpi hb.end.                                              #\label{demo:mixin:mot:end}#
 Elpi hb.structure Monoid Monoid_of_Type.axioms.        #\label{demo:structure:monoid}#
@@ -246,11 +246,11 @@ Elpi hb.declare_mixin Ring_of_Monoid A Monoid.axioms.       #\label{demo:mixin:r
     one : A;
     opp : A -> A;
     mul : A -> A -> A;
-    addNr : left_inverse zero opp add;   (* `opp x` is the right and left additive  *)
+    addNr : left_inverse zero opp add;   (* `opp x` is the left and right additive  *)
     addrN : right_inverse zero opp add;  (*   inverse of `x`.                       *)
     mulrA : associative mul;             (* `mul` is associative.                   *)
     mul1r : left_id one mul;             (* `one` is the left and right identity    *)
-    mulr1 : right_id one mul;            (*   element w.r.t. `mul`.                 *)
+    mulr1 : right_id one mul;            (*   element with respect to `mul`.        *)
     mulrDl : left_distributive mul add;  (* `mul` is left and right distributive    *)
     mulrDr : right_distributive mul add; (*   over `add`.                           *)
   }.
@@ -409,7 +409,7 @@ undergo a deep change in their status.
 The lemma \coq{addrC} part of the abstract theory of
 rings is now an axiom of Abelian groups, while \coq{addrN} is no more
 an axiom of rings, but rather tha theorem of the abstract theory of Abelian
-Groups.
+groups.
 
 With this new version of the hierarchy, that we name V2, code written
 for version V1 breaks. For example the declaration of the canonical ring over 
