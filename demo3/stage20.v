@@ -1,4 +1,4 @@
-Require Import hb ssreflect ssrfun ZArith.
+Require Import hb ssreflect ssrfun ZArith String.
 
 Module V1.
 
