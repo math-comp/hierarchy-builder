@@ -8,7 +8,7 @@
 \newmintinline[coq]{elpi.py:CoqElpiLexer -x}{fontsize=\small}
 \usepackage{xcolor}
 
-\definecolor{dkgreen}{rgb}{0.0, 0.5, 0.0}
+\definecolor{dkgreen}{rgb}{0, 0.502, 0}
 
 \newcommand{\coqelpi}{Coq-Elpi}
 \newcommand{\HB}{\ensuremath{\mathcal{HB}}}
@@ -101,7 +101,6 @@
 \newcommand{\factoryinstances}{factory instances}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
 \newcommand{\dep}{\ensuremath{dep}}
-\newcommand{\depone}{\ensuremath{dep_1}}
 \newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
 \newcommand{\C}{\ensuremath{\mathcal{C}}}
 \newcommand{\B}{\ensuremath{\mathcal{B}}}
@@ -128,6 +127,7 @@
 \newcommand{\hbfactory}{{\tt\color{dkgreen}Elpi hb.factory}}
 \newcommand{\hbinstance}{{\tt\color{dkgreen}Elpi hb.instance}}
 \newcommand{\hbstructure}{{\tt\color{dkgreen}Elpi hb.structure}}
+\newcommand{\hbend}{{\tt\color{dkgreen}Elpi hb.end}}
 
 \newtheoremstyle{implem}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
 {$\blacktriangleright$ \thmname{#1}\thmnumber{ #2}\thmnote{ #3}}
@@ -245,7 +245,7 @@ structures: \coq{Monoid} and \coq{Ring}.
     add0r : left_id zero add;            (* `zero` is the left and right absorbing  *)
     addr0 : right_id zero add;           (*   element with respect to `add`.        *)
   }.
-Elpi hb.end.                                              #\label{demo:mixin:mot:end}#
+#\hbend{}#.                                              #\label{demo:mixin:mot:end}#
 #\hbstructure{}# Monoid Monoid_of_Type.axioms.        #\label{demo:structure:monoid}#
 
 #\hbmixin{}# Ring_of_Monoid A Monoid.axioms.       #\label{demo:mixin:rom}#
@@ -261,7 +261,7 @@ Elpi hb.end.                                              #\label{demo:mixin:mot
     mulrDl : left_distributive mul add;  (* `mul` is left and right distributive    *)
     mulrDr : right_distributive mul add; (*   over `add`.                           *)
   }.
-Elpi hb.end.
+#\hbend{}#.
 #\hbstructure{}# Ring Monoid.axioms Ring_of_Monoid.axioms. #\label{demo:structure:ring}#
 
 \end{coqcode}
@@ -271,14 +271,14 @@ later assemble them. One kind of \factory{} supported by \HB{}, the simplest
 one, is called \emph{\mixin{}} and is embodied by a record, by convention named
 \coq{axioms}, that gathers operations and properties.
 
-\Mixins{} are declared via the \coq{#\hbmixin{}#} command
+\Mixins{} are declared via the \hbmixin{} command
 that takes a module name,
 a type variable name and a possibly empty list of \factories{} for that type.
 The code between lines~\ref{demo:mixin:mot}
 and~\ref{demo:mixin:mot:end} declares a \mixin{} that can turn a naked
 type \coq{A} into a monoid, hence we chose the module name to be \coq{Monoid_of_Type}.
 
-The \coq{#\hbstructure{}#} command takes in input a name S and a possibly
+The \hbstructure{} command takes in input a name S and a possibly
 empty list of \factories{}
 It registers a structure S in the hierarchy placing
 any definition specific to that structure inside a Coq module named \coq{S}.
@@ -309,14 +309,14 @@ Definition Z_Monoid_axioms : Monoid_of_Type.axioms Z :=                         
   Monoid_of_Type.Axioms Z 0 Z.add
     Z.add_assoc Z.add_0_l Z.add_0_r.
 
-Elpi hb.canonical Z Z_Monoid_axioms.                                            #\label{demo:theory:z:monoid:canonical}#
+#\hbinstance{}# Z Z_Monoid_axioms.                                            #\label{demo:theory:z:monoid:canonical}#
 
 Definition Z_Ring_axioms : Ring_of_Monoid.axioms Z _ :=                        #\label{demo:theory:z:ring:axioms}#
   Ring_of_Monoid.Axioms Z 1 Z.opp Z.mul
     Z.add_opp_diag_l Z.add_opp_diag_r Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
-Elpi hb.canonical Z Z_Ring_axioms.                                              #\label{demo:theory:z:ring:canonical}#
+#\hbinstance{}# Z Z_Ring_axioms.                                              #\label{demo:theory:z:ring:canonical}#
 
 Lemma exercise (m n : Z) : (n + m) - n * 1 = m.
 Proof. by rewrite mulr1 (addrC n) -(addrA m) addrN addr0. Qed.
@@ -376,7 +376,7 @@ structure of Abelian groups.
 \begin{coqcode}
 #\hbmixin{}# Monoid_of_Type A.
   Record axioms := { ... (* unchanged *) ... }.
-Elpi hb.end.
+#\hbend{}#.
 #\hbstructure{}# Monoid Monoid_of_Type.axioms.
 
 #\hbmixin{}# AbelianGroup_of_Monoid A Monoid.axioms.
@@ -385,7 +385,7 @@ Elpi hb.end.
     addrC : commutative (S := A) add;
     addNr : left_inverse zero opp add;
   }.
-Elpi hb.end.
+#\hbend{}#.
 #\hbstructure{}# AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
 
 #\hbmixin{}# Ring_of_AbelianGroup A AbelianGroup.axioms.
@@ -398,7 +398,7 @@ Elpi hb.end.
     mulrDl : left_distributive mul add;
     mulrDr : right_distributive mul add;
   }.
-Elpi hb.end.
+#\hbend{}#.
 #\hbstructure{}# Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 
 Lemma addrN {R : AbelianGroup.type} : right_inverse zero opp add.               #\label{demo2:proof:addrN}#
@@ -474,14 +474,14 @@ initial one V1.\marginpar{KS: the following \coq{axioms} record is the same as t
 
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f). (* addrN unused *)
-  Elpi hb.canonical A to_AbelianGroup_of_Monoid.
+  #\hbinstance{}# A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A (one f) (mul f)
       (mulrA f) (mul1r f) (mulr1 f) (mulrDl f) (mulrDr f).
-  Elpi hb.canonical A to_Ring_of_AbelianGroup.
+  #\hbinstance{}# A to_Ring_of_AbelianGroup.
 
-Elpi hb.end.
+#\hbend{}#.
 \end{coqcode}
 
 The record \coq{Ring_of_Monoid.axioms} is the same we declared as a \mixin{}
@@ -506,7 +506,7 @@ The associated \builder{}s generate, behind the scenes, instances of the
 \coq{Ring_of_AbelianGroup.axioms} and \coq{AbelianGroup_of_Monoid.axioms} \mixins{}
 that in turn are used to build instances of the \coq{AbelianGroup} and \coq{Ring}
 structures. Indeed, when used in the context of the hierarchy version V3,
-the command \coq{Elpi hb.canonical Z Z_Ring_axioms}
+the command \hbinstance{} \coq{Z Z_Ring_axioms}
 makes \coq{Z} an instance of \emph{both} structures, and not just the \coq{Ring}
 one as in version V1.
 Thanks to that the proof of \coq{example} can use the theory of
@@ -556,8 +556,6 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{\HB{} language}\label{sec:language}
 
-\subsection{\HB{} terms}
-
 We call \(\Lang{}\) the set of terms of Coq type theory. The terms
 handled by \HB{} are subdivided in six categories, the \mixins{}
 \(\M{}\), the \factories{} \(\F{}\), , \mixinbuilders{} \(\B{}\), the
@@ -572,6 +570,7 @@ when using \hbinstance{} while declaring a \factory{}, and the user
 may only refer to structure types, but should never rely on their
 implementation, neither should they rely on explicit builders.
 
+\subsection{\HB{} mixins, factories and instances}
 
 \begin{definition}[\M{}, mixins]
 A \emph{\mixin{}} \(m \in \M{}\) is a Coq record with one of more parameters.
@@ -588,23 +587,25 @@ have \(\sigma(i,k) \in \enum1{i-1}\).
 
 We will use the abbreviation \(\pmp{n} = \vect{\left(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots\ p_{\sigma(i,n_i)}\right)}_{i \in \enum1n}\)
 
-\begin{definition}[\depone and \dep, mixin dependencies]
-  Given \(m \in \M{}\), we define \(\depone{}(m) \in \powerset\M{}\)
+\begin{definition}[\dep{}, mixin dependencies]
+  Given \(m \in \M{}\), we define \(\dep{}(m) \in \powerset\M{}\)
   as the set of all \mixins{} that occur as parameters of \(m\), i.e.
-  \(\depone{}(m) = \enum{m_1}{m_n}\), and
-  \(\dep{} \in \powerset\M{} \to \powerset\M{}\) by
-  \(\dep{}(M) = \bigcup_{m \in M} \depone{}(m)\).
+  \(\dep{}(m) = \enum{m_1}{m_n}\).
 \end{definition}
 
-
 \begin{remark}For all \(i \in \enum1n\), we have
-\(\depone{}(m_i) = \enum{m_{\sigma(i,1)}}{m_{\sigma(i,m_i)}}\).
+\(\dep{}(m_i) = \enum{m_{\sigma(i,1)}}{m_{\sigma(i,m_i)}}\).
 \end{remark}
 
+\begin{definition}If \(f : \mathcal{X} \to \powerset{\mathcal{Y}}\), then
+\(f^\star : \powerset{\mathcal{X}} \to \powerset{\mathcal{Y}}\) is defined as
+\(f^\star(X) = \bigcup_{x \in X} f(x).\)
+\end{definition}
+
 \begin{proposition}
-\depone{} is transitively closed since records are well typed in the
+\dep{} is transitively closed since records are well typed in the
 empty context and describes a DAG since Coq does not admit circular
-definitions: \(\dep{}(\dep{}(M)) \subset \dep{}(M)\)
+definitions: \(\dep{}^\star(\dep{}^\star(M)) \subset \dep{}^\star(M)\)
 \end{proposition}
 
 \begin{definition}[\factories{} \F{}, \mixinbuilders{} \B{} and \from{}]
@@ -622,13 +623,13 @@ Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n
   that builds the mixin \(m_{n+1}\) from the factory \(f\).
 \end{definition}
 
-\begin{definition}[\provides{}, \requires{}]
+\begin{definition}[$\provides{}$, $\requires{}$]
   We define the following functions \begin{itemize}
-  \item\( \requires{}_1(f) = \enum{m_1}{m_n}  \in \powerset\M{}\)
+  \item\( \requires{}(f) = \enum{m_1}{m_n}  \in \powerset\M{}\)
     the set of mixins a factory \(f \in \F{}\) depends on, thus requiring all the
     \mixinbuilders{} of a given factory to have the same set of
     dependency.
-  \item\( \provides{}_1(f) = \{m | \from{}(f,m) \textrm{ is defined}\}
+  \item\( \provides{}(f) = \{m | \from{}(f,m) \textrm{ is defined}\}
     \in \powerset\M{}\) the set of mixins that a factory
     \(f \in \F{}\) provides, through its \mixinbuilders{}.
   \end{itemize}
@@ -637,21 +638,21 @@ Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n
 \begin{proposition}
 They validate the following properties for all \(f \in \F{}\):
   \begin{enumerate}
-    \item\( \dep{}(\requires{}_1(f)) \subseteq \requires{}(f)\)
-    \item\( \requires{}_1(f) \cap \provides{}_1(f) = \emptyset \)
-    \item\( \forall m \in \provides{}_1(f),~ \from{}(f,m) \) is defined
+    \item\( \dep{}^\star(\requires{}(f)) \subseteq \requires{}(f)\)
+    \item\( \requires{}(f) \cap \provides{}(f) = \emptyset \)
+    \item\( \forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
   \end{enumerate}
 \end{proposition}
 
-Mixins are declared by the user as the fundamental building blocks of
+\Mixins{} are declared by the user as the fundamental building blocks of
 a hierarchy, they are special cases of factories, as the next
 proposition shows, and once declared they shall not be distinguished
 from regular factories.
 
 \begin{proposition}[\( \M{} \subseteq \F{} \)]
   \[\textrm{For all }m \in \M{}\textrm{ we have }\from(m,m) = \coq{fun T p_1 .. p_n (x :}\ m\ \coq{T p_1 .. p_n) => x)} \in \B{}, \]
-  hence \(\requires{}(m) = \depone{}(m)\) and
-  \(\provides{}(m) = \{m\} \).
+  hence \(\requires{}^\star(m) = \dep{}(m)\) and
+  \(\provides{}^\star(m) = \{m\} \).
 \end{proposition}
 
 
@@ -669,12 +670,23 @@ The conception of such notation relies on unification with phantom types \cite{D
 \begin{coqcode}
 #\hbmixin{}# M T #$f_1\ \ldots\ f_n$#.
 Record axioms := { .. }.
-hb.end
+#\hbend{}#
 \end{coqcode}
-Creates a module \coq{M} with a record \coq{M.axioms_}, which depends
-on the mixins \(\bigcup_{f \in \coq{fs}} \provides{}(f)\), and registers this
-new record both as a mixin and a factory
- It also creates a \packager{} \coq{M.Axioms}
+  Creates a module \coq{M} with a record
+  \coq{M.axioms}, which depends on the \mixins{}
+  \(\requires{}(\coq{M.axioms}) =
+  \provides{}^\star\left(\enum{f_1}{f_n}\right)\), and registers this
+  new record both as a mixin and a factory It also creates a
+  \packager{} \coq{M.Axioms}
+\end{command}
+
+\begin{command} to declare an instance:
+\begin{coqcode}
+#\hbinstance{}# X #\(b_1 \ldots b_k\)#
+\end{coqcode}
+  synthesizes terms in $\Lang{}$ corresponding to all the \mixins{}
+  $M$ that can be build. This command also generates unification hints
+  as described in Section~\ref{sec:target-lang}.
 \end{command}
 
 \begin{command} to declaring a new factory and generating new mixin builders:
@@ -686,43 +698,47 @@ Variable (a : axioms _).
 #\hbinstance{}# T #$b_1$#.
 ...
 #\hbinstance{}# T #$b_k$#.
-hb.end
+#\hbend{}#
 \end{coqcode}
   Creates a module \coq{M} with a record \coq{M.axioms_}, which
-  depends on the mixins \(\bigcup_{f \in \coq{fs}} \provides{}(f)\),
-  and registers this new record as factory. We then use the
+  depends on the mixins \(\requires{}(\coq{M.axioms}) = 
+  \provides{}^\star\left(\enum{f_1}{f_n}\right)\)
+  and registers this new record as a factory. We then use the
   \factoryinstances{} \(b_1, \ldots, b_k\) provided by the user and
   derive \mixinbuilders{} from them.
 \end{command}
+
+\subsection{\HB{} classes and structures}
+\label{sec:hb-class-struct}
+
 
 \begin{definition}[\C{}, class]
 A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
 \coq{(T : Type)}. The type of each field is a \mixin{} in \M{} applied to
 \coq{T} and, if needed, any number of other fields:
 \begin{coqcode}
-Record c (T : Type) := { #\(p_1 : m_1\ T\)#; ..; #\(p_n : m_n\ T\ p_{\sigma(n,1)}\ \ldots p_{\sigma(n,n_n)}\)#}.
+Record #$c$# (T : Type) := { ..; #\(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots p_{\sigma(i,n_i)}\)#; ..}.
 \end{coqcode}
-We call \(\cdef{}(c) \in \powerset\M{}\) is the set of \mixins{} mentioned in the fields of the \class{},
-i.e. \{\coq{m_1,m_2,..,m_n}\}.
+We call \(\cdef{}_1(c) \in \powerset\M{}\) is the set of \mixins{} mentioned in the fields of the \class{},
+i.e. \(\{m_1, \ldots,m_n\}\).
 Given that \class{} records are well typed in the empty context
 the set of \mixin{} records is closed transitively.
-Projections for parameters are trivially definable.
 The implementation enforces that no two
 \class{} records contains the same set of
 \mixin{} (disregarding the order of the fields).
 
   They validate the following properties for all \(f \in \F{}\):
   \begin{enumerate}
-    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
-    \item\( \exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
+    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}^\star(f) \cup \provides{}^\star(f) \)
+    \item\( \exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}^\star(f)\)
     \end{enumerate}
   \end{definition}
 
 
 \begin{proposition}[\( \C{} \subseteq \F{} \)]
   forall \(m \in \cdef{}(c)\) we have \(\from{}(c,m_i) = p_i,\) and it
-  follows that \(\requires{}_1(c)~=~\emptyset \),
-  \(\provides{}_1(c)~=~\cdef{}(c).\)
+  follows that \(\requires{}(c)=\emptyset \),
+  \(\provides{}(c)=\cdef{}(c).\)
 \end{proposition}
 
 \begin{definition}[\Str{} Structure]
@@ -739,23 +755,10 @@ they are in bijection.
 #\hbstructure{}# M #\(f_1 \ldots f_n\)#
 \end{coqcode}
   crafts a class \coq{M.class_of} $\in \C{}$ where
-  $\cdef{}(c) = \provides{}\left(\enum{f_1}{f_n}\right) $ and the
+  $\cdef{}(c) = \provides{}^\star\left(\enum{f_1}{f_n}\right) $ and the
   corresponding structure \coq{M.type} $\in \Str{}$, together with
   unification hints as described in Section~\ref{sec:target-lang}.
 \end{command}
-
-\begin{command} to declare an instance:
-\begin{coqcode}
-#\hbinstance{}# c #\(b_1 \ldots b_k\)#
-\end{coqcode}
-synthesizes terms in $\Lang{}$ corresponding to all the \mixins{} $M$
-that can be build with \from{} and all the \classes{} / \structures{}
-for which \( \cdef{}(c) \subseteq M \).
-\end{command}
-
-\subsection{Robustness property}
-
-\subsection{Subclasses and joins}
 
 \begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
   \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
@@ -770,6 +773,7 @@ then \(\join{}(c1,c2)\) is the smallest, w.r.t. set inclusion, \class{} \(c\) su
 \begin{remark}[]
 \(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
 \end{remark}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
