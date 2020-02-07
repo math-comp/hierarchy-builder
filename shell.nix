@@ -22,7 +22,8 @@ stdenv.mkDerivation rec {
   name = "env";
   env = buildEnv { name = name; paths = buildInputs; };
   buildInputs = [ coq myCoqPackages.coq-elpi ]
-                ++ lib.optional withEmacs pgEmacs;
+                ++ lib.optional withEmacs pgEmacs
+                ++ [ pythonPackages.pygments ] ;
   shellHook = ''
     nixEnv (){
       echo "Here is your work environement:"

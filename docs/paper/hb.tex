@@ -91,12 +91,17 @@
 \newcommand{\packager}{packager}
 \newcommand{\Packager}{Packager}
 \newcommand{\builder}{builder}
+\newcommand{\mixinbuilder}{mixin builder}
+\newcommand{\mixinbuilders}{mixin builders}
+\newcommand{\factorybuilder}{factory builder}
+\newcommand{\factorybuilders}{factory builders}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
-\newcommand{\depx}{\ensuremath{d}}
 \newcommand{\dep}{\ensuremath{dep}}
 \newcommand{\depone}{\ensuremath{dep_1}}
 \newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
 \newcommand{\C}{\ensuremath{\mathcal{C}}}
+\newcommand{\MB}{\ensuremath{\mathcal{MB}}}
+\newcommand{\FB}{\ensuremath{\mathcal{FB}}}
 \newcommand{\class}{class}
 \newcommand{\classes}{classes}
 \newcommand{\cdef}{\ensuremath{def}}
@@ -107,6 +112,7 @@
 \newcommand{\subclass}{subclass}
 \newcommand{\join}{\ensuremath{join}}
 \newcommand{\requires}{\ensuremath{requires}}
+\newcommand{\target}{\ensuremath{target}}
 \newcommand{\provides}{\ensuremath{provides}}
 \newcommand{\from}{\ensuremath{\mathsf{from}}}
 \newcommand{\proj}[2]{\ensuremath{#1[#2]}}
@@ -118,18 +124,6 @@
 
 \theoremstyle{implem}
 \newtheorem*{invariant}{Programming invariant for}
-
-\newcounter{axiomcounter}
-\def\axiomcounterautorefname~#1\null{%
-  Axiom~#1\null
-}
-\theoremstyle{axiom}
-\newtheorem{axiom}[axiomcounter]{Axiom}
-
-\newtheoremstyle{abscommand}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
-{$\blacktriangleright$ \thmname{#1}\coq{ #3}}
-\theoremstyle{abscommand}
-\newtheorem*{abscommand}{Command signature}
 
 \newtheoremstyle{command}{\topsep}{\topsep}{}{0pt}{\sffamily\bfseries}{ }{5pt plus 1pt minus 1pt}%
 {$\blacktriangleright$ \thmname{#1}\coq{ #3}}
@@ -547,129 +541,6 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{An abstract presentation of \HB{}}
-
-\subsection{Preliminaries}
-
-\begin{axiom}[\Lang{}, target language]\label{def:universe}
-  \Lang{} is a set of terms of an target language.
-  The language must feature projections. When
-  a projection from $n$ to $m$ exists we write it \proj{n}{m}.
-  The identity projection \proj{x}{x} always exists.
-\end{axiom}
-
-\begin{axiom}[(\M{}, \depx{}), \mixin{}]\label{def:mixin}
-\( \M{} \subseteq \Lang{} \) is the finite set of \mixins{} and
-\( \depx \in \M{} \to \powerset\M{} \) is a function expressing
-dependencies among \mixins{}.
-(\M{}, \depx{}) forms a Directed Acyclig Graph (DAG) and
-\depx{} is transitively closed.
-If \(m \in \depx{}(n) \) then \( \proj{n}{m} \in \Lang{} \)
-\end{axiom}
-
-\begin{definition}[\(\dep \in \powerset{\M{}} \to \powerset\M{}\)]\label{def:depxs}
-\(
-  \dep{}(M) = \bigcup_{m \in M} \depx (m)
-\)
-\end{definition}
-
-\begin{definition}[\(\depone{} \in \M{} \to \powerset\M{}\)]\label{def:dep}
-\(\depone{}(m) = \dep{}(\{m\})\)
-\end{definition}
-
-\begin{axiom}[(\C{}, \cdef{}), \class{}]\label{def:class}
-\(\C{} \subseteq \Lang{}\) is the finite set of names for \classes{}.
-\(\cdef{} \in \C \to \powerset\M{}\) is a function associating to
-each \class{} a set of \mixins{}
-such that \(\forall c \in \C{},~ \dep{}(\cdef{}(c)) \subseteq \cdef{}(c)\).
-If \(m \in \cdef{}(c) \) then \( \proj{c}{m} \in \Lang{} \).
-\cdef{} is injective (no two \classes{} contain the same set of \mixins{}).
-\end{axiom}
-
-\begin{axiom}[\Str{}, \structure{}]\label{def:structure}
-\(\Str{} \subseteq \Lang{} \) is the finite set of names for \structures{}
-and for each \class{} in \C{} there is one and only one \structure{}
-in \Str{}.
-\end{axiom}\marginpar{frankly, at this level of abstraction I don't see what
-structures bring. Can't we talk about structures only when we package (in the
-tgt lang?)}
-
-\begin{axiom}[(\F{}, \requires{}, \provides{}, \from{}), \factory{}]\label{def:factory}
-  \(\F{} \subseteq \Lang{} \) is the finite set of names for \factories{}.
-  It is equipped with the three functions
-  \begin{itemize}
-    \item\( \requires{} \in \F{} \to \powerset\M{} \)
-    \item\( \provides{} \in \F{} \to \powerset\M{} \)
-    \item\( \from{} \in \F{} \times \M{} \to \Lang{} \)
-  \end{itemize}
-  that validate the following properties for all \(f \in \F{}\):
-  \begin{enumerate}
-    \item\( \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
-    \item\( \requires{}(f) \cap \provides{}(f) = \emptyset \)
-    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
-    \item\( \exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
-    \item\( \forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
-  \end{enumerate}
-\end{axiom}
-
-\begin{proposition}[\( \M{} \subseteq \F{} \)]
-  since \(\requires{}(m) = \depone{}(m)\)
-  and \(\provides{}(m) = \{m\} \)
-  and \(\from{}(m,m) = \proj{m}{m} \)
-\end{proposition}
-
-\begin{proposition}[\( \C{} \subseteq \F{} \)]
-  since \(\requires{}(c) = \emptyset \)
-  and \(\provides{}(c) = \cdef{}(c) \)
-  and \(\from{}(c,m) = \proj{c}{m} \)
-\end{proposition}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{The user language of \HB{}}
-
-\begin{abscommand}[hb.declare_mixin] (fs : $\powerset\F{}$) (t : \Lang{}).\\
-Declare a term t as a \mixin{}, adding it to \M{}, and defines
-\( \dep{}(t) = \bigcup_{f \in fs} \requires{}(f) \).
-\end{abscommand}
-
-\begin{abscommand}[hb.declare_factory] (fs : $\powerset\F{}$) (t : \Lang{}) (b : $\powerset\Lang{}$).\\
-Declare a term t as a \factory{}, adding it to \F{}, and defines
-\begin{itemize}
-\item \( \requires{}(t) = \bigcup_{f \in fs} \requires{}(f) \)
-\item \( \provides{}(t) = HELP \)
-\item \( \from{}(t,m) = b_m \)
-\end{itemize}
-\end{abscommand}
-
-\begin{abscommand}[hb.structure] (fs : $\powerset\F{}$).\\
-crafs a class $c \in \C{}$ where $\cdef{}(c) = HELP$ and its companion $s \in \Str{}$.
-\end{abscommand}
-
-\marginpar{This command has not this signature}
-\begin{abscommand}[hb.instance] (c : $\Lang{}$) (fs : $\powerset\F{}$).\\
-synthesizes terms in $\Lang{}$ corresponding to all the \mixins{} $MS$
-that can be build with \from{} and all the \classes{} / \structures{}
-for which \( \cdef{}(c) \subseteq MS \).
-\end{abscommand}
-
-A few more preliminaries are required in order to implement these signatures.
-
-\subsection{Subclasses and joins}
-
-\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
-  \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
-  \end{definition}
-
-\begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
-if \(c1, c2 \in \C{}\) and \(\cdef{}(c1) \cap \cdef{}(c2) \neq \emptyset\)
-then \(\join{}(c1,c2)\) is the smallest, w.r.t. set inclusion, \class{} \(c\) such that
-\(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\).
-\end{definition}
-
-\begin{remark}[]
-\(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
-\end{remark}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The target language: Coq with Packed, flat, Classes}
 \label{sec:target-lang}
@@ -808,37 +679,116 @@ We chose to generate classes from scartch, listing all the involved
 TODO: Example of a by hand flatten class, maybe the one of the join.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Compiling \HB{} to Coq with Packed Classes}\label{sec:compilation}
+\section{\HB{} language and compilation to Packed Classes}\label{sec:compilation}
 
-\begin{implementation}[\autoref{def:universe}]
-We take the language of Coq as an implementation of \Lang{}.
-\end{implementation}
+\subsection{\HB{} terms}
 
-\begin{implementation}[\autoref{def:mixin}]
+We call \(\Lang{}\) the set of terms of Coq type theory. The terms handled by \HB{} are subdivided in six categories,
+the mixins \(\M{}\), the factories \(\F{}\), the classes \(\C{}\), the structures
+\(\Str{}\), factory builders \(\FB{}\), mixin builders \(\from{}(\cdot,\cdot)\).
+
+Mixins, factories and builders are tagged by the user, while
+structures and classes are generated by \HB{}.
+
+
+\begin{definition}[\M{}, mixins]
 A \mixin{} \coq{m} \(\in \M{}\) is a Coq record with one of more parameters.
-The first parameter must be a \coq{(A : Type)}, while the other parameters are
+The first parameter must be a \coq{(T : Type)}, while the other parameters
 are \mixins{} applied to \coq{A} and possibly other \mixins{}. E.g.
 \begin{coqcode}
-Record m3 (A : Type) (p1 : m1 A) (p2 : m2 A p1) := { ... }.
+Record m (T : Type) (p_1 : m_1 T) (p_2 : m_2 T p_1) .. 
+  (p_n : m_n T p_i1 .. p_ik) := { ... }.
 \end{coqcode}
-for \coq{m1}, \coq{m2} and \coq{m3} \(\in \M{}\).
-Given \(m \in \M{}\), \(\depx{}(m)\) is the set of all
-\mixins{} that occur as parameters of \(m\), eg
-\depx{}(\coq{m3}) = \{\coq{m2,m1}\} and \depx{}(\coq{m2}) = \{\coq{m1}\}.
-\depx{} is transitively closed since records are well typed
-in the empty context and describes a DAG since Coq does not
-admit circular definitions.
-Projections for parameters are trivially defineable.
-\end{implementation}
+for \coq{m_1}, \coq{m_2}, .. and \coq{m_n} \(\in \M{}\).
 
-\begin{implementation}[\autoref{def:class}]
-A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
-\coq{(A : Type)}. The type of each field is a \mixin{} in \M{} applied to
-\coq{A} and, if needed, any number of other fields. E.g.
+Given \(m \in \M{}\), we define \(\depone{}(m) \in \powerset\M{}\) as
+the set of all \mixins{} that occur as parameters of \(m\), eg
+\depone{}(\coq{m}) = \{\coq{m_1, m_2, .., m_n}\} and \depone{}(\coq{m_n})
+= \{\coq{m_i1, .., m_ik}\}.  \depone{} is transitively closed since
+records are well typed in the empty context and describes a DAG since
+Coq does not admit circular definitions.
+\end{definition}
+
+\begin{definition}[\factories{} \F{}, \mixinbuilders{} \from{}(f,m) and functions
+   \provides{} and \requires{}]
+  A mixin builder \(mb \in \from{}(f,m)\) is any term which return type is a
+  mixin \(m\), and which parameters are the carrier
+  type \coq{(T: Type)}, an arbitrary number of \mixins{} and an
+  additional argument \coq{f} called \factory{}, which may depend on
+  the \mixins{}.  Eg.
 \begin{coqcode}
-Class c (A : Type) := { f1 : m1 A; ...; f3 : m3 A f1 f2; f4 : m2 A }.
+Definition mb (T : Type) (p_1 : m_1 T) (p_2 : m_2 T p_1) .. (p_n : m_n T p_i1 .. p_ik)
+   (x : f p_1 .. p_n) : m p_j1 .. p_jl := ...
 \end{coqcode}
-\(\cdef{}(c)\) is the set of \mixins{} mentioned in the fields of the \class{},
+We have the following functions \begin{itemize}
+    \item\( \requires{} \in \F{} \to \powerset\M{} \)
+    \item\( \provides{} \in \F{} \to \powerset\M{} \)
+    \item\( \from{} \in \F{} \times \M{} \to \Lang{} \)
+  \end{itemize}
+  We call \(\from{} (f,m) = mb\) the \mixinbuilder{} that builds the mixin \(m\)
+  from the factory \(f\).
+  We call \(\requires{}(\coq{f}) = \{\coq{m_1, m_2, .., m_n}\}\) the set of
+  mixins a factory depends on, thus requiring all the \mixinbuilders{}
+  of a given factory to have the same set of dependency.  We call
+  \(\provides{}(\coq{f}) = \{m | \from{}(f,m) \textrm{ is defined}\}\) the set
+  of mixins that a factory provides, through its \mixinbuilders{}.
+  
+  They validate the following properties for all \(f \in \F{}\):
+  \begin{enumerate}
+    \item\( \dep{}(\requires{}(f)) \subseteq \requires{}(f)\)
+    \item\( \requires{}(f) \cap \provides{}(f) = \emptyset \)
+    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}(f) \cup \provides{}(f) \)
+    \item\( \exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}(f)\)
+    \item\( \forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
+  \end{enumerate}
+\end{definition}
+
+Mixins are declared by the users as the fundamental building blocks of
+a hierarchy. Factories produce various mixins, in particular a mixin is
+a factory producing exactly one mixin. 
+
+\begin{proposition}[\( \M{} \subseteq \F{} \)]
+  where \(\requires{}(m) = \depone{}(m)\), \(\provides{}(m) = \{m\} \) and
+  \(from(m,m) = \coq{fun T p_1 .. p_n (x : m T p_1 .. p_n) => x)}\)
+
+\end{proposition}
+
+
+\begin{definition}[\FB{}, factory builders]
+A factory builder \(fb \in \FB{}\) is a notation which automatically finds
+the mixin instances a factory depends on and takes as explicit argument
+the contents of the factory. E.g.
+\begin{coqcode}
+Notation fb T x_1 .. x_n := (...).
+\end{coqcode}
+\end{definition}
+The conception of such notation relies on unification with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
+
+\begin{command}[hb.declare_mixin M T fs.
+                Record axioms_ := { .. }.
+                hb.end]
+Creates a module \coq{M} with a record \coq{M.axioms_}, which depends
+on the mixins \(\bigcup_{f \in \coq{fs}} \provides{}(f)\), and registers this
+new record both as a mixin and a factory
+ It also creates a \factorybuilder{} \coq{M.Axioms}
+\end{command}
+
+\begin{command}[hb.declare_factory M T fs. Record axioms_ := { .. }. hb.instance bs. hb.end]
+Creates a module \coq{M} with a record \coq{M.axioms_}, which depends
+on the mixins \(\bigcup_{f \in \coq{fs}} \provides{}(f)\), and registers this
+new record as factory, and \coq{bs} as \mixinbuilders
+\end{command}
+
+
+
+\begin{definition}[\C{}, class]
+A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
+\coq{(T : Type)}. The type of each field is a \mixin{} in \M{} applied to
+\coq{T} and, if needed, any number of other fields. E.g.
+\begin{coqcode}
+Record c (T : Type) := { p_1 : m_1 T; p_2 : m_2 T p_1; .. ; p_n : m_n T p_i1 .. p_ik}.
+\end{coqcode}
+We call \(\cdef{}(c) \in \powerset\M{}\) is the set of \mixins{} mentioned in the fields of the \class{},
 i.e. \{m1,m2,m3\}.
 Given that \class{} records are well typed in the empty context
 the set of \mixin{} records is closed transitively.
@@ -846,42 +796,52 @@ Projections for parameters are trivially defineable.
 The implementation enforces that no two
 \class{} records contains the same set of
 \mixin{} (disregarding the order of the fields).
-\end{implementation}
+\end{definition}
 
-\begin{implementation}[\autoref{def:structure}]
+
+\begin{proposition}[\( \C{} \subseteq \F{} \)]
+  since \(\requires{}(c) = \emptyset \)
+  and \(\provides{}(c) = \cdef{}(c) \)
+  and \(\from{}(c,m_i) = p_i \)
+\end{proposition}
+
+\begin{definition}[\Str{} Structure]
 A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters
 and two fields. Its first field is \coq{(sort : Type)} and its second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
 A structure is just a class closed with a sigma type on its parameter, hence
 they are in bijection.
-\end{implementation}
+\end{definition}
 
-\begin{implementation}[\autoref{def:factory}]
-A \factory{} \coq{f} \(\in \F{}\) is a Coq record with one or more parameters.
-The first parameter must be a \coq{(A : Type)}, while the other parameters are
-are \factories{} (or \mixins) applied to \coq{A} and possibly other
-\factories{} (or \mixins).
 
-MORE
-In the packed classes lingo, these are \packager{}s.
-\end{implementation}
+\begin{command}[hb.structure fs] crafts a class $c \in \C{}$ where $\cdef{}(c) = HELP$ and its companion $s \in \Str{}$.
+\end{command}
 
-\begin{command}[hb.declare_mixin M A FS R := { .. } ]
-registers in a db R...
+\begin{command}[hb.instance c fis]
+synthesizes terms in $\Lang{}$ corresponding to all the \mixins{} $MS$
+that can be build with \from{} and all the \classes{} / \structures{}
+for which \( \cdef{}(c) \subseteq MS \).
 \end{command}
-\begin{command}[hb.declare_factory M A FS R := {... }. bs hb.end]
-we split into two since the bs are hand and can be done interactively.
-populates the context with...
-the user labels the bs via instance.
-\end{command}
-\begin{command}[hb.declare_structure]
-declares many records/modules/coercions, for each join... exports operations,
-theory submodule....
-\end{command}
-\begin{command}[hb.instance]
-very close to the abstract one, but instruments CS inference with
-the synthesized terms.
-\end{command}
+
+\subsection{Robustness property}
+
+
+\subsection{Subclasses and joins}
+
+\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
+  \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
+  \end{definition}
+
+\begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
+if \(c1, c2 \in \C{}\) and \(\cdef{}(c1) \cap \cdef{}(c2) \neq \emptyset\)
+then \(\join{}(c1,c2)\) is the smallest, w.r.t. set inclusion, \class{} \(c\) such that
+\(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\).
+\end{definition}
+
+\begin{remark}[]
+\(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
+\end{remark}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
