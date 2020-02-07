@@ -290,8 +290,6 @@ under-mixins T [M|ML] Pred (fun `m` MTy FLG) :- std.do! [
   @pi-decl `m` MTy m\ mixin-src T M m => under-mixins T ML Pred (FLG m)
 ].
 
-
-
 % A *pack* notation can be easiliy produced from a phant-term using
 % [mk-phant-abbrev N PT C], which states that C is a new constant
 % which name is phant_N, and which produces a simple notation
@@ -531,7 +529,6 @@ export Module :- !,
 pred mk-mlams i:term, i:list mixinname, i:term, o:term.
 mk-mlams T ML X MLX :- under-mixins T ML (body\ body = X) MLX.
 
-pred exported-op o:constant, o:constant.
 % given an operation (a mixin projection) we generate a constant projection the
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
@@ -805,13 +802,6 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   acc current (clause _ _ (current-decl Decl))
 ].
 
-pred map11 i:list A, i:list B,
-  i:(A -> B -> C -> prop), i:(A -> C -> prop), i:(B -> C -> prop), o:list C.
-map11 [] [] _ _ _ [] :- !.
-map11 XS [] _ F _ ZS :- !, std.map XS F ZS.
-map11 [] YS _ _ F ZS :- !, std.map YS F ZS.
-map11 [X|XS] [Y|YS] F G H [Z|ZS] :- !, F X Y Z, map11 XS YS F G H ZS.
-
 pred extract-local-factory i:prop, o:term.
 extract-local-factory (local-factory F) F.
 
@@ -853,3 +843,34 @@ main-end-declare :- std.do! [
   coq.env.end-module _Module,
   export Exports,
 ].
+
+pred main-declare-canonical i:term, i:list term.
+main-declare-canonical T FIL :- std.do! [
+  std.forall FIL (f\ acc current (clause _ _ (local-factory f))),
+  std.map FIL (mixin-srcs T) MSLL,
+  canonical-mixins T CMSL,
+  std.flatten [CMSL|MSLL] MSL,
+  MSL => declare-instances T {findall-classes},
+].
+
+pred extract-to-export i:prop, o:modpath.
+extract-to-export (to-export Module) Module.
+
+pred main-begin-export i:string.
+main-begin-export ModuleName :- !,
+  not (locally-exporting),
+  coq.env.begin-module ModuleName none.
+
+pred main-end-export.
+main-end-export :- !,
+  locally-exporting,
+  coq.env.end-module ModPath,
+  acc current (clause _ _ (to-export ModPath)).
+
+pred main-exports i:string.
+main-exports ModuleName :-
+  std.findall (to-export M_) MEL,
+  std.map MEL extract-to-export MPL,
+  coq.env.begin-module ModuleName none,
+  std.forall MPL (m\ coq.env.export-module m),
+  coq.env.end-module _ModPath.
