@@ -681,40 +681,100 @@ It is based on a disciplined use of records and projections and
 on the possibility of extending the elaborator of Coq
 via the declaration of Canonical Structures instances.
 
-\subsection{Describing a structure with record and projections}
+\subsection{Describing structures with records and projections}
 
+We describe mathematical structures with three kinds of dependent records: mixins, classes, and structures.
+As shown in section \ref{sec:example}, a mixin gathers operators and axioms newly introduced by a structure.
+As in \cite[section 2.4]{DBLP:conf/tphol/GarillotGMR09}\cite[section 2]{KSdraft}, a class record is parameterised by the carrier of type \coq{Type} and gathers all the operators and axioms of a structure by assembling mixins, and a structure \coq{type} bundles a carrier and its class instance, as follows.
 \begin{coqcode}
-Module S.
-  Record mixin A C := {
-    one : A;
-    op : A -> A -> A;
-    opK : forall x, op (op x) = one
-  }
-  Record axioms A := {
-    base : T.axioms A;
-    mix  : mixin A base
-  }.
-  Record type := Pack {
-    sort : Type;
-    class : axioms sort
-  }.
-  Module Exports.
-    Coercion sort : type >-> Sortclass.
-    Definition op {T : type} : T -> T -> T := ...
-    Definition one {T:  type} : T := ...
-    Definition opK {T:  type} : forall x, op (op x) = one := ...
-    Infix "*" := op.
-    Infix "1" := one.
-  End Exports.
-End S.
+Module Monoid.
+Record axioms (T : Type) : Type :=
+  Class { Monoid_of_Type_mixin : Monoid_of_Type.axioms T; }.
+Record type : Type := Pack { sort : Type; class : axioms sort; }.
+End Monoid.
+\end{coqcode}
+The \coq{Monoid} module plays the role of a name space and forces us to write the qualified names such as \coq{Monoid.type}; thus allows us to reuse the same unqualified names for other structures, i.e., class and structure record can always be named as \coq{axioms} and \coq{type} respectively.
+
+Mixins and classes are internal definitions to declare structures; in contrast, \coq{Monoid.type} is the interface of the monoid structure to reason about monoids.
+As in section \ref{sec:example}, we declare \coq{Monoid.sort} as an implicit coercion and lift monoid operators and axioms from projections for the monoid mixin to definitions and lemmas for \coq{Monoid.type} as follows.
+\begin{coqcode}
+Coercion Monoid.sort : Monoid.type >-> Sortclass.
+
+Definition zero {T : Monoid.type} : T :=
+  Monoid_of_Type.zero T (Monoid.Monoid_of_Type_mixin T (Monoid.class T)).
+Definition add {T : Monoid.type} : T -> T -> T :=
+  Monoid_of_Type.add T (Monoid.Monoid_of_Type_mixin T (Monoid.class T)).
+Lemma addrA {T : Monoid.type} : associative (@add T).
+(* Two monoid axioms `add0r` and `addr0` are omitted. *)
 \end{coqcode}
 
-The module plays the role of a name space.
-Export submodule is there because... I don't know.
+Next we define the Abelian groups.
+Since the monoid structure is the bottom of this hierarchy, its class record consists only of the mixin to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group mixins as follows because Abelian groups inherit from monoids.
+\begin{coqcode}
+Module AbelianGroup.
+Record axioms (T : Type) : Type := Class {
+  Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
+  AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
+Record type : Type := Pack { sort : Type; class : axioms sort }.
+End AbelianGroup.
+\end{coqcode}
+
+\begin{coqcode}
+Coercion AbelianGroup.sort : AbelianGroup.type >-> Sortclass.
+Coercion AbelianGroup_class_to_TYPE_class : AbelianGroup.axioms >-> Monoid.axioms.
+Coercion AbelianGroup_to_Monoid (T : AbelianGroup.type) : Monoid.type :=
+  Monoid.Pack (AbelianGroup.sort T) (AbelianGroup.class T).
+
+Definition opp {T : AbelianGroup.type} : T -> T := ... .
+(* Abelian group axioms `addrC` and `addNr` are omitted. *)
+\end{coqcode}
+
+
+
+\begin{coqcode}
+Module SemiRing.
+Record axioms (T : Type) : Type := Class {
+  Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
+  SemiRing_of_Monoid_mixin : SemiRing_of_Monoid.axioms T Monoid_of_Type_mixin; }.
+Record type : Type := Pack { sort : Type; class : axioms sort; }.
+End SemiRing.
+\end{coqcode}
+
+\begin{coqcode}
+Coercion SemiRing.sort : SemiRing.type >-> Sortclass.
+Coercion SemiRing_to_Monoid (T : SemiRing.type) : Monoid.type :=
+  Monoid.Pack (SemiRing.sort T) (SemiRing.class T).
+
+Definition one {T : SemiRing.type} : T := ... .
+Definition mul {T : SemiRing.type} : T -> T -> T := ... .
+(* 7 semiring axioms are omitted. *)
+\end{coqcode}
+
+
+
+\begin{coqcode}
+Module Ring.
+Record axioms (T : Type) : Type := Class {
+  Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
+  SemiRing_of_Monoid_mixin : SemiRing_of_Monoid.axioms T Monoid_of_Type_mixin;
+  AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
+Record type : Type := Pack { sort : Type; class : axioms sort; }.
+End Ring.
+\end{coqcode}
+
+\begin{coqcode}
+Coercion Ring.sort : Ring.type >-> Sortclass.
+Coercion Ring_to_Monoid (T : Ring.type) : Monoid.type :=
+   Monoid.Pack (Ring.sort T) (Ring.class T).
+Coercion Ring_to_SemiRing (T : Ring.type) : SemiRing.type :=
+  SemiRing.Pack (Ring.sort T) (Ring.class T).
+Coercion Ring_to_AbelianGroup (T : Ring.type) : AbelianGroup.type :=
+  AbelianGroup.Pack (Ring.sort T) (Ring.class T).
+\end{coqcode}
 
 \subsection{Linking structures and instances via Canonical Structures}
 
-The mechanism of Canonical Structures~\cite{DBLP:conf/itp/MahboubiT13}
+The mechanism of Canonical Structures~\cite{DBLP:conf/itp/MahboubiT13,Saibi99phd}
 lets the user extend the elaborator of the Coq prover. This software component
 takes in input a term as written by the user and has to infer all the missing
 piece of information that is necessary to make the term well typed.
