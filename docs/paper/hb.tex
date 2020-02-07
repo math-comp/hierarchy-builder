@@ -231,7 +231,7 @@ Elpi hb.declare_mixin Monoid_of_Type A.                       #\label{demo:mixin
     addrA : associative add;             (* `add` is associative.                   *)
     add0r : left_id zero add;            (* `zero` is the left and right absorbing  *)
     addr0 : right_id zero add;           (*   element with respect to `add`.        *)
-}.
+  }.
 Elpi hb.end.                                              #\label{demo:mixin:mot:end}#
 Elpi hb.structure Monoid Monoid_of_Type.axioms.        #\label{demo:structure:monoid}#
 
@@ -561,7 +561,7 @@ As in \cite[section 2.4]{DBLP:conf/tphol/GarillotGMR09}\cite[section 2]{KSdraft}
 Module Monoid.
 Record axioms (T : Type) : Type :=
   Class { Monoid_of_Type_mixin : Monoid_of_Type.axioms T; }.
-Record type : Type := Pack { sort : Type; class : axioms sort; }.
+Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End Monoid.
 \end{coqcode}
 The \coq{Monoid} module plays the role of a name space and forces us to write the qualified names such as \coq{Monoid.type}; thus allows us to reuse the same unqualified names for other structures, i.e., class and structure record can always be named as \coq{axioms} and \coq{type} respectively.
@@ -586,7 +586,7 @@ Module AbelianGroup.
 Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
   AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
-Record type : Type := Pack { sort : Type; class : axioms sort }.
+Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End AbelianGroup.
 \end{coqcode}
 
@@ -607,7 +607,7 @@ Module SemiRing.
 Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
   SemiRing_of_Monoid_mixin : SemiRing_of_Monoid.axioms T Monoid_of_Type_mixin; }.
-Record type : Type := Pack { sort : Type; class : axioms sort; }.
+Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End SemiRing.
 \end{coqcode}
 
@@ -629,7 +629,7 @@ Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
   SemiRing_of_Monoid_mixin : SemiRing_of_Monoid.axioms T Monoid_of_Type_mixin;
   AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
-Record type : Type := Pack { sort : Type; class : axioms sort; }.
+Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End Ring.
 \end{coqcode}
 
