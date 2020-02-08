@@ -558,7 +558,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 
 We call \(\Lang{}\) the set of terms of Coq type theory. The terms
 handled by \HB{} are subdivided in six categories, the \mixins{}
-\(\M{}\), the \factories{} \(\F{}\), , \mixinbuilders{} \(\B{}\), the
+\(\M{}\), the \factories{} \(\F{}\), \mixinbuilders{} \(\B{}\), the
 \classes{} \(\C{}\), the \structures{} \(\Str{}\) and
 \packagers{} \(\FP{}\).
 
@@ -619,8 +619,8 @@ Definition f (T : Type) #$\pmp{n}$# : Type := ...
 Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n+1}\ T\ p_{\sigma(n+1,1)}\ \ldots\ p_{\sigma(n+1,n_i)}\)# := ...
 \end{coqcode}
 
-  We define \(\from{} (f, m_{n+1}) = \mu\) to be the unique \mixinbuilder{}
-  that builds the mixin \(m_{n+1}\) from the factory \(f\).
+  We define \(\from{} (f, m_{n+1}) = \mu\) to be the (unique) \mixinbuilder{}
+  for \(m_{n+1}\) from the factory \(f\).
 \end{definition}
 
 \begin{definition}[$\provides{}$, $\requires{}$]
@@ -773,7 +773,7 @@ used by the user should never rely on a particular set of \mixins{} as
 arguments.  This occurs each time one builds a factory for which
 \requires{} is non empty. In these situations \mixin{} arguments of a
 factory constructor must always be inferred automatically. To this
-end, the commands \hbmixin{} and \hb{factory} both generate packagers
+end, the commands \hbmixin{} and \hbfactory{} both generate packagers
 to replace the constructor of the factory.
 
 
