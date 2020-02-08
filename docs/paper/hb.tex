@@ -649,9 +649,11 @@ a hierarchy, they are special cases of factories, as the next
 proposition shows, and once declared they shall not be distinguished
 from regular factories.
 
-\begin{proposition}[\( \M{} \subseteq \F{} \)]
-  \[\textrm{For all }m \in \M{}\textrm{ we have }\from(m,m) = \coq{fun T p_1 .. p_n (x :}\ m\ \coq{T p_1 .. p_n) => x)} \in \B{}, \]
-  hence \(\requires{}(m) = \dep{}(m)\) and \(\provides{}(m) = \{m\}.\)
+\begin{proposition}[\( \M{} \subseteq \F{} \)] For all \(m \in \M{}\)
+  we have \(\requires{}(m) = \dep{}(m)\), \(\provides{}(m) = \{m\}\)
+  and
+  \(\from(m,m) = \coq{fun T p_1 .. p_n (x :}\ m\
+  \coq{T p_1 .. p_n) => x)} \in \B{}.\)
 \end{proposition}
 
 
@@ -678,7 +680,7 @@ from regular factories.
   Section~\ref{sec:target-lang}.
 \end{command}
 
-\begin{command} to declaring a new factory and generating new mixin builders:
+\begin{command} to declare a new factory and generating new mixin builders:
 \begin{coqcode}
 #\hbfactory{}# M T #$f_1\ \ldots\ f_n$#.
   Record axioms := { .. }.
@@ -780,8 +782,8 @@ A \packager{} \(\phi \in \FP{}\) is a notation which automatically finds
 the mixin instances a factory depends on and takes as explicit argument
 the contents of the factory. E.g.
 \begin{coqcode}
-Notation #$\phi$# T x_1 .. x_n := (...).
-Definition fi : f T .. := #$\phi$# x_1 .. x_n.
+Notation #$\phi$# T #\(x_1\ \ldots\ x_n\)# := (...).
+Definition b : f T #$\ldots$# := #$\phi$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
 \end{definition}
 The conception of such notation relies on unification with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
