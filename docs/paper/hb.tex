@@ -200,7 +200,7 @@ We call Packed Classes a discipline, and not a language, because, in spite of
 its many virtues, it is unwieldy to use. In particular it leaks to the user
 many of the technical details of the Coq system. As a result, one
 needs to be a Coq expert in order to build or modify a hierarchy, and even
-experts make mistakes when doing that as shown in~\cite{KSdraft}.
+experts make mistakes as shown in~\cite{KSdraft}.
 Another inconvenience of the Packed Classes discipline is that even
 simple changes to the hierarchy, such as splitting a structure into
 two simpler ones, break user code.
@@ -450,22 +450,11 @@ As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_Monoid} \factory{}, that, from the user point of view,
 will look indistinguishable from the old \coq{Ring_of_Monoid} \mixin{}
 and hence grant backward compatibility between this last version V3 and the
-initial one V1.\marginpar{KS: the following \coq{axioms} record is the same as the second \coq{axioms} record in Sect.~2. We may omit its details.}
+initial one V1.
 
 \begin{coqcode}
 #\hbfactory{}# Ring_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    one : A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
-    addrN : right_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+  Record axioms := { ... (* unchanged, see page 2 line 13 *) ... }.
 
   Variable f : axioms.                                                          #\label{demo3:variable:f}#
 
@@ -608,6 +597,7 @@ empty context and describes a DAG since Coq does not admit circular
 definitions: \(\dep{}^\star(\dep{}^\star(M)) \subseteq \dep{}^\star(M)\)
 \end{proposition}
 
+\marginpar{I'd say that mu and f are functions having as arguments a type T, plus some mixins. f build a type while nu a function from f T ms to ms+1 (return type without saying it is a function is fishy)}
 \begin{definition}[\factories{} \F{}, \mixinbuilders{} \B{} and \from{}]
   A \emph{\mixinbuilder{}} \(\mu \in \B{}\) is any term which return type is
   a mixin \(m_{n+1} \in \M{}\), and which parameters are the carrier
@@ -768,6 +758,7 @@ they are in bijection.
 \subsection{Automatic inference of \mixins{}}
 \label{sec:autom-infer-mixins}
 
+\marginpar{primitives is new terminology. I'd say factories are part of the interface of the hierarchy, hence cannot change in their contents but can change in their requires(f) since they are mixins. To avoid breaking client code these arguments have to be inferred automatically.}
 Since \mixins{} may change but \factories{} stay the same, primitives
 used by the user should never rely on a particular set of \mixins{} as
 arguments.  This occurs each time one builds a factory for which
