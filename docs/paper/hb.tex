@@ -111,7 +111,7 @@
 \newcommand{\Str}{\ensuremath{\mathcal{S}}}
 \newcommand{\structure}{structure}
 \newcommand{\structures}{structures}
-\newcommand{\issubclass}{\ensuremath{sub}}
+\newcommand{\issubclass}{\ensuremath{\leq}}
 \newcommand{\subclass}{subclass}
 \newcommand{\join}{\ensuremath{join}}
 \newcommand{\requires}{\ensuremath{requires}}
@@ -605,7 +605,7 @@ We will use the abbreviation \(\pmp{n} = \vect{\left(p_i : m_i\ T\ p_{\sigma(i,1
 \begin{proposition}
 \dep{} is transitively closed since records are well typed in the
 empty context and describes a DAG since Coq does not admit circular
-definitions: \(\dep{}^\star(\dep{}^\star(M)) \subset \dep{}^\star(M)\)
+definitions: \(\dep{}^\star(\dep{}^\star(M)) \subseteq \dep{}^\star(M)\)
 \end{proposition}
 
 \begin{definition}[\factories{} \F{}, \mixinbuilders{} \B{} and \from{}]
@@ -613,13 +613,13 @@ definitions: \(\dep{}^\star(\dep{}^\star(M)) \subset \dep{}^\star(M)\)
   a mixin \(m_{n+1} \in \M{}\), and which parameters are the carrier
   type \coq{(T: Type)}, an arbitrary number of distinct \mixins{}
   \(\enum{m_1}{m_n}\) and an additional argument \(f\), which we call
-  a \emph{\factory{}}, and may depend on the \mixins{}.  I.e.
+  a \emph{\factory{}}, and which depends on the \mixins{}.  I.e.
 \begin{coqcode}
 Definition f (T : Type) #$\pmp{n}$# : Type := ...
 Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n+1}\ T\ p_{\sigma(n+1,1)}\ \ldots\ p_{\sigma(n+1,n_i)}\)# := ...
 \end{coqcode}
 
-  We define \(\from{} (f, m_{n+1}) = \mu\) the unique \mixinbuilder{}
+  We define \(\from{} (f, m_{n+1}) = \mu\) to be the unique \mixinbuilder{}
   that builds the mixin \(m_{n+1}\) from the factory \(f\).
 \end{definition}
 
@@ -651,25 +651,14 @@ from regular factories.
 
 \begin{proposition}[\( \M{} \subseteq \F{} \)]
   \[\textrm{For all }m \in \M{}\textrm{ we have }\from(m,m) = \coq{fun T p_1 .. p_n (x :}\ m\ \coq{T p_1 .. p_n) => x)} \in \B{}, \]
-  hence \(\requires{}^\star(m) = \dep{}(m)\) and
-  \(\provides{}^\star(m) = \{m\} \).
+  hence \(\requires{}(m) = \dep{}(m)\) and \(\provides{}(m) = \{m\}.\)
 \end{proposition}
 
-
-\begin{definition}[\FP{}, \packagers{}]
-A \packager{} \(\phi \in \FP{}\) is a notation which automatically finds
-the mixin instances a factory depends on and takes as explicit argument
-the contents of the factory. E.g.
-\begin{coqcode}
-Notation #$\phi$# T x_1 .. x_n := (...).
-\end{coqcode}
-\end{definition}
-The conception of such notation relies on unification with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
 
 \begin{command} to declare a new mixin:
 \begin{coqcode}
 #\hbmixin{}# M T #$f_1\ \ldots\ f_n$#.
-Record axioms := { .. }.
+  Record axioms := { .. }.
 #\hbend{}#
 \end{coqcode}
   Creates a module \coq{M} with a record
@@ -680,32 +669,40 @@ Record axioms := { .. }.
   \packager{} \coq{M.Axioms}
 \end{command}
 
-\begin{command} to declare an instance:
-\begin{coqcode}
-#\hbinstance{}# X #\(b_1 \ldots b_k\)#
-\end{coqcode}
-  synthesizes terms in $\Lang{}$ corresponding to all the \mixins{}
-  $M$ that can be build. This command also generates unification hints
-  as described in Section~\ref{sec:target-lang}.
+\begin{command} to declare an instance: \hbinstance{}
+  \(X\ b_1 \ldots b_k\), synthesizes terms corresponding to all the
+  \mixins{} that can be built from the $b_i$. Indeed if
+  \(b_i : f_i\ T\ \ldots\), then this command creates elements of type
+  \(\provides{}^\star\left(\enum{f_1}{f_k}\right).\) This command also
+  generates unification hints as described in
+  Section~\ref{sec:target-lang}.
 \end{command}
 
 \begin{command} to declaring a new factory and generating new mixin builders:
 \begin{coqcode}
 #\hbfactory{}# M T #$f_1\ \ldots\ f_n$#.
-Record axioms := { .. }.
-Variable (a : axioms _).
+  Record axioms := { .. }.
+  Variable (a : axioms _).
 
-#\hbinstance{}# T #$b_1$#.
-...
-#\hbinstance{}# T #$b_k$#.
+  Definition #$b_{n+1}$# : #$f_{n+1}$# T .. := ...
+  #\hbinstance{}# T #$b_{n+1}$#.
+  ..
+  Definition #$b_{n+k}$# : #$f_{n+k}$# T .. := ...
+  #\hbinstance{}# T #$b_{n+k}$#.
 #\hbend{}#
 \end{coqcode}
-  Creates a module \coq{M} with a record \coq{M.axioms_}, which
-  depends on the mixins \(\requires{}(\coq{M.axioms}) = 
-  \provides{}^\star\left(\enum{f_1}{f_n}\right)\)
-  and registers this new record as a factory. We then use the
-  \factoryinstances{} \(b_1, \ldots, b_k\) provided by the user and
-  derive \mixinbuilders{} from them.
+  Creates a module \coq{M} with a record
+  \coq{M.axioms}, which depends on the mixins
+  \(\requires{}(\coq{M.axioms}) =
+  \provides{}^\star\left(\enum{f_1}{f_n}\right)\) and registers this
+  new record as a factory. We then use the \factoryinstances{}
+  \(b_{n+1}, \ldots, b_{n+k}\) provided by the user and derive
+  \mixinbuilders{} from them, so that
+  \(\provides{}(\coq{M.axioms}) = \provides{}^\star\left(\enum{f_{n+1}}{f_{n+k}}\right).\)
+
+  It is thus necessary that
+  \(\requires{}^\star\left(\enum{f_{n+1}}{f_{n+k}}\right) \subseteq
+  \provides{}^\star\left(\enum{f_1}{f_n}\right).\)
 \end{command}
 
 \subsection{\HB{} classes and structures}
@@ -719,55 +716,88 @@ A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
 \begin{coqcode}
 Record #$c$# (T : Type) := { ..; #\(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots p_{\sigma(i,n_i)}\)#; ..}.
 \end{coqcode}
-We call \(\cdef{}_1(c) \in \powerset\M{}\) is the set of \mixins{} mentioned in the fields of the \class{},
-i.e. \(\{m_1, \ldots,m_n\}\).
-Given that \class{} records are well typed in the empty context
-the set of \mixin{} records is closed transitively.
-The implementation enforces that no two
-\class{} records contains the same set of
-\mixin{} (disregarding the order of the fields).
+\end{definition}
 
-  They validate the following properties for all \(f \in \F{}\):
+\begin{definition}[\cdef{}, class definition]
+  We call \(\cdef{}(c) \in \powerset\M{}\) is the set of \mixins{}
+  mentioned in the fields of the \class{}, i.e.
+  \(\{m_1, \ldots,m_n\}\).  Given that \class{} records are well typed
+  in the empty context the set of \mixin{} records is closed
+  transitively.  The implementation enforces that no two \class{}
+  records contains the same set of \mixin{} (disregarding the order of
+  the fields), i.e. \cdef{} is injective.
+\end{definition}
+
+\begin{invariant}[\cdef{}]
+  For all \(f \in \F{}\):
   \begin{enumerate}
-    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}^\star(f) \cup \provides{}^\star(f) \)
-    \item\( \exists C \subseteq \C{},~\bigcup_{c\in C}\cdef{}(c) = \requires{}^\star(f)\)
-    \end{enumerate}
-  \end{definition}
+    \item\( \exists c \in \C{},~ \cdef{}(c) = \requires{}^\star(f) \cup \provides{}^\star(f),\)
+    \item\( \exists C \subseteq \C{},~\cdef{}^\star(C) = \requires{}^\star(f).\)
+  \end{enumerate}
+\end{invariant}
 
-
+Classes could also be seen as factories.
 \begin{proposition}[\( \C{} \subseteq \F{} \)]
   forall \(m \in \cdef{}(c)\) we have \(\from{}(c,m_i) = p_i,\) and it
   follows that \(\requires{}(c)=\emptyset \),
   \(\provides{}(c)=\cdef{}(c).\)
 \end{proposition}
+However since classes are generated, their implementation may change,
+thus users should not rely on constructors of classes. Hence the only
+ways a user may refer to a class is as an argument of \hbmixin{},
+\hbfactory{} or \hbstructure{}.
 
 \begin{definition}[\Str{} Structure]
 A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters
 and two fields. Its first field is \coq{(sort : Type)} and its second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
-A structure is just a class closed with a sigma type on its parameter, hence
+A structure is just a class packaged with a sigma type on its parameter, hence
 they are in bijection.
 \end{definition}
 
 
-\begin{command} to declare a class and structure:
-\begin{coqcode}
-#\hbstructure{}# M #\(f_1 \ldots f_n\)#
-\end{coqcode}
+\begin{command} to declare a class and structure: \hbstructure{} \coq{M} \(f_1 \ldots f_n\)
   crafts a class \coq{M.class_of} $\in \C{}$ where
   $\cdef{}(c) = \provides{}^\star\left(\enum{f_1}{f_n}\right) $ and the
   corresponding structure \coq{M.type} $\in \Str{}$, together with
   unification hints as described in Section~\ref{sec:target-lang}.
 \end{command}
 
+\subsection{Automatic inference of \mixins{}}
+\label{sec:autom-infer-mixins}
+
+Since \mixins{} may change but \factories{} stay the same, primitives
+used by the user should never rely on a particular set of \mixins{} as
+arguments.  This occurs each time one builds a factory for which
+\requires{} is non empty. In these situations \mixin{} arguments of a
+factory constructor must always be inferred automatically. To this
+end, the commands \hbmixin{} and \hb{factory} both generate packagers
+to replace the constructor of the factory.
+
+
+\begin{definition}[\FP{}, \packagers{}]
+A \packager{} \(\phi \in \FP{}\) is a notation which automatically finds
+the mixin instances a factory depends on and takes as explicit argument
+the contents of the factory. E.g.
+\begin{coqcode}
+Notation #$\phi$# T x_1 .. x_n := (...).
+Definition fi : f T .. := #$\phi$# x_1 .. x_n.
+\end{coqcode}
+\end{definition}
+The conception of such notation relies on unification with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
+
+\subsection{Inheritance is inclusion}
+\label{sec:inheritance}
+
+
 \begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
   \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
   \end{definition}
 
 \begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
-if \(c1, c2 \in \C{}\) and \(\cdef{}(c1) \cap \cdef{}(c2) \neq \emptyset\)
-then \(\join{}(c1,c2)\) is the smallest, w.r.t. set inclusion, \class{} \(c\) such that
-\(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\).
+  if \(c1, c2 \in \C{}\) then \(\join{}(c1,c2)\) is the smallest,
+  w.r.t. set inclusion, \class{} \(c\) such that
+  \(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\) if it exists.
 \end{definition}
 
 \begin{remark}[]
