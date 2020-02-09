@@ -14,7 +14,7 @@
 \newcommand{\HB}{\ensuremath{\mathcal{HB}}}
 \newcommand{\hb}{\coq{hierarchy-builder}}
 
-%This is a template for producing LIPIcs articles. 
+%This is a template for producing LIPIcs articles.
 %See lipics-manual.pdf for further information.
 %for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
 %for british hyphenation rules use option "UKenglish", for american hyphenation rules use option "USenglish"
@@ -42,7 +42,7 @@
 \Copyright{Cyril Cohen and Kazuhiko Sakaguchi and Enrico Tassi}%TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
 
 \ccsdesc[100]{General and reference~General literature}
-\ccsdesc[100]{General and reference}%TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
+\ccsdesc[100]{General and reference}%TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm
 \supplement{Source code of the Coq package: \url{https://github.com/math-comp/hierarchy-builder}}
 \keywords{Algebraic Hierarchy, Packed Classes, Coq, Elpi, Metaprogramming, $\lambda$Prolog}%TODO mandatory; please add comma-separated list of keywords
 
@@ -91,9 +91,15 @@
 \newcommand{\factory}{factory}
 \newcommand{\factories}{factories}
 \newcommand{\Factories}{Factories}
-\newcommand{\packager}{packager}
-\newcommand{\packagers}{packagers}
-\newcommand{\Packager}{Packager}
+% \newcommand{\packager}{packager}
+% \newcommand{\packagers}{packagers}
+% \newcommand{\Packager}{Packager}
+\newcommand{\phantterm}{phantom term}
+\newcommand{\phantterms}{phantom terms}
+\newcommand{\Phantterms}{Phantom terms}
+\newcommand{\phanttype}{phantom type}
+\newcommand{\phanttypes}{phantom types}
+\newcommand{\Phanttypes}{Phantom types}
 \newcommand{\builder}{builder}
 \newcommand{\mixinbuilder}{builder}
 \newcommand{\mixinbuilders}{builders}
@@ -104,7 +110,7 @@
 \newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
 \newcommand{\C}{\ensuremath{\mathcal{C}}}
 \newcommand{\B}{\ensuremath{\mathcal{B}}}
-\newcommand{\FP}{\ensuremath{\mathcal{FP}}}
+\newcommand{\FP}{\ensuremath{\mathcal{H}}}
 \newcommand{\class}{class}
 \newcommand{\classes}{classes}
 \newcommand{\cdef}{\ensuremath{def}}
@@ -167,7 +173,7 @@ is hard to get right.
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
 \emph{evolve} without breaking user code. The key concepts are the ones of
-\emph{\factory{}} and \emph{\packager{}} that lets the hierarchy developer
+\emph{\factory{}} and \emph{\phantterm{}} that lets the hierarchy developer
 describe an actual
 interface for their library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
@@ -208,7 +214,7 @@ two simpler ones, break user code.
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
 \emph{evolve} without breaking user code. The key concepts are the ones of
-\emph{\factory{}} and \emph{\packager{}} that let the hierarchy developer describe an actual
+\emph{\factory{}} and \emph{\phantterm{}} that let the hierarchy developer describe an actual
 interface for their library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language by compiling it
@@ -343,7 +349,7 @@ ring axioms imply the commutativity of the underlying monoid
 (line~\ref{demo:theory:state:addrC}). This simple example shows we can
 populate the theory of abstract rings with new results.
 
-We use the \coq{Monoid_of_Type.Axioms} \emph{\packager{}}
+We use the \coq{Monoid_of_Type.Axioms} \emph{\phantterm{}}
 (line~\ref{demo:theory:z:monoid:axioms})
 in order to build an instance of the \coq{Monoid}
 structure for binary integers \coq{Z}.
@@ -351,13 +357,13 @@ We then register that monoid instance as the canonical one on \coq{Z}
 (line~\ref{demo:theory:z:monoid:canonical}) via the command
 \coq{hb.canonical}.
 We can similarly declare that \coq{Z} forms a ring by using
-the \coq{Ring_of_Monoid.Axioms} \packager{}
+the \coq{Ring_of_Monoid.Axioms} \phantterm{}
 (lines~\ref{demo:theory:z:ring:axioms} and~\ref{demo:theory:z:ring:canonical}).
-Note that the \coq{Ring_of_Monoid.Axioms} \packager{} is not
+Note that the \coq{Ring_of_Monoid.Axioms} \phantterm{} is not
 a plain record constructor for \coq{Ring_of_Monoid.axioms}, since that
 would require more arguments, namely the monoid ones (see the \coq{_}
 at line~\ref{demo:theory:z:ring:axioms}). The
-\packager{} synthesized by \HB{} infers them automatically
+\phantterm{} synthesized by \HB{} infers them automatically
 (as in~\cite[Section 7]{DBLP:conf/itp/MahboubiT13}) thanks to the \coq{hb.canonical}
 declaration given just above.
 
@@ -419,9 +425,9 @@ an axiom of rings, but rather tha theorem of the abstract theory of Abelian
 groups.
 
 With this new version of the hierarchy, that we name V2, code written
-for version V1 breaks. For example the declaration of the canonical ring over 
+for version V1 breaks. For example the declaration of the canonical ring over
 the integers fails, if only
-because we don't have a \coq{Ring_of_Monoid.Axioms} \packager{} anymore.
+because we don't have a \coq{Ring_of_Monoid.Axioms} \phantterm{} anymore.
 
 Our objective is to obtain a version of the hierarchy, that we name V3, that does
 not only feature Abelian groups but that is also backward compatible
@@ -444,7 +450,7 @@ trivial, \factories{}).
 not directly used in the definition of structures. Instead a \factory{} is
 equipped with \emph{\builder{}s}: user provided pieces of code that extract
 from the \factory{} the contents of \mixins{}, so that existing
-\packager{}s can be used.
+\phantterm{}s can be used.
 
 As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_Monoid} \factory{}, that, from the user point of view,
@@ -481,7 +487,7 @@ explain how to build an \coq{AbelianGroup} structure out of the \factory{}
 axioms (named \coq{f}, line~\ref{demo3:variable:f}).
 This construction is also registered as canonical for \coq{A},
 so that the next construction \coq{to_Ring_of_AbelianGroup} can call
-the \coq{Ring_of_AbelianGroup.Axioms} \packager{} that requires \coq{A} to be
+the \coq{Ring_of_AbelianGroup.Axioms} \phantterm{} that requires \coq{A} to be
 an \coq{AbelianGroup}.
 It is worth pointing out that the proof of \coq{addrC} we had in V1 is now
 required in order to write the \builder{} for Abelian groups, while
@@ -490,7 +496,7 @@ the theory of Abelian groups, see line~\ref{demo2:proof:addrN} of the previous
 code snippet).
 
 Thanks to this \factory{} we can now declare \coq{Z} to be an instance
-of a ring using the \coq{Ring_of_Monoid.Axioms} \packager{}.
+of a ring using the \coq{Ring_of_Monoid.Axioms} \phantterm{}.
 The associated \builder{}s generate, behind the scenes, instances of the
 \coq{Ring_of_AbelianGroup.axioms} and \coq{AbelianGroup_of_Monoid.axioms} \mixins{}
 that in turn are used to build instances of the \coq{AbelianGroup} and \coq{Ring}
@@ -536,7 +542,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 \item \HB{} high level commands compile to
       the discipline of Packed Classes (Coq modules, records, coercions,
       implicit arguments, canonical structure instances, notations,
-      \packager{}s).
+      \phantterm{}s).
       This process lifts a considerable
       burden from the shoulders of the hierarchy designer and the final user
       that are no longer required to master the details of Packed Classes.
@@ -549,7 +555,7 @@ We call \(\Lang{}\) the set of terms of Coq type theory. The terms
 handled by \HB{} are subdivided in six categories, the \mixins{}
 \(\M{}\), the \factories{} \(\F{}\), \mixinbuilders{} \(\B{}\), the
 \classes{} \(\C{}\), the \structures{} \(\Str{}\) and
-\packagers{} \(\FP{}\).
+\phantterms{} \(\FP{}\).
 
 \Mixins{}, \factories{} and instances are tagged by the user, through the
 commands \hbmixin{}, \hbfactory{} and \hbinstance{}, and the user may
@@ -560,6 +566,7 @@ may only refer to structure types, but should never rely on their
 implementation, neither should they rely on explicit builders.
 
 \subsection{\HB{} mixins, factories and instances}
+\label{sec:hb-mixins-factories}
 
 \begin{definition}[\M{}, mixins]
 A \emph{\mixin{}} \(m \in \M{}\) is a Coq record with one of more parameters.
@@ -597,13 +604,12 @@ empty context and describes a DAG since Coq does not admit circular
 definitions: \(\dep{}^\star(\dep{}^\star(M)) \subseteq \dep{}^\star(M)\)
 \end{proposition}
 
-\marginpar{I'd say that mu and f are functions having as arguments a type T, plus some mixins. f build a type while nu a function from f T ms to ms+1 (return type without saying it is a function is fishy)}
 \begin{definition}[\factories{} \F{}, \mixinbuilders{} \B{} and \from{}]
-  A \emph{\mixinbuilder{}} \(\mu \in \B{}\) is any term which return type is
-  a mixin \(m_{n+1} \in \M{}\), and which parameters are the carrier
+  A \emph{\mixinbuilder{}} \(\mu \in \B{}\) is any function which parameters are the carrier
   type \coq{(T: Type)}, an arbitrary number of distinct \mixins{}
   \(\enum{m_1}{m_n}\) and an additional argument \(f\), which we call
-  a \emph{\factory{}}, and which depends on the \mixins{}.  I.e.
+  a \emph{\factory{}}, and which depends on the \mixins{}. Its return type is
+  a mixin \(m_{n+1} \in \M{}\) i.e.
 \begin{coqcode}
 Definition f (T : Type) #$\pmp{n}$# : Type := ...
 Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n+1}\ T\ p_{\sigma(n+1,1)}\ \ldots\ p_{\sigma(n+1,n_i)}\)# := ...
@@ -642,8 +648,8 @@ from regular factories.
 \begin{proposition}[\( \M{} \subseteq \F{} \)] For all \(m \in \M{}\)
   we have \(\requires{}(m) = \dep{}(m)\), \(\provides{}(m) = \{m\}\)
   and
-  \(\from(m,m) = \coq{fun T p_1 .. p_n (x :}\ m\
-  \coq{T p_1 .. p_n) => x)} \in \B{}.\)
+  \(\from{}(m,m) = \left(\coq{fun T }\ \pmp{n} \ \coq{(x :}\ m\
+  \coq{T }\ p_1\ \ldots p_n\ \coq{) => x}\right) \in \B{}.\)
 \end{proposition}
 
 
@@ -658,7 +664,7 @@ from regular factories.
   \(\requires{}(\coq{M.axioms}) =
   \provides{}^\star\left(\enum{f_1}{f_n}\right)\), and registers this
   new record both as a mixin and a factory It also creates a
-  \packager{} \coq{M.Axioms}
+  \phantterm{} \coq{M.Axioms}
 \end{command}
 
 \begin{command} to declare an instance: \hbinstance{}
@@ -758,31 +764,39 @@ they are in bijection.
 \subsection{Automatic inference of \mixins{}}
 \label{sec:autom-infer-mixins}
 
-\marginpar{primitives is new terminology. I'd say factories are part of the interface of the hierarchy, hence cannot change in their contents but can change in their requires(f) since they are mixins. To avoid breaking client code these arguments have to be inferred automatically.}
-Since \mixins{} may change but \factories{} stay the same, primitives
-used by the user should never rely on a particular set of \mixins{} as
-arguments.  This occurs each time one builds a factory for which
-\requires{} is non empty. In these situations \mixin{} arguments of a
-factory constructor must always be inferred automatically. To this
-end, the commands \hbmixin{} and \hbfactory{} both generate packagers
-to replace the constructor of the factory.
+Since \mixins{} may change but \factories{} stay the same, \HB{}
+commands must never rely on a particular set of \mixins{} as
+arguments, and \factory{} arguments must never be given explicitly by
+the user. As described in Sections~\ref{sec:hb-mixins-factories}
+and~\ref{sec:hb-class-struct}, \HB{} commands take a list of
+\factories as arguments, which they expand into lists of \mixins{}
+behind the scene. However \factory{} types and constructors have
+\mixin{} arguments that must be inferred automatically when used. To
+this end, the commands \hbmixin{} and \hbfactory{} both generate
+\phantterms{} for the user to replace uses of constructors of \factories{}.
 
 
-\begin{definition}[\FP{}, \packagers{}]
-A \packager{} \(\phi \in \FP{}\) is a notation which automatically finds
-the mixin instances a factory depends on and takes as explicit argument
+\begin{definition}[\FP{}, \phantterms{}]
+A \phantterm{} \(\phi \in \FP{}\) is a notation which automatically finds
+the mixin instances a factory depends on and takes as explicit arguments
 the contents of the factory. E.g.
 \begin{coqcode}
-Notation #$\phi$# T #\(x_1\ \ldots\ x_n\)# := (...).
-Definition b : f T #$\ldots$# := #$\phi$# T #\(x_1\ \ldots\ x_n\)#
+Notation #$\varphi$# T := (#$f$# T ..).
+Notation #$\Phi$# T  #\(x_1\ \ldots\ x_n\)# := (mkf T .. #\(x_1\ \ldots\ x_n\)#).
+Definition b : #$\varphi$# T := #$\Phi$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
 \end{definition}
-The conception of such notation relies on unification with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
+\textbf{Now, for robustness sake, every single explicit use of a factory \(f\) as a Coq term
+  must be replaced by \(\varphi\) and every use of its constructor by
+  \(\Phi\).} The conception of such notation relies on unification
+with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
+
 
 \subsection{Inheritance is inclusion}
 \label{sec:inheritance}
 
-Cite \cite{affeldt:hal-02463336}
+As described in \cite{affeldt:hal-02463336},... % the only way to define
+% inheritance of structure in a deterministic fashion is to replace
 
 \begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
   \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
@@ -1114,7 +1128,7 @@ and we replace \elpi{f} by \elpi{m} in \elpi{Fields} by writing
 % The code of \elpi{synthesize-fields} makes an idiomatic use
 % of \elpi{=>} in $\lambda$Prolog: the current program is temporarily
 % extended with a clause.
-% 
+%
 % \marginpar{this may go}The same operation, but with a persistent
 % effect, is made available by Coq-Elpi via a dedicated API to extend
 % data bases. A data base is a named set of clauses and
@@ -1123,7 +1137,7 @@ and we replace \elpi{f} by \elpi{m} in \elpi{Fields} by writing
 % of the \elpi{declare_mixin} command. Text between \verb+lp:{{+ and \verb+}}+
 % is Elpi code embedded in a Coq file. All the vernacular commands beginning
 % with \coq{Elpi} are provided by the Coq-Elpi plugin.
-% 
+%
 % \begin{coqcode}
 % Elpi Db hierarchy.db lp:{{
 %   pred dep1 o:mixinname, o:list mixinname.
@@ -1142,11 +1156,11 @@ and we replace \elpi{f} by \elpi{m} in \elpi{Fields} by writing
 %   main _ :- coq.error "Usage: declare_mixin <mixin>".
 % }}.
 % \end{coqcode}
-% 
+%
 % Line 11 computes the dependencies of \mixin{} \elpi{M} given
 % its type and line 12 crafs a clause for \elpi{dep1} and
 % adds it to the data base \elpi{"hierarchy.db"}.
-% 
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\section{Benchmark}
 %if we can port ssralg, or not... It would be nice, but maybe its a bit late.
