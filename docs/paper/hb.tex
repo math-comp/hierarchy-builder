@@ -855,7 +855,7 @@ Lemma addrA {T : Monoid.type} : associative (@add T).
 \end{coqcode}
 
 Next we define the Abelian groups.
-Since the monoid structure is the bottom of this hierarchy, its class record consists only of the mixin to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group mixins as follows because Abelian groups inherit from monoids.
+Since the monoid structure is the bottom of this hierarchy, its class record \coq{Monoid.axioms} consists only of the mixin to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group mixins as follows because Abelian groups inherit from monoids.
 \begin{coqcode}
 Module AbelianGroup.
 Record axioms (T : Type) : Type := Class {
@@ -864,20 +864,34 @@ Record axioms (T : Type) : Type := Class {
 Structure type : Type := Pack { sort : Type; class : axioms sort }.
 End AbelianGroup.
 \end{coqcode}
-
+As in the monoid structure, we declare \coq{AbelianGroup.sort} as an implicit coercion and lift additive inverse \coq{opp} and Abelian group axioms.
+Since Abelian groups inherit from monoids, we also declare an implicit coercion from Abelian groups to monoids.
+A coercion between structures can be defined as follows and consists of twofold: a coercion between \coq{axioms} records which destructs a class instance of the subclass and reconstructs it as a class instance of the superclass (line~\ref{demo4:coe:ag:monoid:class}), and a coercion between \coq{type} records (line~\ref{demo4:coe:ag:monoid:type}).
 \begin{coqcode}
 Coercion AbelianGroup.sort : AbelianGroup.type >-> Sortclass.
-Coercion AbelianGroup_class_to_TYPE_class : AbelianGroup.axioms >-> Monoid.axioms.
-Coercion AbelianGroup_to_Monoid (T : AbelianGroup.type) : Monoid.type :=
+Coercion AbelianGroup_class_to_Monoid_class (T : Type) (c : AbelianGroup.axioms T) : #\label{demo4:coe:ag:monoid:class}#
+  Monoid.axioms T :=
+  Monoid.Class T (AbelianGroup.Monoid_of_Type_mixin T c).
+Coercion AbelianGroup_to_Monoid (T : AbelianGroup.type) : Monoid.type := #\label{demo4:coe:ag:monoid:type}#
   Monoid.Pack (AbelianGroup.sort T) (AbelianGroup.class T).
 
 Definition opp {T : AbelianGroup.type} : T -> T := ... .
-(* Abelian group axioms `addrC` and `addNr` are omitted. *)
+(* Two Abelian group axioms `addrC` and `addNr` are omitted. *)
 \end{coqcode}
 
-
-
+Generally, a coercion from a structure A to another structure B can (and should) have the following form, thanks to the corresponding coercion between classes \coq{A_class_to_B_class}.
 \begin{coqcode}
+Coercion A_to_B (T : A.type) : B.type :=
+  B.Pack (A.sort T) ((* A_class_to_B_class _ *) (A.class T)).
+\end{coqcode}
+
+In order to introduce multiple inheritance, we define the semiring structure, which is another intermediate structure between monoids and rings, and introduces binary multiplication operator \coq{mul} and its identity element \coq{one}.
+Since semirings and Abelian groups do not inherit from each other, semirings can be defined similarly as in Abelian groups as follows.
+\begin{coqcode}
+Elpi hb.declare_mixin SemiRing_of_Monoid A Monoid.axioms.
+  Record axioms := { one : A; mul : A -> A -> A; (* 7 axioms are omitted. *) }.
+Elpi hb.end.
+
 Module SemiRing.
 Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
@@ -885,19 +899,18 @@ Record axioms (T : Type) : Type := Class {
 Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End SemiRing.
 \end{coqcode}
-
+Implicit coercions from the semiring structure to the carrier and the monoid structure should be defined, and semiring operators and axioms should be lifted, as follows.
 \begin{coqcode}
 Coercion SemiRing.sort : SemiRing.type >-> Sortclass.
-Coercion SemiRing_to_Monoid (T : SemiRing.type) : Monoid.type :=
-  Monoid.Pack (SemiRing.sort T) (SemiRing.class T).
+Coercion SemiRing_to_Monoid : SemiRing.type >-> Monoid.type.
 
 Definition one {T : SemiRing.type} : T := ... .
 Definition mul {T : SemiRing.type} : T -> T -> T := ... .
 (* 7 semiring axioms are omitted. *)
 \end{coqcode}
 
-
-
+The ring structure can be defined by gathering the monoid, Abelian group, and semiring mixins without extra mixin as the ring class, as follows.
+Since the ring structure inherits from monoids, semirings, and Abelian groups, implicit coercions from the ring structure to those three structures should be defined.
 \begin{coqcode}
 Module Ring.
 Record axioms (T : Type) : Type := Class {
@@ -906,16 +919,11 @@ Record axioms (T : Type) : Type := Class {
   AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
 Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End Ring.
-\end{coqcode}
 
-\begin{coqcode}
 Coercion Ring.sort : Ring.type >-> Sortclass.
-Coercion Ring_to_Monoid (T : Ring.type) : Monoid.type :=
-   Monoid.Pack (Ring.sort T) (Ring.class T).
-Coercion Ring_to_SemiRing (T : Ring.type) : SemiRing.type :=
-  SemiRing.Pack (Ring.sort T) (Ring.class T).
-Coercion Ring_to_AbelianGroup (T : Ring.type) : AbelianGroup.type :=
-  AbelianGroup.Pack (Ring.sort T) (Ring.class T).
+Coercion Ring_to_Monoid : Ring.type >-> Monoid.type.
+Coercion Ring_to_SemiRing : Ring.type >-> SemiRing.type.
+Coercion Ring_to_AbelianGroup : Ring.type >-> AbelianGroup.type.
 \end{coqcode}
 
 \subsection{Linking structures and instances via Canonical Structures}
