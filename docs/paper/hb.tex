@@ -433,7 +433,7 @@ Our objective is to obtain a version of the hierarchy, that we name V3, that doe
 not only feature Abelian groups but that is also backward compatible
 with V1.
 
-\subsection{The missing puzzle piece}
+\subsection{The missing puzzle piece}\label{subsec:v3}
 
 \begin{figure}[!h]
   \begin{center}
@@ -892,13 +892,38 @@ Coercion A_to_B (T : A.type) : B.type :=
   B.Pack (A.sort T) ((* A_class_to_B_class _ *) (A.class T)).
 \end{coqcode}
 
-In order to introduce multiple inheritance, we define the semiring structure, which is another intermediate structure between monoids and rings, and introduces binary multiplication operator \coq{mul} and its identity element \coq{one}.
-Since semirings and Abelian groups do not inherit from each other, semirings can be defined similarly as in Abelian groups as follows.
-\begin{coqcode}
-Elpi hb.declare_mixin SemiRing_of_Monoid A Monoid.axioms.
-  Record axioms := { one : A; mul : A -> A -> A; (* 7 axioms are omitted. *) }.
-Elpi hb.end.
+\subsection{Multiple inheritance}
+In order to introduce multiple inheritance, we extend the hierarchy described in
+section~\ref{subsec:v3} wit the structure of semirings, which is another
+intermediate structure between monoids and rings, and introduces binary
+multiplication operator \coq{mul} and its identity element \coq{one}.\\
 
+%\begin{figure}[!h]
+  \begin{tabular}{cc}
+    \begin{minipage}{0.45 \textwidth}
+      \begin{coqcode}
+Elpi hb.declare_mixin
+SemiRing_of_Monoid A Monoid.axioms.
+  Record axioms := {
+    one : A;
+    mul : A -> A -> A;
+    (* 7 axioms are omitted. *)
+  }.
+Elpi hb.end.
+(* Cyril, factories here? *)
+      \end{coqcode}
+    \end{minipage}
+    &
+  \begin{minipage}{0.45 \textwidth}
+    \includegraphics[width=\textwidth]{v4.pdf}
+  \end{minipage}
+  \end{tabular}\\
+%  \caption{\label{fig:puzzle}V4 introduces a join, for brevity we omit the factories/builders for the upper arrows}
+%\end{figure}
+
+Since semirings and Abelian groups do not inherit from each other, semirings can
+be defined similarly as in Abelian groups as follows.
+\begin{coqcode}
 Module SemiRing.
 Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
