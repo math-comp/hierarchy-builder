@@ -173,7 +173,7 @@ is hard to get right.
 In this paper we describe \HB{}, a high level language
 to \emph{build} hierarchies of algebraic structures and to make these hierarchies
 \emph{evolve} without breaking user code. The key concepts are the ones of
-\emph{\factory{}} and \emph{\phantterm{}} that lets the hierarchy developer
+\emph{\factory{}}, \emph{\mixinbuilder{}} and \emph{\phantterm{}} that lets the hierarchy developer
 describe an actual
 interface for their library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
@@ -241,7 +241,7 @@ language and we position \HB{} in the literature.
 
 The first version of our hierarchy (that we name V1) features only two
 structures: \coq{Monoid} and \coq{Ring}.
-\marginpar{remove hb.end for mixins, use next release of coq elpi}
+\marginpar{remove hb.end for \mixins{}, use next release of coq elpi}
 \begin{coqcode}
 #\hbmixin{}# Monoid_of_Type A.                       #\label{demo:mixin:mot}#
   Record axioms := {
@@ -510,7 +510,7 @@ both structures, for example \coq{addrC} holds on Abelian groups,
 As a result the very same proof works on both
 version V1 and V3.
 
-Last, it is worth pointing out that the new factory makes the following
+Last, it is worth pointing out that the new \factory{} makes the following
 two lines equivalent (the former one was used in V1 to declare
 the structure of rings). Indeed they both describe the same set of \mixins{}.
 
@@ -542,7 +542,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 \item \HB{} high level commands compile to
       the discipline of Packed Classes (Coq modules, records, coercions,
       implicit arguments, canonical structure instances, notations,
-      \phantterm{}s).
+      \phantterms{}).
       This process lifts a considerable
       burden from the shoulders of the hierarchy designer and the final user
       that are no longer required to master the details of Packed Classes.
@@ -565,10 +565,10 @@ when using \hbinstance{} while declaring a \factory{}, and the user
 may only refer to structure types, but should never rely on their
 implementation, neither should they rely on explicit builders.
 
-\subsection{\HB{} mixins, factories and instances}
+\subsection{\HB{} \mixins{}, \factories{} and instances}
 \label{sec:hb-mixins-factories}
 
-\begin{definition}[\M{}, mixins]
+\begin{definition}[\M{}, \mixins{}]
 A \emph{\mixin{}} \(m \in \M{}\) is a Coq record with one of more parameters.
 The first parameter must be a \coq{(T : Type)}, while the other parameters
 are \mixins{} applied to \coq{T} and possibly $n$ other distinct \mixins{}. I.e.
@@ -583,7 +583,7 @@ have \(\sigma(i,k) \in \enum1{i-1}\).
 
 We will use the abbreviation \(\pmp{n} = \vect{\left(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots\ p_{\sigma(i,n_i)}\right)}_{i \in \enum1n}\)
 
-\begin{definition}[\dep{}, mixin dependencies]
+\begin{definition}[\dep{}, \mixin{} dependencies]
   Given \(m \in \M{}\), we define \(\dep{}(m) \in \powerset\M{}\)
   as the set of all \mixins{} that occur as parameters of \(m\), i.e.
   \(\dep{}(m) = \enum{m_1}{m_n}\).
@@ -609,21 +609,21 @@ definitions: \(\dep{}^\star(\dep{}^\star(M)) \subseteq \dep{}^\star(M)\)
   type \coq{(T: Type)}, an arbitrary number of distinct \mixins{}
   \(\enum{m_1}{m_n}\) and an additional argument \(f\), which we call
   a \emph{\factory{}}, and which depends on the \mixins{}. Its return type is
-  a mixin \(m_{n+1} \in \M{}\) i.e.
+  a \mixin{} \(m_{n+1} \in \M{}\) i.e.
 \begin{coqcode}
 Definition f (T : Type) #$\pmp{n}$# : Type := ...
 Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n+1}\ T\ p_{\sigma(n+1,1)}\ \ldots\ p_{\sigma(n+1,n_i)}\)# := ...
 \end{coqcode}
 
   We define \(\from{} (f, m_{n+1}) = \mu\) to be the (unique) \mixinbuilder{}
-  for \(m_{n+1}\) from the factory \(f\).
+  for \(m_{n+1}\) from the \factory{} \(f\).
 \end{definition}
 
 \begin{definition}[$\provides{}$, $\requires{}$]
   We define the following functions \begin{itemize}
   \item\( \requires{}(f) = \enum{m_1}{m_n}  \in \powerset\M{}\)
-    the set of mixins a factory \(f \in \F{}\) depends on, thus requiring all the
-    \mixinbuilders{} of a given factory to have the same set of
+    the set of mixins a \factory{} \(f \in \F{}\) depends on, thus requiring all the
+    \mixinbuilders{} of a given \factory{} to have the same set of
     dependency.
   \item\( \provides{}(f) = \{m | \from{}(f,m) \textrm{ is defined}\}
     \in \powerset\M{}\) the set of mixins that a factory
@@ -663,7 +663,7 @@ from regular factories.
   \coq{M.axioms}, which depends on the \mixins{}
   \(\requires{}(\coq{M.axioms}) =
   \provides{}^\star\left(\enum{f_1}{f_n}\right)\), and registers this
-  new record both as a mixin and a factory It also creates a
+  new record both as a \mixin{} and a \factory{} It also creates a
   \phantterm{} \coq{M.Axioms}
 \end{command}
 
@@ -676,7 +676,7 @@ from regular factories.
   Section~\ref{sec:target-lang}.
 \end{command}
 
-\begin{command} to declare a new factory and generating new mixin builders:
+\begin{command} to declare a new \factory{} and generate new \mixinbuilders:
 \begin{coqcode}
 #\hbfactory{}# M T #$f_1\ \ldots\ f_n$#.
   Record axioms := { .. }.
@@ -702,6 +702,11 @@ from regular factories.
   \(\requires{}^\star\left(\enum{f_{n+1}}{f_{n+k}}\right) \subseteq
   \provides{}^\star\left(\enum{f_1}{f_n}\right).\)
 \end{command}
+
+Note that the \(b_i\) are not \mixinbuilders{} since their return types
+are not necessarily \mixins{}. However, since all \factories{} provide
+\mixin{} through \mixinbuilders{}, the latter are composed with the
+provided \(b_i\) to obtain \mixinbuilders{}.
 
 \subsection{\HB{} classes and structures}
 \label{sec:hb-class-struct}
@@ -769,7 +774,7 @@ commands must never rely on a particular set of \mixins{} as
 arguments, and \factory{} arguments must never be given explicitly by
 the user. As described in Sections~\ref{sec:hb-mixins-factories}
 and~\ref{sec:hb-class-struct}, \HB{} commands take a list of
-\factories as arguments, which they expand into lists of \mixins{}
+\factories{} as arguments, which they expand into lists of \mixins{}
 behind the scene. However \factory{} types and constructors have
 \mixin{} arguments that must be inferred automatically when used. To
 this end, the commands \hbmixin{} and \hbfactory{} both generate
@@ -778,7 +783,7 @@ this end, the commands \hbmixin{} and \hbfactory{} both generate
 
 \begin{definition}[\FP{}, \phantterms{}]
 A \phantterm{} \(\phi \in \FP{}\) is a notation which automatically finds
-the mixin instances a factory depends on and takes as explicit arguments
+the \mixin{} instances a \factory{} depends on and takes as explicit arguments
 the contents of the factory. E.g.
 \begin{coqcode}
 Notation #$\varphi$# T := (#$f$# T ..).
@@ -786,7 +791,7 @@ Notation #$\Phi$# T  #\(x_1\ \ldots\ x_n\)# := (mkf T .. #\(x_1\ \ldots\ x_n\)#)
 Definition b : #$\varphi$# T := #$\Phi$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
 \end{definition}
-\textbf{Now, for robustness sake, every single explicit use of a factory \(f\) as a Coq term
+\textbf{Now, for robustness sake, every single explicit use of a \factory{} \(f\) as a Coq term
   must be replaced by \(\varphi\) and every use of its constructor by
   \(\Phi\).} The conception of such notation relies on unification
 with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
@@ -832,7 +837,7 @@ Packed Classes, the target language of \HB{}.
 \subsection{Describing structures with records and projections}
 
 We describe mathematical structures with three kinds of dependent records: mixins, classes, and structures.
-As shown in section \ref{sec:example}, a mixin gathers operators and axioms newly introduced by a structure.
+As shown in section \ref{sec:example}, a \mixin{} gathers operators and axioms newly introduced by a structure.
 As in \cite[section 2.4]{DBLP:conf/tphol/GarillotGMR09}\cite[section 2]{KSdraft}, a class record is parametrized by the carrier type \coq{(T : Type)} and gathers all the operators and axioms of a structure by assembling mixins, and a \coq{Structure type} (a record) bundles a carrier and its class instance, as follows.
 \begin{coqcode}
 Module Monoid.
@@ -844,7 +849,7 @@ End Monoid.
 The \coq{Monoid} module plays the role of a name space and forces us to write the qualified names such as \coq{Monoid.type}; thus allows us to reuse the same unqualified names for other structures, i.e., class and structure record can always be named as \coq{axioms} and \coq{type} respectively.
 
 Mixins and classes are internal definitions to declare structures; in contrast, \coq{Monoid.type} is the interface of the monoid structure to reason about monoids.
-As in section \ref{sec:example}, we declare \coq{Monoid.sort} as an implicit coercion and lift monoid operators and axioms from projections for the monoid mixin to definitions and lemmas for \coq{Monoid.type} as follows.
+As in section \ref{sec:example}, we declare \coq{Monoid.sort} as an implicit coercion and lift monoid operators and axioms from projections for the monoid \mixin{} to definitions and lemmas for \coq{Monoid.type} as follows.
 \begin{coqcode}
 Coercion Monoid.sort : Monoid.type >-> Sortclass.
 
@@ -857,7 +862,7 @@ Lemma addrA {T : Monoid.type} : associative (@add T).
 \end{coqcode}
 
 Next we define the Abelian groups.
-Since the monoid structure is the bottom of this hierarchy, its class record \coq{Monoid.axioms} consists only of the mixin to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group mixins as follows because Abelian groups inherit from monoids.
+Since the monoid structure is the bottom of this hierarchy, its class record \coq{Monoid.axioms} consists only of the \mixin{} to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group \mixins{} as follows because Abelian groups inherit from monoids.
 \begin{coqcode}
 Module AbelianGroup.
 Record axioms (T : Type) : Type := Class {
@@ -911,7 +916,7 @@ Definition mul {T : SemiRing.type} : T -> T -> T := ... .
 (* 7 semiring axioms are omitted. *)
 \end{coqcode}
 
-The ring structure can be defined by gathering the monoid, Abelian group, and semiring mixins without extra mixin as the ring class, as follows.
+The ring structure can be defined by gathering the monoid, Abelian group, and semiring \mixins{} without extra \mixin{} as the ring class, as follows.
 Since the ring structure inherits from monoids, semirings, and Abelian groups, implicit coercions from the ring structure to those three structures should be defined.
 \begin{coqcode}
 Module Ring.
