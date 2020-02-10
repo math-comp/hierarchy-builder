@@ -833,7 +833,7 @@ Packed Classes, the target language of \HB{}.
 
 We describe mathematical structures with three kinds of dependent records: mixins, classes, and structures.
 As shown in section \ref{sec:example}, a mixin gathers operators and axioms newly introduced by a structure.
-As in \cite[section 2.4]{DBLP:conf/tphol/GarillotGMR09}\cite[section 2]{KSdraft}, a class record is parameterised by the carrier of type \coq{Type} and gathers all the operators and axioms of a structure by assembling mixins, and a structure \coq{type} bundles a carrier and its class instance, as follows.
+As in \cite[section 2.4]{DBLP:conf/tphol/GarillotGMR09}\cite[section 2]{KSdraft}, a class record is parametrized by the carrier type \coq{(T : Type)} and gathers all the operators and axioms of a structure by assembling mixins, and a \coq{Structure type} (a record) bundles a carrier and its class instance, as follows.
 \begin{coqcode}
 Module Monoid.
 Record axioms (T : Type) : Type :=
