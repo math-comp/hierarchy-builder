@@ -116,7 +116,7 @@ class CoqElpiLexer(RegexLexer):
         'Proposition', 'Fact', 'Remark', 'Example', 'Proof', 'Goal', 'Save',
         'Qed', 'Defined', 'Hint', 'Resolve', 'Rewrite', 'View', 'Search',
         'Show', 'Print', 'Printing', 'All', 'Graph', 'Projections', 'inside',
-        'outside', 'Check', 'Global', 'Instance', 'Class', 'Existing',
+        'outside', 'Check', 'Global', 'Instance', 'Existing',
         'Universe', 'Polymorphic', 'Monomorphic', 'Context', 'Elpi', 'Accumulate', 'Db', 'Command'
     )
     keywords2 = (
