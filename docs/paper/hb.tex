@@ -766,6 +766,11 @@ they are in bijection.
   unification hints as described in Section~\ref{sec:target-lang}.
 \end{command}
 
+
+\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
+  \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
+  \end{definition}
+
 \subsection{Automatic inference of \mixins{}}
 \label{sec:autom-infer-mixins}
 
@@ -797,27 +802,21 @@ Definition b : #$\varphi$# T := #$\Phi$# T #\(x_1\ \ldots\ x_n\)#
 with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
 
 
-\subsection{Inheritance is inclusion}
-\label{sec:inheritance}
 
-As described in \cite{affeldt:hal-02463336},... % the only way to define
-% inheritance of structure in a deterministic fashion is to replace
+% As described in \cite{affeldt:hal-02463336},... % the only way to define
+% % inheritance of structure in a deterministic fashion is to replace
 
-\begin{definition}[\issubclass{} \(\in \C{}\times\C{}\), \subclass{}]\label{def:subclass}
-  \(c1~\issubclass{}~c2\) iff \(\cdef{}(c2) \subseteq \cdef{}(c1)\)
-  \end{definition}
+% Cite \cite{KSdraft}
 
-Cite \cite{KSdraft}
+% \begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
+%   if \(c1, c2 \in \C{}\) then \(\join{}(c1,c2)\) is the smallest,
+%   w.r.t. set inclusion, \class{} \(c\) such that
+%   \(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\) if it exists.
+% \end{definition}
 
-\begin{definition}[\(\join{} \in \C{}\times\C{} \to \C{}\)]\label{def:join}
-  if \(c1, c2 \in \C{}\) then \(\join{}(c1,c2)\) is the smallest,
-  w.r.t. set inclusion, \class{} \(c\) such that
-  \(\cdef{}(c1) \cup \cdef{}(c2) \subseteq \cdef{}(c)\) if it exists.
-\end{definition}
-
-\begin{remark}[]
-\(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
-\end{remark}
+% \begin{remark}[]
+% \(\join{}(c1,c2)\) is a \subclass{} of both \(c1\) and \(c2\).
+% \end{remark}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
