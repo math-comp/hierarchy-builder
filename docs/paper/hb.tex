@@ -533,7 +533,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
       ones in order to better factor and reuse parts of the hierarchy
       and the library that follows it.
 \item \Mixins{} cannot disappear but can change considerably
-      in their implementation. A simple \mixin{} can becomes a full fledged
+      in their implementation. A \mixin{} can becomes a full fledged
       \factory{} equipped with \builder{}s to ensure retro compatibility.
 \item \HB{} high level commands compile to
       the discipline of Packed Classes (Coq modules, records, coercions,
@@ -547,18 +547,16 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{\HB{} language}\label{sec:language}
 
-We call \(\Lang{}\) the set of terms of Coq type theory. The terms
-handled by \HB{} are subdivided in five categories, the \mixins{}
-\(\M{}\), the \factories{} \(\F{}\), \mixinbuilders{} \(\B{}\), the
-\classes{} \(\C{}\), the \structures{} \(\Str{}\).
-
-\Mixins{}, \factories{} and instances are tagged by the user, through the
-commands \hbmixin{}, \hbfactory{} and \hbinstance{}, and the user may
-rely on their implementation. However structures and classes are
-generated with the command \hbstructure{} and builders are generated
-when using \hbinstance{} while declaring a \factory{}, and the user
-may only refer to structure types, but should never rely on their
-implementation, neither should they rely on explicit builders.
+The Coq terms handled by \HB{} are subdivided in five categories, the
+\mixins{} \(\M{}\), the \factories{}~\(\F{}\), \mixinbuilders{}
+\(\B{}\), the \classes{} \(\C{}\) and the \structures{}
+\(\Str{}\). \Mixins{}, \factories{} and instances are tagged by the
+user, through the commands \hbmixin{}, \hbfactory{} and \hbinstance{},
+and the user may rely on their implementation. However structures and
+classes are generated with the command \hbstructure{} and builders are
+generated when using \hbinstance{} while declaring a \factory{}, and
+the user may only refer to structure types, but should never rely on
+their implementation, neither should they rely on explicit builders.
 
 \subsection{\HB{} \mixins{}, \factories{} and instances}
 \label{sec:hb-mixins-factories}
@@ -650,9 +648,7 @@ from regular factories.
 
 \begin{command} to declare a new mixin:
 \begin{coqcode}
-#\hbmixin{}# M T #$f_1\ \ldots\ f_n$#.
-  Record axioms := { .. }.
-#\hbend{}#
+#\hbmixin{}# M T #$f_1\ \ldots\ f_n$#. Record axioms := { .. }. #\hbend{}#
 \end{coqcode}
   Creates a module \coq{M} with a record
   \coq{M.axioms}, which depends on the \mixins{}
@@ -896,21 +892,27 @@ multiplication operator \coq{mul} and its identity element \coq{one}.\\
 
 %\begin{figure}[!h]
   \begin{tabular}{cc}
-    \begin{minipage}{0.45 \textwidth}
+    \begin{minipage}{0.5 \textwidth}
       \begin{coqcode}
-Elpi hb.declare_mixin
-SemiRing_of_Monoid A Monoid.axioms.
+#\hbmixin{}# SemiRing_of_Monoid A Monoid.axioms.
   Record axioms := {
     one : A;
     mul : A -> A -> A;
     (* 7 axioms are omitted. *)
   }.
-Elpi hb.end.
-(* Cyril, factories here? *)
+#\hbend{}#
+
+#\hbfactory{}# Ring_of_AbelianGroup A
+    AbelianGroup.axioms.
+  Record axioms := {
+    (* 2 operators and 5 axioms are omitted. *)
+  }.
+  ..
+#\hbend{}#
       \end{coqcode}
     \end{minipage}
     &
-  \begin{minipage}{0.45 \textwidth}
+  \begin{minipage}{0.4 \textwidth}
     \includegraphics[width=\textwidth]{v4.pdf}
   \end{minipage}
   \end{tabular}\\
@@ -1208,9 +1210,13 @@ build. The main differences are that \HB{} is a higher level language
 that is compiled down to (flat) Packed Classes. The systematic use of
 \factories{} makes the user interface of a hierarchy stable under the insertion of
 structures, a property that Packed Classes lacks.
-Finally many of the intricacy of Packed Classes are hidden to the user by
-the compilation step.
-\marginpar{ET: I guess you have more to say here}
+Finally many of the intricacies of Packed Classes are hidden to the user by
+the compilation step, in particular creating all the necessary coercions and canonical structure declarations,
+especially in the case of diamonds or when merging several libraries, which used to cause the need for \textit{a posteriori}
+validation of a hierarchy design~\cite{KSdraft}. It also opens the way
+to automatically detect and solve problems tied to non judgmental commutative diagrams when forgetting
+structure~\cite{affeldt:hal-02463336}.
+
 
 In~\cite{CaretteCombinators} Carette and O'Connor describe the language of
 Theory Presentation Combinators that can be used to describe a hierarchy of
@@ -1226,10 +1232,8 @@ but we could not find any written trace of that. Language wise they provides
 keywords such as \verb+combine+ and \verb+over+ to share (reuse) a property
 when defining a new structure. For example in order to avoid restating
 the commutativity property when defining Abelian groups they combine
-a commutative monoid and a group forcing the subjacent monoid to coincide:
-\begin{verbatim}
-CommutativeGroup := combine CommutativeMonoid , Group over Monoid
-\end{verbatim}
+a commutative monoid and a group forcing the subjacent monoid to coincide: %
+\verb-CommutativeGroup := combine CommutativeMonoid , Group over Monoid.-
 In our language \HB{} the same role is played by \emph{\mixins{}}.
 A \mixin{} lets one write once and forall a property and abstract it over types
 and operations so that it can be reused in all the structures that need it.
@@ -1264,11 +1268,10 @@ to share the signature or the properties of structures by just requiring
 a proof of their equivalence that is in turn used by automation to treat
 equivalent structures as equal.
 
-\marginpar{
-the word \factory{} comes from "the gang of four" design patterns, we
-could cite it. Cyril sees a similarity between the AbstractFactory design
-pattern and our notion of factory.
-}
+The concepts of \factory{} and \builder{} presented here is akin to the
+\verb-AbstractFactory- and \verb-Builder- pattern from "the Gang Of Four" design
+patterns~\cite{gamma1995design} in the sense that \factories{} are used
+to build an arbitrary number of objects (here \mixin{} instances).
 
 \subsection{Other target languages}\label{subsec:othertgt}
 \marginpar{section \ref{subsec:othertgt} can be safely cut}
@@ -1283,7 +1286,7 @@ for a comparison.
 % , and is our objective to adopt \HB{} in that context as soon as possible.
 At the same time one
 can imagine a future were the Coq system will provide comparable
-performances for unbundled classes.
+performances for unbundled classes, or even yet another inference mechanism.
 It is a virtue of our work to provide a user language that is separate
 from the implementation one, so we could in principle target any other
 equally expressive language without the user noticing.
@@ -1298,7 +1301,9 @@ The implementation amounts to approximately a thousand lines of (commented)
 Elpi code and tree hundred lines of Coq vernacular. It took less than one month
 to implement \HB{} while it took several years of attempts and fruitful
 discussions with the other developers of the Mathematical Components library
-to design it.\marginpar{Cyril, do you want to make names?}
+to design it, as well as Coq users and developers and members of Dagstuhl seminar 18341.
+In particular, discussions with Georges Gonthier, Assia Mahboubi and
+Florent Hivert were instrumental in coining the concepts formalized here.
 
 The \HB{} language is only loosely tied to Coq or even Type Theory.
 It could probably be adopted without major changes in other tools. Indeed the
@@ -1307,8 +1312,7 @@ are key to rule out meaningless or ambiguous sentences and are not
 specific to the logic setting on which a prover stands. Moreover
 most logics feature packing construction similar to records and corresponding
 projections.
-The compilation scheme we present in \autoref{sec:target-lang} is of
-course tied to dependent records
+The compilation scheme we present in \autoref{sec:target-lang} is tied to dependent records
 and Canonical Structures, features that are available in Coq but also
 in other provers based on Type Theory such a Matita~\cite{DBLP:conf/cade/AspertiRCT11}
 and Lean~\cite{DBLP:conf/cade/MouraKADR15}
