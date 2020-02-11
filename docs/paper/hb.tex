@@ -648,7 +648,7 @@ from regular factories.
 
 \begin{command} to declare a new mixin:
 \begin{coqcode}
-#\hbmixin{}# M T #$f_1\ \ldots\ f_n$#. Record axioms := { .. }. #\hbend{}#
+#\hbmixin{}# M T #$f_1\ \ldots\ f_n$#. Record axioms := { .. }. #\hbend{}#.
 \end{coqcode}
   Creates a module \coq{M} with a record
   \coq{M.axioms}, which depends on the \mixins{}
@@ -678,7 +678,7 @@ from regular factories.
   ..
   Definition #$b_{n+k}$# : #$f_{n+k}$# T .. := ...
   #\hbinstance{}# T #$b_{n+k}$#.
-#\hbend{}#
+#\hbend{}#.
 \end{coqcode}
   Creates a module \coq{M} with a record
   \coq{M.axioms}, which depends on the mixins
@@ -783,15 +783,13 @@ respectively.
 
 \begin{coqcode}
 Record #\(\varphi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
-
 Notation #$f$# T := (#\(Phi\)# T ..).
 Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(\Phi\)# T .. #\(x_1\ \ldots\ x_k\)#).
-
 Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
 
-In our target language of packed classes such notation relies on unification
-with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
+In our target language such notations rely on unification with
+phantom types \cite{DBLP:conf/itp/MahboubiT13}.
 
 
 
@@ -899,7 +897,7 @@ multiplication operator \coq{mul} and its identity element \coq{one}.\\
     mul : A -> A -> A;
     (* 7 axioms are omitted. *)
   }.
-#\hbend{}#
+#\hbend{}#.
 
 #\hbfactory{}# Ring_of_AbelianGroup A
     AbelianGroup.axioms.
@@ -907,7 +905,7 @@ multiplication operator \coq{mul} and its identity element \coq{one}.\\
     (* 2 operators and 5 axioms are omitted. *)
   }.
   ..
-#\hbend{}#
+#\hbend{}#.
       \end{coqcode}
     \end{minipage}
     &
