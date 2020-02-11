@@ -110,9 +110,7 @@ HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
 }.
 HB.builders Context T (f : Ring_of_Monoid.axioms T).
 
-Lemma x : True.
-Print Canonical Projections.
-
+STOP
   Variable f : axioms.
 
   Lemma addrC : commutative (add : A -> A -> A).

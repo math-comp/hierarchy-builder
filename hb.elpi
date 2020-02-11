@@ -887,11 +887,21 @@ main-declare-builders (prod N T Factories) :-
   TheType = global (const C),
   builders-postulate-factories (Factories TheType) TheType [].
 
+pred postulate-factory-abbrev i:term, i:pair id factoryname.
+postulate-factory-abbrev TheType (pr Name F) :-
+  % abbrev, HACK
+  Fabb is {coq.gr->string F} ^ "_",
+  coq.notation.abbreviation Fabb [TheType] Package,
+  Msg is "Unable to declare factory " ^ Name,
+  std.assert-ok! (coq.typecheck-ty Package _) Msg,
+  coq.env.add-const Name _ Package tt tt _.
+
 pred builders-postulate-factories i:term, i:term, i:list (pair id factoryname).
-builders-postulate-factories (sort prop) TheType GRFS :-
-  halt "TODO: postulate the required mixins + postulate the factories applied to these mixins",
+builders-postulate-factories (sort prop) TheType GRFS :- std.do! [
   main-declare-context TheType {std.rev {std.map GRFS snd}} _,
-  acc current (clause _ _ (current-decl factory-decl)).
+  std.forall GRFS (postulate-factory-abbrev TheType),
+  acc current (clause _ _ (current-decl factory-decl)),
+].
 builders-postulate-factories (prod N T Factories) TheType GRFS :-
   coq.name->id N ID,
   std.assert! (pi x y\ Factories x = Factories y) "factories cannot depend on eachother",
@@ -922,7 +932,7 @@ spill-factory-param-factories (parameter _ T Rest) GRFS TheType D :-
   Dummy = sort prop,
   spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D.
 
-spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.spy-do! [
+spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.do! [
   % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields1, copy Sort Sort1),
   Kname = "Axioms_",
