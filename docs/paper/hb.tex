@@ -1275,12 +1275,11 @@ In particular, discussions with Georges Gonthier, Assia Mahboubi and
 Florent Hivert were instrumental in coining the concepts formalized here.
 
 The \HB{} language is only loosely tied to Coq or even Type Theory.
-It could probably be adopted without major changes in other tools. Indeed the
+We believe it could be adopted with no major change to other tools. Indeed the
 properties and invariants that link \factories{}, \mixins{} and \classes{}
 are key to rule out meaningless or ambiguous sentences and are not
-specific to the logic setting on which a prover stands. Moreover
-most logics feature packing construction similar to records and corresponding
-projections.
+specific to our logic setting. Moreover
+most logics feature packing construction similar to records.
 The compilation scheme we present in \autoref{sec:target-lang} is tied to dependent records,
 that are available in Coq but also
 in other provers based on Type Theory such a Matita~\cite{DBLP:conf/cade/AspertiRCT11}
