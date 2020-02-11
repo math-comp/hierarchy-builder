@@ -94,12 +94,9 @@
 % \newcommand{\packager}{packager}
 % \newcommand{\packagers}{packagers}
 % \newcommand{\Packager}{Packager}
-\newcommand{\phantterm}{phantom term}
-\newcommand{\phantterms}{phantom terms}
-\newcommand{\Phantterms}{Phantom terms}
-\newcommand{\phanttype}{phantom type}
-\newcommand{\phanttypes}{phantom types}
-\newcommand{\Phanttypes}{Phantom types}
+\newcommand{\phantterm}{abbreviation}
+\newcommand{\phantterms}{abbreviations}
+\newcommand{\Phantterms}{abbreviations}
 \newcommand{\builder}{builder}
 \newcommand{\mixinbuilder}{builder}
 \newcommand{\mixinbuilders}{builders}
@@ -110,7 +107,6 @@
 \newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
 \newcommand{\C}{\ensuremath{\mathcal{C}}}
 \newcommand{\B}{\ensuremath{\mathcal{B}}}
-\newcommand{\FP}{\ensuremath{\mathcal{H}}}
 \newcommand{\class}{class}
 \newcommand{\classes}{classes}
 \newcommand{\cdef}{\ensuremath{def}}
@@ -552,10 +548,9 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 \section{\HB{} language}\label{sec:language}
 
 We call \(\Lang{}\) the set of terms of Coq type theory. The terms
-handled by \HB{} are subdivided in six categories, the \mixins{}
+handled by \HB{} are subdivided in five categories, the \mixins{}
 \(\M{}\), the \factories{} \(\F{}\), \mixinbuilders{} \(\B{}\), the
-\classes{} \(\C{}\), the \structures{} \(\Str{}\) and
-\phantterms{} \(\FP{}\).
+\classes{} \(\C{}\), the \structures{} \(\Str{}\).
 
 \Mixins{}, \factories{} and instances are tagged by the user, through the
 commands \hbmixin{}, \hbfactory{} and \hbinstance{}, and the user may
@@ -717,7 +712,7 @@ A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
 \coq{(T : Type)}. The type of each field is a \mixin{} in \M{} applied to
 \coq{T} and, if needed, any number of other fields:
 \begin{coqcode}
-Record #$c$# (T : Type) := { ..; #\(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots p_{\sigma(i,n_i)}\)#; ..}.
+Record #$c$# (T : Type) := { #\(p_1 : m_1\ T\)#; .. ; #\(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots p_{\sigma(i,n_i)}\)#; ..}.
 \end{coqcode}
 \end{definition}
 
@@ -785,20 +780,22 @@ behind the scene. However \factory{} types and constructors have
 this end, the commands \hbmixin{} and \hbfactory{} both generate
 \phantterms{} for the user to replace uses of constructors of \factories{}.
 
+Indeed, these two commands, first create a record \(\phi\) with a
+constructor \(\Phi\) and then create abbreviations \(f\) and \(F\)
+that automatically fill the mixin arguments of \(\phi\) and \(\Phi\)
+respectively.
 
-\begin{definition}[\FP{}, \phantterms{}]
-A \phantterm{} \(\phi \in \FP{}\) is a notation which automatically finds
-the \mixin{} instances a \factory{} depends on and takes as explicit arguments
-the contents of the factory. E.g.
 \begin{coqcode}
-Notation #$\varphi$# T := (#$f$# T ..).
-Notation #$\Phi$# T  #\(x_1\ \ldots\ x_n\)# := (mkf T .. #\(x_1\ \ldots\ x_n\)#).
-Definition b : #$\varphi$# T := #$\Phi$# T #\(x_1\ \ldots\ x_n\)#
+Record #\(\varphi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
+
+Notation #$f$# T := (#\(Phi\)# T ..).
+Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(\Phi\)# T .. #\(x_1\ \ldots\ x_k\)#).
+
+Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
-\end{definition}
-\textbf{Now, for robustness sake, every single explicit use of a \factory{} \(f\) as a Coq term
-  must be replaced by \(\varphi\) and every use of its constructor by
-  \(\Phi\).} The conception of such notation relies on unification
+
+In a system based on type classes, such abbreviation could be implemented by tagging \mixins{} as type classes.
+In our target language of packed classes such notation relies on unification
 with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
 
 
@@ -863,7 +860,7 @@ Lemma addrA {T : Monoid.type} : associative (@add T).
 Next we define the Abelian groups.
 Since the monoid structure is the bottom of this hierarchy, its class record \coq{Monoid.axioms} consists only of the \mixin{} to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group \mixins{} as follows because Abelian groups inherit from monoids.
 \begin{coqcode}
-Module AbelianGroup.
+Module AbelianGroup.!
 Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
   AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
