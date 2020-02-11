@@ -790,7 +790,6 @@ Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(\Phi\)# T .. #\(x_1\ \ldots\ x_k
 Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
 
-In a system based on type classes, such abbreviation could be implemented by tagging \mixins{} as type classes.
 In our target language of packed classes such notation relies on unification
 with phantom types \cite{DBLP:conf/itp/MahboubiT13}.
 
@@ -978,18 +977,6 @@ Similarly one can apply an algebraic thoery to an instance (an example)
 of a structure. Eg 1 * 2 + 3. The same mechanism of CS let us
 extend the unifier to solve p1 \_ = nat.
 
-\subsection{The flatten variant}
-
-Describing a structure by proving a base class and a \mixin{} is very conveniet
-if one does it by hand, since it is more concise that spelling out all the
-\mixins{} by hand and is also closer to the user language one desires.
-
-Since we are going to synthesize code automatically the have the freedom
-to organize \mixins{} as we wish while retaining a compact user language.
-We chose to generate classes from scartch, listing all the involved
-\mixins{} since this more uniform.
-
-TODO: Example of a by hand flatten class, maybe the one of the join.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The implementation in Coq-Elpi}\label{sec:implementation}
@@ -1273,24 +1260,6 @@ The concepts of \factory{} and \builder{} presented here is akin to the
 patterns~\cite{gamma1995design} in the sense that \factories{} are used
 to build an arbitrary number of objects (here \mixin{} instances).
 
-\subsection{Other target languages}\label{subsec:othertgt}
-\marginpar{section \ref{subsec:othertgt} can be safely cut}
-We could have chosen telescopes~\cite{telescopes} or unbundled
-classes~\cite{mathclasses} as the target language for \HB{}.
-We believe it would take only a minor effort to patch \coq{hierarchy-builder}
-in order to represent structures in these ways.
-At the same time the Mathematical Components library, given the size and
-the depth of the hierarchy, adopts Packed Classes because they offer a good
-compromise between flexibility and performance. See~\cite[Section 8]{DBLP:conf/itp/MahboubiT13}
-for a comparison.
-% , and is our objective to adopt \HB{} in that context as soon as possible.
-At the same time one
-can imagine a future were the Coq system will provide comparable
-performances for unbundled classes, or even yet another inference mechanism.
-It is a virtue of our work to provide a user language that is separate
-from the implementation one, so we could in principle target any other
-equally expressive language without the user noticing.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
 In this paper we design and implement \HB{}, a high level language to describe
@@ -1312,12 +1281,23 @@ are key to rule out meaningless or ambiguous sentences and are not
 specific to the logic setting on which a prover stands. Moreover
 most logics feature packing construction similar to records and corresponding
 projections.
-The compilation scheme we present in \autoref{sec:target-lang} is tied to dependent records
-and Canonical Structures, features that are available in Coq but also
+The compilation scheme we present in \autoref{sec:target-lang} is tied to dependent records,
+that are available in Coq but also
 in other provers based on Type Theory such a Matita~\cite{DBLP:conf/cade/AspertiRCT11}
-and Lean~\cite{DBLP:conf/cade/MouraKADR15}
-that provide Unification Hints~\cite{10.1007/978-3-642-03359-9_8}, a strict
-super language of Canonical Structures.
+and Lean~\cite{DBLP:conf/cade/MouraKADR15}.
+Then, we could also have chosen telescopes~\cite{telescopes} or unbundled
+classes~\cite{mathclasses}, instead of Canonical Structures as the target language for \HB{},
+and we believe it would take only a minor effort to patch \coq{hierarchy-builder}.
+Historically, Mathematical Components library, given the size and
+the depth of the hierarchy, adopts Packed Classes because they offer a good
+compromise between flexibility and performance~\cite[Section 8]{DBLP:conf/itp/MahboubiT13} in Coq.
+One could instead use a system which provide comparable
+performances for unbundled classes or other ways to implement \HB{}
+(e.g. Unification Hints~\cite{10.1007/978-3-642-03359-9_8}).
+It is a virtue of our work to provide a user language that is separate
+from the implementation one, so we could in principle target any other
+equally expressive language without the user noticing.
+
 
 We leave to future work extending \HB{} to support structures parametrized
 by structures such as the one of module over a ring.
