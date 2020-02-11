@@ -158,7 +158,7 @@ Elpi Accumulate lp:{{
 main [S|FS] :-
   argument->term S T,
   std.map FS argument->gref GRFS, !,
-  main-declare-context T GRFS.
+  main-declare-context T GRFS _.
 main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
 
 }}.
@@ -172,11 +172,9 @@ Elpi Typecheck.
 
   Current syntax to create a mixin "Module.axioms"
   with requirements "Foo.axioms" .. "Bar.axioms":
-   Elpi hb.declare.mixin Module A Foo.axioms .. Bar.axioms.
-   Record axioms := {
-     ..
+   Elpi HB.mixin Record A.axioms T of (Foo.axioms T) .. (Bar.axioms T) := {
+     .. axioms ..
    }
-   Elpi hb.end.
 
    Current syntax to create a factory "Module.axioms",
    which requires "Foo.axioms" .. "Bar.axioms"
@@ -197,37 +195,59 @@ Elpi Typecheck.
    is already "Axioms" and in that case they are called "Axioms_".
 *)
 
-Elpi Command hb.declare_mixin.
+Elpi Command HB.mixin.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str Module, str TName | FS] :- std.map FS argument->gref GRFS, !,
-  main-begin-declare Module TName GRFS mixin-decl.
-main _ :- coq.error
-  "Usage: hb.declare_mixin <ModuleName> <VariableName> <FactoryGRs>*".
+
+main [indt-decl Decl] :- !, main-declare-asset Decl mixin-decl.
+
+main _ :-
+  coq.error "Usage: HB.mixin Record <ModuleName>.axioms (T : Type) of F1 A & F2 A ... := { ... }.".
 }}.
 Elpi Typecheck.
+Elpi Export HB.mixin.
 
-Elpi Command hb.declare_factory.
+Elpi Command HB.factory.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str Module, str TName | FS] :- std.map FS argument->gref GRFS, !,
-  main-begin-declare Module TName GRFS factory-decl.
-main _ :- coq.error
-  "Usage: hb.declare_factory <ModuleName> <VariableName> <FactoryGRs>*".
+main [indt-decl Decl] :- !, main-declare-asset Decl factory-decl.
+
+main _ :-
+  coq.error "Usage: HB.factory Record <ModuleName>.axioms (T : Type) of F1 A & F2 A ... := { ... }.".
 }}.
 Elpi Typecheck.
+Elpi Export HB.factory.
 
-Elpi Command hb.end.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(* TODO: document *)
+
+Elpi Command HB.builders.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [ctx-decl C] :- !, main-declare-builders C.
+
+main _ :- coq.error "Usage: HB.builders Context A (f : F1 A)...".
+}}.
+Elpi Typecheck.
+Elpi Export HB.builders.
+
+
+Elpi Command HB.end.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, main-end-declare.
-main _ :- coq.error "Usage: hb.end.".
+main _ :- coq.error "Usage: HB.end.".
 }}.
 Elpi Typecheck.
-
+Elpi Export HB.end.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -279,13 +299,14 @@ Elpi Typecheck.
 
 *)
 
-Elpi Command hb.structure.
+Elpi Command HB.structure.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [str Module|FS] :- std.map FS argument->gref GRFS, !,
   % compute all the mixins to be part of the structure
   main-declare-structure Module GRFS.
-main _ :- coq.error "Usage: hb.structure <ModuleName> <FactoryGR>*".
+main _ :- coq.error "Usage: HB.structure <ModuleName> <FactoryGR>*".
 }}.
 Elpi Typecheck.
+Elpi Export HB.structure.

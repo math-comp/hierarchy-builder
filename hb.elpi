@@ -455,8 +455,8 @@ postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do!
   coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
 ].
 
-pred main-declare-context i:term, i:list factoryname.
-main-declare-context T GRFS :-  std.do! [
+pred main-declare-context i:term, i:list factoryname, o:list prop.
+main-declare-context T GRFS MSL :-  std.do! [
   factories-provide-mixins GRFS ML _,
   std.fold ML [] (postulate-mixin T) MSL,
   MSL => declare-instances T {findall-classes},
@@ -798,7 +798,7 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   coq.univ.new [] U,
   Ty = sort (typ U),
   coq.env.add-const TName _ Ty tt tt T, % no body, local -> a variable
-  main-declare-context (global (const T)) GRFS,
+  main-declare-context (global (const T)) GRFS _,
   acc current (clause _ _ (current-decl Decl))
 ].
 
@@ -807,7 +807,7 @@ extract-local-factory (local-factory F) F.
 
 pred main-end-declare.
 main-end-declare :- std.do! [
-  current-decl Decl,
+  current-decl factory-decl,
   std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
   std.map AllPostulatedMixins mixin-src-name ML,
   std.assert! (coq.locate "axioms" GR)
@@ -874,3 +874,82 @@ main-exports ModuleName :-
   coq.env.begin-module ModuleName none,
   std.forall MPL (m\ coq.env.export-module m),
   coq.env.end-module _ModPath.
+
+pred main-declare-builders i:term.
+main-declare-builders (prod N T Factories) :-
+  term_to_string {new_int} Suffix, % TODO
+  coq.env.begin-section {calc ( "Buiders" ^ Suffix )  },
+  std.assert! (T = sort (typ _)) "The first context item must be a type variable",
+  coq.univ.new [] U,
+  Ty = sort (typ U),
+  coq.name->id N ID,
+  coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
+  TheType = global (const C),
+  builders-postulate-factories (Factories TheType) TheType [].
+
+pred builders-postulate-factories i:term, i:term, i:list (pair id factoryname).
+builders-postulate-factories (sort prop) TheType GRFS :-
+  halt "TODO: postulate the required mixins + postulate the factories applied to these mixins",
+  main-declare-context TheType {std.rev {std.map GRFS snd}} _,
+  acc current (clause _ _ (current-decl factory-decl)).
+builders-postulate-factories (prod N T Factories) TheType GRFS :-
+  coq.name->id N ID,
+  std.assert! (pi x y\ Factories x = Factories y) "factories cannot depend on eachother",
+  std.assert! (T = app[global GR, TheType]) "a factory must be a name applied to the type variable",
+  builders-postulate-factories (Factories (sort prop)) TheType [pr ID GR|GRFS].
+
+pred name-of-record-decl i:indt-decl, o:string.
+name-of-record-decl (parameter _ _ R) X :-
+  pi x\ name-of-record-decl (R x) X.
+name-of-record-decl (record X _ _ _) X.
+
+pred main-declare-asset i:indt-decl, i:declaration.
+main-declare-asset (parameter _ T Rest as R) D :-
+  name-of-record-decl R Module,
+  coq.env.begin-module Module none,
+  coq.env.begin-section Module,
+  std.assert! (T = sort (typ _)) "The first record parameter must be a type",
+  coq.univ.new [] U,
+  Ty = sort (typ U),
+  coq.env.add-const "T" _ Ty tt tt C, % no body, local -> a variable
+  TheType = global (const C),
+  spill-factory-param-factories (Rest TheType) [] TheType D.
+
+pred spill-factory-param-factories i:indt-decl, i:list factoryname, i:term, i:declaration.
+spill-factory-param-factories (parameter _ T Rest) GRFS TheType D :-
+  std.assert! (T = app[global F, TheType]) "Factory not applied to X",
+  std.assert! (pi x y\ Rest x = Rest y) "Factories cannot be mentioned in the mixin",
+  Dummy = sort prop,
+  spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D.
+
+spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.spy-do! [
+  % refresh implicit arguments, since many binders are now gone
+  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields1, copy Sort Sort1),
+  Kname = "Axioms_",
+  RDecl = record "axioms" Sort1 Kname Fields1,
+  main-declare-context TheType {std.rev GRFS} Hyps,
+  std.assert-ok! (coq.typecheck-indt-decl RDecl) "oops",
+  coq.env.add-indt RDecl R,
+  coq.env.end-section,
+  coq.env.indt R tt _ _ _ [K] _,
+  GRK = indc K,
+  mk-phant-mixins (global GRK) PhGRK,
+  mk-phant-abbrev "Axioms" PhGRK _,
+  std.map Hyps mixin-src-name ML,
+  if (D = mixin-decl)
+     (main-mixin-requires (indt R) ML Props)
+     (main-factory-requires (indt R) ML Props),
+  coq.env.begin-module "Exports" none,
+  (std.forall Props c\ acc current (clause _ _ c)),
+  std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
+  coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
+  coq.env.end-module Exports,
+  coq.env.end-module _Module,
+  export Exports,
+].
+
+pred copy-fields i:record-decl, o:record-decl.
+copy-fields end-record end-record.
+copy-fields (field C N T R) (field C N T1 R1) :-
+  copy T T1,
+  pi x\ copy x x => copy-fields (R x) (R1 x).

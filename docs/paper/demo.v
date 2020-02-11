@@ -2,32 +2,28 @@ Require Import String hb ssreflect ssrfun ZArith.
 
 Module V1.
 
-Elpi hb.declare_mixin Monoid_of_Type A.
-  Record axioms := {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
+HB.mixin Record Monoid_of_Type A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
 }.
-Elpi hb.end.
-Elpi hb.structure Monoid Monoid_of_Type.axioms.
+HB.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin Ring_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    one : A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
-    addrN : right_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
-Elpi hb.end.
-Elpi hb.structure Ring Monoid.axioms Ring_of_Monoid.axioms.
+HB.mixin Record Ring_of_Monoid A of Monoid.axioms A := {
+  one : A;
+  opp : A -> A;
+  mul : A -> A -> A;
+  addNr : left_inverse zero opp add;
+  addrN : right_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
+HB.structure Ring Monoid.axioms Ring_of_Monoid.axioms.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -60,38 +56,32 @@ End V1.
 
 Module V3.
 
-Elpi hb.declare_mixin Monoid_of_Type A.
-  Record axioms := {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
-  }.
-Elpi hb.end.
-Elpi hb.structure Monoid Monoid_of_Type.axioms.
+HB.mixin Record Monoid_of_Type A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+}.
+HB.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-  }.
-Elpi hb.end.
-Elpi hb.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
+HB.mixin Record AbelianGroup_of_Monoid A of Monoid.axioms A := {
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+}.
+HB.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
 
-Elpi hb.declare_mixin Ring_of_AbelianGroup A AbelianGroup.axioms.
-  Record axioms := {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
-Elpi hb.end.
-Elpi hb.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
+HB.mixin Record Ring_of_AbelianGroup A of AbelianGroup.axioms A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
+HB.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -106,19 +96,22 @@ Notation "x - y" := (x + - y) : hb_scope.
 Lemma addrN {R : AbelianGroup.type} : right_inverse (zero : R) opp add.
 Proof. by move=>x; rewrite addrC addNr. Qed.
 
-Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    one : A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
-    addrN : right_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
+  one : A;
+  opp : A -> A;
+  mul : A -> A -> A;
+  addNr : left_inverse zero opp add;
+  addrN : right_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
+HB.builders Context T (f : Ring_of_Monoid.axioms T).
+
+Lemma x : True.
+Print Canonical Projections.
 
   Variable f : axioms.
 
