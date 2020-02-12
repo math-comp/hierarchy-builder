@@ -103,22 +103,22 @@
 \newcommand{\factoryinstance}{factory instance}
 \newcommand{\factoryinstances}{factory instances}
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
-\newcommand{\dep}{\ensuremath{dep}}
+\newcommand{\dep}{\ensuremath{\mathit{dep}}}
 \newcommand{\powerset}[1]{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}(#1)}
 \newcommand{\C}{\ensuremath{\mathcal{C}}}
 \newcommand{\B}{\ensuremath{\mathcal{B}}}
 \newcommand{\class}{class}
 \newcommand{\classes}{classes}
-\newcommand{\cdef}{\ensuremath{def}}
+\newcommand{\cdef}{\ensuremath{\mathit{def}}}
 \newcommand{\Str}{\ensuremath{\mathcal{S}}}
 \newcommand{\structure}{structure}
 \newcommand{\structures}{structures}
 \newcommand{\issubclass}{\ensuremath{\leq}}
 \newcommand{\subclass}{subclass}
-\newcommand{\join}{\ensuremath{join}}
-\newcommand{\requires}{\ensuremath{requires}}
-\newcommand{\target}{\ensuremath{target}}
-\newcommand{\provides}{\ensuremath{provides}}
+\newcommand{\join}{\ensuremath{\mathit{join}}}
+\newcommand{\requires}{\ensuremath{\mathit{requires}}}
+\newcommand{\target}{\ensuremath{\mathit{target}}}
+\newcommand{\provides}{\ensuremath{\mathit{provides}}}
 \newcommand{\from}{\ensuremath{\mathsf{from}}}
 \newcommand{\proj}[2]{\ensuremath{#1[#2]}}
 \newcommand{\set}[1]{\left\{#1\right\}}
@@ -783,7 +783,7 @@ respectively.
 
 \begin{coqcode}
 Record #\(\varphi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
-Notation #$f$# T := (#\(Phi\)# T ..).
+Notation #$f$# T := (#\(\Phi\)# T ..).
 Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(\Phi\)# T .. #\(x_1\ \ldots\ x_k\)#).
 Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
