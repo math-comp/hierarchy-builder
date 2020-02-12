@@ -196,7 +196,7 @@ Theorem~\cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13}.
 
 The hierarchy of the Mathematical Components library
 is implemented following the discipline of Packed Classes initially introduced
-in \cite{DBLP:conf/itp/GonthierAABCGRMOBPRSTT13} and later also adopted in
+in \cite{DBLP:conf/tphol/GarillotGMR09} and later also adopted in
 \cite{DBLP:conf/mpc/AffeldtNS19} and \cite{DBLP:journals/mics/BoldoLM15}.
 We call Packed Classes a discipline, and not a language, because, in spite of
 its many virtues, it is unwieldy to use. In particular it leaks to the user
@@ -289,7 +289,7 @@ Line~\ref{demo:structure:monoid} hence forges a the structure \coq{Monoid}.
 Line~\ref{demo:mixin:rom} declares a second \mixin{} collecting the operations
 and properties that are needed in order to enrich a monoid to a ring, hence
 the name \coq{Ring_of_Monoid}. Indeed this time the type variable \coq{A}
-is followd by \coq{Monoid.axioms} that enriches
+is followed by \coq{Monoid.axioms} that enriches
 \coq{A} with the operations and properties of monoids. As a consequence
 \coq{add} and \coq{zero} can be used to express the new properties.
 
@@ -883,7 +883,7 @@ Coercion A_to_B (T : A.type) : B.type :=
 
 \subsection{Multiple inheritance}
 In order to introduce multiple inheritance, we extend the hierarchy described in
-section~\ref{subsec:v3} wit the structure of semirings, which is another
+section~\ref{subsec:v3} with the structure of semirings, which is another
 intermediate structure between monoids and rings, and introduces binary
 multiplication operator \coq{mul} and its identity element \coq{one}.\\
 
