@@ -966,7 +966,7 @@ piece of information that is necessary in order to make the term well typed.
 
 A first example of elaboration that requires canonical structures is \(0 + 1\).
 After removing all syntactic facilities, the underlying Coq term is
-\coq{(add _ (zero _) (one _))} where \coq{_} stands for an implicit piece
+\coq{(add _ (zero _)) (one _)} where \coq{_} stands for an implicit piece
 of information to be inferred and the constants \coq{add} and \coq{zero} come
 from the monoid structure while \coq{one} comes from semirings.
 When the term is type checked each \coq{_} is replaced by a unification
