@@ -373,7 +373,7 @@ proof we use monoid axioms (e.g. \coq{addrA}), ring axioms
 
 \subsection{Evolution of the hierarchy}\label{subsec:evolution}
 
-We now proceed by changing the hierarchy to accommodate the intermediate
+We proceed by accommodating the intermediate
 structure of Abelian groups.
 
 \begin{coqcode}
@@ -396,10 +396,8 @@ structure of Abelian groups.
     one : A;
     mul : A -> A -> A;
     mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
+    mul1r : left_id one mul;              mulr1 : right_id one mul;
+    mulrDl : left_distributive mul add;   mulrDr : right_distributive mul add;
   }.
 #\hbend{}#.
 #\hbstructure{}# Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
@@ -434,7 +432,7 @@ with V1.
 
 \begin{figure}[!h]
   \begin{center}
-    \includegraphics[width=\textwidth]{puzzle.pdf}
+    \includegraphics[width=0.8\textwidth]{puzzle.pdf}
   \end{center}
   \caption{\label{fig:puzzle}The evolution of the hierarchy. V3 is backward compatible with V1, while V2 is not.}
 \end{figure}
@@ -442,7 +440,6 @@ with V1.
 The key to make a hierarchy evolve without breaking user code is the full
 fledged notion of \emph{\factory{}} (the \mixins{} seen so far are degenerate,
 trivial, \factories{}).
-
 \Factories{}, like \mixins{}, are packages for operations and properties but are
 not directly used in the definition of structures. Instead a \factory{} is
 equipped with \emph{\builder{}s}: user provided pieces of code that extract
@@ -452,8 +449,7 @@ from the \factory{} the contents of \mixins{}, so that existing
 As depicted in figure~\ref{fig:puzzle} we change again the hierarchy
 by declaring a \coq{Ring_of_Monoid} \factory{}, that, from the user point of view,
 will look indistinguishable from the old \coq{Ring_of_Monoid} \mixin{}
-and hence grant backward compatibility between this last version V3 and the
-initial one V1.
+and hence grant backward compatibility between version V3 and version V1.
 
 \begin{coqcode}
 #\hbfactory{}# Ring_of_Monoid A Monoid.axioms.
@@ -508,16 +504,15 @@ As a result the very same proof works on both
 version V1 and V3.
 
 Last, it is worth pointing out that the new \factory{} makes the following
-two lines equivalent (the former one was used in V1 to declare
-the structure of rings). Indeed they both describe the same set of \mixins{}.
+two lines equivalent (the former declares
+rings in V1) since they both describe the same set of \mixins{}.
 
 \begin{coqcode}
 #\hbstructure{}# Ring Monoid.axioms Ring_of_Monoid.axioms.
 #\hbstructure{}# Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 \end{coqcode}
 
-This is another example of client code that would not break when the hierarchy
-moves from V1 to V3: the client of the hierarchy is allowed to declare new
+This is another example of client code that would not break: the client of the hierarchy is allowed to declare new
 structures on top of existing ones.
 
 \subsection{\HB{} in a nutshell}
@@ -746,8 +741,8 @@ way users may refer to a class is as an argument of \hbmixin{},
 A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with no parameters
 and two fields. Its first field is \coq{(sort : Type)} and its second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
-A structure is just a class packaged with a sigma type on its parameter, hence
-they are in bijection.
+A structure is a sigma type packing a class and its parameter.
+% hence they are in bijection.
 \end{definition}
 
 

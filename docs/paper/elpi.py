@@ -57,7 +57,7 @@ class ElpiLexer(RegexLexer):
             (r'(global|indt|indc|field|record|end-record|const|app|some|fun|sort)\b(?!-)', Operator),
             (r'_', Keyword),  # The don't-care variable
             (r'^\s*pred\s', Keyword),
-            (r'^\s*external\s', Keyword),
+            (r'^\s*external\s(pred)?', Keyword),
             (r'\s[io]:', Keyword),
             (r'(:-|pi\b(?!-)|=>|\\|kind\b(?!-)|type\b(?!-)|is\b(?!-)|!)', Keyword),
             (r'(term|record-decl|indt-decl|mixinname|structurename|factoryname|universe|option|list|pair|gref)\b(?!-)', Name.Class),
