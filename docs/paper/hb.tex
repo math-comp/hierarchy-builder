@@ -608,23 +608,25 @@ Definition #$\mu$# (T : Type) #$\pmp{n}$#: #\(f\ T\ p_1 \ldots p_n\)# -> #\(m_{n
 \begin{definition}[$\provides{}$, $\requires{}$]
   We define the following functions \begin{itemize}
   \item\( \requires{}(f) = \enum{m_1}{m_n}  \in \powerset\M{}\)
-    the set of mixins a \factory{} \(f \in \F{}\) depends on, thus requiring all the
-    \mixinbuilders{} of a given \factory{} to have the same set of
-    dependency.
+    is the set of mixins a \factory{} \(f \in \F{}\) depends on.
+    As a consequence all the
+    \mixinbuilders{} of a given \factory{} have the same set of
+    dependencies.
   \item\( \provides{}(f) = \{m | \from{}(f,m) \textrm{ is defined}\}
     \in \powerset\M{}\) the set of mixins that a factory
     \(f \in \F{}\) provides, through its \mixinbuilders{}.
   \end{itemize}
+Moreover the following properties hold for all \(f \in \F{}\):
+  %\begin{proposition}
+  %  They validate the following properties for all \(f \in \F{}\):
+    \begin{enumerate}
+      \item\( \dep{}^\star(\requires{}(f)) \subseteq \requires{}(f)\)
+      \item\( \requires{}(f) \cap \provides{}(f) = \emptyset \)
+      \item\( \forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
+    \end{enumerate}
+  %\end{proposition}
 \end{definition}
 
-\begin{proposition}
-They validate the following properties for all \(f \in \F{}\):
-  \begin{enumerate}
-    \item\( \dep{}^\star(\requires{}(f)) \subseteq \requires{}(f)\)
-    \item\( \requires{}(f) \cap \provides{}(f) = \emptyset \)
-    \item\( \forall m \in \provides{}(f),~ \from{}(f,m) \) is defined
-  \end{enumerate}
-\end{proposition}
 
 \Mixins{} are declared by the user as the fundamental building blocks of
 a hierarchy, they are special cases of \factories{}, as the next
