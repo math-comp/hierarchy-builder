@@ -163,8 +163,8 @@ Still, building algebraic hierarchies in a proof assistant such as Coq~\cite{Coq
 requires a lot of manual labor and often a deep expertise in the internals of
 the prover~\cite{DBLP:conf/tphol/GarillotGMR09,DBLP:conf/itp/MahboubiT13}.
 Moreover, according to our experience~\cite{KSdraft},
-making a hierarchy evolve without causing breakage in client code equally tricky:
-Even a simple refactoring such as splitting a structure into two simpler ones
+making a hierarchy evolve without causing breakage in client code is equally tricky:
+even a simple refactoring such as splitting a structure into two simpler ones
 is hard to get right.
 
 In this paper we describe \HB{}, a high level language
@@ -216,7 +216,7 @@ interface for their library. Behind that interface the developer can provide
 appropriate code to ensure retro compatibility.
 We implement the \HB{} language by compiling it
 to a variant of the Packed Classes discipline, that we call \emph{flat},
-in the \hb{} addon for Coq. We write this addon using using the
+in the \hb{} addon for Coq. We write this addon using the
 Elpi~\cite{DBLP:conf/lpar/DunchevGCT15,CoqElpi} extension language.\\
 
 \noindent To sum up, the main contributions of the paper are:
@@ -245,7 +245,7 @@ structures: \coq{Monoid} and \coq{Ring}.
     zero : A;
     add : A -> A -> A;
     addrA : associative add;             (* `add` is associative.                   *)
-    add0r : left_id zero add;            (* `zero` is the left and right absorbing  *)
+    add0r : left_id zero add;            (* `zero` is the left and right neutral    *)
     addr0 : right_id zero add;           (*   element with respect to `add`.        *)
   }.
 #\hbend{}#.                                              #\label{demo:mixin:mot:end}#
@@ -259,7 +259,7 @@ structures: \coq{Monoid} and \coq{Ring}.
     addNr : left_inverse zero opp add;   (* `opp x` is the left and right additive  *)
     addrN : right_inverse zero opp add;  (*   inverse of `x`.                       *)
     mulrA : associative mul;             (* `mul` is associative.                   *)
-    mul1r : left_id one mul;             (* `one` is the left and right identity    *)
+    mul1r : left_id one mul;             (* `one` is the left and right neutral     *)
     mulr1 : right_id one mul;            (*   element with respect to `mul`.        *)
     mulrDl : left_distributive mul add;  (* `mul` is left and right distributive    *)
     mulrDr : right_distributive mul add; (*   over `add`.                           *)
@@ -282,10 +282,10 @@ and~\ref{demo:mixin:mot:end} declares a \mixin{} that can turn a naked
 type \coq{A} into a monoid, hence we chose the module name to be \coq{Monoid_of_Type}.
 
 The \hbstructure{} command takes in input a name S and a possibly
-empty list of \factories{}
+empty list of \factories{}.
 It registers a structure S in the hierarchy placing
 any definition specific to that structure inside a Coq module named \coq{S}.
-Line~\ref{demo:structure:monoid} hence forges a the structure \coq{Monoid}.
+Line~\ref{demo:structure:monoid} hence forges the \coq{Monoid} structure.
 
 Line~\ref{demo:mixin:rom} declares a second \mixin{} collecting the operations
 and properties that are needed in order to enrich a monoid to a ring, hence
@@ -294,7 +294,7 @@ is followed by \coq{Monoid.axioms} that enriches
 \coq{A} with the operations and properties of monoids. As a consequence
 \coq{add} and \coq{zero} can be used to express the new properties.
 
-The last line declares the structure \coq{Ring} to hold all the axioms declared
+The last line declares the \coq{Ring} structure to hold all the axioms declared
 so far. We can now inspect the contents of the hierarchy and then
 proceed to build a theory about abstract rings,
 register examples (instances) of ring structures
@@ -329,7 +329,7 @@ We can print the type for monoids as forged by \HB{} (line~\ref{demo:theory:prin
 It packs a carrier, called \coq{sort}, and the collection of operation and
 properties that we omit for brevity.  We can also look at the type of two
 constants synthesized by \HB{} out of the hierarchy declaration. Remark that
-while the names of the constants come from the the names of \mixin{} fields,
+while the names of the constants come from the names of \mixin{} fields,
 their types differ.
 In particular they are quantified over a \coq{Monoid.type} or \coq{Ring.type},
 and not a simple type \coq{A} as in the \mixins{}. Moreover we evince that
@@ -418,7 +418,7 @@ While operations moved from one structure to another, some properties
 undergo a deep change in their status.
 The lemma \coq{addrC} part of the abstract theory of
 rings is now an axiom of Abelian groups, while \coq{addrN} is no more
-an axiom of rings, but rather tha theorem of the abstract theory of Abelian
+an axiom of rings, but rather a theorem of the abstract theory of Abelian
 groups.
 
 With this new version of the hierarchy, that we name V2, code written
@@ -478,7 +478,7 @@ initial one V1.
 
 The record \coq{Ring_of_Monoid.axioms} is the same we declared as a \mixin{}
 in version V1. In order to make a \factory{} out of it we equip it with
-two definition that embody the \emph{\builder{}s}.
+two definitions that embody the \emph{\builder{}s}.
 The first is \coq{to_AbelianGroup_of_Monoid} and
 explain how to build an \coq{AbelianGroup} structure out of the \factory{}
 axioms (named \coq{f}, line~\ref{demo3:variable:f}).
@@ -526,7 +526,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
 
 \begin{itemize}
 \item Operations and properties (axioms) are made available to the user
-      as soon as they are used in a structure The hierarchy designer
+      as soon as they are used in a structure. The hierarchy designer
       is free to move them from one to another and replace an axiom
       by a lemma and vice versa.
 \item Structures cannot disappear but the way they are built may change.
@@ -534,7 +534,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
       ones in order to better factor and reuse parts of the hierarchy
       and the library that follows it.
 \item \Mixins{} cannot disappear but can change considerably
-      in their implementation. A \mixin{} can becomes a full fledged
+      in their implementation. A \mixin{} can become a full fledged
       \factory{} equipped with \builder{}s to ensure retro compatibility.
 \item \HB{} high level commands compile to
       the discipline of Packed Classes (Coq modules, records, coercions,
@@ -542,7 +542,7 @@ By using \HB{} the hierarchy designer has the following freedoms and advantages.
       \phantterms{}).
       This process lifts a considerable
       burden from the shoulders of the hierarchy designer and the final user
-      that are no longer required to master the details of Packed Classes.
+      who are no longer required to master the details of Packed Classes.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -570,8 +570,8 @@ are \mixins{} applied to \coq{T} and possibly $n$ other distinct \mixins{}. I.e.
 Record #$m$# (T : Type) #\(\vect{\left(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots\ p_{\sigma(i,n_i)}\right)}_{i \in \enum1n}\)# : Type := { .. }.
 \end{coqcode}
 where for all \(i \in \enum1n\) we have \(m_i \in \M{}\) and its
-arguments is a sequence of size $n_i$ of the previously quantified
-mixins, i.e. for all \(k \in \enum1{n_i}\), we
+arguments consist in $n_i$ of the previously quantified
+mixin parameters $p_k$, i.e. for all \(k \in \enum1{n_i}\), we
 have \(\sigma(i,k) \in \enum1{i-1}\).
 \end{definition}
 
@@ -635,7 +635,7 @@ They validate the following properties for all \(f \in \F{}\):
 \end{proposition}
 
 \Mixins{} are declared by the user as the fundamental building blocks of
-a hierarchy, they are special cases of factories, as the next
+a hierarchy, they are special cases of \factories{}, as the next
 proposition shows, and once declared they shall not be distinguished
 from regular factories.
 
@@ -655,8 +655,8 @@ from regular factories.
   \coq{M.axioms}, which depends on the \mixins{}
   \(\requires{}(\coq{M.axioms}) =
   \provides{}^\star\left(\enum{f_1}{f_n}\right)\), and registers this
-  new record both as a \mixin{} and a \factory{} It also creates a
-  \phantterm{} \coq{M.Axioms}
+  new record both as a \mixin{} and a \factory{}. It also creates a
+  \phantterm{} \coq{M.Axioms.}
 \end{command}
 
 \begin{command} to declare an instance: \hbinstance{}
@@ -719,7 +719,7 @@ Record #$c$# (T : Type) := { #\(p_1 : m_1\ T\)#; .. ; #\(p_i : m_i\ T\ p_{\sigma
   \(\{m_1, \ldots,m_n\}\).  Given that \class{} records are well typed
   in the empty context the set of \mixin{} records is closed
   transitively.  The implementation enforces that no two \class{}
-  records contains the same set of \mixin{} (disregarding the order of
+  records contains the same set of \mixins{} (disregarding the order of
   the fields), i.e. \cdef{} is injective.
 \end{definition}
 
@@ -739,7 +739,7 @@ Classes could also be seen as factories.
 \end{proposition}
 However since classes are generated, their implementation may change,
 thus users should not rely on constructors of classes. Hence the only
-ways a user may refer to a class is as an argument of \hbmixin{},
+way users may refer to a class is as an argument of \hbmixin{},
 \hbfactory{} or \hbstructure{}.
 
 \begin{definition}[\Str{} Structure]
@@ -982,7 +982,7 @@ The same mechanism of canonical structures let us extend the unifier to solve \(
 
 The implementation is based on the Elpi
 extension language for Coq. In this section we introduce the features of the
-programming language that came handy in the development of \HB{} and
+programming language that came in handy in the development of \HB{} and
 comment a few code snippets.
 
 Coq-Elpi~\cite{CoqElpi} is a Coq plugin embedding
@@ -1012,7 +1012,7 @@ logic programming language that makes it easy to manipulate abstract syntax
 tree with binders. Coq-Elpi takes full advantage of this capability by
 representing Coq terms in Higher Order Abstract
 Syntax~\cite{10.1145/53990.54010} style, reusing the binder of the programming
-language in order to represent Coq's ones. Here an excerpt of the data
+language in order to represent Coq's ones. Here is an excerpt of the data
 type of Coq terms:
 
 \begin{elpicode}
@@ -1031,7 +1031,7 @@ can be computed by applying a term (of function type) to an argument.
 
 Data types with binders are also used as input to high level APIs that build
 terms behind the scenes. For example a Coq record is just an inductive type
-and the API do declare one must allow the type of a field to depend on the
+and the API to declare one must allow the type of a field to depend on the
 fields that comes before it. Note that the \elpi{field} constructor
 takes a coercion flag, the name of the field, its type and binds a term
 in the remaining record declaration.
@@ -1047,7 +1047,7 @@ external pred coq.env.add-indt i:indt-decl, o:inductive.
 external pred coq.CS.canonical-projections i:inductive, o:list (option constant).
 \end{elpicode}
 
-The \elpi{pred} keyword documents a the types and modes (input or output) of the
+The \elpi{pred} keyword documents types and modes (input or output) of the
 arguments of a predicate, while \elpi{external} signals that the
 predicate is a builtin (in other words it is implemented in
 OCaml rather than $\lambda$Prolog).
@@ -1086,12 +1086,12 @@ Note that the binder \elpi{s\} at line \ref{binder:sort} lets one mention
 the first field in the type of the second.
 The syntax \elpi{{{ Type }}} is a quotation: it lets
 one use the syntax of Coq to write an Elpi expression of type \elpi{term}.
-The API \elpi{coq.CS.canonical-projection} lets us find the projections
+The API \elpi{coq.CS.canonical-projections} lets us find the projections
 automatically generated by Coq for a given record.
 The last detail worth mentioning is that this program makes no use of
 backtraking: the \elpi{std.do!} combinator signals that.
 
-In the simple case of the structure record the number of fields, and hence
+In the simple case of the structure record, the number of fields, and hence
 the number of binders, is fixed. On the contrary the class record has one
 field per \mixin{} and each of them can depend on the previous ones.
 In order to synthesize terms with binders in an inductive fashion (using
@@ -1221,7 +1221,7 @@ the commutativity property when defining Abelian groups they combine
 a commutative monoid and a group forcing the subjacent monoid to coincide: %
 \verb-CommutativeGroup := combine CommutativeMonoid , Group over Monoid.-
 In our language \HB{} the same role is played by \emph{\mixins{}}.
-A \mixin{} lets one write once and forall a property and abstract it over types
+A \mixin{} lets one write once and for all a property and abstract it over types
 and operations so that it can be reused in all the structures that need it.
 One operation \HB{} allows for but that does not seem to be possible in the
 setting of Presentation Combinators is the one of replacing an axioms with a
@@ -1249,7 +1249,7 @@ The Mizar language also provides the notion of cluster that is used
 to link structures: by showing that property $P$ implies property $Q$
 one can inform automation that structures characterized by $P$ are
 instances of structures characterized by $Q$. The foundational theory of Mizar
-features by an extensional notion of equality that makes it easy
+features an extensional notion of equality that makes it easy
 to share the signature or the properties of structures by just requiring
 a proof of their equivalence that is in turn used by automation to treat
 equivalent structures as equal.
