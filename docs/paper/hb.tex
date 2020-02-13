@@ -627,11 +627,9 @@ Moreover the following properties hold for all \(f \in \F{}\):
   %\end{proposition}
 \end{definition}
 
-
 \Mixins{} are declared by the user as the fundamental building blocks of
-a hierarchy, they are special cases of \factories{}, as the next
-proposition shows, and once declared they shall not be distinguished
-from regular factories.
+a hierarchy. As the next proposition shows they shall not be distinguished
+from regular \factories{}, since they are a special cases.
 
 \begin{proposition}[\( \M{} \subseteq \F{} \)] For all \(m \in \M{}\)
   we have \(\requires{}(m) = \dep{}(m)\), \(\provides{}(m) = \{m\}\)
@@ -690,9 +688,9 @@ from regular factories.
 \end{command}
 
 Note that the \(b_i\) are not \mixinbuilders{} since their return types
-are not necessarily \mixins{}. However, since all \factories{} provide
-\mixin{} through \mixinbuilders{}, the latter are composed with the
-provided \(b_i\) to obtain \mixinbuilders{}.
+are not necessarily \mixins{}, but could be a \factory{}. However, since all
+\factories{} provide \mixin{} through \mixinbuilders{}, we can
+obtain \mixinbuilders{} out of each \(b_i\) by function composition.
 
 \subsection{\HB{} classes and structures}
 \label{sec:hb-class-struct}
@@ -737,11 +735,11 @@ way users may refer to a class is as an argument of \hbmixin{},
 \hbfactory{} or \hbstructure{}.
 
 \begin{definition}[\Str{} Structure]
-A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with no parameters
-and two fields. Its first field is \coq{(sort : Type)} and its second field is
+A \structure{} \coq{s} \(\in \Str{}\) is a dependent pair: a Coq record where
+the value of the first field occurs in the type of the second.
+The first field is \coq{(sort : Type)} and the second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
-A structure is a sigma type packing a class and its parameter.
-% hence they are in bijection.
+As a consequence \structures{} are in bijection with \classes{}.
 \end{definition}
 
 
