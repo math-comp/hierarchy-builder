@@ -772,7 +772,9 @@ this end, the commands \hbmixin{} and \hbfactory{} both generate
 Indeed, these two commands, first create a record \(\phi\) with a
 constructor \(\Phi\) and then create abbreviations \(f\) and \(F\)
 that automatically fill the mixin arguments of \(\phi\) and \(\Phi\)
-respectively.
+respectively.\marginpar{Why don't you use \coq{Axioms_} and \coq{axioms_} vs
+\coq{Axioms} and \coq{axioms} in the
+example rather than greek vs latin?}
 
 \begin{coqcode}
 Record #\(\phi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
