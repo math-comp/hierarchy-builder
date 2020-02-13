@@ -955,21 +955,27 @@ lets the user extend the elaborator of the Coq prover. This software component
 takes in input a term as written by the user and has to infer all the missing
 piece of information that is necessary to make the term well typed.
 
-Example x + y * z
+The first example of inference with canonical structures is \(0 + 1\), which can also be written as a Coq term \coq{@add _ (@zero _) (@one _)}.
+Here \coq{add} and \coq{zero}, and \coq{one} are respectively from monoids and semirings; thus, the left- and right-hand sides can be typed as follows:
+\begin{coqcode}
+#$?_1$# : Monoid.type #$\vdash$# @add #$?_1$# (@zero #$?_1$#) : Monoid.sort #$?_1$# -> Monoid.sort #$?_1$#,
+#$?_2$# : SemiRing.type #$\vdash$# @one #$?_2$# : SemiRing.sort #$?_2$#,
+\end{coqcode}
+where \(?_1~\coq{: Monoid.type}\) and \(?_2~\coq{: SemiRing.type}\) represent unification variables.
 
-Here + and * come respectively from, but we are mising them, so we have
-to find a common type that makes it work. This information comes from
-the hierarchy and the links between the structures. The low level mechanism
-is the unifier that compares p1 \_ = p2 \_ and has to find a common
-superstructure...
+Since Coq does not know how to unify \(\coq{Monoid.sort}~?_1\) and \(\coq{SemiRing.sort}~?_2\), we are missing a piece of information; thus we have to find a common type that makes it work.
+This information comes from the hierarchy and its inheritance relation (Definition~\ref{def:subclass}).
+The low level mechanism is the unifier that compares \(\coq{A.sort}~?_1~\coq{= B.sort}~?_2\) and has to instantiate \(?_1\) and \(?_2\) with the \emph{smallest} common substructure of \coq{A} and \coq{B}~\cite[Sect.~4]{KSdraft}.
+By declaring \coq{SemiRing_to_Monoid : SemiRing.type -> Monoid.type} as canonical, Coq can be aware of that instantiating \(?_1\) with \(\coq{SemiRing_to_Monoid}~?_2\) is the canonical solution of the first example.
+In general, all the inheritance coercion between structures should be declared as canonical to make this inference work.
 
-The language lets us only write hints of the form p s = v, so we need two
-of them here: (p1 s1 = p2 x) and (p1 y = p2 s2) for any x y.
+The second example is \(- 1\), which can also be writen as \coq{@opp _ (@one _)}.
+Here \coq{opp} and \coq{one} are respectively from Abelian groups and semirings...
 
-Similarly one can apply an algebraic thoery to an instance (an example)
-of a structure. Eg 1 * 2 + 3. The same mechanism of CS let us
-extend the unifier to solve p1 \_ = nat.
 
+
+Similarly, one can apply an algebraic theory to an instance (an example) of that structure, e.g., \(2 \times 3\) where \(2\) and \(3\) has type \(\mathbb{Z}\).
+The same mechanism of canonical structures let us extend the unifier to solve \(\coq{SemiRing.type}~? = \mathbb{Z}\).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The implementation in Coq-Elpi}\label{sec:implementation}
