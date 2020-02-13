@@ -828,10 +828,16 @@ Record axioms (T : Type) : Type :=
 Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End Monoid.
 \end{coqcode}
-The \coq{Monoid} module plays the role of a name space and forces us to write the qualified names such as \coq{Monoid.type}; thus allows us to reuse the same unqualified names for other structures, i.e., class and structure record can always be named as \coq{axioms} and \coq{type} respectively.
+The \coq{Monoid} module plays the role of a name space and forces us to write
+qualified names such as \coq{Monoid.type}; as a consequence we can reuse the
+same unqualified names for other structures, i.e., class and structure record
+can always be named as \coq{axioms} and \coq{type} respectively.
 
-Mixins and classes are internal definitions to declare structures; in contrast, \coq{Monoid.type} is the interface of the monoid structure to reason about monoids.
-As in section \ref{sec:example}, we declare \coq{Monoid.sort} as an implicit coercion and lift monoid operators and axioms from projections for the monoid \mixin{} to definitions and lemmas for \coq{Monoid.type} as follows.
+Mixins and classes are internal definitions to structures; in contrast,
+\coq{Monoid.type} is part of the interface of the monoid structure.
+As seen in section \ref{sec:example}, we declare \coq{Monoid.sort} as an
+implicit coercion and lift monoid operators and axioms from projections for
+the monoid \mixin{} to definitions and lemmas for \coq{Monoid.type} as follows.
 \begin{coqcode}
 Coercion Monoid.sort : Monoid.type >-> Sortclass.
 
@@ -843,8 +849,11 @@ Lemma addrA {T : Monoid.type} : associative (@add T).
 (* Two monoid axioms `add0r` and `addr0` are omitted. *)
 \end{coqcode}
 
-Next we define the Abelian groups.
-Since the monoid structure is the bottom of this hierarchy, its class record \coq{Monoid.axioms} consists only of the \mixin{} to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group \mixins{} as follows because Abelian groups inherit from monoids.
+Next we define Abelian groups.
+Since the monoid structure is the bottom of this hierarchy its class record
+\coq{Monoid.axioms} consists just one \mixin{}. In contrast the class record
+of Abelian groups consists of two \mixins{} where the second one depends
+ on the former (since Abelian groups inherit from monoids).
 \begin{coqcode}
 Module AbelianGroup.
 Record axioms (T : Type) : Type := Class {
@@ -853,9 +862,14 @@ Record axioms (T : Type) : Type := Class {
 Structure type : Type := Pack { sort : Type; class : axioms sort }.
 End AbelianGroup.
 \end{coqcode}
-As in the monoid structure, we declare \coq{AbelianGroup.sort} as an implicit coercion and lift additive inverse \coq{opp} and Abelian group axioms.
-Since Abelian groups inherit from monoids, we also declare an implicit coercion from Abelian groups to monoids.
-A coercion between structures can be defined as follows and consists of twofold: a coercion between \coq{axioms} records which reconstructs a given class instance of the subclass as a class instance of the superclass (line~\ref{demo4:coe:ag:monoid:class}), and a coercion between \coq{type} records (line~\ref{demo4:coe:ag:monoid:type}).
+As in the monoid structure, we declare \coq{AbelianGroup.sort} as an implicit
+coercion and lift additive inverse \coq{opp} and Abelian group axioms.
+Since Abelian groups inherit from monoids, we also declare an implicit coercion
+from Abelian groups to monoids. A coercion between structures can be defined
+in two steps: first a coercion between the class record of the
+superclass to the class record of the subclass (line~\ref{demo4:coe:ag:monoid:class});
+and a coercion between
+structure records (line~\ref{demo4:coe:ag:monoid:type}) relying on the first one.
 \begin{coqcode}
 Coercion AbelianGroup.sort : AbelianGroup.type >-> Sortclass.
 Coercion AbelianGroup_class_to_Monoid_class (T : Type) (c : AbelianGroup.axioms T) : #\label{demo4:coe:ag:monoid:class}#
@@ -903,8 +917,8 @@ multiplication operator \coq{mul} and its identity element \coq{one}.
 #\hbend{}#.
 \end{coqcode}
 
-Since semirings and Abelian groups do not inherit from each other, semirings can
-be defined similarly as in Abelian groups as follows.
+Since semirings and Abelian groups do not inherit from each other,
+the definition of semirings and Abelian groups are quite similar:
 \begin{coqcode}
 Module SemiRing.
 Record axioms (T : Type) : Type := Class {
@@ -913,7 +927,8 @@ Record axioms (T : Type) : Type := Class {
 Structure type : Type := Pack { sort : Type; class : axioms sort; }.
 End SemiRing.
 \end{coqcode}
-Implicit coercions from the semiring structure to the carrier and the monoid structure should be defined, and semiring operators and axioms should be lifted, as follows.
+We define implicit coercions from the semiring structure to the carrier
+and the monoid structure, and we lift semiring operators and axioms as follows:
 \begin{coqcode}
 Coercion SemiRing.sort : SemiRing.type >-> Sortclass.
 Coercion SemiRing_to_Monoid : SemiRing.type >-> Monoid.type.
@@ -923,8 +938,10 @@ Definition mul {T : SemiRing.type} : T -> T -> T := ... .
 (* 7 semiring axioms are omitted. *)
 \end{coqcode}
 
-The ring structure can be defined by gathering the monoid, Abelian group, and semiring \mixins{} without extra \mixin{} as the ring class, as follows.
-Since the ring structure inherits from monoids, semirings, and Abelian groups, implicit coercions from the ring structure to those three structures should be defined.
+The class record is defined by gathering the monoid, Abelian group, and
+semiring \mixins{}. Since the rings inherit from monoids, semirings, and
+Abelian groups, we define implicit coercions from the ring structure to those
+three structures.
 \begin{coqcode}
 Module Ring.
 Record axioms (T : Type) : Type := Class {
@@ -943,30 +960,44 @@ Coercion Ring_to_AbelianGroup : Ring.type >-> AbelianGroup.type.
 \subsection{Linking structures and instances via Canonical Structures}
 
 The mechanism of Canonical Structures~\cite{DBLP:conf/itp/MahboubiT13,Saibi99phd}
-lets the user extend the elaborator of the Coq prover. This software component
+lets the user extend the elaborator of Coq. This software component
 takes in input a term as written by the user and has to infer all the missing
-piece of information that is necessary to make the term well typed.
+piece of information that is necessary in order to make the term well typed.
 
-The first example of structure inference is \(0 + 1\), which can also be written as a Coq term \coq{@add _ (@zero _) (@one _)}.
-Here \coq{add} and \coq{zero}, and \coq{one} are respectively from monoids and semirings; thus, the left- and right-hand sides can be typed as follows:
+A first example of elaboration that requires canonical structures is \(0 + 1\).
+After removing all syntactic facilities, the underlying Coq term is
+\coq{(add _ (zero _) (one _))} where \coq{_} stands for an implicit piece
+of information to be inferred and the constants \coq{add} and \coq{zero} come
+from the monoid structure while \coq{one} comes from semirings.
+When the term is type checked each \coq{_} is replaced by a unification
+variable written $?_v$.
+Respectively, the head and the argument of the top application
+can be typed as follows:
 \begin{coqcode}
-#$?_{\texttt{Monoid}}$# : Monoid.type #$\vdash$# @add #$?_{\texttt{Monoid}}$# (@zero #$?_{\texttt{Monoid}}$#) : Monoid.sort #$?_{\texttt{Monoid}}$# -> Monoid.sort #$?_{\texttt{Monoid}}$#,
-#$?_{\texttt{SemiRing}}$# : SemiRing.type #$\vdash$# @one #$?_{\texttt{SemiRing}}$# : SemiRing.sort #$?_{\texttt{SemiRing}}$#,
+  add #$?_{\texttt{M}}$# (zero #$?_{\texttt{M}}$#) : Monoid.sort #$?_{\texttt{M}}$# -> Monoid.sort #$?_{\texttt{M}}$#
+  one #$?_{\texttt{SR}}$# : SemiRing.sort #$?_{\texttt{SR}}$#
 \end{coqcode}
-where \(?_{\texttt{Monoid}}~\coq{: Monoid.type}\) and \(?_{\texttt{SemiRing}}~\coq{: SemiRing.type}\) represent unification variables.
+where \(?_{\texttt{M}}~\coq{: Monoid.type}\) and
+\(?_{\texttt{SR}}~\coq{: SemiRing.type}\).
+In order to type check the application Coq has to unify \(\coq{Monoid.sort}~?_{\texttt{M}}\) with
+\(\coq{SemiRing.sort}~?_{\texttt{SR}}\), which is not trivial: it amounts at
+finding a structure that is both a monoid and a semiring, possibly the
+smallest one~\cite[Sect.~4]{KSdraft}.
+This piece of information can be inferred from the hierarchy and its inheritance
+relation (Definition~\ref{def:subclass}) and we can tell Coq to exploit it by
+declaring \coq{SemiRing_to_Monoid : SemiRing.type -> Monoid.type} as
+canonical. With that hint Coq will pick \(?_{\texttt{M}}\) to be
+\(\coq{SemiRing_to_Monoid}~?_{\texttt{SR}}\) as the canonical solution for this
+unification problem.
+In general, all the coercions between structures must be declared
+as canonical. % to make this inference work.
 
-Since Coq does not know how to unify \(\coq{Monoid.sort}~?_{\texttt{Monoid}}\) and \(\coq{SemiRing.sort}~?_{\texttt{SemiRing}}\), we are missing a piece of information; thus we have to find a common type that makes it work.
-This information comes from the hierarchy and its inheritance relation (Definition~\ref{def:subclass}).
-The low level mechanism is the unifier that compares \(\coq{A.sort}~?_{\texttt{A}}~\coq{= B.sort}~?_{\texttt{B}}\) and has to instantiate \(?_{\texttt{A}}\) and \(?_{\texttt{B}}\) with the \emph{smallest} common substructure of \coq{A} and \coq{B}~\cite[Sect.~4]{KSdraft}.
-By declaring \coq{SemiRing_to_Monoid : SemiRing.type -> Monoid.type} as canonical, Coq can be aware of that instantiating \(?_{\texttt{Monoid}}\) with \(\coq{SemiRing_to_Monoid}~?_{\texttt{SemiRing}}\) is the canonical solution of the first example.
-In general, all the inheritance coercion between structures should be declared as canonical.
-\begin{coqcode}
-Canonical SemiRing_to_Monoid.
-\end{coqcode}
-
-The second example is \(- 1\), which can also be writen as \coq{@opp _ (@one _)}.
-Here \coq{opp} and \coq{one} are respectively from Abelian groups and semirings, which do not inherit each other but whose smallest common substructure is rings; thus we have to extend the unifier to solve a unification problem \(\coq{AbelianGroup.sort}~?_{\texttt{AbelianGroup}}~\coq{= SemiRing.sort}~?_{\texttt{SemiRing}}\) by instantiating \(?_{\texttt{AbelianGroup}}\) and \(?_{\texttt{SemiRing}}\) with \(\coq{Ring_to_AbelianGroup}~?_{\texttt{Ring}}\) and \(\coq{Ring_to_SemiRing}~?_{\texttt{Ring}}\) respectively where \(?_{\texttt{Ring}}\) is a fresh unification variable of type \coq{Ring.type}.
-This extension can be done by the following canonical declaration.
+Another relevant example of elaboration problem is \(- 1\), which hides the term \coq{(opp _) (one _)}.
+Here \coq{opp} and \coq{one} are respectively from Abelian groups and semirings,
+which do not inherit each other but whose smallest common substructure is
+rings; thus we have to extend the unifier to solve a unification problem
+\(\coq{AbelianGroup.sort}~?_{\texttt{AbG}}~\coq{= SemiRing.sort}~?_{\texttt{SR}}\) by instantiating \(?_{\texttt{AbG}}\) and \(?_{\texttt{SR}}\) with \(\coq{Ring_to_AbelianGroup}~?_{\texttt{R}}\) and \(\coq{Ring_to_SemiRing}~?_{\texttt{R}}\) respectively where \(?_{\texttt{R}}\) is a fresh unification variable of type \coq{Ring.type}.
+This hint can be given as follows:% can be done by the following canonical declaration.
 \begin{coqcode}
 Canonical AbelianGroup_to_SemiRing (T : Ring.type) :=
   SemiRing.Pack (AbelianGroup.sort (Ring_to_AbelianGroup T)) (Ring.class T)).
@@ -974,6 +1005,7 @@ Canonical AbelianGroup_to_SemiRing (T : Ring.type) :=
 
 Similarly, one can apply an algebraic theory to an instance (an example) of that structure, e.g., \(2 \times 3\) where \(2\) and \(3\) have type \(\mathbb{Z}\).
 The same mechanism of canonical structures let us extend the unifier to solve \(\coq{SemiRing.type}~? = \mathbb{Z}\).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The implementation in Coq-Elpi}\label{sec:implementation}
@@ -1001,8 +1033,8 @@ type const constant -> gref.     % eg: Coq.Init.Peano.plus
 
 The arguments of the three constructors are opaque to Elpi, that can only use
 values of these types via dedicated APIs. For example the API for declaring
-an inductive type will generate a value of type \elpi{inductive} that,
-in the case of the type of natural numbers, is printed as \elpi{«nat»}.
+an inductive type will generate a value of type \elpi{inductive} that
+is printed as, for example, \elpi{«nat»}.
 
 Elpi~\cite{DBLP:conf/lpar/DunchevGCT15} is a dialect
 of $\lambda$Prolog~\cite{Miller:2012:PHL:2331097}, an higher order
@@ -1052,7 +1084,7 @@ OCaml rather than $\lambda$Prolog).
 
 We comment these two builtin predicates and the \elpi{indt-decl} type
 while looking at the code of \elpi{declare-structure} that is in charge
-of scripting the following Coq code (given as a parameter \coq{axioms}):
+of scripting the following Coq code:% (given as a parameter \coq{axioms}):
 
 \begin{coqcode}
 Structure type : Type := Pack { sort : Type; class : axioms sort }.
@@ -1060,7 +1092,7 @@ Structure type : Type := Pack { sort : Type; class : axioms sort }.
 
 The following Elpi code builds the declaration, type checks it, adds it to the
 Coq environment and finally returns the projections for the sort and the class
-fields (it is handy to have them in the rest of the code).
+fields.% (it is handy to have them in the rest of the code).
 
 \begin{elpicode}
 pred declare-structure i:gref, o:term, o:term, o:term.
@@ -1108,13 +1140,11 @@ pred synthesize-fields i:list mixinname, i:term, o:record-decl.
 
 synthesize-fields [] _ Decl :- Decl = end-record.
 synthesize-fields [M|ML] T Decl :- std.do! [
-  get-mixin-modname M ModName,
-  Name is ModName ^ "_mixin",                          %\label{craft:name}%
+  get-mixin-modname M ModName, Name is ModName ^ "_mixin",                          %\label{craft:name}%
   dep1 M Deps,                                         %\label{deps:fetch}%
   std.map Deps synthesize-fields.field-for-mixin Args, %\label{deps:satisfy}%
   Type = app[ global M, T | Args ],                    %\label{build:type}%
-  Decl = (field ff Name Type f\
-          Fields f),
+  Decl = (field ff Name Type f\ Fields f),
   pi m\                                                %\label{postulate:m}%
     synthesize-fields.field-for-mixin M m =>           %\label{postulate:satisfy}%
     synthesize-fields ML T (Fields m)                  %\label{rec:call}%
