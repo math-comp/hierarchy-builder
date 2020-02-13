@@ -556,7 +556,7 @@ their implementation, neither should they rely on explicit builders.
 \label{sec:hb-mixins-factories}
 
 \begin{definition}[\M{}, \mixins{}]
-A \emph{\mixin{}} \(m \in \M{}\) is a Coq record with one of more parameters.
+A \emph{\mixin{}} \(m \in \M{}\) is a Coq record with one or more parameters.
 The first parameter must be a \coq{(T : Type)}, while the other parameters
 are \mixins{} applied to \coq{T} and possibly $n$ other distinct \mixins{}. I.e.
 \begin{coqcode}
@@ -707,7 +707,7 @@ Record #$c$# (T : Type) := { #\(p_1 : m_1\ T\)#; .. ; #\(p_i : m_i\ T\ p_{\sigma
 \end{definition}
 
 \begin{definition}[\cdef{}, class definition]
-  We call \(\cdef{}(c) \in \powerset\M{}\) is the set of \mixins{}
+  We call \(\cdef{}(c) \in \powerset\M{}\) the set of \mixins{}
   mentioned in the fields of the \class{}, i.e.
   \(\{m_1, \ldots,m_n\}\).  Given that \class{} records are well typed
   in the empty context the set of \mixin{} records is closed
