@@ -948,26 +948,32 @@ lets the user extend the elaborator of the Coq prover. This software component
 takes in input a term as written by the user and has to infer all the missing
 piece of information that is necessary to make the term well typed.
 
-The first example of inference with canonical structures is \(0 + 1\), which can also be written as a Coq term \coq{@add _ (@zero _) (@one _)}.
+The first example of structure inference is \(0 + 1\), which can also be written as a Coq term \coq{@add _ (@zero _) (@one _)}.
 Here \coq{add} and \coq{zero}, and \coq{one} are respectively from monoids and semirings; thus, the left- and right-hand sides can be typed as follows:
 \begin{coqcode}
-#$?_1$# : Monoid.type #$\vdash$# @add #$?_1$# (@zero #$?_1$#) : Monoid.sort #$?_1$# -> Monoid.sort #$?_1$#,
-#$?_2$# : SemiRing.type #$\vdash$# @one #$?_2$# : SemiRing.sort #$?_2$#,
+#$?_{\texttt{Monoid}}$# : Monoid.type #$\vdash$# @add #$?_{\texttt{Monoid}}$# (@zero #$?_{\texttt{Monoid}}$#) : Monoid.sort #$?_{\texttt{Monoid}}$# -> Monoid.sort #$?_{\texttt{Monoid}}$#,
+#$?_{\texttt{SemiRing}}$# : SemiRing.type #$\vdash$# @one #$?_{\texttt{SemiRing}}$# : SemiRing.sort #$?_{\texttt{SemiRing}}$#,
 \end{coqcode}
-where \(?_1~\coq{: Monoid.type}\) and \(?_2~\coq{: SemiRing.type}\) represent unification variables.
+where \(?_{\texttt{Monoid}}~\coq{: Monoid.type}\) and \(?_{\texttt{SemiRing}}~\coq{: SemiRing.type}\) represent unification variables.
 
-Since Coq does not know how to unify \(\coq{Monoid.sort}~?_1\) and \(\coq{SemiRing.sort}~?_2\), we are missing a piece of information; thus we have to find a common type that makes it work.
+Since Coq does not know how to unify \(\coq{Monoid.sort}~?_{\texttt{Monoid}}\) and \(\coq{SemiRing.sort}~?_{\texttt{SemiRing}}\), we are missing a piece of information; thus we have to find a common type that makes it work.
 This information comes from the hierarchy and its inheritance relation (Definition~\ref{def:subclass}).
-The low level mechanism is the unifier that compares \(\coq{A.sort}~?_1~\coq{= B.sort}~?_2\) and has to instantiate \(?_1\) and \(?_2\) with the \emph{smallest} common substructure of \coq{A} and \coq{B}~\cite[Sect.~4]{KSdraft}.
-By declaring \coq{SemiRing_to_Monoid : SemiRing.type -> Monoid.type} as canonical, Coq can be aware of that instantiating \(?_1\) with \(\coq{SemiRing_to_Monoid}~?_2\) is the canonical solution of the first example.
-In general, all the inheritance coercion between structures should be declared as canonical to make this inference work.
+The low level mechanism is the unifier that compares \(\coq{A.sort}~?_{\texttt{A}}~\coq{= B.sort}~?_{\texttt{B}}\) and has to instantiate \(?_{\texttt{A}}\) and \(?_{\texttt{B}}\) with the \emph{smallest} common substructure of \coq{A} and \coq{B}~\cite[Sect.~4]{KSdraft}.
+By declaring \coq{SemiRing_to_Monoid : SemiRing.type -> Monoid.type} as canonical, Coq can be aware of that instantiating \(?_{\texttt{Monoid}}\) with \(\coq{SemiRing_to_Monoid}~?_{\texttt{SemiRing}}\) is the canonical solution of the first example.
+In general, all the inheritance coercion between structures should be declared as canonical.
+\begin{coqcode}
+Canonical SemiRing_to_Monoid.
+\end{coqcode}
 
 The second example is \(- 1\), which can also be writen as \coq{@opp _ (@one _)}.
-Here \coq{opp} and \coq{one} are respectively from Abelian groups and semirings...
+Here \coq{opp} and \coq{one} are respectively from Abelian groups and semirings, which do not inherit each other but whose smallest common substructure is rings; thus we have to extend the unifier to solve a unification problem \(\coq{AbelianGroup.sort}~?_{\texttt{AbelianGroup}}~\coq{= SemiRing.sort}~?_{\texttt{SemiRing}}\) by instantiating \(?_{\texttt{AbelianGroup}}\) and \(?_{\texttt{SemiRing}}\) with \(\coq{Ring_to_AbelianGroup}~?_{\texttt{Ring}}\) and \(\coq{Ring_to_SemiRing}~?_{\texttt{Ring}}\) respectively where \(?_{\texttt{Ring}}\) is a fresh unification variable of type \coq{Ring.type}.
+This extension can be done by the following canonical declaration.
+\begin{coqcode}
+Canonical AbelianGroup_to_SemiRing (T : Ring.type) :=
+  SemiRing.Pack (AbelianGroup.sort (Ring_to_AbelianGroup T)) (Ring.class T)).
+\end{coqcode}
 
-
-
-Similarly, one can apply an algebraic theory to an instance (an example) of that structure, e.g., \(2 \times 3\) where \(2\) and \(3\) has type \(\mathbb{Z}\).
+Similarly, one can apply an algebraic theory to an instance (an example) of that structure, e.g., \(2 \times 3\) where \(2\) and \(3\) have type \(\mathbb{Z}\).
 The same mechanism of canonical structures let us extend the unifier to solve \(\coq{SemiRing.type}~? = \mathbb{Z}\).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
