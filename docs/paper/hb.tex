@@ -384,7 +384,7 @@ structure of Abelian groups.
 #\hbmixin{}# AbelianGroup_of_Monoid A Monoid.axioms.
   Record axioms := {
     opp : A -> A;
-    addrC : commutative (S := A) add;
+    addrC : commutative (add : A -> A -> A);
     addNr : left_inverse zero opp add;
   }.
 #\hbend{}#.
