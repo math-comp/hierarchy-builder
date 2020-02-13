@@ -238,7 +238,7 @@ language and we position \HB{} in the literature.
 
 The first version of our hierarchy (that we name V1) features only two
 structures: \coq{Monoid} and \coq{Ring}.
-\marginpar{remove hb.end for \mixins{}, use next release of coq elpi}
+%\marginpar{remove hb.end for \mixins{}, use next release of coq elpi}
 \begin{coqcode}
 #\hbmixin{}# Monoid_of_Type A.                       #\label{demo:mixin:mot}#
   Record axioms := {
@@ -474,7 +474,7 @@ The record \coq{Ring_of_Monoid.axioms} is the same we declared as a \mixin{}
 in version V1. In order to make a \factory{} out of it we equip it with
 two definitions that embody the \emph{\builder{}s}.
 The first is \coq{to_AbelianGroup_of_Monoid} and
-explain how to build an \coq{AbelianGroup} structure out of the \factory{}
+explains how to build an \coq{AbelianGroup} structure out of the \factory{}
 axioms (named \coq{f}, line~\ref{demo3:variable:f}).
 This construction is also registered as canonical for \coq{A},
 so that the next construction \coq{to_Ring_of_AbelianGroup} can call
