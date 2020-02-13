@@ -560,15 +560,14 @@ A \emph{\mixin{}} \(m \in \M{}\) is a Coq record with one or more parameters.
 The first parameter must be a \coq{(T : Type)}, while the other parameters
 are \mixins{} applied to \coq{T} and possibly $n$ other distinct \mixins{}. I.e.
 \begin{coqcode}
-Record #$m$# (T : Type) #\(\vect{\left(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots\ p_{\sigma(i,n_i)}\right)}_{i \in \enum1n}\)# : Type := { .. }.
+Record #$m$# (T : Type) #\(\pmp{n}\)# : Type := { .. }.
 \end{coqcode}
-where for all \(i \in \enum1n\) we have \(m_i \in \M{}\) and its
+where \(\pmp{n} = \vect{\left(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots\ p_{\sigma(i,n_i)}\right)}_{i \in \enum1n}\).
+For all \(i \in \enum1n\) we have \(m_i \in \M{}\) and its
 arguments consist in $n_i$ of the previously quantified
 mixin parameters $p_k$, i.e. for all \(k \in \enum1{n_i}\), we
 have \(\sigma(i,k) \in \enum1{i-1}\).
 \end{definition}
-
-We will use the abbreviation \(\pmp{n} = \vect{\left(p_i : m_i\ T\ p_{\sigma(i,1)}\ \ldots\ p_{\sigma(i,n_i)}\right)}_{i \in \enum1n}\)
 
 \begin{definition}[\dep{}, \mixin{} dependencies]
   Given \(m \in \M{}\), we define \(\dep{}(m) \in \powerset\M{}\)
