@@ -309,8 +309,7 @@ Lemma addrC : forall R : Ring.type, commutative (@add R).                       
 Proof. (* Proof by Hankel 1867, omitted for brevity *) Qed.
 
 Definition Z_Monoid_axioms : Monoid_of_Type.axioms Z :=                         #\label{demo:theory:z:monoid:axioms}#
-  Monoid_of_Type.Axioms Z 0 Z.add
-    Z.add_assoc Z.add_0_l Z.add_0_r.
+  Monoid_of_Type.Axioms Z 0 Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
 
 #\hbinstance{}# Z Z_Monoid_axioms.                                            #\label{demo:theory:z:monoid:canonical}#
 
@@ -457,8 +456,7 @@ and hence grant backward compatibility between version V3 and version V1.
 
   Variable f : axioms.                                                          #\label{demo3:variable:f}#
 
-  Lemma addrC : commutative add.
-  Proof. (* Same proof as before *) Qed.
+  Lemma addrC : commutative add. Proof. (* The same proof as before *) Qed.
 
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f). (* addrN unused *)
