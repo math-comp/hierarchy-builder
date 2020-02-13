@@ -776,7 +776,7 @@ that automatically fill the mixin arguments of \(\phi\) and \(\Phi\)
 respectively.
 
 \begin{coqcode}
-Record #\(\varphi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
+Record #\(\phi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
 Notation #$f$# T := (#\(\Phi\)# T ..).
 Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(\Phi\)# T .. #\(x_1\ \ldots\ x_k\)#).
 Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
