@@ -7,6 +7,7 @@
 \newminted[coqcode]{elpi.py:CoqElpiLexer -x}{linenos=true,fontsize=\footnotesize,mathescape,escapeinside=\#\#}
 \newmintinline[coq]{elpi.py:CoqElpiLexer -x}{fontsize=\small}
 \usepackage{xcolor}
+\usepackage{wrapfig}
 
 \definecolor{dkgreen}{rgb}{0, 0.502, 0}
 
@@ -704,7 +705,7 @@ provided \(b_i\) to obtain \mixinbuilders{}.
 
 
 \begin{definition}[\C{}, class]
-A \class{} \coq{c} \(\in \C{}\) is a Coq record with with one parameter
+A \class{} \coq{c} \(\in \C{}\) is a Coq record with one parameter
 \coq{(T : Type)}. The type of each field is a \mixin{} in \M{} applied to
 \coq{T} and, if needed, any number of other fields:
 \begin{coqcode}
@@ -742,7 +743,7 @@ ways a user may refer to a class is as an argument of \hbmixin{},
 \hbfactory{} or \hbstructure{}.
 
 \begin{definition}[\Str{} Structure]
-A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with with no parameters
+A \structure{} \coq{s} \(\in \Str{}\) is a Coq record with no parameters
 and two fields. Its first field is \coq{(sort : Type)} and its second field is
 \coq{(class : c sort)} for some \coq{c} \(\in \C{}\).
 A structure is just a class packaged with a sigma type on its parameter, hence
@@ -853,7 +854,7 @@ Lemma addrA {T : Monoid.type} : associative (@add T).
 Next we define the Abelian groups.
 Since the monoid structure is the bottom of this hierarchy, its class record \coq{Monoid.axioms} consists only of the \mixin{} to build monoids from scratch; in contrast, the class record of Abelian groups consists of monoid and Abelian group \mixins{} as follows because Abelian groups inherit from monoids.
 \begin{coqcode}
-Module AbelianGroup.!
+Module AbelianGroup.
 Record axioms (T : Type) : Type := Class {
   Monoid_of_Type_mixin : Monoid_of_Type.axioms T;
   AbelianGroup_of_Monoid_mixin : AbelianGroup_of_Monoid.axioms T Monoid_of_Type_mixin; }.
@@ -862,12 +863,11 @@ End AbelianGroup.
 \end{coqcode}
 As in the monoid structure, we declare \coq{AbelianGroup.sort} as an implicit coercion and lift additive inverse \coq{opp} and Abelian group axioms.
 Since Abelian groups inherit from monoids, we also declare an implicit coercion from Abelian groups to monoids.
-A coercion between structures can be defined as follows and consists of twofold: a coercion between \coq{axioms} records which destructs a class instance of the subclass and reconstructs it as a class instance of the superclass (line~\ref{demo4:coe:ag:monoid:class}), and a coercion between \coq{type} records (line~\ref{demo4:coe:ag:monoid:type}).
+A coercion between structures can be defined as follows and consists of twofold: a coercion between \coq{axioms} records which reconstructs a given class instance of the subclass as a class instance of the superclass (line~\ref{demo4:coe:ag:monoid:class}), and a coercion between \coq{type} records (line~\ref{demo4:coe:ag:monoid:type}).
 \begin{coqcode}
 Coercion AbelianGroup.sort : AbelianGroup.type >-> Sortclass.
 Coercion AbelianGroup_class_to_Monoid_class (T : Type) (c : AbelianGroup.axioms T) : #\label{demo4:coe:ag:monoid:class}#
-  Monoid.axioms T :=
-  Monoid.Class T (AbelianGroup.Monoid_of_Type_mixin T c).
+  Monoid.axioms T := Monoid.Class T (AbelianGroup.Monoid_of_Type_mixin T c).
 Coercion AbelianGroup_to_Monoid (T : AbelianGroup.type) : Monoid.type := #\label{demo4:coe:ag:monoid:type}#
   Monoid.Pack (AbelianGroup.sort T) (AbelianGroup.class T).
 
@@ -885,12 +885,15 @@ Coercion A_to_B (T : A.type) : B.type :=
 In order to introduce multiple inheritance, we extend the hierarchy described in
 section~\ref{subsec:v3} with the structure of semirings, which is another
 intermediate structure between monoids and rings, and introduces binary
-multiplication operator \coq{mul} and its identity element \coq{one}.\\
+multiplication operator \coq{mul} and its identity element \coq{one}.
 
-%\begin{figure}[!h]
-  \begin{tabular}{cc}
-    \begin{minipage}{0.5 \textwidth}
-      \begin{coqcode}
+\begin{wrapfigure}[3]{r}{.4\textwidth}
+ \includegraphics[width=.4\textwidth]{v4.pdf}
+ \caption{V4 introduces multiple inheritance. For brevity we omit the factories/builders for the upper arrows.}
+ \label{fig:puzzle}
+\end{wrapfigure}
+\ 
+\begin{coqcode}
 #\hbmixin{}# SemiRing_of_Monoid A Monoid.axioms.
   Record axioms := {
     one : A;
@@ -906,15 +909,7 @@ multiplication operator \coq{mul} and its identity element \coq{one}.\\
   }.
   ..
 #\hbend{}#.
-      \end{coqcode}
-    \end{minipage}
-    &
-  \begin{minipage}{0.4 \textwidth}
-    \includegraphics[width=\textwidth]{v4.pdf}
-  \end{minipage}
-  \end{tabular}\\
-%  \caption{\label{fig:puzzle}V4 introduces a join, for brevity we omit the factories/builders for the upper arrows}
-%\end{figure}
+\end{coqcode}
 
 Since semirings and Abelian groups do not inherit from each other, semirings can
 be defined similarly as in Abelian groups as follows.
