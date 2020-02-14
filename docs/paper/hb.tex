@@ -769,22 +769,21 @@ behind the scene. However \factory{} types and constructors have
 this end, the commands \hbmixin{} and \hbfactory{} both generate
 \phantterms{} for the user to replace uses of constructors of \factories{}.
 
-Indeed, these two commands, first create a record \(\phi\) with a
-constructor \(\Phi\) and then create abbreviations \(f\) and \(F\)
-that automatically fill the mixin arguments of \(\phi\) and \(\Phi\)
-respectively.\marginpar{Why don't you use \coq{Axioms_} and \coq{axioms_} vs
-\coq{Axioms} and \coq{axioms} in the
-example rather than greek vs latin?}
+Indeed, these two commands first create a record \(f_{aux}\) with a
+constructor \(F_{aux}\) and then create abbreviations \(f\) and \(F\)
+that automatically fill the mixin arguments of \(f_{aux}\) and \(F_{aux}\)
+respectively.
+In our target language these abbreviations rely on triggering
+special unification problems with phantom types, see
+\cite[Section 7]{DBLP:conf/itp/MahboubiT13} for a detailed description.
 
 \begin{coqcode}
-Record #\(\phi\)# T #\(\pmp{n}\)# := #\(\Phi\)# {..}.
-Notation #$f$# T := (#\(\Phi\)# T ..).
-Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(\Phi\)# T .. #\(x_1\ \ldots\ x_k\)#).
+Record #\(f_{aux}\)# T #\(\pmp{n}\)# := #\(F_{aux}\)# { ... }.
+Notation #$f$# T := (#\(f_{aux}\)# T ...(* $p_1 \ldots p_n$ inferred when $T$ is known *)).
+Notation #$F$# T  #\(x_1\ \ldots\ x_k\)# := (#\(F_{aux}\)# T ...(* $p_1 \ldots p_n$ inferred when $T$ is known *) #\(x_1\ \ldots\ x_k\)#).
 Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
 \end{coqcode}
 
-In our target language such notations rely on unification with
-phantom types \cite{DBLP:conf/itp/MahboubiT13}.
 
 
 
