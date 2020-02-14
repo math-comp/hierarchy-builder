@@ -1311,15 +1311,16 @@ The compilation scheme we present in \autoref{sec:target-lang} is tied to depend
 that are available in Coq but also
 in other provers based on Type Theory such a Matita~\cite{DBLP:conf/cade/AspertiRCT11}
 and Lean~\cite{DBLP:conf/cade/MouraKADR15}.
-We chose a variant of Packed Classes as the target for \HB{} because the
-Mathematical Components library uses Packed Classes as well. As of today
-Packed Classes offer a very good compromise between flexibility and
+We chose the flat variant of Packed Classes as the target for \HB{} because the
+Mathematical Components library uses Packed Classes as well: As of today
+Packed Classes offer the best compromise between flexibility and
 performance~\cite[Section 8]{DBLP:conf/itp/MahboubiT13} in Coq.
 Of course one could imagine a future were other approaches such as
 telescopes~\cite{telescopes} or unbundled
-classes~\cite{mathclasses} offer equal performance in Coq, or in another tool.
+classes~\cite{mathclasses} would offer equal or better performances in Coq, or in
+another system.
 It is a virtue of our work to provide a user language that is separate
-from the implementation one and we believe it would take a minor effort to
+from the implementation one. We believe it would take a minor coding effort to
 retarget \HB{} to another bundling approach.
 
 We leave to future work extending \HB{} to support structures parametrized
