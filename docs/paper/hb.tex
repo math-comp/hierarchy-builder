@@ -993,7 +993,7 @@ unification problem.
 In general, all the coercions between structures must be declared
 as canonical. % to make this inference work.
 
-Another relevant example of elaboration problem is \(- 1\), which hides the term \coq{(opp _) (one _)}.
+Another example of elaboration problem is \(- 1\), which hides the term~\coq{opp _ (one _)}.
 Here \coq{opp} and \coq{one} are respectively from Abelian groups and semirings,
 which do not inherit each other but whose smallest common substructure is
 rings; thus we have to extend the unifier to solve a unification problem
