@@ -365,7 +365,7 @@ declaration given just above.
 
 From now on the axioms as well as the abstract theory of rings apply to
 integers, as shown in lemma \coq{exercise}. The details of the proof
-don't matter here, what is worth pointing out is that in a single
+do not matter here, what is worth pointing out is that in a single
 statement we mix monoid (e.g. \coq{+}) and ring (e.g. \coq{-}) operations and in the
 proof we use monoid axioms (e.g. \coq{addrA}), ring axioms
 (e.g. \coq{addrN}) and ring lemmas (e.g. \coq{addrC}), all seamlessly.
@@ -421,7 +421,7 @@ groups.
 With this new version of the hierarchy, that we name V2, code written
 for version V1 breaks. For example the declaration of the canonical ring over
 the integers fails, if only
-because we don't have a \coq{Ring_of_Monoid.Axioms} \phantterm{} anymore.
+because we do not have a \coq{Ring_of_Monoid.Axioms} \phantterm{} anymore.
 
 Our objective is to obtain a version of the hierarchy, that we name V3, that does
 not only feature Abelian groups but that is also backward compatible
@@ -892,15 +892,15 @@ Coercion A_to_B (T : A.type) : B.type :=
 \subsection{Multiple inheritance}
 In order to introduce multiple inheritance, we extend the hierarchy described in
 section~\ref{subsec:v3} with the structure of semirings, which is another
-intermediate structure between monoids and rings, and introduces binary
+intermediate structure between monoids and rings as depicted in figure \ref{fig:puzzle_v4}, and introduces binary
 multiplication operator \coq{mul} and its identity element \coq{one}.
 
 \begin{wrapfigure}[3]{r}{.4\textwidth}
  \includegraphics[width=.4\textwidth]{v4.pdf}
  \caption{V4 introduces multiple inheritance. For brevity we omit the factories/builders for the upper arrows.}
- \label{fig:puzzle}
+ \label{fig:puzzle_v4}
 \end{wrapfigure}
-\ 
+\
 \begin{coqcode}
 #\hbmixin{}# SemiRing_of_Monoid A Monoid.axioms.
   Record axioms := {
@@ -1239,7 +1239,7 @@ Theory Presentation Combinators that can be used to describe a hierarchy of
 algebraic structures.
 They focus on the categorical semantics of the language that is built upon
 the category of context.
-They don't describe any actual compilation to the language of a mainstream
+They do not describe any actual compilation to the language of a mainstream
 interactive prover, indeed they claim their language to be mostly type theory
 independent. We know they considered targeting type theory and the language
 of unification hints~\cite{10.1007/978-3-642-03359-9_8}
