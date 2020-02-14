@@ -766,16 +766,14 @@ and~\ref{sec:hb-class-struct}, \HB{} commands take a list of
 \factories{} as arguments, which they expand into lists of \mixins{}
 behind the scene. However \factory{} types and constructors have
 \mixin{} arguments that must be inferred automatically when used. To
-this end, the commands \hbmixin{} and \hbfactory{} both generate
+this end, the commands \hbmixin{} and \hbfactory{} generate
 \phantterms{} for the user to replace uses of constructors of \factories{}.
-
-Indeed, these two commands first create a record \(f_{aux}\) with a
+These commands first create a record \(f_{aux}\) with a
 constructor \(F_{aux}\) and then create abbreviations \(f\) and \(F\)
 that automatically fill the mixin arguments of \(f_{aux}\) and \(F_{aux}\)
 respectively.
-In our target language these abbreviations rely on triggering
-special unification problems with phantom types, see
-\cite[Section 7]{DBLP:conf/itp/MahboubiT13} for a detailed description.
+See \cite[Section 7]{DBLP:conf/itp/MahboubiT13} for a detailed description
+of how to implement these abbreviations in Coq.
 
 \begin{coqcode}
 Record #\(f_{aux}\)# T #\(\pmp{n}\)# := #\(F_{aux}\)# { ... }.
@@ -890,8 +888,9 @@ Coercion A_to_B (T : A.type) : B.type :=
 
 \subsection{Multiple inheritance}
 In order to introduce multiple inheritance, we extend the hierarchy described in
-section~\ref{subsec:v3} with the structure of semirings, which is another
-intermediate structure between monoids and rings as depicted in figure \ref{fig:puzzle_v4}, and introduces binary
+section~\ref{subsec:v3} with the structure of semirings%, which is another
+%intermediate structure between monoids and rings 
+as depicted in figure \ref{fig:puzzle_v4}. Semirings introduce the binary
 multiplication operator \coq{mul} and its identity element \coq{one}.
 
 \begin{wrapfigure}[3]{r}{.4\textwidth}
