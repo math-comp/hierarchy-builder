@@ -1306,23 +1306,21 @@ properties and invariants that link \factories{}, \mixins{} and \classes{}
 are key to rule out meaningless or ambiguous sentences and are not
 specific to our logic setting. Moreover
 most logics feature packing construction similar to records.
+
 The compilation scheme we present in \autoref{sec:target-lang} is tied to dependent records,
 that are available in Coq but also
 in other provers based on Type Theory such a Matita~\cite{DBLP:conf/cade/AspertiRCT11}
 and Lean~\cite{DBLP:conf/cade/MouraKADR15}.
-Then, we could also have chosen telescopes~\cite{telescopes} or unbundled
-classes~\cite{mathclasses}, instead of Canonical Structures as the target language for \HB{},
-and we believe it would take only a minor effort to patch \coq{hierarchy-builder}.
-Historically, Mathematical Components library, given the size and
-the depth of the hierarchy, adopts Packed Classes because they offer a good
-compromise between flexibility and performance~\cite[Section 8]{DBLP:conf/itp/MahboubiT13} in Coq.
-One could instead use a system which provide comparable
-performances for unbundled classes or other ways to implement \HB{}
-(e.g. Unification Hints~\cite{10.1007/978-3-642-03359-9_8}).
+We chose a variant of Packed Classes as the target for \HB{} because the
+Mathematical Components library uses Packed Classes as well. As of today
+Packed Classes offer a very good compromise between flexibility and
+performance~\cite[Section 8]{DBLP:conf/itp/MahboubiT13} in Coq.
+Of course one could imagine a future were other approaches such as
+telescopes~\cite{telescopes} or unbundled
+classes~\cite{mathclasses} offer equal performance in Coq, or in another tool.
 It is a virtue of our work to provide a user language that is separate
-from the implementation one, so we could in principle target any other
-equally expressive language without the user noticing.
-
+from the implementation one and we believe it would take a minor effort to
+retarget \HB{} to another bundling approach.
 
 We leave to future work extending \HB{} to support structures parametrized
 by structures such as the one of module over a ring.
