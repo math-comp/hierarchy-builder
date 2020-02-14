@@ -805,7 +805,7 @@ Definition b : #$f$# T := #$F$# T #\(x_1\ \ldots\ x_n\)#
 \section{The target language: Coq with Packed, flat, Classes}
 \label{sec:target-lang}
 
-The language of packed classes were introduces in
+The language of packed classes were introduced in
 \cite{DBLP:conf/tphol/GarillotGMR09} and used directly to describe the
 algebraic hierarchy of the Mathematical Components library.
 It is based on a disciplined use of records and projections and
@@ -958,10 +958,12 @@ Coercion Ring_to_AbelianGroup : Ring.type >-> AbelianGroup.type.
 
 \subsection{Linking structures and instances via Canonical Structures}
 
-The mechanism of Canonical Structures~\cite{DBLP:conf/itp/MahboubiT13,Saibi99phd}
-lets the user extend the elaborator of Coq. This software component
-takes in input a term as written by the user and has to infer all the missing
-piece of information that is necessary in order to make the term well typed.
+We recall here how to use the Canonical
+Structures~\cite{DBLP:conf/itp/MahboubiT13,Saibi99phd} mechanism, which
+lets the user extend the elaborator of Coq, in order to handle
+inheritance and inference of structure~\cite{affeldt:hal-02463336,KSdraft,DBLP:conf/tphol/GarillotGMR09}.
+This software component
+takes in input a term as written by the user and has to infer all the missing information that is necessary in order to make the term well typed.
 
 A first example of elaboration that requires canonical structures is \(0 + 1\).
 After removing all syntactic facilities, the underlying Coq term is
