@@ -306,23 +306,24 @@ mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
 mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
   mk-phant-abbrev.term K {mk-app F [{{lib:@hb.id _ _}}]} AL K' FAbbrev.
 
-pred mk-phant-abbrev i:string, i:phant-term, o:constant.
+pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
 mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.typecheck T _TTy) "mk-phant-abbrev: T illtyped",
   coq.env.add-const NC T _ ff ff C,
-  mk-phant-abbrev.term 0 (global (const C)) AL NParams Abbrev,
-  coq.notation.add-abbreviation N NParams Abbrev tt ff
+  mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
+  coq.notation.add-abbreviation N NParams AbbrevT tt ff Abbrev,
 ].
 
-% [acc-factory-aliases GR] makes a phantom abbreviation for F
-pred acc-factory-aliases i:gref, o:list prop.
-acc-factory-aliases GR [] :- factory-alias GR _, !.
-acc-factory-aliases GR Aliases :- !,
+pred factory-alias i:gref, o:gref.
+factory-alias PhC GR :- phant-abbrev GR (const PhC) _. 
+
+% [acc-phant-abbrev GR Str Acc] makes a phantom abbreviation for F
+pred acc-phant-abbrev i:gref, i:string, o:list prop.
+acc-phant-abbrev GR AbbrevStr [] :- factory-alias GR _, !.
+acc-phant-abbrev GR AbbrevStr [phant-abbrev GR (const PhC) Abbrev] :- !,
   mk-phant-mixins (global GR) PhGR,
-  PhantAbbrevName is "axioms_",
-  mk-phant-abbrev PhantAbbrevName PhGR PhC,
-  Aliases = [factory-alias GR GR, factory-alias (const PhC) GR].
+  mk-phant-abbrev AbbrevStr PhGR PhC Abbrev.
 
 % [mk-phant-unify X1 X2 PF PUF] states that PUF is a phant-term that
 % is starts with unifing X1 and X2 and then outputs PF.
@@ -428,7 +429,7 @@ pred main-factory-requires i:gref, i:list factoryname, o:list prop.
 main-factory-requires GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
   factories-provide-mixins GRFS ML _,
   FactoryRequires = factory-requires GR ML,
-  acc-factory-aliases GR Aliases
+  acc-phant-abbrev GR Aliases
 ].
 
 pred main-mixin-requires i:gref, i:list factoryname, o:list prop.
@@ -823,7 +824,7 @@ main-end-declare :- std.do! [
   coq.env.end-section,
 
   mk-phant-mixins (global GRK) PhGRK,
-  mk-phant-abbrev PackagerName PhGRK _,
+  mk-phant-abbrev PackagerName PhGRK _ _,
 
   if (Decl = mixin-decl) (!, main-mixin-requires GR ML Props, Clauses = []) (
     Decl = factory-decl, !,
@@ -885,28 +886,32 @@ main-declare-builders (prod N T Factories) :-
   coq.name->id N ID,
   coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
-  builders-postulate-factories (Factories TheType) TheType [].
+  builders-postulate-factories (Factories TheType) TheType [] [].
 
 pred postulate-factory-abbrev i:term, i:pair id factoryname.
-postulate-factory-abbrev TheType (pr Name F) :-
+postulate-factory-abbrev TheType (pr Name F) :- std.spy-do! [
   % abbrev, HACK
-  Fabb is {coq.gr->string F} ^ "_",
-  coq.notation.abbreviation Fabb [TheType] Package,
+  phant-abbrev F _ Fabv,
+  coq.notation.abbreviation Fabv [TheType] Package,
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
-  coq.env.add-const Name _ Package tt tt _.
+  coq.env.add-const Name _ Package tt tt _].
 
-pred builders-postulate-factories i:term, i:term, i:list (pair id factoryname).
-builders-postulate-factories (sort prop) TheType GRFS :- std.do! [
+pred builders-postulate-factories i:term, i:term, i:list mixinname, i:list (pair id factoryname).
+builders-postulate-factories (sort prop) TheType GRML GRFS :- std.spy-do! [
+  main-declare-context TheType GRML _,
   main-declare-context TheType {std.rev {std.map GRFS snd}} _,
   std.forall GRFS (postulate-factory-abbrev TheType),
   acc current (clause _ _ (current-decl factory-decl)),
 ].
-builders-postulate-factories (prod N T Factories) TheType GRFS :-
+builders-postulate-factories (prod N T Factories) TheType GRML GRFS :- std.spy-do! [
   coq.name->id N ID,
   std.assert! (pi x y\ Factories x = Factories y) "factories cannot depend on eachother",
   std.assert! (T = app[global GR, TheType]) "a factory must be a name applied to the type variable",
-  builders-postulate-factories (Factories (sort prop)) TheType [pr ID GR|GRFS].
+  factory-alias GR GRF,
+  factory-requires GRF FML,
+  std.append GRML FML GRFML,
+  builders-postulate-factories (Factories (sort prop)) TheType GRFML [pr ID GR|GRFS]].
 
 pred name-of-record-decl i:indt-decl, o:string.
 name-of-record-decl (parameter _ _ R) X :-
@@ -936,7 +941,7 @@ spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.do!
   % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields1, copy Sort Sort1),
   Kname = "Axioms_",
-  RDecl = record "axioms" Sort1 Kname Fields1,
+  RDecl = record "axioms_" Sort1 Kname Fields1,
   main-declare-context TheType {std.rev GRFS} Hyps,
   std.assert-ok! (coq.typecheck-indt-decl RDecl) "oops",
   coq.env.add-indt RDecl R,
@@ -944,7 +949,7 @@ spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.do!
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
   mk-phant-mixins (global GRK) PhGRK,
-  mk-phant-abbrev "Axioms" PhGRK _,
+  mk-phant-abbrev "Axioms" PhGRK _ Abbrev,
   std.map Hyps mixin-src-name ML,
   if (D = mixin-decl)
      (main-mixin-requires (indt R) ML Props)

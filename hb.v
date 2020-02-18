@@ -77,9 +77,12 @@ pred class-def o:class.
 % an instance of the mixin [M T ...], directly or through a factory.
 pred mixin-src o:term, o:mixinname, o:term.
 
-% [factory-alias Alias Factory]
-% Stores all the aliases factories
-pred factory-alias o:gref, o:gref.
+% [phant-abbrev Cst AbbrevCst Abbrev]
+% Stores phantom abbrevation Abbrev associated with Cst
+% AbbrevCst is the constant that serves as support
+% e.g. Definition AbbrevCst := fun t1 t2 (phant_id t1 t2) => Cst t2.
+%      Notation   Abbrev t1 := (AbbrevSt t1 _ idfun).
+pred phant-abbrev o:gref, o:gref, o:abbrevation.
 
 % [sub-class C1 C2] C1 is a sub-class of C2.
 pred sub-class o:class, o:class.
