@@ -108,16 +108,28 @@ HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.builders Context T (f : Ring_of_Monoid.axioms T).
 
-STOP
-  Variable f : axioms.
+HB.builders Context A (f : Ring_of_Monoid.axioms A).
 
+  About Ring_of_Monoid.axioms.
+  (* automatize *)
+  Definition opp_f := Ring_of_Monoid.opp _ _ f.
+  Definition one_f := Ring_of_Monoid.one _ _ f.
+  Definition mul_f := Ring_of_Monoid.mul _ _ f.
+  Definition addNr_f := Ring_of_Monoid.addNr _ _ f.
+  Definition addrN_f := Ring_of_Monoid.addrN _ _ f. (*
+  Definition mulrA_f  := Ring_of_Monoid.mulrA_f _ _ f.
+  Definition mul1r_f  := Ring_of_Monoid.mul1r _ _ f.
+  Definition mulr1_f  := Ring_of_Monoid.addNr _ _ f.
+  Definition mulrDl_f := Ring_of_Monoid.addNr _ _ f.
+  Definition mulrDr_f := Ring_of_Monoid.addNr _ _ f. *)
+  Locate opp.
+  About AbelianGroup.opp.
   Lemma addrC : commutative (add : A -> A -> A).
   Proof.
   have addKl (a b c : A) : a + b = a + c -> b = c.
-    apply: can_inj (add a) (add (opp f a)) _ _ _.
-    by move=> x; rewrite addrA (addNr f) add0r.
+    apply: can_inj (add a) (add (opp_f a)) _ _ _.
+    by move=> x; rewrite addrA addNr_f add0r.
   have addKr (a b c : A) : b + a = c + a -> b = c.
     apply: can_inj (add ^~ a) (add ^~ (opp f a)) _ _ _.
     by move=> x; rewrite /= -addrA (addrN f) addr0.
@@ -130,6 +142,7 @@ STOP
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f).
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
+
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A (one f) (mul f)

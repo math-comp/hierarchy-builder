@@ -78,11 +78,11 @@ pred class-def o:class.
 pred mixin-src o:term, o:mixinname, o:term.
 
 % [phant-abbrev Cst AbbrevCst Abbrev]
-% Stores phantom abbrevation Abbrev associated with Cst
+% Stores phantom abbreviation Abbrev associated with Cst
 % AbbrevCst is the constant that serves as support
 % e.g. Definition AbbrevCst := fun t1 t2 (phant_id t1 t2) => Cst t2.
 %      Notation   Abbrev t1 := (AbbrevSt t1 _ idfun).
-pred phant-abbrev o:gref, o:gref, o:abbrevation.
+pred phant-abbrev o:gref, o:gref, o:abbreviation.
 
 % [sub-class C1 C2] C1 is a sub-class of C2.
 pred sub-class o:class, o:class.
@@ -267,7 +267,7 @@ Elpi Command hb.canonical.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !, 
+main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
   main-declare-canonical T FIL.
 main _ :- coq.error "Usage: hb.canonical <CarrierTerm> <FactoryInstanceTerm>*".
 
