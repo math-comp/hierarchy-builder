@@ -841,15 +841,15 @@ main-end-declare-builders :- std.spy-do! [
   main-factory-requires "axioms" GR ML Props,
   Props => std.fold TS [] main-declare-factory-fun Clauses,
 
-  coq.env.begin-module "Exports" none,
+  % TODO: Do we need this module?
+  coq.gr->path GR Path,
+  std.rev Path [_,M|_],
+  Name is M ^ "_Exports",
+  coq.env.begin-module Name none,
   (std.forall Props c\ acc current (clause _ _ c)),
   (std.forall Clauses c\ acc current (clause _ _ c)),
 
-  std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
-  coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
-
   coq.env.end-module Exports,
-  coq.env.end-module _Module,
   export Exports,
 ].
 
