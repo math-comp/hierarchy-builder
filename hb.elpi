@@ -524,7 +524,8 @@ pred main-declare-factory-fun i:term, i:list prop, o:list prop.
 main-declare-factory-fun F PI PO :- !, std.do! [
   PI => std.spy-do! [
     std.assert-ok! (coq.typecheck F Ty) "main-declare-factory-fun: F illtyped",
-    gather-last-product Ty none Src MidAlias,
+    gather-last-product Ty none SrcAlias MidAlias,
+    factory-alias->gref SrcAlias Src,
     factory-requires Src ML,
     factory-alias->gref MidAlias Mid,
     factory-provides Mid AllTgts,
