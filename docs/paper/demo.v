@@ -148,44 +148,40 @@ HB.builders Context A (f : Ring_of_Monoid.axioms A).
 
 HB.end.
 
+Print Module Ring_of_Monoid_Exports.
+
 End V3.
 
 Module V4.
 
-Elpi hb.declare_mixin Monoid_of_Type A.
-  Record axioms := {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
-  }.
-Elpi hb.end.
-Elpi hb.structure Monoid Monoid_of_Type.axioms.
+HB.mixin Record Monoid_of_Type A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+}.
+HB.structure Monoid Monoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AbelianGroup_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-  }.
-Elpi hb.end.
-Elpi hb.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
+HB.mixin Record AbelianGroup_of_Monoid A of Monoid.axioms A := {
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+}.
+HB.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
 
-Elpi hb.declare_mixin SemiRing_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-    mul0r : left_zero zero mul;
-    mulr0 : right_zero zero mul;
-  }.
-Elpi hb.end.
-Elpi hb.structure SemiRing Monoid.axioms SemiRing_of_Monoid.axioms.
+HB.mixin Record SemiRing_of_Monoid A of Monoid.axioms A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+  mul0r : left_zero zero mul;
+  mulr0 : right_zero zero mul;
+}.
+HB.structure SemiRing Monoid.axioms SemiRing_of_Monoid.axioms.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -200,55 +196,63 @@ Notation "x - y" := (x + - y) : hb_scope.
 Lemma addrN {R : AbelianGroup.type} : right_inverse (zero : R) opp add.
 Proof. by move=>x; rewrite addrC addNr. Qed.
 
-Elpi hb.declare_factory Ring_of_AbelianGroup A AbelianGroup.axioms.
-  Record axioms := {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_AbelianGroup A of AbelianGroup.axioms A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable f : axioms.
+HB.builders Context (A : Type) (f : Ring_of_AbelianGroup.axioms A).
 
-  Fact mul0r : left_zero zero (mul f).
+  (* automatize *)
+  Definition one_f := Ring_of_AbelianGroup.one _ _ f.
+  Definition mul_f := Ring_of_AbelianGroup.mul _ _ f.
+  Definition mulrDl_f := Ring_of_AbelianGroup.mulrDl _ _ f.
+  Definition mulrDr_f := Ring_of_AbelianGroup.mulrDr _ _ f.
+  Definition mulr1_f := Ring_of_AbelianGroup.mulr1 _ _ f.
+  Definition mul1r_f := Ring_of_AbelianGroup.mul1r _ _ f.
+  Definition mulrA_f := Ring_of_AbelianGroup.mulrA _ _ f.
+
+  Fact mul0r : left_zero zero mul_f.
   Proof.
   move=> x; rewrite -[LHS]add0r addrC.
-  rewrite -{2}(addNr (mul f x x)) (addrC (opp _)) addrA.
-  by rewrite -mulrDl add0r addrC addNr.
+  rewrite -{2}(addNr (mul_f x x)) (addrC (opp _)) addrA.
+  by rewrite -mulrDl_f add0r addrC addNr.
   Qed.
 
-  Fact mulr0 : right_zero zero (mul f).
+  Fact mulr0 : right_zero zero mul_f.
   Proof.
   move=> x; rewrite -[LHS]add0r addrC.
-  rewrite -{2}(addNr (mul f x x)) (addrC (opp _)) addrA.
-  by rewrite -mulrDr add0r addrC addNr.
+  rewrite -{2}(addNr (mul_f x x)) (addrC (opp _)) addrA.
+  by rewrite -mulrDr_f add0r addrC addNr.
   Qed.
 
   Definition to_SemiRing_of_Monoid := SemiRing_of_Monoid.Axioms A
-    _ (mul f) (mulrA f) (mul1r f) (mulr1 f)
-    (mulrDl f) (mulrDr f) (mul0r) (mulr0).
+    _ mul_f mulrA_f mul1r_f mulr1_f
+    mulrDl_f mulrDr_f mul0r mulr0.
   Elpi hb.canonical A to_SemiRing_of_Monoid.
 
-Elpi hb.end.
-Elpi hb.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
+HB.end.
+HB.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
 
-Elpi hb.declare_factory Ring_of_Monoid A Monoid.axioms.
-  Record axioms := {
-    one : A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
-    addrN : right_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
+  one : A;
+  opp : A -> A;
+  mul : A -> A -> A;
+  addNr : left_inverse zero opp add;
+  addrN : right_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
+HB.builders Context (A : Type) (f : Ring_of_Monoid.axioms A).
   Variable f : axioms.
 
   Lemma addrC : commutative (add : A -> A -> A).
