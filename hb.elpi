@@ -851,6 +851,7 @@ main-end-declare-builders :- std.spy-do! [
 
   coq.env.end-module Exports,
   export Exports,
+  coq.env.end-module _,
 ].
 
 pred main-declare-canonical i:term, i:list term.
@@ -887,14 +888,15 @@ main-exports ModuleName :- std.do! [
 
 pred main-declare-builders i:context-decl.
 main-declare-builders (context-item ID T none Factories) :- std.do! [
-  term_to_string {new_int} Suffix, % TODO
-  coq.env.begin-section {calc ( "Buiders" ^ Suffix )  },
+  Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
+  coq.env.begin-module Name none,
+  coq.env.begin-section Name,
   std.assert! (T = sort (typ _)) "The first context item must be a type variable",
   coq.univ.new [] U,
   Ty = sort (typ U),
   coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
-  builders-postulate-factories (Factories TheType) TheType [] []
+  builders-postulate-factories (Factories TheType) TheType [] [],
 ].
 
 pred postulate-factory-abbrev i:term, i:pair id factoryname.
