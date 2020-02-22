@@ -121,10 +121,37 @@ pred exported-op o:constant, o:constant.
 
 }}.
 
-Elpi Command debug.
+Elpi Command HB.status.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+pred pp-from i:prop.
+pp-from (from F M T) :-
+  coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
+  coq.say "  " {coq.term->string T},
+  coq.say "".
+
+pred pp-gref i:gref.
+pp-gref X :- coq.say "  " {coq.term->string (global X)}.
+
+pred pp-class i:prop.
+pp-class (class-def (class _ S ML)) :-
+  coq.say {coq.term->string S} ":=",
+  std.forall ML pp-gref,
+  coq.say "".
+
+main [] :- std.do! [
+  coq.say "--------------------- Hierarchy -----------------------------------",
+  std.findall (class-def CL_) CL,
+  std.forall CL pp-class,
+  coq.say "--------------------- Factories -----------------------------------",
+  std.findall (from A_ B_ C_) L,
+  std.forall L pp-from,
+].
+}}.
 Elpi Typecheck.
+Elpi Export HB.status.
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
