@@ -111,18 +111,6 @@ HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
 
 HB.builders Context A (f : Ring_of_Monoid.axioms A).
 
-  (* automatize *)
-  Definition opp_f := Ring_of_Monoid.opp _ _ f.
-  Definition one_f := Ring_of_Monoid.one _ _ f.
-  Definition mul_f := Ring_of_Monoid.mul _ _ f.
-  Definition addNr_f := Ring_of_Monoid.addNr _ _ f.
-  Definition addrN_f := Ring_of_Monoid.addrN _ _ f.
-  Definition mulrA_f  := Ring_of_Monoid.mulrA _ _ f.
-  Definition mul1r_f  := Ring_of_Monoid.mul1r _ _ f.
-  Definition mulr1_f  := Ring_of_Monoid.mulr1 _ _ f.
-  Definition mulrDl_f := Ring_of_Monoid.mulrDl _ _ f.
-  Definition mulrDr_f := Ring_of_Monoid.mulrDr _ _ f.
-
   Lemma addrC : commutative (add : A -> A -> A).
   Proof.
   have addKl (a b c : A) : a + b = a + c -> b = c.
@@ -206,15 +194,6 @@ HB.factory Record Ring_of_AbelianGroup A of AbelianGroup.axioms A := {
 
 HB.builders Context (A : Type) (f : Ring_of_AbelianGroup.axioms A).
 
-  (* automatize *)
-  Definition one_f := Ring_of_AbelianGroup.one _ _ f.
-  Definition mul_f := Ring_of_AbelianGroup.mul _ _ f.
-  Definition mulrDl_f := Ring_of_AbelianGroup.mulrDl _ _ f.
-  Definition mulrDr_f := Ring_of_AbelianGroup.mulrDr _ _ f.
-  Definition mulr1_f := Ring_of_AbelianGroup.mulr1 _ _ f.
-  Definition mul1r_f := Ring_of_AbelianGroup.mul1r _ _ f.
-  Definition mulrA_f := Ring_of_AbelianGroup.mulrA _ _ f.
-
   Fact mul0r : left_zero zero mul_f.
   Proof.
   move=> x; rewrite -[LHS]add0r addrC.
@@ -250,21 +229,7 @@ HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
   mulrDr : right_distributive mul add;
 }.
 
-About A_is_a_Monoid.
-
 HB.builders Context (A : Type) (f : Ring_of_Monoid.axioms A).
-
-  (* automatize *)
-  Definition one_f := Ring_of_Monoid.one _ _ f.
-  Definition mul_f := Ring_of_Monoid.mul _ _ f.
-  Definition opp_f := Ring_of_Monoid.opp _ _ f.
-  Definition addNr_f := Ring_of_Monoid.addNr _ _ f.
-  Definition addrN_f := Ring_of_Monoid.addrN _ _ f.
-  Definition mulr1_f := Ring_of_Monoid.mulr1 _ _ f.
-  Definition mul1r_f := Ring_of_Monoid.mul1r _ _ f.
-  Definition mulrA_f := Ring_of_Monoid.mulrA _ _ f.
-  Definition mulrDl_f := Ring_of_Monoid.mulrDl _ _ f.
-  Definition mulrDr_f := Ring_of_Monoid.mulrDr _ _ f.
 
   Lemma addrC : commutative (add : A -> A -> A).
   Proof.
