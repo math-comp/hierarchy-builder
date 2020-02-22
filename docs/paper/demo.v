@@ -139,12 +139,12 @@ HB.builders Context A (f : Ring_of_Monoid.axioms A).
 
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Axioms A opp_f addrC addNr_f.
-  Elpi hb.canonical A to_AbelianGroup_of_Monoid.
+  HB.instance A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A one_f mul_f
       mulrA_f mul1r_f mulr1_f mulrDl_f mulrDr_f.
-  Elpi hb.canonical A to_Ring_of_AbelianGroup.
+  HB.instance A to_Ring_of_AbelianGroup.
 
 HB.end.
 
@@ -232,7 +232,7 @@ HB.builders Context (A : Type) (f : Ring_of_AbelianGroup.axioms A).
   Definition to_SemiRing_of_Monoid := SemiRing_of_Monoid.Axioms A
     _ mul_f mulrA_f mul1r_f mulr1_f
     mulrDl_f mulrDr_f mul0r mulr0.
-  Elpi hb.canonical A to_SemiRing_of_Monoid.
+  HB.instance A to_SemiRing_of_Monoid.
 
 HB.end.
 HB.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
@@ -282,23 +282,23 @@ HB.builders Context (A : Type) (f : Ring_of_Monoid.axioms A).
 
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Axioms A opp_f addrC addNr_f.
-  Elpi hb.canonical A to_AbelianGroup_of_Monoid.
+  HB.instance A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A one_f mul_f
       mulrA_f mul1r_f mulr1_f mulrDl_f mulrDr_f.
-  Elpi hb.canonical A to_Ring_of_AbelianGroup.
+  HB.instance A to_Ring_of_AbelianGroup.
 
 HB.end.
 
 End V4.
 
-Import V3. (* or V1, both work! *)
+Import V3. (* V1, V3 and V4, they all work! *)
 
 Definition Z_monoid_axioms : Monoid_of_Type.axioms Z :=
   Monoid_of_Type.Axioms Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
 
-Elpi hb.canonical Z Z_monoid_axioms.
+HB.instance Z Z_monoid_axioms.
 
 Definition Z_ring_axioms : Ring_of_Monoid.axioms Z :=
   Ring_of_Monoid.Axioms Z 1%Z Z.opp Z.mul
@@ -306,7 +306,7 @@ Definition Z_ring_axioms : Ring_of_Monoid.axioms Z :=
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
-Elpi hb.canonical Z Z_ring_axioms.
+HB.instance Z Z_ring_axioms.
 
 Lemma exercise (m n : Z) : (n + m) - n * 1 = m.
 Proof. by rewrite mulr1 (addrC n) -(addrA m) addrN addr0. Qed.

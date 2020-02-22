@@ -505,7 +505,7 @@ factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
 % declares a factory by composing F and G.
 pred declare-factory-from
   i:gref, i:term, i:gref, i:gref, i:list prop, o:list prop.
-declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.spy-do! [
+declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.do! [
   std.assert-ok! (coq.typecheck F (prod TName TTy _)) "declare-factory-from: F is not a function",
   factory-requires Src ML,
 
@@ -522,7 +522,7 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.spy-
 
 pred main-declare-factory-fun i:term, i:list prop, o:list prop.
 main-declare-factory-fun F PI PO :- !, std.do! [
-  PI => std.spy-do! [
+  PI => std.do! [
     std.assert-ok! (coq.typecheck F Ty) "main-declare-factory-fun: F illtyped",
     gather-last-product Ty none SrcAlias MidAlias,
     factory-alias->gref SrcAlias Src,
@@ -822,7 +822,7 @@ pred extract-local-factory i:prop, o:term.
 extract-local-factory (local-factory F) F.
 
 pred main-end-declare-builders.
-main-end-declare-builders :- std.spy-do! [
+main-end-declare-builders :- std.do! [
   current-decl (builders-for-factory GR),
   std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
   std.map AllPostulatedMixins mixin-src-name ML,
@@ -850,13 +850,15 @@ main-end-declare-builders :- std.spy-do! [
   (std.forall Clauses c\ acc current (clause _ _ c)),
 
   coq.env.end-module Exports,
-  export Exports,
   coq.env.end-module _,
+  export Exports,
 ].
 
-pred main-declare-canonical i:term, i:list term.
-main-declare-canonical T FIL :- std.do! [
-  std.forall FIL (f\ acc current (clause _ _ (local-factory f))),
+pred main-declare-canonical-instances i:term, i:list term.
+main-declare-canonical-instances T FIL :- std.do! [
+  if (current-decl (builders-for-factory _))
+     (std.forall FIL (f\ acc current (clause _ _ (local-factory f))))
+     true,
   std.map FIL (mixin-srcs T) MSLL,
   canonical-mixins T CMSL,
   std.flatten [CMSL|MSLL] MSL,
@@ -886,8 +888,8 @@ main-exports ModuleName :- std.do! [
   coq.env.end-module _ModPath
 ].
 
-pred main-declare-builders i:context-decl.
-main-declare-builders (context-item ID T none Factories) :- std.do! [
+pred main-begin-declare-builders i:context-decl.
+main-begin-declare-builders (context-item ID T none Factories) :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
   coq.env.begin-module Name none,
   coq.env.begin-section Name,

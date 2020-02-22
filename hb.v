@@ -238,7 +238,7 @@ Elpi Command HB.builders.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [ctx-decl C] :- !, main-declare-builders C.
+main [ctx-decl C] :- !, main-begin-declare-builders C.
 
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A)...".
 }}.
@@ -267,16 +267,17 @@ Elpi Export HB.end.
 
 *)
 
-Elpi Command hb.canonical.
+Elpi Command HB.instance.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
-  main-declare-canonical T FIL.
-main _ :- coq.error "Usage: hb.canonical <CarrierTerm> <FactoryInstanceTerm>*".
+  main-declare-canonical-instances T FIL.
+main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*".
 
 }}.
 Elpi Typecheck.
+Elpi Export HB.instance.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
