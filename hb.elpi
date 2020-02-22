@@ -46,18 +46,25 @@ factory-provides Factory ML :- std.do! [
   std.map All extract-mix ML,
 ].
 
+% TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
+% Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
+pred located->gref i:string, i:list located, o:gref.
+located->gref _ [loc-gref GR|_] GR.
+located->gref _ [loc-abbreviation Abbrev|_] GR :- phant-abbrev GR _ Abbrev, !.
+located->gref S [loc-abbreviation _|_] _ :- coq.error S "is an abbreviation out of the control of HB".
+located->gref S [loc-modpath _|_] _ :- coq.error S "should be a factory, but is a module".
+located->gref S [loc-modtypath _|_] _ :- coq.error S "should be a factory, but is a module type".
+located->gref S [] _ :- coq.error "Could not locate name" S.
+
 % TODO: generalize/rename when we support parameters
 pred argument->gref i:argument, o:gref.
-argument->gref (str S) GR :- coq.locate-any S (loc-abbreviation Abbrev), !, phant-abbrev GR _ Abbrev.
-argument->gref (str S) GR :- coq.locate-any S (loc-term GR), !.
-argument->gref (str S) _GR :- coq.locate-any S _, !, coq.error S "should be a factory, but is a module".
-argument->gref (str S) _ :- coq.error "Not found:" S.
-argument->gref X _ :- coq.error "Not a string:" X.
+argument->gref (str S) GR :-located->gref S {coq.locate-all S} GR.
+argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
 pred argument->term i:argument, o:term.
 argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
 argument->term (trm T) T :- !, std.assert-ok! (coq.typecheck T _) "not well typed term".
-argument->term X _ :- coq.error "Not a term:" X.
+argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
 % TODO: document
 pred mk-mixin-provided-by i:factoryname, i:list mixinname, o:list prop.
@@ -886,14 +893,13 @@ main-exports ModuleName :- std.do! [
   coq.env.end-module _ModPath
 ].
 
-pred main-declare-builders i:term.
-main-declare-builders (prod N T Factories) :- std.do! [
+pred main-declare-builders i:context-decl.
+main-declare-builders (context-item ID T none Factories) :- std.do! [
   term_to_string {new_int} Suffix, % TODO
   coq.env.begin-section {calc ( "Buiders" ^ Suffix )  },
   std.assert! (T = sort (typ _)) "The first context item must be a type variable",
   coq.univ.new [] U,
   Ty = sort (typ U),
-  coq.name->id N ID,
   coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
   builders-postulate-factories (Factories TheType) TheType [] []
@@ -909,21 +915,22 @@ postulate-factory-abbrev TheType (pr Name Falias) :- std.spy-do! [
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
   coq.env.add-const Name _ Package tt tt _].
 
-pred builders-postulate-factories i:term, i:term, i:list mixinname, i:list (pair id factoryname).
-builders-postulate-factories (sort prop) TheType GRML GRFS :- std.spy-do! [
+pred builders-postulate-factories i:context-decl, i:term, i:list mixinname, i:list (pair id factoryname).
+builders-postulate-factories context-end TheType GRML GRFS :- std.spy-do! [
   main-declare-context TheType GRML _,
   main-declare-context TheType {std.rev {std.map GRFS snd}} _,
   std.forall GRFS (postulate-factory-abbrev TheType),
   acc current (clause _ _ (current-decl factory-decl)),
 ].
-builders-postulate-factories (prod N T Factories) TheType GRML GRFS :- std.spy-do! [
-  coq.name->id N ID,
+builders-postulate-factories (context-item ID T none Factories) TheType GRML GRFS :- std.spy-do! [
   std.assert! (pi x y\ Factories x = Factories y) "factories cannot depend on eachother",
   std.assert! (T = app[global GR, TheType|_]) "a factory must be a name applied to the type variable",
   factory-alias->gref GR GRF,
   factory-requires GRF FML,
   std.append GRML FML GRFML,
   builders-postulate-factories (Factories (sort prop)) TheType GRFML [pr ID GR|GRFS]].
+builders-postulate-factories (context-item _ _ (some _) _) _ _ _ :-
+  coq.error "context entried with a body are not supported".
 
 pred name-of-record-decl i:indt-decl, o:string.
 name-of-record-decl (parameter _ _ R) X :-
