@@ -148,8 +148,6 @@ HB.builders Context A (f : Ring_of_Monoid.axioms A).
 
 HB.end.
 
-Print Module Ring_of_Monoid_Exports.
-
 End V3.
 
 Module V4.
@@ -252,33 +250,46 @@ HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
   mulrDr : right_distributive mul add;
 }.
 
+About A_is_a_Monoid.
+
 HB.builders Context (A : Type) (f : Ring_of_Monoid.axioms A).
-  Variable f : axioms.
+
+  (* automatize *)
+  Definition one_f := Ring_of_Monoid.one _ _ f.
+  Definition mul_f := Ring_of_Monoid.mul _ _ f.
+  Definition opp_f := Ring_of_Monoid.opp _ _ f.
+  Definition addNr_f := Ring_of_Monoid.addNr _ _ f.
+  Definition addrN_f := Ring_of_Monoid.addrN _ _ f.
+  Definition mulr1_f := Ring_of_Monoid.mulr1 _ _ f.
+  Definition mul1r_f := Ring_of_Monoid.mul1r _ _ f.
+  Definition mulrA_f := Ring_of_Monoid.mulrA _ _ f.
+  Definition mulrDl_f := Ring_of_Monoid.mulrDl _ _ f.
+  Definition mulrDr_f := Ring_of_Monoid.mulrDr _ _ f.
 
   Lemma addrC : commutative (add : A -> A -> A).
   Proof.
   have addKl (a b c : A) : a + b = a + c -> b = c.
-    apply: can_inj (add a) (add (opp f a)) _ _ _.
-    by move=> x; rewrite addrA (addNr f) add0r.
+    apply: can_inj (add a) (add (opp_f a)) _ _ _.
+    by move=> x; rewrite addrA addNr_f add0r.
   have addKr (a b c : A) : b + a = c + a -> b = c.
-    apply: can_inj (add ^~ a) (add ^~ (opp f a)) _ _ _.
-    by move=> x; rewrite /= -addrA (addrN f) addr0.
+    apply: can_inj (add ^~ a) (add ^~ (opp_f a)) _ _ _.
+    by move=> x; rewrite /= -addrA addrN_f addr0.
   have innerC (a b : A) : a + b + (a + b) = a + a + (b + b).
-    by rewrite -[a+b](mul1r f) -(mulrDl f) (mulrDr f) !(mulrDl f) !(mul1r f).
+    by rewrite -[a+b]mul1r_f -mulrDl_f mulrDr_f !mulrDl_f !mul1r_f.
   move=> x y; apply: addKl (x) _ _ _; apply: addKr (y) _ _ _.
   by rewrite -!addrA [in RHS]addrA innerC !addrA.
   Qed.
 
   Definition to_AbelianGroup_of_Monoid :=
-    AbelianGroup_of_Monoid.Axioms A (opp f) addrC (addNr f).
+    AbelianGroup_of_Monoid.Axioms A opp_f addrC addNr_f.
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
 
   Definition to_Ring_of_AbelianGroup :=
-    Ring_of_AbelianGroup.Axioms A (one f) (mul f)
-      (mulrA f) (mul1r f) (mulr1 f) (mulrDl f) (mulrDr f).
+    Ring_of_AbelianGroup.Axioms A one_f mul_f
+      mulrA_f mul1r_f mulr1_f mulrDl_f mulrDr_f.
   Elpi hb.canonical A to_Ring_of_AbelianGroup.
 
-Elpi hb.end.
+HB.end.
 
 End V4.
 
@@ -289,7 +300,7 @@ Definition Z_monoid_axioms : Monoid_of_Type.axioms Z :=
 
 Elpi hb.canonical Z Z_monoid_axioms.
 
-Definition Z_ring_axioms : Ring_of_Monoid.axioms Z _ :=
+Definition Z_ring_axioms : Ring_of_Monoid.axioms Z :=
   Ring_of_Monoid.Axioms Z 1%Z Z.opp Z.mul
     Z.add_opp_diag_l Z.add_opp_diag_r
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
