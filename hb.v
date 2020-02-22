@@ -33,15 +33,10 @@ Register Coq.Init.Datatypes.pair as hb.pair.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** This is the database of clauses that represent the hierarchy.
-    TODO: Decide where to put the description and the invariant, part of it
-    is in README, but it is currently outdated.
-*)
+(** This is the database of clauses that represent the hierarchy. *)
 
 Elpi Db hb.db lp:{{
 
-% TODO: once we are decided, remove these macros, most of the times we
-% whould work with records, like the class data type done there.
 typeabbrev mixinname gref.
 typeabbrev classname gref.
 typeabbrev factoryname gref.
@@ -98,28 +93,21 @@ pred sub-class o:class, o:class.
 % that contains the mixin M
 pred mixin-first-class o:mixinname, o:classname.
 
-% [to-export Module] means that Module must be exported in the end
-pred to-export o:modpath.
-
-pred locally-exporting.
-
-% [current-decl D] states that we are currently declaring a
-% | mixin   if D = mixin-decl
-% | factory if D = builders-for-factory
+% To tell HB.end what we are doing
 kind declaration type.
-type mixin-decl declaration.
 type builders-for-factory gref -> declaration.
 pred current-decl o:declaration.
 
-kind asset type.
-type asset-mixin asset.
-type asset-factory asset.
-
+% To tell HB.end which canonical instances are declared inside a HB.builders
 pred local-factory o:term.
 
-pred exported-op o:constant, o:constant.
-
 }}.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This command prints the status of the hierarchy (Debug) *)
 
 Elpi Command HB.status.
 Elpi Accumulate File "hb.elpi".
@@ -141,18 +129,187 @@ pp-class (class-def (class _ S ML)) :-
   std.forall ML pp-gref,
   coq.say "".
 
-main [] :- std.do! [
+main [] :- !, std.do! [
   coq.say "--------------------- Hierarchy -----------------------------------",
   std.findall (class-def CL_) CL,
   std.forall CL pp-class,
   coq.say "--------------------- Factories -----------------------------------",
-  std.findall (from A_ B_ C_) L,
-  std.forall L pp-from,
+  std.findall (from A_ B_ C_) FL,
+  std.forall FL pp-from,
 ].
+main _ :- coq.error "Usage: HB.status.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.status.
 
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.mixin] declares a mixin
+
+  Syntax to create a mixin [MixinName.axioms]
+  with requirements [Factory1.axioms] .. [FactoryN.axioms]:
+
+  <<
+  HB.mixin Record MixinName T of Factory1.axioms T & ... & FactoryN.axioms T := {
+     op : T -> ...
+     ...
+     property : forall x : T, op ...
+     ...
+  }
+  >>
+
+  Synthesizes:
+  - [MixinName.axioms T] abbreviation for the type of the (degenerate) factory
+  - [MixinName.Axioms T] abbreviation for the constructor of the factory
+
+  Note: [T of f1 T & ... & fN T] is ssreflect syntax for [T (_ : f1 T) ... (_ : fN T)]
+*)
+
+Elpi Command HB.mixin.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main [indt-decl Decl] :- !, main-declare-asset Decl asset-mixin.
+
+main _ :-
+  coq.error "Usage: HB.mixin Record <MixinName> T of F A & ... := { ... }.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.mixin.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.structure] declares a packed structure.
+
+  Syntax to declare a structure combing the axioms from [Factory1] ... [FactoryN]
+
+  <<
+  HB.structure StructureName Factory1.axioms ... FactoryN.axioms.
+  >>
+
+*)
+
+Elpi Command HB.structure.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [str Module|FS] :- std.map FS argument->gref GRFS, !,
+  % compute all the mixins to be part of the structure
+  main-declare-structure Module GRFS.
+main _ :- coq.error "Usage: HB.structure <ModuleName> <FactoryGR>*".
+}}.
+Elpi Typecheck.
+Elpi Export HB.structure.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.instance] associated to a type all the structures that can be
+    obtaind from the provided factory inhabitant.
+
+    Syntax for declaring a canonical instance:
+
+    <<
+    Definition f1 : Factory1.axioms T := Factory1.Axioms T ...
+    ...
+    Definition fN : FactoryN.axioms T := FactoryN.Axioms T ...
+    HB.instance T f1 ... fN.
+    >>
+
+*)
+
+Elpi Command HB.instance.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
+  main-declare-canonical-instances T FIL.
+main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*".
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.instance.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
+
+Elpi Command HB.factory.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [indt-decl Decl] :- !, main-declare-asset Decl asset-factory.
+
+main _ :-
+  coq.error "Usage: HB.factory Record <FactoryName> T of F A & ... := { ... }.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.factory.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.builders] starts a section to declare the builders associated
+    to a factory. [HB.end] ends that section.
+
+    Syntax to declare builders for factory [Factory.axioms]:
+
+    <<
+    HB.builders Context A (f : Factory.axioms A).
+    ...
+    HB.instance A someFactoryInstance.
+    ...
+    HB.end.
+    >>
+
+    [HB.builders] starts a section (inside a module of unspecified name) where:
+    - [A] is a type variable
+    - all the requirements of [Factory] were postulated as variables
+    - [f] is variable of type [Factory.axioms A]
+    - all classes whose requirements can be obtained from [Factory] are
+      declared canonical on [A]
+    - for each operation [op] and property [prop] (named fields) of
+      [Factory.axioms A] a [Let] definition named [op_f] and [property_f]
+      for the partial application of [op] and [property] to the variable [f]
+
+    [HB.end] ends the section and closes the module and synthesizes
+    - for each structure inhabited via [HB.instance] it defined all
+      builders to known mixins
+
+    *)
+
+Elpi Command HB.builders.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [ctx-decl C] :- !, main-begin-declare-builders C.
+
+main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
+}}.
+Elpi Typecheck.
+Elpi Export HB.builders.
+
+
+Elpi Command HB.end.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [] :- !, main-end-declare-builders.
+main _ :- coq.error "Usage: HB.end.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.end.
+
+(*
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -198,150 +355,4 @@ main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
 }}.
 Elpi Typecheck.
 
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
-(** This command creates mixins and factories
-
-  Current syntax to create a mixin "Module.axioms"
-  with requirements "Foo.axioms" .. "Bar.axioms":
-   Elpi HB.mixin Record A.axioms T of (Foo.axioms T) .. (Bar.axioms T) := {
-     .. axioms ..
-   }
-
-   Current syntax to create a factory "Module.axioms",
-   which requires "Foo.axioms" .. "Bar.axioms"
-   and provides "Baw.axioms" .. "Baz.axioms".
-   Elpi hb.declare.mixin Module A Foo.axioms .. Bar.axioms.
-   Record axioms := {
-     ..
-   }
-   Variable (a : axioms).
-   Definition to_Baw : Baw.axioms_ A := ..
-   Elpi hb.canonical to_Baw.
-   ..
-   Definition to_Baz : Baz.axioms_ A := ..
-   Elpi hb.canonical to_Baw.
-   Elpi hb.end.
-
-   Packagers are called "Axioms" unless the record constructor
-   is already "Axioms" and in that case they are called "Axioms_".
 *)
-
-Elpi Command HB.mixin.
-Elpi Accumulate File "hb.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-
-main [indt-decl Decl] :- !, main-declare-asset Decl asset-mixin.
-
-main _ :-
-  coq.error "Usage: HB.mixin Record <ModuleName>.axioms (T : Type) of F1 A & F2 A ... := { ... }.".
-}}.
-Elpi Typecheck.
-Elpi Export HB.mixin.
-
-Elpi Command HB.factory.
-Elpi Accumulate File "hb.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-main [indt-decl Decl] :- !, main-declare-asset Decl asset-factory.
-
-main _ :-
-  coq.error "Usage: HB.factory Record <ModuleName>.axioms (T : Type) of F1 A & F2 A ... := { ... }.".
-}}.
-Elpi Typecheck.
-Elpi Export HB.factory.
-
-
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
-(* TODO: document *)
-
-Elpi Command HB.builders.
-Elpi Accumulate File "hb.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-main [ctx-decl C] :- !, main-begin-declare-builders C.
-
-main _ :- coq.error "Usage: HB.builders Context A (f : F1 A)...".
-}}.
-Elpi Typecheck.
-Elpi Export HB.builders.
-
-
-Elpi Command HB.end.
-Elpi Accumulate File "hb.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-main [] :- !, main-end-declare-builders.
-main _ :- coq.error "Usage: HB.end.".
-}}.
-Elpi Typecheck.
-Elpi Export HB.end.
-
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
-(** This command declares all the canonical instances the given factories
-    provides.
-
-   TODO: sanity check for arguments
-
-*)
-
-Elpi Command HB.instance.
-Elpi Accumulate File "hb.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
-  main-declare-canonical-instances T FIL.
-main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*".
-
-}}.
-Elpi Typecheck.
-Elpi Export HB.instance.
-
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
-(** This command declares a packed structure.
-
-  Input:
-  - a module name S, eg Equality
-  - zero or more factory names
-
-  Effect:
-    Module S.
-      Record axioms T := Axioms { m1_mixin : m1 T, mn_mixin : mn T dn }.
-      Record type := Pack { sort : Type; class : axioms sort }.
-      Module Exports.
-        Coercion sort : type >-> Sortclass.
-        Definition oij {x} : type := oj x (mi_mixin x (class x)) (di (class x))
-      End Exports.
-    End S.
-
-  where:
-  - factories produce mixins m1 .. mn
-  - mixin mn depends on mixins dn
-  - named fieds of mixins are oij are exported only if they were never
-    exported before.
-
-*)
-
-Elpi Command HB.structure.
-Elpi Accumulate File "hb.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-main [str Module|FS] :- std.map FS argument->gref GRFS, !,
-  % compute all the mixins to be part of the structure
-  main-declare-structure Module GRFS.
-main _ :- coq.error "Usage: HB.structure <ModuleName> <FactoryGR>*".
-}}.
-Elpi Typecheck.
-Elpi Export HB.structure.

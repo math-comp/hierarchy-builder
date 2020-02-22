@@ -536,11 +536,11 @@ main-declare-factory-fun F PI PO :- !, std.do! [
 
 % [export Module] exports a Module now adds it to the collection of
 % modules to export in the end
+pred to-export o:modpath.
 pred export i:modpath.
 export Module :- !,
   coq.env.export-module Module,
   acc current (clause _ _ (to-export Module)).
-
 
 pred mk-mlams i:term, i:list mixinname, i:term, o:term.
 mk-mlams T ML X MLX :- under-mixins T ML (body\ body = X) MLX.
@@ -549,6 +549,7 @@ mk-mlams T ML X MLX :- under-mixins T ML (body\ body = X) MLX.
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
 % of the package structure.
+pred exported-op o:constant, o:constant. % memory
 pred export-1-operation i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
 export-1-operation _ _ _ none EX EX :- !. % not a projection, no operation
 export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
@@ -865,29 +866,6 @@ main-declare-canonical-instances T FIL :- std.do! [
   MSL => declare-instances T {findall-classes},
 ].
 
-pred extract-to-export i:prop, o:modpath.
-extract-to-export (to-export Module) Module.
-
-pred main-begin-export i:string.
-main-begin-export ModuleName :- !,
-  not (locally-exporting),
-  coq.env.begin-module ModuleName none.
-
-pred main-end-export.
-main-end-export :- !,
-  locally-exporting,
-  coq.env.end-module ModPath,
-  acc current (clause _ _ (to-export ModPath)).
-
-pred main-exports i:string.
-main-exports ModuleName :- std.do! [
-  std.findall (to-export M_) MEL,
-  std.map MEL extract-to-export MPL,
-  coq.env.begin-module ModuleName none,
-  std.forall MPL (m\ coq.env.export-module m),
-  coq.env.end-module _ModPath
-].
-
 pred main-begin-declare-builders i:context-decl.
 main-begin-declare-builders (context-item ID T none Factories) :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
@@ -955,6 +933,10 @@ pred name-of-record-decl i:indt-decl, o:string.
 name-of-record-decl (parameter _ _ R) X :-
   pi x\ name-of-record-decl (R x) X.
 name-of-record-decl (record X _ _ _) X.
+
+kind asset type.
+type asset-mixin asset.
+type asset-factory asset.
 
 pred main-declare-asset i:indt-decl, i:asset.
 main-declare-asset (parameter _ T Rest as R) D :- std.do! [
