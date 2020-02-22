@@ -1,26 +1,9 @@
 Require Import String ssreflect ssrfun.
-Require Import ZArith.
 From elpi Require Import elpi.
 
-(* From /Canonical Structures for the working Coq user/ Mahboubi Tassi *)
+(** Technical definition from /Canonical Structures for the working Coq user/ *)
 Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
   phantom T1 t1 -> phantom T2 t2.
-Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
-  (at level 0, format "`Error_cannot_unify:  t1  'with'  t2", only printing) :
-  form_scope.
-Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
-  (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
-  form_scope.
-
-Notation "[find v | t1 ∼ t2 ] rest" :=
-  (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
-  form_scope.
-Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
-  (fun v1 .. vn => fun (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
-  form_scope.
-Notation "[find v | t1 ∼ t2 | msg ] rest" :=
-  (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
-  form_scope.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 
 Register unify as hb.unify.
@@ -33,7 +16,8 @@ Register Coq.Init.Datatypes.pair as hb.pair.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** This is the database of clauses that represent the hierarchy. *)
+(** This data represents the hierarchy and some othe piece of state to
+    implement the commands above *)
 
 Elpi Db hb.db lp:{{
 
@@ -356,3 +340,25 @@ main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
 Elpi Typecheck.
 
 *)
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** Technical notations from /Canonical Structures for the working Coq user/ *)
+Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
+  (at level 0, format "`Error_cannot_unify:  t1  'with'  t2", only printing) :
+  form_scope.
+Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
+  (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
+  form_scope.
+
+Notation "[find v | t1 ∼ t2 ] rest" :=
+  (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
+  form_scope.
+Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
+  (fun v1 .. vn => fun (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
+  form_scope.
+Notation "[find v | t1 ∼ t2 | msg ] rest" :=
+  (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
+  form_scope.
