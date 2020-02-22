@@ -335,7 +335,7 @@ factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
 % [acc-phant-abbrev Str GR Acc] makes a phantom abbreviation for F
 pred acc-phant-abbrev i:string, i:gref, o:list prop.
 acc-phant-abbrev _Str GR [] :- factory-alias->gref GR _, !.
-acc-phant-abbrev Str GR [phant-abbrev GR (const PhC) Abbrev] :- !, std.spy-do! [
+acc-phant-abbrev Str GR [phant-abbrev GR (const PhC) Abbrev] :- !, std.do! [
   mk-phant-mixins (global GR) PhGR,
   mk-phant-abbrev Str PhGR PhC Abbrev
 ].
@@ -441,14 +441,14 @@ declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
 
 pred main-factory-requires i:string, i:gref, i:list factoryname, o:list prop.
-main-factory-requires Str GR GRFS [FactoryRequires|Aliases] :- !, std.spy-do! [
+main-factory-requires Str GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
   factories-provide-mixins GRFS ML _,
   FactoryRequires = factory-requires GR ML,
   acc-phant-abbrev Str GR Aliases
 ].
 
 pred main-mixin-requires i:string, i:gref, i:list factoryname, o:list prop.
-main-mixin-requires Str GR GRFS [From|PO] :- !, std.spy-do! [
+main-mixin-requires Str GR GRFS [From|PO] :- !, std.do! [
   main-factory-requires Str GR GRFS PO,
   % register factory
   PO => std.do! [
@@ -505,8 +505,7 @@ factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
 % declares a factory by composing F and G.
 pred declare-factory-from
   i:gref, i:term, i:gref, i:gref, i:list prop, o:list prop.
-declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI]
- :- !, FromI => std.do! [
+declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.spy-do! [
   std.assert-ok! (coq.typecheck F (prod TName TTy _)) "declare-factory-from: F is not a function",
   factory-requires Src ML,
 
@@ -523,7 +522,7 @@ declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI]
 
 pred main-declare-factory-fun i:term, i:list prop, o:list prop.
 main-declare-factory-fun F PI PO :- !, std.do! [
-  PI => std.do! [
+  PI => std.spy-do! [
     std.assert-ok! (coq.typecheck F Ty) "main-declare-factory-fun: F illtyped",
     gather-last-product Ty none Src MidAlias,
     factory-requires Src ML,
@@ -821,19 +820,14 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
 pred extract-local-factory i:prop, o:term.
 extract-local-factory (local-factory F) F.
 
-pred main-end-declare.
-main-end-declare :- std.do! [
-  current-decl factory-decl,
+pred main-end-declare-builders.
+main-end-declare-builders :- std.spy-do! [
+  current-decl (builders-for-factory GR),
   std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
   std.map AllPostulatedMixins mixin-src-name ML,
-  std.assert! (coq.locate "axioms_" GR)
-    "you must define a term named axioms, typically a record",
-  if (GR = indt AxiomsRecord)
-    (std.assert! (coq.env.indt AxiomsRecord _ _ _ _ [K] _)
-      "axioms should be a record, not a general inductive",
-     GRK = indc K)
-    (std.assert! (coq.locate "Axioms_" GRK)
-      "axioms is not a record and no Axioms pseudo constructor is defined"),
+  std.assert! (GR = indt AxiomsRecord) "factory is not an inductive",
+  std.assert! (coq.env.indt AxiomsRecord _ _ _ _ [K] _) "factory should be a record, not a general inductive",
+  GRK = indc K,
   if (coq.gr->id GRK "Axioms") (PackagerName = "Axioms_") (PackagerName = "Axioms"),
 
   coq.env.end-section,
@@ -841,14 +835,11 @@ main-end-declare :- std.do! [
   mk-phant-mixins (global GRK) PhGRK,
   mk-phant-abbrev PackagerName PhGRK _ _,
 
-  if (Decl = mixin-decl)
-    (!, main-mixin-requires "axioms" GR ML Props, Clauses = []) (
-    Decl = factory-decl, !,
-    std.findall (local-factory F_) LFIL,
-    std.map LFIL extract-local-factory TS,
-    main-factory-requires "axioms" GR ML Props,
-    Props => std.fold TS [] main-declare-factory-fun Clauses
-  ),
+  std.findall (local-factory F_) LFIL,
+  std.map LFIL extract-local-factory TS,
+  main-factory-requires "axioms" GR ML Props,
+  Props => std.fold TS [] main-declare-factory-fun Clauses,
+
   coq.env.begin-module "Exports" none,
   (std.forall Props c\ acc current (clause _ _ c)),
   (std.forall Clauses c\ acc current (clause _ _ c)),
@@ -906,7 +897,7 @@ main-declare-builders (context-item ID T none Factories) :- std.do! [
 ].
 
 pred postulate-factory-abbrev i:term, i:pair id factoryname.
-postulate-factory-abbrev TheType (pr Name Falias) :- std.spy-do! [
+postulate-factory-abbrev TheType (pr Name Falias) :- std.do! [
   % abbrev, HACK
   factory-alias->gref Falias F,
   phant-abbrev F _ Fabv,
@@ -916,29 +907,29 @@ postulate-factory-abbrev TheType (pr Name Falias) :- std.spy-do! [
   coq.env.add-const Name _ Package tt tt _].
 
 pred builders-postulate-factories i:context-decl, i:term, i:list mixinname, i:list (pair id factoryname).
-builders-postulate-factories context-end TheType GRML GRFS :- std.spy-do! [
-  main-declare-context TheType GRML _,
-  main-declare-context TheType {std.rev {std.map GRFS snd}} _,
-  std.forall GRFS (postulate-factory-abbrev TheType),
-  acc current (clause _ _ (current-decl factory-decl)),
-].
-builders-postulate-factories (context-item ID T none Factories) TheType GRML GRFS :- std.spy-do! [
+builders-postulate-factories (context-item ID T none _\ context-end) TheType GRML GRFS :- std.do! [
   std.assert! (pi x y\ Factories x = Factories y) "factories cannot depend on eachother",
   std.assert! (T = app[global GR, TheType|_]) "a factory must be a name applied to the type variable",
   factory-alias->gref GR GRF,
   factory-requires GRF FML,
   std.append GRML FML GRFML,
-  builders-postulate-factories (Factories (sort prop)) TheType GRFML [pr ID GR|GRFS]].
-builders-postulate-factories (context-item _ _ (some _) _) _ _ _ :-
-  coq.error "context entried with a body are not supported".
+  main-declare-context TheType GRFML _,
+  main-declare-context TheType {std.rev {std.map GRFS snd}} _,
+  postulate-factory-abbrev TheType (pr ID GR),
+  acc current (clause _ _ (current-decl (builders-for-factory GRF))),
+].
+builders-postulate-factories (context-item ID _ (some _) _) _ _ _ :-
+  coq.error "factories cannot be given a body:" ID.
+builders-postulate-factories (context-item ID1 _ none _\ context-item ID2 _ _ _) _ _ _ :-
+  coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
 
 pred name-of-record-decl i:indt-decl, o:string.
 name-of-record-decl (parameter _ _ R) X :-
   pi x\ name-of-record-decl (R x) X.
 name-of-record-decl (record X _ _ _) X.
 
-pred main-declare-asset i:indt-decl, i:declaration.
-main-declare-asset (parameter _ T Rest as R) D :- std.spy-do! [
+pred main-declare-asset i:indt-decl, i:asset.
+main-declare-asset (parameter _ T Rest as R) D :- std.do! [
   name-of-record-decl R Module,
   coq.env.begin-module Module none,
   coq.env.begin-section Module,
@@ -950,7 +941,7 @@ main-declare-asset (parameter _ T Rest as R) D :- std.spy-do! [
   spill-factory-param-factories (Rest TheType) [] TheType D
 ].
 
-pred spill-factory-param-factories i:indt-decl, i:list factoryname, i:term, i:declaration.
+pred spill-factory-param-factories i:indt-decl, i:list factoryname, i:term, i:asset.
 spill-factory-param-factories (parameter _ T Rest) GRFS TheType D :- std.do! [
   std.assert! (T = app[global F, TheType]) "Factory not applied to X",
   std.assert! (pi x y\ Rest x = Rest y) "Factories cannot be mentioned in the mixin",
@@ -958,7 +949,7 @@ spill-factory-param-factories (parameter _ T Rest) GRFS TheType D :- std.do! [
   spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D
 ].
 
-spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.spy-do! [
+spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.do! [
   % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields1, copy Sort Sort1),
   Kname = "Axioms_",
@@ -972,7 +963,7 @@ spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.spy
   mk-phant-mixins (global GRK) PhGRK,
   mk-phant-abbrev "Axioms" PhGRK _ _,
   std.map Hyps mixin-src-name ML,
-  if (D = mixin-decl)
+  if (D = asset-mixin)
      (main-mixin-requires "axioms" (indt R) ML Props)
      (main-factory-requires "axioms" (indt R) ML Props),
   coq.env.begin-module "Exports" none,

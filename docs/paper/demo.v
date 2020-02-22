@@ -111,7 +111,6 @@ HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
 
 HB.builders Context A (f : Ring_of_Monoid.axioms A).
 
-  About Ring_of_Monoid.axioms.
   (* automatize *)
   Definition opp_f := Ring_of_Monoid.opp _ _ f.
   Definition one_f := Ring_of_Monoid.one _ _ f.
@@ -123,8 +122,7 @@ HB.builders Context A (f : Ring_of_Monoid.axioms A).
   Definition mulr1_f  := Ring_of_Monoid.mulr1 _ _ f.
   Definition mulrDl_f := Ring_of_Monoid.mulrDl _ _ f.
   Definition mulrDr_f := Ring_of_Monoid.mulrDr _ _ f.
-  Locate opp.
-  About AbelianGroup.opp.
+
   Lemma addrC : commutative (add : A -> A -> A).
   Proof.
   have addKl (a b c : A) : a + b = a + c -> b = c.
@@ -142,7 +140,6 @@ HB.builders Context A (f : Ring_of_Monoid.axioms A).
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Axioms A opp_f addrC addNr_f.
   Elpi hb.canonical A to_AbelianGroup_of_Monoid.
-
 
   Definition to_Ring_of_AbelianGroup :=
     Ring_of_AbelianGroup.Axioms A one_f mul_f

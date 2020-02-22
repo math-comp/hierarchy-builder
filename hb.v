@@ -105,11 +105,15 @@ pred locally-exporting.
 
 % [current-decl D] states that we are currently declaring a
 % | mixin   if D = mixin-decl
-% | factory if D = factory-decl
+% | factory if D = builders-for-factory
 kind declaration type.
 type mixin-decl declaration.
-type factory-decl declaration.
+type builders-for-factory gref -> declaration.
 pred current-decl o:declaration.
+
+kind asset type.
+type asset-mixin asset.
+type asset-factory asset.
 
 pred local-factory o:term.
 
@@ -203,7 +207,7 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [indt-decl Decl] :- !, main-declare-asset Decl mixin-decl.
+main [indt-decl Decl] :- !, main-declare-asset Decl asset-mixin.
 
 main _ :-
   coq.error "Usage: HB.mixin Record <ModuleName>.axioms (T : Type) of F1 A & F2 A ... := { ... }.".
@@ -215,7 +219,7 @@ Elpi Command HB.factory.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [indt-decl Decl] :- !, main-declare-asset Decl factory-decl.
+main [indt-decl Decl] :- !, main-declare-asset Decl asset-factory.
 
 main _ :-
   coq.error "Usage: HB.factory Record <ModuleName>.axioms (T : Type) of F1 A & F2 A ... := { ... }.".
@@ -246,7 +250,7 @@ Elpi Command HB.end.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, main-end-declare.
+main [] :- !, main-end-declare-builders.
 main _ :- coq.error "Usage: HB.end.".
 }}.
 Elpi Typecheck.
