@@ -907,7 +907,7 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   coq.gr->id (const P) Name,
   coq.gr->id {term->gr TheFactory} F,
   OpName is Name ^ "_" ^ F,
-  coq.env.add-const OpName T _ ff tt _. % a Let
+  coq.notation.add-abbreviation OpName 0 T ff ff _.
 
 pred mk-n-holes i:int, o:list A.
 mk-n-holes 0 [] :- !.

@@ -262,7 +262,7 @@ Elpi Export HB.factory.
     - all classes whose requirements can be obtained from [Factory] are
       declared canonical on [A]
     - for each operation [op] and property [prop] (named fields) of
-      [Factory.axioms A] a [Let] definition named [op_f] and [property_f]
+      [Factory.axioms A] a [Notation] named [op_f] and [property_f]
       for the partial application of [op] and [property] to the variable [f]
 
     [HB.end] ends the section and closes the module and synthesizes
