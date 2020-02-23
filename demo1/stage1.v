@@ -7,67 +7,64 @@ From elpi Require Import elpi.
 
 Module Stage1.
 
-Elpi hb.structure TYPE.
+HB.structure TYPE.
 
 (* Begin change *)
 
-Elpi hb.declare_mixin AddComoid_of_TYPE A.
-  Record axioms := Axioms {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    addrC : commutative add;
-    add0r : left_id zero add;
-  }.
-Elpi hb.end.
-Elpi hb.structure AddComoid AddComoid_of_TYPE.axioms.
+HB.mixin Record AddComoid_of_TYPE A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  addrC : commutative add;
+  add0r : left_id zero add;
+}.
+HB.structure AddComoid AddComoid_of_TYPE.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddComoid A AddComoid.axioms.
-  Record axioms := Axioms {
-    opp : A -> A;
-    one : A;
-    mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
-Elpi hb.end.
+HB.mixin Record Ring_of_AddComoid A of AddComoid.axioms A := {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  addNr : left_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-Elpi hb.declare_factory Ring_of_TYPE A.
-  Record axioms := Axioms {
-    zero : A;
-    one : A;
-    add : A -> A -> A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addrA : associative add;
-    addrC : commutative add;
-    add0r : left_id zero add;
-    addNr : left_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_TYPE A := {
+  zero : A;
+  one : A;
+  add : A -> A -> A;
+  opp : A -> A;
+  mul : A -> A -> A;
+  addrA : associative add;
+  addrC : commutative add;
+  add0r : left_id zero add;
+  addNr : left_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable a : axioms.
+HB.builders Context A (a : Ring_of_TYPE.axioms A).
+
   Definition to_AddComoid_of_TYPE :=
-    AddComoid_of_TYPE.Axioms_ A (zero a) (add a) (addrA _) (addrC _) (add0r _).
-  Elpi hb.canonical A to_AddComoid_of_TYPE.
+    AddComoid_of_TYPE.Axioms A zero_a add_a addrA_a addrC_a add0r_a.
+  HB.instance A to_AddComoid_of_TYPE.
 
   Definition to_Ring_of_AddComoid :=
-    Ring_of_AddComoid.Axioms_ A _ _ _ (addNr _) (mulrA _) (mul1r _)
-      (mulr1 _) (mulrDl _) (mulrDr _).
-  Elpi hb.canonical A to_Ring_of_AddComoid.
-Elpi hb.end.
+    Ring_of_AddComoid.Axioms A _ _ _ addNr_a mulrA_a mul1r_a
+      mulr1_a mulrDl_a mulrDr_a.
+  HB.instance A to_Ring_of_AddComoid.
+
+HB.end.
 
 (* End change *)
 
-Elpi hb.structure Ring Ring_of_TYPE.axioms.
+HB.structure Ring Ring_of_TYPE.axioms.
 
 (* Notations *)
 
@@ -104,12 +101,12 @@ End Theory.
 (* Instance *)
 
 Definition Z_ring_axioms :=
-  Ring_of_TYPE.Axioms_ Z 0%Z 1%Z Z.add Z.opp Z.mul
+  Ring_of_TYPE.Axioms Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
-Elpi hb.canonical Z Z_ring_axioms.
+HB.instance Z Z_ring_axioms.
 
 Example test1 (m n : Z) : (m + n) - n + 0 = m.
 Proof. by rewrite addrNK addr0. Qed.
