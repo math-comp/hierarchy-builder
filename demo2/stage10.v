@@ -212,7 +212,7 @@ HB.structure TAddAG
 (* Instance *)
 
 Definition Z_ring_axioms :=
-  Ring_of_TYPE.Axioms 0%Z 1%Z Z.add Z.opp Z.mul
+  Ring_of_TYPE.Axioms Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
@@ -228,7 +228,7 @@ Lemma Qcplus_opp_l q : - q + q = 0.
 Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
 
 Definition Qc_ring_axioms :=
-  Ring_of_TYPE.Axioms 0%Qc 1%Qc Qcplus Qcopp Qcmult
+  Ring_of_TYPE.Axioms Qc 0%Qc 1%Qc Qcplus Qcopp Qcmult
     Qcplus_assoc Qcplus_comm Qcplus_0_l Qcplus_opp_l
     Qcmult_assoc Qcmult_1_l Qcmult_1_r
     Qcmult_plus_distr_l Qcmult_plus_distr_r.
