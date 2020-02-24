@@ -433,6 +433,10 @@ declare-instances T [class Class Struct ML|Rest] :-
 declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
 
+% [main-factory-requires Str GR FL CL]
+% computes the list of mixins ML provided by FL,
+% creates a clause in CL stating that GR requires ML (factory-requires ..), and
+% creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
 pred main-factory-requires i:string, i:gref, i:list factoryname, o:list prop.
 main-factory-requires Str GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
   factories-provide-mixins GRFS ML,
@@ -818,29 +822,18 @@ extract-local-factory (local-factory F) F.
 pred main-end-declare-builders.
 main-end-declare-builders :- std.do! [
   current-decl (builders-for-factory GR),
-  std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
-  std.map AllPostulatedMixins mixin-src-name ML,
-  std.assert! (GR = indt AxiomsRecord) "factory is not an inductive",
-  std.assert! (coq.env.indt AxiomsRecord _ _ _ _ [K] _) "factory should be a record, not a general inductive",
-  GRK = indc K,
-  if (coq.gr->id GRK "Axioms") (PackagerName = "Axioms_") (PackagerName = "Axioms"),
 
   coq.env.end-section,
 
-  mk-phant-mixins (global GRK) PhGRK,
-  mk-phant-abbrev PackagerName PhGRK _ _,
-
   std.findall (local-factory F_) LFIL,
   std.map LFIL extract-local-factory TS,
-  main-factory-requires "axioms" GR ML Props,
-  Props => std.fold TS [] main-declare-factory-fun Clauses,
+  std.fold TS [] main-declare-factory-fun Clauses,
 
   % TODO: Do we need this module?
   coq.gr->path GR Path,
   std.rev Path [_,M|_],
   Name is M ^ "_Exports",
   coq.env.begin-module Name none,
-  (std.forall Props c\ acc current (clause _ _ c)),
   (std.forall Clauses c\ acc current (clause _ _ c)),
 
   coq.env.end-module Exports,
@@ -883,12 +876,14 @@ postulate-factory-abbrev TheType Name Falias TheFactory :- std.do! [
   TheFactory = global (const C),
 ].
 
+% Only record fields can be exported as operations.
 pred define-factory-operations i:term, i:term, i:gref.
-define-factory-operations TheType TheFactory (indt I) :-
+define-factory-operations TheType TheFactory (indt I) :- !,
   coq.env.indt I _ NParams _ _ _ _,
   NHoles is NParams - 1,
   coq.CS.canonical-projections I PL,
   std.forall PL (define-factory-operation TheType TheFactory NHoles).
+define-factory-operations _ _ _.
 
 pred define-factory-operation i:term, i:term, i:int, i:option constant.
 define-factory-operation _ _ _ none.
