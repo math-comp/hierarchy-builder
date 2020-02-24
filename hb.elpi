@@ -917,18 +917,35 @@ builders-postulate-factories (context-item ID _ (some _) _) _ _ :-
 builders-postulate-factories (context-item ID1 _ none _\ context-item ID2 _ _ _) _ _ :-
   coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
 
-pred name-of-record-decl i:indt-decl, o:string.
-name-of-record-decl (parameter _ _ R) X :-
-  pi x\ name-of-record-decl (R x) X.
-name-of-record-decl (record X _ _ _) X.
+pred name-of-asset-decl i:asset-decl, o:string.
+name-of-asset-decl (asset-parameter _ _ R) X :-
+  pi x\ name-of-asset-decl (R x) X.
+name-of-asset-decl (asset-record X _ _ _) X.
+name-of-asset-decl (asset-alias X _) X.
 
 kind asset type.
 type asset-mixin asset.
 type asset-factory asset.
 
-pred main-declare-asset i:indt-decl, i:asset.
-main-declare-asset (parameter _ T Rest as R) D :- std.do! [
-  name-of-record-decl R Module,
+kind asset-decl type.
+type asset-parameter  id -> term -> (term -> asset-decl) -> asset-decl.
+type asset-record     id -> term -> id -> record-decl    -> asset-decl.
+type asset-alias      id -> term                         -> asset-decl.
+
+pred argument->asset i:argument, o:asset-decl.
+argument->asset (indt-decl (parameter Name Ty I)) (asset-parameter "T" Ty A) :- % TODO, take the name
+  @pi-decl Name Ty a\
+    argument->asset (indt-decl (I a)) (A a).
+argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
+argument->asset (const-decl Id (some (fun _ _ Bo)) (some (prod Name Src Ty))) (asset-parameter "T" Src A) :- !,
+  @pi-decl Name Src a\
+    argument->asset (const-decl Id (some (Bo a)) (some (Ty a))) (A a).
+argument->asset (const-decl Id (some Bo) _Ty) (asset-alias Id Bo) :- !.
+argument->asset X _ :- halt "XXXXXX" X.
+
+pred main-declare-asset i:asset-decl, i:asset.
+main-declare-asset (asset-parameter _ T Rest as R) D :- std.do! [
+  name-of-asset-decl R Module,
   coq.env.begin-module Module none,
   coq.env.begin-section Module,
   std.assert! (T = sort (typ _)) "The first record parameter must be a type",
@@ -939,26 +956,57 @@ main-declare-asset (parameter _ T Rest as R) D :- std.do! [
   spill-factory-param-factories (Rest TheType) [] TheType D
 ].
 
-pred spill-factory-param-factories i:indt-decl, i:list factoryname, i:term, i:asset.
-spill-factory-param-factories (parameter _ T Rest) GRFS TheType D :- std.do! [
+pred spill-factory-param-factories i:asset-decl, i:list factoryname, i:term, i:asset.
+spill-factory-param-factories (asset-parameter _ T Rest) GRFS TheType D :- std.do! [
   std.assert! (T = app[global F, TheType]) "Factory not applied to X",
   std.assert! (pi x y\ Rest x = Rest y) "Factories cannot be mentioned in the mixin",
   Dummy = sort prop,
   spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D
 ].
+spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
+  (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
+  main-declare-context TheType {std.rev GRFS} Hyps,
+  std.assert! (not(var Ty1)) "TODO: please add : type to definition", % TODO
 
-spill-factory-param-factories (record _ Sort _ Fields) GRFS TheType D :- std.do! [
+  std.spy (std.assert-ok! (coq.typecheck-ty Ty1 _) "xxxX"),
+
+  std.spy (coq.env.add-const "axioms_" Ty1 _ ff ff Cty),
+
+  coq.env.end-section,
+  % TODO add definition Axioms too.
+
+  std.map Hyps mixin-src-name ML,
+  if (D = asset-mixin)
+     (coq.error "mixins must be records")
+     (main-factory-requires "axioms" (const Cty) ML Props),
+  coq.env.begin-module "Exports" none,
+  (std.forall Props c\ acc current (clause _ _ c)),
+  % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
+  % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
+  coq.env.end-module Exports,
+  coq.env.end-module _Module,
+  export Exports,
+].
+
+pred append-phant-unify i:phant-term, o:phant-term.
+append-phant-unify (phant-trm LP T) (phant-trm LPU T) :-
+  std.append LP [unify-arg] LPU.
+
+spill-factory-param-factories (asset-record _ Sort _ Fields) GRFS TheType D :- std.do! [
   % refresh implicit arguments, since many binders are now gone
-  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields1, copy Sort Sort1),
+  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
+  if (D = asset-mixin) (Fields1 = Fields0)
+     (Fields1 = (field ff "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
   Kname = "Axioms_",
   RDecl = record "axioms_" Sort1 Kname Fields1,
   main-declare-context TheType {std.rev GRFS} Hyps,
-  std.assert-ok! (coq.typecheck-indt-decl RDecl) "oops",
+  std.assert-ok! (coq.typecheck-indt-decl RDecl) "record declaration illtyped",
   coq.env.add-indt RDecl R,
   coq.env.end-section,
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
-  mk-phant-mixins (global GRK) PhGRK,
+  mk-phant-mixins (global GRK) PhGRK0,
+  if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
   mk-phant-abbrev "Axioms" PhGRK _ _,
   std.map Hyps mixin-src-name ML,
   if (D = asset-mixin)
