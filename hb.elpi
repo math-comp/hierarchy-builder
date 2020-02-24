@@ -41,7 +41,8 @@ factory-fun->term T Src Tgt FT :- !, std.do! [
 % [factory-provides F ML] states that the factory ML
 % provides instances of ML
 pred factory-provides i:factoryname, o:list mixinname.
-factory-provides Factory ML :- std.do! [
+factory-provides FactoryAlias ML :- std.do! [
+  factory-alias->gref FactoryAlias Factory,
   std.findall (from Factory T_ F_) All,
   std.map All extract-mix ML,
 ].
