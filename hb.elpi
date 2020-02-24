@@ -66,17 +66,9 @@ argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
 argument->term (trm T) T :- !, std.assert-ok! (coq.typecheck T _) "not well typed term".
 argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
-% TODO: document
-pred mk-mixin-provided-by i:factoryname, i:list mixinname, o:list prop.
-mk-mixin-provided-by F ML CL :-
-  std.map ML (x\r\ r = factories-provide-mixins.mixin-provided-by F x) CL.
-
-pred factories-provide-mixins.mixin-provided-by i:mixinname, o:factoryname.
-pred factories-provide-mixins i:list factoryname, o:list mixinname, o:list prop.
-factories-provide-mixins GRFS ML Clauses :- std.do! [
+pred factories-provide-mixins i:list factoryname, o:list mixinname.
+factories-provide-mixins GRFS ML :- std.do! [
   std.map GRFS factory-provides MLUnsortedL,
-  std.map2 GRFS MLUnsortedL mk-mixin-provided-by PL,
-  std.flatten PL Clauses,
   std.flatten MLUnsortedL MLUnsorted,
   toposort-mixins MLUnsorted ML,
 ].
@@ -442,7 +434,7 @@ declare-instances _ [].
 
 pred main-factory-requires i:string, i:gref, i:list factoryname, o:list prop.
 main-factory-requires Str GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
-  factories-provide-mixins GRFS ML _,
+  factories-provide-mixins GRFS ML,
   FactoryRequires = factory-requires GR ML,
   acc-phant-abbrev Str GR Aliases
 ].
@@ -473,7 +465,7 @@ postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do!
 
 pred main-declare-context i:term, i:list factoryname, o:list prop.
 main-declare-context T GRFS MSL :-  std.do! [
-  factories-provide-mixins GRFS ML _,
+  factories-provide-mixins GRFS ML,
   std.fold ML [] (postulate-mixin T) MSL,
   MSL => declare-instances T {findall-classes},
   std.forall MSL (ms\ acc current (clause _ _ ms)),
@@ -745,7 +737,7 @@ declare-sort-coercion (global StructureName) (global Proj) :-
 
 pred main-declare-structure i:string, i:list gref.
 main-declare-structure Module GRFS :- std.do! [
-  factories-provide-mixins GRFS  ML _,
+  factories-provide-mixins GRFS  ML,
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
   coq.env.begin-module Module none,
