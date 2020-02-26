@@ -940,8 +940,8 @@ argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :-
 argument->asset (const-decl Id (some (fun _ _ Bo)) (some (prod Name Src Ty))) (asset-parameter "T" Src A) :- !,
   @pi-decl Name Src a\
     argument->asset (const-decl Id (some (Bo a)) (some (Ty a))) (A a).
-argument->asset (const-decl Id (some Bo) _Ty) (asset-alias Id Bo) :- !.
-argument->asset X _ :- halt "XXXXXX" X.
+argument->asset (const-decl Id _ (some Ty)) (asset-alias Id Ty) :- !.
+argument->asset X _ :- coq.error "Unsupported asset:" X.
 
 pred main-declare-asset i:asset-decl, i:asset.
 main-declare-asset (asset-parameter _ T Rest as R) D :- std.do! [
@@ -966,9 +966,9 @@ spill-factory-param-factories (asset-parameter _ T Rest) GRFS TheType D :- std.d
 spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
   (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
   main-declare-context TheType {std.rev GRFS} Hyps,
-  std.assert! (not(var Ty1)) "TODO: please add : type to definition", % TODO
+  std.assert! (not(var Ty1)) "TODO: please add \": type\" to Definition",
 
-  std.spy (std.assert-ok! (coq.typecheck-ty Ty1 _) "xxxX"),
+  std.spy (std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory"),
 
   std.spy (coq.env.add-const "axioms_" Ty1 _ ff ff Cty),
 

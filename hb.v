@@ -233,7 +233,7 @@ Elpi Accumulate lp:{{
 main [A] :- !, main-declare-asset {argument->asset A} asset-factory.
 
 main _ :-
-  coq.error "Usage: HB.factory Record <FactoryName> T of F A & ... := { ... }.".
+  coq.error "Usage: HB.factory Record <FactoryName> T of F A & ... := { ... }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.factory.
