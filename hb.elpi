@@ -966,7 +966,7 @@ spill-factory-param-factories (asset-parameter _ T Rest) GRFS TheType D :- std.d
 spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
   (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
   main-declare-context TheType {std.rev GRFS} Hyps,
-  std.assert! (not(var Ty1)) "TODO: please add \": type\" to Definition",
+  std.assert! (not(var Ty1)) "Please add \": type\" to Definition",
 
   std.spy (std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory"),
 
