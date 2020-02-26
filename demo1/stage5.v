@@ -91,104 +91,99 @@ HB.structure BiNearRing AddMonoid.axioms BiNearRing_of_AddMonoid.axioms.
 
 (* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
 (* we alias it for backward compatilibity and uniformity purposes *)
-HB.factory Record SemiRing_of_AddComoid A of AddComoid.axioms A.
-  Definition axioms := BiNearRing_of_AddMonoid.axioms_ A.
-  Definition Axioms := @BiNearRing_of_AddMonoid.Axioms.
-  Variables (a : axioms).
-  Definition to_BiNearRing_of_AddMonoid :
-     BiNearRing_of_AddMonoid.axioms_ A := a.
+HB.factory Definition SemiRing_of_AddComoid A of AddComoid.axioms A : BiNearRing_of_AddMonoid.axioms A := BiNearRing_of_AddMonoid.Axioms A.
+HB.builders Context A (a : SemiRing_of_AddComoid.axioms A).
+
+  Definition to_BiNearRing_of_AddMonoid : BiNearRing_of_AddMonoid.axioms A := a.
   HB.instance A to_BiNearRing_of_AddMonoid.
-Elpi hb.end.
+HB.end.
 
 (* End changes *)
 
 HB.structure SemiRing AddComoid.axioms SemiRing_of_AddComoid.axioms.
 
-HB.factory Record Ring_of_AddAG A AddAG :=axioms.
-  Record axioms := Axioms {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mulr1 : left_id one mul;
-    mul1r : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_AddAG A of AddAG.axioms A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mulr1 : left_id one mul;
+  mul1r : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable (a : axioms).
+HB.builders Context A (a : Ring_of_AddAG.axioms A).
 
-  Fact mul0r : left_zero zero (mul a).
+  Fact mul0r : left_zero zero mul_a.
   Proof.
   move=> x; rewrite -[LHS]add0r addrC.
-  rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
-  by rewrite -mulrDl add0r addrC addNr.
+  rewrite -{2}(addNr (mul_a x x)) (addrC (opp _)) addrA.
+  by rewrite -mulrDl_a add0r addrC addNr.
   Qed.
 
-  Fact mulr0 : right_zero zero (mul a).
+  Fact mulr0 : right_zero zero mul_a.
   Proof.
   move=> x; rewrite -[LHS]add0r addrC.
-  rewrite -{2}(addNr (mul a x x)) (addrC (opp _)) addrA.
-  by rewrite -mulrDr add0r addrC addNr.
+  rewrite -{2}(addNr (mul_a x x)) (addrC (opp _)) addrA.
+  by rewrite -mulrDr_a add0r addrC addNr.
   Qed.
 
-  Definition to_SemiRing_of_AddComoid := SemiRing_of_AddComoid.Axioms A
-    _ (mul a) (mulrA a) (mulr1 a) (mul1r a)
-    (mulrDl a) (mulrDr a) (mul0r) (mulr0).
-  HB.instance A to_SemiRing_of_AddComoid.
+  Fail Definition to_SemiRing_of_AddComoid := SemiRing_of_AddComoid.Axioms A
+    _ mul_a mulrA_a mulr1_a mul1r_a mulrDl_a mulrDr_a mul0r mulr0.
+  Fail HB.instance A to_SemiRing_of_AddComoid.
 
-Elpi hb.end.
+HB.end.
 
-HB.factory Record Ring_of_AddComoid A AddComoid :=axioms.
-  Record axioms := Axioms {
-    opp : A -> A;
-    one : A;
-    mul : A -> A -> A;
-    addNr : left_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_AddComoid A of AddComoid.axioms A := {
+  opp : A -> A;
+  one : A;
+  mul : A -> A -> A;
+  addNr : left_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable a : axioms.
+HB.builders Context A (a :Ring_of_AddComoid.axioms A).
 
-  Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms A _ (addNr a).
+  Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
 
   Definition to_Ring_of_AddAG := Ring_of_AddAG.Axioms A
-    _ _ (mulrA a) (mul1r a) (mulr1 a) (mulrDl a) (mulrDr a).
+    _ _ mulrA_a mul1r_a mulr1_a mulrDl_a mulrDr_a.
   HB.instance A to_Ring_of_AddAG.
 
-Elpi hb.end.
+HB.end.
 
-HB.factory Record Ring_of_TYPE A :=
-  Record axioms := Axioms {
-    zero : A;
-    one : A;
-    add : A -> A -> A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addrA : associative add;
-    addrC : commutative add;
-    add0r : left_id zero add;
-    addNr : left_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_TYPE A := {
+  zero : A;
+  one : A;
+  add : A -> A -> A;
+  opp : A -> A;
+  mul : A -> A -> A;
+  addrA : associative add;
+  addrC : commutative add;
+  add0r : left_id zero add;
+  addNr : left_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable a : axioms.
+HB.builders Context A (a : Ring_of_TYPE.axioms A).
+
   Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Axioms A
-    (zero a) (add a) (addrA _) (addrC _) (add0r _).
+    zero_a add_a addrA_a addrC_a add0r_a.
   HB.instance A to_AddComoid_of_TYPE.
 
   Definition to_Ring_of_AddComoid := Ring_of_AddComoid.Axioms A
-    _ _ _ (addNr _) (mulrA _) (mul1r _) (mulr1 _) (mulrDl _) (mulrDr _).
+    _ _ _ addNr_a mulrA_a mul1r_a mulr1_a mulrDl_a mulrDr_a.
   HB.instance A to_Ring_of_AddComoid.
-Elpi hb.end.
+HB.end.
 
 HB.structure Ring Ring_of_TYPE.axioms.
 
