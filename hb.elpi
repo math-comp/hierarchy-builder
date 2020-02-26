@@ -152,7 +152,7 @@ get-class-constructor (indt S) (global (indc K)) :-
 
 pred gref->modname i:mixinname, o:id.
 gref->modname GR ModName :-
-  coq.gr->path GR Path,
+  coq.gref->path GR Path,
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for " GR).
 
 pred term->modname i:structure, o:id.
@@ -420,7 +420,7 @@ declare-instances T [class Class Struct ML|Rest] :-
   not (local-structure T Struct), % not already built
   !,
   term->gr T TGR,
-  coq.gr->id TGR TID,
+  coq.gref->id TGR TID,
   Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
   get-structure-constructor Struct KS,
@@ -550,7 +550,7 @@ pred exported-op o:constant, o:constant. % memory
 pred export-1-operation i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
 export-1-operation _ _ _ none EX EX :- !. % not a projection, no operation
 export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
-  coq.gr->id (const Poperation) Name,
+  coq.gref->id (const Poperation) Name,
   (@pi-decl `s` Struct s\ sigma Carrier Class MSL DirtyTy Copies\ std.do! [
       Carrier = app[Psort, s],
       Class = app[Pclass, s],
@@ -830,7 +830,7 @@ main-end-declare-builders :- std.do! [
   std.fold TS [] main-declare-factory-fun Clauses,
 
   % TODO: Do we need this module?
-  coq.gr->path GR Path,
+  coq.gref->path GR Path,
   std.rev Path [_,M|_],
   Name is M ^ "_Exports",
   coq.env.begin-module Name none,
@@ -892,8 +892,8 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   std.append Holes [TheFactory] Holes_Factory,
   T = app[global (const P), TheType|Holes_Factory],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
-  coq.gr->id (const P) Name,
-  coq.gr->id {term->gr TheFactory} F,
+  coq.gref->id (const P) Name,
+  coq.gref->id {term->gr TheFactory} F,
   OpName is Name ^ "_" ^ F,
   coq.notation.add-abbreviation OpName 0 T ff ff _.
 
