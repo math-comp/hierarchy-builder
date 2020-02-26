@@ -91,7 +91,8 @@ HB.structure BiNearRing AddMonoid.axioms BiNearRing_of_AddMonoid.axioms.
 
 (* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
 (* we alias it for backward compatilibity and uniformity purposes *)
-HB.factory Definition SemiRing_of_AddComoid A of AddComoid.axioms A : BiNearRing_of_AddMonoid.axioms A := BiNearRing_of_AddMonoid.Axioms A.
+HB.factory Definition SemiRing_of_AddComoid A of AddComoid.axioms A :=
+    BiNearRing_of_AddMonoid.axioms A.
 HB.builders Context A (a : SemiRing_of_AddComoid.axioms A).
 
   Definition to_BiNearRing_of_AddMonoid : BiNearRing_of_AddMonoid.axioms A := a.
@@ -128,9 +129,9 @@ HB.builders Context A (a : Ring_of_AddAG.axioms A).
   by rewrite -mulrDr_a add0r addrC addNr.
   Qed.
 
-  Fail Definition to_SemiRing_of_AddComoid := SemiRing_of_AddComoid.Axioms A
+  Definition to_SemiRing_of_AddComoid := SemiRing_of_AddComoid.Axioms A
     _ mul_a mulrA_a mulr1_a mul1r_a mulrDl_a mulrDr_a mul0r mulr0.
-  Fail HB.instance A to_SemiRing_of_AddComoid.
+  HB.instance A to_SemiRing_of_AddComoid.
 
 HB.end.
 

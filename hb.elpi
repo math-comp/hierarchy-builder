@@ -165,10 +165,11 @@ term->modname T ModName :- gref->modname {term->gr T} ModName.
 %            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
 % thus instanciating an abstraction on mixin M_i with X_i
 pred instanciate-mixin i:term, i:mixinname, i:term, o:term.
-instanciate-mixin T M (fun _ Tm F) (F X) :-
+instanciate-mixin T M (fun _ Tm F) R :-
   safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M, !,
-  mixin-for T M X, !.
+  mixin-for T M X, !,
+  R = F X.
 instanciate-mixin T M (fun N Ty F) (fun N Ty FX) :- !,
   pi m\ instanciate-mixin T M (F m) (FX m).
 instanciate-mixin _ _ F F.
@@ -177,7 +178,7 @@ instanciate-mixin _ _ F F.
 % (mtrm ML F) and perform the substitution as above
 % for every mixin-for entry out of the list ML = [M_0, .., M_n].
 pred mterm->term i:term, i:mterm, o:term.
-mterm->term T (mtrm ML F) SFX :- std.do![
+mterm->term T (mtrm ML F) SFX :- std.do! [
   std.assert-ok! (coq.typecheck F Ty) "mtrm->term: F illtyped",
   mk-eta (-1) Ty F EtaF,
   subst-fun [T] EtaF FT,
@@ -188,8 +189,13 @@ mterm->term T (mtrm ML F) SFX :- std.do![
 % (through factory-requires if it exist, otherwise gr-deps)
 % and instanciates all of them through mixin-src, and fails if it cannot.
 pred mgref->term i:term, i:gref, o:term.
-mgref->term T GR X :- factory-requires GR ML, !, mterm->term T (mtrm ML (global GR)) X.
-mgref->term T GR X :- !, gr-deps GR ML, !, mterm->term T (mtrm ML (global GR)) X.
+mgref->term T GR X :- factory-requires GR ML, !, std.do! [
+  mterm->term T (mtrm ML (global GR)) X
+].
+mgref->term T GR X :- !, std.do! [
+  std.assert! (gr-deps GR ML) "BUG: gr-deps should never fail",
+  mterm->term T (mtrm ML (global GR)) X
+].
 
 
 % [mixin-srcs T X MSL] states that MSL is a list of [mixin-src T m X]
@@ -484,7 +490,7 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
   decl x N Src =>
   gather-last-product (Tgt x) (some Src) R1 R2.
 gather-last-product End (some Last) LastGR EndGR :-
-  term->gr End EndGR, term->gr Last LastGR.
+  term->gr End EndGR, std.spy(term->gr Last LastGR).
 
 pred factory-comp i:term, i:gref, i:mterm, i:gref, i:gref, o:term.
 factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
@@ -940,7 +946,8 @@ argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :-
 argument->asset (const-decl Id (some (fun _ _ Bo)) (some (prod Name Src Ty))) (asset-parameter "T" Src A) :- !,
   @pi-decl Name Src a\
     argument->asset (const-decl Id (some (Bo a)) (some (Ty a))) (A a).
-argument->asset (const-decl Id _ (some Ty)) (asset-alias Id Ty) :- !.
+argument->asset (const-decl Id (some Bo) (some Ty)) (asset-alias Id Bo) :- !,
+  std.assert! (var Ty) "Factories aliases should not be given a type".
 argument->asset X _ :- coq.error "Unsupported asset:" X.
 
 pred main-declare-asset i:asset-decl, i:asset.
@@ -963,26 +970,41 @@ spill-factory-param-factories (asset-parameter _ T Rest) GRFS TheType D :- std.d
   Dummy = sort prop,
   spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D
 ].
+
 spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
+  std.assert! (D = asset-factory) "Mixins cannot be aliases",
+
   (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
   main-declare-context TheType {std.rev GRFS} Hyps,
-  std.assert! (not(var Ty1)) "Please add \": type\" to Definition",
 
-  std.spy (std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory"),
+  std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory",
+  coq.env.add-const "axioms_" Ty1 _ ff ff C,
 
-  std.spy (coq.env.add-const "axioms_" Ty1 _ ff ff Cty),
+  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+  std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
+  std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
+
+  Hyps => mgref->term TheType FK MFK,
+  std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
+  (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
+  coq.env.add-const "Axioms_" MFK MFKTyC ff ff CK,
+  GRK = const CK,
 
   coq.env.end-section,
-  % TODO add definition Axioms too.
+
+  mk-phant-mixins (global GRK) PhGRK0,
+  if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
+  mk-phant-abbrev "Axioms" PhGRK _ _,
 
   std.map Hyps mixin-src-name ML,
   if (D = asset-mixin)
      (coq.error "mixins must be records")
-     (main-factory-requires "axioms" (const Cty) ML Props),
+     (main-factory-requires "axioms" (const C) ML Props),
   coq.env.begin-module "Exports" none,
   (std.forall Props c\ acc current (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
+  acc current (clause _ _ (factory-constructor (const C) GRK)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
   export Exports,
@@ -1016,6 +1038,7 @@ spill-factory-param-factories (asset-record _ Sort _ Fields) GRFS TheType D :- s
   (std.forall Props c\ acc current (clause _ _ c)),
   std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
+  acc current (clause _ _ (factory-constructor (indt R) GRK)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
   export Exports,

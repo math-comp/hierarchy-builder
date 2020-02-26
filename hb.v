@@ -48,6 +48,10 @@ pred from o:factoryname, o:mixinname, o:term.
 % (i.e. has parameters among) mixins ML.
 pred factory-requires o:factoryname, o:list mixinname.
 
+% [factory-constructor F K] means K is a constructor for
+% the factory F.
+pred factory-constructor o:factoryname, o:gref.
+
 % class-def contains all the classes ever declared
 pred class-def o:class.
 

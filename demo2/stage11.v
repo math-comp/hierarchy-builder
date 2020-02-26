@@ -196,7 +196,7 @@ Section ProductTopology.
     TopologicalBase.Axioms _ _ prod_open_base_covers prod_open_base_setU.
 
   (* TODO: make elpi insert coercions! *)
-  HB.instance (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type prod_topology.
+  HB.instance ((TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type) prod_topology.
 
 End ProductTopology.
 
@@ -331,7 +331,10 @@ HB.factory Definition JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axiom
 
 HB.builders Context T (a : JoinTAddAG.axioms T).
   Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform.axioms T := a.
-  Definition to_Uniform := TAddAG_Uniform.Axioms T.
+  HB.instance T to_JoinTAddAG_wo_Uniform.
+  (* TODO: Nice error message when factory builders do not depend on the source factory 'a'*)
+  Definition to_Uniform := let _ := a in TAddAG_Uniform.Axioms T.
+  HB.instance T to_Uniform.
 HB.end.
 
 (* Instance *)
@@ -358,7 +361,7 @@ Definition Qc_ring_axioms :=
 HB.instance Qc Qc_ring_axioms.
 
 Obligation Tactic := idtac.
-Definition Qcopen_base : set (set Qc) := 
+Definition Qcopen_base : set (set Qc) :=
   [set A | exists a b : Qc, forall z, A z <-> a < z /\ z < b].
 Program Definition QcTopological := TopologicalBase.Axioms Qc Qcopen_base _ _.
   Next Obligation.
@@ -373,12 +376,11 @@ Program Definition QcTopological := TopologicalBase.Axioms Qc Qcopen_base _ _.
   Admitted.
 HB.instance Qc QcTopological.
 
-Program Definition QcJoinTAddAG : JoinTAddAG.axioms Qc :=
- JoinTAddAG_wo_Uniform.Axioms Qc _ _. (* TODO fix spill-factory-param-factories *)
+Program Definition QcJoinTAddAG := JoinTAddAG.Axioms Qc _ _.
   Next Obligation. Admitted.
   Next Obligation. Admitted.
 HB.instance Qc QcJoinTAddAG.
 
-Fail Check (entourage : set (set (Qc * Qc))). (* TODO fix spill-factory-param-factories *)
+Check (entourage : set (set (Qc * Qc))). (* TODO fix spill-factory-param-factories *)
 
 End Stage11.

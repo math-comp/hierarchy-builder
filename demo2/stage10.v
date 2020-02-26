@@ -190,7 +190,7 @@ Section ProductTopology.
 
   Definition prod_topology :=
     TopologicalBase.Axioms (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type _ prod_open_base_covers prod_open_base_setU.
-  HB.instance (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type prod_topology.
+  HB.instance ((TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type) prod_topology.
 
 End ProductTopology.
 
@@ -235,7 +235,7 @@ Definition Qc_ring_axioms :=
 HB.instance Qc Qc_ring_axioms.
 
 Obligation Tactic := idtac.
-Definition Qcopen_base : set (set Qc) := 
+Definition Qcopen_base : set (set Qc) :=
   [set A | exists a b : Qc, forall z, A z <-> a < z /\ z < b].
 Program Definition QcTopological := TopologicalBase.Axioms Qc Qcopen_base _ _.
 Next Obligation.
