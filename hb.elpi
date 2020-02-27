@@ -204,6 +204,11 @@ mgref->term T GR X :- !, std.do! [
 pred mixin-srcs i:term, i:term, o:list prop.
 mixin-srcs T X MSL :- std.do! [
   std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
+  if (not (safe-dest-app XTy (global _) _))
+     (coq.error "Term:\n" {coq.term->string X}
+                "\nhas type:\n" {coq.term->string XTy}
+                "\nwhich is not a record")
+     true,
   term->gref XTy Src,
   factory-alias->gref Src Factory,
   factory-provides Factory ML,
