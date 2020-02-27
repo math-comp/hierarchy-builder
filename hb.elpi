@@ -156,7 +156,7 @@ gref->modname GR ModName :-
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for " GR).
 
 pred term->modname i:structure, o:id.
-term->modname T ModName :- gref->modname {term->gr T} ModName.
+term->modname T ModName :- gref->modname {term->gref T} ModName.
 
 % [instanciate-mixin T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
@@ -204,7 +204,7 @@ mgref->term T GR X :- !, std.do! [
 pred mixin-srcs i:term, i:term, o:list prop.
 mixin-srcs T X MSL :- std.do! [
   std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
-  term->gr XTy Src,
+  term->gref XTy Src,
   factory-alias->gref Src Factory,
   factory-provides Factory ML,
   % TODO: skip mixins for which there is already a source.
@@ -216,7 +216,7 @@ mixin-srcs T X MSL :- std.do! [
 pred mixin-for o:term, o:mixinname, o:term.
 mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
-  term->gr Ty Src,
+  term->gref Ty Src,
   factory-alias->gref Src Factory,
   if (M = Factory) (MI = Tm) (
       factory-fun->term T Factory M F,
@@ -236,7 +236,7 @@ has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
 pred local-structures i:term, o:list term.
 local-structures TyTrm StructL :- std.do! [
-  std.filter {coq.CS.db} (has-cs-instance {term->gr TyTrm}) DBGTyL,
+  std.filter {coq.CS.db} (has-cs-instance {term->gref TyTrm}) DBGTyL,
   std.map DBGTyL cs-structure StructL,
 ].
 
@@ -425,7 +425,7 @@ declare-instances T [class Class Struct ML|Rest] :-
   mterm->term T (mtrm ML KC) KCApp, % we can build it
   not (local-structure T Struct), % not already built
   !,
-  term->gr T TGR,
+  term->gref T TGR,
   coq.gref->id TGR TID,
   Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
@@ -490,7 +490,7 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
   decl x N Src =>
   gather-last-product (Tgt x) (some Src) R1 R2.
 gather-last-product End (some Last) LastGR EndGR :-
-  term->gr End EndGR, std.spy(term->gr Last LastGR).
+  term->gref End EndGR, term->gref Last LastGR.
 
 pred factory-comp i:term, i:gref, i:mterm, i:gref, i:gref, o:term.
 factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
@@ -630,7 +630,7 @@ declare-coercion SortProjection ClassProjection
   std.assert-ok! (coq.typecheck SCoeBody STy) "declare-coercion: SCoeBody illtyped",
 
   coq.env.add-const SName SCoeBody STy ff ff SC,
-  coq.coercion.declare (coercion (const SC) 0 {term->gr StructureF} (grefclass {term->gr StructureT})) tt,
+  coq.coercion.declare (coercion (const SC) 0 {term->gref StructureF} (grefclass {term->gref StructureT})) tt,
   coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
 
@@ -899,7 +899,7 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   T = app[global (const P), TheType|Holes_Factory],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
-  coq.gref->id {term->gr TheFactory} F,
+  coq.gref->id {term->gref TheFactory} F,
   OpName is Name ^ "_" ^ F,
   coq.notation.add-abbreviation OpName 0 T ff ff _.
 
