@@ -2,196 +2,175 @@ Require Import hb ssreflect ssrfun ZArith String.
 
 Module V1.
 
-Elpi hb.declare_mixin MulMonoid_of_Type A.
-  Record axioms := Axioms {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
+HB.mixin Record MulMonoid_of_Type A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
 }.
-Elpi hb.end.
-Elpi hb.structure MulMonoid MulMonoid_of_Type.axioms.
+HB.structure MulMonoid MulMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin Ring_of_MulMonoid A MulMonoid.axioms.
-  Record axioms := Axioms {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
-Elpi hb.end.
-Elpi hb.structure Ring MulMonoid.axioms Ring_of_MulMonoid.axioms.
+HB.mixin Record Ring_of_MulMonoid A of MulMonoid.axioms A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
+HB.structure Ring MulMonoid.axioms Ring_of_MulMonoid.axioms.
 
 End V1.
 
 Module V2.
 
-Elpi hb.declare_mixin MulMonoid_of_Type A.
-  Record axioms := Axioms {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
+HB.mixin Record MulMonoid_of_Type A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
 }.
-Elpi hb.end.
-Elpi hb.structure MulMonoid MulMonoid_of_Type.axioms.
+HB.structure MulMonoid MulMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AddMonoid_of_Type A.
-  Record axioms := Axioms {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
+HB.mixin Record AddMonoid_of_Type A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
 }.
-Elpi hb.end.
-Elpi hb.structure AddMonoid AddMonoid_of_Type.axioms.
+HB.structure AddMonoid AddMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin Ring_of_AddMulMonoid A MulMonoid.axioms AddMonoid.axioms.
-  Record axioms := Axioms {
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-    mulrDl : left_distributive mul (add : A -> A -> A);
-    mulrDr : right_distributive mul (add : A -> A -> A);
-  }.
-Elpi hb.end.
-Elpi hb.structure Ring MulMonoid.axioms AddMonoid.axioms Ring_of_AddMulMonoid.axioms.
+HB.mixin Record Ring_of_AddMulMonoid A of MulMonoid.axioms A & AddMonoid.axioms A := {
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+  mulrDl : left_distributive mul (add : A -> A -> A);
+  mulrDr : right_distributive mul (add : A -> A -> A);
+}.
+HB.structure Ring MulMonoid.axioms AddMonoid.axioms Ring_of_AddMulMonoid.axioms.
 
-Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
-  Record axioms := Axioms {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_MulMonoid A of MulMonoid.axioms A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable a : axioms.
+HB.builders Context A (a : Ring_of_MulMonoid.axioms A).
 
   Definition to_AddMonoid_of_Type :=
-    AddMonoid_of_Type.Axioms_ A (zero a) (add a) (addrA a) (add0r a) (addr0 a).
+    AddMonoid_of_Type.Axioms A zero_a add_a addrA_a add0r_a addr0_a.
 
-  Elpi hb.canonical A to_AddMonoid_of_Type.
+  HB.instance A to_AddMonoid_of_Type.
 
   Definition to_Ring_of_AddMulMonoid :=
-    Ring_of_AddMulMonoid.Axioms_ A (opp a) (addrC a) (addNr a) (mulrDl a) (mulrDr a).
+    Ring_of_AddMulMonoid.Axioms A opp_a addrC_a addNr_a mulrDl_a mulrDr_a.
 
-  Elpi hb.canonical A to_Ring_of_AddMulMonoid.
+  HB.instance A to_Ring_of_AddMulMonoid.
 
-Elpi hb.end.
+HB.end.
 
 End V2.
 
 Module V3.
 
-Elpi hb.declare_mixin MulMonoid_of_Type A.
-  Record axioms := Axioms {
-    one : A;
-    mul : A -> A -> A;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
+HB.mixin Record MulMonoid_of_Type A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
 }.
-Elpi hb.end.
-Elpi hb.structure MulMonoid MulMonoid_of_Type.axioms.
+HB.structure MulMonoid MulMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AddMonoid_of_Type A.
-  Record axioms := Axioms {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
+HB.mixin Record AddMonoid_of_Type A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
 }.
-Elpi hb.end.
-Elpi hb.structure AddMonoid AddMonoid_of_Type.axioms.
+HB.structure AddMonoid AddMonoid_of_Type.axioms.
 
-Elpi hb.declare_mixin AbGroup_of_AddMonoid A AddMonoid.axioms.
-  Record axioms := Axioms {
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
+HB.mixin Record AbGroup_of_AddMonoid A of AddMonoid.axioms A := {
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
 }.
-Elpi hb.end.
-Elpi hb.structure AbGroup AddMonoid.axioms AbGroup_of_AddMonoid.axioms.
+HB.structure AbGroup AddMonoid.axioms AbGroup_of_AddMonoid.axioms.
 
-Elpi hb.declare_mixin Ring_of_AbGroupMulMonoid A MulMonoid.axioms AbGroup.axioms.
-  Record axioms := Axioms {
-    mulrDl : left_distributive mul (add : A -> A -> A);
-    mulrDr : right_distributive mul (add : A -> A -> A);
-  }.
-Elpi hb.end.
-Elpi hb.structure Ring MulMonoid.axioms AbGroup.axioms Ring_of_AbGroupMulMonoid.axioms.
+HB.mixin Record Ring_of_AbGroupMulMonoid A of MulMonoid.axioms A & AbGroup.axioms A := {
+  mulrDl : left_distributive mul (add : A -> A -> A);
+  mulrDr : right_distributive mul (add : A -> A -> A);
+}.
+HB.structure Ring MulMonoid.axioms AbGroup.axioms Ring_of_AbGroupMulMonoid.axioms.
 
-Elpi hb.declare_factory Ring_of_AddMulMonoid A MulMonoid.axioms AddMonoid.axioms.
-  Record axioms := Axioms {
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-    mulrDl : left_distributive mul (add : A -> A -> A);
-    mulrDr : right_distributive mul (add : A -> A -> A);
-  }.
+HB.factory Record Ring_of_AddMulMonoid A of MulMonoid.axioms A & AddMonoid.axioms A := {
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+  mulrDl : left_distributive mul (add : A -> A -> A);
+  mulrDr : right_distributive mul (add : A -> A -> A);
+}.
 
-  Variable a : axioms.
+HB.builders Context A (a : Ring_of_AddMulMonoid.axioms A).
 
   Definition to_AbGroup_of_AddMonoid :=
-    AbGroup_of_AddMonoid.Axioms_ A (opp a) (addrC a) (addNr a).
+    AbGroup_of_AddMonoid.Axioms A opp_a addrC_a addNr_a.
 
-  Elpi hb.canonical A to_AbGroup_of_AddMonoid.
+  HB.instance A to_AbGroup_of_AddMonoid.
 
   Definition to_Ring_of_AbGroupMulMonoid :=
-  Ring_of_AbGroupMulMonoid.Axioms_ A (mulrDl a) (mulrDr a).
+  Ring_of_AbGroupMulMonoid.Axioms A mulrDl_a mulrDr_a.
 
-  Elpi hb.canonical A to_Ring_of_AbGroupMulMonoid.
+  HB.instance A to_Ring_of_AbGroupMulMonoid.
 
-Elpi hb.end. 
+HB.end.
 
-Elpi hb.declare_factory Ring_of_MulMonoid A MulMonoid.axioms.
-  Record axioms := Axioms {
-    zero : A;
-    add : A -> A -> A;
-    addrA : associative add;
-    add0r : left_id zero add;
-    addr0 : right_id zero add;
-    opp : A -> A;
-    addrC : commutative (add : A -> A -> A);
-    addNr : left_inverse zero opp add;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
+HB.factory Record Ring_of_MulMonoid A of MulMonoid.axioms A := {
+  zero : A;
+  add : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+  opp : A -> A;
+  addrC : commutative (add : A -> A -> A);
+  addNr : left_inverse zero opp add;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
 
-  Variable a : axioms.
+HB.builders Context A (a : Ring_of_MulMonoid.axioms A).
 
   Definition to_AddMonoid_of_Type :=
-    AddMonoid_of_Type.Axioms_ A (zero a) (add a) (addrA a) (add0r a) (addr0 a).
+    AddMonoid_of_Type.Axioms A zero_a add_a addrA_a add0r_a addr0_a.
 
-  Elpi hb.canonical A to_AddMonoid_of_Type.
+  HB.instance A to_AddMonoid_of_Type.
 
   Definition to_AbGroup_of_AddMonoid :=
-    AbGroup_of_AddMonoid.Axioms_ A (opp a) (addrC a) (addNr a).
+    AbGroup_of_AddMonoid.Axioms A opp_a addrC_a addNr_a.
 
-  Elpi hb.canonical A to_AbGroup_of_AddMonoid.
+  HB.instance A to_AbGroup_of_AddMonoid.
 
   Definition to_Ring_of_AddMulMonoid :=
-    Ring_of_AddMulMonoid.Axioms_ A (opp a) (addrC a) (addNr a) (mulrDl a) (mulrDr a).
+    Ring_of_AddMulMonoid.Axioms A opp_a addrC_a addNr_a mulrDl_a mulrDr_a.
 
-  Elpi hb.canonical A to_Ring_of_AddMulMonoid.
+  HB.instance A to_Ring_of_AddMulMonoid.
 
-Elpi hb.end.
+HB.end.
 
 End V3.
 
@@ -234,16 +213,16 @@ End Theory.
 (* Instance *)
 
 Definition Z_mulmonoid_axioms :=
-  MulMonoid_of_Type.Axioms_ Z 1%Z Z.mul Z.mul_assoc Z.mul_1_l Z.mul_1_r.
+  MulMonoid_of_Type.Axioms Z 1%Z Z.mul Z.mul_assoc Z.mul_1_l Z.mul_1_r.
 
-Elpi hb.canonical Z Z_mulmonoid_axioms.
+HB.instance Z Z_mulmonoid_axioms.
 
 Definition Z_ring_axioms :=
-  Ring_of_MulMonoid.Axioms_ Z 0%Z Z.add
+  Ring_of_MulMonoid.Axioms Z 0%Z Z.add
     Z.add_assoc Z.add_0_l Z.add_0_r
     Z.opp Z.add_comm Z.add_opp_diag_l
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
-Elpi hb.canonical Z Z_ring_axioms.
+HB.instance Z Z_ring_axioms.
 
 *)

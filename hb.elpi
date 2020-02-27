@@ -41,32 +41,35 @@ factory-fun->term T Src Tgt FT :- !, std.do! [
 % [factory-provides F ML] states that the factory ML
 % provides instances of ML
 pred factory-provides i:factoryname, o:list mixinname.
-factory-provides Factory ML :- std.do! [
+factory-provides FactoryAlias ML :- std.do! [
+  factory-alias->gref FactoryAlias Factory,
   std.findall (from Factory T_ F_) All,
   std.map All extract-mix ML,
 ].
 
+% TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
+% Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
+pred located->gref i:string, i:list located, o:gref.
+located->gref _ [loc-gref GR|_] GR.
+located->gref _ [loc-abbreviation Abbrev|_] GR :- phant-abbrev GR _ Abbrev, !.
+located->gref S [loc-abbreviation _|_] _ :- coq.error S "is an abbreviation out of the control of HB".
+located->gref S [loc-modpath _|_] _ :- coq.error S "should be a factory, but is a module".
+located->gref S [loc-modtypath _|_] _ :- coq.error S "should be a factory, but is a module type".
+located->gref S [] _ :- coq.error "Could not locate name" S.
+
 % TODO: generalize/rename when we support parameters
 pred argument->gref i:argument, o:gref.
-argument->gref (str S) GR :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
-argument->gref X _ :- coq.error "not a string:" X.
+argument->gref (str S) GR :-located->gref S {coq.locate-all S} GR.
+argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
 pred argument->term i:argument, o:term.
-argument->term (str S) (global GR) :- !, std.assert! (coq.locate S GR) "cannot locate a factory".
+argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
 argument->term (trm T) T :- !, std.assert-ok! (coq.typecheck T _) "not well typed term".
-argument->term X _ :- coq.error "not a term:" X.
+argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
-% TODO: document
-pred mk-mixin-provided-by i:factoryname, i:list mixinname, o:list prop.
-mk-mixin-provided-by F ML CL :-
-  std.map ML (x\r\ r = factories-provide-mixins.mixin-provided-by F x) CL.
-
-pred factories-provide-mixins.mixin-provided-by i:mixinname, o:factoryname.
-pred factories-provide-mixins i:list factoryname, o:list mixinname, o:list prop.
-factories-provide-mixins GRFS ML Clauses :- std.do! [
+pred factories-provide-mixins i:list factoryname, o:list mixinname.
+factories-provide-mixins GRFS ML :- std.do! [
   std.map GRFS factory-provides MLUnsortedL,
-  std.map2 GRFS MLUnsortedL mk-mixin-provided-by PL,
-  std.flatten PL Clauses,
   std.flatten MLUnsortedL MLUnsorted,
   toposort-mixins MLUnsorted ML,
 ].
@@ -149,11 +152,11 @@ get-class-constructor (indt S) (global (indc K)) :-
 
 pred gref->modname i:mixinname, o:id.
 gref->modname GR ModName :-
-  coq.gr->path GR Path,
+  coq.gref->path GR Path,
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for " GR).
 
 pred term->modname i:structure, o:id.
-term->modname T ModName :- gref->modname {term->gr T} ModName.
+term->modname T ModName :- gref->modname {term->gref T} ModName.
 
 % [instanciate-mixin T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
@@ -162,10 +165,11 @@ term->modname T ModName :- gref->modname {term->gr T} ModName.
 %            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
 % thus instanciating an abstraction on mixin M_i with X_i
 pred instanciate-mixin i:term, i:mixinname, i:term, o:term.
-instanciate-mixin T M (fun _ Tm F) (F X) :-
+instanciate-mixin T M (fun _ Tm F) R :-
   safe-dest-app Tm (global TmGR) _,
-  factory-alias TmGR M, !,
-  mixin-for T M X, !.
+  factory-alias->gref TmGR M, !,
+  mixin-for T M X, !,
+  R = F X.
 instanciate-mixin T M (fun N Ty F) (fun N Ty FX) :- !,
   pi m\ instanciate-mixin T M (F m) (FX m).
 instanciate-mixin _ _ F F.
@@ -174,7 +178,7 @@ instanciate-mixin _ _ F F.
 % (mtrm ML F) and perform the substitution as above
 % for every mixin-for entry out of the list ML = [M_0, .., M_n].
 pred mterm->term i:term, i:mterm, o:term.
-mterm->term T (mtrm ML F) SFX :- std.do![
+mterm->term T (mtrm ML F) SFX :- std.do! [
   std.assert-ok! (coq.typecheck F Ty) "mtrm->term: F illtyped",
   mk-eta (-1) Ty F EtaF,
   subst-fun [T] EtaF FT,
@@ -185,8 +189,13 @@ mterm->term T (mtrm ML F) SFX :- std.do![
 % (through factory-requires if it exist, otherwise gr-deps)
 % and instanciates all of them through mixin-src, and fails if it cannot.
 pred mgref->term i:term, i:gref, o:term.
-mgref->term T GR X :- factory-requires GR ML, !, mterm->term T (mtrm ML (global GR)) X.
-mgref->term T GR X :- !, gr-deps GR ML, !, mterm->term T (mtrm ML (global GR)) X.
+mgref->term T GR X :- factory-requires GR ML, !, std.do! [
+  mterm->term T (mtrm ML (global GR)) X
+].
+mgref->term T GR X :- !, std.do! [
+  std.assert! (gr-deps GR ML) "BUG: gr-deps should never fail",
+  mterm->term T (mtrm ML (global GR)) X
+].
 
 
 % [mixin-srcs T X MSL] states that MSL is a list of [mixin-src T m X]
@@ -195,8 +204,8 @@ mgref->term T GR X :- !, gr-deps GR ML, !, mterm->term T (mtrm ML (global GR)) X
 pred mixin-srcs i:term, i:term, o:list prop.
 mixin-srcs T X MSL :- std.do! [
   std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
-  term->gr XTy Src,
-  factory-alias Src Factory,
+  term->gref XTy Src,
+  factory-alias->gref Src Factory,
   factory-provides Factory ML,
   % TODO: skip mixins for which there is already a source.
   std.map ML (m\r\ r = mixin-src T m X) MSL
@@ -207,8 +216,8 @@ mixin-srcs T X MSL :- std.do! [
 pred mixin-for o:term, o:mixinname, o:term.
 mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
-  term->gr Ty Src,
-  factory-alias Src Factory,
+  term->gref Ty Src,
+  factory-alias->gref Src Factory,
   if (M = Factory) (MI = Tm) (
       factory-fun->term T Factory M F,
       subst-fun [Tm] F MI
@@ -227,7 +236,7 @@ has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
 pred local-structures i:term, o:list term.
 local-structures TyTrm StructL :- std.do! [
-  std.filter {coq.CS.db} (has-cs-instance {term->gr TyTrm}) DBGTyL,
+  std.filter {coq.CS.db} (has-cs-instance {term->gref TyTrm}) DBGTyL,
   std.map DBGTyL cs-structure StructL,
 ].
 
@@ -246,7 +255,7 @@ ty-deps (prod N S R) ML' :- !,
   @pi-decl N S x\
     ty-deps (R x) ML,
     safe-dest-app S HD _,
-    if (HD = global GR, factory-alias GR F, from  _ F _, !)
+    if (HD = global GR, factory-alias->gref GR F, from  _ F _, !)
       (ML' = [F|ML]) (ML' = ML).
 ty-deps Ty ML :- whd1 Ty Ty1, !, ty-deps Ty1 ML.
 ty-deps _Ty [].
@@ -306,23 +315,29 @@ mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
 mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
   mk-phant-abbrev.term K {mk-app F [{{lib:@hb.id _ _}}]} AL K' FAbbrev.
 
-pred mk-phant-abbrev i:string, i:phant-term, o:constant.
-mk-phant-abbrev N (phant-trm AL T) C :- std.do! [
+pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
+mk-phant-abbrev N (phant-trm AL T) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.typecheck T _TTy) "mk-phant-abbrev: T illtyped",
   coq.env.add-const NC T _ ff ff C,
-  mk-phant-abbrev.term 0 (global (const C)) AL NParams Abbrev,
-  coq.notation.add-abbreviation N NParams Abbrev tt ff
+  mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
+  coq.notation.add-abbreviation N NParams AbbrevT tt tt Abbrev,
 ].
 
-% [acc-factory-aliases GR] makes a phantom abbreviation for F
-pred acc-factory-aliases i:gref, o:list prop.
-acc-factory-aliases GR [] :- factory-alias GR _, !.
-acc-factory-aliases GR Aliases :- !,
+% [factory-alias->gref X GR] when X is already a factory X = GR
+% however, when X is a phantom abbreviated gref, we find the underlying
+% factory gref GR associated to it.
+pred factory-alias->gref i:gref, o:gref.
+factory-alias->gref PhGR GR :- phant-abbrev GR PhGR _, !.
+factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
+
+% [acc-phant-abbrev Str GR Acc] makes a phantom abbreviation for F
+pred acc-phant-abbrev i:string, i:gref, o:list prop.
+acc-phant-abbrev _Str GR [] :- factory-alias->gref GR _, !.
+acc-phant-abbrev Str GR [phant-abbrev GR (const PhC) Abbrev] :- !, std.do! [
   mk-phant-mixins (global GR) PhGR,
-  PhantAbbrevName is "axioms_",
-  mk-phant-abbrev PhantAbbrevName PhGR PhC,
-  Aliases = [factory-alias GR GR, factory-alias (const PhC) GR].
+  mk-phant-abbrev Str PhGR PhC Abbrev
+].
 
 % [mk-phant-unify X1 X2 PF PUF] states that PUF is a phant-term that
 % is starts with unifing X1 and X2 and then outputs PF.
@@ -410,8 +425,8 @@ declare-instances T [class Class Struct ML|Rest] :-
   mterm->term T (mtrm ML KC) KCApp, % we can build it
   not (local-structure T Struct), % not already built
   !,
-  term->gr T TGR,
-  coq.gr->id TGR TID,
+  term->gref T TGR,
+  coq.gref->id TGR TID,
   Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
   get-structure-constructor Struct KS,
@@ -424,16 +439,20 @@ declare-instances T [class Class Struct ML|Rest] :-
 declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
 
-pred main-factory-requires i:gref, i:list factoryname, o:list prop.
-main-factory-requires GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
-  factories-provide-mixins GRFS ML _,
+% [main-factory-requires Str GR FL CL]
+% computes the list of mixins ML provided by FL,
+% creates a clause in CL stating that GR requires ML (factory-requires ..), and
+% creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
+pred main-factory-requires i:string, i:gref, i:list factoryname, o:list prop.
+main-factory-requires Str GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
+  factories-provide-mixins GRFS ML,
   FactoryRequires = factory-requires GR ML,
-  acc-factory-aliases GR Aliases
+  acc-phant-abbrev Str GR Aliases
 ].
 
-pred main-mixin-requires i:gref, i:list factoryname, o:list prop.
-main-mixin-requires GR GRFS [From|PO] :- !, std.do! [
-  main-factory-requires GR GRFS PO,
+pred main-mixin-requires i:string, i:gref, i:list factoryname, o:list prop.
+main-mixin-requires Str GR GRFS [From|PO] :- !, std.do! [
+  main-factory-requires Str GR GRFS PO,
   % register factory
   PO => std.do! [
     coq.env.typeof GR (prod T TTy _),
@@ -455,9 +474,9 @@ postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do!
   coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
 ].
 
-pred main-declare-context i:term, i:list factoryname.
-main-declare-context T GRFS :-  std.do! [
-  factories-provide-mixins GRFS ML _,
+pred main-declare-context i:term, i:list factoryname, o:list prop.
+main-declare-context T GRFS MSL :-  std.do! [
+  factories-provide-mixins GRFS ML,
   std.fold ML [] (postulate-mixin T) MSL,
   MSL => declare-instances T {findall-classes},
   std.forall MSL (ms\ acc current (clause _ _ ms)),
@@ -471,7 +490,7 @@ gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
   decl x N Src =>
   gather-last-product (Tgt x) (some Src) R1 R2.
 gather-last-product End (some Last) LastGR EndGR :-
-  term->gr End EndGR, term->gr Last LastGR.
+  term->gref End EndGR, term->gref Last LastGR.
 
 pred factory-comp i:term, i:gref, i:mterm, i:gref, i:gref, o:term.
 factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
@@ -489,8 +508,7 @@ factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
 % declares a factory by composing F and G.
 pred declare-factory-from
   i:gref, i:term, i:gref, i:gref, i:list prop, o:list prop.
-declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI]
- :- !, FromI => std.do! [
+declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.do! [
   std.assert-ok! (coq.typecheck F (prod TName TTy _)) "declare-factory-from: F is not a function",
   factory-requires Src ML,
 
@@ -509,9 +527,10 @@ pred main-declare-factory-fun i:term, i:list prop, o:list prop.
 main-declare-factory-fun F PI PO :- !, std.do! [
   PI => std.do! [
     std.assert-ok! (coq.typecheck F Ty) "main-declare-factory-fun: F illtyped",
-    gather-last-product Ty none Src MidAlias,
+    gather-last-product Ty none SrcAlias MidAlias,
+    factory-alias->gref SrcAlias Src,
     factory-requires Src ML,
-    factory-alias MidAlias Mid,
+    factory-alias->gref MidAlias Mid,
     factory-provides Mid AllTgts,
     std.filter AllTgts (t\ not (std.mem! ML t)) Tgts,
   ],
@@ -520,11 +539,11 @@ main-declare-factory-fun F PI PO :- !, std.do! [
 
 % [export Module] exports a Module now adds it to the collection of
 % modules to export in the end
+pred to-export o:modpath.
 pred export i:modpath.
 export Module :- !,
   coq.env.export-module Module,
   acc current (clause _ _ (to-export Module)).
-
 
 pred mk-mlams i:term, i:list mixinname, i:term, o:term.
 mk-mlams T ML X MLX :- under-mixins T ML (body\ body = X) MLX.
@@ -533,10 +552,11 @@ mk-mlams T ML X MLX :- under-mixins T ML (body\ body = X) MLX.
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
 % of the package structure.
+pred exported-op o:constant, o:constant. % memory
 pred export-1-operation i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
 export-1-operation _ _ _ none EX EX :- !. % not a projection, no operation
 export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
-  coq.gr->id (const Poperation) Name,
+  coq.gref->id (const Poperation) Name,
   (@pi-decl `s` Struct s\ sigma Carrier Class MSL DirtyTy Copies\ std.do! [
       Carrier = app[Psort, s],
       Class = app[Pclass, s],
@@ -610,7 +630,7 @@ declare-coercion SortProjection ClassProjection
   std.assert-ok! (coq.typecheck SCoeBody STy) "declare-coercion: SCoeBody illtyped",
 
   coq.env.add-const SName SCoeBody STy ff ff SC,
-  coq.coercion.declare (coercion (const SC) 0 {term->gr StructureF} (grefclass {term->gr StructureT})) tt,
+  coq.coercion.declare (coercion (const SC) 0 {term->gref StructureF} (grefclass {term->gref StructureT})) tt,
   coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
 
@@ -728,14 +748,14 @@ declare-sort-coercion (global StructureName) (global Proj) :-
 
 pred main-declare-structure i:string, i:list gref.
 main-declare-structure Module GRFS :- std.do! [
-  factories-provide-mixins GRFS  ML _,
+  factories-provide-mixins GRFS  ML,
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
   coq.env.begin-module Module none,
 
   declare-class ML  ClassName Factories,
   ClassRequires = factory-requires (ClassName) [],
-  ClassAlias = (factory-alias ClassName ClassName),
+  ClassAlias = (factory-alias->gref ClassName ClassName),
 
   declare-structure ClassName  Structure SortProjection ClassProjection,
   CurrentClass = (class ClassName Structure ML),
@@ -798,79 +818,234 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   coq.univ.new [] U,
   Ty = sort (typ U),
   coq.env.add-const TName _ Ty tt tt T, % no body, local -> a variable
-  main-declare-context (global (const T)) GRFS,
+  main-declare-context (global (const T)) GRFS _,
   acc current (clause _ _ (current-decl Decl))
 ].
 
 pred extract-local-factory i:prop, o:term.
 extract-local-factory (local-factory F) F.
 
-pred main-end-declare.
-main-end-declare :- std.do! [
-  current-decl Decl,
-  std.findall (mixin-src T_ M_ X_) AllPostulatedMixins,
-  std.map AllPostulatedMixins mixin-src-name ML,
-  std.assert! (coq.locate "axioms" GR)
-    "you must define a term named axioms, typically a record",
-  if (GR = indt AxiomsRecord)
-    (std.assert! (coq.env.indt AxiomsRecord _ _ _ _ [K] _)
-      "axioms should be a record, not a general inductive",
-     GRK = indc K)
-    (std.assert! (coq.locate "Axioms" GRK)
-      "axioms is not a record and no Axioms pseudo constructor is defined"),
-  if (coq.gr->id GRK "Axioms") (PackagerName = "Axioms_") (PackagerName = "Axioms"),
+pred main-end-declare-builders.
+main-end-declare-builders :- std.do! [
+  current-decl (builders-for-factory GR),
 
   coq.env.end-section,
 
-  mk-phant-mixins (global GRK) PhGRK,
-  mk-phant-abbrev PackagerName PhGRK _,
+  std.findall (local-factory F_) LFIL,
+  std.map LFIL extract-local-factory TS,
+  std.fold TS [] main-declare-factory-fun Clauses,
 
-  if (Decl = mixin-decl) (!, main-mixin-requires GR ML Props, Clauses = []) (
-    Decl = factory-decl, !,
-    std.findall (local-factory F_) LFIL,
-    std.map LFIL extract-local-factory TS,
-    main-factory-requires GR ML Props,
-    Props => std.fold TS [] main-declare-factory-fun Clauses
-  ),
-  coq.env.begin-module "Exports" none,
-  (std.forall Props c\ acc current (clause _ _ c)),
+  % TODO: Do we need this module?
+  coq.gref->path GR Path,
+  std.rev Path [_,M|_],
+  Name is M ^ "_Exports",
+  coq.env.begin-module Name none,
   (std.forall Clauses c\ acc current (clause _ _ c)),
 
-  std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
-  coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
-
   coq.env.end-module Exports,
-  coq.env.end-module _Module,
+  coq.env.end-module _,
   export Exports,
 ].
 
-pred main-declare-canonical i:term, i:list term.
-main-declare-canonical T FIL :- std.do! [
-  std.forall FIL (f\ acc current (clause _ _ (local-factory f))),
+pred main-declare-canonical-instances i:term, i:list term.
+main-declare-canonical-instances T FIL :- std.do! [
+  if (current-decl (builders-for-factory _))
+     (std.forall FIL (f\ acc current (clause _ _ (local-factory f))))
+     true,
   std.map FIL (mixin-srcs T) MSLL,
   canonical-mixins T CMSL,
   std.flatten [CMSL|MSLL] MSL,
   MSL => declare-instances T {findall-classes},
 ].
 
-pred extract-to-export i:prop, o:modpath.
-extract-to-export (to-export Module) Module.
+pred main-begin-declare-builders i:context-decl.
+main-begin-declare-builders (context-item ID T none Factories) :- std.do! [
+  Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
+  coq.env.begin-module Name none,
+  coq.env.begin-section Name,
+  std.assert! (T = sort (typ _)) "The first context item must be a type variable",
+  coq.univ.new [] U,
+  Ty = sort (typ U),
+  coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
+  TheType = global (const C),
+  builders-postulate-factories (Factories TheType) TheType [],
+].
 
-pred main-begin-export i:string.
-main-begin-export ModuleName :- !,
-  not (locally-exporting),
-  coq.env.begin-module ModuleName none.
+pred postulate-factory-abbrev i:term, i:id, i:factoryname, o:term.
+postulate-factory-abbrev TheType Name Falias TheFactory :- std.do! [
+  factory-alias->gref Falias F,
+  phant-abbrev F _ Fabv,
+  coq.notation.abbreviation Fabv [TheType] Package,
+  Msg is "Unable to declare factory " ^ Name,
+  std.assert-ok! (coq.typecheck-ty Package _) Msg,
+  coq.env.add-const Name _ Package tt tt C,
+  TheFactory = global (const C),
+].
 
-pred main-end-export.
-main-end-export :- !,
-  locally-exporting,
-  coq.env.end-module ModPath,
-  acc current (clause _ _ (to-export ModPath)).
+% Only record fields can be exported as operations.
+pred define-factory-operations i:term, i:term, i:gref.
+define-factory-operations TheType TheFactory (indt I) :- !,
+  coq.env.indt I _ NParams _ _ _ _,
+  NHoles is NParams - 1,
+  coq.CS.canonical-projections I PL,
+  std.forall PL (define-factory-operation TheType TheFactory NHoles).
+define-factory-operations _ _ _.
 
-pred main-exports i:string.
-main-exports ModuleName :-
-  std.findall (to-export M_) MEL,
-  std.map MEL extract-to-export MPL,
-  coq.env.begin-module ModuleName none,
-  std.forall MPL (m\ coq.env.export-module m),
-  coq.env.end-module _ModPath.
+pred define-factory-operation i:term, i:term, i:int, i:option constant.
+define-factory-operation _ _ _ none.
+define-factory-operation TheType TheFactory NHoles (some P) :-
+  mk-n-holes NHoles Holes,
+  std.append Holes [TheFactory] Holes_Factory,
+  T = app[global (const P), TheType|Holes_Factory],
+  std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
+  coq.gref->id (const P) Name,
+  coq.gref->id {term->gref TheFactory} F,
+  OpName is Name ^ "_" ^ F,
+  coq.notation.add-abbreviation OpName 0 T ff ff _.
+
+pred mk-n-holes i:int, o:list A.
+mk-n-holes 0 [] :- !.
+mk-n-holes N [HOLE_|R] :- M is N - 1, mk-n-holes M R.
+
+pred builders-postulate-factories i:context-decl, i:term, i:list mixinname.
+builders-postulate-factories (context-item ID T none _\ context-end) TheType GRML :- std.do! [
+  std.assert! (T = app[global GR, TheType|_]) "a factory must be a name applied to the type variable",
+  factory-alias->gref GR GRF,
+  factory-requires GRF FML,
+  std.append GRML FML GRFML,
+  main-declare-context TheType GRFML _,
+  postulate-factory-abbrev TheType ID GR TheFactory,
+  define-factory-operations TheType TheFactory GRF,
+  acc current (clause _ _ (current-decl (builders-for-factory GRF))),
+].
+builders-postulate-factories (context-item ID _ (some _) _) _ _ :-
+  coq.error "factories cannot be given a body:" ID.
+builders-postulate-factories (context-item ID1 _ none _\ context-item ID2 _ _ _) _ _ :-
+  coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
+
+pred name-of-asset-decl i:asset-decl, o:string.
+name-of-asset-decl (asset-parameter _ _ R) X :-
+  pi x\ name-of-asset-decl (R x) X.
+name-of-asset-decl (asset-record X _ _ _) X.
+name-of-asset-decl (asset-alias X _) X.
+
+kind asset type.
+type asset-mixin asset.
+type asset-factory asset.
+
+kind asset-decl type.
+type asset-parameter  id -> term -> (term -> asset-decl) -> asset-decl.
+type asset-record     id -> term -> id -> record-decl    -> asset-decl.
+type asset-alias      id -> term                         -> asset-decl.
+
+pred argument->asset i:argument, o:asset-decl.
+argument->asset (indt-decl (parameter Name Ty I)) (asset-parameter "T" Ty A) :- % TODO, take the name
+  @pi-decl Name Ty a\
+    argument->asset (indt-decl (I a)) (A a).
+argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
+argument->asset (const-decl Id (some (fun _ _ Bo)) (some (prod Name Src Ty))) (asset-parameter "T" Src A) :- !,
+  @pi-decl Name Src a\
+    argument->asset (const-decl Id (some (Bo a)) (some (Ty a))) (A a).
+argument->asset (const-decl Id (some Bo) (some Ty)) (asset-alias Id Bo) :- !,
+  std.assert! (var Ty) "Factories aliases should not be given a type".
+argument->asset X _ :- coq.error "Unsupported asset:" X.
+
+pred main-declare-asset i:asset-decl, i:asset.
+main-declare-asset (asset-parameter _ T Rest as R) D :- std.do! [
+  name-of-asset-decl R Module,
+  coq.env.begin-module Module none,
+  coq.env.begin-section Module,
+  std.assert! (T = sort (typ _)) "The first record parameter must be a type",
+  coq.univ.new [] U,
+  Ty = sort (typ U),
+  coq.env.add-const "T" _ Ty tt tt C, % no body, local -> a variable
+  TheType = global (const C),
+  spill-factory-param-factories (Rest TheType) [] TheType D
+].
+
+pred spill-factory-param-factories i:asset-decl, i:list factoryname, i:term, i:asset.
+spill-factory-param-factories (asset-parameter _ T Rest) GRFS TheType D :- std.do! [
+  std.assert! (T = app[global F, TheType]) "Factory not applied to X",
+  std.assert! (pi x y\ Rest x = Rest y) "Factories cannot be mentioned in the mixin",
+  Dummy = sort prop,
+  spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D
+].
+
+spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
+  std.assert! (D = asset-factory) "Mixins cannot be aliases",
+
+  (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
+  main-declare-context TheType {std.rev GRFS} Hyps,
+
+  std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory",
+  coq.env.add-const "axioms_" Ty1 _ ff ff C,
+
+  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+  std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
+  std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
+
+  Hyps => mgref->term TheType FK MFK,
+  std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
+  (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
+  coq.env.add-const "Axioms_" MFK MFKTyC ff ff CK,
+  GRK = const CK,
+
+  coq.env.end-section,
+
+  mk-phant-mixins (global GRK) PhGRK0,
+  if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
+  mk-phant-abbrev "Axioms" PhGRK _ _,
+
+  std.map Hyps mixin-src-name ML,
+  if (D = asset-mixin)
+     (coq.error "mixins must be records")
+     (main-factory-requires "axioms" (const C) ML Props),
+  coq.env.begin-module "Exports" none,
+  (std.forall Props c\ acc current (clause _ _ c)),
+  % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
+  % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
+  acc current (clause _ _ (factory-constructor (const C) GRK)),
+  coq.env.end-module Exports,
+  coq.env.end-module _Module,
+  export Exports,
+].
+
+pred append-phant-unify i:phant-term, o:phant-term.
+append-phant-unify (phant-trm LP T) (phant-trm LPU T) :-
+  std.append LP [unify-arg] LPU.
+
+spill-factory-param-factories (asset-record _ Sort _ Fields) GRFS TheType D :- std.do! [
+  % refresh implicit arguments, since many binders are now gone
+  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
+  if (D = asset-mixin) (Fields1 = Fields0)
+     (Fields1 = (field ff "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
+  Kname = "Axioms_",
+  RDecl = record "axioms_" Sort1 Kname Fields1,
+  main-declare-context TheType {std.rev GRFS} Hyps,
+  std.assert-ok! (coq.typecheck-indt-decl RDecl) "record declaration illtyped",
+  coq.env.add-indt RDecl R,
+  coq.env.end-section,
+  coq.env.indt R tt _ _ _ [K] _,
+  GRK = indc K,
+  mk-phant-mixins (global GRK) PhGRK0,
+  if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
+  mk-phant-abbrev "Axioms" PhGRK _ _,
+  std.map Hyps mixin-src-name ML,
+  if (D = asset-mixin)
+     (main-mixin-requires "axioms" (indt R) ML Props)
+     (main-factory-requires "axioms" (indt R) ML Props),
+  coq.env.begin-module "Exports" none,
+  (std.forall Props c\ acc current (clause _ _ c)),
+  std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
+  coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
+  acc current (clause _ _ (factory-constructor (indt R) GRK)),
+  coq.env.end-module Exports,
+  coq.env.end-module _Module,
+  export Exports,
+].
+
+pred copy-fields i:record-decl, o:record-decl.
+copy-fields end-record end-record.
+copy-fields (field C N T R) (field C N T1 R1) :-
+  copy T T1,
+  pi x\ copy x x => copy-fields (R x) (R1 x).

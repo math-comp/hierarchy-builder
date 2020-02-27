@@ -6,27 +6,25 @@ From elpi Require Import elpi.
 (**************************************************************************)
 
 Module Stage0.
-Elpi hb.structure TYPE.
+HB.structure TYPE.
 
-Elpi hb.declare_mixin Ring_of_TYPE A.
-  Record axioms := Axioms {
-    zero : A;
-    one : A;
-    add : A -> A -> A;
-    opp : A -> A;
-    mul : A -> A -> A;
-    addrA : associative add;
-    addrC : commutative add;
-    add0r : left_id zero add;
-    addNr : left_inverse zero opp add;
-    mulrA : associative mul;
-    mul1r : left_id one mul;
-    mulr1 : right_id one mul;
-    mulrDl : left_distributive mul add;
-    mulrDr : right_distributive mul add;
-  }.
-Elpi hb.end.
-Elpi hb.structure Ring Ring_of_TYPE.axioms.
+HB.mixin Record Ring_of_TYPE A := {
+  zero : A;
+  one : A;
+  add : A -> A -> A;
+  opp : A -> A;
+  mul : A -> A -> A;
+  addrA : associative add;
+  addrC : commutative add;
+  add0r : left_id zero add;
+  addNr : left_inverse zero opp add;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+}.
+HB.structure Ring Ring_of_TYPE.axioms.
 
 (* Notations *)
 
@@ -63,12 +61,12 @@ End Theory.
 (* Instance *)
 
 Definition Z_ring_axioms :=
-  Ring_of_TYPE.Axioms_ Z 0%Z 1%Z Z.add Z.opp Z.mul
+  Ring_of_TYPE.Axioms Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
-Elpi hb.canonical Z Z_ring_axioms.
+HB.instance Z Z_ring_axioms.
 
 Example test1 (m n : Z) : (m + n) - n + 0 = m.
 Proof. by rewrite addrNK addr0. Qed.
