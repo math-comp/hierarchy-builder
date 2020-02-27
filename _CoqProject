@@ -1,11 +1,11 @@
 hb.v
 
-demo1/stage0.v
-demo1/stage1.v
-demo1/stage2.v
-demo1/stage3.v
-demo1/stage4.v
-demo1/stage5.v
+demo1/hierarchy_0.v
+demo1/hierarchy_1.v
+demo1/hierarchy_2.v
+demo1/hierarchy_3.v
+demo1/hierarchy_4.v
+demo1/hierarchy_5.v
 
 demo2/classical.v
 demo2/stage10.v

@@ -1,24 +1,51 @@
-Require Import String ssreflect ssrfun ZArith hb.
-From elpi Require Import elpi.
+From Coq Require Import ssreflect ssrfun.
+Require Import hb.
 
 (**************************************************************************)
-(* Stage 2: AddComoid -> +AddAG+ -> Ring                                  *)
+(* Stage 4: +AddMonoid+ -> AddComoid ---> AddAG ----> Ring                *)
+(*                                   \             /                      *)
+(*                                    -> SemiRing -                       *)
 (**************************************************************************)
-
-Module Stage2.
 
 HB.structure TYPE.
 
-HB.mixin Record AddComoid_of_TYPE A := {
+(* Begin change *)
+HB.mixin Record AddMonoid_of_TYPE S := {
+  zero : S;
+  add : S -> S -> S;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+}.
+HB.structure AddMonoid AddMonoid_of_TYPE.axioms.
+
+HB.mixin Record AddComoid_of_AddMonoid A of AddMonoid.axioms A := {
+  addrC : commutative (add : A -> A -> A);
+}.
+HB.factory Record AddComoid_of_TYPE A := {
   zero : A;
   add : A -> A -> A;
   addrA : associative add;
   addrC : commutative add;
   add0r : left_id zero add;
 }.
+
+HB.builders Context A (a : AddComoid_of_TYPE.axioms A).
+
+  Fact addr0 : right_id zero_a add_a.
+  Proof. by move=> x; rewrite addrC_a add0r_a. Qed.
+
+  Definition to_AddMonoid_of_TYPE :=
+    AddMonoid_of_TYPE.Axioms A zero_a add_a addrA_a add0r_a addr0.
+  HB.instance A to_AddMonoid_of_TYPE.
+
+  Definition to_AddComoid_of_AddMonoid :=
+    AddComoid_of_AddMonoid.Axioms A addrC_a.
+  HB.instance A to_AddComoid_of_AddMonoid.
+HB.end.
 HB.structure AddComoid AddComoid_of_TYPE.axioms.
 
-(* Begin change *)
+(* End change *)
 
 HB.mixin Record AddAG_of_AddComoid A of AddComoid.axioms A := {
   opp : A -> A;
@@ -43,11 +70,23 @@ HB.builders Context A (a : AddAG_of_TYPE.axioms A).
   Definition to_AddAG_of_AddComoid :=
     AddAG_of_AddComoid.Axioms A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
-
 HB.end.
 HB.structure AddAG AddAG_of_TYPE.axioms.
 
-HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
+HB.mixin Record SemiRing_of_AddComoid A of AddComoid.axioms A := {
+  one : A;
+  mul : A -> A -> A;
+  mulrA : associative mul;
+  mul1r : left_id one mul;
+  mulr1 : right_id one mul;
+  mulrDl : left_distributive mul add;
+  mulrDr : right_distributive mul add;
+  mul0r : left_zero zero mul;
+  mulr0 : right_zero zero mul;
+}.
+HB.structure SemiRing AddComoid.axioms SemiRing_of_AddComoid.axioms.
+
+HB.factory Record Ring_of_AddAG A of AddAG.axioms A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -56,6 +95,30 @@ HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
+
+HB.builders Context A (a : Ring_of_AddAG.axioms A).
+
+  Fact mul0r : left_zero zero mul_a.
+  Proof.
+  move=> x; rewrite -[LHS]add0r addrC.
+  rewrite -{2}(addNr (mul_a x x)) (addrC (opp _)) addrA.
+  by rewrite -mulrDl_a add0r addrC addNr.
+  Qed.
+
+  Fact mulr0 : right_zero zero mul_a.
+  Proof.
+  move=> x; rewrite -[LHS]add0r addrC.
+  rewrite -{2}(addNr (mul_a x x)) (addrC (opp _)) addrA.
+  by rewrite -mulrDr_a add0r addrC addNr.
+  Qed.
+
+  Definition to_SemiRing_of_AddComoid :=
+    SemiRing_of_AddComoid.Axioms A _ mul_a mulrA_a mulr1_a mul1r_a
+      mulrDl_a mulrDr_a (mul0r) (mulr0).
+  HB.instance A to_SemiRing_of_AddComoid.
+HB.end.
+
+(* End change *)
 HB.factory Record Ring_of_AddComoid A of AddComoid.axioms A := {
   opp : A -> A;
   one : A;
@@ -129,8 +192,9 @@ Section Theory.
 Variable R : Ring.type.
 Implicit Type (x : R).
 
-Lemma addr0 : right_id (@zero R) add.
-Proof. by move=> x; rewrite addrC add0r. Qed.
+(* Not general enough anymore, subsumed by Monoid addr0 *)
+(* Lemma addr0 : right_id (@zero R) add.
+Proof. by move=> x; rewrite addrC add0r. Qed. *)
 
 Lemma addrN : right_inverse (@zero R) opp add.
 Proof. by move=> x; rewrite addrC addNr. Qed.
@@ -142,18 +206,3 @@ Lemma addrNK x y : x + y - y = x.
 Proof. by rewrite -addrA subrr addr0. Qed.
 
 End Theory.
-
-(* Instance *)
-
-Definition Z_ring_axioms :=
-  Ring_of_TYPE.Axioms Z 0%Z 1%Z Z.add Z.opp Z.mul
-    Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
-    Z.mul_assoc Z.mul_1_l Z.mul_1_r
-    Z.mul_add_distr_r Z.mul_add_distr_l.
-
-HB.instance Z Z_ring_axioms.
-
-Example test1 (m n : Z) : (m + n) - n + 0 = m.
-Proof. by rewrite addrNK addr0. Qed.
-
-End Stage2.
