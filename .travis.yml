@@ -20,9 +20,9 @@ install:
  - OPAMROOT=$HOME/coq-8.11
  - opam init --disable-sandboxing -j 2 --compiler=4.05.0 -n -y
  - eval $(opam env)
+ - opam repository add coq-dev https://coq.inria.fr/opam/core-dev
  - opam repository add coq-released https://coq.inria.fr/opam/released
- - travis_wait opam install coq.8.11.0 -y
- - opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y
+ - travis_wait opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y
 
 matrix:
   include:
