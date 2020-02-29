@@ -708,7 +708,7 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
 % (that are previously declared fields recorded via field-for-mixin)
 pred synthesize-fields i:term, i:list mixinname,o:record-decl.
 synthesize-fields _T []     end-record.
-synthesize-fields T  [M|ML] (field ff Name MTy Fields) :- std.do! [
+synthesize-fields T  [M|ML] (field _ Name MTy Fields) :- std.do! [
   Name is {gref->modname M} ^ "_mixin",
   mgref->term T M MTy,
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
@@ -734,8 +734,8 @@ pred declare-structure i:factoryname, o:term, o:term, o:term.
 declare-structure ClassName Structure SortProjection ClassProjection :- std.do! [
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
-      field ff "sort" {{ Type }} s\
-      field ff "class" (app [global ClassName, s]) _\
+      field _ "sort" {{ Type }} s\
+      field _ "class" (app [global ClassName, s]) _\ % on Coq 8.11 we should replace _ with [canonical ff]
     end-record),
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare-structure: illtyped",
   coq.env.add-indt StructureDeclaration StructureName,
@@ -1023,7 +1023,7 @@ spill-factory-param-factories (asset-record _ Sort _ Fields) GRFS TheType D :- s
   % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
   if (D = asset-mixin) (Fields1 = Fields0)
-     (Fields1 = (field ff "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
+     (Fields1 = (field _ "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
   Kname = "Axioms_",
   RDecl = record "axioms_" Sort1 Kname Fields1,
   main-declare-context TheType {std.rev GRFS} Hyps,
