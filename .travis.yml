@@ -8,21 +8,45 @@ git:
 install:
  - curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh > install.sh
  - echo | sudo sh install.sh
+ - OPAMROOT=$HOME/coq-8.10
  - opam init --disable-sandboxing -j 2 --compiler=4.05.0 -n -y
  - eval $(opam env)
- - opam config var root
  - opam repository add coq-released https://coq.inria.fr/opam/released
- - travis_wait opam install coq-elpi.1.3.0 -y
+ - travis_wait opam install coq-8.10.2 coq-elpi.1.3.0 -y
+ - OPAMROOT=$HOME/coq-8.11
+ - opam init --disable-sandboxing -j 2 --compiler=4.05.0 -n -y
+ - eval $(opam env)
+ - opam repository add coq-released https://coq.inria.fr/opam/released
+ - travis_wait opam install coq-8.11.0 -y
+ - opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git -y
 
 matrix:
   include:
 
-  - env: TEST="test"
+  - env: TEST="Coq 8.10 + Coq-Elpi 1.3.0"
     os: linux
     addons:
       apt:
         sources:
         - avsm
+    cache:
+      directories:
+      - $HOME/coq-8.10
     script:
+    - OPAMROOT=$HOME/coq-8.10
+    - eval $(opam env)
+    - make
+
+  - env: TEST="Coq 8.11 + Coq-Elpi 1.3.1"
+    os: linux
+    addons:
+      apt:
+        sources:
+        - avsm
+    cache:
+      directories:
+      - $HOME/coq-8.11
+    script:
+    - OPAMROOT=$HOME/coq-8.11
     - eval $(opam env)
     - make
