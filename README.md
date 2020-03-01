@@ -68,6 +68,13 @@ Proof. by rewrite example. Qed.
 TODO:
 HB works on Coq 8.10 and 8.11. You can install it via opam or nix
 
+#### Demos
+
+- [demo1](demo1/) and [demo3](demo3/) declare and evolve a hierarchy up to
+  rings with various clients that are tested not to break when the hierarchy
+  evolves
+- [demo2](demo2/) TODO: explain the tricky thing
+
 #### The commands provided by hb
 
 - `HB.mixin` declares a mixin
