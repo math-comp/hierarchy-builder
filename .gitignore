@@ -13,9 +13,12 @@
 *.mllib.d
 *.mlpack.d
 *.native
+*.coq.d
 *.o
 *.v.d
 *.vio
+*.vos
+*.vok
 *.vo
 .coq-native/
 .csdp.cache
