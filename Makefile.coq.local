@@ -19,8 +19,12 @@ $(foreach N,$(shell seq 0 10),\
 
 ## demo1/
 
-# user_0 works on top of all 5 hierarchies
+# user_0 works on top of all 6 hierarchies
 VFILES+=$(foreach H,$(shell seq 0 5), demo1/test_$(H)_0.v)
 # user_3 on version 3 to 5
 VFILES+=$(foreach H,$(shell seq 3 5), demo1/test_$(H)_3.v)
 
+## demo3/
+
+# user_0 works on top of all 3 hierarchies
+VFILES+=$(foreach H,$(shell seq 0 2), demo3/test_$(H)_0.v)
