@@ -323,8 +323,8 @@ HB.builders Context U of TAddAG_Uniform.axioms U.
 HB.end.
 
 HB.structure Definition TAddAG :=
-   { A & TAddAG_Uniform.axioms (* TODO: should be replaced by type alias TAddAG *)
-   * TAddAG_wo_Uniform.axioms }. (* TODO: should be omitted *)
+   { A & TAddAG_Uniform.axioms A (* TODO: should be replaced by type alias TAddAG *)
+   * TAddAG_wo_Uniform.axioms A }. (* TODO: should be omitted *)
 
 HB.factory Definition JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axioms T :=
   (JoinTAddAG_wo_Uniform.axioms T).

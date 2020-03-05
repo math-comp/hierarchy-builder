@@ -13,8 +13,12 @@ Register Coq.Init.Datatypes.None as hb.none.
 Register Coq.Init.Datatypes.Some as hb.some.
 Register Coq.Init.Datatypes.pair as hb.pair.
 Register Coq.Init.Datatypes.prod as hb.prod.
-Register Coq.Init.Nat.mul as hb.mul.
 Register Coq.Init.Specif.sigT as hb.sigT.
+
+(* Coq's notation does not put P in type scope *)
+Declare Scope HB_scope.
+Notation "{ x  &  P }" := (sigT (fun x => (P)%type)) : HB_scope.
+Global Open Scope HB_scope.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -193,12 +197,6 @@ Elpi Accumulate lp:{{
 
 pred product->grefs i:term, o:list gref.
 product->grefs {{ lib:hb.prod lp:A lp:B  }} [GR|Rest] :- !,
-  type->gref B GR,
-  product->grefs A Rest.
-product->grefs {{ lib:hb.mul lp:A lp:B  }} [GR|Rest] :- !,
-  type->gref B GR,
-  product->grefs A Rest.
-product->grefs {{ lib:hb.pair lp:A lp:B  }} [GR|Rest] :- !,
   type->gref B GR,
   product->grefs A Rest.
 product->grefs {{ True }} [] :- !.
