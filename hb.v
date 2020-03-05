@@ -1,5 +1,6 @@
-Require Import String ssreflect ssrfun.
+From Coq Require Import String ssreflect ssrfun.
 From elpi Require Import elpi.
+Export String.StringSyntax.
 
 (** Technical definition from /Canonical Structures for the working Coq user/ *)
 Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
