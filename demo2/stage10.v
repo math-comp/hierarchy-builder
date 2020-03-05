@@ -10,7 +10,7 @@ Local Open Scope hb_scope.
 
 Module Stage10.
 
-HB.structure TYPE :=.
+HB.structure Definition TYPE := { A & True }.
 
 HB.mixin Record AddAG_of_TYPE A := {
   zero : A;
@@ -21,7 +21,7 @@ HB.mixin Record AddAG_of_TYPE A := {
   add0r : left_id zero add;
   addNr : left_inverse zero opp add;
 }.
-HB.structure AddAG := AddAG_of_TYPE.axioms.
+HB.structure Definition AddAG := { A & AddAG_of_TYPE.axioms A }.
 
 Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
@@ -115,7 +115,7 @@ Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Axioms A
   HB.instance A to_Ring_of_AddAG.
 HB.end.
 
-HB.structure Ring := Ring_of_TYPE.axioms.
+HB.structure Definition Ring := { A & Ring_of_TYPE.axioms A }.
 
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
@@ -127,7 +127,7 @@ HB.mixin Record Topological T := {
     (forall i, D i -> open (F i)) -> open (\bigcup_(i in D) F i);
   open_setI : forall X Y : set T, open X -> open Y -> open (setI X Y);
 }.
-HB.structure TopologicalSpace := Topological.axioms.
+HB.structure Definition TopologicalSpace := { A & Topological.axioms A }.
 
 Hint Extern 0 (open setT) => now apply: open_setT : core.
 
@@ -205,7 +205,7 @@ HB.mixin Record JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axioms T :=
   opp_continuous : continuous (opp : T -> T)
 }.
 
-HB.structure TAddAG := Topological.axioms * AddAG_of_TYPE.axioms * JoinTAddAG.axioms.
+HB.structure Definition TAddAG := { A & Topological.axioms A * AddAG_of_TYPE.axioms A * JoinTAddAG.axioms A }.
 
 (* Instance *)
 

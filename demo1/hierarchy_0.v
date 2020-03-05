@@ -5,7 +5,7 @@ From HB Require Import structures.
 (* Stage 0: +Ring+                                                        *)
 (**************************************************************************)
 
-HB.structure TYPE := .
+HB.structure Definition TYPE := { A & True }.
 
 HB.mixin Record Ring_of_TYPE A := {
   zero : A;
@@ -23,7 +23,7 @@ HB.mixin Record Ring_of_TYPE A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.structure Ring := Ring_of_TYPE.axioms.
+HB.structure Definition Ring := { A & Ring_of_TYPE.axioms A }.
 
 (* Notations *)
 

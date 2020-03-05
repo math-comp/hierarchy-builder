@@ -12,6 +12,9 @@ Register id_phant as hb.id.
 Register Coq.Init.Datatypes.None as hb.none.
 Register Coq.Init.Datatypes.Some as hb.some.
 Register Coq.Init.Datatypes.pair as hb.pair.
+Register Coq.Init.Datatypes.prod as hb.prod.
+Register Coq.Init.Nat.mul as hb.mul.
+Register Coq.Init.Specif.sigT as hb.sigT.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -178,7 +181,7 @@ Elpi Export HB.mixin.
   Syntax to declare a structure combing the axioms from [Factory1] ... [FactoryN]
 
   <<
-  HB.structure StructureName := Factory1.axioms * ... * FactoryN.axioms.
+  HB.structure Definition StructureName := { A & Factory1.axioms A * ... * FactoryN.axioms A }.
   >>
 
 *)
@@ -187,15 +190,35 @@ Elpi Command HB.structure.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-pred remove-star i:list argument, o:list argument.
-remove-star [] [].
-remove-star [str "*",Y|Z] [Y|Z1] :- remove-star Z Z1.
 
-main [str Module, str ":="] :- !, main-declare-structure Module [].
-main [str Module, str ":=", A | Args] :- remove-star Args FS, !,
-  std.map [A|FS] argument->gref GRFS, !,
+pred product->grefs i:term, o:list gref.
+product->grefs {{ lib:hb.prod lp:A lp:B  }} [GR|Rest] :- !,
+  type->gref B GR,
+  product->grefs A Rest.
+product->grefs {{ lib:hb.mul lp:A lp:B  }} [GR|Rest] :- !,
+  type->gref B GR,
+  product->grefs A Rest.
+product->grefs {{ lib:hb.pair lp:A lp:B  }} [GR|Rest] :- !,
+  type->gref B GR,
+  product->grefs A Rest.
+product->grefs {{ True }} [] :- !.
+product->grefs A [GR] :-
+  type->gref A GR.
+
+pred type->gref i:term, o:gref.
+type->gref (app[global Abbrev|_]) GR :- phant-abbrev GR Abbrev _.
+type->gref (app[global GR|_]) GR :- !.
+type->gref T _ :- coq.error "Not a factory:" {coq.term->string T}.
+
+pred sigT->grefs i:term, o:list gref.
+sigT->grefs {{ lib:@hb.sigT _ (fun a : lp:T => lp:(B a)) }} L :-
+  @pi-decl `a` T a\
+    product->grefs (B a) L.
+
+main [const-decl Module (some B) _] :- !,
+  sigT->grefs B GRFS, !,
   main-declare-structure Module GRFS.
-main _ :- coq.error "Usage: HB.structure <ModuleName> := <Factory1> * ... * <FactoryN>".
+main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A & <Factory1> A * ... * <FactoryN> A }".
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.

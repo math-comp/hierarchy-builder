@@ -7,7 +7,7 @@ HB.mixin Record Foo A := {
   ax : comb A op
 }.
 
-HB.structure S := Foo.axioms.
+HB.structure Definition S := { A & Foo.axioms A }.
 
 Set Printing All.
 Lemma test1 : True.

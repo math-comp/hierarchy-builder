@@ -66,7 +66,7 @@ located->gref S [] _ :- coq.error "Could not locate name" S.
 
 % TODO: generalize/rename when we support parameters
 pred argument->gref i:argument, o:gref.
-argument->gref (str S) GR :-located->gref S {coq.locate-all S} GR.
+argument->gref (str S) GR :- located->gref S {coq.locate-all S} GR.
 argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
 pred argument->term i:argument, o:term.

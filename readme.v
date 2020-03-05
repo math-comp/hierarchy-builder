@@ -8,7 +8,7 @@ HB.mixin Record AddComoid_of_Type A := {
   addrC : forall x y, add x y = add y x;
   add0r : forall x, add zero x = x;
 }.
-HB.structure AddComoid := AddComoid_of_Type.axioms.
+HB.structure Definition AddComoid := { A & AddComoid_of_Type.axioms A }.
 
 Notation "0" := zero.
 Infix "+" := add.
@@ -19,7 +19,7 @@ HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid.axioms A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.
-HB.structure AbelianGrp := AbelianGrp_of_AddComoid.axioms * AddComoid_of_Type.axioms.
+HB.structure Definition AbelianGrp := { A & AbelianGrp_of_AddComoid.axioms A * AddComoid_of_Type.axioms A }.
 
 Notation "- x" := (opp x).
 
