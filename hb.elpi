@@ -560,6 +560,15 @@ export Module :- !,
 pred mk-mlams i:term, i:list mixinname, i:term, o:term.
 mk-mlams T ML X MLX :- under-mixins T ML (body\ body = X) MLX.
 
+pred clean-op-ty i:list prop, i:term, i:term, i:term, o:term.
+clean-op-ty [] _ _ T1 T2 :- copy T1 T2.
+clean-op-ty [exported-op Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
+  gr-deps (const Po) ML,
+  mk-mlams SortPTheStructure ML (app [global (const C), TheStructure]) EtaC,
+  (pi L T R H S\
+    copy (app [global (const Po), T|L]) R :- hd-beta EtaC L H S, unwind H S R) =>
+    clean-op-ty Ops SortPTheStructure TheStructure T1 T2.
+
 % given an operation (a mixin projection) we generate a constant projection the
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
@@ -575,15 +584,7 @@ export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
       mixin-srcs Carrier Class MSL,
       MSL => mgref->term Carrier (const Poperation) (Body s),
       std.assert-ok! (coq.typecheck (Body s) DirtyTy) "export-1-operation: Body illtyped",
-      % makes the type of T nicer.
-      std.map EXI (x\r\ sigma Po C ML EtaC\
-        x = exported-op Po C,
-        gr-deps (const Po) ML,
-        mk-mlams Carrier ML (app [global (const C), s]) EtaC,
-        % TODO: optimze by populating exported-op with EtaC : term -> term instead of C
-        r = pi rest\ copy (app [global (const Po), _|rest]) (app [EtaC|rest])) Copies,
-      Copies => copy DirtyTy (BodyTy s)
-    ]
+      clean-op-ty EXI Carrier s DirtyTy (BodyTy s)]
   ),
   T = fun `x` Struct Body,
   Ty = prod `x` Struct BodyTy,
