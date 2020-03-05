@@ -7,7 +7,7 @@ Require Import hb.
 (*                      -> +BiNearRing+ -> SemiRing -                     *)
 (**************************************************************************)
 
-HB.structure TYPE.
+HB.structure TYPE :=.
 
 HB.mixin Record AddMonoid_of_TYPE S := {
   zero : S;
@@ -16,7 +16,7 @@ HB.mixin Record AddMonoid_of_TYPE S := {
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure AddMonoid AddMonoid_of_TYPE.axioms.
+HB.structure AddMonoid := AddMonoid_of_TYPE.axioms.
 
 HB.mixin Record AddComoid_of_AddMonoid A of AddMonoid.axioms A := {
   addrC : commutative (add : A -> A -> A);
@@ -42,7 +42,7 @@ HB.builders Context A (a : AddComoid_of_TYPE.axioms A).
     AddComoid_of_AddMonoid.Axioms A addrC_a.
   HB.instance A to_AddComoid_of_AddMonoid.
 HB.end.
-HB.structure AddComoid AddComoid_of_TYPE.axioms.
+HB.structure AddComoid := AddComoid_of_TYPE.axioms.
 
 (* End change *)
 
@@ -70,7 +70,7 @@ HB.builders Context A (a : AddAG_of_TYPE.axioms A).
     AddAG_of_AddComoid.Axioms A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
 HB.end.
-HB.structure AddAG AddAG_of_TYPE.axioms.
+HB.structure AddAG := AddAG_of_TYPE.axioms.
 
 (* Begin changes *)
 
@@ -85,7 +85,7 @@ HB.mixin Record BiNearRing_of_AddMonoid A of AddMonoid.axioms A := {
   mul0r : left_zero zero mul;
   mulr0 : right_zero zero mul;
 }.
-HB.structure BiNearRing AddMonoid.axioms BiNearRing_of_AddMonoid.axioms.
+HB.structure BiNearRing := AddMonoid.axioms * BiNearRing_of_AddMonoid.axioms.
 
 (* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
 (* we alias it for backward compatilibity and uniformity purposes *)
@@ -99,7 +99,7 @@ HB.end.
 
 (* End changes *)
 
-HB.structure SemiRing AddComoid.axioms SemiRing_of_AddComoid.axioms.
+HB.structure SemiRing := AddComoid.axioms * SemiRing_of_AddComoid.axioms.
 
 HB.factory Record Ring_of_AddAG A of AddAG.axioms A := {
   one : A;
@@ -184,7 +184,7 @@ HB.builders Context A (a : Ring_of_TYPE.axioms A).
   HB.instance A to_Ring_of_AddComoid.
 HB.end.
 
-HB.structure Ring Ring_of_TYPE.axioms.
+HB.structure Ring := Ring_of_TYPE.axioms.
 
 (* Notations *)
 

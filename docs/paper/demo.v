@@ -9,7 +9,7 @@ HB.mixin Record Monoid_of_Type A := {
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure Monoid Monoid_of_Type.axioms.
+HB.structure Monoid := Monoid_of_Type.axioms.
 
 HB.mixin Record Ring_of_Monoid A of Monoid.axioms A := {
   one : A;
@@ -23,7 +23,7 @@ HB.mixin Record Ring_of_Monoid A of Monoid.axioms A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.structure Ring Monoid.axioms Ring_of_Monoid.axioms.
+HB.structure Ring := Monoid.axioms * Ring_of_Monoid.axioms.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -63,14 +63,14 @@ HB.mixin Record Monoid_of_Type A := {
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure Monoid Monoid_of_Type.axioms.
+HB.structure Monoid := Monoid_of_Type.axioms.
 
 HB.mixin Record AbelianGroup_of_Monoid A of Monoid.axioms A := {
   opp : A -> A;
   addrC : commutative (add : A -> A -> A);
   addNr : left_inverse zero opp add;
 }.
-HB.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
+HB.structure AbelianGroup := Monoid.axioms * AbelianGroup_of_Monoid.axioms.
 
 HB.mixin Record Ring_of_AbelianGroup A of AbelianGroup.axioms A := {
   one : A;
@@ -81,7 +81,7 @@ HB.mixin Record Ring_of_AbelianGroup A of AbelianGroup.axioms A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
+HB.structure Ring := AbelianGroup.axioms * Ring_of_AbelianGroup.axioms.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -147,14 +147,14 @@ HB.mixin Record Monoid_of_Type A := {
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure Monoid Monoid_of_Type.axioms.
+HB.structure Monoid := Monoid_of_Type.axioms.
 
 HB.mixin Record AbelianGroup_of_Monoid A of Monoid.axioms A := {
   opp : A -> A;
   addrC : commutative (add : A -> A -> A);
   addNr : left_inverse zero opp add;
 }.
-HB.structure AbelianGroup Monoid.axioms AbelianGroup_of_Monoid.axioms.
+HB.structure AbelianGroup := Monoid.axioms * AbelianGroup_of_Monoid.axioms.
 
 HB.mixin Record SemiRing_of_Monoid A of Monoid.axioms A := {
   one : A;
@@ -167,7 +167,7 @@ HB.mixin Record SemiRing_of_Monoid A of Monoid.axioms A := {
   mul0r : left_zero zero mul;
   mulr0 : right_zero zero mul;
 }.
-HB.structure SemiRing Monoid.axioms SemiRing_of_Monoid.axioms.
+HB.structure SemiRing := Monoid.axioms * SemiRing_of_Monoid.axioms.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -214,7 +214,7 @@ HB.builders Context (A : Type) (f : Ring_of_AbelianGroup.axioms A).
   HB.instance A to_SemiRing_of_Monoid.
 
 HB.end.
-HB.structure Ring AbelianGroup.axioms Ring_of_AbelianGroup.axioms.
+HB.structure Ring := AbelianGroup.axioms * Ring_of_AbelianGroup.axioms.
 
 HB.factory Record Ring_of_Monoid A of Monoid.axioms A := {
   one : A;

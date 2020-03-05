@@ -178,7 +178,7 @@ Elpi Export HB.mixin.
   Syntax to declare a structure combing the axioms from [Factory1] ... [FactoryN]
 
   <<
-  HB.structure StructureName Factory1.axioms ... FactoryN.axioms.
+  HB.structure StructureName := Factory1.axioms * ... * FactoryN.axioms.
   >>
 
 *)
@@ -187,10 +187,15 @@ Elpi Command HB.structure.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str Module|FS] :- std.map FS argument->gref GRFS, !,
-  % compute all the mixins to be part of the structure
+pred remove-star i:list argument, o:list argument.
+remove-star [] [].
+remove-star [str "*",Y|Z] [Y|Z1] :- remove-star Z Z1.
+
+main [str Module, str ":="] :- !, main-declare-structure Module [].
+main [str Module, str ":=", A | Args] :- remove-star Args FS, !,
+  std.map [A|FS] argument->gref GRFS, !,
   main-declare-structure Module GRFS.
-main _ :- coq.error "Usage: HB.structure <ModuleName> <FactoryGR>*".
+main _ :- coq.error "Usage: HB.structure <ModuleName> := <Factory1> * ... * <FactoryN>".
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.

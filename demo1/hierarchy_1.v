@@ -5,7 +5,7 @@ Require Import hb.
 (* Stage 1: +AddComoid+ -> Ring                                           *)
 (**************************************************************************)
 
-HB.structure TYPE.
+HB.structure TYPE :=.
 
 (* Begin change *)
 
@@ -16,7 +16,7 @@ HB.mixin Record AddComoid_of_TYPE A := {
   addrC : commutative add;
   add0r : left_id zero add;
 }.
-HB.structure AddComoid AddComoid_of_TYPE.axioms.
+HB.structure AddComoid := AddComoid_of_TYPE.axioms.
 
 HB.mixin Record Ring_of_AddComoid A of AddComoid.axioms A := {
   opp : A -> A;
@@ -62,7 +62,7 @@ HB.end.
 
 (* End change *)
 
-HB.structure Ring Ring_of_TYPE.axioms.
+HB.structure Ring := Ring_of_TYPE.axioms.
 
 (* Notations *)
 
