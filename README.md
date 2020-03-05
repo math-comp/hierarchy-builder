@@ -89,7 +89,7 @@ opam install coq-hierarchy-builder
 - `HB.instance` declares an example of a structure
 - `HB.status` dumps the contents of the hierarchy (debug purposes)
 
-Their documentation can be found in the comments of [structure.v](structure.v),
+Their documentation can be found in the comments of [structures.v](structures.v),
 search for `Elpi Command` and you will find them.
 
 #### Key concepts
