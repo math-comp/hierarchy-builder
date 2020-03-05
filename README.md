@@ -66,8 +66,12 @@ Proof. by rewrite example. Qed.
 
 #### Installation & availability
 
-TODO:
-HB works on Coq 8.10 and 8.11. You can install it via opam or nix
+HB works on Coq 8.10 and 8.11. you can install it via OPAM
+
+```shell
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam install coq-hierarchy-builder
+```
 
 #### Demos
 
@@ -85,8 +89,8 @@ HB works on Coq 8.10 and 8.11. You can install it via opam or nix
 - `HB.instance` declares an example of a structure
 - `HB.status` dumps the contents of the hierarchy (debug purposes)
 
-Their documentation can be found in the comments of [hb.v](hb.v), search for
-`Elpi Command` and you will find them.
+Their documentation can be found in the comments of [structure.v](structure.v),
+search for `Elpi Command` and you will find them.
 
 #### Key concepts
 
