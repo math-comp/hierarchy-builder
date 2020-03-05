@@ -3,7 +3,7 @@ hb.vo : hb.elpi
 
 #### generate many rules to generate demoN/test_HIERARCHY_USER.v ####
 define MKRULE
-demo$1/test_$2_$3.v: demo$1/user_$3.v
+demo$1/test_$2_$3.v: demo$1/user_$3.v hb.vo demo$1/hierarchy_$2.vo
 	cat demo$1/user_$3.v \
 		| sed 's?@@HIERARCHY@@?hierarchy_$2?' \
 		| sed 's?@@DEMO@@?hb.demo$1?' \
