@@ -1,5 +1,6 @@
-Require Import String ssreflect ssrfun ssrbool ZArith hb classical.
-From elpi Require Import elpi.
+From Coq Require Import ssreflect ssrfun ssrbool ZArith QArith.
+From HB Require Import structures.
+From HB.demo2 Require Import classical.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.

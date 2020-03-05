@@ -1,5 +1,5 @@
 From Coq Require Import ssreflect ssrfun.
-Require Import hb.
+From HB Require Import structures.
 
 (**************************************************************************)
 (* Stage 5: AddMonoid ---> AddComoid ----> AddAG ----> Ring               *)

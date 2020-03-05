@@ -1,4 +1,5 @@
-Require Import hb ssreflect ssrfun.
+From HB Require Import structures.
+From Coq Require Import ssreflect ssrfun.
 
 HB.mixin Record MulMonoid_of_Type A := {
   one : A;

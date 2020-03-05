@@ -1,4 +1,5 @@
-Require Import String hb ssreflect ssrfun ZArith.
+From Coq Require Import ssreflect ssrfun ZArith.
+From HB Require Import structures.
 
 Module V1.
 

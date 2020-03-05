@@ -1,4 +1,4 @@
-hb.v
+structures.v
 
 readme.v
 
@@ -20,4 +20,4 @@ demo3/hierarchy_2.v
 
 docs/paper/demo.v
 
--R . hb
+-R . HB

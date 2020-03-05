@@ -1,5 +1,5 @@
 From Coq Require Import ZArith ssreflect.
-Require Import hb.
+From HB Require Import structures.
 From @@DEMO@@ Require Import @@HIERARCHY@@.
 
 Definition Z_AddComoid := AddComoid_of_TYPE.Axioms

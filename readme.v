@@ -1,4 +1,5 @@
-Require Import hb ssreflect ZArith.
+From HB Require Import structures.
+From Coq Require Import ssreflect ZArith.
 
 HB.mixin Record AddComoid_of_Type A := {
   zero : A;

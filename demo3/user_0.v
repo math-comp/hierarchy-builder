@@ -1,5 +1,5 @@
 From Coq Require Import ZArith ssreflect ssrfun.
-Require Import hb.
+From HB Require Import structures.
 From @@DEMO@@ Require Import @@HIERARCHY@@.
 
 Declare Scope hb_scope.
