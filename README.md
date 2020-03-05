@@ -17,7 +17,7 @@ HB.mixin Record AddComoid_of_Type A := {
   addrC : forall x y, add x y = add y x;
   add0r : forall x, add zero x = x;
 }.
-HB.structure Definition AddComoid := { A & AddComoid_of_Type.axioms }.
+HB.structure Definition AddComoid := { A & AddComoid_of_Type.axioms A }.
 
 Notation "0" := zero.
 Infix "+" := add.
