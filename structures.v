@@ -15,9 +15,10 @@ Register Coq.Init.Datatypes.pair as hb.pair.
 Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
 
-(* Coq's notation does not put P in type scope *)
 Declare Scope HB_scope.
-Notation "{ x  &  P }" := (sigT (fun x => (P)%type)) : HB_scope.
+Notation "{  A  'of'  P  &  ..  &  Q  }" :=
+  (sigT (fun A : Type => (prod P .. (prod Q True) ..)%type))
+  (at level 0, A at level 99) : HB_scope.
 Global Open Scope HB_scope.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -185,7 +186,7 @@ Elpi Export HB.mixin.
   Syntax to declare a structure combing the axioms from [Factory1] ... [FactoryN]
 
   <<
-  HB.structure Definition StructureName := { A & Factory1.axioms A * ... * FactoryN.axioms A }.
+  HB.structure Definition StructureName := { A of Factory1.axioms A & ... & FactoryN.axioms A }.
   >>
 
 *)
@@ -196,9 +197,10 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 pred product->grefs i:term, o:list gref.
-product->grefs {{ lib:hb.prod lp:A lp:B  }} [GR|Rest] :- !,
-  type->gref B GR,
-  product->grefs A Rest.
+product->grefs {{ lib:hb.prod lp:A lp:B  }} L :- !,
+  product->grefs B GRB,
+  product->grefs A GRA,
+  std.append GRA GRB L.
 product->grefs {{ True }} [] :- !.
 product->grefs A [GR] :-
   type->gref A GR.
@@ -216,7 +218,7 @@ sigT->grefs {{ lib:@hb.sigT _ (fun a : lp:T => lp:(B a)) }} L :-
 main [const-decl Module (some B) _] :- !,
   sigT->grefs B GRFS, !,
   main-declare-structure Module GRFS.
-main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A & <Factory1> A * ... * <FactoryN> A }".
+main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & ... & <FactoryN> A }".
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.
