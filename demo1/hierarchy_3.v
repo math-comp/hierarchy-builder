@@ -7,7 +7,7 @@ From HB Require Import structures.
 (*                     -> +SemiRing+ -                                    *)
 (**************************************************************************)
 
-HB.structure Definition TYPE := { A & True }.
+HB.structure Definition TYPE := { A of True }.
 
 HB.mixin Record AddComoid_of_TYPE A := {
   zero : A;
@@ -16,7 +16,7 @@ HB.mixin Record AddComoid_of_TYPE A := {
   addrC : commutative add;
   add0r : left_id zero add;
 }.
-HB.structure Definition AddComoid := { A & AddComoid_of_TYPE.axioms A }.
+HB.structure Definition AddComoid := { A of AddComoid_of_TYPE.axioms A }.
 
 HB.mixin Record AddAG_of_AddComoid A of AddComoid.axioms A := {
   opp : A -> A;
@@ -41,7 +41,7 @@ HB.builders Context A (a : AddAG_of_TYPE.axioms A).
   Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
 HB.end.
-HB.structure Definition AddAG := { A & AddAG_of_TYPE.axioms A }.
+HB.structure Definition AddAG := { A of AddAG_of_TYPE.axioms A }.
 
 (* Begin change *)
 
@@ -56,7 +56,7 @@ HB.mixin Record SemiRing_of_AddComoid A of AddComoid.axioms A := {
   mul0r : left_zero zero mul;
   mulr0 : right_zero zero mul;
 }.
-HB.structure Definition SemiRing := { A & AddComoid.axioms A * SemiRing_of_AddComoid.axioms A }.
+HB.structure Definition SemiRing := { A of AddComoid.axioms A & SemiRing_of_AddComoid.axioms A }.
 
 HB.factory Record Ring_of_AddAG A of AddAG.axioms A := {
   one : A;
@@ -145,7 +145,7 @@ HB.builders Context A (a : Ring_of_TYPE.axioms A).
   HB.instance A to_Ring_of_AddComoid.
 HB.end.
 
-HB.structure Definition Ring := { A & Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
 
 (* Notations *)
 

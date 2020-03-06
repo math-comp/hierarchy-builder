@@ -10,7 +10,7 @@ Local Open Scope hb_scope.
 
 Module Stage11.
 
-HB.structure Definition TYPE := { A & True }.
+HB.structure Definition TYPE := { A of True }.
 
 HB.mixin Record AddAG_of_TYPE A := {
   zero : A;
@@ -21,7 +21,7 @@ HB.mixin Record AddAG_of_TYPE A := {
   add0r : left_id zero add;
   addNr : left_inverse zero opp add;
 }.
-HB.structure Definition AddAG := { A & AddAG_of_TYPE.axioms A }.
+HB.structure Definition AddAG := { A of AddAG_of_TYPE.axioms A }.
 
 (* TODO: command hb.module_export which creates a module,
    exports it immediatly and remembers that it should be
@@ -119,7 +119,7 @@ HB.builders Context A (a : Ring_of_TYPE.axioms A).
   HB.instance A to_Ring.
 HB.end.
 
-HB.structure Definition Ring := { A & Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
 
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
@@ -131,7 +131,7 @@ HB.mixin Record Topological T := {
   (forall i, D i -> open (F i)) -> open (\bigcup_(i in D) F i);
   open_setI : forall X Y : set T, open X -> open Y -> open (setI X Y);
 }.
-HB.structure Definition TopologicalSpace := { A & Topological.axioms A }.
+HB.structure Definition TopologicalSpace := { A of Topological.axioms A }.
 
 Hint Extern 0 (open setT) => now apply: open_setT : core.
 
@@ -214,7 +214,7 @@ HB.mixin Record JoinTAddAG_wo_Uniform T of AddAG_of_TYPE.axioms T & Topological.
 }.
 
 HB.structure Definition TAddAG_wo_Uniform :=
-  { A & Topological.axioms A * AddAG_of_TYPE.axioms A * JoinTAddAG_wo_Uniform.axioms A }.
+  { A of Topological.axioms A & AddAG_of_TYPE.axioms A & JoinTAddAG_wo_Uniform.axioms A }.
 
 HB.mixin Record Uniform_wo_Topology U := {
   entourage : set (set (U * U)) ;
@@ -224,7 +224,7 @@ HB.mixin Record Uniform_wo_Topology U := {
   entourage_split : forall A, entourage A ->
     exists2 B, entourage B & graph_comp B B `<=` A ;
 }.
-HB.structure Definition UniformSpace_wo_Topology := { A & Uniform_wo_Topology.axioms A }.
+HB.structure Definition UniformSpace_wo_Topology := { A of Uniform_wo_Topology.axioms A }.
 
 (* TODO: have a command hb.typealias which register "typealias factories"
    which turn a typealias into factories *)
@@ -259,9 +259,9 @@ HB.builders Context U (f : Uniform_Topology.axioms U).
   HB.instance U to_Topological.
 HB.end.
 
-HB.structure Definition UniformSpace := { A &
+HB.structure Definition UniformSpace := { A of
    Uniform_Topology.axioms A    (* should be replaced by typealias uniform *)
-   * Uniform_wo_Topology.axioms A }. (* TODO: should be ommited                 *)
+   & Uniform_wo_Topology.axioms A }. (* TODO: should be ommited                 *)
 
 (* TODO: this is another typealias *)
 Definition TAddAG (T : Type) := T.
@@ -301,7 +301,7 @@ Section TAddAGUniform.
 End TAddAGUniform.
 
 HB.structure Definition Uniform_TAddAG_unjoined :=
-  { A & TAddAG_wo_Uniform.axioms A * Uniform_wo_Topology.axioms A }.
+  { A of TAddAG_wo_Uniform.axioms A & Uniform_wo_Topology.axioms A }.
   (* should be created automatically *)
 HB.mixin Record Join_TAddAG_Uniform T of Uniform_TAddAG_unjoined.axioms T := {
     entourageE :
@@ -323,8 +323,8 @@ HB.builders Context U of TAddAG_Uniform.axioms U.
 HB.end.
 
 HB.structure Definition TAddAG :=
-   { A & TAddAG_Uniform.axioms A (* TODO: should be replaced by type alias TAddAG *)
-   * TAddAG_wo_Uniform.axioms A }. (* TODO: should be omitted *)
+   { A of TAddAG_Uniform.axioms A (* TODO: should be replaced by type alias TAddAG *)
+        & TAddAG_wo_Uniform.axioms A }. (* TODO: should be omitted *)
 
 HB.factory Definition JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axioms T :=
   (JoinTAddAG_wo_Uniform.axioms T).
