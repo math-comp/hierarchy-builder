@@ -18,6 +18,7 @@ demo3/hierarchy_1.v
 demo3/hierarchy_2.v
 
 tests/type_of_exported_ops.v
+tests/duplicate_structure.v
 
 docs/paper/demo.v
 

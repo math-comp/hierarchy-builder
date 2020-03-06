@@ -765,8 +765,18 @@ list-diff L [D|DS] R :-
   std.filter L (x\ not(x = D)) L1,
   list-diff L1 DS R.
 
+pred list-eq-set i:list A, i:list A.
+list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
+
 pred nice-gref->string i:gref, o:string.
 nice-gref->string X S :- coq.term->string (global X) S.
+
+pred if-class-already-exists-error i:Name, i:list class, i:list mixinname.
+if-class-already-exists-error _ [] _.
+if-class-already-exists-error N [class _ S ML1|CS] ML2 :-
+  if (list-eq-set ML1 ML2)
+     (coq.error "Structure" {coq.term->string S} "contains the same mixins of" N)
+     (if-class-already-exists-error N CS ML2).
 
 pred main-declare-structure i:string, i:list gref.
 main-declare-structure Module GRFS :- std.do! [
@@ -779,6 +789,8 @@ main-declare-structure Module GRFS :- std.do! [
   if (not({std.length PML} = {std.length ML}))
      (coq.warn "pulling in dependencies:" {std.map {list-diff ML PML} nice-gref->string})
      true,
+
+  if-class-already-exists-error Module {findall-classes} ML,
 
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
