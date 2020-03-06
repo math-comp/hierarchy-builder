@@ -761,7 +761,12 @@ declare-sort-coercion (global StructureName) (global Proj) :-
 
 pred main-declare-structure i:string, i:list gref.
 main-declare-structure Module GRFS :- std.do! [
-  factories-provide-mixins GRFS  ML,
+  factories-provide-mixins GRFS  PML,
+
+  std.map GRFS factory-requires RML,
+  std.flatten [PML|RML] UnsortedML,
+  toposort-mixins UnsortedML ML,
+
   % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
   coq.env.begin-module Module none,
