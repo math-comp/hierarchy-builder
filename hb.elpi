@@ -494,15 +494,10 @@ main-declare-context T GRFS MSL :-  std.do! [
   std.forall MSL (ms\ acc current (clause _ _ ms)),
 ].
 
-pred gather-last-product i:term, i:option term, o:factoryname, o:mixinname.
-gather-last-product T Last R1 R2 :- whd1 T T1, !, % unfold the type
-  gather-last-product T1 Last R1 R2.
-gather-last-product (prod N Src Tgt) _ R1 R2 :- !,
-  pi x\
-  decl x N Src =>
-  gather-last-product (Tgt x) (some Src) R1 R2.
-gather-last-product End (some Last) LastGR EndGR :-
-  term->gref End EndGR, term->gref Last LastGR.
+pred target-gref i:term, o:gref.
+target-gref T GR :- whd1 T T1, !, target-gref T1 GR.
+target-gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ target-gref (Tgt x) GR.
+target-gref End GR :- term->gref End GR.
 
 pred factory-comp i:term, i:gref, i:mterm, i:gref, i:gref, o:term.
 factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
@@ -512,41 +507,49 @@ factory-comp T Src MF Mid Tgt (fun `src` SrcTy GoF) :- !, std.do![
     MSL => (std.do! [
       factory-fun->term T Mid Tgt G,
       mterm->term T MF F,
-      subst-fun [{subst-fun [src] F}] G (GoF src)
+      subst-fun [{subst-fun-opt src F}] G (GoF src)
     ])
 ].
 
-% [declare-factory-from ML Src F Mid Tgt FromI FromO]
-% declares a factory by composing F and G.
-pred declare-factory-from
+% Sometimes section variables are unused, hence this lambda may not be there
+pred subst-fun-opt i:term, i:term, o:term.
+subst-fun-opt T (fun _ _ _ as F) O :- !, subst-fun [T] F O.
+subst-fun-opt T (let _ _ _ _ as F) O :- !, subst-fun [T] F O.
+subst-fun-opt _ X X.
+
+% [declare-builder ML Src F Mid Tgt FromI FromO]
+% declares a builder by composing F and G.
+pred declare-builder
   i:gref, i:term, i:gref, i:gref, i:list prop, o:list prop.
-declare-factory-from Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.do! [
-  std.assert-ok! (coq.typecheck F (prod TName TTy _)) "declare-factory-from: F is not a function",
+declare-builder Src F Mid Tgt FromI [NewFrom|FromI] :- !, FromI => std.do! [
+  std.assert-ok! (coq.typecheck F (prod TName TTy _)) "declare-builder: F is not a function",
   factory-requires Src ML,
 
   (@pi-decl TName TTy t\
     under-mixins t ML (factory-comp t Src (mtrm ML F) Mid Tgt) (GoFt t)
   ),
   GoF = fun TName TTy GoFt,
-  std.assert-ok! (coq.typecheck GoF _GoFTy) "declare-factory-from: GoF illtyped",
+  std.assert-ok! (coq.typecheck GoF _GoFTy) "declare-builder: GoF illtyped",
   new_int XXX, term_to_string XXX Suffix,
   Name is {gref->modname Src} ^ "_to_" ^ {gref->modname Tgt} ^ Suffix,
   coq.env.add-const Name GoF _GoFTy ff ff GoFC,
   NewFrom = from Src Tgt (global (const GoFC)),
 ].
 
-pred main-declare-factory-fun i:term, i:list prop, o:list prop.
-main-declare-factory-fun F PI PO :- !, std.do! [
-  PI => std.do! [
-    std.assert-ok! (coq.typecheck F Ty) "main-declare-factory-fun: F illtyped",
-    gather-last-product Ty none SrcAlias MidAlias,
-    factory-alias->gref SrcAlias Src,
-    factory-requires Src ML,
-    factory-alias->gref MidAlias Mid,
-    factory-provides Mid AllTgts,
-    std.filter AllTgts (t\ not (std.mem! ML t)) Tgts,
+% [main-declare-builder (builder _ F B) From MoreFrom] Given B of type FB, it
+% generates all the builders for mixins in FB from F via components of B.
+% From holds the (from F Mi Bi) predicates during folding.
+pred main-declare-builder i:builder, i:list prop, o:list prop.
+main-declare-builder (builder _ SrcFactory B) FromClauses MoreFromClauses :- !, std.do! [
+  FromClauses => std.do! [
+    std.assert-ok! (coq.typecheck B Ty) "main-declare-builder: B illtyped",
+    target-gref Ty MiddleFactoryAlias,
+    factory-requires SrcFactory SrcFactoryRequires,
+    factory-alias->gref MiddleFactoryAlias MiddleFactory,
+    factory-provides MiddleFactory AllTgtMixins,
+    std.filter AllTgtMixins (t\ not (std.mem! SrcFactoryRequires t)) TgtMixins,
   ],
-  std.fold Tgts PI (declare-factory-from Src F Mid) PO,
+  std.fold TgtMixins FromClauses (declare-builder SrcFactory B MiddleFactory) MoreFromClauses,
 ].
 
 % [export Module] exports a Module now adds it to the collection of
@@ -865,8 +868,19 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   acc current (clause _ _ (current-decl Decl))
 ].
 
-pred extract-local-factory i:prop, o:term.
-extract-local-factory (local-factory F) F.
+pred extract-builder i:prop, o:builder.
+extract-builder (builder-decl B) B.
+pred builder->string i:builder, o:string.
+builder->string (builder _ _ B) S :- coq.term->string B S.
+
+pred sort i:list A, i:(A -> A -> prop), o:list A.
+sort [] _ [] :- !.
+sort [X] _ [X] :- !.
+sort [X,Y|Rest] Rel [X|Rest1] :- Rel X Y, !, sort [Y|Rest] Rel Rest1.
+sort [X,Y|Rest] Rel [Y|Rest1] :- sort [X|Rest] Rel Rest1.
+
+pred leq-builder i:builder, i:builder.
+leq-builder (builder N _ _) (builder M _ _) :- N =< M.
 
 pred main-end-declare-builders.
 main-end-declare-builders :- std.do! [
@@ -874,9 +888,13 @@ main-end-declare-builders :- std.do! [
 
   coq.env.end-section,
 
-  std.findall (local-factory F_) LFIL,
-  std.map LFIL extract-local-factory TS,
-  std.fold TS [] main-declare-factory-fun Clauses,
+  std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
+  sort LFILunsorted leq-builder LFIL,
+  std.fold LFIL [] main-declare-builder Clauses,
+
+  if (Clauses = [])
+     (coq.error "No builders to declare, did you forget HB.instance?")
+     true,
 
   % TODO: Do we need this module?
   coq.gref->path GR Path,
@@ -892,8 +910,9 @@ main-end-declare-builders :- std.do! [
 
 pred main-declare-canonical-instances i:term, i:list term.
 main-declare-canonical-instances T FIL :- std.do! [
-  if (current-decl (builders-for-factory _))
-     (std.forall FIL (f\ acc current (clause _ _ (local-factory f))))
+  if (current-decl (builders-for-factory FGR))
+     (std.forall FIL (f\ sigma N\
+        new_int N, acc current (clause _ _ (builder-decl (builder N FGR f)))))
      true,
   std.map FIL (mixin-srcs T) MSLL,
   canonical-mixins T CMSL,
