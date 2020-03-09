@@ -141,6 +141,24 @@ findall-classes CLSorted :- std.do! [
   toposort-classes CL CLSorted
 ].
 
+% Bubblesort
+pred bubblesort i:list A, i:(A -> A -> prop), o:list A.
+bubblesort [] _ [] :- !.
+bubblesort [X] _ [X] :- !.
+bubblesort [X,Y|Rest] Rel [X|Rest1] :- Rel X Y, !, bubblesort [Y|Rest] Rel Rest1.
+bubblesort [X,Y|Rest] Rel [Y|Rest1] :- bubblesort [X|Rest] Rel Rest1.
+
+pred extract-builder i:prop, o:builder.
+extract-builder (builder-decl B) B.
+
+pred leq-builder i:builder, i:builder.
+leq-builder (builder N _ _) (builder M _ _) :- N =< M.
+
+pred findall-builders o:list builder.
+findall-builders LFIL :-
+  std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
+  bubblesort LFILunsorted leq-builder LFIL.
+
 %%%%% Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [get-structure-coercion S1 S2 F] finds the coecion F from the structure S1 to S2
@@ -880,19 +898,8 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   acc current (clause _ _ (current-decl Decl))
 ].
 
-pred extract-builder i:prop, o:builder.
-extract-builder (builder-decl B) B.
 pred builder->string i:builder, o:string.
 builder->string (builder _ _ B) S :- coq.term->string B S.
-
-pred sort i:list A, i:(A -> A -> prop), o:list A.
-sort [] _ [] :- !.
-sort [X] _ [X] :- !.
-sort [X,Y|Rest] Rel [X|Rest1] :- Rel X Y, !, sort [Y|Rest] Rel Rest1.
-sort [X,Y|Rest] Rel [Y|Rest1] :- sort [X|Rest] Rel Rest1.
-
-pred leq-builder i:builder, i:builder.
-leq-builder (builder N _ _) (builder M _ _) :- N =< M.
 
 pred main-end-declare-builders.
 main-end-declare-builders :- std.do! [
@@ -900,8 +907,7 @@ main-end-declare-builders :- std.do! [
 
   coq.env.end-section,
 
-  std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
-  sort LFILunsorted leq-builder LFIL,
+  findall-builders LFIL,
 
   if-verbose (coq.say "HB: declaring builders from factory" {nice-gref->string GR}
               "using" {std.map LFIL builder->string}),
