@@ -19,6 +19,9 @@ Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
   (sigT (fun A : Type => (prod P .. (prod Q True) ..)%type))
   (at level 0, A at level 99) : HB_scope.
+Notation "{  A  'of'  P  &  ..  &  Q  '....'  }" :=
+  (sigT (fun A : Type => (prod P .. (prod Q False) ..)%type))
+  (at level 0, A at level 99) : HB_scope.
 Global Open Scope HB_scope.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -66,7 +69,7 @@ pred class-def o:class.
 
 %% database for locally available mixins
 % [mixin-src T M X] states that X can be used to reconstruct
-% an instance of the mixin [M T ...], directly or through a factory.
+% an instance of the mixin [M T …], directly or through a factory.
 pred mixin-src o:term, o:mixinname, o:term.
 
 % [phant-abbrev Cst AbbrevCst Abbrev]
@@ -154,11 +157,11 @@ Elpi Export HB.status.
   with requirements [Factory1.axioms] .. [FactoryN.axioms]:
 
   <<
-  HB.mixin Record MixinName T of Factory1.axioms T & ... & FactoryN.axioms T := {
-     op : T -> ...
-     ...
-     property : forall x : T, op ...
-     ...
+  HB.mixin Record MixinName T of Factory1.axioms T & … & FactoryN.axioms T := {
+     op : T -> …
+     …
+     property : forall x : T, op …
+     …
   }
   >>
 
@@ -166,7 +169,7 @@ Elpi Export HB.status.
   - [MixinName.axioms T] abbreviation for the type of the (degenerate) factory
   - [MixinName.Axioms T] abbreviation for the constructor of the factory
 
-  Note: [T of f1 T & ... & fN T] is ssreflect syntax for [T (_ : f1 T) ... (_ : fN T)]
+  Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
 *)
 
 Elpi Command HB.mixin.
@@ -178,7 +181,7 @@ main [A] :- A = indt-decl _, !,
   with-attributes (main-declare-asset {argument->asset A} asset-mixin).
 
 main _ :-
-  coq.error "Usage: HB.mixin Record <MixinName> T of F A & ... := { ... }.".
+  coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.mixin.
@@ -189,10 +192,12 @@ Elpi Export HB.mixin.
 
 (** [HB.structure] declares a packed structure.
 
-  Syntax to declare a structure combing the axioms from [Factory1] ... [FactoryN]
+  Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
+  The second syntax has a trailing [....] to pull in factory requirements silently.
 
   <<
-  HB.structure Definition StructureName := { A of Factory1.axioms A & ... & FactoryN.axioms A }.
+  HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A }.
+  HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A .... }.
   >>
 
 *)
@@ -202,13 +207,14 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred product->grefs i:term, o:list gref.
-product->grefs {{ lib:hb.prod lp:A lp:B  }} L :- !,
-  product->grefs B GRB,
-  product->grefs A GRA,
+pred product->grefs i:term, o:list gref, o:bool.
+product->grefs {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
+  product->grefs B GRB ClosureCheck,
+  product->grefs A GRA _,
   std.append GRA GRB L.
-product->grefs {{ True }} [] :- !.
-product->grefs A [GR] :-
+product->grefs {{ True }} [] tt :- !.
+product->grefs {{ False }} [] ff :- !.
+product->grefs A [GR] tt :-
   type->gref A GR.
 
 pred type->gref i:term, o:gref.
@@ -216,15 +222,15 @@ type->gref (app[global Abbrev|_]) GR :- phant-abbrev GR Abbrev _.
 type->gref (app[global GR|_]) GR :- !.
 type->gref T _ :- coq.error "Not a factory:" {coq.term->string T}.
 
-pred sigT->grefs i:term, o:list gref.
-sigT->grefs {{ lib:@hb.sigT _ (fun a : lp:T => lp:(B a)) }} L :-
+pred sigT->grefs i:term, o:list gref, o:bool.
+sigT->grefs {{ lib:@hb.sigT _ (fun a : lp:T => lp:(B a)) }} L S :-
   @pi-decl `a` T a\
-    product->grefs (B a) L.
+    product->grefs (B a) L S.
 
 main [const-decl Module (some B) _] :- !,
-  sigT->grefs B GRFS, !,
-  with-attributes (main-declare-structure Module GRFS).
-main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & ... & <FactoryN> A }".
+  sigT->grefs B GRFS ClosureCheck, !,
+  with-attributes (main-declare-structure Module GRFS ClosureCheck).
+main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.
@@ -239,10 +245,10 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Definition f1 : Factory1.axioms T := Factory1.Axioms T ...
-    ...
-    Definition fN : FactoryN.axioms T := FactoryN.Axioms T ...
-    HB.instance T f1 ... fN.
+    Definition f1 : Factory1.axioms T := Factory1.Axioms T …
+    …
+    Definition fN : FactoryN.axioms T := FactoryN.Axioms T …
+    HB.instance T f1 … fN.
     >>
 
 *)
@@ -273,7 +279,7 @@ main [A] :- !,
   with-attributes (main-declare-asset {argument->asset A} asset-factory).
 
 main _ :-
-  coq.error "Usage: HB.factory Record <FactoryName> T of F A & ... := { ... }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
+  coq.error "Usage: HB.factory Record <FactoryName> T of F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.factory.
@@ -289,9 +295,9 @@ Elpi Export HB.factory.
 
     <<
     HB.builders Context A (f : Factory.axioms A).
-    ...
+    …
     HB.instance A someFactoryInstance.
-    ...
+    …
     HB.end.
     >>
 

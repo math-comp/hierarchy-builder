@@ -903,16 +903,17 @@ if-class-already-exists-error N [class _ S ML1|CS] ML2 :-
      (coq.error "Structure" {coq.term->string S} "contains the same mixins of" N)
      (if-class-already-exists-error N CS ML2).
 
-pred main-declare-structure i:string, i:list gref.
-main-declare-structure Module GRFS :- std.do! [
+pred main-declare-structure i:string, i:list gref, i:bool.
+main-declare-structure Module GRFS ClosureCheck :- std.do! [
   factories-provide-mixins GRFS  PML,
 
   std.map GRFS factory-requires RML,
   std.flatten [PML|RML] UnsortedML,
   toposort-mixins UnsortedML ML,
 
-  if (not({std.length PML} = {std.length ML}))
-     (coq.warn "pulling in dependencies:" {std.map {list-diff ML PML} nice-gref->string})
+  if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
+     (coq.warn "pulling in dependencies:" {std.map {list-diff ML PML} nice-gref->string}
+               "\nPlease list them or end the declaration with '....'")
      true,
 
   if-class-already-exists-error Module {findall-classes} ML,

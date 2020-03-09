@@ -23,7 +23,7 @@ HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid.axioms A := {
   addNr : forall x, opp x + x = 0;
 }.
 #[verbose]
-HB.structure Definition AbelianGrp := { A of AbelianGrp_of_AddComoid.axioms A }.
+HB.structure Definition AbelianGrp := { A of AbelianGrp_of_AddComoid.axioms A .... }.
 
 Notation "- x" := (opp x).
 
