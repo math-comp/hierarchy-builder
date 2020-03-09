@@ -19,7 +19,7 @@ Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
   (sigT (fun A : Type => (prod P .. (prod Q True) ..)%type))
   (at level 0, A at level 99) : HB_scope.
-Notation "{  A  'of'  P  &  ..  &  Q  '....'  }" :=
+Notation "{  A  'of'  P  &  ..  &  Q  &  }" :=
   (sigT (fun A : Type => (prod P .. (prod Q False) ..)%type))
   (at level 0, A at level 99) : HB_scope.
 Global Open Scope HB_scope.
