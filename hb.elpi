@@ -119,6 +119,16 @@ subst-fun-opt T (fun _ _ _ as F) O :- !, subst-fun [T] F O.
 subst-fun-opt T (let _ _ _ _ as F) O :- !, subst-fun [T] F O.
 subst-fun-opt _ X X.
 
+pred append-phant-unify i:phant-term, o:phant-term.
+append-phant-unify (phant-trm LP T) (phant-trm LPU T) :-
+  std.append LP [unify-arg] LPU.
+
+pred copy-fields i:record-decl, o:record-decl.
+copy-fields end-record end-record.
+copy-fields (field C N T R) (field C N T1 R1) :-
+  copy T T1,
+  pi x\ copy x x => copy-fields (R x) (R1 x).
+
 %%%%%%%%% Database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Specialize coq.elpi.accumulate to "hiearchy.db"
@@ -578,6 +588,8 @@ declare-instances T [class Class Struct ML|Rest] :-
   coq.gref->id TGR TID,
   Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
+  if-verbose (coq.say "HB: declaring canonical instance" Name),
+
   get-structure-constructor Struct KS,
   S = app[KS, T, KCApp],
   std.assert-ok! (coq.typecheck S STy) "declare-instances: S illtyped",
@@ -626,6 +638,9 @@ postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do!
 pred main-declare-context i:term, i:list factoryname, o:list prop.
 main-declare-context T GRFS MSL :-  std.do! [
   factories-provide-mixins GRFS ML,
+
+  if-verbose (coq.say "HB: postulating mixin:" MSL),
+
   std.fold ML [] (postulate-mixin T) MSL,
   MSL => declare-instances T {findall-classes},
   std.forall MSL (ms\ acc current (clause _ _ ms)),
@@ -1039,30 +1054,46 @@ builders-postulate-factories (context-item ID1 _ none _\ context-item ID2 _ _ _)
   coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
 
 pred main-declare-asset i:asset-decl, i:asset.
-main-declare-asset (asset-parameter _ T Rest as R) D :- std.do! [
+main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [
   name-of-asset-decl R Module,
+
+  if-verbose (coq.say "HB: Start module and section" Module),
+
   coq.env.begin-module Module none,
   coq.env.begin-section Module,
+
+  if-verbose (coq.say "HB: Postulate type variable" Name),
+
   std.assert! (T = sort (typ _)) "The first record parameter must be a type",
   coq.univ.new [] U,
   Ty = sort (typ U),
-  coq.env.add-const "T" _ Ty tt tt C, % no body, local -> a variable
+  coq.env.add-const Name _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
-  spill-factory-param-factories (Rest TheType) [] TheType D
+  collect-asset-parameters (Rest TheType) [] TheType D
 ].
 
-pred spill-factory-param-factories i:asset-decl, i:list factoryname, i:term, i:asset.
-spill-factory-param-factories (asset-parameter _ T Rest) GRFS TheType D :- std.do! [
-  std.assert! (T = app[global F, TheType]) "Factory not applied to X",
+pred collect-asset-parameters i:asset-decl, i:list factoryname, i:term, i:asset.
+collect-asset-parameters (asset-parameter _ T Rest) GRFS TheType D :- std.do! [
+  std.assert! (T = app[global F, TheType]) "Factory not applied to the type variable",
   std.assert! (pi x y\ Rest x = Rest y) "Factories cannot be mentioned in the mixin",
   Dummy = sort prop,
-  spill-factory-param-factories (Rest Dummy) [F|GRFS] TheType D
+  collect-asset-parameters (Rest Dummy) [F|GRFS] TheType D
 ].
 
-spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
+collect-asset-parameters (asset-alias _ Ty) GRFS TheType D :-
   std.assert! (D = asset-factory) "Mixins cannot be aliases",
-
+  % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
+  declare-factory-alias Ty1 GRFS TheType.
+
+collect-asset-parameters (asset-record _ Sort _ Fields) GRFS TheType D :-
+  % refresh implicit arguments, since many binders are now gone
+  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
+  declare-mixin-or-factory Sort1 Fields0 GRFS TheType D.
+
+pred declare-factory-alias i:term, i:list factoryname, i:term.
+declare-factory-alias Ty1 GRFS TheType :- std.do! [
+
   main-declare-context TheType {std.rev GRFS} Hyps,
 
   std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory",
@@ -1085,9 +1116,7 @@ spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
   mk-phant-abbrev "Axioms" PhGRK _ _,
 
   std.map Hyps mixin-src-name ML,
-  if (D = asset-mixin)
-     (coq.error "mixins must be records")
-     (main-factory-requires "axioms" (const C) ML Props),
+  main-factory-requires "axioms" (const C) ML Props,
   coq.env.begin-module "Exports" none,
   (std.forall Props c\ acc current (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
@@ -1098,13 +1127,8 @@ spill-factory-param-factories (asset-alias _ Ty) GRFS TheType D :- std.do! [
   export Exports,
 ].
 
-pred append-phant-unify i:phant-term, o:phant-term.
-append-phant-unify (phant-trm LP T) (phant-trm LPU T) :-
-  std.append LP [unify-arg] LPU.
-
-spill-factory-param-factories (asset-record _ Sort _ Fields) GRFS TheType D :- std.do! [
-  % refresh implicit arguments, since many binders are now gone
-  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
+pred declare-mixin-or-factory i:term, i:record-decl, i:list factoryname, i:term, i:asset.
+declare-mixin-or-factory Sort1 Fields0 GRFS TheType D :- std.do! [
   if (D = asset-mixin) (Fields1 = Fields0)
      (Fields1 = (field _ "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
   Kname = "Axioms_",
@@ -1132,8 +1156,3 @@ spill-factory-param-factories (asset-record _ Sort _ Fields) GRFS TheType D :- s
   export Exports,
 ].
 
-pred copy-fields i:record-decl, o:record-decl.
-copy-fields end-record end-record.
-copy-fields (field C N T R) (field C N T1 R1) :-
-  copy T T1,
-  pi x\ copy x x => copy-fields (R x) (R1 x).
