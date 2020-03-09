@@ -174,7 +174,8 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [A] :- A = indt-decl _, !, main-declare-asset {argument->asset A} asset-mixin.
+main [A] :- A = indt-decl _, !,
+  with-attributes (main-declare-asset {argument->asset A} asset-mixin).
 
 main _ :-
   coq.error "Usage: HB.mixin Record <MixinName> T of F A & ... := { ... }.".
@@ -222,7 +223,7 @@ sigT->grefs {{ lib:@hb.sigT _ (fun a : lp:T => lp:(B a)) }} L :-
 
 main [const-decl Module (some B) _] :- !,
   sigT->grefs B GRFS, !,
-  main-declare-structure Module GRFS.
+  with-attributes (main-declare-structure Module GRFS).
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & ... & <FactoryN> A }".
 }}.
 Elpi Typecheck.
@@ -251,7 +252,7 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
-  main-declare-canonical-instances T FIL.
+  with-attributes (main-declare-canonical-instances T FIL).
 main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*".
 
 }}.
@@ -268,7 +269,8 @@ Elpi Command HB.factory.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [A] :- !, main-declare-asset {argument->asset A} asset-factory.
+main [A] :- !,
+  with-attributes (main-declare-asset {argument->asset A} asset-factory).
 
 main _ :-
   coq.error "Usage: HB.factory Record <FactoryName> T of F A & ... := { ... }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
@@ -313,7 +315,7 @@ Elpi Command HB.builders.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [ctx-decl C] :- !, main-begin-declare-builders C.
+main [ctx-decl C] :- !, with-attributes (main-begin-declare-builders C).
 
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
 }}.
@@ -325,7 +327,7 @@ Elpi Command HB.end.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, main-end-declare-builders.
+main [] :- !, with-attributes main-end-declare-builders.
 main _ :- coq.error "Usage: HB.end.".
 }}.
 Elpi Typecheck.

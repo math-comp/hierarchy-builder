@@ -5,6 +5,16 @@ add-abbrev N NParams AbbrevT Global OnlyParse Abbrev :-
      (std.unsafe-cast coq.notation.add-abbreviation F, F N NParams AbbrevT Global OnlyParse Abbrev)
      (std.unsafe-cast coq.notation.add-abbreviation G, G N NParams AbbrevT Global OnlyParse _ Abbrev). % 8.11 has a deprecation flag
 
+% runs P in a context where Coq #[attributes] are parsed
+pred with-attributes i:prop.
+with-attributes P :-
+  attributes A, parse-attributes A [att "verbose" bool] Opts, !,
+  Opts => P.
+
+pred if-verbose i:prop.
+if-verbose P :- get-option "verbose" tt, !, P.
+if-verbose _.
+
 % A mterm is always of the form [mtrm ML F], which is a pair of
 % a list of mixins ML that should be substituted in F and a term F
 kind mterm type.
@@ -549,6 +559,8 @@ main-declare-builder (builder _ SrcFactory B) FromClauses MoreFromClauses :- !, 
     factory-provides MiddleFactory AllTgtMixins,
     std.filter AllTgtMixins (t\ not (std.mem! SrcFactoryRequires t)) TgtMixins,
   ],
+  if-verbose (coq.say "HB: declaring builders from" {nice-gref->string SrcFactory}
+                      "to" {std.map TgtMixins nice-gref->string}),
   std.fold TgtMixins FromClauses (declare-builder SrcFactory B MiddleFactory) MoreFromClauses,
 ].
 
@@ -890,6 +902,10 @@ main-end-declare-builders :- std.do! [
 
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   sort LFILunsorted leq-builder LFIL,
+
+  if-verbose (coq.say "HB: declaring builders from factory" {nice-gref->string GR}
+              "using" {std.map LFIL builder->string}),
+
   std.fold LFIL [] main-declare-builder Clauses,
 
   if (Clauses = [])
