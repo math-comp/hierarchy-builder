@@ -588,7 +588,7 @@ declare-instances T [class Class Struct ML|Rest] :-
   coq.gref->id TGR TID,
   Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
-  if-verbose (coq.say "HB: declaring canonical instance" Name),
+  if-verbose (coq.say "HB: declare canonical instance" Name),
 
   get-structure-constructor Struct KS,
   S = app[KS, T, KCApp],
@@ -629,8 +629,11 @@ main-mixin-requires Str GR GRFS [From|PO] :- !, std.do! [
 % to the corresponding mixin using mixin-for
 pred postulate-mixin i:term, i:mixinname, i:list prop, o:list prop.
 postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
-  mgref->term T M Ty,
   Name is "mixin_" ^ {gref->modname M},
+
+  if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
+
+  mgref->term T M Ty,
   std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
   coq.env.add-const Name _ Ty tt tt C % no body, local -> a variable
 ].
@@ -638,9 +641,6 @@ postulate-mixin T M MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do!
 pred main-declare-context i:term, i:list factoryname, o:list prop.
 main-declare-context T GRFS MSL :-  std.do! [
   factories-provide-mixins GRFS ML,
-
-  if-verbose (coq.say "HB: postulating mixin:" MSL),
-
   std.fold ML [] (postulate-mixin T) MSL,
   MSL => declare-instances T {findall-classes},
   std.forall MSL (ms\ acc current (clause _ _ ms)),
@@ -690,7 +690,7 @@ main-declare-builder (builder _ SrcFactory B) FromClauses MoreFromClauses :- !, 
     factory-provides MiddleFactory AllTgtMixins,
     std.filter AllTgtMixins (t\ not (std.mem! SrcFactoryRequires t)) TgtMixins,
   ],
-  if-verbose (coq.say "HB: declaring builders from" {nice-gref->string SrcFactory}
+  if-verbose (coq.say "HB: declare builders from" {nice-gref->string SrcFactory}
                       "to" {std.map TgtMixins nice-gref->string}),
   std.fold TgtMixins FromClauses (declare-builder SrcFactory B MiddleFactory) MoreFromClauses,
 ].
@@ -734,6 +734,9 @@ export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
   ),
   T = fun `x` Struct Body,
   Ty = prod `x` Struct BodyTy,
+
+  if-verbose (coq.say "HB: export operation" Name),
+
   coq.env.add-const Name T Ty ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
   EXO = [exported-op Poperation C|EXI]
@@ -778,6 +781,8 @@ declare-coercion SortProjection ClassProjection
   CoeBody = {{ fun (T : Type) (c : lp:Class T) => lp:(ClassCoercion T c) }},
   std.assert-ok! (coq.typecheck CoeBody Ty) "declare-coercion: CoeBody illtyped",
 
+  if-verbose (coq.say "HB: declare coercion hint" CName),
+
   coq.env.add-const CName CoeBody Ty ff ff C,
   coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)) tt,
 
@@ -787,6 +792,8 @@ declare-coercion SortProjection ClassProjection
      let T : Type := lp:SortProjection s in
      lp:Pack T (lp:Coercion T (lp:ClassProjection s)) }},
   std.assert-ok! (coq.typecheck SCoeBody STy) "declare-coercion: SCoeBody illtyped",
+
+  if-verbose (coq.say "HB: declare unification hint" SName),
 
   coq.env.add-const SName SCoeBody STy ff ff SC,
   coq.coercion.declare (coercion (const SC) 0 {term->gref StructureF} (grefclass {term->gref StructureT})) tt,
@@ -808,6 +815,9 @@ declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3
                               (lp:S2_class (lp:S3_to_S2 s)) }},
 
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
+
+  if-verbose (coq.say "HB: declare unification hint" Name),
+
   coq.env.add-const Name JoinBody Ty ff ff J,
   coq.CS.declare-instance (const J).
 
@@ -843,6 +853,9 @@ synthesize-fields T  [M|ML] (field _ Name MTy Fields) :- std.do! [
 % Builds the axioms record and the factories from this class to each mixin
 pred declare-class i:list mixinname, o:factoryname, o:list prop.
 declare-class ML (indt ClassName) Factories :- std.do! [
+
+  if-verbose (coq.say "HB: declare axioms record"),
+
   (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
     (parameter `T` {{ Type }} t\
@@ -858,6 +871,9 @@ declare-class ML (indt ClassName) Factories :- std.do! [
 % Builds the package record
 pred declare-structure i:factoryname, o:term, o:term, o:term.
 declare-structure ClassName Structure SortProjection ClassProjection :- std.do! [
+
+  if-verbose (coq.say "HB: declare type record"),
+
   StructureDeclaration =
     record "type" {{ Type }} "Pack" (
       field _ "sort" {{ Type }} s\
@@ -875,6 +891,9 @@ declare-structure ClassName Structure SortProjection ClassProjection :- std.do! 
 % Declares "sort" as a coercion Structurename >-> Sortclass
 pred declare-sort-coercion i:term, i:term.
 declare-sort-coercion (global StructureName) (global Proj) :-
+
+  if-verbose (coq.say "HB: declare sort coercion"),
+
   coq.coercion.declare (coercion Proj 0 StructureName sortclass) tt.
 
 pred if-class-already-exists-error i:Name, i:list class, i:list mixinname.
@@ -898,8 +917,10 @@ main-declare-structure Module GRFS :- std.do! [
 
   if-class-already-exists-error Module {findall-classes} ML,
 
-  % TODO: avoid redefining the same class
   % TODO: check we never define the superclass of an exising class
+
+  if-verbose (coq.say "HB: start module" Module),
+
   coq.env.begin-module Module none,
 
   declare-class ML  ClassName Factories,
@@ -909,41 +930,42 @@ main-declare-structure Module GRFS :- std.do! [
   declare-structure ClassName  Structure SortProjection ClassProjection,
   CurrentClass = (class ClassName Structure ML),
 
-  % Exports module
+  if-verbose (coq.say "HB: start module Exports"),
+
   coq.env.begin-module "Exports" none,
-
   declare-sort-coercion Structure SortProjection,
-
   ClassAlias => ClassRequires => Factories =>
     export-operations Structure SortProjection ClassProjection ML MLToExport,
-
   ClassAlias => ClassRequires => Factories =>
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
-
   % Register in Elpi's DB the new structure
   % NOT TODO: All these acc are correctly locaed in an Export Module
   std.forall MLToExport (m\
      acc current (clause _ _ (mixin-first-class m ClassName))),
-
   std.forall Factories (f\ acc current (clause _ _ f)),
   acc current (clause _ _ ClassRequires),
   acc current (clause _ _ ClassAlias),
-
   std.forall NewJoins (j\ acc current (clause _ _ j)),
-
   acc current (clause _ _ (class-def CurrentClass)),
-
   coq.env.end-module Exports,
 
   coq.env.end-module _,
+
+  if-verbose (coq.say "HB: end modules; export" Exports),
 
   export Exports,
 ].
 
 pred main-begin-declare i:string, i:string, i:list gref, i:declaration.
 main-begin-declare Module TName GRFS Decl :- std.do! [
+
+  if-verbose (coq.say "HB: start module and section" Module),
+
   coq.env.begin-module Module none,
   coq.env.begin-section Module,
+
+  if-verbose (coq.say "HB: postulate type" TName),
+
   coq.univ.new [] U,
   Ty = sort (typ U),
   coq.env.add-const TName _ Ty tt tt T, % no body, local -> a variable
@@ -959,7 +981,7 @@ main-end-declare-builders :- std.do! [
 
   findall-builders LFIL,
 
-  if-verbose (coq.say "HB: declaring builders from factory" {nice-gref->string GR}
+  if-verbose (coq.say "HB: declare builders from factory" {nice-gref->string GR}
               "using" {std.map LFIL builder->string}),
 
   std.fold LFIL [] main-declare-builder Clauses,
@@ -1057,12 +1079,12 @@ pred main-declare-asset i:asset-decl, i:asset.
 main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [
   name-of-asset-decl R Module,
 
-  if-verbose (coq.say "HB: Start module and section" Module),
+  if-verbose (coq.say "HB: start module and section" Module),
 
   coq.env.begin-module Module none,
   coq.env.begin-section Module,
 
-  if-verbose (coq.say "HB: Postulate type variable" Name),
+  if-verbose (coq.say "HB: postulate type" Name),
 
   std.assert! (T = sort (typ _)) "The first record parameter must be a type",
   coq.univ.new [] U,
@@ -1117,6 +1139,9 @@ declare-factory-alias Ty1 GRFS TheType :- std.do! [
 
   std.map Hyps mixin-src-name ML,
   main-factory-requires "axioms" (const C) ML Props,
+
+  if-verbose (coq.say "HB: start module Exports"),
+
   coq.env.begin-module "Exports" none,
   (std.forall Props c\ acc current (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
@@ -1124,6 +1149,9 @@ declare-factory-alias Ty1 GRFS TheType :- std.do! [
   acc current (clause _ _ (factory-constructor (const C) GRK)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
+
+  if-verbose (coq.say "HB: end modules and sections; export" Exports),
+
   export Exports,
 ].
 
@@ -1131,21 +1159,35 @@ pred declare-mixin-or-factory i:term, i:record-decl, i:list factoryname, i:term,
 declare-mixin-or-factory Sort1 Fields0 GRFS TheType D :- std.do! [
   if (D = asset-mixin) (Fields1 = Fields0)
      (Fields1 = (field _ "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
+  main-declare-context TheType {std.rev GRFS} Hyps,
+
+  if-verbose (coq.say "HB: declare record axioms_"),
+
   Kname = "Axioms_",
   RDecl = record "axioms_" Sort1 Kname Fields1,
-  main-declare-context TheType {std.rev GRFS} Hyps,
   std.assert-ok! (coq.typecheck-indt-decl RDecl) "record declaration illtyped",
   coq.env.add-indt RDecl R,
   coq.env.end-section,
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
+
+  % TODO: should this be in the Exports module?
+  if-verbose (coq.say "HB: declare notation axioms"),
+
   mk-phant-mixins (global GRK) PhGRK0,
+
+  if-verbose (coq.say "HB: declare notation Axioms"),
+
   if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
   mk-phant-abbrev "Axioms" PhGRK _ _,
+
   std.map Hyps mixin-src-name ML,
   if (D = asset-mixin)
      (main-mixin-requires "axioms" (indt R) ML Props)
      (main-factory-requires "axioms" (indt R) ML Props),
+
+  if-verbose (coq.say "HB: start module Exports"),
+
   coq.env.begin-module "Exports" none,
   (std.forall Props c\ acc current (clause _ _ c)),
   std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
@@ -1153,6 +1195,9 @@ declare-mixin-or-factory Sort1 Fields0 GRFS TheType D :- std.do! [
   acc current (clause _ _ (factory-constructor (indt R) GRK)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
+
+  if-verbose (coq.say "HB: end modules and sections; export" Exports),
+
   export Exports,
 ].
 
