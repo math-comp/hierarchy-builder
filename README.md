@@ -73,12 +73,24 @@ opam repo add coq-released https://coq.inria.fr/opam/released
 opam install coq-hierarchy-builder
 ```
 
-#### Demos
+#### Key concepts
 
-- [demo1](demo1/) and [demo3](demo3/) declare and evolve a hierarchy up to
-  rings with various clients that are tested not to break when the hierarchy
-  evolves
-- [demo2](demo2/) TODO: explain the tricky thing
+- a *mixin* is a bare bone building block of the hierarchy, it packs operations
+  and axioms.
+
+- a *factory* is a package of operations and properties that is elaborated by
+  HB to one or more mixin. A mixin is hence a trivial factory.
+
+- a *structure* is declared by attaching zero or more factories to a type.
+
+- a *builder* is user provided piece of code capable of
+  building one or more mixins from a factory.
+
+- an *instance* is an example of a structure: it provides all operation and
+  fulfills all axioms.
+
+A [draft paper](https://hal.inria.fr/hal-02478907) describes the language in
+more detail.
 
 #### The commands provided by hb
 
@@ -86,25 +98,16 @@ opam install coq-hierarchy-builder
 - `HB.structure` declares a structure
 - `HB.factory` declares a factory
 - `HB.builders` and `HB.end` declares a set of builders
-- `HB.instance` declares an example of a structure
+- `HB.instance` declares a structure instance
 - `HB.status` dumps the contents of the hierarchy (debug purposes)
 
 Their documentation can be found in the comments of [structures.v](structures.v),
-search for `Elpi Command` and you will find them.
+search for `Elpi Command` and you will find them. All commands can be
+prefixed with the attribute `#[verbose]`.
 
-#### Key concepts
+#### Demos
 
-- a *mixin* is a bare bone building block of the hierarchy, it packs operations
-  and axioms.
-
-- a *factory* is a package of operations and properties that is elaborated by
-  HB to one or more mixin. When a mixin is changed or removed from the
-  hierarchy, an identical factory should be declared. A factory comes
-  equipped with *builders*. A builder is user provided piece of code capable of
-  building a mixin from the factory. A mixin is hence a trivial factory (its
-  builder is the identity function).
-
-- a *structure* is declared by attaching zero or more factories to a type.
-
-A [draft paper](https://hal.inria.fr/hal-02478907) describes the language in
-more detail.
+- [demo1](demo1/) and [demo3](demo3/) declare and evolve a hierarchy up to
+  rings with various clients that are tested not to break when the hierarchy
+  evolves
+- [demo2](demo2/) TODO: explain the tricky thing
