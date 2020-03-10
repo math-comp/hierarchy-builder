@@ -64,14 +64,28 @@ Proof. by rewrite example. Qed.
 
 ## Documentation
 
+#### Status
+
+The software is beta-quality, it works but error messages should be improved.
+
+The current version does not handle structures with parameters (for example
+modules over a ring), and forces the carrier to be a type (excluding hierarchies
+of morphisms).
+
 #### Installation & availability
 
-HB works on Coq 8.10 and 8.11. you can install it via OPAM
+HB works on Coq 8.10 and 8.11.
+
+- You can install it via OPAM
 
 ```shell
 opam repo add coq-released https://coq.inria.fr/opam/released
 opam install coq-hierarchy-builder
 ```
+
+- You can use it in nix with the attribute `coqPackages_8_10.hierarchy-builder`
+  or `coqPackages_8_11.hierarchy-builder` (e.g. via `nix-shell -p coqPackages_8_10.hierarchy-builder`)
+
 
 #### Key concepts
 
@@ -114,7 +128,5 @@ prefixed with the attribute `#[verbose]`.
   topological space and uniform spaces. Indeed, 1. all uniform spaces induce a
   topology, which makes them topological spaces, but 2. all topological groups
   (groups that are topological spaces such that the addition and opposite are
-  continuous) induce a uniformity, which makes them uniform spaces. We explain
-  how to solve this seamingly mutual dependency using the high level HB language,
-  which constitute a step towards the automatic detection and handling of this
-  pattern.
+  continuous) induce a uniformity, which makes them uniform spaces. We solve
+  this seamingly mutual dependency using HB.
