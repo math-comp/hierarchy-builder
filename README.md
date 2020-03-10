@@ -117,7 +117,7 @@ more detail.
 
 Their documentation can be found in the comments of [structures.v](structures.v),
 search for `Elpi Command` and you will find them. All commands can be
-prefixed with the attribute `#[verbose]`.
+prefixed with the attribute `#[verbose]` to get an idea of what they are doing.
 
 #### Demos
 
