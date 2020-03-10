@@ -11,13 +11,11 @@ let
   pgEmacs = emacsWithPackages (epkgs:
     with epkgs.melpaStablePackages; [proof-general]);
   myCoqPackages = {
-    "8.7" = coqPackages_8_7;
-    "8.8" = coqPackages_8_8;
-    "8.9" = coqPackages_8_9;
     "8.10" = coqPackages_8_10;
+    "8.11" = coqPackages_8_11;
     }."${coq-version}";
   coq = myCoqPackages.coq;
-  coq-elpi =  myCoqPackages.coq-elpi;
+  coq-elpi = myCoqPackages.coq-elpi;
 in
 stdenv.mkDerivation {
   name = "coq${coq.coq-version}-hierarchy-builder-dev";
