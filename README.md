@@ -110,4 +110,11 @@ prefixed with the attribute `#[verbose]`.
 - [demo1](demo1/) and [demo3](demo3/) declare and evolve a hierarchy up to
   rings with various clients that are tested not to break when the hierarchy
   evolves
-- [demo2](demo2/) TODO: explain the tricky thing
+- [demo2](demo2/) describes the subtle triangular interaction between groups,
+  topological space and uniform spaces. Indeed, 1. all uniform spaces induce a
+  topology, which makes them topological spaces, but 2. all topological groups
+  (groups that are topological spaces such that the addition and opposite are
+  continuous) induce a uniformity, which makes them uniform spaces. We explain
+  how to solve this seamingly mutual dependency using the high level HB language,
+  which constitute a step towards the automatic detection and handling of this
+  pattern.
