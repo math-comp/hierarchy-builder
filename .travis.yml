@@ -1,37 +1,64 @@
-dist: bionic
-language: minimal
+version: ~> 1.0
 
-services:
-  - docker
+branches:
+  only:
+  - master
 
-env:
-  global:
-  - NJOBS="2"
-  - CONTRIB_NAME="hb"
-  matrix:
-  - COQ="coqorg/coq:8.10" ELPI="coq-elpi.1.3.0" CMD="make && make install"
-  - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="make && make install"
-  - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="opam pin add coq-hierarchy-builder . -y -v"
+jobs:
+  include:
+  - language: nix
+    env:
+    - COQ=8.10
+    script:
+    - nix-build --argstr coq-version "${COQ}"
 
-install: |
-  # Prepare the COQ container
-  docker pull ${COQ}
-  docker run -d -i --init --name=COQ -v ${TRAVIS_BUILD_DIR}:/home/coq/${CONTRIB_NAME} -w /home/coq/${CONTRIB_NAME} ${COQ}
-  docker exec COQ /bin/bash --login -c "
-    export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '; set -ex
-    opam update -y
-    opam install -y -v -j ${NJOBS} ${ELPI}
-    opam config list; opam repo list; opam list
-    " install
-script:
-- echo -e "${ANSI_YELLOW}Building ${CONTRIB_NAME}...${ANSI_RESET}" && echo -en 'travis_fold:start:script\\r'
-- |
-  docker exec COQ /bin/bash --login -c "
-    export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '; set -ex
-    sudo chown -R coq:coq /home/coq/${CONTRIB_NAME}
-    ( ${CMD} )
-    " script
-- echo -en 'travis_fold:end:script\\r'
+  - language: nix
+    env:
+    - COQ=8.11
+    script:
+    - nix-build --argstr coq-version "${COQ}"
 
-after_script:
-- docker stop COQ  # optional but recommended
+  - dist: bionic
+    language: minimal
+    services:
+    - docker
+    env:
+    - NJOBS="2"
+    - CONTRIB_NAME="hb"
+    - COQ="coqorg/coq:8.10" ELPI="coq-elpi.1.3.0" CMD="make && make install"
+    install:
+    - ./.travis.docker-install.sh
+    script:
+    - ./.travis.docker-test.sh
+    after_script:
+    - docker stop COQ
+
+  - dist: bionic
+    language: minimal
+    services:
+    - docker
+    env:
+    - NJOBS="2"
+    - CONTRIB_NAME="hb"
+    - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="make && make install"
+    install:
+    - ./.travis.docker-install.sh
+    script:
+    - ./.travis.docker-test.sh
+    after_script:
+    - docker stop COQ
+
+  - dist: bionic
+    language: minimal
+    services:
+    - docker
+    env:
+    - NJOBS="2"
+    - CONTRIB_NAME="hb"
+    - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="opam pin add coq-hierarchy-builder . -y -v"
+    install:
+    - ./.travis.docker-install.sh
+    script:
+    - ./.travis.docker-test.sh
+    after_script:
+    - docker stop COQ
