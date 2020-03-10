@@ -1,4 +1,35 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+%%%%%%% Naming converntions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% - under-foobar.do! Arg [ Code ]
+%   enriches the context with foobar, the runs std.do! [ Code ]
+% - under-foobar.then Arg F Out
+%   enriches the context with foobar, the runs F Out, as a consequence
+%   the spilling expression {under-foobar.then Arg F} can be used
+% - foo_bar
+%   projection from foo to its field bar
+% - foo->bar
+%   conversion from type foo to type bar (it can be arbitrarily complex)
+% - get-foobar
+%   reads foobar from the Coq world
+% - findall-foobar
+%   reads foobar from hb.db, the output is sorted whenever it makes sense
+% - main-foobar
+%   main entry point for a user facing (or almost user facing) command foobar
+% - declare-foobar
+%   predicate adding to the Coq ennvironment a foobar
+% - postulate-foobar
+%   predicate assuming a foobar (declaring a Coq section variable)
+% - TheType, TheClass, TheFoobar
+%   the thing the current code is working on, eg the type of the structure
+%   begin defined
+% - FooAlias
+%   see phant-abbrev, used to talk about the non canonical name of Foo
+
 %%%%%%%%% Elpi Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This code could be moved in Elpi's standard library
 
 % TODO: pred toposort i:(A -> A -> prop), i:list A, o:list A.
 %       pred edge? i:int, i:int.
@@ -138,7 +169,7 @@ gref->modname GR ModName :-
 pred term->modname i:structure, o:id.
 term->modname T ModName :- gref->modname {term->gref T} ModName.
 
-%%%%%%%%% Database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Specialize coq.elpi.accumulate to "hiearchy.db"
 pred acc i:scope, i:clause.
@@ -221,9 +252,10 @@ findall-builders LFIL :-
 % and for which there is no join C3.
 % If there exists a join C3 of C1 and C2 then C is a subclass
 % of C3 (otherwise C should have been declared before C3)
-%              /-- C1
+%
+%        / --- /-- C1
 %    C -- no C3    !=
-%              \-- C2
+%        \ --- \-- C2
 %
 % [findall-newjoins C AllSuper] finds all C1 and C2 such that C is a (new) join for
 % them
@@ -413,8 +445,8 @@ mixin-srcs T X MSL :- std.do! [
   std.map ML (m\r\ r = mixin-src T m X) MSL
 ].
 
-pred under-mixin-src-from-factory i:term, i:term, i:(term -> prop), o:term.
-under-mixin-src-from-factory TheType TheFactory P X :-
+pred under-mixin-src-from-factory.then i:term, i:term, i:(term -> prop), o:term.
+under-mixin-src-from-factory.then TheType TheFactory P X :-
   mixin-srcs TheType TheFactory ML,
   ML => P X.
 
@@ -485,15 +517,15 @@ find-max-classes [M|Mixins] [C|Classes] :-
   ].
 find-max-classes [M|_] _ :- coq.error "cannot find a class containing mixin" M.
 
-% [under-fun-foreach-mixin T ML Pred F] states that F has type
+% [mk-mixin-fun.then T ML Pred F] states that F has type
 % fun (m_0 : M_0 T) .. (m_n : M_n T m_i0 .. m_ik) => Body m_0 .. m_n
 % where ML = [M_0, .., M_n]
 % and Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
-pred under-fun-foreach-mixin i:term, i:list gref, i:(term -> prop), o:term.
-under-fun-foreach-mixin _T [] Pred Body :- !, Pred Body.
-under-fun-foreach-mixin T [M|ML] Pred (fun `m` MTy FLG) :- std.do! [
+pred mk-mixin-fun.then i:term, i:list gref, i:(term -> prop), o:term.
+mk-mixin-fun.then _T [] Pred Body :- !, Pred Body.
+mk-mixin-fun.then T [M|ML] Pred (fun `m` MTy FLG) :- std.do! [
   mgref->term T M MTy,
-  @pi-decl `m` MTy m\ mixin-src T M m => under-fun-foreach-mixin T ML Pred (FLG m)
+  @pi-decl `m` MTy m\ mixin-src T M m => mk-mixin-fun.then T ML Pred (FLG m)
 ].
 
 % A *pack* notation can be easiliy produced from a phant-term using
@@ -656,7 +688,7 @@ main-mixin-requires Str GR GRFS [From|PO] :- !, std.do! [
   % register factory
   PO => std.do! [
     coq.env.typeof GR (prod T TTy _),
-    @pi-decl T TTy t\ under-fun-foreach-mixin t {factory-requires GR} (body\ sigma MTy\
+    @pi-decl T TTy t\ mk-mixin-fun.then t {factory-requires GR} (body\ sigma MTy\
         mgref->term t GR MTy,
         body = fun `x` MTy x\x) (IDBody t)],
   From = from GR GR (fun T TTy IDBody),
@@ -695,7 +727,7 @@ factory-comp TheType SrcFactory MB MiddleFactory TgtMixin MBoB :-
   mgref->term TheType SrcFactory Src,
   MBoB = {{
     fun src : lp:Src => lp:{{
-      {under-mixin-src-from-factory TheType {{src}}
+      {under-mixin-src-from-factory.then TheType {{src}}
         (factory-comp-body TheType {{src}} MB MiddleFactory TgtMixin)} }}
   }}.
 
@@ -718,7 +750,7 @@ declare-builder SrcFactory SrcFactoryRequires B BTy MiddleFactory TgtMixin FromI
 
   GoF = {{
     fun t : lp:TTy => lp:{{ % a fun for the type
-      {under-fun-foreach-mixin {{t}} SrcFactoryRequires
+      {mk-mixin-fun.then {{t}} SrcFactoryRequires
         (factory-comp {{t}} SrcFactory MB MiddleFactory TgtMixin)} }}
   }},
 
@@ -753,14 +785,14 @@ export Module :- !,
   coq.env.export-module Module,
   acc current (clause _ _ (to-export Module)).
 
-pred mk-mlams i:term, i:list mixinname, i:term, o:term.
-mk-mlams T ML X MLX :- under-fun-foreach-mixin T ML (body\ body = X) MLX.
+pred mk-mixin-fun i:term, i:list mixinname, i:term, o:term.
+mk-mixin-fun T ML X MLX :- mk-mixin-fun.then T ML (body\ body = X) MLX.
 
 pred clean-op-ty i:list prop, i:term, i:term, i:term, o:term.
 clean-op-ty [] _ _ T1 T2 :- copy T1 T2.
 clean-op-ty [exported-op Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
   gr-deps (const Po) ML,
-  mk-mlams SortPTheStructure ML (app [global (const C), TheStructure]) EtaC,
+  mk-mixin-fun SortPTheStructure ML (app [global (const C), TheStructure]) EtaC,
   (pi L T R H S\
     copy (app [global (const Po), T|L]) R :- hd-beta EtaC L H S, unwind H S R) =>
     clean-op-ty Ops SortPTheStructure TheStructure T1 T2.
