@@ -193,11 +193,11 @@ Elpi Export HB.mixin.
 (** [HB.structure] declares a packed structure.
 
   Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
-  The second syntax has a trailing [....] to pull in factory requirements silently.
+  The second syntax has a trailing [&] to pull in factory requirements silently.
 
   <<
   HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A }.
-  HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A .... }.
+  HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A & }.
   >>
 
 *)
