@@ -1,64 +1,37 @@
-version: ~> 1.0
-
 branches:
   only:
   - master
 
-jobs:
-  include:
-  - language: nix
-    env:
-    - COQ=8.10
-    script:
-    - nix-build --argstr coq-version "${COQ}"
+language:
+- nix
+- minimal
 
-  - language: nix
-    env:
-    - COQ=8.11
-    script:
-    - nix-build --argstr coq-version "${COQ}"
+if: language = minimal
+- dist: bionic
+- services:
+  - docker
 
-  - dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - NJOBS="2"
-    - CONTRIB_NAME="hb"
-    - COQ="coqorg/coq:8.10" ELPI="coq-elpi.1.3.0" CMD="make && make install"
-    install:
-    - ./.travis.docker-install.sh
-    script:
-    - ./.travis.docker-test.sh
-    after_script:
-    - docker stop COQ
+env:
+- global:
+  - NJOBS="2"
+  - CONTRIB_NAME="hierarchy-builder"
+- matrix:
+  - COQ=8.10 ELPI=1.3.0
+  - COQ=8.11 ELPI=1.3.1
+- matrix:
+  - CMD="make && make install"
+  - CMD="opam pin add coq-hierarchy-builder . -y -v"
 
-  - dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - NJOBS="2"
-    - CONTRIB_NAME="hb"
-    - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="make && make install"
-    install:
-    - ./.travis.docker-install.sh
-    script:
-    - ./.travis.docker-test.sh
-    after_script:
-    - docker stop COQ
+install:
+- if: language = minimal
+  - ./.travis.docker-install.sh
 
-  - dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - NJOBS="2"
-    - CONTRIB_NAME="hb"
-    - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="opam pin add coq-hierarchy-builder . -y -v"
-    install:
-    - ./.travis.docker-install.sh
-    script:
-    - ./.travis.docker-test.sh
-    after_script:
-    - docker stop COQ
+script:
+- if: language = nix
+  - nix-build --argstr coq-version "${COQ}"
+- if: language = minimal
+  - ./.travis.docker-test.sh
+
+after_script:
+- if: language = minimal
+  - docker stop COQ
