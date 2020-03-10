@@ -1,5 +1,5 @@
 opam-version: "2.0"
-name: "coq-hirarchy-builder"
+name: "coq-hierarchy-builder"
 version: "dev"
 maintainer: "Enrico Tassi <enrico.tassi@inria.fr>"
 authors: [ "Cyril Cohen" "Kazuhiko Sakaguchi" "Enrico Tassi" ]
