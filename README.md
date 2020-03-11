@@ -42,7 +42,7 @@ Notation "- x" := (opp x).
 ```
 
 Abelian groups feature the operations and properties given by the
-`AbelianGrp_of_AddComoid` mixin (and its dependency `AddComoid_of_Type`).
+`AbelianGrp_of_AddComoid` mixin (and its dependency `AddComoid`).
 
 ```coq
 Lemma example (G : AbelianGrp.type) (x : G) : x + (- x) = - 0.
@@ -72,7 +72,12 @@ The current version does not handle structures with parameters (for example
 modules over a ring), and forces the carrier to be a type (excluding hierarchies
 of morphisms).
 
+This [draft paper](https://hal.inria.fr/hal-02478907) describes the language
+in full detail.
+
 #### Installation & availability
+
+<details><summary>(click to expand)</summary><p>
 
 HB works on Coq 8.10 and 8.11.
 
@@ -85,9 +90,12 @@ opam install coq-hierarchy-builder
 
 - You can use it in nix with the attribute `coqPackages_8_10.hierarchy-builder`
   or `coqPackages_8_11.hierarchy-builder` (e.g. via `nix-shell -p coqPackages_8_10.hierarchy-builder`)
-
+ 
+</p></details>
 
 #### Key concepts
+
+<details><summary>(click to expand)</summary><p>
 
 - a *mixin* is a bare bone building block of the hierarchy, it packs operations
   and axioms.
@@ -103,10 +111,11 @@ opam install coq-hierarchy-builder
 - an *instance* is an example of a structure: it provides all operation and
   fulfills all axioms.
 
-A [draft paper](https://hal.inria.fr/hal-02478907) describes the language in
-more detail.
+</p></details>
 
-#### The commands provided by hb
+#### The commands of HB
+
+<details><summary>(click to expand)</summary><p>
 
 - `HB.mixin` declares a mixin
 - `HB.structure` declares a structure
@@ -119,7 +128,11 @@ Their documentation can be found in the comments of [structures.v](structures.v)
 search for `Elpi Command` and you will find them. All commands can be
 prefixed with the attribute `#[verbose]` to get an idea of what they are doing.
 
+</p></details>
+
 #### Demos
+
+<details><summary>(click to expand)</summary><p>
 
 - [demo1](demo1/) and [demo3](demo3/) declare and evolve a hierarchy up to
   rings with various clients that are tested not to break when the hierarchy
@@ -130,3 +143,5 @@ prefixed with the attribute `#[verbose]` to get an idea of what they are doing.
   (groups that are topological spaces such that the addition and opposite are
   continuous) induce a uniformity, which makes them uniform spaces. We solve
   this seamingly mutual dependency using HB.
+
+</p></details>
