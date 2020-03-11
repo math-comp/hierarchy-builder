@@ -17,7 +17,7 @@ HB.mixin Record AddComoid_of_Type A := {
   addrC : forall x y, add x y = add y x;
   add0r : forall x, add zero x = x;
 }.
-HB.structure Definition AddComoid := { A of AddComoid_of_Type.axioms A }.
+HB.structure Definition AddComoid := { A of AddComoid_of_Type A }.
 
 Notation "0" := zero.
 Infix "+" := add.
@@ -32,17 +32,17 @@ We proceed by declaring how to obtain an Abelian group out of the
 additive, commutative, monoid.
 
 ```coq
-HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid.axioms A := {
+HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.
-HB.structure Definition AbelianGrp := { A of AbelianGrp_of_AddComoid.axioms A & }.
+HB.structure Definition AbelianGrp := { A of AbelianGrp_of_AddComoid A & }.
 
 Notation "- x" := (opp x).
 ```
 
 Abelian groups feature the operations and properties given by the
-`AbelianGrp_of_AddComoid.axioms` and `AddComoid_of_Type.axioms` mixins.
+`AbelianGrp_of_AddComoid` and `AddComoid_of_Type` mixins.
 
 ```coq
 Lemma example (G : AbelianGrp.type) (x : G) : x + (- x) = - 0.
@@ -53,9 +53,9 @@ We proceed by showing that `Z` is an example of both structures, and use
 the lemma just proved on a statement about `Z`.
 
 ```coq
-Definition Z_CoMoid := AddComoid_of_Type.Axioms Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
+Definition Z_CoMoid := AddComoid_of_Type.Build Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
 HB.instance Z Z_CoMoid.
-Definition Z_AbGrp := AbelianGrp_of_AddComoid.Axioms Z Z.opp Z.add_opp_diag_l.
+Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z.add_opp_diag_l.
 HB.instance Z Z_AbGrp.
 
 Lemma example2 (x : Z) : x + (- x) = - 0.

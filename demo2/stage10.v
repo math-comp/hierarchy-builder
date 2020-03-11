@@ -21,7 +21,7 @@ HB.mixin Record AddAG_of_TYPE A := {
   add0r : left_id zero add;
   addNr : left_inverse zero opp add;
 }.
-HB.structure Definition AddAG := { A of AddAG_of_TYPE.axioms A }.
+HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
 Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
@@ -78,7 +78,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
+HB.mixin Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -104,18 +104,18 @@ HB.factory Record Ring_of_TYPE A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_TYPE.axioms A).
+HB.builders Context A (a : Ring_of_TYPE A).
 
-Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Axioms A
+Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Build A
     _ _ _ addrA_a addrC_a add0r_a addNr_a.
   HB.instance A to_AddAG_of_TYPE.
   Definition to_Ring_of_AddAG :=
-    Ring_of_AddAG.Axioms _ _ _ mulrA_a mul1r_a
+    Ring_of_AddAG.Build _ _ _ mulrA_a mul1r_a
       mulr1_a mulrDl_a mulrDr_a.
   HB.instance A to_Ring_of_AddAG.
 HB.end.
 
-HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
@@ -127,7 +127,7 @@ HB.mixin Record Topological T := {
     (forall i, D i -> open (F i)) -> open (\bigcup_(i in D) F i);
   open_setI : forall X Y : set T, open X -> open Y -> open (setI X Y);
 }.
-HB.structure Definition TopologicalSpace := { A of Topological.axioms A }.
+HB.structure Definition TopologicalSpace := { A of Topological A }.
 
 Hint Extern 0 (open setT) => now apply: open_setT : core.
 
@@ -138,7 +138,7 @@ HB.factory Record TopologicalBase T := {
     forall z, (X `&` Y) z -> exists2 Z, open_base Z & Z z /\ Z `<=` X `&` Y
 }.
 
-HB.builders Context T (a : TopologicalBase.axioms T).
+HB.builders Context T (a : TopologicalBase T).
 
   Definition open_of : (T -> Prop) -> Prop :=
     [set A | exists2 D, D `<=` open_base_a & A = \bigcup_(X in D) X].
@@ -156,7 +156,7 @@ HB.builders Context T (a : TopologicalBase.axioms T).
   Proof. Admitted.
 
   Definition to_Topological :=
-    Topological.Axioms T _ open_of_setT (@open_of_bigcup) open_of_cap.
+    Topological.Build T _ open_of_setT (@open_of_bigcup) open_of_cap.
   HB.instance T to_Topological.
 
 HB.end.
@@ -189,7 +189,7 @@ Section ProductTopology.
   Qed.
 
   Definition prod_topology :=
-    TopologicalBase.Axioms (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type _ prod_open_base_covers prod_open_base_setU.
+    TopologicalBase.Build (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type _ prod_open_base_covers prod_open_base_setU.
   HB.instance ((TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type) prod_topology.
 
 End ProductTopology.
@@ -200,17 +200,17 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-HB.mixin Record JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axioms T := {
+HB.mixin Record JoinTAddAG T of AddAG_of_TYPE T & Topological T := {
   add_continuous : continuous2 (add : T -> T -> T);
   opp_continuous : continuous (opp : T -> T)
 }.
 
-HB.structure Definition TAddAG := { A of Topological.axioms A & AddAG_of_TYPE.axioms A & JoinTAddAG.axioms A }.
+HB.structure Definition TAddAG := { A of Topological A & AddAG_of_TYPE A & JoinTAddAG A }.
 
 (* Instance *)
 
 Definition Z_ring_axioms :=
-  Ring_of_TYPE.Axioms Z 0%Z 1%Z Z.add Z.opp Z.mul
+  Ring_of_TYPE.Build Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
@@ -226,7 +226,7 @@ Lemma Qcplus_opp_l q : - q + q = 0.
 Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
 
 Definition Qc_ring_axioms :=
-  Ring_of_TYPE.Axioms Qc 0%Qc 1%Qc Qcplus Qcopp Qcmult
+  Ring_of_TYPE.Build Qc 0%Qc 1%Qc Qcplus Qcopp Qcmult
     Qcplus_assoc Qcplus_comm Qcplus_0_l Qcplus_opp_l
     Qcmult_assoc Qcmult_1_l Qcmult_1_r
     Qcmult_plus_distr_l Qcmult_plus_distr_r.
@@ -235,7 +235,7 @@ HB.instance Qc Qc_ring_axioms.
 Obligation Tactic := idtac.
 Definition Qcopen_base : set (set Qc) :=
   [set A | exists a b : Qc, forall z, A z <-> a < z /\ z < b].
-Program Definition QcTopological := TopologicalBase.Axioms Qc Qcopen_base _ _.
+Program Definition QcTopological := TopologicalBase.Build Qc Qcopen_base _ _.
 Next Obligation.
 move=> x _; exists [set y | x - 1 < y < x + 1].
   by exists (x - 1), (x + 1).
@@ -248,7 +248,7 @@ move=> X Y [aX [bX Xeq]] [aY [bY Yeq]] z [/Xeq [aXz zbX] /Yeq [aYz zbY]].
 Admitted.
 HB.instance Qc QcTopological.
 
-Program Definition QcJoinTAddAG := JoinTAddAG.Axioms Qc _ _.
+Program Definition QcJoinTAddAG := JoinTAddAG.Build Qc _ _.
 Next Obligation. Admitted.
 Next Obligation. Admitted.
 HB.instance Qc QcJoinTAddAG.

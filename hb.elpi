@@ -555,10 +555,9 @@ mk-phant-abbrev N (phant-term AL T) C Abbrev :- std.do! [
   add-abbrev N NParams AbbrevT tt tt Abbrev,
 ].
 
-% [acc-phant-abbrev Str GR Acc] makes a phantom abbreviation for F
-pred acc-phant-abbrev i:string, i:gref, o:list prop.
-acc-phant-abbrev _Str GR [] :- factory-alias->gref GR _, !.
-acc-phant-abbrev Str GR [phant-abbrev GR (const PhC) Abbrev] :- !, std.do! [
+% [acc-phant-abbrev Str GR PhGR Abbrev] makes a phantom abbreviation for F
+pred acc-phant-abbrev i:string, i:gref, o:gref, o:abbreviation.
+acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
   mk-phant-mixins (global GR) PhGR,
   mk-phant-abbrev Str PhGR PhC Abbrev
 ].
@@ -673,20 +672,36 @@ declare-instances T [class Class Struct ML|Rest] :-
 declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
 
-% [main-factory-requires Str GR FL CL]
+kind factory-name type.
+type factory-by-classname gref -> factory-name.
+type factory-by-phantabbrev abbreviation -> factory-name.
+
+pred declare-factory-abbrev i:id, i:factory-name.
+declare-factory-abbrev Name (factory-by-classname GR) :-
+  add-abbrev Name 1 (fun _ _ t\ app[global GR,t]) tt tt _.
+declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
+  add-abbrev Name 1 (fun _ _ t\ {coq.notation.abbreviation Abbr [t]}) tt tt _.
+
+% [main-factory-requires Str GR FL CL SN]
 % computes the list of mixins ML provided by FL,
 % creates a clause in CL stating that GR requires ML (factory-requires ..), and
 % creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
-pred main-factory-requires i:string, i:gref, i:list factoryname, o:list prop.
-main-factory-requires Str GR GRFS [FactoryRequires|Aliases] :- !, std.do! [
+% SN is the short name for the factory (either an alias of the class record)
+pred main-factory-requires i:string, i:gref, i:list factoryname, o:list prop, o:factory-name.
+main-factory-requires Str GR GRFS [FactoryRequires|Aliases] SN :- !, std.do! [
   factories-provide GRFS ML,
   FactoryRequires = factory-requires GR ML,
-  acc-phant-abbrev Str GR Aliases
+  if (factory-alias->gref GR _)
+     (Aliases = [],
+      SN = factory-by-classname GR)
+     (acc-phant-abbrev Str GR PhGR Abbrv,
+      Aliases = [phant-abbrev GR PhGR Abbrv],
+      SN = factory-by-phantabbrev Abbrv),
 ].
 
-pred main-mixin-requires i:string, i:gref, i:list factoryname, o:list prop.
-main-mixin-requires Str GR GRFS [From|PO] :- !, std.do! [
-  main-factory-requires Str GR GRFS PO,
+pred main-mixin-requires i:string, i:gref, i:list factoryname, o:list prop, o:factory-name.
+main-mixin-requires Str GR GRFS [From|PO] SN :- !, std.do! [
+  main-factory-requires Str GR GRFS PO SN,
   % register factory
   PO => std.do! [
     coq.env.typeof GR (prod T TTy _),
@@ -1040,6 +1055,8 @@ main-declare-structure Module GRFS ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: end modules; export" Exports),
 
   export Exports,
+
+  declare-factory-abbrev Module (factory-by-classname ClassName),
 ].
 
 pred main-begin-declare i:string, i:string, i:list gref, i:declaration.
@@ -1176,30 +1193,30 @@ main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [
   Ty = sort (typ U),
   coq.env.add-const Name _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
-  collect-asset-parameters (Rest TheType) [] TheType D
+  collect-asset-parameters (Rest TheType) [] Module TheType D
 ].
 
-pred collect-asset-parameters i:asset-decl, i:list factoryname, i:term, i:asset.
-collect-asset-parameters (asset-parameter _ T Rest) GRFS TheType D :- std.do! [
+pred collect-asset-parameters i:asset-decl, i:list factoryname, i:id, i:term, i:asset.
+collect-asset-parameters (asset-parameter _ T Rest) GRFS Module TheType D :- std.do! [
   std.assert! (T = app[global F, TheType]) "Factory not applied to the type variable",
   std.assert! (pi x y\ Rest x = Rest y) "Factories cannot be mentioned in the mixin",
   Dummy = sort prop,
-  collect-asset-parameters (Rest Dummy) [F|GRFS] TheType D
+  collect-asset-parameters (Rest Dummy) [F|GRFS] Module TheType D
 ].
 
-collect-asset-parameters (asset-alias _ Ty) GRFS TheType D :-
+collect-asset-parameters (asset-alias _ Ty) GRFS Module TheType D :-
   std.assert! (D = asset-factory) "Mixins cannot be aliases",
   % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
-  declare-factory-alias Ty1 GRFS TheType.
+  declare-factory-alias Ty1 GRFS Module TheType.
 
-collect-asset-parameters (asset-record _ Sort _ Fields) GRFS TheType D :-
+collect-asset-parameters (asset-record _ Sort _ Fields) GRFS Module TheType D :-
   % refresh implicit arguments, since many binders are now gone
   (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
-  declare-mixin-or-factory Sort1 Fields0 GRFS TheType D.
+  declare-mixin-or-factory Sort1 Fields0 GRFS Module TheType D.
 
-pred declare-factory-alias i:term, i:list factoryname, i:term.
-declare-factory-alias Ty1 GRFS TheType :- std.do! [
+pred declare-factory-alias i:term, i:list factoryname, i:id, i:term.
+declare-factory-alias Ty1 GRFS Module TheType :- std.do! [
 
   main-declare-context TheType {std.rev GRFS} Hyps,
 
@@ -1220,10 +1237,10 @@ declare-factory-alias Ty1 GRFS TheType :- std.do! [
 
   mk-phant-mixins (global GRK) PhGRK0,
   if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  mk-phant-abbrev "Axioms" PhGRK _ _,
+  mk-phant-abbrev "Build" PhGRK _ _,
 
   std.map Hyps mixin-src_mixin ML,
-  main-factory-requires "axioms" (const C) ML Props,
+  main-factory-requires "axioms" (const C) ML Props SN,
 
   if-verbose (coq.say "HB: start module Exports"),
 
@@ -1238,10 +1255,12 @@ declare-factory-alias Ty1 GRFS TheType :- std.do! [
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
   export Exports,
+
+  declare-factory-abbrev Module SN,
 ].
 
-pred declare-mixin-or-factory i:term, i:record-decl, i:list factoryname, i:term, i:asset.
-declare-mixin-or-factory Sort1 Fields0 GRFS TheType D :- std.do! [
+pred declare-mixin-or-factory i:term, i:record-decl, i:list factoryname, i:id, i:term, i:asset.
+declare-mixin-or-factory Sort1 Fields0 GRFS Module TheType D :- std.do! [
   if (D = asset-mixin) (Fields1 = Fields0)
      (Fields1 = (field _ "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
   main-declare-context TheType {std.rev GRFS} Hyps,
@@ -1264,12 +1283,12 @@ declare-mixin-or-factory Sort1 Fields0 GRFS TheType D :- std.do! [
   if-verbose (coq.say "HB: declare notation Axioms"),
 
   if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  mk-phant-abbrev "Axioms" PhGRK _ _,
+  mk-phant-abbrev "Build" PhGRK _ _,
 
   std.map Hyps mixin-src_mixin ML,
   if (D = asset-mixin)
-     (main-mixin-requires "axioms" (indt R) ML Props)
-     (main-factory-requires "axioms" (indt R) ML Props),
+     (main-mixin-requires "axioms" (indt R) ML Props SN)
+     (main-factory-requires "axioms" (indt R) ML Props SN),
 
   if-verbose (coq.say "HB: start module Exports"),
 
@@ -1284,5 +1303,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFS TheType D :- std.do! [
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
   export Exports,
+
+  declare-factory-abbrev Module SN,
 ].
 

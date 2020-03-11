@@ -7,5 +7,5 @@ HB.mixin Record Foo A := {
   ax : comb A op
 }.
 
-HB.structure Definition S1 := { A of Foo.axioms A }.
-Fail HB.structure Definition S2 := { A of Foo.axioms A }.
+HB.structure Definition S1 := { A of Foo A }.
+Fail HB.structure Definition S2 := { A of Foo A }.

@@ -153,11 +153,11 @@ Elpi Export HB.status.
 
 (** [HB.mixin] declares a mixin
 
-  Syntax to create a mixin [MixinName.axioms]
-  with requirements [Factory1.axioms] .. [FactoryN.axioms]:
+  Syntax to create a mixin [MixinName]
+  with requirements [Factory1] .. [FactoryN]:
 
   <<
-  HB.mixin Record MixinName T of Factory1.axioms T & … & FactoryN.axioms T := {
+  HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
      op : T -> …
      …
      property : forall x : T, op …
@@ -166,8 +166,8 @@ Elpi Export HB.status.
   >>
 
   Synthesizes:
-  - [MixinName.axioms T] abbreviation for the type of the (degenerate) factory
-  - [MixinName.Axioms T] abbreviation for the constructor of the factory
+  - [MixinName T] abbreviation for the type of the (degenerate) factory
+  - [MixinName.Build T] abbreviation for the constructor of the factory
 
   Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
 *)
@@ -196,8 +196,8 @@ Elpi Export HB.mixin.
   The second syntax has a trailing [&] to pull in factory requirements silently.
 
   <<
-  HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A }.
-  HB.structure Definition StructureName := { A of Factory1.axioms A & … & FactoryN.axioms A & }.
+  HB.structure Definition StructureName := { A of Factory1 A & … & FactoryN A }.
+  HB.structure Definition StructureName := { A of Factory1 A & … & FactoryN A & }.
   >>
 
 *)
@@ -245,9 +245,9 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Definition f1 : Factory1.axioms T := Factory1.Axioms T …
+    Definition f1 : Factory1 T := Factory1.Build T …
     …
-    Definition fN : FactoryN.axioms T := FactoryN.Axioms T …
+    Definition fN : FactoryN T := FactoryN.Build T …
     HB.instance T f1 … fN.
     >>
 
@@ -291,10 +291,10 @@ Elpi Export HB.factory.
 (** [HB.builders] starts a section to declare the builders associated
     to a factory. [HB.end] ends that section.
 
-    Syntax to declare builders for factory [Factory.axioms]:
+    Syntax to declare builders for factory [Factory]:
 
     <<
-    HB.builders Context A (f : Factory.axioms A).
+    HB.builders Context A (f : Factory A).
     …
     HB.instance A someFactoryInstance.
     …
@@ -304,11 +304,11 @@ Elpi Export HB.factory.
     [HB.builders] starts a section (inside a module of unspecified name) where:
     - [A] is a type variable
     - all the requirements of [Factory] were postulated as variables
-    - [f] is variable of type [Factory.axioms A]
+    - [f] is variable of type [Factory A]
     - all classes whose requirements can be obtained from [Factory] are
       declared canonical on [A]
     - for each operation [op] and property [prop] (named fields) of
-      [Factory.axioms A] a [Notation] named [op_f] and [property_f]
+      [Factory A] a [Notation] named [op_f] and [property_f]
       for the partial application of [op] and [property] to the variable [f]
 
     [HB.end] ends the section and closes the module and synthesizes
@@ -354,11 +354,11 @@ Elpi Export HB.end.
   Effect:
 
     Variable m0 : m0.
-    Definition s0 := S0.Pack T (S0.Axioms T m0).
+    Definition s0 := S0.Pack T (S0.Build T m0).
     Canonical s0.
     ..
     Variable mn : mn dn.
-    Definition sm : SM.Pack T (SM.Axioms T m0 .. mn).
+    Definition sm : SM.Pack T (SM.Build T m0 .. mn).
     Canonical sm.
 
   where:

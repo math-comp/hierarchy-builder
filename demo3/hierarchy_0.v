@@ -8,9 +8,9 @@ HB.mixin Record MulMonoid_of_Type A := {
   mul1r : left_id one mul;
   mulr1 : right_id one mul;
 }.
-HB.structure Definition MulMonoid := { A of MulMonoid_of_Type.axioms A }.
+HB.structure Definition MulMonoid := { A of MulMonoid_of_Type A }.
 
-HB.mixin Record Ring_of_MulMonoid A of MulMonoid.axioms A := {
+HB.mixin Record Ring_of_MulMonoid A of MulMonoid A := {
   zero : A;
   add : A -> A -> A;
   addrA : associative add;
@@ -22,5 +22,5 @@ HB.mixin Record Ring_of_MulMonoid A of MulMonoid.axioms A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.structure Definition Ring := { A of MulMonoid.axioms A & Ring_of_MulMonoid.axioms A }.
+HB.structure Definition Ring := { A of MulMonoid A & Ring_of_MulMonoid A }.
 
