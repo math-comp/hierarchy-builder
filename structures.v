@@ -239,7 +239,7 @@ Elpi Export HB.structure.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** [HB.instance] associated to a type all the structures that can be
+(** [HB.instance] associates to a type all the structures that can be
     obtaind from the provided factory inhabitant.
 
     Syntax for declaring a canonical instance:
