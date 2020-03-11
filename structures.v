@@ -167,7 +167,7 @@ Elpi Export HB.status.
 
   Synthesizes:
   - [MixinName T] abbreviation for the type of the (degenerate) factory
-  - [MixinName.Axioms T] abbreviation for the constructor of the factory
+  - [MixinName.Build T] abbreviation for the constructor of the factory
 
   Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
 *)
@@ -245,9 +245,9 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Definition f1 : Factory1 T := Factory1.Axioms T …
+    Definition f1 : Factory1 T := Factory1.Build T …
     …
-    Definition fN : FactoryN T := FactoryN.Axioms T …
+    Definition fN : FactoryN T := FactoryN.Build T …
     HB.instance T f1 … fN.
     >>
 
@@ -354,11 +354,11 @@ Elpi Export HB.end.
   Effect:
 
     Variable m0 : m0.
-    Definition s0 := S0.Pack T (S0.Axioms T m0).
+    Definition s0 := S0.Pack T (S0.Build T m0).
     Canonical s0.
     ..
     Variable mn : mn dn.
-    Definition sm : SM.Pack T (SM.Axioms T m0 .. mn).
+    Definition sm : SM.Pack T (SM.Build T m0 .. mn).
     Canonical sm.
 
   where:

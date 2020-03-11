@@ -53,9 +53,9 @@ We proceed by showing that `Z` is an example of both structures, and use
 the lemma just proved on a statement about `Z`.
 
 ```coq
-Definition Z_CoMoid := AddComoid_of_Type.Axioms Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
+Definition Z_CoMoid := AddComoid_of_Type.Build Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
 HB.instance Z Z_CoMoid.
-Definition Z_AbGrp := AbelianGrp_of_AddComoid.Axioms Z Z.opp Z.add_opp_diag_l.
+Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z.add_opp_diag_l.
 HB.instance Z Z_AbGrp.
 
 Lemma example2 (x : Z) : x + (- x) = - 0.

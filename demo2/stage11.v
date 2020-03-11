@@ -110,11 +110,11 @@ HB.factory Record Ring_of_TYPE A := {
 
 HB.builders Context A (a : Ring_of_TYPE A).
 
-  Definition to_AddAG := AddAG_of_TYPE.Axioms A
+  Definition to_AddAG := AddAG_of_TYPE.Build A
     _ _ _ addrA_a addrC_a add0r_a addNr_a.
   HB.instance A to_AddAG.
 
-  Definition to_Ring := Ring_of_AddAG.Axioms A
+  Definition to_Ring := Ring_of_AddAG.Build A
     _ _ mulrA_a mul1r_a mulr1_a mulrDl_a mulrDr_a.
   HB.instance A to_Ring.
 HB.end.
@@ -161,7 +161,7 @@ HB.builders Context T (a : TopologicalBase T).
   Proof. Admitted.
 
   Definition to_Topological :=
-    Topological.Axioms T _ open_of_setT (@open_of_bigcup) open_of_cap.
+    Topological.Build T _ open_of_setT (@open_of_bigcup) open_of_cap.
   HB.instance T to_Topological.
 
 HB.end.
@@ -194,7 +194,7 @@ Section ProductTopology.
   Qed.
 
   Definition prod_topology :=
-    TopologicalBase.Axioms _ _ prod_open_base_covers prod_open_base_setU.
+    TopologicalBase.Build _ _ prod_open_base_covers prod_open_base_setU.
 
   (* TODO: make elpi insert coercions! *)
   HB.instance ((TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type) prod_topology.
@@ -242,7 +242,7 @@ Section Uniform_Topology.
   Admitted.
 
   Definition uniform_topology :=
-    Topological.Axioms _ _ uniform_open_setT (@uniform_open_bigcup) uniform_open_setI.
+    Topological.Build _ _ uniform_open_setT (@uniform_open_bigcup) uniform_open_setI.
   HB.instance (uniform (UniformSpace_wo_Topology.sort U)) uniform_topology.
 
 End Uniform_Topology.
@@ -282,7 +282,7 @@ Section TAddAGUniform.
   Admitted.
 
   Definition TAddAG_uniform :=
-    Uniform_wo_Topology.Axioms _ _ filter_TAddAG_entourage TAddAG_entourage_sub
+    Uniform_wo_Topology.Build _ _ filter_TAddAG_entourage TAddAG_entourage_sub
       TAddAG_entourage_sym TAddAG_entourage_split.
   HB.instance (TAddAG (TAddAG_wo_Uniform.sort T)) TAddAG_uniform.
 
@@ -290,7 +290,7 @@ Section TAddAGUniform.
      open = (uniform_open _ : set (set (uniform TT))).
   Admitted.
   Definition TAddAG_Join_Uniform_Topology : Join_Uniform_Topology (TAddAG T)
-    := Join_Uniform_Topology.Axioms _ TAddAG_uniform_topologyE.
+    := Join_Uniform_Topology.Build _ TAddAG_uniform_topologyE.
   HB.instance (TAddAG (TAddAG_wo_Uniform.sort T))
     TAddAG_Join_Uniform_Topology.
 
@@ -318,7 +318,7 @@ HB.builders Context U of TAddAG_Uniform U.
     (TAddAG_Join_Uniform_Topology _).
   HB.instance U to_Join_Uniform_Topology.
   Definition to_Join_TAddAG_Uniform :=
-    (Join_TAddAG_Uniform.Axioms U (TAddAG_entourageE _)).
+    (Join_TAddAG_Uniform.Build U (TAddAG_entourageE _)).
   HB.instance U to_Join_TAddAG_Uniform.
 HB.end.
 
@@ -333,14 +333,14 @@ HB.builders Context T (a : JoinTAddAG T).
   Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform T := a.
   HB.instance T to_JoinTAddAG_wo_Uniform.
   (* TODO: Nice error message when factory builders do not depend on the source factory 'a'*)
-  Definition to_Uniform := let _ := a in TAddAG_Uniform.Axioms T.
+  Definition to_Uniform := let _ := a in TAddAG_Uniform.Build T.
   HB.instance T to_Uniform.
 HB.end.
 
 (* Instance *)
 
 Definition Z_ring_axioms :=
-  Ring_of_TYPE.Axioms _ 0%Z 1%Z Z.add Z.opp Z.mul
+  Ring_of_TYPE.Build _ 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
@@ -354,7 +354,7 @@ Lemma Qcplus_opp_l q : - q + q = 0.
 Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
 
 Definition Qc_ring_axioms :=
-  Ring_of_TYPE.Axioms _ 0%Qc 1%Qc Qcplus Qcopp Qcmult
+  Ring_of_TYPE.Build _ 0%Qc 1%Qc Qcplus Qcopp Qcmult
     Qcplus_assoc Qcplus_comm Qcplus_0_l Qcplus_opp_l
     Qcmult_assoc Qcmult_1_l Qcmult_1_r
     Qcmult_plus_distr_l Qcmult_plus_distr_r.
@@ -363,7 +363,7 @@ HB.instance Qc Qc_ring_axioms.
 Obligation Tactic := idtac.
 Definition Qcopen_base : set (set Qc) :=
   [set A | exists a b : Qc, forall z, A z <-> a < z /\ z < b].
-Program Definition QcTopological := TopologicalBase.Axioms Qc Qcopen_base _ _.
+Program Definition QcTopological := TopologicalBase.Build Qc Qcopen_base _ _.
   Next Obligation.
   move=> x _; exists [set y | x - 1 < y < x + 1].
     by exists (x - 1), (x + 1).
@@ -376,7 +376,7 @@ Program Definition QcTopological := TopologicalBase.Axioms Qc Qcopen_base _ _.
   Admitted.
 HB.instance Qc QcTopological.
 
-Program Definition QcJoinTAddAG := JoinTAddAG.Axioms Qc _ _.
+Program Definition QcJoinTAddAG := JoinTAddAG.Build Qc _ _.
   Next Obligation. Admitted.
   Next Obligation. Admitted.
 HB.instance Qc QcJoinTAddAG.

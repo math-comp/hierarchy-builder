@@ -37,12 +37,12 @@ End Theory.
 (* Instance *)
 
 Definition Z_mulmonoid_axioms :=
-  MulMonoid_of_Type.Axioms Z 1%Z Z.mul Z.mul_assoc Z.mul_1_l Z.mul_1_r.
+  MulMonoid_of_Type.Build Z 1%Z Z.mul Z.mul_assoc Z.mul_1_l Z.mul_1_r.
 
 HB.instance Z Z_mulmonoid_axioms.
 
 Definition Z_ring_axioms :=
-  Ring_of_MulMonoid.Axioms Z 0%Z Z.add
+  Ring_of_MulMonoid.Build Z 0%Z Z.add
     Z.add_assoc Z.add_0_l Z.add_0_r
     Z.opp Z.add_comm Z.add_opp_diag_l
     Z.mul_add_distr_r Z.mul_add_distr_l.

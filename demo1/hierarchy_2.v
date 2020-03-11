@@ -35,11 +35,11 @@ HB.factory Record AddAG_of_TYPE A := {
 HB.builders Context A (a : AddAG_of_TYPE A).
 
   Definition to_AddComoid_of_TYPE :=
-    AddComoid_of_TYPE.Axioms A zero_a add_a addrA_a addrC_a add0r_a.
+    AddComoid_of_TYPE.Build A zero_a add_a addrA_a addrC_a add0r_a.
   HB.instance A to_AddComoid_of_TYPE.
 
   Definition to_AddAG_of_AddComoid :=
-    AddAG_of_AddComoid.Axioms A _ addNr_a.
+    AddAG_of_AddComoid.Build A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
 
 HB.end.
@@ -68,10 +68,10 @@ HB.factory Record Ring_of_AddComoid A of AddComoid A := {
 
 HB.builders Context A (a : Ring_of_AddComoid A).
 
-  Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms A _ addNr_a.
+  Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Build A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
 
-  Definition to_Ring_of_AddAG := Ring_of_AddAG.Axioms A
+  Definition to_Ring_of_AddAG := Ring_of_AddAG.Build A
     _ _ mulrA_a mul1r_a mulr1_a mulrDl_a mulrDr_a.
   HB.instance A to_Ring_of_AddAG.
 
@@ -98,11 +98,11 @@ HB.factory Record Ring_of_TYPE A := {
 
 HB.builders Context A (a : Ring_of_TYPE A).
 
-  Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Axioms A
+  Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Build A
     zero_a add_a addrA_a addrC_a add0r_a.
   HB.instance A to_AddComoid_of_TYPE.
 
-  Definition to_Ring_of_AddComoid := Ring_of_AddComoid.Axioms A
+  Definition to_Ring_of_AddComoid := Ring_of_AddComoid.Build A
     _ _ _ addNr_a mulrA_a mul1r_a mulr1_a mulrDl_a mulrDr_a.
   HB.instance A to_Ring_of_AddComoid.
 HB.end.
