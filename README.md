@@ -42,7 +42,7 @@ Notation "- x" := (opp x).
 ```
 
 Abelian groups feature the operations and properties given by the
-`AbelianGrp_of_AddComoid` and `AddComoid_of_Type` mixins.
+`AbelianGrp_of_AddComoid` mixin (and its dependency `AddComoid_of_Type`).
 
 ```coq
 Lemma example (G : AbelianGrp.type) (x : G) : x + (- x) = - 0.
