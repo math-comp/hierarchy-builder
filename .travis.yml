@@ -6,8 +6,10 @@ branches:
 
 env:
   global:
-  - NJOBS="2"
-  - CONTRIB_NAME="hb"
+  - CONTRIB_NAME=hb
+  - ELPI_810=coq-elpi.1.3.0
+  - ELPI_811=coq-elpi.1.3.1
+  - ELPI_DEV=https://github.com/LPCIC/coq-elpi.git#coq-master
 
 jobs:
   include:
@@ -28,7 +30,7 @@ jobs:
     services:
     - docker
     env:
-    - COQ="coqorg/coq:8.10" ELPI="coq-elpi.1.3.0" CMD="make && make install"
+    - COQ=8.10 ELPI="install ${ELPI_810}" CMD="make && make install"
     install:
     - ./.travis/docker-install.sh
     script:
@@ -41,7 +43,7 @@ jobs:
     services:
     - docker
     env:
-    - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="make && make install"
+    - COQ=8.11 ELPI="install ${ELPI_811}" CMD="make && make install"
     install:
     - ./.travis/docker-install.sh
     script:
@@ -54,7 +56,21 @@ jobs:
     services:
     - docker
     env:
-    - COQ="coqorg/coq:8.11" ELPI="coq-elpi.1.3.1" CMD="opam pin add coq-hierarchy-builder . -y -v"
+    - COQ=8.11 ELPI="install ${ELPI_811}" CMD="opam pin add coq-hierarchy-builder ."
+    install:
+    - ./.travis/docker-install.sh
+    script:
+    - ./.travis/docker-test.sh
+    after_script:
+    - docker stop COQ
+
+  - if: branch = coq-master
+    dist: bionic
+    language: minimal
+    services:
+    - docker
+    env:
+    - COQ=dev ELPI="pin add coq-elpi ${ELPI_DEV}" CMD="opam pin add coq-hierarchy-builder ."
     install:
     - ./.travis/docker-install.sh
     script:

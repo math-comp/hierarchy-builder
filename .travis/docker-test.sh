@@ -4,6 +4,9 @@ echo -e "${ANSI_YELLOW}Building ${CONTRIB_NAME}...${ANSI_RESET}" && echo -en 'tr
 
 docker exec COQ /bin/bash --login -c "
   export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '; set -ex
+  export OPAMYES=true
+  export OPAMJOBS=2
+  export OPAMVERBOSE=true
   sudo chown -R coq:coq /home/coq/${CONTRIB_NAME}
   ( ${CMD} )
   " script
