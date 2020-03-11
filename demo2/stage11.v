@@ -264,11 +264,11 @@ HB.structure Definition UniformSpace := { A of
    & Uniform_wo_Topology A }. (* TODO: should be ommited                 *)
 
 (* TODO: this is another typealias *)
-Definition TAddAG_ (T : Type) := T.
+Definition tAddAG (T : Type) := T.
 
 Section TAddAGUniform.
   Variable T : TAddAG_wo_Uniform.type.
-  Notation TT := (TAddAG_ T).
+  Notation TT := (tAddAG T).
   Definition TAddAG_entourage : set (set (TT * TT)).
   Admitted.
   Lemma filter_TAddAG_entourage : is_filter TAddAG_entourage.
@@ -284,14 +284,14 @@ Section TAddAGUniform.
   Definition TAddAG_uniform :=
     Uniform_wo_Topology.Build _ _ filter_TAddAG_entourage TAddAG_entourage_sub
       TAddAG_entourage_sym TAddAG_entourage_split.
-  HB.instance (TAddAG_ (TAddAG_wo_Uniform.sort T)) TAddAG_uniform.
+  HB.instance (tAddAG (TAddAG_wo_Uniform.sort T)) TAddAG_uniform.
 
   Lemma TAddAG_uniform_topologyE :
      open = (uniform_open _ : set (set (uniform TT))).
   Admitted.
   Definition TAddAG_Join_Uniform_Topology : Join_Uniform_Topology TT
     := Join_Uniform_Topology.Build _ TAddAG_uniform_topologyE.
-  HB.instance (TAddAG_ (TAddAG_wo_Uniform.sort T))
+  HB.instance (tAddAG (TAddAG_wo_Uniform.sort T))
     TAddAG_Join_Uniform_Topology.
 
   Lemma TAddAG_entourageE :
@@ -305,7 +305,7 @@ HB.structure Definition Uniform_TAddAG_unjoined :=
   (* should be created automatically *)
 HB.mixin Record Join_TAddAG_Uniform T of Uniform_TAddAG_unjoined T := {
     entourageE :
-    entourage = (TAddAG_entourage _ : set (set (TAddAG_ T * TAddAG_ T)))
+    entourage = (TAddAG_entourage _ : set (set (tAddAG T * tAddAG T)))
 }.
 
   (* TODO: should be subsumed by the type alias TAddAG *)
