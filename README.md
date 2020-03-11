@@ -17,7 +17,7 @@ HB.mixin Record AddComoid_of_Type A := {
   addrC : forall x y, add x y = add y x;
   add0r : forall x, add zero x = x;
 }.
-HB.structure Definition AddComoid := { A of AddComoid_of_Type.axioms A }.
+HB.structure Definition AddComoid := { A of AddComoid_of_Type A }.
 
 Notation "0" := zero.
 Infix "+" := add.
@@ -32,17 +32,17 @@ We proceed by declaring how to obtain an Abelian group out of the
 additive, commutative, monoid.
 
 ```coq
-HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid.axioms A := {
+HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.
-HB.structure Definition AbelianGrp := { A of AbelianGrp_of_AddComoid.axioms A & }.
+HB.structure Definition AbelianGrp := { A of AbelianGrp_of_AddComoid A & }.
 
 Notation "- x" := (opp x).
 ```
 
 Abelian groups feature the operations and properties given by the
-`AbelianGrp_of_AddComoid.axioms` and `AddComoid_of_Type.axioms` mixins.
+`AbelianGrp_of_AddComoid` and `AddComoid_of_Type` mixins.
 
 ```coq
 Lemma example (G : AbelianGrp.type) (x : G) : x + (- x) = - 0.
