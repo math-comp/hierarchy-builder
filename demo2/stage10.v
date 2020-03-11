@@ -21,7 +21,7 @@ HB.mixin Record AddAG_of_TYPE A := {
   add0r : left_id zero add;
   addNr : left_inverse zero opp add;
 }.
-HB.structure Definition AddAG := { A of AddAG_of_TYPE.axioms A }.
+HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
 Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
@@ -78,7 +78,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
+HB.mixin Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -104,7 +104,7 @@ HB.factory Record Ring_of_TYPE A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_TYPE.axioms A).
+HB.builders Context A (a : Ring_of_TYPE A).
 
 Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Axioms A
     _ _ _ addrA_a addrC_a add0r_a addNr_a.
@@ -115,7 +115,7 @@ Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Axioms A
   HB.instance A to_Ring_of_AddAG.
 HB.end.
 
-HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
@@ -127,7 +127,7 @@ HB.mixin Record Topological T := {
     (forall i, D i -> open (F i)) -> open (\bigcup_(i in D) F i);
   open_setI : forall X Y : set T, open X -> open Y -> open (setI X Y);
 }.
-HB.structure Definition TopologicalSpace := { A of Topological.axioms A }.
+HB.structure Definition TopologicalSpace := { A of Topological A }.
 
 Hint Extern 0 (open setT) => now apply: open_setT : core.
 
@@ -138,7 +138,7 @@ HB.factory Record TopologicalBase T := {
     forall z, (X `&` Y) z -> exists2 Z, open_base Z & Z z /\ Z `<=` X `&` Y
 }.
 
-HB.builders Context T (a : TopologicalBase.axioms T).
+HB.builders Context T (a : TopologicalBase T).
 
   Definition open_of : (T -> Prop) -> Prop :=
     [set A | exists2 D, D `<=` open_base_a & A = \bigcup_(X in D) X].
@@ -200,12 +200,12 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-HB.mixin Record JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axioms T := {
+HB.mixin Record JoinTAddAG T of AddAG_of_TYPE T & Topological T := {
   add_continuous : continuous2 (add : T -> T -> T);
   opp_continuous : continuous (opp : T -> T)
 }.
 
-HB.structure Definition TAddAG := { A of Topological.axioms A & AddAG_of_TYPE.axioms A & JoinTAddAG.axioms A }.
+HB.structure Definition TAddAG := { A of Topological A & AddAG_of_TYPE A & JoinTAddAG A }.
 
 (* Instance *)
 

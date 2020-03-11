@@ -16,9 +16,9 @@ HB.mixin Record AddComoid_of_TYPE A := {
   addrC : commutative add;
   add0r : left_id zero add;
 }.
-HB.structure Definition AddComoid := { A of AddComoid_of_TYPE.axioms A }.
+HB.structure Definition AddComoid := { A of AddComoid_of_TYPE A }.
 
-HB.mixin Record Ring_of_AddComoid A of AddComoid.axioms A := {
+HB.mixin Record Ring_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -47,7 +47,7 @@ HB.factory Record Ring_of_TYPE A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_TYPE.axioms A).
+HB.builders Context A (a : Ring_of_TYPE A).
 
   Definition to_AddComoid_of_TYPE :=
     AddComoid_of_TYPE.Axioms A zero_a add_a addrA_a addrC_a add0r_a.
@@ -62,7 +62,7 @@ HB.end.
 
 (* End change *)
 
-HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 
 (* Notations *)
 

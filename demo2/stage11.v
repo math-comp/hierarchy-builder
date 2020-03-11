@@ -21,7 +21,7 @@ HB.mixin Record AddAG_of_TYPE A := {
   add0r : left_id zero add;
   addNr : left_inverse zero opp add;
 }.
-HB.structure Definition AddAG := { A of AddAG_of_TYPE.axioms A }.
+HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
 (* TODO: command hb.module_export which creates a module,
    exports it immediatly and remembers that it should be
@@ -82,7 +82,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
+HB.mixin Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -108,7 +108,7 @@ HB.factory Record Ring_of_TYPE A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_TYPE.axioms A).
+HB.builders Context A (a : Ring_of_TYPE A).
 
   Definition to_AddAG := AddAG_of_TYPE.Axioms A
     _ _ _ addrA_a addrC_a add0r_a addNr_a.
@@ -119,7 +119,7 @@ HB.builders Context A (a : Ring_of_TYPE.axioms A).
   HB.instance A to_Ring.
 HB.end.
 
-HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
@@ -131,7 +131,7 @@ HB.mixin Record Topological T := {
   (forall i, D i -> open (F i)) -> open (\bigcup_(i in D) F i);
   open_setI : forall X Y : set T, open X -> open Y -> open (setI X Y);
 }.
-HB.structure Definition TopologicalSpace := { A of Topological.axioms A }.
+HB.structure Definition TopologicalSpace := { A of Topological A }.
 
 Hint Extern 0 (open setT) => now apply: open_setT : core.
 
@@ -142,7 +142,7 @@ HB.factory Record TopologicalBase T := {
     forall z, (X `&` Y) z -> exists2 Z, open_base Z & Z z /\ Z `<=` X `&` Y
 }.
 
-HB.builders Context T (a : TopologicalBase.axioms T).
+HB.builders Context T (a : TopologicalBase T).
 
   Definition open_of :=
     [set A | exists2 D, D `<=` open_base_a & A = \bigcup_(X in D) X].
@@ -208,13 +208,13 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-HB.mixin Record JoinTAddAG_wo_Uniform T of AddAG_of_TYPE.axioms T & Topological.axioms T := {
+HB.mixin Record JoinTAddAG_wo_Uniform T of AddAG_of_TYPE T & Topological T := {
   add_continuous : continuous2 (add : T -> T -> T);
   opp_continuous : continuous (opp : T -> T)
 }.
 
 HB.structure Definition TAddAG_wo_Uniform :=
-  { A of Topological.axioms A & AddAG_of_TYPE.axioms A & JoinTAddAG_wo_Uniform.axioms A }.
+  { A of Topological A & AddAG_of_TYPE A & JoinTAddAG_wo_Uniform A }.
 
 HB.mixin Record Uniform_wo_Topology U := {
   entourage : set (set (U * U)) ;
@@ -224,7 +224,7 @@ HB.mixin Record Uniform_wo_Topology U := {
   entourage_split : forall A, entourage A ->
     exists2 B, entourage B & graph_comp B B `<=` A ;
 }.
-HB.structure Definition UniformSpace_wo_Topology := { A of Uniform_wo_Topology.axioms A }.
+HB.structure Definition UniformSpace_wo_Topology := { A of Uniform_wo_Topology A }.
 
 (* TODO: have a command hb.typealias which register "typealias factories"
    which turn a typealias into factories *)
@@ -247,21 +247,21 @@ Section Uniform_Topology.
 
 End Uniform_Topology.
 
-HB.mixin Record Join_Uniform_Topology U of Topological.axioms U & Uniform_wo_Topology.axioms U := {
+HB.mixin Record Join_Uniform_Topology U of Topological U & Uniform_wo_Topology U := {
   openE : open = (uniform_open _ : set (set (uniform U)))
 }.
 
 (* TODO: this factory should be replaced by type alias uniform *)
-HB.factory Record Uniform_Topology U of Uniform_wo_Topology.axioms U := { }.
+HB.factory Record Uniform_Topology U of Uniform_wo_Topology U := { }.
 
-HB.builders Context U (f : Uniform_Topology.axioms U).
-  Definition to_Topological : Topological.axioms U := (uniform_topology _).
+HB.builders Context U (f : Uniform_Topology U).
+  Definition to_Topological : Topological U := (uniform_topology _).
   HB.instance U to_Topological.
 HB.end.
 
 HB.structure Definition UniformSpace := { A of
-   Uniform_Topology.axioms A    (* should be replaced by typealias uniform *)
-   & Uniform_wo_Topology.axioms A }. (* TODO: should be ommited                 *)
+   Uniform_Topology A    (* should be replaced by typealias uniform *)
+   & Uniform_wo_Topology A }. (* TODO: should be ommited                 *)
 
 (* TODO: this is another typealias *)
 Definition TAddAG (T : Type) := T.
@@ -289,7 +289,7 @@ Section TAddAGUniform.
   Lemma TAddAG_uniform_topologyE :
      open = (uniform_open _ : set (set (uniform TT))).
   Admitted.
-  Definition TAddAG_Join_Uniform_Topology : Join_Uniform_Topology.axioms (TAddAG T)
+  Definition TAddAG_Join_Uniform_Topology : Join_Uniform_Topology (TAddAG T)
     := Join_Uniform_Topology.Axioms _ TAddAG_uniform_topologyE.
   HB.instance (TAddAG (TAddAG_wo_Uniform.sort T))
     TAddAG_Join_Uniform_Topology.
@@ -301,20 +301,20 @@ Section TAddAGUniform.
 End TAddAGUniform.
 
 HB.structure Definition Uniform_TAddAG_unjoined :=
-  { A of TAddAG_wo_Uniform.axioms A & Uniform_wo_Topology.axioms A }.
+  { A of TAddAG_wo_Uniform A & Uniform_wo_Topology A }.
   (* should be created automatically *)
-HB.mixin Record Join_TAddAG_Uniform T of Uniform_TAddAG_unjoined.axioms T := {
+HB.mixin Record Join_TAddAG_Uniform T of Uniform_TAddAG_unjoined T := {
     entourageE :
     entourage = (TAddAG_entourage _ : set (set (TAddAG T * TAddAG T)))
 }.
 
   (* TODO: should be subsumed by the type alias TAddAG *)
-HB.factory Record TAddAG_Uniform U of TAddAG_wo_Uniform.axioms U := { }.
+HB.factory Record TAddAG_Uniform U of TAddAG_wo_Uniform U := { }.
 
-HB.builders Context U of TAddAG_Uniform.axioms U.
-  Definition to_Uniform_wo_Topology : Uniform_wo_Topology.axioms U := (TAddAG_uniform _).
+HB.builders Context U of TAddAG_Uniform U.
+  Definition to_Uniform_wo_Topology : Uniform_wo_Topology U := (TAddAG_uniform _).
   HB.instance U to_Uniform_wo_Topology.
-  Definition to_Join_Uniform_Topology : Join_Uniform_Topology.axioms U :=
+  Definition to_Join_Uniform_Topology : Join_Uniform_Topology U :=
     (TAddAG_Join_Uniform_Topology _).
   HB.instance U to_Join_Uniform_Topology.
   Definition to_Join_TAddAG_Uniform :=
@@ -323,14 +323,14 @@ HB.builders Context U of TAddAG_Uniform.axioms U.
 HB.end.
 
 HB.structure Definition TAddAG :=
-   { A of TAddAG_Uniform.axioms A (* TODO: should be replaced by type alias TAddAG *)
-        & TAddAG_wo_Uniform.axioms A }. (* TODO: should be omitted *)
+   { A of TAddAG_Uniform A (* TODO: should be replaced by type alias TAddAG *)
+        & TAddAG_wo_Uniform A }. (* TODO: should be omitted *)
 
-HB.factory Definition JoinTAddAG T of AddAG_of_TYPE.axioms T & Topological.axioms T :=
-  (JoinTAddAG_wo_Uniform.axioms T).
+HB.factory Definition JoinTAddAG T of AddAG_of_TYPE T & Topological T :=
+  (JoinTAddAG_wo_Uniform T).
 
-HB.builders Context T (a : JoinTAddAG.axioms T).
-  Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform.axioms T := a.
+HB.builders Context T (a : JoinTAddAG T).
+  Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform T := a.
   HB.instance T to_JoinTAddAG_wo_Uniform.
   (* TODO: Nice error message when factory builders do not depend on the source factory 'a'*)
   Definition to_Uniform := let _ := a in TAddAG_Uniform.Axioms T.

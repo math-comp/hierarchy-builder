@@ -14,11 +14,11 @@ HB.mixin Record AddComoid_of_TYPE A := {
   addrC : commutative add;
   add0r : left_id zero add;
 }.
-HB.structure Definition AddComoid := { A of AddComoid_of_TYPE.axioms A }.
+HB.structure Definition AddComoid := { A of AddComoid_of_TYPE A }.
 
 (* Begin change *)
 
-HB.mixin Record AddAG_of_AddComoid A of AddComoid.axioms A := {
+HB.mixin Record AddAG_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   addNr : left_inverse zero opp add;
 }.
@@ -32,7 +32,7 @@ HB.factory Record AddAG_of_TYPE A := {
   addNr : left_inverse zero opp add;
 }.
 
-HB.builders Context A (a : AddAG_of_TYPE.axioms A).
+HB.builders Context A (a : AddAG_of_TYPE A).
 
   Definition to_AddComoid_of_TYPE :=
     AddComoid_of_TYPE.Axioms A zero_a add_a addrA_a addrC_a add0r_a.
@@ -43,9 +43,9 @@ HB.builders Context A (a : AddAG_of_TYPE.axioms A).
   HB.instance A to_AddAG_of_AddComoid.
 
 HB.end.
-HB.structure Definition AddAG := { A of AddAG_of_TYPE.axioms A }.
+HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
-HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
+HB.mixin Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -54,7 +54,7 @@ HB.mixin Record Ring_of_AddAG A of AddAG.axioms A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.factory Record Ring_of_AddComoid A of AddComoid.axioms A := {
+HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;
@@ -66,7 +66,7 @@ HB.factory Record Ring_of_AddComoid A of AddComoid.axioms A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_AddComoid.axioms A).
+HB.builders Context A (a : Ring_of_AddComoid A).
 
   Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Axioms A _ addNr_a.
   HB.instance A to_AddAG_of_AddComoid.
@@ -96,7 +96,7 @@ HB.factory Record Ring_of_TYPE A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_TYPE.axioms A).
+HB.builders Context A (a : Ring_of_TYPE A).
 
   Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Axioms A
     zero_a add_a addrA_a addrC_a add0r_a.
@@ -107,7 +107,7 @@ HB.builders Context A (a : Ring_of_TYPE.axioms A).
   HB.instance A to_Ring_of_AddComoid.
 HB.end.
 
-HB.structure Definition Ring := { A of Ring_of_TYPE.axioms A }.
+HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 
 (* Notations *)
 
