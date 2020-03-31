@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-
 set -e
-
 echo -e "${ANSI_YELLOW}Building ${CONTRIB_NAME}...${ANSI_RESET}" && echo -en 'travis_fold:start:script\\r'
 
 docker exec COQ /bin/bash --login -c "
