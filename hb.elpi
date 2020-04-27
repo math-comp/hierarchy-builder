@@ -807,7 +807,7 @@ mk-mixin-fun T ML X MLX :- mk-mixin-fun.then T ML (body\ body = X) MLX.
 
 pred clean-op-ty i:list prop, i:term, i:term, i:term, o:term.
 clean-op-ty [] _ _ T1 T2 :- copy T1 T2.
-clean-op-ty [exported-op Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
+clean-op-ty [exported-op _ Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
   gr-deps (const Po) ML,
   mk-mixin-fun SortPTheStructure ML (app [global (const C), TheStructure]) EtaC,
   (pi L T R H S\
@@ -818,10 +818,9 @@ clean-op-ty [exported-op Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
 % of the package structure.
-pred exported-op o:constant, o:constant. % memory
-pred export-1-operation i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
-export-1-operation _ _ _ none EX EX :- !. % not a projection, no operation
-export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
+pred export-1-operation i:mixinname, i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
+export-1-operation _ _ _ _ none EX EX :- !. % not a projection, no operation
+export-1-operation M Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
   coq.gref->id (const Poperation) Name,
   (@pi-decl `s` Struct s\ sigma Carrier Class MSL DirtyTy Copies\ std.do! [
       Carrier = app[Psort, s],
@@ -839,25 +838,34 @@ export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
 
   coq.env.add-const Name T Ty ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
-  EXO = [exported-op Poperation C|EXI]
+  EXO = [exported-op M Poperation C|EXI]
 ].
 
 % Given a list of mixins, it exports all operations in there
-pred export-operations.aux i:term, i:term, i:term, i:list mixinname.
-export-operations.aux _ _ _ [].
-export-operations.aux Struct ProjSort ProjClass [indt M|ML] :- !, std.do! [
+pred export-operations.aux i:term, i:term, i:term, i:list mixinname, i:list prop, o:list prop.
+export-operations.aux _ _ _ [] EX EX.
+export-operations.aux Struct ProjSort ProjClass [indt M|ML] EX1 EX3 :- !, std.do! [
   coq.CS.canonical-projections M Poperations,
-  std.fold Poperations [] (export-1-operation Struct ProjSort ProjClass) _,
-  export-operations.aux Struct ProjSort ProjClass ML
+  std.fold Poperations EX1 (export-1-operation (indt M) Struct ProjSort ProjClass) EX2,
+  export-operations.aux Struct ProjSort ProjClass ML EX2 EX3
 ].
-export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
+export-operations.aux Struct ProjSort ProjClass [GR|ML] EXI EXO:-
   coq.say GR "is not a record: skipping operations factory this mixin",
-  export-operations.aux Struct ProjSort ProjClass ML.
+  export-operations.aux Struct ProjSort ProjClass ML EXI EXO.
 
-pred export-operations i:term, i:term, i:term, i:list mixinname, o:list mixinname.
-export-operations Structure ProjSort ProjClass ML MLToExport :-
-  std.filter ML (m\not(mixin-first-class m _)) MLToExport,
-  export-operations.aux Structure ProjSort ProjClass MLToExport.
+pred export-operations i:term, i:term, i:term, i:list mixinname, i:list prop, o:list prop, o:list mixinname.
+export-operations Structure ProjSort ProjClass ML EXI EXO MLToExport :-
+  std.filter ML (m\ not(mixin-first-class m _)) MLToExport,
+  export-operations.aux Structure ProjSort ProjClass MLToExport EXI EXO.
+
+pred reexport-1-operation i:prop.
+reexport-1-operation (exported-op _M _P C) :-
+  add-abbrev {coq.gref->id (const C)} 0 (global (const C)) tt ff _.
+pred reexport-operations i:list mixinname.
+reexport-operations ML :- std.do![
+  std.flatten {std.map ML (m\ std.findall (exported-op m Poperation_ C_))} PL,
+  std.forall PL reexport-1-operation
+].
 
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
@@ -1035,20 +1043,28 @@ main-declare-structure Module GRFS ClosureCheck :- std.do! [
 
   coq.env.begin-module "Exports" none,
   declare-sort-coercion Structure SortProjection,
+  if-verbose (coq.say "HB: exporting operations"),
   ClassAlias => ClassRequires => Factories =>
-    export-operations Structure SortProjection ClassProjection ML MLToExport,
+    export-operations Structure SortProjection ClassProjection ML [] EX MLToExport,
+  if-verbose (coq.say "HB: exporting unification hints"),
   ClassAlias => ClassRequires => Factories =>
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
   % Register in Elpi's DB the new structure
   % NOT TODO: All these acc are correctly locaed in an Export Module
-  std.forall MLToExport (m\
-     acc current (clause _ _ (mixin-first-class m ClassName))),
+  if-verbose (coq.say "HB: accumulating various props"),
+  std.forall MLToExport (m\  acc current (clause _ _ (mixin-first-class m ClassName))),
+  std.forall EX (ex\ acc current (clause _ _ ex)),
   std.forall Factories (f\ acc current (clause _ _ f)),
   acc current (clause _ _ ClassRequires),
   acc current (clause _ _ ClassAlias),
   std.forall NewJoins (j\ acc current (clause _ _ j)),
   acc current (clause _ _ (class-def CurrentClass)),
+
+  if-verbose (coq.say "HB: stop module Exports"),
   coq.env.end-module Exports,
+
+  if-verbose (coq.say "HB: reexporting previous operations as notations"),
+  EX => reexport-operations ML,
 
   coq.env.end-module _,
 
@@ -1157,9 +1173,7 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   T = app[global (const P), TheType|Holes_Factory],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
-  coq.gref->id {term->gref TheFactory} F,
-  OpName is Name ^ "_" ^ F,
-  add-abbrev OpName 0 T ff ff _.
+  add-abbrev Name 0 T ff ff _.
 
 pred builders-postulate-factories i:context-decl, i:term, i:list mixinname.
 builders-postulate-factories (context-item ID T none _\ context-end) TheType GRML :- std.do! [
