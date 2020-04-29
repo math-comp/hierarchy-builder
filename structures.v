@@ -106,6 +106,8 @@ kind builder type.
 type builder int -> factoryname -> term -> builder.
 pred builder-decl o:builder.
 
+pred exported-op o:mixinname, o:constant, o:constant. % memory of exported operations
+
 }}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
