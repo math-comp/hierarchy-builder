@@ -6,22 +6,22 @@ Delimit Scope hb_scope with G.
 Open Scope hb_scope.
 
 (* Bottom mixin in Fig. 1. *)
-HB.mixin Record Monoid_of_Type A := {
-  zero : A;
-  add : A -> A -> A;
+HB.mixin Record Monoid_of_Type M := {
+  zero : M;
+  add : M -> M -> M;
   addrA : associative add;
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure Definition Monoid := { A of Monoid_of_Type A }.
+HB.structure Definition Monoid := { M of Monoid_of_Type M }.
 Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
 
 (* Left mixin in Fig. 1. *)
-HB.mixin Record Ring_of_Monoid A of Monoid A := {
-  one : A;
-  opp : A -> A;
-  mul : A -> A -> A;
+HB.mixin Record Ring_of_Monoid R of Monoid R := {
+  one : R;
+  opp : R -> R;
+  mul : R -> R -> R;
   addNr : left_inverse zero opp add;
   addrN : right_inverse zero opp add;
   mulrA : associative mul;
@@ -30,7 +30,7 @@ HB.mixin Record Ring_of_Monoid A of Monoid A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
-HB.structure Definition Ring := { A of Monoid A & Ring_of_Monoid A }.
+HB.structure Definition Ring := { R of Monoid R & Ring_of_Monoid R }.
 Notation "1" := one : hb_scope.
 Notation "- x" := (@opp _ x) : hb_scope.
 Notation "x - y" := (x + - y) : hb_scope.

@@ -6,14 +6,14 @@ Delimit Scope hb_scope with G.
 Open Scope hb_scope.
 
 (* Bottom mixin in Fig. 2. *)
-HB.mixin Record Monoid_of_Type A := {
-  zero : A;
-  add : A -> A -> A;
+HB.mixin Record Monoid_of_Type M := {
+  zero : M;
+  add : M -> M -> M;
   addrA : associative add;
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure Definition Monoid := { A of Monoid_of_Type A }.
+HB.structure Definition Monoid := { M of Monoid_of_Type M }.
 Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
 
@@ -29,9 +29,9 @@ Notation "- x" := (@opp _ x) : hb_scope.
 Notation "x - y" := (x + - y) : hb_scope.
 
 (* Bottom left mixin in Fig. 2. *)
-HB.mixin Record SemiRing_of_Monoid A of Monoid A := {
-  one : A;
-  mul : A -> A -> A;
+HB.mixin Record SemiRing_of_Monoid S of Monoid S := {
+  one : S;
+  mul : S -> S -> S;
   mulrA : associative mul;
   mul1r : left_id one mul;
   mulr1 : right_id one mul;
@@ -40,17 +40,17 @@ HB.mixin Record SemiRing_of_Monoid A of Monoid A := {
   mul0r : left_zero zero mul;
   mulr0 : right_zero zero mul;
 }.
-HB.structure Definition SemiRing := { A of Monoid A & SemiRing_of_Monoid A }.
+HB.structure Definition SemiRing := { S of Monoid S & SemiRing_of_Monoid S }.
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
 
-Lemma addrN {R : AbelianGroup.type} : right_inverse (zero : R) opp add.
+Lemma addrN {A : AbelianGroup.type} : right_inverse (zero : A) opp add.
 Proof. by move=> x; rewrite addrC addNr. Qed.
 
 (* Top right factory in Fig. 2. *)
-HB.factory Record Ring_of_AbelianGroup A of AbelianGroup A := {
-  one : A;
-  mul : A -> A -> A;
+HB.factory Record Ring_of_AbelianGroup R of AbelianGroup R := {
+  one : R;
+  mul : R -> R -> R;
   mulrA : associative mul;
   mul1r : left_id one mul;
   mulr1 : right_id one mul;
@@ -85,18 +85,18 @@ HB.structure Definition Ring :=
 
 (* Top left factory in Fig. 2. *)
 (* It is an exact copy of the bottom right mixin. *)
-HB.factory Definition Ring_of_SemiRing A of SemiRing A := AbelianGroup_of_Monoid A.
+HB.factory Definition Ring_of_SemiRing R of SemiRing R := AbelianGroup_of_Monoid R.
 (* The corresponding builder is the identity. *)
-HB.builders Context (A : Type) (f : Ring_of_SemiRing A).
-  Definition to_AbelianGroup_of_Monoid : AbelianGroup_of_Monoid A := f.
-  HB.instance A to_AbelianGroup_of_Monoid.
+HB.builders Context (R : Type) (f : Ring_of_SemiRing R).
+  Definition to_AbelianGroup_of_Monoid : AbelianGroup_of_Monoid R := f.
+  HB.instance R to_AbelianGroup_of_Monoid.
 HB.end.
 
 (* Right-most factory in Fig. 2. *)
-HB.factory Record Ring_of_Monoid A of Monoid A := {
-  one : A;
-  opp : A -> A;
-  mul : A -> A -> A;
+HB.factory Record Ring_of_Monoid R of Monoid R := {
+  one : R;
+  opp : R -> R;
+  mul : R -> R -> R;
   addNr : left_inverse zero opp add;
   addrN : right_inverse zero opp add;
   mulrA : associative mul;

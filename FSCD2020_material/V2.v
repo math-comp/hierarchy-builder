@@ -6,14 +6,14 @@ Delimit Scope hb_scope with G.
 Open Scope hb_scope.
 
 (* Bottom mixin in Fig. 1. *)
-HB.mixin Record Monoid_of_Type A := {
-  zero : A;
-  add : A -> A -> A;
+HB.mixin Record Monoid_of_Type M := {
+  zero : M;
+  add : M -> M -> M;
   addrA : associative add;
   add0r : left_id zero add;
   addr0 : right_id zero add;
 }.
-HB.structure Definition Monoid := { A of Monoid_of_Type A }.
+HB.structure Definition Monoid := { M of Monoid_of_Type M }.
 Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
 
@@ -29,9 +29,9 @@ Notation "- x" := (@opp _ x) : hb_scope.
 Notation "x - y" := (x + - y) : hb_scope.
 
 (* Top right mixin in Fig. 1. *)
-HB.mixin Record Ring_of_AbelianGroup A of AbelianGroup A := {
-  one : A;
-  mul : A -> A -> A;
+HB.mixin Record Ring_of_AbelianGroup R of AbelianGroup R := {
+  one : R;
+  mul : R -> R -> R;
   mulrA : associative mul;
   mul1r : left_id one mul;
   mulr1 : right_id one mul;
@@ -39,7 +39,7 @@ HB.mixin Record Ring_of_AbelianGroup A of AbelianGroup A := {
   mulrDr : right_distributive mul add;
 }.
 HB.structure Definition Ring :=
-  { A of AbelianGroup A & Ring_of_AbelianGroup A }.
+  { R of AbelianGroup R & Ring_of_AbelianGroup R }.
 Notation "1" := one : hb_scope.
 Infix "*" := (@mul _) : hb_scope.
 
