@@ -1132,17 +1132,43 @@ main-declare-canonical-instances T FIL :- std.do! [
   ]],
 ].
 
+pred declare-old-located i:string, i:located.
+declare-old-located Id (loc-gref GR) :-
+  add-abbrev Id 0 (global GR) tt ff _.
+declare-old-located Id (loc-abbreviation Abbrev) :-
+  coq.notation.abbreviation Abbrev [] T,
+  % FIXME: this assumes the abbreviation has no arg
+  % we should fix it.
+  add-abbrev Id 0 T tt ff _.
+
+pred declare-old-constant i:option constant.
+declare-old-constant none.
+declare-old-constant (some C) :-
+  coq.gref->id (const C) Id,
+  std.forall {coq.locate-all Id} (declare-old-located Id).
+declare-old-constant _ :- true.
+
 pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders (context-item ID T none Factories) :- std.do! [
+main-begin-declare-builders (context-item _ _ none _\ context-item IDF _ (some _) _\ context-end) :-
+    coq.error "factories cannot be given a body:" IDF.
+main-begin-declare-builders (context-item _ _ none _\ context-item ID1 _ none _\ context-item ID2 _ _ _) :-
+  coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
+main-begin-declare-builders (context-item IDT T none t\ context-item IDF (F t) none _\ context-end) :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
+  std.assert! (pi t\ F t = app[global GRA, t|_]) "a factory must be a name applied to the type variable",
+  factory-alias->gref GRA GRF,
   coq.env.begin-module Name none,
+  if (GRF = indt FRecord) (std.do! [
+    coq.env.begin-module "Super" none,
+    std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
+    coq.env.end-module _]) (true),
   coq.env.begin-section Name,
   std.assert! (T = sort (typ _)) "The first context item must be a type variable",
   coq.univ.new [] U,
   Ty = sort (typ U),
-  coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
+  coq.env.add-const IDT _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
-  builders-postulate-factories (Factories TheType) TheType [],
+  builders-postulate-factories IDF GRA GRF TheType [],
 ].
 
 pred postulate-factory-abbrev i:term, i:id, i:factoryname, o:term.
@@ -1175,21 +1201,15 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   coq.gref->id (const P) Name,
   add-abbrev Name 0 T ff ff _.
 
-pred builders-postulate-factories i:context-decl, i:term, i:list mixinname.
-builders-postulate-factories (context-item ID T none _\ context-end) TheType GRML :- std.do! [
-  std.assert! (T = app[global GR, TheType|_]) "a factory must be a name applied to the type variable",
-  factory-alias->gref GR GRF,
+pred builders-postulate-factories i:string, i:gref, i:gref, i:term, i:list mixinname.
+builders-postulate-factories ID GRA GRF TheType GRML :- std.do! [
   factory-requires GRF FML,
   std.append GRML FML GRFML,
   main-declare-context TheType GRFML _,
-  postulate-factory-abbrev TheType ID GR TheFactory,
+  postulate-factory-abbrev TheType ID GRA TheFactory,
   define-factory-operations TheType TheFactory GRF,
   acc current (clause _ _ (current-decl (builders-for-factory GRF))),
 ].
-builders-postulate-factories (context-item ID _ (some _) _) _ _ :-
-  coq.error "factories cannot be given a body:" ID.
-builders-postulate-factories (context-item ID1 _ none _\ context-item ID2 _ _ _) _ _ :-
-  coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
 
 pred main-declare-asset i:asset-decl, i:asset.
 main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [
