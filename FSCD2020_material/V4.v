@@ -1,3 +1,4 @@
+(* Accompanying material to https://hal.inria.fr/hal-02478907 *)
 From Coq Require Import ssreflect ssrfun ZArith.
 From HB Require Import structures.
 
@@ -109,7 +110,7 @@ HB.factory Record Ring_of_Monoid R of Monoid R := {
 HB.builders Context (R : Type) (f : Ring_of_Monoid R).
 
   Lemma addrC : commutative (add : R -> R -> R).
-  Proof.
+  Proof. (* Exactly the same as in Appendix B. *)
   have innerC (a b : R) : a + b + (a + b) = a + a + (b + b).
     by rewrite -[a+b]mul1r -mulrDl mulrDr !mulrDl !mul1r.
   have addKl (a b c : R) : a + b = a + c -> b = c.

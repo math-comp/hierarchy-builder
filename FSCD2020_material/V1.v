@@ -1,3 +1,4 @@
+(* Accompanying material to https://hal.inria.fr/hal-02478907 *)
 From Coq Require Import ssreflect ssrfun ZArith.
 From HB Require Import structures.
 
