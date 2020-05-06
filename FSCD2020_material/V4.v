@@ -60,7 +60,7 @@ HB.factory Record Ring_of_AbelianGroup R of AbelianGroup R := {
 }.
 
 (* Builder arrow from top right to bottom left in Fig. 2. *)
-HB.builders Context (A : Type) (f : Ring_of_AbelianGroup A).
+HB.builders Context (R : Type) (f : Ring_of_AbelianGroup R).
 
   Fact mul0r : left_zero zero mul.
   Proof.
@@ -76,13 +76,13 @@ HB.builders Context (A : Type) (f : Ring_of_AbelianGroup A).
   by rewrite -mulrDr add0r addrC addNr.
   Qed.
 
-  Definition to_SemiRing_of_Monoid := SemiRing_of_Monoid.Build A _ mul mulrA
+  Definition to_SemiRing_of_Monoid := SemiRing_of_Monoid.Build R _ mul mulrA
      mul1r mulr1 mulrDl mulrDr mul0r mulr0.
-  HB.instance A to_SemiRing_of_Monoid.
+  HB.instance R to_SemiRing_of_Monoid.
 
 HB.end.
 HB.structure Definition Ring :=
-  { A of AbelianGroup A & Ring_of_AbelianGroup A }.
+  { R of AbelianGroup R & Ring_of_AbelianGroup R }.
 
 (* Top left factory in Fig. 2. *)
 (* It is an exact copy of the bottom right mixin. *)
