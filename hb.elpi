@@ -125,7 +125,8 @@ name-of-asset-decl (asset-record X _ _ _) X.
 name-of-asset-decl (asset-alias X _) X.
 
 pred argument->asset i:argument, o:asset-decl.
-argument->asset (indt-decl (parameter Name Ty I)) (asset-parameter "T" Ty A) :- % TODO, take the name
+argument->asset (indt-decl (parameter ID Ty I)) (asset-parameter ID Ty A) :- % TODO, take the name
+  coq.string->name ID Name,
   @pi-decl Name Ty a\
     argument->asset (indt-decl (I a)) (A a).
 argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
@@ -966,7 +967,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
 
   (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
-    (parameter `T` {{ Type }} t\
+    (parameter "T" {{ Type }} t\
       record "axioms" {{ Type }} "Class" (RDecl t)),
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
   coq.env.add-indt ClassDeclaration ClassName,
