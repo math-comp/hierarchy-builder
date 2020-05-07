@@ -125,7 +125,8 @@ name-of-asset-decl (asset-record X _ _ _) X.
 name-of-asset-decl (asset-alias X _) X.
 
 pred argument->asset i:argument, o:asset-decl.
-argument->asset (indt-decl (parameter Name Ty I)) (asset-parameter "T" Ty A) :- % TODO, take the name
+argument->asset (indt-decl (parameter ID Ty I)) (asset-parameter ID Ty A) :- % TODO, take the name
+  coq.string->name ID Name,
   @pi-decl Name Ty a\
     argument->asset (indt-decl (I a)) (A a).
 argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
@@ -807,7 +808,7 @@ mk-mixin-fun T ML X MLX :- mk-mixin-fun.then T ML (body\ body = X) MLX.
 
 pred clean-op-ty i:list prop, i:term, i:term, i:term, o:term.
 clean-op-ty [] _ _ T1 T2 :- copy T1 T2.
-clean-op-ty [exported-op Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
+clean-op-ty [exported-op _ Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
   gr-deps (const Po) ML,
   mk-mixin-fun SortPTheStructure ML (app [global (const C), TheStructure]) EtaC,
   (pi L T R H S\
@@ -818,10 +819,9 @@ clean-op-ty [exported-op Po C|Ops] SortPTheStructure TheStructure T1 T2 :-
 % same operation out of the package structure (out of the class field of the
 % structure). We also provide all the other mixin dependencies (other misins)
 % of the package structure.
-pred exported-op o:constant, o:constant. % memory
-pred export-1-operation i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
-export-1-operation _ _ _ none EX EX :- !. % not a projection, no operation
-export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
+pred export-1-operation i:mixinname, i:term, i:term, i:term, i:option constant, i:list prop, o:list prop.
+export-1-operation _ _ _ _ none EX EX :- !. % not a projection, no operation
+export-1-operation M Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
   coq.gref->id (const Poperation) Name,
   (@pi-decl `s` Struct s\ sigma Carrier Class MSL DirtyTy Copies\ std.do! [
       Carrier = app[Psort, s],
@@ -839,25 +839,34 @@ export-1-operation Struct Psort Pclass (some Poperation) EXI EXO :- !, std.do! [
 
   coq.env.add-const Name T Ty ff ff C,
   coq.arguments.set-implicit (const C) [[maximal]] tt,
-  EXO = [exported-op Poperation C|EXI]
+  EXO = [exported-op M Poperation C|EXI]
 ].
 
 % Given a list of mixins, it exports all operations in there
-pred export-operations.aux i:term, i:term, i:term, i:list mixinname.
-export-operations.aux _ _ _ [].
-export-operations.aux Struct ProjSort ProjClass [indt M|ML] :- !, std.do! [
+pred export-operations.aux i:term, i:term, i:term, i:list mixinname, i:list prop, o:list prop.
+export-operations.aux _ _ _ [] EX EX.
+export-operations.aux Struct ProjSort ProjClass [indt M|ML] EX1 EX3 :- !, std.do! [
   coq.CS.canonical-projections M Poperations,
-  std.fold Poperations [] (export-1-operation Struct ProjSort ProjClass) _,
-  export-operations.aux Struct ProjSort ProjClass ML
+  std.fold Poperations EX1 (export-1-operation (indt M) Struct ProjSort ProjClass) EX2,
+  export-operations.aux Struct ProjSort ProjClass ML EX2 EX3
 ].
-export-operations.aux Struct ProjSort ProjClass [GR|ML] :-
+export-operations.aux Struct ProjSort ProjClass [GR|ML] EXI EXO:-
   coq.say GR "is not a record: skipping operations factory this mixin",
-  export-operations.aux Struct ProjSort ProjClass ML.
+  export-operations.aux Struct ProjSort ProjClass ML EXI EXO.
 
-pred export-operations i:term, i:term, i:term, i:list mixinname, o:list mixinname.
-export-operations Structure ProjSort ProjClass ML MLToExport :-
-  std.filter ML (m\not(mixin-first-class m _)) MLToExport,
-  export-operations.aux Structure ProjSort ProjClass MLToExport.
+pred export-operations i:term, i:term, i:term, i:list mixinname, i:list prop, o:list prop, o:list mixinname.
+export-operations Structure ProjSort ProjClass ML EXI EXO MLToExport :-
+  std.filter ML (m\ not(mixin-first-class m _)) MLToExport,
+  export-operations.aux Structure ProjSort ProjClass MLToExport EXI EXO.
+
+pred reexport-1-operation i:prop.
+reexport-1-operation (exported-op _M _P C) :-
+  add-abbrev {coq.gref->id (const C)} 0 (global (const C)) tt ff _.
+pred reexport-operations i:list mixinname.
+reexport-operations ML :- std.do![
+  std.flatten {std.map ML (m\ std.findall (exported-op m Poperation_ C_))} PL,
+  std.forall PL reexport-1-operation
+].
 
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
@@ -958,7 +967,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
 
   (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
-    (parameter `T` {{ Type }} t\
+    (parameter "T" {{ Type }} t\
       record "axioms" {{ Type }} "Class" (RDecl t)),
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
   coq.env.add-indt ClassDeclaration ClassName,
@@ -1035,20 +1044,28 @@ main-declare-structure Module GRFS ClosureCheck :- std.do! [
 
   coq.env.begin-module "Exports" none,
   declare-sort-coercion Structure SortProjection,
+  if-verbose (coq.say "HB: exporting operations"),
   ClassAlias => ClassRequires => Factories =>
-    export-operations Structure SortProjection ClassProjection ML MLToExport,
+    export-operations Structure SortProjection ClassProjection ML [] EX MLToExport,
+  if-verbose (coq.say "HB: exporting unification hints"),
   ClassAlias => ClassRequires => Factories =>
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
   % Register in Elpi's DB the new structure
   % NOT TODO: All these acc are correctly locaed in an Export Module
-  std.forall MLToExport (m\
-     acc current (clause _ _ (mixin-first-class m ClassName))),
+  if-verbose (coq.say "HB: accumulating various props"),
+  std.forall MLToExport (m\  acc current (clause _ _ (mixin-first-class m ClassName))),
+  std.forall EX (ex\ acc current (clause _ _ ex)),
   std.forall Factories (f\ acc current (clause _ _ f)),
   acc current (clause _ _ ClassRequires),
   acc current (clause _ _ ClassAlias),
   std.forall NewJoins (j\ acc current (clause _ _ j)),
   acc current (clause _ _ (class-def CurrentClass)),
+
+  if-verbose (coq.say "HB: stop module Exports"),
   coq.env.end-module Exports,
+
+  if-verbose (coq.say "HB: reexporting previous operations as notations"),
+  EX => reexport-operations ML,
 
   coq.env.end-module _,
 
@@ -1116,17 +1133,43 @@ main-declare-canonical-instances T FIL :- std.do! [
   ]],
 ].
 
+pred declare-old-located i:string, i:located.
+declare-old-located Id (loc-gref GR) :-
+  add-abbrev Id 0 (global GR) tt ff _.
+declare-old-located Id (loc-abbreviation Abbrev) :-
+  coq.notation.abbreviation Abbrev [] T,
+  % FIXME: this assumes the abbreviation has no arg
+  % we should fix it.
+  add-abbrev Id 0 T tt ff _.
+
+pred declare-old-constant i:option constant.
+declare-old-constant none.
+declare-old-constant (some C) :-
+  coq.gref->id (const C) Id,
+  std.forall {coq.locate-all Id} (declare-old-located Id).
+declare-old-constant _ :- true.
+
 pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders (context-item ID T none Factories) :- std.do! [
+main-begin-declare-builders (context-item _ _ none _\ context-item IDF _ (some _) _\ context-end) :-
+    coq.error "factories cannot be given a body:" IDF.
+main-begin-declare-builders (context-item _ _ none _\ context-item ID1 _ none _\ context-item ID2 _ _ _) :-
+  coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
+main-begin-declare-builders (context-item IDT T none t\ context-item IDF (F t) none _\ context-end) :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
+  std.assert! (pi t\ F t = app[global GRA, t|_]) "a factory must be a name applied to the type variable",
+  factory-alias->gref GRA GRF,
   coq.env.begin-module Name none,
+  if (GRF = indt FRecord) (std.do! [
+    coq.env.begin-module "Super" none,
+    std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
+    coq.env.end-module _]) (true),
   coq.env.begin-section Name,
   std.assert! (T = sort (typ _)) "The first context item must be a type variable",
   coq.univ.new [] U,
   Ty = sort (typ U),
-  coq.env.add-const ID _ Ty tt tt C, % no body, local -> a variable
+  coq.env.add-const IDT _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
-  builders-postulate-factories (Factories TheType) TheType [],
+  builders-postulate-factories IDF GRA GRF TheType [],
 ].
 
 pred postulate-factory-abbrev i:term, i:id, i:factoryname, o:term.
@@ -1157,25 +1200,17 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   T = app[global (const P), TheType|Holes_Factory],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
-  coq.gref->id {term->gref TheFactory} F,
-  OpName is Name ^ "_" ^ F,
-  add-abbrev OpName 0 T ff ff _.
+  add-abbrev Name 0 T ff ff _.
 
-pred builders-postulate-factories i:context-decl, i:term, i:list mixinname.
-builders-postulate-factories (context-item ID T none _\ context-end) TheType GRML :- std.do! [
-  std.assert! (T = app[global GR, TheType|_]) "a factory must be a name applied to the type variable",
-  factory-alias->gref GR GRF,
+pred builders-postulate-factories i:string, i:gref, i:gref, i:term, i:list mixinname.
+builders-postulate-factories ID GRA GRF TheType GRML :- std.do! [
   factory-requires GRF FML,
   std.append GRML FML GRFML,
   main-declare-context TheType GRFML _,
-  postulate-factory-abbrev TheType ID GR TheFactory,
+  postulate-factory-abbrev TheType ID GRA TheFactory,
   define-factory-operations TheType TheFactory GRF,
   acc current (clause _ _ (current-decl (builders-for-factory GRF))),
 ].
-builders-postulate-factories (context-item ID _ (some _) _) _ _ :-
-  coq.error "factories cannot be given a body:" ID.
-builders-postulate-factories (context-item ID1 _ none _\ context-item ID2 _ _ _) _ _ :-
-  coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
 
 pred main-declare-asset i:asset-decl, i:asset.
 main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [

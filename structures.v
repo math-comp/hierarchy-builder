@@ -106,6 +106,8 @@ kind builder type.
 type builder int -> factoryname -> term -> builder.
 pred builder-decl o:builder.
 
+pred exported-op o:mixinname, o:constant, o:constant. % memory of exported operations
+
 }}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -239,7 +241,7 @@ Elpi Export HB.structure.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** [HB.instance] associated to a type all the structures that can be
+(** [HB.instance] associates to a type all the structures that can be
     obtaind from the provided factory inhabitant.
 
     Syntax for declaring a canonical instance:

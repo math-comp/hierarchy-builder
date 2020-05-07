@@ -107,11 +107,11 @@ HB.factory Record Ring_of_TYPE A := {
 HB.builders Context A (a : Ring_of_TYPE A).
 
 Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Build A
-    _ _ _ addrA_a addrC_a add0r_a addNr_a.
+    _ _ _ addrA addrC add0r addNr.
   HB.instance A to_AddAG_of_TYPE.
   Definition to_Ring_of_AddAG :=
-    Ring_of_AddAG.Build _ _ _ mulrA_a mul1r_a
-      mulr1_a mulrDl_a mulrDr_a.
+    Ring_of_AddAG.Build _ _ _ mulrA mul1r
+      mulr1 mulrDl mulrDr.
   HB.instance A to_Ring_of_AddAG.
 HB.end.
 
@@ -141,11 +141,11 @@ HB.factory Record TopologicalBase T := {
 HB.builders Context T (a : TopologicalBase T).
 
   Definition open_of : (T -> Prop) -> Prop :=
-    [set A | exists2 D, D `<=` open_base_a & A = \bigcup_(X in D) X].
+    [set A | exists2 D, D `<=` open_base & A = \bigcup_(X in D) X].
 
   Lemma open_of_setT : open_of setT.  Proof.
-  exists open_base_a; rewrite // predeqE => x; split=> // _.
-  by apply: open_base_covers_a.
+  exists open_base; rewrite // predeqE => x; split=> // _.
+  by apply: open_base_covers.
   Qed.
 
   Lemma open_of_bigcup {I} (D : set I) (F : I -> set T) :

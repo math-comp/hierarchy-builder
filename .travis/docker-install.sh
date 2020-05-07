@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 docker pull coqorg/coq:${COQ}
 docker run -d -i --init --name=COQ -v ${TRAVIS_BUILD_DIR}:/home/coq/${CONTRIB_NAME} -w /home/coq/${CONTRIB_NAME} coqorg/coq:${COQ}
 docker exec COQ /bin/bash --login -c "
