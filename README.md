@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/math-comp/hierarchy-builder.svg?branch=master)](https://travis-ci.org/math-comp/hierarchy-builder)
+[![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/237868-Hierarchy-Buidlder)
 
 # Hierarchy Builder
 
