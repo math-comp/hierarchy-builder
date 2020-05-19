@@ -1,9 +1,9 @@
 {withEmacs ? false,
  nixpkgs ?  (fetchTarball {
-  url = "https://github.com/NixOS/nixpkgs/archive/82b54d490663b6d87b7b34b9cfc0985df8b49c7d.tar.gz";
-  sha256 = "12gpsif48g5b4ys45x36g4vdf0srgal4c96351m7gd2jsgvdllyf";
+  url = "https://github.com/CohenCyril/nixpkgs/archive/7f59c094a0e5c8659856e611075fe88d6177830f.tar.gz";
+  sha256 = "00cf4r8dqfx2hwlwaqb239h72m4s0wl97i98424xd4hki0vzifbi";
 }),
- coq-version ? "8.10",
+ coq-version ? "8.11",
  print-env ? false
 }:
 with import nixpkgs {};
@@ -11,17 +11,19 @@ let
   pgEmacs = emacsWithPackages (epkgs:
     with epkgs.melpaStablePackages; [proof-general]);
   myCoqPackages = {
-    "8.7" = coqPackages_8_7;
-    "8.8" = coqPackages_8_8;
-    "8.9" = coqPackages_8_9;
     "8.10" = coqPackages_8_10;
+    "8.11" = coqPackages_8_11;
     }."${coq-version}";
   coq = myCoqPackages.coq;
+  coq-elpi = myCoqPackages.coq-elpi.overrideAttrs (o: {
+    name = "coq8.11-elpi-784659c";
+    src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/784659cbc4ced031b87fc9eda349162169f15084.tar.gz;
+  });
 in
 stdenv.mkDerivation rec {
   name = "env";
   env = buildEnv { name = name; paths = buildInputs; };
-  buildInputs = [ coq myCoqPackages.coq-elpi ]
+  buildInputs = [ coq coq.ocaml coq.ocamlPackages.elpi coq-elpi ]
                 ++ lib.optional withEmacs pgEmacs
                 ++ [ pythonPackages.pygments ] ;
   shellHook = ''
