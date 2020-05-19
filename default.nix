@@ -16,8 +16,8 @@ let
     }."${coq-version}";
   coq = myCoqPackages.coq;
   coq-elpi = myCoqPackages.coq-elpi.overrideAttrs(o: {
-    name = "coq8.11-elpi-784659c";
-    src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/784659cbc4ced031b87fc9eda349162169f15084.tar.gz;
+    name = "coq8.11-elpi-v1.4.0";
+    src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.4.0.tar.gz;
   });
 in
 stdenv.mkDerivation {
