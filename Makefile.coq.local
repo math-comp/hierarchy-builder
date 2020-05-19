@@ -54,5 +54,3 @@ VFILES+=$(foreach H,$(shell seq 3 5), demo1/test_$(H)_3.v)
 
 # user_0 works on top of all 3 hierarchies
 VFILES+=$(foreach H,$(shell seq 0 2), demo3/test_$(H)_0.v)
-
-.NOTPARALLEL:
