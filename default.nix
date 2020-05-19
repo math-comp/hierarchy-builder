@@ -1,9 +1,9 @@
 {withEmacs ? false,
  nixpkgs ?  (fetchTarball {
-  url = "https://github.com/NixOS/nixpkgs/archive/82b54d490663b6d87b7b34b9cfc0985df8b49c7d.tar.gz";
-  sha256 = "12gpsif48g5b4ys45x36g4vdf0srgal4c96351m7gd2jsgvdllyf";
+  url = "https://github.com/CohenCyril/nixpkgs/archive/7f59c094a0e5c8659856e611075fe88d6177830f.tar.gz";
+  sha256 = "00cf4r8dqfx2hwlwaqb239h72m4s0wl97i98424xd4hki0vzifbi";
 }),
- coq-version ? "8.10",
+ coq-version ? "8.11",
  print-env ? false
 }:
 with import nixpkgs {};
@@ -15,7 +15,10 @@ let
     "8.11" = coqPackages_8_11;
     }."${coq-version}";
   coq = myCoqPackages.coq;
-  coq-elpi = myCoqPackages.coq-elpi;
+  coq-elpi = myCoqPackages.coq-elpi.overrideAttrs(o: {
+    name = "coq8.11-elpi-v1.4.0";
+    src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.4.0.tar.gz;
+  });
 in
 stdenv.mkDerivation {
   name = "coq${coq.coq-version}-hierarchy-builder-dev";

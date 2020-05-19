@@ -30,6 +30,8 @@
      see phant-abbrev, used to talk about the non canonical name of Foo
 */
 
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta }.
+
 %%%%%%%%% Elpi Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code could be moved in Elpi's standard library
 
@@ -81,7 +83,7 @@ add-abbrev N NParams AbbrevT Global OnlyParse Abbrev :-
 % runs P in a context where Coq #[attributes] are parsed
 pred with-attributes i:prop.
 with-attributes P :-
-  attributes A, parse-attributes A [att "verbose" bool] Opts, !,
+  attributes A, coq.parse-attributes A [att "verbose" bool] Opts, !,
   Opts => P.
 
 pred if-verbose i:prop.
@@ -343,8 +345,9 @@ local-cs? TyTerm Struct :-
 pred get-canonical-mixins-of i:term, i:structure, o:list prop.
 get-canonical-mixins-of T S MSL :- std.do! [
   get-structure-sort-projection S Sort,
-  coq.unify-eq T (app [Sort, ST]),
-  coq.unify-eq ST (app [_, _, C]),
+  std.assert-ok! (coq.unify-eq T (app [Sort, ST])) "HB: get-canonical-mixins-of: T = sort ST",
+  % Hum, this unification problem is not super trivial. TODO replace by something simpler
+  std.assert-ok! (coq.unify-eq ST (app [_, _, C])) "HB: get-canonical-mixins-of: ST = _ _ C",
   C = app [_, _ | MIL],
   std.map MIL (mixin-srcs T) MSLL,
   std.flatten MSLL MSL
@@ -1087,8 +1090,7 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
 
   if-verbose (coq.say "HB: postulate type" TName),
 
-  coq.univ.new [] U,
-  Ty = sort (typ U),
+  coq.fresh-type Ty,
   coq.env.add-const TName _ Ty tt tt T, % no body, local -> a variable
   main-declare-context (global (const T)) GRFS _,
   acc current (clause _ _ (current-decl Decl))
@@ -1166,8 +1168,7 @@ main-begin-declare-builders (context-item IDT _ T none t\ context-item IDF _ (F 
     coq.env.end-module _]) (true),
   coq.env.begin-section Name,
   std.assert! (T = sort (typ _)) "The first context item must be a type variable",
-  coq.univ.new [] U,
-  Ty = sort (typ U),
+  coq.fresh-type Ty,
   coq.env.add-const IDT _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
   builders-postulate-factories IDF GRA GRF TheType [],
@@ -1225,8 +1226,7 @@ main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [
   if-verbose (coq.say "HB: postulate type" Name),
 
   std.assert! (T = sort (typ _)) "The first record parameter must be a type",
-  coq.univ.new [] U,
-  Ty = sort (typ U),
+  coq.fresh-type Ty,
   coq.env.add-const Name _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
   collect-asset-parameters (Rest TheType) [] Module TheType D
