@@ -1,58 +1,16 @@
 # Coq does not know about Elpi Accumulate File, so we declare the dependency here
 structures.vo : hb.elpi
 
-#### generate many rules to generate demoN/test_HIERARCHY_USER.v ####
-define MKRULE
-demo%/test_$1_$2.v: demo%/user_$2.v structures.vo demo%/hierarchy_$1.vo
-	cat demo$*/user_$2.v \
-		| sed 's?@@HIERARCHY@@?hierarchy_$1?' \
-		| sed 's?@@DEMO@@?HB.demo$*?' \
-		> demo$*/test_$1_$2.v
-endef
-
-# This makes make try to compile things more than onece :-/
-#$(foreach N,$(shell seq 0 10),\
-# $(foreach M,$(shell seq 0 10),\
-#  $(foreach K,$(shell seq 0 10),\
-#    $(eval $(call MKRULE,$(N),$(M),$(K))))))
-
-$(call MKRULE,0,0)
-$(call MKRULE,0,1)
-$(call MKRULE,0,2)
-$(call MKRULE,0,3)
-$(call MKRULE,1,0)
-$(call MKRULE,1,1)
-$(call MKRULE,1,2)
-$(call MKRULE,1,3)
-$(call MKRULE,2,0)
-$(call MKRULE,2,1)
-$(call MKRULE,2,2)
-$(call MKRULE,2,3)
-$(call MKRULE,3,0)
-$(call MKRULE,3,1)
-$(call MKRULE,3,2)
-$(call MKRULE,3,3)
-$(call MKRULE,4,0)
-$(call MKRULE,4,1)
-$(call MKRULE,4,2)
-$(call MKRULE,4,3)
-$(call MKRULE,5,0)
-$(call MKRULE,5,1)
-$(call MKRULE,5,2)
-$(call MKRULE,5,3)
-
-### add all the files we want to test ####
-
-## demo1/
-
-# user_0 works on top of all 6 hierarchies
-VFILES+=$(foreach H,$(shell seq 0 5), demo1/test_$(H)_0.v)
-# user_3 on version 3 to 5
-VFILES+=$(foreach H,$(shell seq 3 5), demo1/test_$(H)_3.v)
-
-## demo3/
-
-# user_0 works on top of all 3 hierarchies
-VFILES+=$(foreach H,$(shell seq 0 2), demo3/test_$(H)_0.v)
-
-.NOTPARALLEL:
+# #### generate many rules to generate demoN/test_HIERARCHY_USER.v ####
+# define MKRULE
+# demo$1/test_$2_$3.v: demo$1/user_$3.v structures.vo demo$1/hierarchy_$2.vo
+# 	cat demo$1/user_$3.v \
+# 		| sed 's?@@HIERARCHY@@?hierarchy_$2?' \
+# 		| sed 's?@@DEMO@@?HB.demo$1?' \
+# 		> demo$1/test_$2_$3.v
+# endef
+# 
+# $(foreach N,$(shell seq 0 10),\
+#  $(foreach M,$(shell seq 0 10),\
+#   $(foreach K,$(shell seq 0 10),\
+#     $(eval $(call MKRULE,$(N),$(M),$(K))))))

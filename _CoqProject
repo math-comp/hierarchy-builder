@@ -8,6 +8,15 @@ demo1/hierarchy_2.v
 demo1/hierarchy_3.v
 demo1/hierarchy_4.v
 demo1/hierarchy_5.v
+demo1/test_0_0.v
+demo1/test_1_0.v
+demo1/test_2_0.v
+demo1/test_3_0.v
+demo1/test_3_3.v
+demo1/test_4_0.v
+demo1/test_4_3.v
+demo1/test_5_0.v
+demo1/test_5_3.v
 
 demo2/classical.v
 demo2/stage10.v
@@ -16,6 +25,9 @@ demo2/stage11.v
 demo3/hierarchy_0.v
 demo3/hierarchy_1.v
 demo3/hierarchy_2.v
+demo3/test_0_0.v
+demo3/test_1_0.v
+demo3/test_2_0.v
 
 FSCD2020_material/V1.v
 FSCD2020_material/V2.v
@@ -26,3 +38,4 @@ tests/type_of_exported_ops.v
 tests/duplicate_structure.v
 
 -R . HB
+
