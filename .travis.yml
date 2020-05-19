@@ -13,11 +13,11 @@ env:
 
 jobs:
   include:
-  - language: nix
-    env:
-    - COQ=8.10
-    script:
-    - nix-build --argstr coq-version "${COQ}"
+  # - language: nix
+  #   env:
+  #   - COQ=8.10
+  #   script:
+  #   - nix-build --argstr coq-version "${COQ}"
 
   - language: nix
     env:
@@ -25,55 +25,55 @@ jobs:
     script:
     - nix-build --argstr coq-version "${COQ}"
 
-  - dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - COQ=8.10 ELPI="install ${ELPI_810}" CMD="make && make install"
-    install:
-    - ./.travis/docker-install.sh
-    script:
-    - ./.travis/docker-test.sh
-    after_script:
-    - docker stop COQ
+  # - dist: bionic
+  #   language: minimal
+  #   services:
+  #   - docker
+  #   env:
+  #   - COQ=8.10 ELPI="install ${ELPI_810}" CMD="make && make install"
+  #   install:
+  #   - ./.travis/docker-install.sh
+  #   script:
+  #   - ./.travis/docker-test.sh
+  #   after_script:
+  #   - docker stop COQ
 
-  - dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - COQ=8.11 ELPI="install ${ELPI_811}" CMD="make && make install"
-    install:
-    - ./.travis/docker-install.sh
-    script:
-    - ./.travis/docker-test.sh
-    after_script:
-    - docker stop COQ
+  # - dist: bionic
+  #   language: minimal
+  #   services:
+  #   - docker
+  #   env:
+  #   - COQ=8.11 ELPI="install ${ELPI_811}" CMD="make && make install"
+  #   install:
+  #   - ./.travis/docker-install.sh
+  #   script:
+  #   - ./.travis/docker-test.sh
+  #   after_script:
+  #   - docker stop COQ
 
-  - dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - COQ=8.11 ELPI="install ${ELPI_811}" CMD="opam pin add coq-hierarchy-builder ."
-    install:
-    - ./.travis/docker-install.sh
-    script:
-    - ./.travis/docker-test.sh
-    after_script:
-    - docker stop COQ
+  # - dist: bionic
+  #   language: minimal
+  #   services:
+  #   - docker
+  #   env:
+  #   - COQ=8.11 ELPI="install ${ELPI_811}" CMD="opam pin add coq-hierarchy-builder ."
+  #   install:
+  #   - ./.travis/docker-install.sh
+  #   script:
+  #   - ./.travis/docker-test.sh
+  #   after_script:
+  #   - docker stop COQ
 
-  - if: branch = coq-master
-    dist: bionic
-    language: minimal
-    services:
-    - docker
-    env:
-    - COQ=dev ELPI="pin add coq-elpi ${ELPI_DEV}" CMD="opam pin add coq-hierarchy-builder ."
-    install:
-    - ./.travis/docker-install.sh
-    script:
-    - ./.travis/docker-test.sh
-    after_script:
-    - docker stop COQ
+  # - if: branch = coq-master
+  #   dist: bionic
+  #   language: minimal
+  #   services:
+  #   - docker
+  #   env:
+  #   - COQ=dev ELPI="pin add coq-elpi ${ELPI_DEV}" CMD="opam pin add coq-hierarchy-builder ."
+  #   install:
+  #   - ./.travis/docker-install.sh
+  #   script:
+  #   - ./.travis/docker-test.sh
+  #   after_script:
+  #   - docker stop COQ
