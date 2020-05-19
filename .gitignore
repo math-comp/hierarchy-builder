@@ -35,8 +35,6 @@ Makefile.coq
 Makefile.coq.conf
 .coqdeps.d
 
-demo*/test*.v
-
 _minted-*
 *.aux
 *.log
