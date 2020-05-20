@@ -30,6 +30,8 @@
      see phant-abbrev, used to talk about the non canonical name of Foo
 */
 
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta }.
+
 %%%%%%%%% Elpi Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code could be moved in Elpi's standard library
 
@@ -81,7 +83,7 @@ add-abbrev N NParams AbbrevT Global OnlyParse Abbrev :-
 % runs P in a context where Coq #[attributes] are parsed
 pred with-attributes i:prop.
 with-attributes P :-
-  attributes A, parse-attributes A [att "verbose" bool] Opts, !,
+  attributes A, coq.parse-attributes A [att "verbose" bool] Opts, !,
   Opts => P.
 
 pred if-verbose i:prop.
@@ -125,14 +127,16 @@ name-of-asset-decl (asset-record X _ _ _) X.
 name-of-asset-decl (asset-alias X _) X.
 
 pred argument->asset i:argument, o:asset-decl.
-argument->asset (indt-decl (parameter Name Ty I)) (asset-parameter "T" Ty A) :- % TODO, take the name
+argument->asset (indt-decl (parameter ID _ Ty I)) (asset-parameter ID Ty A) :-
+  coq.string->name ID Name,
   @pi-decl Name Ty a\
     argument->asset (indt-decl (I a)) (A a).
 argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
-argument->asset (const-decl Id (some (fun _ _ Bo)) (some (prod Name Src Ty))) (asset-parameter "T" Src A) :- !,
+argument->asset (const-decl Id (some (fun _ _ Bo)) (parameter ID _ Src Ty)) (asset-parameter ID Src A) :- !,
+  coq.id->name ID Name,
   @pi-decl Name Src a\
-    argument->asset (const-decl Id (some (Bo a)) (some (Ty a))) (A a).
-argument->asset (const-decl Id (some Bo) (some Ty)) (asset-alias Id Bo) :- !,
+    argument->asset (const-decl Id (some (Bo a)) (Ty a)) (A a).
+argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
   std.assert! (var Ty) "Factories aliases should not be given a type".
 argument->asset X _ :- coq.error "Unsupported asset:" X.
 
@@ -341,8 +345,9 @@ local-cs? TyTerm Struct :-
 pred get-canonical-mixins-of i:term, i:structure, o:list prop.
 get-canonical-mixins-of T S MSL :- std.do! [
   get-structure-sort-projection S Sort,
-  coq.unify-eq T (app [Sort, ST]),
-  coq.unify-eq ST (app [_, _, C]),
+  std.assert-ok! (coq.unify-eq T (app [Sort, ST])) "HB: get-canonical-mixins-of: T = sort ST",
+  % Hum, this unification problem is not super trivial. TODO replace by something simpler
+  std.assert-ok! (coq.unify-eq ST (app [_, _, C])) "HB: get-canonical-mixins-of: ST = _ _ C",
   C = app [_, _ | MIL],
   std.map MIL (mixin-srcs T) MSLL,
   std.flatten MSLL MSL
@@ -966,7 +971,7 @@ declare-class ML (indt ClassName) Factories :- std.do! [
 
   (@pi-decl `T` {{Type}} t\ synthesize-fields t ML (RDecl t)),
   ClassDeclaration =
-    (parameter `T` {{ Type }} t\
+    (parameter "T" explicit {{ Type }} t\
       record "axioms" {{ Type }} "Class" (RDecl t)),
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
   coq.env.add-indt ClassDeclaration ClassName,
@@ -1085,8 +1090,7 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
 
   if-verbose (coq.say "HB: postulate type" TName),
 
-  coq.univ.new [] U,
-  Ty = sort (typ U),
+  coq.fresh-type Ty,
   coq.env.add-const TName _ Ty tt tt T, % no body, local -> a variable
   main-declare-context (global (const T)) GRFS _,
   acc current (clause _ _ (current-decl Decl))
@@ -1149,11 +1153,11 @@ declare-old-constant (some C) :-
 declare-old-constant _ :- true.
 
 pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders (context-item _ _ none _\ context-item IDF _ (some _) _\ context-end) :-
+main-begin-declare-builders (context-item _ _ _ none _\ context-item IDF _ _ (some _) _\ context-end) :-
     coq.error "factories cannot be given a body:" IDF.
-main-begin-declare-builders (context-item _ _ none _\ context-item ID1 _ none _\ context-item ID2 _ _ _) :-
+main-begin-declare-builders (context-item _ _ _ none _\ context-item ID1 _ _ none _\ context-item ID2 _ _ _ _) :-
   coq.error "only one factory is supported, got at least two" ID1 "and" ID2.
-main-begin-declare-builders (context-item IDT T none t\ context-item IDF (F t) none _\ context-end) :- std.do! [
+main-begin-declare-builders (context-item IDT _ T none t\ context-item IDF _ (F t) none _\ context-end) :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO
   std.assert! (pi t\ F t = app[global GRA, t|_]) "a factory must be a name applied to the type variable",
   factory-alias->gref GRA GRF,
@@ -1164,8 +1168,7 @@ main-begin-declare-builders (context-item IDT T none t\ context-item IDF (F t) n
     coq.env.end-module _]) (true),
   coq.env.begin-section Name,
   std.assert! (T = sort (typ _)) "The first context item must be a type variable",
-  coq.univ.new [] U,
-  Ty = sort (typ U),
+  coq.fresh-type Ty,
   coq.env.add-const IDT _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
   builders-postulate-factories IDF GRA GRF TheType [],
@@ -1223,8 +1226,7 @@ main-declare-asset (asset-parameter Name T Rest as R) D :- std.do! [
   if-verbose (coq.say "HB: postulate type" Name),
 
   std.assert! (T = sort (typ _)) "The first record parameter must be a type",
-  coq.univ.new [] U,
-  Ty = sort (typ U),
+  coq.fresh-type Ty,
   coq.env.add-const Name _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
   collect-asset-parameters (Rest TheType) [] Module TheType D
