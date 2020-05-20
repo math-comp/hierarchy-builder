@@ -8,7 +8,12 @@
 }:
 with import nixpkgs {
   overlays = [ (super: self: {
-    coqPackages = { "8.11" = super.coqPackages_8_11;  }."${coq-version}";
+    coqPackages = { "8.11" = super.coqPackages_8_11;  }."${coq-version}".overrideScope' (self: super: {
+      ## Coq package override example:
+      # coq-elpi = super.coq-elpi.overrideAttrs (old: {
+      #   name = "coq8.11-elpi-v1.4.0";
+      #   src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.4.0.tar.gz;
+    });
     coq = self.coqPackages.coq;
   })];
 };
