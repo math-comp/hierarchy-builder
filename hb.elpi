@@ -585,7 +585,7 @@ mk-phant-implicit N Ty PF (phant-term [implicit-arg|AL] (fun N Ty F)) :- !,
 pred mk-phant-struct i:term, i:term, i:(term -> phant-term), o:phant-term.
 mk-phant-struct T SI PF (phant-term [implicit-arg, unify-arg|AL] UF) :-
   get-structure-sort-projection SI Sort,
-  pi s\ PF s = phant-term AL (F s),
+  (pi s\ PF s = phant-term AL (F s)),
   UF = {{fun (s : lp:SI) (u : lib:hb.unify lp:T (lp:Sort s)
     (lib:hb.some (lib:hb.pair "is not canonically a"%string lp:SI)))
       => lp:(F s)}}.
