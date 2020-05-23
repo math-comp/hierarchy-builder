@@ -239,11 +239,10 @@ w-params.nparams (w-params.nil _ _ _) 0.
 % [w-params.then AwP Nil Cons Pred Out] states that Out has shape
 %   Cons `x_1` T_1 p_1 \ .. \ Nil `T` {{Type}} t \ Body
 %   where the-type [p_1 .. p_n] T => Pred Body
-pred the-type o:list term, o:term.
 pred w-params.then i:w-params A,
    i:(name -> term -> (term -> B) -> C -> prop),
    i:(name -> term -> (term -> C) -> C -> prop),
-   i:(A -> B -> prop),
+   i:(list term -> term -> A -> B -> prop),
    o:C.
 w-params.then L Nil Cons P O :- w-params.then.params L Nil Cons [] P O.
 
@@ -251,17 +250,18 @@ pred w-params.then.params i:w-params A,
    i:(name -> term -> (term -> B) -> C -> prop),
    i:(name -> term -> (term -> C) -> C -> prop),
    i:list term, % accumulator
-   i:(A -> B -> prop), o:C.
+   i:(list term -> term -> A -> B -> prop), o:C.
 w-params.then.params (w-params.cons N PTy ML) Nil Cons RevParams Pred Out :-
   @pi-decl N PTy p\
     w-params.then.params (ML p) Nil Cons [p|RevParams] Pred (Body p),
     Cons N PTy Body Out.
 w-params.then.params (w-params.nil NT TTy ML) Nil _ RevParams Pred Out :-
   std.rev RevParams Params,
-  @pi-decl NT TTy t\ the-type Params t => Pred (ML t) (Body t),
+  @pi-decl NT TTy t\
+    Pred Params t (ML t) (Body t),
     Nil NT TTy Body Out.
 
-pred w-params.map i:w-params A, i:(A -> B -> prop), o:w-params B.
+pred w-params.map i:w-params A, i:(list term -> term -> A -> B -> prop), o:w-params B.
 w-params.map AL F BL :- w-params.then AL (mk3 w-params.nil) (mk3 w-params.cons) F BL.
 
 % on the fly abstraction
@@ -273,7 +273,7 @@ bind-cons N T X V (w-params.cons N T A) :- V = A X.
 
 % Specific to list-w-params
 pred list-w-params_list i:list-w-params A, o:list A.
-list-w-params_list AwP R :- w-params.then AwP ignore ignore (x\ std.map x triple_1) R.
+list-w-params_list AwP R :- w-params.then AwP ignore ignore (p\ t\ x\ std.map x triple_1) R.
 
 pred list-w-params.append i:list-w-params A, i:list-w-params A, o:list-w-params A.
 list-w-params.append (w-params.nil N T ML1) (w-params.nil N T ML2) (w-params.nil N T ML) :-
@@ -324,7 +324,7 @@ distribute-w-params (w-params.nil N T F) L :-
 
 % Specific to one-w-params
 pred w-params_1 i:one-w-params A, o:A.
-w-params_1 X Y :- w-params.then X ignore ignore triple_1 Y.
+w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 
 %%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -371,12 +371,12 @@ factory-provides FactoryAlias MLwP :- std.do! [
   w-params.map RMLwP (factory-provides.base Factory) MLwP
 ].
 
-pred factory-provides.base i:factoryname, i:list (w-args mixinname), o:list (w-args mixinname).
-factory-provides.base Factory _RMLwP MLwP :- std.do! [
+pred factory-provides.base i:factoryname, i:list term, i: term,
+  i:list (w-args mixinname), o:list (w-args mixinname).
+factory-provides.base Factory Params T _RMLwP MLwP :- std.do! [
   std.findall (from Factory T_ F_) All,
   std.map All from_mixin ML,
   std.map All from_builder BL,
-  the-type Params T,
   std.map2 BL ML (factory-provides.one Params T) MLwP,
 ].
 
@@ -405,7 +405,7 @@ extract-conclusion-params T R :- whd1 T T1, !, extract-conclusion-params T1 R.
 pred factories-provide i:list-w-params factoryname, o:list-w-params mixinname.
 factories-provide FLwP MLwP :-
   list-w-params.flatten-map FLwP factory-provides UnsortedMLwP,
-  w-params.map UnsortedMLwP toposort-mixins MLwP.
+  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP.
 
 % Mixins can be topologically sorted according to their dependencies
 pred toposort-mixins.mk-mixin-edge i:prop, o:list (pair mixinname mixinname).
@@ -838,9 +838,9 @@ under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
 % where  MLwP contains M_0, .., M_n (under p_1 .. p_k)
 %   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
 %   and  ..p.. is a list of terms built using p_1 .. p_k and T
-pred mk-mixin-fun.then i:list-w-params mixinname, i:(term -> prop), o:term.
+pred mk-mixin-fun.then i:list-w-params mixinname, i:(list term -> term -> term -> prop), o:term.
 mk-mixin-fun.then L P Out :- !,
-  w-params.then L mk-fun mk-fun (ml\ out\ under-mixins.then ml mk-fun P out) Out.
+  w-params.then L mk-fun mk-fun (p\ t\ ml\ out\ under-mixins.then ml mk-fun (P p t) out) Out.
 
 % A *pack* notation can be easiliy produced from a phant-term using
 % [mk-phant-abbrev N PT C], which states that C is a new constant
@@ -1051,9 +1051,8 @@ main-mixin-requires Str GR GRFS [From|PO] SN :- !, std.do! [
   % register factory
   PO => std.do! [
     mk-mixin-fun.then {factory-requires GR}
-      (body\ sigma MTy Params T\
-        the-type Params T,
-        mgref->term Params T GR MTy,
+      (params\ t\ body\ sigma MTy\
+        mgref->term params t GR MTy,
         body = fun `x` MTy x\x)
       IDBody
   ],
@@ -1086,18 +1085,18 @@ main-declare-context TheType TheParams GRFSwP MSL :-  std.do! [
   std.forall MSL (ms\ acc current (clause _ _ ms)),
 ].
 
-% [factory-comp TheType SrcFactory MB MiddleFactory TgtMixin B1] synthesizes
+% [factory-comp SrcFactory MB MiddleFactory TgtMixin B1] synthesizes
 %   B1 = MB o B
 % where MB is the builder from MiddleFactory to TgtMixin and
 % B is a builder from SrcFactory to MiddleFactory
-pred factory-comp i:list mixinname, i:factoryname, i:term, i:factoryname, i:mixinname, o:term.
-factory-comp ML SrcFactory B MiddleFactory TgtMixin Comp :-
-  the-type TheParams TheType,
-  mgref->term TheParams TheType SrcFactory Src,
-  MB = mterm TheParams TheType ML B,
+pred factory-comp i:list mixinname, i:factoryname, i:term, i:factoryname,
+  i:mixinname, i:list term, i:term, o:term.
+factory-comp ML SrcFactory B MiddleFactory TgtMixin Params Type Comp :-
+  mgref->term Params Type SrcFactory Src,
+  MB = mterm Params Type ML B,
   Comp = {{
     fun src : lp:Src => lp:{{
-      {under-mixin-src-from-factory.then TheType {{src}}
+      {under-mixin-src-from-factory.then Type {{src}}
         (factory-comp-body {{src}} MB MiddleFactory TgtMixin)} }}
   }}.
 
@@ -1157,7 +1156,7 @@ export Module :- !,
   acc current (clause _ _ (to-export Module)).
 
 pred mk-mixin-fun i:list-w-params mixinname, i:term, o:term.
-mk-mixin-fun ML X MLX :- mk-mixin-fun.then ML (body\ body = X) MLX.
+mk-mixin-fun ML X MLX :- mk-mixin-fun.then ML (p\ t\ body\ body = X) MLX.
 
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra
@@ -1178,8 +1177,8 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   clean-op-ty Ops S T1 T2.
 
 pred operation-body-and-ty i:list prop, i:constant, i:term, i:term, i:term,
-  i:w-args A, o:pair term term.
-operation-body-and-ty EXI Poperation Struct Psort Pclass (triple _ Params _) (pr Bo Ty) :- std.do! [
+  i:list term, i:term, i:w-args A, o:pair term term.
+operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Params _) (pr Bo Ty) :- std.do! [
   mk-app Struct Params StructType,
   mk-app Psort Params PsortP,
   mk-app Pclass Params PclassP,
@@ -1190,7 +1189,7 @@ operation-body-and-ty EXI Poperation Struct Psort Pclass (triple _ Params _) (pr
       mk-app PclassP [s] Class,
       under-mixin-src-from-factory.do! Carrier Class [
         % just in case..
-        the-type Params Carrier => mgref->term Params Carrier (const Poperation) (Body s),
+        mgref->term Params Carrier (const Poperation) (Body s),
         std.assert-ok! (coq.typecheck (Body s) (DirtyTy s)) "export-1-operation: Body illtyped",
         clean-op-ty EXI s (DirtyTy s) (BodyTy s),
       ],
@@ -1252,10 +1251,10 @@ pred mk-coe-class-body
   i:factoryname, % From class
   i:factoryname, % To class
   i:list-w-params mixinname, % To mixins
+  i:list term, i:term, % Params, T
   i:list (w-args mixinname),
   o:term.
-mk-coe-class-body FC TC TMLwP _ CoeBody :- std.do! [
-  the-type Params T,
+mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
   mk-app (global FC) Params ClassKP,
   mk-app ClassKP [T] Class,
 
@@ -1281,10 +1280,11 @@ pred mk-coe-structure-body
   i:term, % class coercion
   i:term, % sort projection
   i:term, % class projection
+  i:list term, i:term, % Params, T
   i:list (w-args mixinname),
   o:term.
-mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection _ SCoeBody :- std.do! [
-  the-type Params _T,
+mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection
+    Params _T _ SCoeBody :- std.do! [
   mk-app StructureF Params StructureP,
 
   factory-nparams TC NHoles,
@@ -1390,17 +1390,15 @@ synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
 
-pred synthesize-fields.body i:list (w-args mixinname), o:indt-decl.
-synthesize-fields.body ML (record "axioms" {{ Type }} "Class" FS) :-
-  the-type _ T,
+pred synthesize-fields.body i:list term, i:term, i:list (w-args mixinname), o:indt-decl.
+synthesize-fields.body _Params T ML (record "axioms" {{ Type }} "Class" FS) :-
   synthesize-fields T ML FS.
 
 pred mk-record+sort-field i:name, i:term, i:(term -> record-decl), o:indt-decl.
 mk-record+sort-field _ T F (record "type" {{ Type }} "Pack" (field _ "sort" T F)).
 
-pred mk-class-field i:classname, i:list (w-args mixinname), o:record-decl.
-mk-class-field ClassName _ (field _ "class" (app [global ClassName|Args]) _\end-record) :-
-  the-type Params T,
+pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
+mk-class-field ClassName Params T _ (field _ "class" (app [global ClassName|Args]) _\end-record) :-
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
@@ -1461,7 +1459,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   list-w-params.flatten-map GRFSwP factory-requires RMLwP, % TODO: extract code from factories-provide
   list-w-params.append PMLwP RMLwP UnsortedMLwP,
-  w-params.map UnsortedMLwP toposort-mixins MLwP,
+  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
 
   list-w-params_list PMLwP PML,
   list-w-params_list MLwP ML,
@@ -1482,7 +1480,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   declare-class+structure MLwP
     ClassName Structure SortProjection ClassProjection Factories,
 
-  w-params.map MLwP (_\ mk-nil) NilwP,
+  w-params.map MLwP (_\_\_\ mk-nil) NilwP,
   ClassRequires = factory-requires (ClassName) NilwP,
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
