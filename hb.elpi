@@ -1273,7 +1273,7 @@ declare-factory-alias Ty1 GRFS Module TheType :- std.do! [
 
   mk-phant-mixins (global GRK) PhGRK0,
   if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  mk-phant-abbrev "Build" PhGRK _ _,
+  mk-phant-abbrev "Build" PhGRK BuildConst _,
 
   std.map Hyps mixin-src_mixin ML,
   main-factory-requires "axioms" (const C) ML Props SN,
@@ -1285,6 +1285,7 @@ declare-factory-alias Ty1 GRFS Module TheType :- std.do! [
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
   acc current (clause _ _ (factory-constructor (const C) GRK)),
+  acc current (clause _ _ (factory-builder-nparams BuildConst 0)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
 
@@ -1319,7 +1320,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFS Module TheType D :- std.do! [
   if-verbose (coq.say "HB: declare notation Axioms"),
 
   if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  mk-phant-abbrev "Build" PhGRK _ _,
+  mk-phant-abbrev "Build" PhGRK BuildConst _,
 
   std.map Hyps mixin-src_mixin ML,
   if (D = asset-mixin)
@@ -1333,6 +1334,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFS Module TheType D :- std.do! [
   std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
   acc current (clause _ _ (factory-constructor (indt R) GRK)),
+  acc current (clause _ _ (factory-builder-nparams BuildConst 0)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
 
