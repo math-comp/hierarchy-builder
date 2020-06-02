@@ -1060,6 +1060,19 @@ main-mixin-requires Str GR GRFS [From|PO] SN :- !, std.do! [
   From = from GR GR IDBody,
 ].
 
+% [postulate-arity A Acc T TS] postulates section variables
+% corresponding to parameters in arity A. TS is T applied
+% to all section variables (and hd-beta reduced). Acc should
+% be [] at call site.
+pred postulate-arity i:arity, i:list term, i:term, o:term.
+postulate-arity (parameter ID _ S A) Acc T T1 :-
+  coq.env.add-const ID _ S tt tt C,
+  Var = global (const C),
+  postulate-arity (A Var) [Var|Acc] T T1.
+postulate-arity (arity _) ArgsRev X T :-
+  hd-beta X {std.rev ArgsRev} X1 Stack1,
+  unwind X1 Stack1 T.
+
 % Given a type T, a fresh number N, and a mixin M it postulates
 % a variable "mN" inhabiting M applied to T and
 % all its dependencies, previously postulated and associated

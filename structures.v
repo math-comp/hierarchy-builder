@@ -297,11 +297,18 @@ Elpi Accumulate lp:{{
 main [const-decl Name (some Body) TyWP] :- !, std.do! [
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
-  std.assert! (coq.safe-dest-app Body (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
+
+  SectionName is "hb_instance_" ^ {term_to_string {new_int} },
+  coq.env.begin-section SectionName,
+  postulate-arity TyWP [] Body SectionBody,
+
+  std.assert! (coq.safe-dest-app SectionBody (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
   std.assert! (factory-builder-nparams Builder NParams) "Not a factory builder synthesized by HB",
-  coq.env.add-const Name Body Ty ff ff C,
+  coq.env.add-const Name SectionBody _ ff ff C,
   std.appendR {coq.mk-n-holes NParams} [T|_] Args,
   with-attributes (main-declare-canonical-instances T (global (const C))),
+
+  coq.env.end-section,
 ].
 main L :-
   std.map L argument->term [T,F], !,
