@@ -79,6 +79,10 @@ pred mixin-src o:term, o:mixinname, o:term.
 %      Notation   Abbrev t1 := (AbbrevSt t1 _ idfun).
 pred phant-abbrev o:gref, o:gref, o:abbreviation.
 
+% [factory-builder-nparams Build N] states that when the user writes
+% the `F.Build T` abbreviation the term behind it has N arguments before T
+pred factory-builder-nparams o:constant, o:int.
+
 % [sub-class C1 C2] C1 is a sub-class of C2.
 pred sub-class o:class, o:class.
 
@@ -251,6 +255,8 @@ Elpi Export HB.structure.
     …
     Definition fN : FactoryN T := FactoryN.Build T …
     HB.instance T f1 … fN.
+
+    HB.instance Definition N := Factory.Build T …
     >>
 
 *)
@@ -259,9 +265,18 @@ Elpi Command HB.instance.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+main [const-decl Name (some Body) TyWP] :- !, std.do! [
+  coq.arity->term TyWP Ty,
+  std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
+  std.assert! (coq.safe-dest-app Body (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
+  std.assert! (factory-builder-nparams Builder NParams) "Not a factory builder synthesized by HB",
+  coq.env.add-const Name Body Ty ff ff C,
+  std.appendR {coq.mk-n-holes NParams} [T|_] Args,
+  with-attributes (main-declare-canonical-instances T [global (const C)]),
+].
 main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
   with-attributes (main-declare-canonical-instances T FIL).
-main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*".
+main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 
 }}.
 Elpi Typecheck.
