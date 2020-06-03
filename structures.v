@@ -14,6 +14,8 @@ Register Coq.Init.Datatypes.Some as hb.some.
 Register Coq.Init.Datatypes.pair as hb.pair.
 Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
+Definition indexed {T} (x : T) := x.
+Register indexed as hb.indexed.
 
 Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
@@ -38,10 +40,26 @@ typeabbrev classname gref.
 typeabbrev factoryname gref.
 typeabbrev structure term.
 
+kind triple type -> type -> type -> type.
+type triple A -> B -> C -> triple A B C.
+typeabbrev (w-args A) (triple A (list term) term).
+
+kind w-params type -> type -> type.
+type w-params.cons name -> term -> (term -> w-params A) -> w-params A.
+type w-params.nil name -> term -> (term -> A) -> w-params A.
+
+typeabbrev (list-w-params A) (w-params (list (w-args A))).
+typeabbrev (one-w-params A) (w-params (w-args A)).
+
 % (class C S ML) represents a class C packed in S containing mixins ML.
-% The order of ML is relevant.
+% example
+%  class {{Module.axioms}} {{Module.type}}
+%    (w-params.cons {{Ring.type}} R \
+%     w-params.nil TheType \
+%          [..., pr3 {{Ring.mixin}} [] TheType,
+%                pr3 {{Module.mixin}} [R] TheType ])
 kind class type.
-type class classname -> structure -> list mixinname -> class.
+type class classname -> structure -> list-w-params mixinname -> class.
 
 %%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -50,19 +68,23 @@ pred join o:classname, o:classname, o:classname.
 
 %%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % [from FN MN F] invariant:
-% "F : forall T LMN, FN T .. -> MN T .." where
-%  - .. is a sub list of LMN
+% "F : forall p1 .. pn T LMN, FN p1 .. pn T LMN1 -> MN c1 .. cm T LMN2" where
+%  - LMN1 and LMN2 are sub lists of LMN
+%  - c1 .. cm are terms built using p1 .. pn and T
 % - [factory-requires FN LMN]
 % [from _ M _] tests whether M is a declared mixin.
 pred from o:factoryname, o:mixinname, o:term.
 
 % [factory-requires M ML] means that factory M depends on
 % (i.e. has parameters among) mixins ML.
-pred factory-requires o:factoryname, o:list mixinname.
+pred factory-requires o:factoryname, o:list-w-params mixinname.
 
 % [factory-constructor F K] means K is a constructor for
 % the factory F.
 pred factory-constructor o:factoryname, o:gref.
+
+% TODO params
+pred factory-nparams o:factoryname, o:int.
 
 % class-def contains all the classes ever declared
 pred class-def o:class.
@@ -131,14 +153,22 @@ pp-from (from F M T) :-
   coq.say "  " {coq.term->string T},
   coq.say "".
 
-pred pp-gref i:gref.
-pp-gref X :- coq.say "  " {coq.term->string (global X)}.
+pred pp-list-w-params i:list-w-params mixinname, i:term.
+pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
+pred pp-list-w-params.triple i:w-args mixinname.
+pp-list-w-params (w-params.cons N Ty LwP) T :-
+  @pi-decl N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
+pp-list-w-params (w-params.nil N TTy LwP) T :-
+  @pi-decl N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
+pp-list-w-params.list-triple L S :-
+  coq.say {coq.term->string S} ":=",
+  std.forall L pp-list-w-params.triple.
+pp-list-w-params.triple (triple M Params T) :-
+  coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
 
 pred pp-class i:prop.
-pp-class (class-def (class _ S ML)) :-
-  coq.say {coq.term->string S} ":=",
-  std.forall ML pp-gref,
-  coq.say "".
+pp-class (class-def (class _ S MLwP)) :-
+  pp-list-w-params MLwP S.
 
 main [] :- !, std.do! [
   coq.say "--------------------- Hierarchy -----------------------------------",
@@ -213,29 +243,29 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred product->grefs i:term, o:list gref, o:bool.
-product->grefs {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
-  product->grefs B GRB ClosureCheck,
-  product->grefs A GRA _,
+pred product->triples i:term, o:list (w-args factoryname), o:bool.
+product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
+  product->triples B GRB ClosureCheck,
+  product->triples A GRA _,
   std.append GRA GRB L.
-product->grefs {{ True }} [] tt :- !.
-product->grefs {{ False }} [] ff :- !.
-product->grefs A [GR] tt :-
-  type->gref A GR.
+product->triples {{ True }} [] tt :- !.
+product->triples {{ False }} [] ff :- !.
+product->triples A [GR] tt :- factory? A GR.
 
-pred type->gref i:term, o:gref.
-type->gref (app[global Abbrev|_]) GR :- phant-abbrev GR Abbrev _.
-type->gref (app[global GR|_]) GR :- !.
-type->gref T _ :- coq.error "Not a factory:" {coq.term->string T}.
+pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
+sigT->list-w-params (fun N T B) L C :-
+  L = w-params.cons N T Rest,
+  @pi-decl N T p\
+    sigT->list-w-params (B p) (Rest p) C.
+sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
+  L = w-params.nil N Ty Rest,
+  @pi-decl N Ty t\
+    product->triples (B t) (Rest t) C.
 
-pred sigT->grefs i:term, o:list gref, o:bool.
-sigT->grefs {{ lib:@hb.sigT _ (fun a : lp:T => lp:(B a)) }} L S :-
-  @pi-decl `a` T a\
-    product->grefs (B a) L S.
-
-main [const-decl Module (some B) _] :- !,
-  sigT->grefs B GRFS ClosureCheck, !,
-  with-attributes (main-declare-structure Module GRFS ClosureCheck).
+main [const-decl Module (some B) _] :- !, std.do! [
+  sigT->list-w-params B GRFS ClosureCheck, !,
+  with-attributes (main-declare-structure Module GRFS ClosureCheck),
+].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
 Elpi Typecheck.
@@ -251,12 +281,10 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Definition f1 : Factory1 T := Factory1.Build T …
-    …
-    Definition fN : FactoryN T := FactoryN.Build T …
-    HB.instance T f1 … fN.
+    Definition f Params : Factory T := Factory.Build Params T …
+    HB.instance Params T f.
 
-    HB.instance Definition N := Factory.Build T …
+    HB.instance Definition N Params := Factory.Build Params T …
     >>
 
 *)
@@ -265,17 +293,27 @@ Elpi Command HB.instance.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
 main [const-decl Name (some Body) TyWP] :- !, std.do! [
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
-  std.assert! (coq.safe-dest-app Body (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
+
+  SectionName is "hb_instance_" ^ {term_to_string {new_int} },
+  coq.env.begin-section SectionName,
+  postulate-arity TyWP [] Body SectionBody,
+
+  std.assert! (coq.safe-dest-app SectionBody (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
   std.assert! (factory-builder-nparams Builder NParams) "Not a factory builder synthesized by HB",
-  coq.env.add-const Name Body Ty ff ff C,
+  coq.env.add-const Name SectionBody _ ff ff C,
   std.appendR {coq.mk-n-holes NParams} [T|_] Args,
-  with-attributes (main-declare-canonical-instances T [global (const C)]),
+  with-attributes (main-declare-canonical-instances T (global (const C))),
+
+  coq.env.end-section,
 ].
-main [S|FIS] :- std.map [S|FIS] argument->term [T|FIL], !,
-  with-attributes (main-declare-canonical-instances T FIL).
+main L :-
+  std.map L argument->term [T,F], !,
+  with-attributes
+    (main-declare-canonical-instances T F).
 main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 
 }}.
