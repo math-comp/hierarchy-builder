@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- HB now supports parameters.
+
 ## [0.9.1] - 2020-06-03
 
 - `HB.instance` can be applied directly to a definition as in
