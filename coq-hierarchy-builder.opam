@@ -11,8 +11,7 @@ dev-repo: "git+https://github.com/math-comp/hierarchy-builder"
 build: [ make ]
 install: [ make "install" "VFILES=structures.v" ]
 depends: [
-  "coq"      {>= "8.11.0" & < "8.12.0~" }
-  "coq-elpi" {>= "1.4.0" & < "1.5.0~"}
+  "coq-elpi"
   ]
 synopsis: "Hierarchy Builder"
 description: """
