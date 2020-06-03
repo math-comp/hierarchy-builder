@@ -775,9 +775,10 @@ ty-deps (prod N T _) (w-params.nil N T _\[]) :- T = {{Type}}, !.
 ty-deps T _ :- % TODO: forall p1 ... pn (T : indexed Type) with indexed being the id function
   coq.error "ty-deps: BUG: could not get the parameters and the dependencies of"
     {coq.term->string T}.
+pred ty-deps.aux i:term, o:list-w-params mixinname.
 ty-deps.aux (prod N S R) ML :- !,
   @pi-decl N S x\
-    if (prod-src-is-factory (R x))
+    if (prod-src-is-factory (R x); S = {{Type}})
       (ML = w-params.nil  N S MLP, ty-deps.factories (R x) (MLP x))
       (ML = w-params.cons N S ML1, ty-deps.aux (R x) (ML1 x)).
 ty-deps.aux Ty ML :- whd1 Ty Ty1, !, ty-deps.aux Ty1 ML.
@@ -1022,9 +1023,11 @@ type factory-by-phantabbrev abbreviation -> factory-name.
 
 pred declare-factory-abbrev i:id, i:factory-name.
 declare-factory-abbrev Name (factory-by-classname GR) :-
+  % looks fishy (the parameters are not taken into account)
   add-abbrev Name 1 (fun _ _ t\ app[global GR,t]) tt tt _.
 declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
-  add-abbrev Name 1 (fun _ _ t\ {coq.notation.abbreviation Abbr [t]}) tt tt _.
+  coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
+  add-abbrev Name Nargs AbbrTrm tt tt _.
 
 % [main-factory-requires Str GR FL CL SN]
 % computes the list of mixins ML provided by FL,
@@ -1804,7 +1807,7 @@ declare-factory-alias Ty1 GRFSwP Module TheType TheParams :- std.do! [
 
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
-  export Exports,
+  std.spy(export Exports),
 
   declare-factory-abbrev Module SN,
 ].
