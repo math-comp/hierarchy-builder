@@ -778,7 +778,7 @@ ty-deps T _ :- % TODO: forall p1 ... pn (T : indexed Type) with indexed being th
 pred ty-deps.aux i:term, o:list-w-params mixinname.
 ty-deps.aux (prod N S R) ML :- !,
   @pi-decl N S x\
-    if (prod-src-is-factory (R x); S = {{Type}})
+    if (prod-src-is-factory (R x); S = {{ lib:hb.indexed Type }})
       (ML = w-params.nil  N S MLP, ty-deps.factories (R x) (MLP x))
       (ML = w-params.cons N S ML1, ty-deps.aux (R x) (ML1 x)).
 ty-deps.aux Ty ML :- whd1 Ty Ty1, !, ty-deps.aux Ty1 ML.
@@ -1715,11 +1715,10 @@ main-declare-asset Asset AssetKind :- std.do! [
 
 pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (pair term term).
 % We reached TheType
-process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
+process-asset-named-parameters (asset-parameter Name _ Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
 
   if-verbose (coq.say "HB: postulate type" Name),
 
-  std.assert! (T = sort (typ _)) "The first record parameter must be a type",
   coq.fresh-type Ty,
   coq.env.add-const Name _ Ty tt tt C, % no body, local -> a variable
   TheType = global (const C),
