@@ -146,6 +146,7 @@ HB.mixin Record LModule_of_AG (R : Ring.type) (M : Type) of AddAG M := {
 }.
 HB.structure Definition LModule (R : Ring.type) :=
   { M of LModule_of_AG R M & }.
+Infix "*:" := (@scale _ _) (at level 30) : hb_scope.
 
 Definition regular (R : Type) := R.
 
@@ -156,3 +157,13 @@ HB.instance Definition regular_LModule (R : Ring.type) :=
   LModule_of_AG.Build R (regular (Ring.sort R)) mul
     (fun _ _ _ => mulrDl _ _ _) mulrDr mulrA mul1r.
 
+Require Import ZArith.
+
+HB.instance Definition Z_ring_axioms :=
+  Ring_of_TYPE.Build Z 0%Z 1%Z Z.add Z.opp Z.mul
+  Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
+  Z.mul_assoc Z.mul_1_l Z.mul_1_r
+  Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Lemma test (m : Z) (n : regular Z) : m *: n = m * n.
+Proof. by []. Qed.
