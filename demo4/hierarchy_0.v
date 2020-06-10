@@ -1,6 +1,6 @@
 From HB Require Import structures.
 
-HB.mixin Record m1 (T : Type) (A : Type) := {
+HB.mixin Record m1 (T : Type) (A : indexed Type) := {
   inhab : A;
   inhab_param : T;
 }.
