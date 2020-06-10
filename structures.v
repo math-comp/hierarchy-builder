@@ -35,6 +35,8 @@ Global Open Scope HB_scope.
 
 Elpi Db hb.db lp:{{
 
+typeabbrev abbreviation (ctype "abbreviation"). % missing from coq-elpi
+
 typeabbrev mixinname gref.
 typeabbrev classname gref.
 typeabbrev factoryname gref.
@@ -463,3 +465,8 @@ Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
 Notation "[find v | t1 ∼ t2 | msg ] rest" :=
   (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
   form_scope.
+
+Elpi Command HB.debug.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Typecheck.
