@@ -152,11 +152,7 @@ Definition regular (R : Type) := R.
 HB.instance Definition regular_AG (R : AddAG.type) :=
   AddAG_of_TYPE.Build (regular (AddAG.sort R)) zero add opp addrA addrC add0r addNr.
 
-Section regular_LModule.
-Variable R : Ring.type.
-Definition regular_LModule :=
+HB.instance Definition regular_LModule (R : Ring.type) :=
   LModule_of_AG.Build R (regular (Ring.sort R)) mul
     (fun _ _ _ => mulrDl _ _ _) mulrDr mulrA mul1r.
-Fail #[verbose]
-HB.instance (regular (Ring.sort R)) regular_LModule.
-End regular_LModule.
+

@@ -525,11 +525,19 @@ get-class-constructor (indt S) Params T :-
     (coq.error "get-class-constructor: wrong number of params:" S),
   mk-app (global (indc K)) Params T.
 
+pred safe-head i:term, o:term.
+safe-head (prod N T Body) Hd :-
+  @pi-decl N T x\
+    safe-head (Body x) (Hd' x),
+    std.assert! (Hd' x = Hd) "safe-head: the head symbol is a bound variable".
+safe-head T Hd :- whd1 T T', safe-head T' Hd.
+safe-head T Hd :- safe-dest-app T Hd _.
+
 %% finding for locally defined structures
 pred get-cs-structure i:cs-instance, o:term.
 get-cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
   coq.env.typeof Inst InstTy,
-  safe-dest-app InstTy Struct _
+  safe-head InstTy Struct
 ].
 
 pred has-cs-instance i:gref, i:cs-instance.
@@ -1806,7 +1814,7 @@ declare-factory-alias Ty1 GRFSwP Module TheType TheParams :- std.do! [
 
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
-  std.spy(export Exports),
+  export Exports,
 
   declare-factory-abbrev Module SN,
 ].
