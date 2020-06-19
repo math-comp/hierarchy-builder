@@ -38,6 +38,8 @@ FSCD2020_material/V2.v
 FSCD2020_material/V3.v
 FSCD2020_material/V4.v
 
+Coq2020_material/example.v
+
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
 
