@@ -1,6 +1,7 @@
 {withEmacs ? false,
  nixpkgs ?  (fetchTarball {
-  url = "https://github.com/CohenCyril/nixpkgs/archive/8d04d29adb547353ed9fb5c5c4aa6d540e198366.tar.gz";
+  url = https://nixos.org/channels/nixpkgs-unstable;
+  # url = "https://github.com/CohenCyril/nixpkgs/archive/8d04d29adb547353ed9fb5c5c4aa6d540e198366.tar.gz";
   sha256 = "1v4l37xkadpnkydpycnk9hrjgh6yc792k66yi7f6203zzr0phzx8";
 }),
  coq-version ? "8.11",
