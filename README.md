@@ -104,7 +104,7 @@ opam install coq-hierarchy-builder
 
 - a *structure* is declared by attaching zero or more factories to a type.
 
-- a *builder* is user provided piece of code capable of
+- a *builder* is a user provided piece of code capable of
   building one or more mixins from a factory.
 
 - an *instance* is an example of a structure: it provides all operation and
