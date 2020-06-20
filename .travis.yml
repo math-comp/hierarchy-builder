@@ -7,7 +7,7 @@ branches:
 env:
   global:
   - CONTRIB_NAME=hb
-  - ELPI_811=coq-elpi.1.4.0
+  - ELPI_811=coq-elpi.1.4.1
   - ELPI_DEV=https://github.com/LPCIC/coq-elpi.git#coq-master
 
 jobs:
