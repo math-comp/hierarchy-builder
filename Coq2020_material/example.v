@@ -2,10 +2,6 @@
 From Coq Require Import ssreflect ssrfun ZArith.
 From HB Require Import structures.
 
-Declare Scope hb_scope.
-Delimit Scope hb_scope with G.
-Open Scope hb_scope.
-
 HB.mixin Record CMonoid_of_Type A := { (* The set of axioms making A a commutative monoid. *)
   zero  : A; add   : A -> A -> A;
   addrA : associative add;  (* `add` is associative  *)
