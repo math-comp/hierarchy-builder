@@ -87,8 +87,7 @@ opam repo add coq-released https://coq.inria.fr/opam/released
 opam install coq-hierarchy-builder
 ```
 
-- You can use it in nix with the attribute `coqPackages_8_10.hierarchy-builder`
-  or `coqPackages_8_11.hierarchy-builder` (e.g. via `nix-shell -p coqPackages_8_10.hierarchy-builder`)
+- You can use it in nix with the attribute `coqPackages_8_11.hierarchy-builder` e.g. via `nix-shell -p coq_8_11 -p coqPackages_8_11.hierarchy-builder`
  
 </p></details>
 
