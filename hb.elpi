@@ -151,7 +151,11 @@ pred builder->string i:builder, o:string.
 builder->string (builder _ _ B) S :- coq.term->string B S.
 
 pred nice-gref->string i:gref, o:string.
-nice-gref->string X S :- coq.term->string (global X) S.
+nice-gref->string X Mod :-
+  coq.gref->path X Path,
+  std.rev Path [_,Mod|_].
+nice-gref->string X S :-
+  coq.term->string (global X) S.
 
 pred target-gref i:term, o:gref.
 target-gref T GR :- whd1 T T1, !, target-gref T1 GR.
@@ -1489,8 +1493,8 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   list-w-params_list MLwP ML,
 
   if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
-     (coq.warn "pulling in dependencies:" {std.map {list-diff ML PML} nice-gref->string}
-               "\nPlease list them or end the declaration with '....'")
+     (coq.warn "HB: pulling in dependencies:" {std.map {list-diff ML PML} nice-gref->string}
+               "\nPlease list them or end the declaration with '&'")
      true,
 
   if-class-already-exists-error Module {findall-classes} ML,
