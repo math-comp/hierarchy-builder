@@ -9,6 +9,9 @@ Set Warnings "-redundant-canonical-projection".
 
 
 
+(* ****************************************************** *)
+(* ******** 1. Building the hierarchy          ********** *)
+(* ****************************************************** *)
 
 
 (* ********************************************************
@@ -47,7 +50,7 @@ Check add.
 (* Axioms are also there *)
 Check addrC.
 
-(* We can developd the abstract theory of CMonoid *)
+(* We can develop the abstract theory of CMonoid *)
 Notation "0" := zero.
 Infix    "+" := add.
 Lemma silly :
@@ -101,8 +104,13 @@ Infix    "*"  := mul.
 (* Quick check that + and 1 and * are compatible *)
 Check forall x y, 1 + x = y * x.
 
-(* Can I mix * and - in the same expression? *)
+(* ********************************************************
+   Can I mix * and - in the same expression?
+*)
 Fail Check forall x y, 1 * x = y - x.
+
+
+
 
 (* ********************************************************
    The missing structure, no puzzle piece is missing
@@ -112,9 +120,17 @@ HB.structure
   Definition Ring := { A of SemiRing A & AbelianGrp A }.
 
 Check forall (R : Ring.type) (x y : R), 1 * x = y - x.
-Check forall x y, 1 * x = y - x. (* is the join misnamed? *)
+Check forall x y, 1 * x = y - x.
 
-(* ********************************************************
+
+
+
+(* ****************************************************** *)
+(* ******** 2. Declaring instances               ******** *)
+(* ****************************************************** *)
+
+
+(* ******************************************************
    Inhabiting the puzzle pieces with Z
 *)
 
@@ -130,19 +146,26 @@ HB.instance
 
 HB.instance
   Definition Z_SemiRing := SemiRing_of_CMonoid.Build Z
-    1%Z Z.mul Z.mul_assoc Z.mul_1_l Z.mul_1_r Z.mul_add_distr_r Z.mul_add_distr_l Z.mul_0_l Z.mul_0_r.
+    1%Z Z.mul Z.mul_assoc Z.mul_1_l Z.mul_1_r
+    Z.mul_add_distr_r Z.mul_add_distr_l Z.mul_0_l Z.mul_0_r.
 
 (* Now Z is recognized as a Ring *)
 Check forall x : Z, x * - (1 + x) = 0 + 1.
 
 End Z_instances.
 
+
+(* ****************************************************** *)
+(* ********** 3. Being nice with users           ******** *)
+(* ****************************************************** *)
+
+
 (* ********************************************************
-   Being nice with users: specific builder
+   Crafting special builders
 
    We provide an API to build a ring directly.
 
-   A factory is a ''meta'' puzzle piece that can be
+   A factory is a ''virtual'' puzzle piece that can be
    ''compiled'' to other puzzle pieces.
 *)
 
@@ -166,11 +189,11 @@ HB.factory
     mulrDr : right_distributive mul add;
     mul0r  : left_zero zero mul;
     mulr0  : right_zero zero mul;
-}.
+  }.
 
 (* The ''compilation'' of a factory *)
 HB.builders
-  Context (A : Type) (f : Ring_of_Type A).
+  Context A of Ring_of_Type A.
 
 (* We are in a Context with a type A that with operations
    and properties, but wich is not yet known to be a Ring *)

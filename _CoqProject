@@ -42,7 +42,8 @@ FSCD2020_talk/V1.v
 FSCD2020_talk/V2.v
 FSCD2020_talk/V3.v
 
-Coq2020_material/example.v
+Coq2020_material/CoqWS_demo.v
+Coq2020_material/CoqWS_abstract.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
