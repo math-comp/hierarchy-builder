@@ -6,16 +6,20 @@ Export String.StringSyntax.
 Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
+Definition nomsg : option (string * Type) := None.
 
 Register unify as hb.unify.
 Register id_phant as hb.id.
 Register Coq.Init.Datatypes.None as hb.none.
+Register nomsg as hb.nomsg.
 Register Coq.Init.Datatypes.Some as hb.some.
 Register Coq.Init.Datatypes.pair as hb.pair.
 Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
 Definition indexed {T} (x : T) := x.
 Register indexed as hb.indexed.
+Definition new {T} (x : T) := x.
+Register new as hb.new.
 
 Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
