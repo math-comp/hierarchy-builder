@@ -9,33 +9,6 @@ Notation "[unify t1 'with' t2 ]" := (unify t1 t2 _)
 Notation "[unify t1 'with' t2 ]" := (unify t1 t2 None)
   (at level 0, format "[unify  t1  'with'  t2 ]", only parsing).
 
-Module HB. (* 20 lines *)
-
-HB.mixin
-  Record CMonoid_of_Type A := {
-    zero  : A;
-    add   : A -> A -> A;
-    addrA : associative add;
-    addrC : commutative add;
-    add0r : left_id zero add;
-  }.
-
-HB.structure
-  Definition CMonoid := { A of CMonoid_of_Type A }.
-
-HB.mixin
-  Record AbelianGrp_of_CMonoid A of CMonoid A := {
-    opp   : A -> A;
-    addNr : left_inverse zero opp add;
-  }.
-
-HB.structure
-  Definition AbelianGrp := { A of AbelianGrp_of_CMonoid A & }.
-
-End HB.
-
-Module NoHB. (* 118 lines *)
-
 Module CMonoid_of_Type.
 Section CMonoid_of_Type.
 Variable (A : Type).
@@ -50,9 +23,9 @@ Record axioms_ : Type := Axioms_ {
 
 Definition phant_Build (zero : A) (add : A -> A -> A)
   (addrA : associative add) (addrC : commutative add) :=
-  [eta HB.CMonoid_of_Type.Axioms_ zero add addrA addrC].
+  [eta CMonoid_of_Type.Axioms_ zero add addrA addrC].
 
-Definition phant_axioms := [eta HB.CMonoid_of_Type.axioms_].
+Definition phant_axioms := CMonoid_of_Type.axioms_.
 
 End CMonoid_of_Type.
 
@@ -154,5 +127,3 @@ Definition addNr {s : type} : left_inverse (@zero s) opp (@add s) :=
 End Exports.
 End AbelianGrp.
 Export AbelianGrp.Exports.
-
-End NoHB.
