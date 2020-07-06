@@ -44,6 +44,7 @@ FSCD2020_talk/V3.v
 
 Coq2020_material/CoqWS_demo.v
 Coq2020_material/CoqWS_abstract.v
+Coq2020_material/CoqWS_expansion.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
