@@ -66,13 +66,6 @@ HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   mulrDr : right_distributive mul add;
 }.
 
-Print Ring_of_AddComoid.axioms.
-Section test.
-Context A (A_is_AG : AddAG A).
-HB.instance A A_is_AG.
-Check (Ring_of_AddComoid A). (* Success *)
-End test.
-
 HB.builders Context A (a : Ring_of_AddComoid A). (* Failure *)
 
   Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Build A _ addNr.
