@@ -251,17 +251,17 @@ w-params.nparams (w-params.nil _ _ _) 0.
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty F
 %   where AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
 pred w-params.fold i:w-params A, i:(name -> term -> (term -> B) -> B -> prop),
-   i:(list term -> name -> term -> (term -> A) -> B -> prop), o:C.
+   i:(list term -> name -> term -> (term -> A) -> B -> prop), o:B.
 w-params.fold L Cons Nil Out :- w-params.fold.params L Cons Nil [] Out.
 
-pred w-params.fold.params i:w-params A, i:(name -> term -> (term -> B) -> B -> prop),
+pred w-params.fold.params i:w-params A,
+   i:(name -> term -> (term -> B) -> B -> prop),
    i:(list term -> name -> term -> (term -> A) -> B -> prop),
    i:list term, % accumulator
-   o:C.
-w-params.fold.params (w-params.cons N PTy F) Cons Nil RevParams Out :- !,
-  (@pi-decl N PTy p\
-    w-params.fold.params (F p) Cons Nil [p|RevParams] (Body p)), !,
-  Cons N PTy Body Out.
+   o:B.
+w-params.fold.params (w-params.cons N PTy F) Cons Nil RevPs Out :- !, std.do! [
+  (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
+  Cons N PTy Body Out].
 w-params.fold.params (w-params.nil NT TTy F) _ Nil RevParams Out :- !,
   std.rev RevParams Params, !, Nil Params NT TTy F Out.
 
@@ -842,16 +842,15 @@ find-max-classes [M|Mixins] [C|Classes] :-
   ].
 find-max-classes [M|_] _ :- coq.error "cannot find a class containing mixin" M.
 
-pred under-mixins.then i:prop, i:list (w-args mixinname),
+pred under-mixins.then i:list (w-args mixinname),
     i:(name -> term -> (term -> A) -> A -> prop),
     i:(A -> prop), o:A.
-under-mixins.then _ [] _ Pred Body :- !, Pred Body.
-under-mixins.then Load [triple M Args T|ML] Mixin Pred Out :- std.do! [
+under-mixins.then [] _ Pred Body :- !, Pred Body.
+under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
   mgref->term Args T M MTy,
-  (pi m\ if Load (Clause m = mixin-src T M m) (Clause m = true)),
-  @pi-decl `m` MTy m\ Clause m =>
-    under-mixins.then Load ML Mixin Pred (Body m),
-    Mixin `m` MTy Body Out
+  (@pi-decl `m` MTy m\ mixin-src T M m =>
+    under-mixins.then ML Mixin Pred (Body m)),
+  Mixin `m` MTy Body Out
 ].
 
 % [mk-mixin-fun.then MLwP Pred F] states that F has shape
@@ -864,7 +863,7 @@ under-mixins.then Load [triple M Args T|ML] Mixin Pred Out :- std.do! [
 pred mk-mixin-fun.then i:list-w-params mixinname, i:(list term -> term -> term -> prop), o:term.
 mk-mixin-fun.then L P Out :- !,
   w-params.then L mk-fun mk-fun
-    (p\ t\ ml\ out\ under-mixins.then true ml mk-fun (P p t) out) Out.
+    (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
 
 % A *pack* notation can be easiliy produced from a phant-term using
 % [mk-phant-abbrev N PT C], which states that C is a new constant
@@ -937,8 +936,7 @@ mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
     get-class-constructor CN Params KC,
     ClassTy = app [global CN | {std.append Params [T]}],
     (@pi-decl `s` SI s\ @pi-decl `c` ClassTy c\ sigma PF2\ std.do![
-       under-mixins.then true (MLwA t)
-          (phant-fun-unify-mixin T)
+       under-mixins.then (MLwA t) (phant-fun-unify-mixin T)
           (x\ sigma KCM\ std.do![
             mterm->term (mterm [] t ML KC) KCM,
             phant-fun-unify NoMsg KCM c PF x
@@ -959,7 +957,7 @@ pred mk-phant-term.classes i:term, i:list classname, i:list term, i:term,
                       i:list (w-args mixinname), o:phant-term.
 mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
   std.map MLwA triple_1 ML,
-  under-mixins.then true MLwA phant-fun-implicit (out\ sigma FPLTM\ std.do! [
+  under-mixins.then MLwA phant-fun-implicit (out\ sigma FPLTM\ std.do! [
     mterm->term (mterm PL T ML EtaF) FPLTM,
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
 ].

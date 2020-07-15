@@ -66,7 +66,7 @@ HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_AddComoid A). (* Failure *)
+HB.builders Context A (a : Ring_of_AddComoid A).
 
   Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Build A _ addNr.
   HB.instance A to_AddAG_of_AddComoid.
