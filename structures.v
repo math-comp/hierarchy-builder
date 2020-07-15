@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 Export String.StringSyntax.
 
 (** Technical definition from /Canonical Structures for the working Coq user/ *)
-Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
+Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition nomsg : option (string * Type) := None.
