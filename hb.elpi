@@ -556,7 +556,8 @@ has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 pred get-local-structures i:term, o:list term.
 get-local-structures TyTrm StructL :- std.do! [
   std.filter {coq.CS.db} (has-cs-instance {term->gref TyTrm}) DBGTyL,
-  std.map DBGTyL get-cs-structure StructL,
+  std.map DBGTyL get-cs-structure RecL,
+  std.filter RecL is-structure StructL
 ].
 
 pred local-cs? i:term, i:term.
@@ -1457,7 +1458,7 @@ if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred main-declare-structure i:string, i:list-w-params gref, i:bool.
 main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
-  factories-provide GRFSwP  PMLwP,
+  factories-provide GRFSwP PMLwP,
 
   list-w-params.flatten-map GRFSwP factory-requires RMLwP, % TODO: extract code from factories-provide
   list-w-params.append PMLwP RMLwP UnsortedMLwP,
@@ -1507,6 +1508,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   std.forall Factories (f\ acc current (clause _ _ f)),
   acc current (clause _ _ ClassRequires),
   acc current (clause _ _ ClassAlias),
+  acc current (clause _ _ (is-structure Structure)),
   std.forall NewJoins (j\ acc current (clause _ _ j)),
   acc current (clause _ _ (class-def CurrentClass)),
 

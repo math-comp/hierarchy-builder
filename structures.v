@@ -93,6 +93,9 @@ pred factory-nparams o:factoryname, o:int.
 % class-def contains all the classes ever declared
 pred class-def o:class.
 
+% is-structure
+pred is-structure o:term.
+
 %% database for locally available mixins
 % [mixin-src T M X] states that X can be used to reconstruct
 % an instance of the mixin [M T …], directly or through a factory.
