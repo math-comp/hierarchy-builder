@@ -5,7 +5,7 @@
 
 High level commands to declare and evolve a hierarchy based on packed classes.
 
-[Presented at FSCD2020, talk available on youtube.](https://www.youtube.com/watch?v=wgl62umKQ74&t=7421)
+[Presented at FSCD2020, talk available on youtube.](https://www.youtube.com/watch?v=F6iRaTlQrlo)
 
 ## Example
 
