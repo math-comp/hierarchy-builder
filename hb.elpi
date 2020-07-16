@@ -38,6 +38,13 @@ shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }
 %%%%%%%%% Elpi Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code could be moved in Elpi's standard library
 
+% printing the local mixin context
+pred print-ctx.
+print-ctx :- declare_constraint print-ctx [].
+constraint print-ctx mixin-src {
+  rule \ (G ?- print-ctx) | (coq.say "The context is:" G).
+}
+
 % TODO: pred toposort i:(A -> A -> prop), i:list A, o:list A.
 %       pred edge? i:int, i:int.
 %       toposort edge? [1,2,3,4] TopoList
@@ -133,7 +140,7 @@ name-of-asset-decl (asset-record X _ _ _) X.
 name-of-asset-decl (asset-alias X _) X.
 
 pred argument->asset i:argument, o:asset-decl.
-argument->asset (indt-decl (parameter ID _ImplicitStatus Ty I)) (asset-parameter ID Ty A) :-
+argument->asset (indt-decl (parameter ID _ImplicitStatus Ty I)) (asset-parameter ID Ty A) :- !,
   % Should we check that _ImplicitStatus is explicit?
   coq.string->name ID Name,
   @pi-decl Name Ty a\
@@ -240,33 +247,40 @@ pred w-params.nparams i:w-params A, o:int.
 w-params.nparams (w-params.cons _ _ F) N :- pi x\ w-params.nparams (F x) M, N is M + 1.
 w-params.nparams (w-params.nil _ _ _) 0.
 
-% [w-params.then AwP Nil Cons Pred Out] states that Out has shape
-%   Cons `x_1` T_1 p_1 \ .. \ Nil `T` {{Type}} t \ Body
-%   where the-type [p_1 .. p_n] T => Pred Body
+% [w-params.fold AwP Cons Nil Out] states that Out has shape
+%   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty F
+%   where AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
+pred w-params.fold i:w-params A, i:(name -> term -> (term -> B) -> B -> prop),
+   i:(list term -> name -> term -> (term -> A) -> B -> prop), o:B.
+w-params.fold L Cons Nil Out :- w-params.fold.params L Cons Nil [] Out.
+
+pred w-params.fold.params i:w-params A,
+   i:(name -> term -> (term -> B) -> B -> prop),
+   i:(list term -> name -> term -> (term -> A) -> B -> prop),
+   i:list term, % accumulator
+   o:B.
+w-params.fold.params (w-params.cons N PTy F) Cons Nil RevPs Out :- !, std.do! [
+  (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
+  Cons N PTy Body Out].
+w-params.fold.params (w-params.nil NT TTy F) _ Nil RevParams Out :- !,
+  std.rev RevParams Params, !, Nil Params NT TTy F Out.
+
+% [w-params.then AwP Cons Nil Out] states that Out has shape
+%   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty t \ Body
+%   where Pred [p_1 .. p_n] T Body
+%   and AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
 pred w-params.then i:w-params A,
-   i:(name -> term -> (term -> B) -> C -> prop),
    i:(name -> term -> (term -> C) -> C -> prop),
+   i:(name -> term -> (term -> B) -> C -> prop),
    i:(list term -> term -> A -> B -> prop),
    o:C.
-w-params.then L Nil Cons P O :- w-params.then.params L Nil Cons [] P O.
-
-pred w-params.then.params i:w-params A,
-   i:(name -> term -> (term -> B) -> C -> prop),
-   i:(name -> term -> (term -> C) -> C -> prop),
-   i:list term, % accumulator
-   i:(list term -> term -> A -> B -> prop), o:C.
-w-params.then.params (w-params.cons N PTy ML) Nil Cons RevParams Pred Out :-
-  @pi-decl N PTy p\
-    w-params.then.params (ML p) Nil Cons [p|RevParams] Pred (Body p),
-    Cons N PTy Body Out.
-w-params.then.params (w-params.nil NT TTy ML) Nil _ RevParams Pred Out :-
-  std.rev RevParams Params,
-  @pi-decl NT TTy t\
-    Pred Params t (ML t) (Body t),
-    Nil NT TTy Body Out.
+w-params.then L Cons Nil Pred Out :-
+  w-params.fold L Cons (ps\ n\ ty\ f\ out\ sigma Body\
+    (@pi-decl n ty t\ Pred ps t (f t) (Body t)),
+    Nil n ty Body out) Out.
 
 pred w-params.map i:w-params A, i:(list term -> term -> A -> B -> prop), o:w-params B.
-w-params.map AL F BL :- w-params.then AL (mk3 w-params.nil) (mk3 w-params.cons) F BL.
+w-params.map AL F BL :- w-params.then AL (mk3 w-params.cons) (mk3 w-params.nil) F BL.
 
 % on the fly abstraction
 pred bind-nil i:name, i:term, i:term, i:A, o:w-params A.
@@ -277,7 +291,8 @@ bind-cons N T X V (w-params.cons N T A) :- V = A X.
 
 % Specific to list-w-params
 pred list-w-params_list i:list-w-params A, o:list A.
-list-w-params_list AwP R :- w-params.then AwP ignore ignore (p\ t\ x\ std.map x triple_1) R.
+list-w-params_list AwP R :- w-params.then AwP ignore ignore
+   (p\ t\ x\ std.map x triple_1) R.
 
 pred list-w-params.append i:list-w-params A, i:list-w-params A, o:list-w-params A.
 list-w-params.append (w-params.nil N T ML1) (w-params.nil N T ML2) (w-params.nil N T ML) :-
@@ -516,18 +531,9 @@ get-structure-class-projection (global (indt S)) (global (const P)) :-
   coq.CS.canonical-projections S L,
   if (L = [_, some P]) true (coq.error "No canonical class projection for" S).
 
-pred get-structure-constructor i:structure, i:list term, o:term.
-get-structure-constructor (global (indt S)) Params T :-
-  if (coq.env.indt S _ _ NParams _ [K] _) true (coq.error "Not a packed structure" S),
-  std.assert! ({std.length Params} = NParams) "get-structure-constructor: wrong number of params",
-  mk-app (global (indc K)) Params T.
-
-pred get-class-constructor i:classname, i:list term, o:term.
-get-class-constructor (indt S) Params T :-
-  if (coq.env.indt S _ _ NParams _ [K] _) true (coq.error "Not a class" S),
- if ({std.length [_|Params]} = NParams) true
-    (coq.error "get-class-constructor: wrong number of params:" S),
-  mk-app (global (indc K)) Params T.
+pred get-constructor i:term, o:gref.
+get-constructor (global (indt R) as S) (indc K) :- !,
+ if (coq.env.indt R _ _ _ _ [K] _) true (coq.error "Not a record" S).
 
 pred safe-head i:term, o:term.
 safe-head (prod N T Body) Hd :-
@@ -608,7 +614,7 @@ type phant-term list phant-arg -> term -> phant-term.
 pred phant-fun i:phant-arg, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun Arg Ty PhF (phant-term [Arg|ArgL] (fun N Ty F)) :-
   if (Arg = real-arg N) true (N = `_`),
-  pi x\ PhF x = phant-term ArgL (F x).
+  @pi-decl N Ty x\ PhF x = phant-term ArgL (F x).
 
 pred phant-fun-real i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-real N T F Res :- !, phant-fun (real-arg N) T F Res.
@@ -616,43 +622,37 @@ phant-fun-real N T F Res :- !, phant-fun (real-arg N) T F Res.
 % [phant-fun-unify N X1 X2 PF PUF] states that PUF is a phant-term that
 % is starts with unifing X1 and X2 and then outputs PF.
 % N is ignored
-pred phant-fun-unify i:term, i:term, i:phant-term, o:phant-term.
-phant-fun-unify X1 X2 (phant-term AL F) (phant-term [unify-arg|AL] UF) :-
-  UF = {{fun u : lib:hb.unify lp:X1 lp:X2 lib:hb.none => lp:F}}.
+pred phant-fun-unify i:term, i:term, i:term, i:phant-term, o:phant-term.
+phant-fun-unify Msg X1 X2 (phant-term AL F) (phant-term [unify-arg|AL] UF) :-
+  std.assert-ok! (coq.typecheck X1 T1) "mk-phant-abbrev: X1 illtyped",
+  std.assert-ok! (coq.typecheck X2 T2) "mk-phant-abbrev: X2 illtyped",
+  UF = {{fun unif_arbitrary : lib:hb.unify lp:T1 lp:T2 lp:X1 lp:X2 lp:Msg => lp:F}}.
 
 % [phant-fun-implicit N Ty PF PUF] states that PUF is a phant-term
 % which quantifies [PF x] over [x : Ty] (with name N)
 pred phant-fun-implicit i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-implicit N Ty PF (phant-term [implicit-arg|AL] (fun N Ty F)) :- !,
-  pi t\ PF t = phant-term AL (F t).
+  @pi-decl N Ty t\ PF t = phant-term AL (F t).
+
+pred phant-fun-unify-mixin i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
+phant-fun-unify-mixin T N Ty PF Out :- !, std.do! [
+  safe-dest-app Ty (global M) _,
+  mixin-src T M Mstr,
+  (@pi-decl `m` Ty m\ phant-fun-unify {{lib:hb.nomsg}} m Mstr (PF m) (PFM m)),
+  phant-fun-implicit N Ty PFM Out
+].
 
 % [phant-fun-struct T SI PF PSF] states that PSF is a phant-term
 % which postulate a structure [s : SI] such that [T = sort s]
 % and then outputs [PF s]
 pred phant-fun-struct i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
-phant-fun-struct SI _Name T PF (phant-term [implicit-arg, unify-arg|AL] UF) :-
+phant-fun-struct T Name SI PF Out :- std.do! [
   get-structure-sort-projection SI Sort,
-  pi s\ PF s = phant-term AL (F s),
-  UF = {{fun (s : lp:SI) (u : lib:hb.unify lp:T (lp:Sort s)
-    (lib:hb.some (lib:hb.pair "is not canonically a"%string lp:SI)))
-      => lp:(F s)}}.
-
-pred phant-fun-struct-and-class i:list term, i:term, i:classname,
-  i:name, i:term, i:(term -> phant-term), o:phant-term.
-phant-fun-struct-and-class Params T CN Name T PF Out :-
-  class-def (class CN SI _),
-  get-structure-constructor SI Params SK,
-  std.append Params [T] ClassArgs,
-  ClassTy = app [global CN | ClassArgs],
-  Out = {phant-fun-struct SI `s` T s\
-          {phant-fun-implicit Name ClassTy c\
-            {phant-fun-unify s (app [SK, T, c]) (PF c)}}}.
-
-pred print-ctx.
-print-ctx :- declare_constraint print-ctx [].
-constraint print-ctx mixin-src {
-  rule \ (G ?- print-ctx) | (coq.say "The context is:" G).
-}
+  % Msg = {{lib:hb.nomsg}},
+  Msg = {{lib:hb.some (lib:hb.pair "is not canonically a"%string lp:SI)}},
+  (@pi-decl Name SI s\ phant-fun-unify Msg T {mk-app Sort [s]} (PF s) (UnifSI s)),
+  phant-fun-implicit Name SI UnifSI Out
+].
 
 % [builder->term Params T Src Tgt MF] provides a term which is
 % a function to transform Src into Tgt under the right mixin-src.
@@ -839,9 +839,9 @@ pred under-mixins.then i:list (w-args mixinname),
 under-mixins.then [] _ Pred Body :- !, Pred Body.
 under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
   mgref->term Args T M MTy,
-  @pi-decl `m` MTy m\ mixin-src T M m =>
-    under-mixins.then ML Mixin Pred (Body m),
-    Mixin `m` MTy Body Out
+  (@pi-decl `m` MTy m\ mixin-src T M m =>
+    under-mixins.then ML Mixin Pred (Body m)),
+  Mixin `m` MTy Body Out
 ].
 
 % [mk-mixin-fun.then MLwP Pred F] states that F has shape
@@ -853,7 +853,8 @@ under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
 %   and  ..p.. is a list of terms built using p_1 .. p_k and T
 pred mk-mixin-fun.then i:list-w-params mixinname, i:(list term -> term -> term -> prop), o:term.
 mk-mixin-fun.then L P Out :- !,
-  w-params.then L mk-fun mk-fun (p\ t\ ml\ out\ under-mixins.then ml mk-fun (P p t) out) Out.
+  w-params.then L mk-fun mk-fun
+    (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
 
 % A *pack* notation can be easiliy produced from a phant-term using
 % [mk-phant-abbrev N PT C], which states that C is a new constant
@@ -874,8 +875,8 @@ mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
 pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
 mk-phant-abbrev N (phant-term AL T) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
-  std.assert-ok! (coq.typecheck T _TTy) "mk-phant-abbrev: T illtyped",
-  coq.env.add-const NC T _ ff ff C,
+  std.assert-ok! (coq.typecheck T TTy) "mk-phant-abbrev: T illtyped",
+  coq.env.add-const NC T TTy ff ff C,
   mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
   add-abbrev N NParams AbbrevT tt tt Abbrev,
 ].
@@ -887,27 +888,6 @@ acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
   mk-phant-abbrev Str PhGR PhC Abbrev
 ].
 
-
-% [mk-phant-term F PF] states that if F = fun p1 .. p_k T m_0 .. m_n => _
-% then PF = phant-term
-%   [real-arg p_1, ... real-arg p_k,
-%    real-arg T,
-%        implicit-arg, unify-arg, implicit-arg, unify-arg,
-%                implicit-arg, .., implicit-arg, unify-arg, ...,
-%                implicit-arg, unify-arg, implicit-arg, unify-arg,
-%                implicit-arg, .., implicit-arg, unify-arg]
-%   {{fun p_1 ... p_k T =>
-%              fun q_1 .. q_l =>
-%                [find s_0 | T ~ s_0]
-%                [find c_0 | s_0 ~ SK q_1 .. q_l T c_0]
-%                [find m_0_0, .., m_0_n0 | c_0 ~ CK m_0_0 .. m_0_n0]
-%              ...
-%              fun q'_1 .. q'_l' =>
-%                [find s_k | T ~ s_k]
-%                [find c_k | s_k ~ SK q'_1 .. q'_l' T c_k]
-%                [find m_k_0, .., m_k_nk | c_k ~ CK m_k_0 .. m_k_nk]
-
-% Cyril: FIX so that
 % [mk-phant-term F PF] states that
 % if F = fun p1 .. p_k T m_0 .. m_n => _
 % then PF = phant-term
@@ -936,49 +916,46 @@ acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
 %         [find m'_{i_k_0}, .., m'_{i_k_nk} | c_0 ~ CK m'_{i_k_0} .. m'_{i_k_nk}]
 %         fun of hb.unify m_{i_0_0} m'_{i_0_0} & ... & hb.unify m_{i_k_nk} m'_{i_k_nk} =>
 %       F p_1 ... p_k T m_i0_j0 .. m_il_jl}}
-pred mk-phant-term.class-mixins i:list term, i:term, i:classname, i:term,
-  i:list (w-args mixinname), i:phant-term, o:phant-term.
-mk-phant-term.class-mixins Params T CN C [] PF UPF :- !, std.do![
-    get-class-constructor CN Params K, class-def (class CN _ CMLwP),
-    list-w-params_list CMLwP CML,
-    mterm->term (mterm Params T CML K) KCML,
-    phant-fun-unify C KCML PF UPF].
-mk-phant-term.class-mixins Params T CN C [triple M Args _|ML] (phant-term AL FMML) LamPFmmL :- !,
-    mgref->term Args T M MTy,
-    (@pi-decl `m` MTy m\ mixin-src T M m => sigma FmML\
-      instantiate-mixin T M FMML FmML,
-      mk-phant-term.class-mixins Params T CN C ML (phant-term AL FmML) (PFmmL m)),
-    phant-fun-implicit `m` MTy PFmmL LamPFmmL.
+pred mk-phant-term.mixins i:term, i:classname, i:phant-term,
+  i:list term, i:name, i:term, i:(term -> list (w-args mixinname)), o:phant-term.
+mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
+  class-def (class CN SI _),
+  NoMsg = {{lib:hb.nomsg}},
+  (@pi-decl N Ty t\ sigma SK KC ML\ std.do! [
+    std.map (MLwA t) triple_1 ML,
+    std.append Params [T] ParamsT,
+    SKPT = app [global {get-constructor SI} | ParamsT],
+    ClassTy = app [global CN | ParamsT],
+    (@pi-decl `s` SI s\ @pi-decl `c` ClassTy c\ sigma PF2\ std.do![
+       under-mixins.then (MLwA t) (phant-fun-unify-mixin T)
+          (x\ sigma KC KCM\ std.do![
+            get-constructor (global CN) KC,
+            mgref->term Params t KC KCM,
+            phant-fun-unify NoMsg KCM c PF x
+          ]) PF2,
+       phant-fun-unify NoMsg s {mk-app SKPT [c]} PF2 (PFU t s c)])
+  ]),
+  Out = {phant-fun-struct T `s` SI s\
+          {phant-fun-implicit `c` ClassTy (PFU T s)}}
+].
 
 pred mk-phant-term.class i:term, i:classname, i:phant-term, o:phant-term.
-mk-phant-term.class T CN PF SCF :- !,
-  class-def (class CN _ CML),
-  mk-phant-term.class.aux T CN CML PF [] SCF.
+mk-phant-term.class T CN PF CPF :- !, std.do! [
+  class-def (class CN _ CMLwP),
+  w-params.fold CMLwP phant-fun-implicit (mk-phant-term.mixins T CN PF) CPF
+].
 
-pred mk-phant-term.class.aux
-  i:term, i:classname, i:list-w-params mixinname,
-  i:phant-term, i:list term, o:phant-term.
-mk-phant-term.class.aux T CN (w-params.cons N Ty ML) PF RevParams Out :-
-  Out = {phant-fun-implicit N Ty p\
-          {mk-phant-term.class.aux T CN (ML p) PF [p|RevParams]}}.
-mk-phant-term.class.aux T CN (w-params.nil _ _ ML) PF RevParams Out :-
-  Out = {phant-fun-struct-and-class {std.rev RevParams} T CN `c` T c\
-          {mk-phant-term.class-mixins {std.rev RevParams} T CN c (ML T) PF}}.
-
-pred mk-phant-term.body i:list-w-params mixinname, i:list classname, i:term, i:list term, o:phant-term.
-mk-phant-term.body (w-params.cons N Ty ML) CNL EtaF Params PhBody :-
-  @pi-decl N Ty p\
-    mk-phant-term.body (ML p) CNL {subst-fun [p] EtaF} [p|Params] (PhBody1 p),
-    phant-fun (real-arg `p`) Ty PhBody1 PhBody.
-
-mk-phant-term.body (w-params.nil N TTy _ML) CNL EtaF _Params PhBody :-
-  @pi-decl N TTy t\
-    std.fold CNL (phant-term [] {subst-fun [t] EtaF}) (mk-phant-term.class t)
-      (PhBody1 t),
-    phant-fun (real-arg N) TTy PhBody1 PhBody.
+pred mk-phant-term.classes i:term, i:list classname, i:list term, i:term,
+                      i:list (w-args mixinname), o:phant-term.
+mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
+  std.map MLwA triple_1 ML,
+  under-mixins.then MLwA phant-fun-implicit (out\ sigma FPLTM\ std.do! [
+    mterm->term (mterm PL T ML EtaF) FPLTM,
+    std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
+].
 
 pred mk-phant-term i:term, o:phant-term.
-mk-phant-term F PhBody:- std.do! [
+mk-phant-term F PhBody:- !, std.do! [
   std.assert-ok! (coq.typecheck F FTy) "mk-phant-term: F illtyped",
   ty-deps FTy MLwP,
   mk-eta (-1) FTy F EtaF,
@@ -986,7 +963,8 @@ mk-phant-term F PhBody:- std.do! [
   MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
   std.rev {list-w-params_list MLwPSorted} MLSortedRev,
   find-max-classes MLSortedRev CNL,
-  mk-phant-term.body MLwPSorted CNL EtaF [] PhBody,
+  w-params.then MLwP phant-fun-real phant-fun-real
+    (mk-phant-term.classes EtaF CNL) PhBody,
 ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1008,9 +986,8 @@ params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 pred declare-instances i:term, i:list class.
 declare-instances T [class Class Struct MLwP|Rest] :-
   params->holes MLwP Params,
-  get-class-constructor Class Params KC,
-  list-w-params_list MLwP ML,
-  mterm->term (mterm [/*Params already applied to KC*/] T ML KC) KCApp, % we can build it
+  get-constructor (global Class) KC,
+  mgref->term Params T KC KCApp, % we can build it
   not (local-cs? T Struct), % not already built
   !,
   term->gref T TGR,
@@ -1019,8 +996,8 @@ declare-instances T [class Class Struct MLwP|Rest] :-
 
   if-verbose (coq.say "HB: declare canonical instance" Name),
 
-  get-structure-constructor Struct Params KS,
-  S = app[KS, T, KCApp],
+  get-constructor Struct KS,
+  mk-app (global KS) {std.append Params [T, KCApp]} S,
   std.assert-ok! (coq.typecheck S STy) "declare-instances: S illtyped",
 
   coq.env.add-const Name S STy ff ff CS, % Bug coq/coq#11155, could be a Let
@@ -1233,7 +1210,7 @@ export-1-operation _ _ _ _ _ none EX EX :- !. % not a projection, no operation
 export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std.do! [
   coq.gref->id (const Poperation) Name,
 
-  w-params.then MwP ignore mk-fun-prod (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
+  w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
   if-verbose (coq.say "HB: export operation" Name),
   coq.env.add-const Name Body BodyTy ff ff C,
@@ -1283,20 +1260,18 @@ pred mk-coe-class-body
   i:list (w-args mixinname),
   o:term.
 mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
-  mk-app (global FC) Params ClassKP,
-  mk-app ClassKP [T] Class,
+  mk-app (global FC) {std.append Params [T]} Class,
 
   list-w-params_list TMLwP TML,
   std.map TML (from FC) Builders,
   std.map Builders (x\r\mk-app x Params r) BuildersP,
 
-  factory-nparams TC NHoles,
-  mk-n-holes NHoles Holes,
-  get-class-constructor TC Holes KC,
+  mk-app (global {get-constructor (global TC)})
+    {mk-n-holes {factory-nparams TC}} KCHoles,
 
   (pi c\ sigma Mixes\
     std.map BuildersP (builder\r\ r = app[builder, T, c]) Mixes,
-    ClassCoercion c = app[KC, T | Mixes]),
+    mk-app KCHoles [T | Mixes] (ClassCoercion c)),
 
   CoeBody = {{ fun (c : lp:Class) => lp:(ClassCoercion c) }}
 ].
@@ -1313,16 +1288,14 @@ pred mk-coe-structure-body
   o:term.
 mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection
     Params _T _ SCoeBody :- std.do! [
-  mk-app StructureF Params StructureP,
 
-  factory-nparams TC NHoles,
-  mk-n-holes NHoles Holes,
-  get-structure-constructor StructureT Holes PackPH,
-
-  mk-app SortProjection Params SortP,
+  mk-app StructureF      Params StructureP,
+  mk-app SortProjection  Params SortP,
   mk-app ClassProjection Params ClassP,
+  mk-app Coercion        Params CoercionP,
 
-  mk-app Coercion Params CoercionP,
+  mk-app (global {get-constructor StructureT})
+    {mk-n-holes {factory-nparams TC}} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
      let T : Type := lp:SortP s in
@@ -1355,7 +1328,7 @@ declare-coercion SortProjection ClassProjection
   coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)) tt,
 
   Coercion = global (const C),
-  w-params.then FMLwP ignore mk-fun
+  w-params.then FMLwP mk-fun ignore
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
 
@@ -1376,10 +1349,11 @@ declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3
   get-structure-coercion S3 S1 S3_to_S1,
   get-structure-sort-projection S1 S1_sort,
   get-structure-class-projection S2 S2_class,
-  get-structure-constructor S2 [/*fixme params*/] S2_Pack,
+  get-constructor S2 S2_Pack,
 
+  % Cyril: /!\ BUG /!\ missing parameters!
   JoinBody = {{ fun s : lp:S3 =>
-                   lp:S2_Pack (lp:S1_sort (lp:S3_to_S1 s))
+                   lp:{global S2_Pack} (lp:S1_sort (lp:S3_to_S1 s))
                               (lp:S2_class (lp:S3_to_S2 s)) }},
 
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
@@ -1451,7 +1425,7 @@ declare-class+structure MLwP (indt ClassInd) Structure SortProjection ClassProje
 
   if-verbose (coq.say "HB: declare type record"),
 
-  w-params.then MLwP mk-record+sort-field (mk-parameter explicit)
+  w-params.then MLwP (mk-parameter explicit) mk-record+sort-field
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare-structure: illtyped",
@@ -1826,7 +1800,8 @@ declare-factory-alias Ty1 GRFSwP Module TheType TheParams :- std.do! [
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.do! [
   if (D = asset-mixin) (Fields1 = Fields0)
-     (Fields1 = (field _ "_" {{ lib:hb.unify lp:TheType lp:TheType lib:hb.none }} _\ Fields0)),
+      (Fields1 = (field _ "_" {{ lib:hb.unify Type Type lp:TheType lp:TheType
+        lib:hb.nomsg }} _\ Fields0)),
   main-declare-context TheType TheParams GRFSwP _Hyps,
 
   if-verbose (coq.say "HB: declare record axioms_"),

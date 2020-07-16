@@ -4,9 +4,9 @@ From HB Require Import structures.
 Set Warnings "-redundant-canonical-projection".
 
 (* Helpers *)
-Notation "[unify t1 'with' t2 ]" := (unify t1 t2 _)
+Notation "[unify t1 'with' t2 ]" := (unify _ _ t1 t2 _)
   (at level 0, format "[unify  t1  'with'  t2 ]", only printing).
-Notation "[unify t1 'with' t2 ]" := (unify t1 t2 None)
+Notation "[unify t1 'with' t2 ]" := (unify _ _ t1 t2 None)
   (at level 0, format "[unify  t1  'with'  t2 ]", only parsing).
 
 Module CMonoid_of_Type.
