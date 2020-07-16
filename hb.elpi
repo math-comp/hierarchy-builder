@@ -570,7 +570,8 @@ get-canonical-mixins-of T S MSL :- std.do! [
   get-structure-sort-projection S Sort,
   std.assert-ok! (coq.unify-eq T (app [Sort, ST])) "HB: get-canonical-mixins-of: T = sort ST",
   % Hum, this unification problem is not super trivial. TODO replace by something simpler
-  std.assert-ok! (coq.unify-eq ST (app [_, _, C])) "HB: get-canonical-mixins-of: ST = _ _ C",
+  get-constructor S KS,
+  std.assert-ok! (coq.unify-eq ST (app [global KS, _, C])) "HB: get-canonical-mixins-of: ST = _ _ C",
   C = app [_, _ | MIL],
   std.map MIL (mixin-srcs T) MSLL,
   std.flatten MSLL MSL
