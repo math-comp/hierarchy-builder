@@ -1691,7 +1691,10 @@ is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
 
 % main-declare-asset Asset AssetKind
 pred main-declare-asset i:asset-decl, i:asset.
-main-declare-asset Asset AssetKind :- std.do! [
+main-declare-asset Asset AssetKind :- 
+  % since we turn locally bound variables into global constrants the holes
+  % in the input term can go outside the pattern fragment, but we don't care
+  @holes! => std.do! [
   name-of-asset-decl Asset Module,
 
   if-verbose (coq.say "HB: start module and section" Module),
@@ -1730,24 +1733,15 @@ process-asset-unnamed-parameters (asset-parameter _ T Rest) FS Module TheType D 
   process-asset-unnamed-parameters (Rest Dummy) [triple F Ps TheType|FS] Module TheType D Params,
 ].
 
-% (*) We did substitute bound variables by terms, we would end up outside the pattern fragment
-%  X x = (global(cont "foo"))        X := _\ (global ...)     1 solution
-%  X x = x                           X := a\a                 1 solution
-%  X x (global(cont "foo")) = (global(cont "foo"))   X := _\a\a   or   X := _\_\ (global ...)  2 solution, bad
-
 process-asset-unnamed-parameters (asset-alias _ Ty) GRFS Module TheType D Params :- std.do! [
   std.assert! (D = asset-factory) "Mixins cannot be aliases",
-  % refresh implicit arguments, since many binders are now gone (*)
-  (pi X Y\ copy X Y :- var X, !) => copy Ty Ty1,
   build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
-  declare-factory-alias Ty1 GRFSwParams Module TheType {std.map Params fst},
+  declare-factory-alias Ty GRFSwParams Module TheType {std.map Params fst},
 ].
 
 process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheType D Params :- std.do! [
-  % refresh implicit arguments, since many binders are now gone
-  (pi X Y\ copy X Y :- var X, !) => (copy-fields Fields Fields0, copy Sort Sort1),
   build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
-  declare-mixin-or-factory Sort1 Fields0 GRFSwParams Module TheType D {std.map Params fst},
+  declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params fst},
 ].
 
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
