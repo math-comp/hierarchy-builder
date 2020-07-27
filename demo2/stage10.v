@@ -188,9 +188,8 @@ Section ProductTopology.
   by split => // [[x1 x2] [[/=Ax1 Bx1] [/=Ax2 Bx2]]].
   Qed.
 
-  Definition prod_topology :=
-    TopologicalBase.Build (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type _ prod_open_base_covers prod_open_base_setU.
-  HB.instance ((TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type) prod_topology.
+  HB.instance Definition prod_topology :=
+    TopologicalBase.Build (T1 * T2)%type _ prod_open_base_covers prod_open_base_setU.
 
 End ProductTopology.
 

@@ -295,16 +295,17 @@ Elpi Export HB.structure.
     >>
 
 *)
-
+Elpi Debug "DBG:unif" "DBG:of" "OVERRIDE_COQ_ELABORATOR".
 Elpi Command HB.instance.
+Elpi Accumulate File "engine/elaborator.elpi".
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl Name (some Body) TyWP] :- !, std.do! [
-  coq.arity->term TyWP Ty,
-  std.assert-ok! (coq.typecheck-ty Ty _) "Definition type illtyped",
-  std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
+main [const-decl Name (some Bo) TyWP] :- !, std.do! [
+  coq.arity->term TyWP T,
+  std.assert-ok! (coq.typecheck-or-elpi-elaborate T _ Ty) "Definition type illtyped",
+  std.assert-ok! (coq-typecheck-or-elpi-elaborate Bo Ty Body) "Definition illtyped",
   if (TyWP = arity _) (
      % Do not open a section when it is not necessary (no parameters)
      % A side effect of opening a section is loosing meta data associated

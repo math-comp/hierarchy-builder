@@ -113,8 +113,37 @@ argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
 pred argument->term i:argument, o:term.
 argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
-argument->term (trm T) T :- !, std.assert-ok! (coq.typecheck T _) "not well typed term".
+argument->term (trm T) T1 :- !, std.assert-ok! (coq-typecheck-or-elpi-elaborate T _ T1) "argument is not well typed".
 argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
+
+pred elaborate.compile-coercion i:coercion, o:prop.
+elaborate.compile-coercion (coercion GR N SrcGR sortclass) (pi From S X X1 A H Tmp\
+  coerced From (sort S) X X1 :-
+    safe-dest-app From (global SrcGR) A,
+    mk-n-holes N H,
+    mk-app (global GR) H Tmp,
+    mk-app Tmp [X] X1
+  ).
+elaborate.compile-coercion (coercion _ _ _ funclass)  (true). % TODO
+elaborate.compile-coercion (coercion _ _ _ (grefclass _)) (true). % TODO
+
+pred elaborate.compile-CS i:cs-instance, o:prop.
+elaborate.compile-CS (cs-instance Proj (cs-gref Val) Sol) (pi f c Pargs Vargs\
+  unif (global Proj) Pargs (global Val) Vargs f c :- % TODO params...
+    halt "XXXXX").
+elaborate.compile-CS (cs-instance _ _ _) true. %TODO
+
+pred elaborate i:term, o:term, o:term.
+elaborate T Ty R :- std.do! [
+  std.map {coq.coercion.db} elaborate.compile-coercion C,
+  std.map {coq.CS.db} elaborate.compile-CS S,
+  C => get-option "of:coerce" tt => S => of T Ty R,
+].
+
+pred coq-typecheck-or-elpi-elaborate i:term, o:term, o:term, o:diagnostic.
+coq-typecheck-or-elpi-elaborate T Ty T1 D :-
+  coq.typecheck T Ty D1,
+  if (D1 = ok) (T1 = T, D = D1) (elaborate T Ty T1, D = ok ; D = D1).
 
 % Type to share code between HB.mixin and HB.factory (that supports alias factories)
 kind asset type.
