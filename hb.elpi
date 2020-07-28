@@ -1053,6 +1053,7 @@ main-mixin-requires Str GR GRFS [From|PO] SN :- !, std.do! [
 % be [] at call site.
 pred postulate-arity i:arity, i:list term, i:term, o:term.
 postulate-arity (parameter ID _ S A) Acc T T1 :-
+  if-verbose (coq.say "HB: postulating" ID),
   @local! => coq.env.add-const ID _ S @opaque! C,
   Var = global (const C),
   postulate-arity (A Var) [Var|Acc] T T1.
@@ -1653,6 +1654,7 @@ builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ 
   % TODO we should allow T to be anything.
   std.assert! (TTy = sort (typ _)) "The last context item before the factory must be a type variable",
   coq.fresh-type Ty,
+  if-verbose (coq.say "HB: postulating" IDT),
   @local! => coq.env.add-const IDT _ Ty @opaque! C, % no body, local -> a variable
   TheType = global (const C),
 
@@ -1666,6 +1668,7 @@ builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ 
 ].
 
 builders-postulate-factories (context-item ID _ T none Factories) :- std.do! [
+  if-verbose (coq.say "HB: postulating" ID),
   @local! => coq.env.add-const ID _ T @opaque! P, % no body, local -> a variable
   TheParam = global (const P),
   builders-postulate-factories (Factories TheParam),
@@ -1712,6 +1715,7 @@ process-asset-named-parameters (asset-parameter Name _ Rest as R) D Module Param
 % This is a real parameter
 process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- std.do! [
   std.assert-ok! (coq.typecheck-ty T _) "Illtyped parameter",
+  if-verbose (coq.say "HB: postulate " Name),
   @local! => coq.env.add-const Name _ T @opaque! C, % no body, local -> a variable
   TheParam = global (const C),
   process-asset-named-parameters (Rest TheParam) D Module [pr TheParam T|Params],
