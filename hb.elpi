@@ -143,7 +143,9 @@ elaborate T Ty R :- std.do! [
 pred coq-typecheck-or-elpi-elaborate i:term, o:term, o:term, o:diagnostic.
 coq-typecheck-or-elpi-elaborate T Ty T1 D :-
   coq.typecheck T Ty D1,
-  if (D1 = ok) (T1 = T, D = D1) (elaborate T Ty T1, D = ok ; D = D1).
+  if (D1 = ok) (T1 = T, D = D1)
+     % some univ constraints are missins, so we typecheck the elaborated
+     (elaborate T Ty T1, coq.typecheck T1 Ty D ; D = D1).
 
 % Type to share code between HB.mixin and HB.factory (that supports alias factories)
 kind asset type.

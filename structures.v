@@ -295,7 +295,7 @@ Elpi Export HB.structure.
     >>
 
 *)
-Elpi Debug "DBG:unif" "DBG:of" "OVERRIDE_COQ_ELABORATOR".
+Elpi Debug "OVERRIDE_COQ_ELABORATOR".
 Elpi Command HB.instance.
 Elpi Accumulate File "engine/elaborator.elpi".
 Elpi Accumulate File "hb.elpi".
