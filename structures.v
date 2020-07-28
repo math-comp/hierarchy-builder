@@ -303,6 +303,7 @@ Elpi Accumulate lp:{{
 
 main [const-decl Name (some Body) TyWP] :- !, std.do! [
   coq.arity->term TyWP Ty,
+  std.assert-ok! (coq.typecheck-ty Ty _) "Definition type illtyped",
   std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
   if (TyWP = arity _) (
      % Do not open a section when it is not necessary (no parameters)
