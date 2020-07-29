@@ -1,7 +1,7 @@
 {withEmacs ? false,
  nixpkgs ?  (fetchTarball {
-  url = "https://github.com/CohenCyril/nixpkgs/archive/8d04d29adb547353ed9fb5c5c4aa6d540e198366.tar.gz";
-  sha256 = "1v4l37xkadpnkydpycnk9hrjgh6yc792k66yi7f6203zzr0phzx8";
+  url = "https://github.com/NixOS/nixpkgs-channels/archive/0a9d9946ed3e1ec526848db2f77f2dc978b46bb5.tar.gz";
+  sha256 = "1gdqnb5g5h47gqx95lyzlqnmhzkcnh27gia778cr79cmgvwasb69";
 }),
  coq-version ? "8.11",
  print-env ? false
@@ -29,7 +29,7 @@ coqPackages.hierarchy-builder.overrideAttrs (old: {
   shellHook = ''
     nixEnv (){
       echo "Here is your work environement:"
-      for x in $buildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
+      for x in $buildInputs $propagatedBuildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
       echo "you can pass option '--argstr coq-version \"x.y\"' to nix-shell to change coq versions"
     }
   '' + lib.optionalString print-env "nixEnv";

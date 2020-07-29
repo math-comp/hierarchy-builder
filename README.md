@@ -1,9 +1,11 @@
-[![Build Status](https://travis-ci.org/math-comp/hierarchy-builder.svg?branch=master)](https://travis-ci.org/math-comp/hierarchy-builder)
+[![Actions Status](https://github.com/math-comp/hierarchy-builder/workflows/CI/badge.svg)](https://github.com/math-comp/hierarchy-builder/actions)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/237868-Hierarchy-Buidlder)
 
 # Hierarchy Builder
 
 High level commands to declare and evolve a hierarchy based on packed classes.
+
+[Presented at FSCD2020, talk available on youtube.](https://www.youtube.com/watch?v=F6iRaTlQrlo)
 
 ## Example
 
@@ -87,8 +89,7 @@ opam repo add coq-released https://coq.inria.fr/opam/released
 opam install coq-hierarchy-builder
 ```
 
-- You can use it in nix with the attribute `coqPackages_8_10.hierarchy-builder`
-  or `coqPackages_8_11.hierarchy-builder` (e.g. via `nix-shell -p coqPackages_8_10.hierarchy-builder`)
+- You can use it in nix with the attribute `coqPackages_8_11.hierarchy-builder` e.g. via `nix-shell -p coq_8_11 -p coqPackages_8_11.hierarchy-builder`
  
 </p></details>
 
@@ -104,7 +105,7 @@ opam install coq-hierarchy-builder
 
 - a *structure* is declared by attaching zero or more factories to a type.
 
-- a *builder* is user provided piece of code capable of
+- a *builder* is a user provided piece of code capable of
   building one or more mixins from a factory.
 
 - an *instance* is an example of a structure: it provides all operation and

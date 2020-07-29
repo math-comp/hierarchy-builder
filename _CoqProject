@@ -29,10 +29,23 @@ demo3/test_0_0.v
 demo3/test_1_0.v
 demo3/test_2_0.v
 
+demo4/hierarchy_0.v
+
+demo5/hierarchy_0.v
+
 FSCD2020_material/V1.v
 FSCD2020_material/V2.v
 FSCD2020_material/V3.v
 FSCD2020_material/V4.v
+
+FSCD2020_talk/V1.v
+FSCD2020_talk/V2.v
+FSCD2020_talk/V3.v
+
+Coq2020_material/CoqWS_demo.v
+Coq2020_material/CoqWS_abstract.v
+Coq2020_material/CoqWS_expansion/withHB.v
+Coq2020_material/CoqWS_expansion/withoutHB.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
