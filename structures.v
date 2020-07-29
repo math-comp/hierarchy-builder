@@ -320,7 +320,7 @@ main [const-decl Name (some Body) TyWP] :- !, std.do! [
 
   std.assert! (coq.safe-dest-app SectionBody (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
   std.assert! (factory-builder-nparams Builder NParams) "Not a factory builder synthesized by HB",
-  coq.env.add-const Name SectionBody _ ff ff C,
+  coq.env.add-const Name SectionBody _ @transparent! C,
   std.appendR {coq.mk-n-holes NParams} [T|_] Args,
   with-attributes (main-declare-canonical-instances T (global (const C))),
 
