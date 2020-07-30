@@ -982,8 +982,16 @@ pred declare-instances i:term, i:list class.
 declare-instances T [class Class Struct MLwP|Rest] :-
   params->holes MLwP Params,
   get-constructor (global Class) KC,
+
+  if-verbose (coq.say "HB: can we build a" Struct "on" T "?"),
+
   mgref->term Params T KC KCApp, % we can build it
+
+  if-verbose (coq.say "HB: yes we can, but is it already built?"),
+
   not (local-cs? T Struct), % not already built
+
+  if-verbose (coq.say "HB: no it is not, so we build it"),
   !,
   term->gref T TGR,
   coq.gref->id TGR TID,
@@ -1492,6 +1500,9 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: exporting operations"),
   ClassAlias => ClassRequires => Factories =>
     export-operations Structure SortProjection ClassProjection MLwP [] EX MLToExport,
+  % TODO: issue an Arguments op T : rename, where T is the name written by
+  %   the user in Definition foo := { T of ... }
+
   if-verbose (coq.say "HB: exporting unification hints"),
   ClassAlias => ClassRequires => Factories =>
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
