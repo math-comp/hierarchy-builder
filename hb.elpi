@@ -1457,6 +1457,16 @@ if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
      (coq.error "Structure" {coq.term->string S} "contains the same mixins of" N)
      (if-class-already-exists-error N CS ML2).
 
+pred export-mixin-coercion i:classname, i:option constant.
+export-mixin-coercion _ none.
+export-mixin-coercion ClassName (some C) :-
+  coq.env.typeof (const C) CTy,
+  safe-dest-app {safe-head CTy} Mixin _,
+  coq.term->gref Mixin MixinGR,
+  if-verbose (coq.say "export-mixin-coercion: from" ClassName "to" MixinGR),
+  @global! =>
+    coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
+
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred main-declare-structure i:string, i:list-w-params gref, i:bool.
@@ -1508,6 +1518,14 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
     declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
   % Register in Elpi's DB the new structure
   % NOT TODO: All these acc are correctly locaed in an Export Module
+
+  if (ClassName = indt ClassInd) (std.do![
+    if-verbose (coq.say "HB: exporting coercions from class to mixins"),
+    std.forall {coq.CS.canonical-projections ClassInd}
+      (export-mixin-coercion ClassName)
+    ])
+    (coq.say "declare-structure:" ClassName "should be an inductive", fail),
+
   if-verbose (coq.say "HB: accumulating various props"),
   std.forall MLToExport (m\  acc current (clause _ _ (mixin-first-class m ClassName))),
   std.forall EX (ex\ acc current (clause _ _ ex)),
@@ -1698,7 +1716,7 @@ is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
 
 % main-declare-asset Asset AssetKind
 pred main-declare-asset i:asset-decl, i:asset.
-main-declare-asset Asset AssetKind :- 
+main-declare-asset Asset AssetKind :-
   % since we turn locally bound variables into global constrants the holes
   % in the input term can go outside the pattern fragment, but we don't care
   @holes! => std.do! [

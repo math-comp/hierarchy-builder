@@ -1,18 +1,16 @@
 {withEmacs ? false,
- nixpkgs ?  (fetchTarball {
-  url = "https://github.com/NixOS/nixpkgs-channels/archive/0a9d9946ed3e1ec526848db2f77f2dc978b46bb5.tar.gz";
-  sha256 = "1gdqnb5g5h47gqx95lyzlqnmhzkcnh27gia778cr79cmgvwasb69";
-}),
+ nixpkgs ? (fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/e97fdce4e1b945c9ec30d4d90a451f1577f5cf4a.tar.gz),
  coq-version ? "8.11",
  print-env ? false
 }:
 with import nixpkgs {
   overlays = [ (super: self: {
     coqPackages = { "8.11" = super.coqPackages_8_11;  }."${coq-version}".overrideScope' (self: super: {
-      ## Coq package override example:
-      # coq-elpi = super.coq-elpi.overrideAttrs (old: {
-      #   name = "coq8.11-elpi-v1.4.0";
-      #   src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.4.0.tar.gz;
+      # Coq package override example:
+      coq-elpi = super.coq-elpi.overrideAttrs (old: {
+        name = "coq8.11-elpi-1.5.0";
+        src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.5.0.tar.gz;
+      });
     });
     coq = self.coqPackages.coq;
   })];
