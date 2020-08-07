@@ -5,8 +5,6 @@ From HB Require Import structures.
 (* Stage 0: +Ring+                                                        *)
 (**************************************************************************)
 
-HB.structure Definition TYPE := { A of True }.
-
 HB.mixin Record Ring_of_TYPE A := {
   zero : A;
   one : A;
