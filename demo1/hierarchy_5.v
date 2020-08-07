@@ -7,8 +7,6 @@ From HB Require Import structures.
 (*                      -> +BiNearRing+ -> SemiRing -                     *)
 (**************************************************************************)
 
-HB.structure Definition TYPE := { A of True }.
-
 HB.mixin Record AddMonoid_of_TYPE S := {
   zero : S;
   add : S -> S -> S;

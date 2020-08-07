@@ -5,8 +5,6 @@ From HB Require Import structures.
 (* Stage 2: AddComoid -> +AddAG+ -> Ring                                  *)
 (**************************************************************************)
 
-HB.structure Definition TYPE := { A of True }.
-
 HB.mixin Record AddComoid_of_TYPE A := {
   zero : A;
   add : A -> A -> A;
