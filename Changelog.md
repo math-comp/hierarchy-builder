@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.10.0]
+## [0.10.0] - 2020-08-08
 
 - HB now supports parameters (experimental).
 - Port to Coq-Elpi 1.5.
