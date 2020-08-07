@@ -382,8 +382,9 @@ Elpi Export HB.factory.
     - all classes whose requirements can be obtained from [Factory] are
       declared canonical on [A]
     - for each operation [op] and property [prop] (named fields) of
-      [Factory A] a [Notation] named [op_f] and [property_f]
+      [Factory A] a [Notation] named [op] and [property]
       for the partial application of [op] and [property] to the variable [f]
+      The former [op] and [property] are aliased [Super.op] and [Super.property]
 
     [HB.end] ends the section and closes the module and synthesizes
     - for each structure inhabited via [HB.instance] it defined all
