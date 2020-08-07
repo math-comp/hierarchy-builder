@@ -1247,15 +1247,6 @@ export-operations Structure ProjSort ProjClass MLwP EX1 EX2 MLToExport :- std.do
   std.map LMwPToExport w-params_1 MLToExport,
 ].
 
-pred reexport-1-operation i:prop.
-reexport-1-operation (exported-op _M _P C) :-
-  @global! => coq.notation.add-abbreviation {coq.gref->id (const C)} 0 (global (const C)) ff _.
-pred reexport-operations i:list mixinname.
-reexport-operations ML :- std.do! [
-  std.flatten {std.map ML (m\ std.findall (exported-op m Poperation_ C_))} PL,
-  std.forall PL reexport-1-operation
-].
-
 pred mk-coe-class-body
   i:factoryname, % From class
   i:factoryname, % To class
@@ -1538,9 +1529,6 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: stop module Exports"),
   coq.env.end-module Exports,
-
-  if-verbose (coq.say "HB: reexporting previous operations as notations"),
-  EX => reexport-operations ML,
 
   coq.env.end-module _,
 
