@@ -1337,9 +1337,26 @@ declare-coercion SortProjection ClassProjection
   coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
 
+pred join-body i:int, i:int, i:term, i:term, i:term, i:term, i:term, i:term,
+  i:list term, i:name, i:term, i:(term -> A), o:term.
+join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
+  P N _Ty _F (fun N S3P Pack) :- !,
+  mk-app S3 P S3P, !,
+  mk-n-holes N1 Holes1, !,
+  mk-n-holes N2 Holes2, !,
+  @pi-decl N S3P s\
+  sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps \ std.do! [
+    mk-app S3_to_S1 {std.append P [s]} S3_to_S1_Ps,
+    mk-app S1_sort {std.append Holes1 [S3_to_S1_Ps]} S1_sortS3Ps,
+    mk-app S3_to_S2 {std.append P [s]} S3_to_S2_Ps,
+    mk-app S2_class {std.append Holes2 [S3_to_S2_Ps]} S2_classS3Ps ,
+    mk-app S2_Pack {std.append Holes2 [S1_sortS3Ps, S2_classS3Ps]} (Pack s)
+  ].
+
 pred declare-join i:class, i:pair class class, o:prop.
-declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
-  Name is {term->modname S1} ^ "_to_" ^ {term->modname S2},
+declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
+  Name is "join_" ^ {term->modname S3} ^
+    "_between_" ^ {term->modname S1} ^ "_and_" ^ {term->modname S2},
 
   get-structure-coercion S3 S2 S3_to_S2,
   get-structure-coercion S3 S1 S3_to_S1,
@@ -1347,15 +1364,13 @@ declare-join (class C3 S3 _) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3
   get-structure-class-projection S2 S2_class,
   get-constructor S2 S2_Pack,
 
-  % Cyril: /!\ BUG /!\ missing parameters!
-  JoinBody = {{ fun s : lp:S3 =>
-                   lp:{global S2_Pack} (lp:S1_sort (lp:S3_to_S1 s))
-                              (lp:S2_class (lp:S3_to_S2 s)) }},
-
-  std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
+  factory-nparams C1 N1,
+  factory-nparams C2 N2,
 
   if-verbose (coq.say "HB: declare unification hint" Name),
-
+  w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
+    (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
+  std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
   coq.env.add-const Name JoinBody Ty @transparent! J,
   coq.CS.declare-instance (const J).
 

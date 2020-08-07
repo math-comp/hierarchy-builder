@@ -1,9 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.10.0]
 
-- HB now supports parameters.
-- Port to Coq-Elpi 1.5
+- HB now supports parameters (experimental).
+- Port to Coq-Elpi 1.5.
+- NBetter error message in case classes are not defined in the right order.
+- Structure operations are not reexported by substructures.
+- Spurious trivial `TYPE` structure removed from demo1.
 
 ## [0.9.1] - 2020-06-03
 
