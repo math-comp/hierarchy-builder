@@ -494,8 +494,9 @@ distinct-pairs-below CurrentClass AllSuper C1 C2 :-
 pred assert-building-bottom-up i:class, i:classname.
 assert-building-bottom-up CurrentClass C3n :-
   class-def (class C3n X Y),
+  CurrentClass = class CC _ _,
   if (not (sub-class? CurrentClass (class C3n X Y)))
-     (coq.error "You must declare" CurrentClass "before" C3n)
+     (coq.error "You must declare the current class" CC "before" C3n)
      true.
 
 pred distinct-pairs_pair i:prop, o:pair class class.
