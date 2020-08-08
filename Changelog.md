@@ -4,7 +4,7 @@
 
 - HB now supports parameters (experimental).
 - Port to Coq-Elpi 1.5.
-- NBetter error message in case classes are not defined in the right order.
+- Better error message in case classes are not defined in the right order.
 - Structure operations are not reexported by substructures.
 - Spurious trivial `TYPE` structure removed from demo1.
 
