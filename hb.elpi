@@ -77,10 +77,6 @@ list-diff L [D|DS] R :-
 pred list-eq-set i:list A, i:list A.
 list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
 
-pred mk-n-holes i:int, o:list A.
-mk-n-holes 0 [] :- !.
-mk-n-holes N [HOLE_|R] :- M is N - 1, mk-n-holes M R.
-
 pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
 under.do! Then LP :- Then (_\ std.do! LP) _.
 
@@ -89,12 +85,26 @@ under.do! Then LP :- Then (_\ std.do! LP) _.
 % runs P in a context where Coq #[attributes] are parsed
 pred with-attributes i:prop.
 with-attributes P :-
-  attributes A, coq.parse-attributes A [att "verbose" bool] Opts, !,
+  attributes A,
+  coq.parse-attributes A [
+    att "verbose" bool,
+    att "mathcomp" bool,
+    att "mathcomp.axiom" string,
+  ] Opts, !,
   Opts => P.
 
 pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
+
+pred if-MC-compat i:(option gref -> prop).
+if-MC-compat P :- get-option "mathcomp" tt, !, P none.
+if-MC-compat P :- get-option "mathcomp.axiom" S, !,
+  std.assert! (coq.locate S GR) "The name passed to the mathcomp.axiom attribute does not exist",
+  P (some GR).
+if-MC-compat _.
+
+
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
@@ -1263,7 +1273,7 @@ mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
   std.map Builders (x\r\mk-app x Params r) BuildersP,
 
   mk-app (global {get-constructor (global TC)})
-    {mk-n-holes {factory-nparams TC}} KCHoles,
+    {coq.mk-n-holes {factory-nparams TC}} KCHoles,
 
   (pi c\ sigma Mixes\
     std.map BuildersP (builder\r\ r = app[builder, T, c]) Mixes,
@@ -1291,7 +1301,7 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
   mk-app Coercion        Params CoercionP,
 
   mk-app (global {get-constructor StructureT})
-    {mk-n-holes {factory-nparams TC}} PackPH,
+    {coq.mk-n-holes {factory-nparams TC}} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
      let T : Type := lp:SortP s in
@@ -1342,8 +1352,8 @@ pred join-body i:int, i:int, i:term, i:term, i:term, i:term, i:term, i:term,
 join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
   P N _Ty _F (fun N S3P Pack) :- !,
   mk-app S3 P S3P, !,
-  mk-n-holes N1 Holes1, !,
-  mk-n-holes N2 Holes2, !,
+  coq.mk-n-holes N2 Holes2, !,
+  coq.mk-n-holes N1 Holes1, !,
   @pi-decl N S3P s\
   sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps \ std.do! [
     mk-app S3_to_S1 {std.append P [s]} S3_to_S1_Ps,
@@ -1474,6 +1484,37 @@ export-mixin-coercion ClassName (some C) :-
   @global! =>
     coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
+pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:term, i:option gref.
+mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms :- std.do! [
+  CompatModuleName is "MathCompCompat" ^ ModuleName,
+  coq.env.begin-module CompatModuleName none, % to avoid collisions
+  coq.env.begin-module ModuleName none,
+
+  if (Axioms = some GR)
+    (@global! => coq.notation.add-abbreviation "axiom" 0 (global GR) ff _)
+    true,
+
+  if (NewMixins = [NewMixin]) (std.do! [
+    if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms' and 'mixin_of'"),
+    MArgs is {factory-nparams NewMixin} + 1,
+    mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
+    @global! => coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
+    @global! => coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
+    ])
+    (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
+
+  if-verbose (coq.say "mc-compat-structure: declaring notation 'class_of'"),
+  std.assert-ok! (coq.typecheck ClassProjection ClassProjectionTy) "wtf",
+  CArgs is CNParams + 1,
+  mk-eta CArgs ClassProjectionTy ClassProjection EtaClassProjection,
+  @global! => coq.notation.add-abbreviation "class_of" CArgs EtaClassProjection ff _,
+
+  coq.env.end-module _,
+  coq.env.end-module MCCompat,
+  coq.env.export-module MCCompat,
+  coq.env.import-module Module,
+].
+
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred main-declare-structure i:string, i:list-w-params gref, i:bool.
@@ -1546,13 +1587,16 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: stop module Exports"),
   coq.env.end-module Exports,
 
-  coq.env.end-module _,
+  coq.env.end-module ModulePath,
 
   if-verbose (coq.say "HB: end modules; export" Exports),
 
   export Exports,
 
   declare-factory-abbrev Module (factory-by-classname ClassName),
+
+  if-MC-compat (mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassProjection),
+
 ].
 
 /* HB.context?
@@ -1675,7 +1719,7 @@ define-factory-operations _ _ _.
 pred define-factory-operation i:term, i:term, i:int, i:option constant.
 define-factory-operation _ _ _ none.
 define-factory-operation TheType TheFactory NHoles (some P) :-
-  mk-n-holes NHoles Holes,
+  coq.mk-n-holes NHoles Holes,
   std.append Holes [TheFactory] Holes_Factory,
   T = app[global (const P), TheType|Holes_Factory],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
