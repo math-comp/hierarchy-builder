@@ -1515,6 +1515,22 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms 
   coq.env.import-module Module,
 ].
 
+pred clone-body i:factoryname, i:term, i:term, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
+clone-body ClassName SortProjection (global (indt I) as Structure) PL T _ PhF :- std.do! [
+  std.assert! (coq.env.indt I _ _ _ _ [PackC] _) "wtf",
+  mk-app (global (indc PackC)) {std.append PL [T]} PackPLT,
+  mk-app Structure PL SPL,
+  (@pi-decl `cT` SPL cT\
+  mk-app (global ClassName) {std.append PL [T]} CPL,
+  @pi-decl `c` CPL c\
+  (Ph cT c) =
+    {phant-fun-unify {{lib:hb.nomsg}} T {mk-app {mk-app SortProjection PL} [cT]}
+      {phant-fun-unify {{lib:hb.nomsg}} cT {mk-app PackPLT [c]}
+        (phant-term [] {mk-app PackPLT [c]}) }}),
+  PhF = {phant-fun-real `cT` SPL cT\ {phant-fun-implicit `c` CPL c\ Ph cT c }}
+].
+
+
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred main-declare-structure i:string, i:list-w-params gref, i:bool.
@@ -1549,7 +1565,13 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
 
-  %declare-structure MLwP ClassName  Structure SortProjection ClassProjection,
+  if-verbose (coq.say "HB: declaring clone abbreviation"),
+
+  w-params.then MLwP phant-fun-real phant-fun-real
+    (clone-body ClassName SortProjection Structure) PhBody,
+
+  mk-phant-abbrev "clone" PhBody _ _,
+
 
   if-verbose (coq.say "HB: start module Exports"),
 
