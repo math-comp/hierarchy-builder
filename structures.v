@@ -301,10 +301,10 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl Name (some Body) TyWP] :- !, std.do! [
+main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
-  std.assert-ok! (coq.typecheck-ty Ty _) "Definition type illtyped",
-  std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
   if (TyWP = arity _) (
      % Do not open a section when it is not necessary (no parameters)
      % A side effect of opening a section is loosing meta data associated

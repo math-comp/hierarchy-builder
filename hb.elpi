@@ -1786,10 +1786,7 @@ is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
 
 % main-declare-asset Asset AssetKind
 pred main-declare-asset i:asset-decl, i:asset.
-main-declare-asset Asset AssetKind :-
-  % since we turn locally bound variables into global constrants the holes
-  % in the input term can go outside the pattern fragment, but we don't care
-  @holes! => std.do! [
+main-declare-asset Asset AssetKind :- std.do! [
   name-of-asset-decl Asset Module,
 
   if-verbose (coq.say "HB: start module and section" Module),
@@ -1841,13 +1838,13 @@ process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheT
 ].
 
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
-declare-factory-alias Ty1 GRFSwP Module TheType TheParams :- std.do! [
+declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   % TODO maybe main-declare-context should just take GRFSwP and postulate
   % the parameters and the type
   main-declare-context TheType TheParams GRFSwP Hyps,
 
-  std.assert-ok! (coq.typecheck-ty Ty1 _) "Illtyped alias factory",
+  std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
   coq.env.add-const "axioms_" Ty1 _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
@@ -1900,8 +1897,8 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   if-verbose (coq.say "HB: declare record axioms_"),
 
   Kname = "Axioms_",
-  RDecl = record "axioms_" Sort1 Kname Fields1,
-  std.assert-ok! (coq.typecheck-indt-decl RDecl) "record declaration illtyped",
+  RDeclSkel = record "axioms_" Sort1 Kname Fields1,
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
   coq.env.add-indt RDecl R,
   coq.env.end-section,
   coq.env.indt R tt _ _ _ [K] _,
