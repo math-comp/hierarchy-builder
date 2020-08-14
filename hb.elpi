@@ -123,7 +123,7 @@ argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
 pred argument->term i:argument, o:term.
 argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
-argument->term (trm T) T :- !, std.assert-ok! (coq.typecheck T _) "not well typed term".
+argument->term (trm T) T1 :- !, std.assert-ok! (coq.elaborate-skeleton T _ T1) "not well typed term".
 argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
 % Type to share code between HB.mixin and HB.factory (that supports alias factories)
