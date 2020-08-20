@@ -1075,13 +1075,13 @@ main-mixin-requires Str GR GRFS [From|PO] SN :- !, std.do! [
 % corresponding to parameters in arity A. TS is T applied
 % to all section variables (and hd-beta reduced). Acc should
 % be [] at call site.
-pred postulate-arity i:arity, i:list term, i:term, o:term.
-postulate-arity (parameter ID _ S A) Acc T T1 :-
+pred postulate-arity i:arity, i:list term, i:term, o:term, o:term.
+postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   if-verbose (coq.say "HB: postulating" ID),
   @local! => coq.env.add-const ID _ S @opaque! C,
   Var = global (const C),
-  postulate-arity (A Var) [Var|Acc] T T1.
-postulate-arity (arity _) ArgsRev X T :-
+  postulate-arity (A Var) [Var|Acc] T T1 Ty.
+postulate-arity (arity Ty) ArgsRev X T Ty :-
   hd-beta X {std.rev ArgsRev} X1 Stack1,
   unwind X1 Stack1 T.
 

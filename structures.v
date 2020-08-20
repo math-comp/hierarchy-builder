@@ -305,7 +305,7 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
-  if (TyWP = arity _) (
+  if (TyWP = arity SectionTy) (
      % Do not open a section when it is not necessary (no parameters)
      % A side effect of opening a section is loosing meta data associated
      % with instances, in particular builder tags are lost
@@ -315,11 +315,12 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
     with-attributes (if-verbose (coq.say  "opening instance section" TyWP)),
     SectionName is "hb_instance_" ^ {term_to_string {new_int} },
     coq.env.begin-section SectionName,
-    postulate-arity TyWP [] Body SectionBody
+    postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
-  std.assert! (coq.safe-dest-app SectionBody (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
-  std.assert! (factory-builder-nparams Builder NParams) "Not a factory builder synthesized by HB",
+  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
+  factory-alias->gref FactoryAlias Factory,
+  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
   coq.env.add-const Name SectionBody _ @transparent! C,
   std.appendR {coq.mk-n-holes NParams} [T|_] Args,
   with-attributes (main-declare-canonical-instances T (global (const C))),
