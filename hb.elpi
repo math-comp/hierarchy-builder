@@ -1916,8 +1916,10 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
 
   if-verbose (coq.say "HB: declare notation Axioms"),
 
+  % We work around the fact that Coq sections automatically prune unused
+  % variables
   if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  mk-phant-abbrev "Build" PhGRK BuildConst _,
+  mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
 
   % std.map Hyps mixin-src_mixin ML,
   factories-provide GRFSwP MLwP,
@@ -1935,6 +1937,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   @global! => coq.arguments.set-implicit GRK [[maximal|Implicits]],
   acc current (clause _ _ (factory-constructor (indt R) GRK)),
   acc current (clause _ _ (factory-builder-nparams BuildConst NParams)),
+  acc current (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
   coq.env.end-module Exports,
   coq.env.end-module _Module,
 
