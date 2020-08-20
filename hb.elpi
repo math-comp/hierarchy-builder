@@ -1500,11 +1500,15 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms 
     true,
 
   if (NewMixins = [NewMixin]) (std.do! [
-    if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms' and 'mixin_of'"),
+    if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms', 'mixin_of' and 'Mixin'"),
     MArgs is {factory-nparams NewMixin} + 1,
     mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
     @global! => coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
     @global! => coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
+    std.assert! (factory-constructor NewMixin FK) "BUG: Factory constructor missing",
+    std.assert! (phant-abbrev FK _ PhAbb) "BUG: missing phant-abbrev",
+    @global! => coq.notation.add-abbreviation "Mixin" 0
+      {coq.notation.abbreviation PhAbb {coq.mk-n-holes MArgs}} ff _,
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
 
