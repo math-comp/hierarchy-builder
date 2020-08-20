@@ -105,7 +105,7 @@ pred mixin-src o:term, o:mixinname, o:term.
 % Stores phantom abbreviation Abbrev associated with Cst
 % AbbrevCst is the constant that serves as support
 % e.g. Definition AbbrevCst := fun t1 t2 (phant_id t1 t2) => Cst t2.
-%      Notation   Abbrev t1 := (AbbrevSt t1 _ idfun).
+%      Notation   Abbrev t1 := (AbbrevCst t1 _ idfun).
 pred phant-abbrev o:gref, o:gref, o:abbreviation.
 
 % [factory-builder-nparams Build N] states that when the user writes
