@@ -329,11 +329,12 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
     coq.env.end-section
   ),
 ].
-main L :-
-  std.map L argument->term [T,F], !,
+main [T0, F0] :-
+  argument->ty T0 T, !, % TODO: change this when supporting morphism hierarchies
+  argument->term F0 F, !,
   with-attributes
     (main-declare-canonical-instances T F).
-main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
+main _ :- coq.error "Usage: HB.instance <CarrierType> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 
 }}.
 Elpi Typecheck.

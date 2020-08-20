@@ -126,6 +126,11 @@ argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
 argument->term (trm T) T1 :- !, std.assert-ok! (coq.elaborate-skeleton T _ T1) "not well typed term".
 argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
+pred argument->ty i:argument, o:term.
+argument->ty (str S) (global GR) :- !, argument->gref (str S) GR, std.assert! (coq.env.typeof GR (sort _)) "global reference is not a type".
+argument->ty (trm T) T1 :- !, std.assert-ok! (coq.elaborate-ty-skeleton T _ T1) "not well typed type".
+argument->ty X _ :- coq.error "Argument" X " is expected to be a type or a string".
+
 % Type to share code between HB.mixin and HB.factory (that supports alias factories)
 kind asset type.
 type asset-mixin asset.
