@@ -1,10 +1,18 @@
 # Changelog
 
+## [0.10.0] - 2020-08-08
+
+- HB now supports parameters (experimental).
+- Port to Coq-Elpi 1.5.
+- NBetter error message in case classes are not defined in the right order.
+- Structure operations are not reexported by substructures.
+- Spurious trivial `TYPE` structure removed from demo1.
+
 ## [0.9.1] - 2020-06-03
 
 - `HB.instance` can be applied directly to a definition as in
   `HB.instance Definition foo := Bar.Build T ...`
-- port to coq-elpi version 1.4
+- Port to Coq-Elpi version 1.4
 - Operations `op` from factory `f` are not bound to `f_op` anymore,
   they are now bound to `op` and potentially masked operations
   are accessible via `Super.op`.

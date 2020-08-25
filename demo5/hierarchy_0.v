@@ -1,49 +1,18 @@
 From Coq Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
-(**************************************************************************)
-(* Stage 4: +AddMonoid+ -> AddComoid ---> AddAG ----> Ring                *)
-(*                                   \             /                      *)
-(*                                    -> SemiRing -                       *)
-(**************************************************************************)
+HB.structure Definition TYPE := { A of True }.
 
-(* Begin change *)
-HB.mixin Record AddMonoid_of_TYPE S := {
-  zero : S;
-  add : S -> S -> S;
-  addrA : associative add;
-  add0r : left_id zero add;
-  addr0 : right_id zero add;
-}.
-HB.structure Definition AddMonoid := { A of AddMonoid_of_TYPE A }.
-
-HB.mixin Record AddComoid_of_AddMonoid A of AddMonoid A := {
-  addrC : commutative (add : A -> A -> A);
-}.
-HB.factory Record AddComoid_of_TYPE A := {
+HB.mixin Record AddComoid_of_TYPE A := {
   zero : A;
   add : A -> A -> A;
   addrA : associative add;
   addrC : commutative add;
   add0r : left_id zero add;
 }.
-
-HB.builders Context A (a : AddComoid_of_TYPE A).
-
-  Fact addr0 : right_id zero add.
-  Proof. by move=> x; rewrite addrC add0r. Qed.
-
-  Definition to_AddMonoid_of_TYPE :=
-    AddMonoid_of_TYPE.Build A zero add addrA add0r addr0.
-  HB.instance A to_AddMonoid_of_TYPE.
-
-  Definition to_AddComoid_of_AddMonoid :=
-    AddComoid_of_AddMonoid.Build A addrC.
-  HB.instance A to_AddComoid_of_AddMonoid.
-HB.end.
 HB.structure Definition AddComoid := { A of AddComoid_of_TYPE A }.
 
-(* End change *)
+(* Begin change *)
 
 HB.mixin Record AddAG_of_AddComoid A of AddComoid A := {
   opp : A -> A;
@@ -68,10 +37,11 @@ HB.builders Context A (a : AddAG_of_TYPE A).
   Definition to_AddAG_of_AddComoid :=
     AddAG_of_AddComoid.Build A _ addNr.
   HB.instance A to_AddAG_of_AddComoid.
+
 HB.end.
 HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
-HB.mixin Record SemiRing_of_AddComoid A of AddComoid A := {
+HB.mixin Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -79,44 +49,7 @@ HB.mixin Record SemiRing_of_AddComoid A of AddComoid A := {
   mulr1 : right_id one mul;
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
-  mul0r : left_zero zero mul;
-  mulr0 : right_zero zero mul;
 }.
-HB.structure Definition SemiRing := { A of AddComoid A & SemiRing_of_AddComoid A }.
-
-HB.factory Record Ring_of_AddAG A of AddAG A := {
-  one : A;
-  mul : A -> A -> A;
-  mulrA : associative mul;
-  mulr1 : left_id one mul;
-  mul1r : right_id one mul;
-  mulrDl : left_distributive mul add;
-  mulrDr : right_distributive mul add;
-}.
-
-HB.builders Context A (a : Ring_of_AddAG A).
-
-  Fact mul0r : left_zero zero mul.
-  Proof.
-  move=> x; rewrite -[LHS]add0r addrC.
-  rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
-  by rewrite -mulrDl add0r addrC addNr.
-  Qed.
-
-  Fact mulr0 : right_zero zero mul.
-  Proof.
-  move=> x; rewrite -[LHS]add0r addrC.
-  rewrite -{2}(addNr (mul x x)) (addrC (opp _)) addrA.
-  by rewrite -mulrDr add0r addrC addNr.
-  Qed.
-
-  Definition to_SemiRing_of_AddComoid :=
-    SemiRing_of_AddComoid.Build A _ mul mulrA mulr1 mul1r
-      mulrDl mulrDr (mul0r) (mulr0).
-  HB.instance A to_SemiRing_of_AddComoid.
-HB.end.
-
-(* End change *)
 HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   one : A;
@@ -190,9 +123,8 @@ Section Theory.
 Variable R : Ring.type.
 Implicit Type (x : R).
 
-(* Not general enough anymore, subsumed by Monoid addr0 *)
-(* Lemma addr0 : right_id (@zero R) add.
-Proof. by move=> x; rewrite addrC add0r. Qed. *)
+Lemma addr0 : right_id (@zero R) add.
+Proof. by move=> x; rewrite addrC add0r. Qed.
 
 Lemma addrN : right_inverse (@zero R) opp add.
 Proof. by move=> x; rewrite addrC addNr. Qed.
@@ -204,3 +136,34 @@ Lemma addrNK x y : x + y - y = x.
 Proof. by rewrite -addrA subrr addr0. Qed.
 
 End Theory.
+
+HB.mixin Record LModule_of_AG (R : Ring.type) (M : Type) of AddAG M := {
+  scale : Ring.sort R -> M -> M; (* TODO: insert coercions automatically *)
+  scaleDl : forall v, {morph scale^~ v: a b / a + b};
+  scaleDr : right_distributive scale add;
+  scaleA : forall a b v, scale a (scale b v) = scale (a * b) v;
+  scale1r : forall m, scale 1 m = m;
+}.
+HB.structure Definition LModule (R : Ring.type) :=
+  { M of LModule_of_AG R M & }.
+Infix "*:" := (@scale _ _) (at level 30) : hb_scope.
+
+Definition regular (R : Type) := R.
+
+HB.instance Definition regular_AG (R : AddAG.type) :=
+  AddAG_of_TYPE.Build (regular (AddAG.sort R)) zero add opp addrA addrC add0r addNr.
+
+HB.instance Definition regular_LModule (R : Ring.type) :=
+  LModule_of_AG.Build R (regular (Ring.sort R)) mul
+    (fun _ _ _ => mulrDl _ _ _) mulrDr mulrA mul1r.
+
+Require Import ZArith.
+
+HB.instance Definition Z_ring_axioms :=
+  Ring_of_TYPE.Build Z 0%Z 1%Z Z.add Z.opp Z.mul
+  Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
+  Z.mul_assoc Z.mul_1_l Z.mul_1_r
+  Z.mul_add_distr_r Z.mul_add_distr_l.
+
+Lemma test (m : Z) (n : regular Z) : m *: n = m * n.
+Proof. by []. Qed.
