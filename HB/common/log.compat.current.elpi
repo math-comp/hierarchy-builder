@@ -85,7 +85,8 @@ coq.vernac->pp1 (notation KM NParams Term) (box (hv 2) [box h [str "Notation \"'
   coq.vernac->ppabbrterm NParams Term StrParams B.
 coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notation ",str Name|StrParams], str " :=", spc, B, str "."]) :-
   coq.vernac->ppabbrterm NParams Term StrParams B.
-coq.vernac->pp1 (canonical Name) (box h [str "Canonical ", str Name, str "."]).
+coq.vernac->pp1 (canonical Name Local) (box h [Locality, str "Canonical ", str Name, str "."]) :-
+  local->locality Local Locality.
 coq.vernac->pp1 (coercion Name SRC TGT) (box h [str "Coercion ", str Name, str " : ", str S, str " >-> ", str T, str "."]) :-
   coq.gref->path SRC SP, std.string.concat "." {std.take-last 2 SP} S,
   if2 (TGT = sortclass) (T = "Sortclass")
@@ -100,12 +101,17 @@ coq.vernac->pp1 (vernac.implicit Local Name [L]) (box h [Locality, str "Argument
   std.intersperse spc PP1 PP.
 coq.vernac->pp1 (comment A) (box (hov 2) [str"(*", str S, str"*)"]) :-
   std.any->string A S.
-coq.vernac->pp1 (check T) (box (hov 2) [str"Check", spc, PPT, str"."]) :-
-  @holes! => coq.term->pp T PPT.
+coq.vernac->pp1 (check T Fail) (box (hov 2) [Failure, str"Check", spc, PPT, str"."]) :-
+  @holes! => coq.term->pp T PPT,
+  fail->failure Fail Failure.
 
 pred local->locality i:bool, o:coq.pp.
 local->locality tt (str "Local ").
 local->locality ff (str "Global ").
+
+pred fail->failure i:bool, o:coq.pp.
+fail->failure tt (str "Fail ").
+fail->failure ff (str "").
 
 pred coq.vernac->ppimparg i:implicit_kind, o:coq.pp.
 coq.vernac->ppimparg explicit (str "_").

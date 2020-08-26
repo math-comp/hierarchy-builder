@@ -259,6 +259,9 @@ Elpi Export HB.graph.
   - [MixinName.Build T] abbreviation for the constructor of the factory
 
   Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
+
+  Supported attributes: [#[verbose]]
+
 *)
 
 Elpi Command HB.mixin.
@@ -319,7 +322,7 @@ Elpi Export HB.mixin.
     not be relied upon. Also hand-crafted `Canonical` declarations of such structures will
     break the hierarchy. Use [HB.instance] instead.
 
-  Attributes:
+  Supported attributes:
   - [#[mathcomp]] attempts to generate a backward compatibility layer with mathcomp:
     trying to infer the right [StructureName.pack],
   - [#[infer(variable)]], where [variable : pT] belongs to [params] and is a structure
@@ -334,6 +337,8 @@ Elpi Export HB.mixin.
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
     Cf https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v#L225-L243.
+  - [#[verbose]]
+
 *)
 
 Elpi Command HB.structure.
@@ -372,6 +377,8 @@ Elpi Export HB.structure.
 
     Attributes:
     - [#[export]] to flag the instance so that it is redeclared by #[HB.reexport]
+    - [#[local]] to indicate that the instance should not survive the section.
+    - [#[verbose]]
 
 *)
 
@@ -456,6 +463,8 @@ Elpi Export HB.factory.
     [HB.end] ends the section and closes the module and synthesizes
     - for each structure inhabited via [HB.instance] it defined all
       builders to known mixins
+
+    Supported attributes: [#[verbose]]
 
     *)
 
@@ -607,7 +616,8 @@ Elpi Typecheck.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** [HB.check T] acts like [Check T] but supports the attribute [#[skip="rex"]]
-    that skips the action on Coq version matches rex *)
+    that skips the action on Coq version matches rex. It also understands the
+    [#[fail]] attribute. *)
 
 Elpi Command HB.check.
 Elpi Accumulate Db hb.db.
@@ -623,8 +633,15 @@ check-or-not Skel :-
   coq.version VersionString _ _ _,
   if (get-option "skip" R, rex_match R VersionString)
      (coq.warn "Skipping test on Coq" VersionString "as requested")
-     (log.coq.check Skel Ty T,
-      coq.say {coq.term->string T} ":" {coq.term->string Ty}).
+     (log.coq.check Skel Ty T Result,
+      if (Result = error Msg)
+         (if (get-option "fail" tt)
+             (coq.say "The command did fail as expected with message:" Msg)
+             (coq.error "HB.check:" Msg))
+         (if (get-option "fail" tt)
+             (coq.error "The command did not fail")
+             (coq.say "HB.check:" {coq.term->string T} ":" {coq.term->string Ty}))).
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.check.

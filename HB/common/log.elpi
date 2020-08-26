@@ -112,9 +112,10 @@ coercion.declare C :- std.do! [
 % in the namespace, so we just define it here with the full name
 pred log.coq.CS.declare-instance i:constant.
 log.coq.CS.declare-instance C  :- std.do! [
+  if (@local!) (Local = tt) (Local = ff),
   coq.CS.declare-instance (const C),
   coq.gref->id (const C) Name,
-  log.private.log-vernac (log.private.coq.vernac.canonical Name),
+  log.private.log-vernac (log.private.coq.vernac.canonical Name Local),
 ].
 
 % Since "accumulate" is a keyword we can't use it as a predicate name
@@ -125,10 +126,11 @@ log.coq.env.accumulate S DB CL :- std.do! [
   if-verbose (log.private.log-vernac (log.private.coq.vernac.comment CL)),
 ].
 
-pred log.coq.check i:term, o:term, o:term.
-log.coq.check Skel Ty T :- std.do! [
-  std.assert-ok! (coq.elaborate-skeleton Skel Ty T) "Check fails",
-  log.private.log-vernac (log.private.coq.vernac.check Skel),
+pred log.coq.check i:term, o:term, o:term, o:diagnostic.
+log.coq.check Skel Ty T D :- std.do! [
+  coq.elaborate-skeleton Skel Ty T D,
+  if (get-option "fail" tt) (Fail = tt) (Fail = ff),
+  log.private.log-vernac (log.private.coq.vernac.check Skel Fail),
 ].
 
 namespace log.private {
@@ -163,10 +165,10 @@ type coq.vernac.inductive     indt-decl                     -> coq.vernac.
 type coq.vernac.abbreviation  string -> int -> term         -> coq.vernac.
 type coq.vernac.notation      string -> int -> term         -> coq.vernac.
 type coq.vernac.coercion      string -> gref -> class       -> coq.vernac.
-type coq.vernac.canonical     string                        -> coq.vernac.
+type coq.vernac.canonical     string -> bool                -> coq.vernac.
 type coq.vernac.implicit      bool -> string -> list (list implicit_kind)  -> coq.vernac.
 type coq.vernac.comment       A                             -> coq.vernac.
-type coq.vernac.check         term                          -> coq.vernac.
+type coq.vernac.check         term -> bool                  -> coq.vernac.
 
 }
 
