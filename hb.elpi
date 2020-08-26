@@ -574,14 +574,24 @@ local-cs? TyTerm Struct :-
   get-local-structures TyTerm StructL,
   std.mem! StructL Struct.
 
+pred structure-nparams i:structure, o:int.
+structure-nparams Structure NParams :-
+  class-def (class Class Structure _),
+  factory-nparams Class NParams.
+
 pred get-canonical-mixins-of i:term, i:structure, o:list prop.
 get-canonical-mixins-of T S MSL :- std.do! [
   get-structure-sort-projection S Sort,
-  std.assert-ok! (coq.unify-eq T (app [Sort, ST])) "HB: get-canonical-mixins-of: T = sort ST",
+  structure-nparams S NParams,
+  coq.mk-n-holes NParams Holes,
+  coq.mk-app Sort {std.append Holes [ST]} SortHolesST,
+  std.assert-ok! (coq.unify-eq T SortHolesST) "HB: get-canonical-mixins-of: T = sort ST",
   % Hum, this unification problem is not super trivial. TODO replace by something simpler
   get-constructor S KS,
-  std.assert-ok! (coq.unify-eq ST (app [global KS, _, C])) "HB: get-canonical-mixins-of: ST = _ _ C",
-  C = app [_, _ | MIL],
+  coq.mk-app (global KS) {std.append Holes [T, C]} KSHolesC,
+  std.assert-ok! (coq.unify-eq ST KSHolesC) "HB: get-canonical-mixins-of: ST = _ _ C",
+  C = app Stuff,
+  std.drop {calc (NParams + 2)} Stuff MIL,
   std.map MIL (mixin-srcs T) MSLL,
   std.flatten MSLL MSL
 ].
