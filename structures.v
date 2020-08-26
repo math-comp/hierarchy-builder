@@ -105,7 +105,7 @@ pred mixin-src o:term, o:mixinname, o:term.
 % Stores phantom abbreviation Abbrev associated with Cst
 % AbbrevCst is the constant that serves as support
 % e.g. Definition AbbrevCst := fun t1 t2 (phant_id t1 t2) => Cst t2.
-%      Notation   Abbrev t1 := (AbbrevSt t1 _ idfun).
+%      Notation   Abbrev t1 := (AbbrevCst t1 _ idfun).
 pred phant-abbrev o:gref, o:gref, o:abbreviation.
 
 % [factory-builder-nparams Build N] states that when the user writes
@@ -301,11 +301,11 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl Name (some Body) TyWP] :- !, std.do! [
+main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
-  std.assert-ok! (coq.typecheck-ty Ty _) "Definition type illtyped",
-  std.assert-ok! (coq.typecheck Body Ty) "Definition illtyped",
-  if (TyWP = arity _) (
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
+  if (TyWP = arity SectionTy) (
      % Do not open a section when it is not necessary (no parameters)
      % A side effect of opening a section is loosing meta data associated
      % with instances, in particular builder tags are lost
@@ -315,11 +315,12 @@ main [const-decl Name (some Body) TyWP] :- !, std.do! [
     with-attributes (if-verbose (coq.say  "opening instance section" TyWP)),
     SectionName is "hb_instance_" ^ {term_to_string {new_int} },
     coq.env.begin-section SectionName,
-    postulate-arity TyWP [] Body SectionBody
+    postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
-  std.assert! (coq.safe-dest-app SectionBody (global (const Builder)) Args) "Not an application of a builder, use a section if you have parameters",
-  std.assert! (factory-builder-nparams Builder NParams) "Not a factory builder synthesized by HB",
+  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
+  factory-alias->gref FactoryAlias Factory,
+  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
   coq.env.add-const Name SectionBody _ @transparent! C,
   std.appendR {coq.mk-n-holes NParams} [T|_] Args,
   with-attributes (main-declare-canonical-instances T (global (const C))),
@@ -329,11 +330,12 @@ main [const-decl Name (some Body) TyWP] :- !, std.do! [
     coq.env.end-section
   ),
 ].
-main L :-
-  std.map L argument->term [T,F], !,
+main [T0, F0] :-
+  argument->ty T0 T, !, % TODO: change this when supporting morphism hierarchies
+  argument->term F0 F, !,
   with-attributes
     (main-declare-canonical-instances T F).
-main _ :- coq.error "Usage: HB.instance <CarrierTerm> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
+main _ :- coq.error "Usage: HB.instance <CarrierType> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 
 }}.
 Elpi Typecheck.
