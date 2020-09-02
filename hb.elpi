@@ -909,6 +909,18 @@ acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
   mk-phant-abbrev Str PhGR PhC Abbrev
 ].
 
+% [phant-fun-mixin N Ty PF PUF] states that PUF is a phant-term
+% which quantifies [PF x] over [x : Ty] (with name N)
+% Ty must be an (applied) mixin M, and the phantom status of this mixin
+% is determined by [phant-mixin-real M].
+pred phant-mixin-real o:mixinname.
+pred phant-fun-mixin i:name, i:term, i:(term -> phant-term), o:phant-term.
+phant-fun-mixin N Ty PF (phant-term [Status|AL] (fun N Ty F)) :- !, std.do! [
+  @pi-decl N Ty t\ PF t = phant-term AL (F t),
+  safe-dest-app Ty (global Mixin) _,
+  if (phant-mixin-real Mixin) (Status = real-arg N) (Status = implicit-arg)
+].
+
 % [mk-phant-term F PF] states that
 % if F = fun p1 .. p_k T m_0 .. m_n => _
 % then PF = phant-term
@@ -970,7 +982,7 @@ pred mk-phant-term.classes i:term, i:list classname, i:list term, i:term,
                       i:list (w-args mixinname), o:phant-term.
 mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
   std.map MLwA triple_1 ML,
-  under-mixins.then MLwA phant-fun-implicit (out\ sigma FPLTM\ std.do! [
+  under-mixins.then MLwA phant-fun-mixin (out\ sigma FPLTM\ std.do! [
     mterm->term (mterm PL T ML EtaF) FPLTM,
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
 ].
@@ -1521,6 +1533,9 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms 
     std.assert! (phant-abbrev FK _ PhAbb) "BUG: missing phant-abbrev",
     @global! => coq.notation.add-abbreviation "Mixin" 0
       {coq.notation.abbreviation PhAbb {coq.mk-n-holes MArgs}} ff _,
+    if-verbose (coq.say "mc-compat-structure: declaring pack abbreviation"),
+    w-params.then {gr-deps ClassName} mk-fun mk-fun (pack-body ClassName) Pack,
+    (phant-mixin-real NewMixin => mk-phant-abbrev "pack" {mk-phant-term Pack} _ _),
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
 
@@ -1536,8 +1551,8 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms 
   coq.env.import-module Module,
 ].
 
-pred clone-body i:factoryname, i:term, i:term, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
-clone-body ClassName SortProjection (global (indt I) as Structure) PL T _ PhF :- std.do! [
+pred clone-phant-body i:factoryname, i:term, i:term, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
+clone-phant-body ClassName SortProjection (global (indt I) as Structure) PL T _ PhF :- std.do! [
   std.assert! (coq.env.indt I _ _ _ _ [PackC] _) "wtf",
   mk-app (global (indc PackC)) {std.append PL [T]} PackPLT,
   mk-app Structure PL SPL,
@@ -1551,6 +1566,20 @@ clone-body ClassName SortProjection (global (indt I) as Structure) PL T _ PhF :-
   PhF = {phant-fun-real `cT` SPL cT\ {phant-fun-implicit `c` CPL c\ Ph cT c }}
 ].
 
+% [pack-body ClassName P T MLwA B] asserts B = fun m0 ... mn => Pack ps T (Class ps T m0 ... mn)
+pred pack-body.mixins i:list term, i:term, i:gref, i:gref, o:term.
+pack-body.mixins PL T BuildC PackS Body :- !, std.do! [
+  mgref->term PL T BuildC Class,
+  mk-app (global PackS) {std.append PL [T, Class]} Body
+].
+
+pred pack-body i:classname, i:list term, i:term, i:list (w-args mixinname), o:term.
+pack-body ClassName PL T MLwA F :- std.do! [
+  class-def (class ClassName S _),
+  get-constructor (global ClassName) BuildC,
+  get-constructor S PackS,
+  under-mixins.then MLwA mk-fun (pack-body.mixins PL T BuildC PackS) F
+].
 
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
@@ -1589,10 +1618,9 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: declaring clone abbreviation"),
 
   w-params.then MLwP phant-fun-real phant-fun-real
-    (clone-body ClassName SortProjection Structure) PhBody,
+    (clone-phant-body ClassName SortProjection Structure) PhClone,
 
-  mk-phant-abbrev "clone" PhBody _ _,
-
+  mk-phant-abbrev "clone" PhClone _ _,
 
   if-verbose (coq.say "HB: start module Exports"),
 
