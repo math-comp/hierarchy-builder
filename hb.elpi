@@ -1513,8 +1513,8 @@ export-mixin-coercion ClassName (some C) :-
   @global! =>
     coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
-pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:term, i:option gref.
-mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms :- std.do! [
+pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:classname, i:term, i:option gref.
+mc-compat-structure ModuleName Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
   CompatModuleName is "MathCompCompat" ^ ModuleName,
   coq.env.begin-module CompatModuleName none, % to avoid collisions
   coq.env.begin-module ModuleName none,
@@ -1534,7 +1534,8 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassProjection Axioms 
     @global! => coq.notation.add-abbreviation "Mixin" 0
       {coq.notation.abbreviation PhAbb {coq.mk-n-holes MArgs}} ff _,
     if-verbose (coq.say "mc-compat-structure: declaring pack abbreviation"),
-    w-params.then {gr-deps ClassName} mk-fun mk-fun (pack-body ClassName) Pack,
+    class-def (class ClassName _ ClassMixins),
+    w-params.then ClassMixins mk-fun mk-fun (pack-body ClassName) Pack,
     (phant-mixin-real NewMixin => mk-phant-abbrev "pack" {mk-phant-term Pack} _ _),
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
@@ -1566,7 +1567,9 @@ clone-phant-body ClassName SortProjection (global (indt I) as Structure) PL T _ 
   PhF = {phant-fun-real `cT` SPL cT\ {phant-fun-implicit `c` CPL c\ Ph cT c }}
 ].
 
-% [pack-body ClassName P T MLwA B] asserts B = fun m0 ... mn => Pack ps T (Class ps T m0 ... mn)
+% [pack-body ClassName P T MLwA B] asserts
+%  B = fun m0 ... mn => Pack P T (Class P T m0 ... mn)
+% under a context with P and T
 pred pack-body.mixins i:list term, i:term, i:gref, i:gref, o:term.
 pack-body.mixins PL T BuildC PackS Body :- !, std.do! [
   mgref->term PL T BuildC Class,
