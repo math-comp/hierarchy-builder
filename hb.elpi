@@ -1649,14 +1649,14 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
     (coq.say "declare-structure:" ClassName "should be an inductive", fail),
 
   if-verbose (coq.say "HB: accumulating various props"),
-  std.forall MLToExport (m\  acc current (clause _ _ (mixin-first-class m ClassName))),
-  std.forall EX (ex\ acc current (clause _ _ ex)),
-  std.forall Factories (f\ acc current (clause _ _ f)),
-  acc current (clause _ _ ClassRequires),
-  acc current (clause _ _ ClassAlias),
-  acc current (clause _ _ (is-structure Structure)),
-  std.forall NewJoins (j\ acc current (clause _ _ j)),
-  acc current (clause _ _ (class-def CurrentClass)),
+  std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
+  std.flatten [
+      MixinFirstClass, EX, Factories,
+      [ClassRequires], [ClassAlias], [is-structure Structure],
+      NewJoins, [class-def CurrentClass]
+    ]
+    NewClauses,
+  std.forall NewClauses (c\ acc current (clause _ _ c)),
 
   if-verbose (coq.say "HB: stop module Exports"),
   coq.env.end-module Exports,
@@ -1669,7 +1669,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   declare-factory-abbrev Module (factory-by-classname ClassName),
 
-  if-MC-compat (mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassProjection),
+  NewClauses => if-MC-compat (mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassName ClassProjection),
 
 ].
 
