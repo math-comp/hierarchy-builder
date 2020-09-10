@@ -353,6 +353,13 @@ distribute-w-params (w-params.nil N T F) L :-
 pred w-params_1 i:one-w-params A, o:A.
 w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 
+% no implicit arguments
+pred hb-add-const i:id, i:term, i:term, i:opaque?, o:constant.
+hb-add-const Name Bo Ty Opaque C :- std.do! [
+  coq.env.add-const Name Bo Ty Opaque C,
+  coq.arguments.set-implicit (const C) [[]]
+].
+
 %%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Specialize coq.elpi.accumulate to "hiearchy.db"
@@ -897,7 +904,7 @@ pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
 mk-phant-abbrev N (phant-term AL T) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.typecheck T TTy) "mk-phant-abbrev: T illtyped",
-  coq.env.add-const NC T TTy @transparent! C,
+  hb-add-const NC T TTy @transparent! C,
   mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
   @global! => coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
 ].
@@ -995,7 +1002,7 @@ mk-phant-term F PhBody:- !, std.do! [
 %  toposort-mixins ML MLSorted,
   MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
   std.rev {list-w-params_list MLwPSorted} MLSortedRev,
-  find-max-classes MLSortedRev CNL,
+  find-max-classes MLSortedRev CNL, % TODO: filter out mixins tagged with phant-mixin-real
   w-params.then MLwP phant-fun-real phant-fun-real
     (mk-phant-term.classes EtaF CNL) PhBody,
 ].
@@ -1041,7 +1048,7 @@ declare-instances T [class Class Struct MLwP|Rest] :-
   mk-app (global KS) {std.append Params [T, KCApp]} S,
   std.assert-ok! (coq.typecheck S STy) "declare-instances: S illtyped",
 
-  coq.env.add-const Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
+  hb-add-const Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
   declare-instances T Rest.
 declare-instances T [_|Rest] :- declare-instances T Rest.
@@ -1102,7 +1109,7 @@ postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   std.assert-ok! (coq.typecheck-ty S _) "arity parameter illtyped",
   if-verbose (coq.say "HB: postulating" ID),
   if (var S) (coq.fresh-type S) true,
-  @local! => coq.env.add-const ID _ S @opaque! C,
+  @local! => hb-add-const ID _ S @opaque! C,
   Var = global (const C),
   postulate-arity (A Var) [Var|Acc] T T1 Ty.
 postulate-arity (arity Ty) ArgsRev X T Ty :-
@@ -1121,7 +1128,7 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
 
   mgref->term Ps T M Ty,
   std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
-  @local! => coq.env.add-const Name _ Ty @opaque! C % no body, local -> a variable
+  @local! => hb-add-const Name _ Ty @opaque! C % no body, local -> a variable
 ].
 
 % Postulates a context with all the mixins provided by the factories
@@ -1171,7 +1178,7 @@ declare-builder SrcFactory SrcFactoryRequires F FTy MiddleFactory TgtMixin FromI
 
   std.assert-ok! (coq.typecheck GoF _GoFTy) "declare-builder: GoF illtyped",
   Name is {gref->modname SrcFactory} ^ "_to_" ^ {gref->modname TgtMixin} ^ {term_to_string {new_int}},
-  coq.env.add-const Name GoF _GoFTy @transparent! GoFC,
+  hb-add-const Name GoF _GoFTy @transparent! GoFC,
   NewFrom = from SrcFactory TgtMixin (global (const GoFC)),
 ].
 
@@ -1257,7 +1264,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
   w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
   if-verbose (coq.say "HB: export operation" Name),
-  coq.env.add-const Name Body BodyTy @transparent! C,
+  hb-add-const Name Body BodyTy @transparent! C,
 
   w-params.nparams MwP NP,
   NImplicits is NP + 1,
@@ -1359,7 +1366,7 @@ declare-coercion SortProjection ClassProjection
 
   if-verbose (coq.say "HB: declare coercion hint" CName),
 
-  coq.env.add-const CName CoeBody Ty @transparent! C,
+  hb-add-const CName CoeBody Ty @transparent! C,
   @global! => coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
 
   Coercion = global (const C),
@@ -1371,7 +1378,7 @@ declare-coercion SortProjection ClassProjection
 
   if-verbose (coq.say "HB: declare unification hint" SName),
 
-  coq.env.add-const SName SCoeBody STy @transparent! SC,
+  hb-add-const SName SCoeBody STy @transparent! SC,
   @global! => coq.coercion.declare (coercion (const SC) 0 {term->gref StructureF} (grefclass {term->gref StructureT})),
   coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
@@ -1410,7 +1417,7 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
   w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
     (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
-  coq.env.add-const Name JoinBody Ty @transparent! J,
+  hb-add-const Name JoinBody Ty @transparent! J,
   coq.CS.declare-instance (const J).
 
 % TODO: this works under the invariant: we never have two classes that
@@ -1685,7 +1692,7 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   if-verbose (coq.say "HB: postulate type" TName),
 
   coq.fresh-type Ty,
-  @local! => coq.env.add-const TName _ Ty @opaque! T, % no body, local -> a variable
+  @local! => hb-add-const TName _ Ty @opaque! T, % no body, local -> a variable
   main-declare-context (global (const T)) [] GRFS _, % TODO params
   acc current (clause _ _ (current-decl Decl))
 ].
@@ -1777,7 +1784,7 @@ postulate-factory-abbrev TheType Name Falias TheFactory :- std.do! [
   coq.notation.abbreviation Fabv [TheType] Package,
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
-  @local! => coq.env.add-const Name _ Package @opaque! C,
+  @local! => hb-add-const Name _ Package @opaque! C,
   TheFactory = global (const C),
 ].
 
@@ -1806,7 +1813,7 @@ builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ 
   std.assert! (TTy = sort (typ _)) "The last context item before the factory must be a type variable",
   coq.fresh-type Ty,
   if-verbose (coq.say "HB: postulating" IDT),
-  @local! => coq.env.add-const IDT _ Ty @opaque! C, % no body, local -> a variable
+  @local! => hb-add-const IDT _ Ty @opaque! C, % no body, local -> a variable
   TheType = global (const C),
 
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
@@ -1820,7 +1827,7 @@ builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ 
 
 builders-postulate-factories (context-item ID _ T none Factories) :- std.do! [
   if-verbose (coq.say "HB: postulating" ID),
-  @local! => coq.env.add-const ID _ T @opaque! P, % no body, local -> a variable
+  @local! => hb-add-const ID _ T @opaque! P, % no body, local -> a variable
   TheParam = global (const P),
   builders-postulate-factories (Factories TheParam),
 ].
@@ -1856,7 +1863,7 @@ process-asset-named-parameters (asset-parameter Name _ Rest as R) D Module Param
   if-verbose (coq.say "HB: postulate type" Name),
 
   coq.fresh-type Ty,
-  @local! => coq.env.add-const Name _ Ty @opaque! C, % no body, local -> a variable
+  @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
   TheType = global (const C),
   process-asset-unnamed-parameters (Rest TheType) [] Module TheType D {std.rev Params}
 ].
@@ -1865,7 +1872,7 @@ process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- 
   std.assert-ok! (coq.typecheck-ty T _) "Illtyped parameter",
   if-verbose (coq.say "HB: postulate " Name),
   if (var T) (coq.fresh-type T) true,
-  @local! => coq.env.add-const Name _ T @opaque! C, % no body, local -> a variable
+  @local! => hb-add-const Name _ T @opaque! C, % no body, local -> a variable
   TheParam = global (const C),
   process-asset-named-parameters (Rest TheParam) D Module [pr TheParam T|Params],
 ].
@@ -1898,7 +1905,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   main-declare-context TheType TheParams GRFSwP Hyps,
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
-  coq.env.add-const "axioms_" Ty1 _ @transparent! C,
+  hb-add-const "axioms_" Ty1 _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
@@ -1907,7 +1914,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   Hyps => mgref->term TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
   (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
-  coq.env.add-const "Axioms_" MFK MFKTyC @transparent! CK,
+  hb-add-const "Axioms_" MFK MFKTyC @transparent! CK,
   GRK = const CK,
 
   coq.env.end-section,
