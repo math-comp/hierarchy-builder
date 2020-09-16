@@ -535,7 +535,7 @@ findall-newjoins CurrentClass AllSuper TodoJoins :-
 pred get-structure-coercion i:structure, i:structure, o:term.
 get-structure-coercion (global S) (global T) (global F) :-
   coq.coercion.db-for (grefclass S) (grefclass T) L,
-  if (L = [pr F 0]) true (coq.error "No one step coercion from" S "to" T).
+  if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T).
 
 pred get-structure-sort-projection i:structure, o:term.
 get-structure-sort-projection (global (indt S)) (global (const P)) :-
