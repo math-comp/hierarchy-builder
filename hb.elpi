@@ -148,14 +148,16 @@ name-of-asset-decl (asset-record X _ _ _) X.
 name-of-asset-decl (asset-alias X _) X.
 
 pred argument->asset i:argument, o:asset-decl.
-argument->asset (indt-decl (parameter ID _ImplicitStatus Ty I)) (asset-parameter ID Ty A) :- !,
+argument->asset (indt-decl (parameter ID _ImplicitStatus TySkel I)) (asset-parameter ID Ty A) :- !,
   % Should we check that _ImplicitStatus is explicit?
   coq.string->name ID Name,
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "parameter illtyped",
   @pi-decl Name Ty a\
     argument->asset (indt-decl (I a)) (A a).
 argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
-argument->asset (const-decl Id (some (fun _ _ Bo)) (parameter ID _ Src Ty)) (asset-parameter ID Src A) :- !,
+argument->asset (const-decl Id (some (fun _ _ Bo)) (parameter ID _ SrcSkel Ty)) (asset-parameter ID Src A) :- !,
   coq.id->name ID Name,
+  std.assert-ok! (coq.elaborate-ty-skeleton SrcSkel _ Src) "parameter illtyped",
   @pi-decl Name Src a\
     argument->asset (const-decl Id (some (Bo a)) (Ty a)) (A a).
 argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
@@ -1754,13 +1756,16 @@ declare-old-constant (some C) :-
 declare-old-constant _ :- true.
 
 pred context->factory i:context-decl, o:factoryname.
-context->factory (context-item IDT _ TTy none t\ context-item _ _ (TF t) none _\ context-end) GRF :- !,
+context->factory (context-item IDT _ TTySkel none t\ context-item _ _ (TF t) none _\ context-end) GRF :- !,
   coq.id->name IDT NameT,
+  std.assert-ok! (coq.elaborate-ty-skeleton TTySkel _ TTy) "context entry illtyped",
   @pi-decl NameT TTy t\
     std.assert! (factory? (TF t) (triple GRF _Params t))
       "the last argument must be a factory applied to the type variable".
-context->factory (context-item ID _ T none Factories) GRF :- !,
-  coq.id->name ID Name, @pi-decl Name T x\ context->factory (Factories x) GRF.
+context->factory (context-item ID _ TSkel none Factories) GRF :- !,
+  coq.id->name ID Name,
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "context entry illtyped",
+  @pi-decl Name T x\ context->factory (Factories x) GRF.
 context->factory (context-item ID _ _ (some _) _) _ :-
   coq.error "context item cannot be given a body:" ID.
 
