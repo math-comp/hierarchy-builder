@@ -17,6 +17,7 @@ Register Coq.Init.Datatypes.pair as hb.pair.
 Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
 Definition indexed {T} (x : T) := x.
+Bind Scope type_scope with indexed.
 Register indexed as hb.indexed.
 Definition new {T} (x : T) := x.
 Register new as hb.new.

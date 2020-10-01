@@ -788,10 +788,11 @@ mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
 
 % ----------- Finding and instantiating mixin arguments -------------------
 
-% [ty-deps Ty ML] states that ML is the list of
-% mixins which the type Ty rely on, i.e.
+% [ty-deps Ty MLwP] states that ML is a list with parameters of
+% mixins with arguments which the type Ty rely on, i.e.
 % Ty = forall p_1 ... p_n (T : Type) (m_0 : M_0 T) ... (m_n : M_n T ..), (zero : T), ..... axioms_ T
-% ML = [M_0, .., M_n]
+% MLwP = w-params.cons p_1 P_1 (... w-param.cons p_n P_n 
+%          (w-param.nil T Type [(M_0, T, qs_0), .., (M_n, T, qs_n)]))
 % pred ty-deps i:term, o:list-w-params mixinname.
 % ty-deps (prod N S R) ML' :- !,
 %   @pi-decl N S x\
@@ -813,7 +814,7 @@ prod-src-is-factory Ty :- whd1 Ty Ty1, !, prod-src-is-factory Ty1.
 
 pred ty-deps i:term, o:list-w-params mixinname.
 ty-deps Ty ML :- ty-deps.aux Ty ML, !.
-ty-deps (prod N T _) (w-params.nil N T _\[]) :- T = {{Type}}, !.
+ty-deps (prod N T _) (w-params.nil N T _\[]) :- T = {{Type}}, !. % TODO: relax to any type later on.
 ty-deps T _ :- % TODO: forall p1 ... pn (T : indexed Type) with indexed being the id function
   coq.error "ty-deps: BUG: could not get the parameters and the dependencies of"
     {coq.term->string T}.
@@ -1755,6 +1756,17 @@ declare-old-constant (some C) :-
   std.forall {coq.locate-all Id} (declare-old-located Id).
 declare-old-constant _ :- true.
 
+% % MUST be replaced by a native elaborate-context command
+% pred elaborate-context i:context-decl, o:context-decl.
+% elaborate-context context-end context-end.
+% elaborate-context (context-item Id Impl TySkel none FSkel)
+%                   (context-item Id Impl Ty     none F) :-
+%   coq.id->name Id Name,
+%   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "context entry illtyped",
+%   @pi-decl Name Ty t\ elaborate-context (FSkel t) (F t).
+% elaborate-context (context-item _ _ _ (some _) _) _ :- !, coq.error "elaborate-context: not implemented".
+
+
 pred context->factory i:context-decl, o:factoryname.
 context->factory (context-item IDT _ TTySkel none t\ context-item _ _ (TF t) none _\ context-end) GRF :- !,
   coq.id->name IDT NameT,
@@ -1770,16 +1782,16 @@ context->factory (context-item ID _ _ (some _) _) _ :-
   coq.error "context item cannot be given a body:" ID.
 
 pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders Ctx :- std.do! [
+main-begin-declare-builders CtxSkel :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO?
-  context->factory Ctx GRF,
+  context->factory CtxSkel GRF,
   coq.env.begin-module Name none,
   if (GRF = indt FRecord) (std.do! [
     coq.env.begin-module "Super" none,
     std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
     coq.env.end-module _]) (true),
   coq.env.begin-section Name,
-  builders-postulate-factories Ctx,
+  builders-postulate-factories CtxSkel,
 ].
 
 pred postulate-factory-abbrev i:term, i:id, i:factoryname, o:term.
@@ -1815,8 +1827,15 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
 pred builders-postulate-factories i:context-decl.
 builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
-  std.assert! (TTy = sort (typ _)) "The last context item before the factory must be a type variable",
-  coq.fresh-type Ty,
+  if (var TTy) (
+    % coq.fresh-type TTy1,
+    % TTy = {{lib:hb.indexed lp:TTy1}},
+    % std.assert-ok! (coq.typecheck-ty TTy _) "impossible"
+    coq.fresh-type Ty
+    ) (     
+    coq.fresh-type Ty,
+    true % std.assert-ok! (coq.unify-eq TTy {{Type}}) "The last context item before the factory must be a type variable"
+    ),
   if-verbose (coq.say "HB: postulating" IDT),
   @local! => hb-add-const IDT _ Ty @opaque! C, % no body, local -> a variable
   TheType = global (const C),
@@ -1830,8 +1849,9 @@ builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ 
   acc current (clause _ _ (current-decl (builders-for-factory GRF))),
 ].
 
-builders-postulate-factories (context-item ID _ T none Factories) :- std.do! [
+builders-postulate-factories (context-item ID _ TSkel none Factories) :- std.do! [
   if-verbose (coq.say "HB: postulating" ID),
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factorie: illtyped context", 
   @local! => hb-add-const ID _ T @opaque! P, % no body, local -> a variable
   TheParam = global (const P),
   builders-postulate-factories (Factories TheParam),
@@ -1863,12 +1883,15 @@ main-declare-asset Asset AssetKind :- std.do! [
 
 pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (pair term term).
 % We reached TheType
-process-asset-named-parameters (asset-parameter Name _ Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
+process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
 
   if-verbose (coq.say "HB: postulate type" Name),
+  if (var T) (
+    coq.fresh-type T1, T = {{lib:hb.indexed lp:T1}},
+    std.assert-ok! (coq.typecheck T _) "process-asset-named-parameters: impossible!!!"
+  ) true,
+  @local! => hb-add-const Name _ T @opaque! C, % no body, local -> a variable
 
-  coq.fresh-type Ty,
-  @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
   TheType = global (const C),
   process-asset-unnamed-parameters (Rest TheType) [] Module TheType D {std.rev Params}
 ].
