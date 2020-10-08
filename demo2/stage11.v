@@ -306,14 +306,14 @@ HB.mixin Record Join_TAddAG_Uniform T of Uniform_TAddAG_unjoined T := {
   (* TODO: should be subsumed by the type alias TAddAG *)
 HB.factory Record TAddAG_Uniform U of TAddAG_wo_Uniform U := { }.
 
-HB.builders Context U of TAddAG_Uniform U.
-  Definition to_Uniform_wo_Topology : Uniform_wo_Topology U := (TAddAG_uniform _).
+HB.builders Context U (a : TAddAG_Uniform U).
+  Definition to_Uniform_wo_Topology : Uniform_wo_Topology U := let _ := a in (TAddAG_uniform _).
   HB.instance U to_Uniform_wo_Topology.
   Definition to_Join_Uniform_Topology : Join_Uniform_Topology U :=
-    (TAddAG_Join_Uniform_Topology _).
+    let _ := a in (TAddAG_Join_Uniform_Topology _).
   HB.instance U to_Join_Uniform_Topology.
   Definition to_Join_TAddAG_Uniform :=
-    (Join_TAddAG_Uniform.Build U (TAddAG_entourageE _)).
+    let _ := a in (Join_TAddAG_Uniform.Build U (TAddAG_entourageE _)).
   HB.instance U to_Join_TAddAG_Uniform.
 HB.end.
 
@@ -328,7 +328,7 @@ HB.builders Context T (a : JoinTAddAG T).
   Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform T := a.
   HB.instance T to_JoinTAddAG_wo_Uniform.
   (* TODO: Nice error message when factory builders do not depend on the source factory 'a'*)
-  Definition to_Uniform := let _ := a in TAddAG_Uniform.Build T.
+  Definition to_Uniform : TAddAG_Uniform T := let _ := a in TAddAG_Uniform.Build T.
   HB.instance T to_Uniform.
 HB.end.
 
