@@ -170,7 +170,7 @@ builder->string (builder _ _ B) S :- coq.term->string B S.
 pred nice-gref->string i:gref, o:string.
 nice-gref->string X Mod :-
   coq.gref->path X Path,
-  std.rev Path [_,Mod|_].
+  std.rev Path [_,Mod|_], !.
 nice-gref->string X S :-
   coq.term->string (global X) S.
 
