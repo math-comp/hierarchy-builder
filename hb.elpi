@@ -165,7 +165,7 @@ argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
 argument->asset X _ :- coq.error "Unsupported asset:" X.
 
 pred builder->string i:builder, o:string.
-builder->string (builder _ _ B) S :- coq.term->string B S.
+builder->string (builder _ _ _ B) S :- coq.term->string B S.
 
 pred nice-gref->string i:gref, o:string.
 nice-gref->string X Mod :-
@@ -178,12 +178,6 @@ pred target-gref i:term, o:gref.
 target-gref T GR :- whd1 T T1, !, target-gref T1 GR.
 target-gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ target-gref (Tgt x) GR.
 target-gref End GR :- term->gref End GR.
-
-% Sometimes section variables are unused, hence the lambda may not be there
-pred subst-fun-opt i:term, i:term, o:term.
-subst-fun-opt T (fun _ _ _ as F) O :- !, subst-fun [T] F O.
-subst-fun-opt T (let _ _ _ _ as F) O :- !, subst-fun [T] F O.
-subst-fun-opt _ X X.
 
 pred append-phant-unify i:phant-term, o:phant-term.
 append-phant-unify (phant-term LP T) (phant-term LPU T) :-
@@ -381,7 +375,7 @@ pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.
 
 pred leq-builder i:builder, i:builder.
-leq-builder (builder N _ _) (builder M _ _) :- N =< M.
+leq-builder (builder N _ _ _) (builder M _ _ _) :- N =< M.
 
 % [factory-alias->gref X GR] when X is already a factory X = GR
 % however, when X is a phantom abbreviated gref, we find the underlying
@@ -689,11 +683,12 @@ phant-fun-struct T Name SI PF Out :- std.do! [
 % [builder->term Params T Src Tgt MF] provides a term which is
 % a function to transform Src into Tgt under the right mixin-src.
 pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
-builder->term Ps T Src Tgt FT :- !, std.do! [
+builder->term Ps T Src Tgt B :- !, std.do! [
   from Src Tgt F,
   factory-requires Src MLwP,
   list-w-params_list MLwP ML,
-  mterm->term (mterm Ps T ML F) FT].
+  mterm->term (mterm Ps T ML F) B,
+].
 
 % [instantiate-mixin T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
@@ -776,24 +771,30 @@ under-mixin-src-from-factories.do! TheType Factories LP :-
 
 % [mixin-for T M X] states that X has type [M T ...]
 % it is reconstructed from two databases [mixin-src] and [from]
-pred mixin-for o:term, o:mixinname, o:term.
+pred mixin-for i:term, i:mixinname, o:term.
 mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
   factory? Ty (triple Factory Params _),
 
   if (M = Factory) (MI = Tm) (
-      builder->term Params T Factory M F,
-      subst-fun [Tm] F MI
+      builder->term Params T Factory M B,
+      subst-fun [Tm] B MI
   )
 ].
+pred assert!-mixin-for i:term, i:mixinname, o:term.
+assert!-mixin-for T M B :-
+  Msg is "HB: cannot inhabit mixin" ^
+    {nice-gref->string M} ^ "on" ^ {coq.term->string T},
+  std.assert! (mixin-for T M B) Msg.
 
 % ----------- Finding and instantiating mixin arguments -------------------
 
-% [ty-deps Ty ML] states that ML is the list of
-% mixins which the type Ty rely on, i.e.
+% [ty-deps Ty MLwP] states that ML is a list with parameters of
+% mixins with arguments which the type Ty rely on, i.e.
 % Ty = forall p_1 ... p_n (T : Type) (m_0 : M_0 T) ... (m_n : M_n T ..), (zero : T), ..... axioms_ T
-% ML = [M_0, .., M_n]
+% MLwP = w-params.cons p_1 P_1 (... w-param.cons p_n P_n
+%          (w-param.nil T Type [(M_0, T, qs_0), .., (M_n, T, qs_n)]))
 % pred ty-deps i:term, o:list-w-params mixinname.
 % ty-deps (prod N S R) ML' :- !,
 %   @pi-decl N S x\
@@ -815,7 +816,7 @@ prod-src-is-factory Ty :- whd1 Ty Ty1, !, prod-src-is-factory Ty1.
 
 pred ty-deps i:term, o:list-w-params mixinname.
 ty-deps Ty ML :- ty-deps.aux Ty ML, !.
-ty-deps (prod N T _) (w-params.nil N T _\[]) :- T = {{Type}}, !.
+ty-deps (prod N T _) (w-params.nil N T _\[]) :- T = {{Type}}, !. % TODO: relax to any type later on.
 ty-deps T _ :- % TODO: forall p1 ... pn (T : indexed Type) with indexed being the id function
   coq.error "ty-deps: BUG: could not get the parameters and the dependencies of"
     {coq.term->string T}.
@@ -1023,24 +1024,29 @@ pred params->holes i:list-w-params A, o:list term.
 params->holes (w-params.nil _ _ _) [].
 params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 
-% Given a type T, a list of class definition in topological order (from least dep to most)
-% it consumes the list all the classes for which all the dependencies
-% (mixins) were postulated so far (skips the rest) and declares a local
-% constant inhabiting the corresponding structure and declares it canonical.
+% [declare-instances T CL MCSTL] given a type T and a list of class definition
+% CL in topological order (from least dep to most) looks for classes
+% for which all the dependencies (mixins) were postulated so far and skips the
+% rest. For each fulfilled class it declares a local constant inhabiting the
+% corresponding structure and declares it canonical.
+% Each mixin used in order to fulfill a class is returned together with its name.
 pred declare-instances i:term, i:list class.
 declare-instances T [class Class Struct MLwP|Rest] :-
   params->holes MLwP Params,
   get-constructor (global Class) KC,
 
-  if-verbose (coq.say "HB: can we build a" Struct "on" T "?"),
+  if (not(local-cs? T Struct))
+     true % we build it
+     (if-verbose (coq.say "HB: skipping alreay existing"
+                    {coq.term->string Struct} "instance on"
+                    {coq.term->string T}),
+      fail),
 
-  mgref->term Params T KC KCApp, % we can build it
+  if (mgref->term Params T KC KCApp)
+     (if-verbose (coq.say "HB: we can build a" {coq.term->string Struct} "on"
+        {coq.term->string T}))
+     fail,
 
-  if-verbose (coq.say "HB: yes we can, but is it already built?"),
-
-  not (local-cs? T Struct), % not already built
-
-  if-verbose (coq.say "HB: no it is not, so we build it"),
   !,
   term->gref T TGR,
   coq.gref->id TGR TID,
@@ -1145,67 +1151,20 @@ main-declare-context TheType TheParams GRFSwP MSL :-  std.do! [
   std.forall MSL (ms\ acc current (clause _ _ ms)),
 ].
 
-% [factory-comp SrcFactory MB MiddleFactory TgtMixin B1] synthesizes
-%   B1 = MB o B
-% where MB is the builder from MiddleFactory to TgtMixin and
-% B is a builder from SrcFactory to MiddleFactory
-pred factory-comp i:list mixinname, i:factoryname, i:term, i:factoryname,
-  i:mixinname, i:list term, i:term, o:term.
-factory-comp ML SrcFactory B MiddleFactory TgtMixin Params Type Comp :-
-  mgref->term Params Type SrcFactory Src,
-  MB = mterm Params Type ML B,
-  Comp = {{
-    fun src : lp:Src => lp:{{
-      {under-mixin-src-from-factory.then Type {{src}}
-        (factory-comp-body {{src}} MB MiddleFactory TgtMixin)} }}
-  }}.
-
-pred factory-comp-body i:term, i:mterm, i:factoryname, i:mixinname, o:term.
-factory-comp-body TheFactory (mterm TheParams TheType _ _ as MB) MiddleFactory TgtMixin Comp :- std.do! [
-  mterm->term MB MB1,
-  subst-fun-opt TheFactory MB1 MB2,
-  builder->term TheParams TheType MiddleFactory TgtMixin B2,
-  subst-fun [MB2] B2 Comp
-].
-
-% [declare-builder Src SrcRequires F Fty Mid Tgt FromI FromO]
-% declares a builder by composing F and Mid.
-pred declare-builder
-  i:gref, i:list-w-params mixinname, i:term, i:term, i:gref, i:gref, i:list prop, o:list prop.
-declare-builder SrcFactory SrcFactoryRequires F FTy MiddleFactory TgtMixin FromI [NewFrom|FromI] :- !, FromI => std.do! [
-  std.assert! (FTy = prod _ _ _) "declare-builder: B is not a function",
-
-  list-w-params_list SrcFactoryRequires ML, % args of F we can fulfill with the context
-
-  GoF = {mk-mixin-fun.then SrcFactoryRequires
-          (factory-comp ML SrcFactory F MiddleFactory TgtMixin)},
-
-  std.assert-ok! (coq.typecheck GoF _GoFTy) "declare-builder: GoF illtyped",
-  Name is {gref->modname SrcFactory} ^ "_to_" ^ {gref->modname TgtMixin} ^ {term_to_string {new_int}},
-  hb-add-const Name GoF _GoFTy @transparent! GoFC,
-  NewFrom = from SrcFactory TgtMixin (global (const GoFC)),
-].
-
-% [main-declare-builder (builder _ F B) From MoreFrom] Given B of type FB, it
-% generates all the builders for mixins in FB from F via components of B.
-% From holds the (from F Mi Bi) predicates during folding.
+% [main-declare-builder (builder _ F M B) From MoreFrom] Given B of type FB, it
+% declares all the new builders F to M via B.
+% From holds the (from F Mi Bi) new clauses during folding.
 pred main-declare-builder i:builder, i:list prop, o:list prop.
-main-declare-builder (builder _ SrcFactory B) FromClauses MoreFromClauses :- !, std.do! [
+main-declare-builder (builder _ SrcFactory TgtMixin B) FromClauses MoreFromClauses :-
   FromClauses => std.do! [
-    std.assert-ok! (coq.typecheck B BTy) "main-declare-builder: B illtyped",
-    factory-alias->gref {target-gref BTy} MiddleFactory,
-    factory-requires SrcFactory SrcFactoryRequireswP,
-    list-w-params_list SrcFactoryRequireswP SrcFactoryRequires,
-
-    factory-provides MiddleFactory AllTgtMixinswP,
-    list-w-params_list AllTgtMixinswP AllTgtMixins,
-
-    std.filter AllTgtMixins (t\ not (std.mem! SrcFactoryRequires t)) TgtMixins,
-  ],
-  if-verbose (coq.say "HB: declare builders from" {nice-gref->string SrcFactory}
-                      "to" {std.map TgtMixins nice-gref->string}),
-  std.fold TgtMixins FromClauses (declare-builder SrcFactory SrcFactoryRequireswP B BTy MiddleFactory) MoreFromClauses,
-].
+    if (from SrcFactory TgtMixin _)
+       (if-verbose (coq.say "HB: skipping duplicate builder from"
+          {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}),
+        MoreFromClauses = FromClauses)
+       (if-verbose (coq.say "HB: declare builder from"
+          {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}),
+        MoreFromClauses = [from SrcFactory TgtMixin B|FromClauses])
+  ].
 
 % [export Module] exports a Module now adds it to the collection of
 % modules to export in the end
@@ -1449,7 +1408,8 @@ pred synthesize-fields i:term, i:list (w-args mixinname), o:record-decl.
 synthesize-fields _T []     end-record.
 synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
   Name is {gref->modname M} ^ "_mixin",
-  mgref->term Args T M MTy,
+  if-verbose (coq.say "HB: typing class field" M),
+  std.assert! (mgref->term Args T M MTy) "anomaly: a field type cannot be solved",
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
 
@@ -1506,7 +1466,7 @@ declare-sort-coercion (global StructureName) (global Proj) :-
 
   @global! => coq.coercion.declare (coercion Proj 0 StructureName sortclass).
 
-pred if-class-already-exists-error i:Name, i:list class, i:list mixinname.
+pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
 if-class-already-exists-error _ [] _.
 if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
   list-w-params_list ML1wP ML1,
@@ -1520,7 +1480,7 @@ export-mixin-coercion ClassName (some C) :-
   coq.env.typeof (const C) CTy,
   safe-dest-app {safe-head CTy} Mixin _,
   coq.term->gref Mixin MixinGR,
-  if-verbose (coq.say "export-mixin-coercion: from" ClassName "to" MixinGR),
+  if-verbose (coq.say "HB: export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
   @global! =>
     coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
@@ -1698,20 +1658,17 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
   coq.fresh-type Ty,
   @local! => hb-add-const TName _ Ty @opaque! T, % no body, local -> a variable
   main-declare-context (global (const T)) [] GRFS _, % TODO params
-  acc current (clause _ _ (current-decl Decl))
+  acc current (clause _ _ (current-mode Decl))
 ].
 */
 
 pred main-end-declare-builders.
 main-end-declare-builders :- std.do! [
-  current-decl (builders-for-factory GR),
+  current-mode (builder-from GR),
 
   coq.env.end-section,
 
   findall-builders LFIL,
-
-  if-verbose (coq.say "HB: declare builders from factory" {nice-gref->string GR}
-              "using" {std.map LFIL builder->string}),
 
   std.fold LFIL [] main-declare-builder Clauses,
 
@@ -1730,16 +1687,74 @@ main-end-declare-builders :- std.do! [
   export Exports,
 ].
 
-pred main-declare-canonical-instances i:term, i:term.
-main-declare-canonical-instances T F :- std.do! [
-  if (current-decl (builders-for-factory FGR))
-     (new_int N, acc current (clause _ _ (builder-decl (builder N FGR F))))
-     true,
-  under-mixin-src-from-factory.do! T F [
-    under-canonical-mixins-of.do! T [
-      declare-instances T {findall-classes}
-  ]],
+pred add-mixin i:term, i:factoryname, i:mixinname, i:term, o:list prop.
+add-mixin T FGR MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
+  MixinSrcCl = mixin-src T MixinName (global (const C)),
+  BuiderDeclCl = builder-decl (builder N FGR MixinName (global (const C))),
+  new_int N, % timestamp
+
+  std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
+  safe-dest-app Ty (global MixinNameAlias) _,
+  factory-alias->gref MixinNameAlias MixinName,
+
+  std.assert! (MissinMixin = MixinName) "HB: anomaly: we built the wrong mixin",
+
+  % If the mixin instance is alreaduy a constant there is no need to
+  % alias it.
+  if (Bo = global (const C)) true (
+    Name is {nice-gref->string FGR} ^"_to_" ^ {nice-gref->string MixinName},
+    if-verbose (coq.say "HB: declare" Name),
+    hb-add-const Name Bo Ty @transparent! C
+  ).
+
+pred mixin-for_mixin-builder i:prop, o:term.
+mixin-for_mixin-builder (mixin-for _ _ B) B.
+
+pred add-all-mixins i:term, i:factoryname, i:list mixinname, o:list prop.
+add-all-mixins T FGR MissingMixins Clauses :- std.do! [
+  std.map MissingMixins (assert!-mixin-for T) MBL,
+  std.map2 MissingMixins MBL (add-mixin T FGR) ClausesL,
+  std.flatten ClausesL Clauses,
 ].
+
+pred findall-mixin-src i:term, o:list mixinname.
+findall-mixin-src T ML :-
+  std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
+
+% We find the new mixins that F build, we build them and shedule them
+% for becoming builders at section closing time. We also declare
+% all canonical instances these new mixins allow for, so that the user
+% can access their theory and notations
+pred declare-canonical-instances-from-factory-and-local-builders i:term, i:term, i:factoryname, o:list prop.
+declare-canonical-instances-from-factory-and-local-builders T F FGR Clauses :- std.do! [
+  findall-mixin-src T OldMixins,
+  mixin-srcs T F MixinSrcFromF,
+  std.map MixinSrcFromF mixin-src_mixin FMixins,
+  std.filter FMixins (m\ not(std.mem! OldMixins m)) MissingMixins,
+  if-verbose (coq.say "HB: new mixins from"
+    {coq.term->string F} "on" {coq.term->string T} ":"
+    {std.map MissingMixins nice-gref->string}),
+  MixinSrcFromF => add-all-mixins T FGR MissingMixins Clauses,
+  Clauses => declare-instances T {findall-classes}
+].
+
+% [declare-canonical-instances-from-factory T F] given a factory F
+% it uses all known builders to declare canonical instances of structures
+% on T
+pred declare-canonical-instances-from-factory i:term, i:term.
+declare-canonical-instances-from-factory T F :-
+  under-canonical-mixins-of.do! T [
+    under-mixin-src-from-factory.do! T F [
+      declare-instances T {findall-classes}
+    ]
+  ].
+
+% entry point for HB.instance
+pred main-declare-instance i:term, i:term, o:list prop.
+main-declare-instance T F Clauses :- current-mode (builder-from FGR), !,
+  declare-canonical-instances-from-factory-and-local-builders T F FGR Clauses.
+main-declare-instance T F [] :-
+  declare-canonical-instances-from-factory T F.
 
 pred declare-old-located i:string, i:located.
 declare-old-located Id (loc-gref GR) :-
@@ -1772,23 +1787,23 @@ context->factory (context-item ID _ _ (some _) _) _ :-
   coq.error "context item cannot be given a body:" ID.
 
 pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders Ctx :- std.do! [
+main-begin-declare-builders CtxSkel :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO?
-  context->factory Ctx GRF,
+  context->factory CtxSkel GRF,
   coq.env.begin-module Name none,
   if (GRF = indt FRecord) (std.do! [
     coq.env.begin-module "Super" none,
     std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
     coq.env.end-module _]) (true),
   coq.env.begin-section Name,
-  builders-postulate-factories Ctx,
+  builders-postulate-factories CtxSkel,
 ].
 
-pred postulate-factory-abbrev i:term, i:id, i:factoryname, o:term.
-postulate-factory-abbrev TheType Name Falias TheFactory :- std.do! [
+pred postulate-factory-abbrev i:term, i:list term, i:id, i:factoryname, o:term.
+postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
   factory-alias->gref Falias F,
   phant-abbrev F _ Fabv,
-  coq.notation.abbreviation Fabv [TheType] Package,
+  coq.notation.abbreviation Fabv {std.append Params [TheType]} Package,
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
   @local! => hb-add-const Name _ Package @opaque! C,
@@ -1814,12 +1829,18 @@ define-factory-operation TheType TheFactory NHoles (some P) :-
   coq.gref->id (const P) Name,
   @local! => coq.notation.add-abbreviation Name 0 T ff _.
 
+pred fresh-indexed-type o:term.
+fresh-indexed-type Ty :-
+  Ty = {{lib:hb.indexed Type}},
+  std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
+
 pred builders-postulate-factories i:context-decl.
-builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
+builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
-  std.assert! (TTy = sort (typ _)) "The last context item before the factory must be a type variable",
-  coq.fresh-type Ty,
-  if-verbose (coq.say "HB: postulating" IDT),
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factorie: illtyped context",
+  if (var Ty) (fresh-indexed-type Ty)
+     (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
+  if-verbose (coq.say "HB: postulating type" IDT),
   @local! => hb-add-const IDT _ Ty @opaque! C, % no body, local -> a variable
   TheType = global (const C),
 
@@ -1827,13 +1848,15 @@ builders-postulate-factories (context-item IDT _ TTy none t\ context-item IDF _ 
     "the last argument must be a factory applied to the type variable",
   factory-requires GRF GRFMLwP, % TODO: remove, pass to main-declare-context the list-w-params-eta-expansion of GRF
   main-declare-context TheType Params GRFMLwP _,
-  postulate-factory-abbrev TheType IDF GRF TheFactory,
+  postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType TheFactory GRF,
-  acc current (clause _ _ (current-decl (builders-for-factory GRF))),
+  acc current (clause _ _ (current-mode (builder-from GRF))),
 ].
 
-builders-postulate-factories (context-item ID _ T none Factories) :- std.do! [
+builders-postulate-factories (context-item ID _ TSkel none Factories) :- std.do! [
   if-verbose (coq.say "HB: postulating" ID),
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factorie: illtyped context",
+  if (var T) (coq.fresh-type T) true,
   @local! => hb-add-const ID _ T @opaque! P, % no body, local -> a variable
   TheParam = global (const P),
   builders-postulate-factories (Factories TheParam),
@@ -1865,12 +1888,12 @@ main-declare-asset Asset AssetKind :- std.do! [
 
 pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (pair term term).
 % We reached TheType
-process-asset-named-parameters (asset-parameter Name _ Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
+process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
 
   if-verbose (coq.say "HB: postulate type" Name),
-
-  coq.fresh-type Ty,
+  if (var T) (fresh-indexed-type Ty) (Ty = T),
   @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
+
   TheType = global (const C),
   process-asset-unnamed-parameters (Rest TheType) [] Module TheType D {std.rev Params}
 ].
@@ -1954,11 +1977,24 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   declare-factory-abbrev Module SN,
 ].
 
+pred hack-append-phant-unify i:int, i:phant-term, o:phant-term.
+hack-append-phant-unify 0 X Y :- append-phant-unify X Y.
+hack-append-phant-unify M X Y :- M > 0, !,
+  N is M - 1,
+  hack-append-phant-unify N {append-phant-unify X} Y.
+
+
+pred hack-section-discharge-unused i:list term, i:record-decl, o:record-decl.
+hack-section-discharge-unused [] F F.
+hack-section-discharge-unused [T|TS] F (field _ "_" {{ lib:hb.unify lp:TT lp:TT lp:T lp:T lib:hb.nomsg }} _\ F0) :-
+  std.assert-ok! (coq.typecheck T TT) "wtf",
+  hack-section-discharge-unused TS F F0.
+
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.do! [
+  % HACK: work around section discharging unused stuff
   if (D = asset-mixin) (Fields1 = Fields0)
-      (Fields1 = (field _ "_" {{ lib:hb.unify Type Type lp:TheType lp:TheType
-        lib:hb.nomsg }} _\ Fields0)),
+      (hack-section-discharge-unused [TheType|TheParams] Fields0 Fields1),
   main-declare-context TheType TheParams GRFSwP _Hyps,
 
   if-verbose (coq.say "HB: declare record axioms_"),
@@ -1980,7 +2016,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
 
   % We work around the fact that Coq sections automatically prune unused
   % variables
-  if (D = asset-mixin) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
+  if (D = asset-mixin) (PhGRK = PhGRK0) (hack-append-phant-unify {std.length TheParams} PhGRK0 PhGRK),
   mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
 
   % std.map Hyps mixin-src_mixin ML,

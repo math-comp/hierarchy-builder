@@ -51,5 +51,6 @@ tests/type_of_exported_ops.v
 tests/duplicate_structure.v
 tests/instance_params_no_type.v
 tests/test_CS_db_filtering.v
+tests/subtype.v
 
 -R . HB
