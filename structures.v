@@ -124,7 +124,7 @@ pred mixin-first-class o:mixinname, o:classname.
 
 % To tell HB.end what we are doing
 kind declaration type.
-type builder-from factoryname -> declaration.
+type builder-from term -> factoryname -> declaration. % TheFactory and it's name
 pred current-mode o:declaration.
 
 pred exported-op o:mixinname, o:constant, o:constant. % memory of exported operations
@@ -321,6 +321,14 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+% If you don't mention the factory in a builder, then Coq won't make
+% a lambda for it at section closing time.
+pred hack-section-discharging i:term, o:term.
+hack-section-discharging B B1 :- current-mode (builder-from TheFactory _), !,
+  std.assert-ok! (coq.typecheck TheFactory TheFactoryTy) "TheFactory is illtyped (BUG)",
+  B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
+hack-section-discharging B B.
+
 main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
@@ -340,7 +348,8 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
-  coq.env.add-const Name SectionBody _ @transparent! C,
+  hack-section-discharging SectionBody SectionBodyHack,
+  coq.env.add-const Name SectionBodyHack _ @transparent! C,
   std.appendR {coq.mk-n-holes NParams} [T|_] Args,
   with-attributes (main-declare-instance T (global (const C)) Clauses),
 

@@ -1664,7 +1664,7 @@ main-begin-declare Module TName GRFS Decl :- std.do! [
 
 pred main-end-declare-builders.
 main-end-declare-builders :- std.do! [
-  current-mode (builder-from GR),
+  current-mode (builder-from _ GR),
 
   coq.env.end-section,
 
@@ -1725,8 +1725,8 @@ findall-mixin-src T ML :-
 % for becoming builders at section closing time. We also declare
 % all canonical instances these new mixins allow for, so that the user
 % can access their theory and notations
-pred declare-canonical-instances-from-factory-and-local-builders i:term, i:term, i:factoryname, o:list prop.
-declare-canonical-instances-from-factory-and-local-builders T F FGR Clauses :- std.do! [
+pred declare-canonical-instances-from-factory-and-local-builders i:term, i:term, i:term, i:factoryname, o:list prop.
+declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR Clauses :- std.do! [
   findall-mixin-src T OldMixins,
   mixin-srcs T F MixinSrcFromF,
   std.map MixinSrcFromF mixin-src_mixin FMixins,
@@ -1751,8 +1751,8 @@ declare-canonical-instances-from-factory T F :-
 
 % entry point for HB.instance
 pred main-declare-instance i:term, i:term, o:list prop.
-main-declare-instance T F Clauses :- current-mode (builder-from FGR), !,
-  declare-canonical-instances-from-factory-and-local-builders T F FGR Clauses.
+main-declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR), !,
+  declare-canonical-instances-from-factory-and-local-builders T F TheFactory FGR Clauses.
 main-declare-instance T F [] :-
   declare-canonical-instances-from-factory T F.
 
@@ -1837,7 +1837,7 @@ fresh-indexed-type Ty :-
 pred builders-postulate-factories i:context-decl.
 builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
-  std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factorie: illtyped context",
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factory: illtyped context",
   if (var Ty) (fresh-indexed-type Ty)
      (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
   if-verbose (coq.say "HB: postulating type" IDT),
@@ -1850,7 +1850,7 @@ builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF
   main-declare-context TheType Params GRFMLwP _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType TheFactory GRF,
-  acc current (clause _ _ (current-mode (builder-from GRF))),
+  acc current (clause _ _ (current-mode (builder-from TheFactory GRF))),
 ].
 
 builders-postulate-factories (context-item ID _ TSkel none Factories) :- std.do! [
