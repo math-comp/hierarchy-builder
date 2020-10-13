@@ -351,7 +351,7 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   hack-section-discharging SectionBody SectionBodyHack,
   if (Name = "_")
      (TheFactory = SectionBodyHack)
-     (coq.env.add-const Name SectionBodyHack _ @transparent! C,
+     (hb-add-const Name SectionBodyHack _ @transparent! C,
       TheFactory = (global (const C))),
   std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
   with-attributes (main-declare-instance TheType TheFactory Clauses),
