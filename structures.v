@@ -349,9 +349,12 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
   hack-section-discharging SectionBody SectionBodyHack,
-  coq.env.add-const Name SectionBodyHack _ @transparent! C,
-  std.appendR {coq.mk-n-holes NParams} [T|_] Args,
-  with-attributes (main-declare-instance T (global (const C)) Clauses),
+  if (Name = "_")
+     (TheFactory = SectionBodyHack)
+     (coq.env.add-const Name SectionBodyHack _ @transparent! C,
+      TheFactory = (global (const C))),
+  std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
+  with-attributes (main-declare-instance TheType TheFactory Clauses),
 
   if (TyWP = arity _) true (
     if-verbose (coq.say "HB: closing instance section"),
