@@ -1064,11 +1064,11 @@ declare-instances T [class Class Struct MLwP|Rest] :-
 declare-instances T [_|Rest] :- declare-instances T Rest.
 declare-instances _ [].
 
-kind factory-name-or-alias type.
-type factory-by-classname gref -> factory-name-or-alias.
-type factory-by-phantabbrev abbreviation -> factory-name-or-alias.
+kind factory-abbrev type.
+type factory-by-classname gref -> factory-abbrev.
+type factory-by-phantabbrev abbreviation -> factory-abbrev.
 
-pred declare-factory-abbrev i:id, i:factory-name-or-alias.
+pred declare-factory-abbrev i:id, i:factory-abbrev.
 declare-factory-abbrev Name (factory-by-classname GR) :-
   % looks fishy (the parameters are not taken into account)
   @global! => coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
@@ -1076,28 +1076,29 @@ declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => coq.notation.add-abbreviation Name Nargs AbbrTrm tt _.
 
-% [main-factory-requires Str GR FL CL SN]
+% [mk-factory-requires-clause-and-abbrev Str GR FL CL FactAbbrev]
 % computes the list of mixins ML provided by FL,
 % creates a clause in CL stating that GR requires ML (factory-requires ..), and
 % creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
-% SN is the short name for the factory (either an alias of the class record)
-pred main-factory-requires i:string, i:gref, i:list-w-params factoryname, o:list prop, o:factory-name-or-alias.
-main-factory-requires Str GR GRFS [FactoryRequires|Aliases] SN :- !, std.do! [
+% FactAbbrev is the short name for the factory (either an alias of the class record)
+pred mk-factory-requires-clause-and-abbrev i:string, i:gref, i:list-w-params factoryname, o:list prop, o:factory-abbrev.
+mk-factory-requires-clause-and-abbrev Str GR GRFS [FactoryRequires|Aliases] FactAbbrev :- !, std.do! [
   factories-provide GRFS ML,
   FactoryRequires = factory-requires GR ML,
   if (factory-alias->gref GR _)
      (Aliases = [],
-      SN = factory-by-classname GR)
+      FactAbbrev = factory-by-classname GR)
      (acc-phant-abbrev Str GR PhGR Abbrv,
       Aliases = [phant-abbrev GR PhGR Abbrv],
-      SN = factory-by-phantabbrev Abbrv),
+      FactAbbrev = factory-by-phantabbrev Abbrv),
 ].
 
-% [main-mixin-requires S GR FL CL SN]
-% calls main-factory-requires and appends the identity builders for the mixin
-pred main-mixin-requires i:string, i:gref, i:list-w-params factoryname, o:list prop, o:factory-name-or-alias.
-main-mixin-requires Str GR GRFS [From|PO] SN :- !, std.do! [
-  main-factory-requires Str GR GRFS PO SN,
+% [mk-factory-requires-clause-and-abbrev-and-from-clause S GR FL CL SN]
+% Like mk-factory-requires-clause-and-abbrev and appends the identity
+% builders for the mixin (the from clause)
+pred mk-factory-requires-clause-and-abbrev-and-from-clause i:string, i:gref, i:list-w-params factoryname, o:list prop, o:factory-abbrev.
+mk-factory-requires-clause-and-abbrev-and-from-clause Str GR GRFS [From|PO] SN :- !, std.do! [
+  mk-factory-requires-clause-and-abbrev Str GR GRFS PO SN,
   % register factory
   PO => std.do! [
     mk-mixin-fun.then {factory-requires GR}
@@ -1955,12 +1956,12 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   % std.map Hyps mixin-src_mixin ML,
   factories-provide GRFSwP MLwP,
-  main-factory-requires "axioms" (const C) MLwP Props SN,
+  mk-factory-requires-clause-and-abbrev "axioms" (const C) MLwP Clauses FactAbbrev,
 
   if-verbose (coq.say "HB: start module Exports"),
 
   coq.env.begin-module "Exports" none,
-  (std.forall Props c\ acc current (clause _ _ c)),
+  std.forall Clauses (c\ acc current (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
   w-params.nparams MLwP NParams,
@@ -1974,7 +1975,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   export Exports,
 
-  declare-factory-abbrev Module SN,
+  declare-factory-abbrev Module FactAbbrev,
 ].
 
 pred hack-append-phant-unify i:int, i:phant-term, o:phant-term.
@@ -2022,13 +2023,13 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   % std.map Hyps mixin-src_mixin ML,
   factories-provide GRFSwP MLwP,
   if (D = asset-mixin)
-     (main-mixin-requires "axioms" (indt R) MLwP Props SN)
-     (main-factory-requires "axioms" (indt R) MLwP Props SN),
+     (mk-factory-requires-clause-and-abbrev-and-from-clause "axioms" (indt R) MLwP Clauses FactAbbrev)
+     (mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP Clauses FactAbbrev),
 
   if-verbose (coq.say "HB: start module Exports"),
 
   coq.env.begin-module "Exports" none,
-  (std.forall Props c\ acc current (clause _ _ c)),
+  std.forall Clauses (c\ acc current (clause _ _ c)),
   w-params.nparams MLwP NParams,
   acc current (clause _ _ (factory-nparams (indt R) NParams)),
   std.map {list-w-params_list {gr-deps GRK}} (_\ r\ r = maximal) Implicits,
@@ -2043,5 +2044,5 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
 
   export Exports,
 
-  declare-factory-abbrev Module SN,
+  declare-factory-abbrev Module FactAbbrev,
 ].
