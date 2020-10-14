@@ -165,7 +165,7 @@ argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
 argument->asset X _ :- coq.error "Unsupported asset:" X.
 
 pred builder->string i:builder, o:string.
-builder->string (builder _ _ _ B) S :- coq.term->string B S.
+builder->string (builder _ _ _ B) S :- coq.term->string (global B) S.
 
 pred nice-gref->string i:gref, o:string.
 nice-gref->string X Mod :-
@@ -366,7 +366,7 @@ pred from_mixin i:prop, o:mixinname.
 from_mixin (from _ X _) X.
 
 pred from_builder i:prop, o:term.
-from_builder (from _ _ X) X.
+from_builder (from _ _ X) (global X).
 
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
@@ -684,7 +684,8 @@ phant-fun-struct T Name SI PF Out :- std.do! [
 % a function to transform Src into Tgt under the right mixin-src.
 pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
 builder->term Ps T Src Tgt B :- !, std.do! [
-  from Src Tgt F,
+  from Src Tgt FGR,
+  F = global FGR,
   factory-requires Src MLwP,
   list-w-params_list MLwP ML,
   mterm->term (mterm Ps T ML F) B,
@@ -1095,7 +1096,7 @@ mk-factory-requires-clause-and-abbrev Str GR GRFS [FactoryRequires|Aliases] Fact
 
 % The identity builder
 pred declare-id-builder i:factoryname, o:prop.
-declare-id-builder GR (from GR GR (global (const C))) :- std.do! [
+declare-id-builder GR (from GR GR (const C)) :- std.do! [
   mk-mixin-fun.then {factory-requires GR}
     (params\ t\ body\ sigma MTy\
       mgref->term params t GR MTy,
@@ -1268,7 +1269,7 @@ mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
 
   list-w-params_list TMLwP TML,
   std.map TML (from FC) Builders,
-  std.map Builders (x\r\mk-app x Params r) BuildersP,
+  std.map Builders (x\r\mk-app (global x) Params r) BuildersP,
 
   mk-app (global {get-constructor (global TC)})
     {coq.mk-n-holes {factory-nparams TC}} KCHoles,
@@ -1440,7 +1441,7 @@ declare-class+structure MLwP (indt ClassInd) Structure SortProjection ClassProje
   w-params.nparams MLwP NParams,
   std.map2 {list-w-params_list MLwP} Projs (m\ p\ r\ sigma P\
     p = some P,
-    r = from (indt ClassInd) m (global (const P))) Factories,
+    r = from (indt ClassInd) m (const P)) Factories,
   AllFactories = [factory-nparams (indt ClassInd) NParams | Factories],
 
   if-verbose (coq.say "HB: declare type record"),
@@ -1689,7 +1690,7 @@ main-end-declare-builders :- std.do! [
 pred add-mixin i:term, i:factoryname, i:mixinname, i:term, o:list prop.
 add-mixin T FGR MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
   MixinSrcCl = mixin-src T MixinName (global (const C)),
-  BuiderDeclCl = builder-decl (builder N FGR MixinName (global (const C))),
+  BuiderDeclCl = builder-decl (builder N FGR MixinName (const C)),
   new_int N, % timestamp
 
   std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
