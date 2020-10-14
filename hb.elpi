@@ -1093,23 +1093,18 @@ mk-factory-requires-clause-and-abbrev Str GR GRFS [FactoryRequires|Aliases] Fact
       FactAbbrev = factory-by-phantabbrev Abbrv),
 ].
 
-% [mk-factory-requires-clause-and-abbrev-and-from-clause S GR FL CL SN]
-% Like mk-factory-requires-clause-and-abbrev and appends the identity
-% builders for the mixin (the from clause)
-pred mk-factory-requires-clause-and-abbrev-and-from-clause i:string, i:gref, i:list-w-params factoryname, o:list prop, o:factory-abbrev.
-mk-factory-requires-clause-and-abbrev-and-from-clause Str GR GRFS [From|PO] SN :- !, std.do! [
-  mk-factory-requires-clause-and-abbrev Str GR GRFS PO SN,
-  % register factory
-  PO => std.do! [
-    mk-mixin-fun.then {factory-requires GR}
-      (params\ t\ body\ sigma MTy\
-        mgref->term params t GR MTy,
-        body = fun `x` MTy x\x)
-      IDBody
-  ],
-  std.assert-ok! (coq.typecheck IDBody _) "identity builder illtyped",
-  From = from GR GR IDBody,
+% The identity builder
+pred declare-id-builder i:factoryname, o:prop.
+declare-id-builder GR (from GR GR (global (const C))) :- std.do! [
+  mk-mixin-fun.then {factory-requires GR}
+    (params\ t\ body\ sigma MTy\
+      mgref->term params t GR MTy,
+      body = fun `x` MTy x\x)
+    IDBody,
+  std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
+  hb-add-const "identity_builder" IDBody IDType @transparent! C,
 ].
+
 
 % [postulate-arity A Acc T TS] postulates section variables
 % corresponding to parameters in arity A. TS is T applied
@@ -1142,7 +1137,10 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
   @local! => hb-add-const Name _ Ty @opaque! C % no body, local -> a variable
 ].
 
-% Postulates a context with all the mixins provided by the factories
+% [main-declare-context TheType Parameters Factories Clauses] postulates a
+% (section) context with all the mixins provided by the factories and all
+% the structure instances we can derive on TheType from these. Clauses
+% contain mixin-src for each postulated mixin
 pred main-declare-context i:term, i:list term, i:list-w-params factoryname, o:list prop.
 main-declare-context TheType TheParams GRFSwP MSL :-  std.do! [
   factories-provide GRFSwP MLwP,
@@ -1874,7 +1872,8 @@ is-last-named-asset-param (asset-parameter _ _ p\ asset-parameter _ (M p) _) :- 
 is-last-named-asset-param (asset-parameter _ _ _\ asset-record _ _ _ _) :- !.
 is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
 
-% main-declare-asset Asset AssetKind
+% [main-declare-asset Asset AssetKind] unifies the code paths for
+% mixins, factories (and alias factories)
 pred main-declare-asset i:asset-decl, i:asset.
 main-declare-asset Asset AssetKind :- std.do! [
   name-of-asset-decl Asset Module,
@@ -1884,6 +1883,7 @@ main-declare-asset Asset AssetKind :- std.do! [
   coq.env.begin-module Module none,
   coq.env.begin-section Module,
 
+  % We start by postulating the parameters
   process-asset-named-parameters Asset AssetKind Module [],
 ].
 
@@ -1896,9 +1896,10 @@ process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Param
   @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
 
   TheType = global (const C),
+  % We postulate the dependencies
   process-asset-unnamed-parameters (Rest TheType) [] Module TheType D {std.rev Params}
 ].
-% This is a real parameter
+% This is a real parameter, we postulate it
 process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- std.do! [
   std.assert-ok! (coq.typecheck-ty T _) "Illtyped parameter",
   if-verbose (coq.say "HB: postulate " Name),
@@ -2023,7 +2024,9 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   % std.map Hyps mixin-src_mixin ML,
   factories-provide GRFSwP MLwP,
   if (D = asset-mixin)
-     (mk-factory-requires-clause-and-abbrev-and-from-clause "axioms" (indt R) MLwP Clauses FactAbbrev)
+     (mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP FRClauses FactAbbrev,
+      FRClauses => declare-id-builder (indt R) IdBuilderClause,
+      Clauses = [IdBuilderClause|FRClauses])
      (mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP Clauses FactAbbrev),
 
   if-verbose (coq.say "HB: start module Exports"),
