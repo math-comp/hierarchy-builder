@@ -1995,10 +1995,14 @@ hack-section-discharge-unused [T|TS] F (field _ "_" {{ lib:hb.unify lp:TT lp:TT 
 
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.do! [
+  main-declare-context TheType TheParams GRFSwP MixinSrcClauses,
+
   % HACK: work around section discharging unused stuff
-  if (D = asset-mixin) (Fields1 = Fields0)
-      (hack-section-discharge-unused [TheType|TheParams] Fields0 Fields1),
-  main-declare-context TheType TheParams GRFSwP _Hyps,
+  if (D = asset-mixin) (Fields1 = Fields0, HackExtraPhantNo = 0)
+      (std.map MixinSrcClauses mixin-src_mixin MLHack,
+       std.map MLHack (mn\r\ r = global mn) TheHackCrap,
+       HackExtraPhantNo is {std.length TheHackCrap} + {std.length TheParams},
+       hack-section-discharge-unused [TheType|{std.append TheParams TheHackCrap}] Fields0 Fields1),
 
   if-verbose (coq.say "HB: declare record axioms_"),
 
@@ -2019,7 +2023,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
 
   % We work around the fact that Coq sections automatically prune unused
   % variables
-  if (D = asset-mixin) (PhGRK = PhGRK0) (hack-append-phant-unify {std.length TheParams} PhGRK0 PhGRK),
+  if (D = asset-mixin) (PhGRK = PhGRK0) (hack-append-phant-unify HackExtraPhantNo PhGRK0 PhGRK),
   mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
 
   % std.map Hyps mixin-src_mixin ML,
