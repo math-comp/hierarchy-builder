@@ -1520,7 +1520,7 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassName ClassProjecti
   coq.env.end-module _,
   coq.env.end-module MCCompat,
   coq.env.export-module MCCompat,
-  coq.env.import-module Module,
+  %coq.env.import-module Module,
 ].
 
 pred clone-phant-body i:factoryname, i:term, i:term, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
