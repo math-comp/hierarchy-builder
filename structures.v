@@ -520,3 +520,5 @@ Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
 Notation "[find v | t1 ∼ t2 | msg ] rest" :=
   (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
   form_scope.
+
+Global Open Scope string_scope.

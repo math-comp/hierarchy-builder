@@ -371,6 +371,10 @@ from_builder (from _ _ X) (global X).
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
 
+pred mixin-src_src i:prop, o:term.
+mixin-src_src (mixin-src _ _ S) S.
+
+
 pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.
 
@@ -533,10 +537,13 @@ get-structure-coercion (global S) (global T) (global F) :-
   coq.coercion.db-for (grefclass S) (grefclass T) L,
   if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T).
 
+% TODO
 pred get-structure-sort-projection i:structure, o:term.
-get-structure-sort-projection (global (indt S)) (global (const P)) :-
+get-structure-sort-projection T Proj :-
+  safe-dest-app T (global (indt S)) Params,
   coq.CS.canonical-projections S L,
-  if (L = [some P, _]) true (coq.error "No canonical sort projection for" S).
+  if (L = [some P, _]) true (coq.error "No canonical sort projection for" S),
+  mk-app (global (const P)) Params Proj.
 
 pred get-structure-class-projection i:structure, o:term.
 get-structure-class-projection (global (indt S)) (global (const P)) :-
@@ -650,8 +657,8 @@ phant-fun-real N T F Res :- !, phant-fun (real-arg N) T F Res.
 % N is ignored
 pred phant-fun-unify i:term, i:term, i:term, i:phant-term, o:phant-term.
 phant-fun-unify Msg X1 X2 (phant-term AL F) (phant-term [unify-arg|AL] UF) :-
-  std.assert-ok! (coq.typecheck X1 T1) "mk-phant-abbrev: X1 illtyped",
-  std.assert-ok! (coq.typecheck X2 T2) "mk-phant-abbrev: X2 illtyped",
+  std.assert-ok! (coq.typecheck X1 T1) "phant-fun-unify: X1 illtyped",
+  std.assert-ok! (coq.typecheck X2 T2) "phant-fun-unify: X2 illtyped",
   UF = {{fun unif_arbitrary : lib:hb.unify lp:T1 lp:T2 lp:X1 lp:X2 lp:Msg => lp:F}}.
 
 % [phant-fun-implicit N Ty PF PUF] states that PUF is a phant-term
@@ -663,8 +670,9 @@ phant-fun-implicit N Ty PF (phant-term [implicit-arg|AL] (fun N Ty F)) :- !,
 pred phant-fun-unify-mixin i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-unify-mixin T N Ty PF Out :- !, std.do! [
   safe-dest-app Ty (global M) _,
-  mixin-src T M Mstr,
-  (@pi-decl `m` Ty m\ phant-fun-unify {{lib:hb.nomsg}} m Mstr (PF m) (PFM m)),
+  Msg is "phant-fun-unify-mixin: No mixin-src on " ^ {coq.term->string T},
+  std.assert! (mixin-src T M Msrc) Msg,
+  (@pi-decl `m` Ty m\ phant-fun-unify {{lib:hb.nomsg}} m Msrc (PF m) (PFM m)),
   phant-fun-implicit N Ty PFM Out
 ].
 
@@ -865,7 +873,7 @@ find-max-classes [M|Mixins] [C|Classes] :-
     std.filter Mixins (x\ not (std.mem! ML x)) Mixins',
     find-max-classes Mixins' Classes
   ].
-find-max-classes [M|_] _ :- coq.error "cannot find a class containing mixin" M.
+find-max-classes [M|_] _ :- coq.error "HB: cannot find a class containing mixin" M.
 
 pred under-mixins.then i:list (w-args mixinname),
     i:(name -> term -> (term -> A) -> A -> prop),
@@ -875,7 +883,7 @@ under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
   mgref->term Args T M MTy,
   (@pi-decl `m` MTy m\ mixin-src T M m =>
     under-mixins.then ML Mixin Pred (Body m)),
-  Mixin `m` MTy Body Out
+  Mixin `m` MTy Body Out,
 ].
 
 % [mk-mixin-fun.then MLwP Pred F] states that F has shape
@@ -966,23 +974,26 @@ pred mk-phant-term.mixins i:term, i:classname, i:phant-term,
   i:list term, i:name, i:term, i:(term -> list (w-args mixinname)), o:phant-term.
 mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
   class-def (class CN SI _),
+  mk-app SI Params SIParams,
   NoMsg = {{lib:hb.nomsg}},
-  (@pi-decl N Ty t\ sigma SK KC ML\ std.do! [
+  coq.name-suffix N "local" Nlocal,
+  (@pi-decl Nlocal Ty t\ sigma SK KC ML\ std.do! [
     std.map (MLwA t) triple_1 ML,
     std.append Params [T] ParamsT,
     SKPT = app [global {get-constructor SI} | ParamsT],
     ClassTy = app [global CN | ParamsT],
-    (@pi-decl `s` SI s\ @pi-decl `c` ClassTy c\ sigma PF2\ std.do![
-       under-mixins.then (MLwA t) (phant-fun-unify-mixin T)
-          (x\ sigma KC KCM\ std.do![
-            get-constructor (global CN) KC,
-            mgref->term Params t KC KCM,
-            phant-fun-unify NoMsg KCM c PF x
-          ]) PF2,
+    (@pi-decl `s` SIParams s\ @pi-decl `c` ClassTy c\ sigma PF2\ std.do![
+       under-mixins.then (MLwA t) (phant-fun-unify-mixin T) (mk-phant-term.mixins.aux t Params c CN PF) PF2,
        phant-fun-unify NoMsg s {mk-app SKPT [c]} PF2 (PFU t s c)])
   ]),
-  Out = {phant-fun-struct T `s` SI s\
+  Out = {phant-fun-struct T `s` SIParams s\
           {phant-fun-implicit `c` ClassTy (PFU T s)}}
+].
+
+mk-phant-term.mixins.aux T Params C CN PF X :- std.do![
+  get-constructor (global CN) KC,
+  mgref->term Params T KC KCM,
+  phant-fun-unify {{lib:hb.nomsg}} KCM C PF X,
 ].
 
 pred mk-phant-term.class i:term, i:classname, i:phant-term, o:phant-term.
@@ -1008,10 +1019,62 @@ mk-phant-term F PhBody:- !, std.do! [
 %  toposort-mixins ML MLSorted,
   MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
   std.rev {list-w-params_list MLwPSorted} MLSortedRev,
-  find-max-classes MLSortedRev CNL, % TODO: filter out mixins tagged with phant-mixin-real
+
+  % phant-mixin-real is used to tag mixins which are passed as arguments
+  std.filter MLSortedRev (m\not(phant-mixin-real m)) MLSortedRevFiltered,
+  find-max-classes MLSortedRevFiltered CNL,
+  assert-good-coverage! MLSortedRevFiltered CNL,
+
   w-params.then MLwP phant-fun-real phant-fun-real
     (mk-phant-term.classes EtaF CNL) PhBody,
 ].
+
+pred classname->mixins i:classname, o:list-w-params mixinname.
+classname->mixins CN MLwP :- class-def (class CN _ MLwP).
+
+pred class-coverage i:list classname, o:coq.gref.set.
+class-coverage CNL CSet :-
+  std.map CNL classname->mixins CMLLwP,
+  std.map CMLLwP list-w-params_list CMLL,
+  coq.gref.list->set {std.flatten CMLL} CSet.
+
+pred coq.gref.list->set i:list mixinname, o:coq.gref.set.
+coq.gref.list->set L S :-
+  std.fold L {coq.gref.set.empty} coq.gref.set.add S.
+
+pred assert-good-coverage! i:list mixinname, i:list classname.
+assert-good-coverage! MLSortedRev CNL :- std.do! [
+  coq.gref.list->set MLSortedRev MLSet,
+  class-coverage CNL CMLSet,
+  if (not(coq.gref.set.equal MLSet CMLSet))
+     (coq.gref.set.diff CMLSet MLSet Extra,
+      coq.error "I could not find classes covering exactly mixins:"
+        {std.any->string MLSortedRev}
+        "In particular the covering" CNL "also includes mixins:"
+        {coq.gref.set.elements Extra}
+        "This should never happen, please report a bug.")
+     true
+].
+
+pred if-coverage-not-good-error i:list mixinname.
+if-coverage-not-good-error ML :-
+  coq.gref.list->set ML MS,
+  std.forall ML (if-coverage-not-good-error.one MS).
+
+pred if-coverage-not-good-error.one i:coq.gref.set, i:mixinname.
+if-coverage-not-good-error.one MS M :- mixin-first-class M C, !,
+  class-coverage [C] CMS,
+  if (coq.gref.set.subset CMS MS)
+     true
+     (coq.gref.set.elements {coq.gref.set.remove M CMS} MissinFromCurrent,
+      coq.error "HB: the first structure declared in this hierarchy containing" {nice-gref->string M} "is" {nice-gref->string C}
+       "which also contains" {std.map MissinFromCurrent nice-gref->string} "."
+       "\nThe are two ways to fix this problem:"
+       "1) change the current structure to contain" {std.map MissinFromCurrent nice-gref->string} "as well;"
+       "2) amend the hierarchy by declaring a structure before" {nice-gref->string C}
+       "which contains at most" {std.map {coq.gref.set.elements {coq.gref.set.inter CMS MS}} nice-gref->string}).
+if-coverage-not-good-error.one _ _. % new class is the first covering M
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1053,7 +1116,7 @@ declare-instances T [class Class Struct MLwP|Rest] :-
   coq.gref->id TGR TID,
   Name is TID ^ "_is_a_" ^ {term->modname Struct},
 
-  if-verbose (coq.say "HB: declare canonical instance" Name),
+  if-verbose (coq.say "HB: declare canonical structure instance" Name),
 
   get-constructor Struct KS,
   mk-app (global KS) {std.append Params [T, KCApp]} S,
@@ -1574,6 +1637,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
      true,
 
   if-class-already-exists-error Module {findall-classes} ML,
+  if-coverage-not-good-error ML,
 
   % TODO: check we never define the superclass of an exising class
 
@@ -1687,8 +1751,8 @@ main-end-declare-builders :- std.do! [
   export Exports,
 ].
 
-pred add-mixin i:term, i:factoryname, i:mixinname, i:term, o:list prop.
-add-mixin T FGR MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
+pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, i:term, o:list prop.
+add-mixin T FGR MakeCanon MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
   MixinSrcCl = mixin-src T MixinName (global (const C)),
   BuiderDeclCl = builder-decl (builder N FGR MixinName (const C)),
   new_int N, % timestamp
@@ -1701,19 +1765,22 @@ add-mixin T FGR MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
 
   % If the mixin instance is alreaduy a constant there is no need to
   % alias it.
-  if (Bo = global (const C)) true (
-    Name is {nice-gref->string FGR} ^"_to_" ^ {nice-gref->string MixinName},
-    if-verbose (coq.say "HB: declare" Name),
-    hb-add-const Name Bo Ty @transparent! C
-  ).
+  if (Bo = global (const C)) true
+    (Name is {nice-gref->string FGR} ^"_to_" ^ {nice-gref->string MixinName} ^ "__" ^ {std.any->string {new_int}},
+     if-verbose (coq.say "HB: declare" Name),
+     hb-add-const Name Bo Ty @transparent! C),
+  if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
+     (if-verbose (coq.say "HB: declare canonical mixin instance" C),
+      coq.CS.declare-instance (const C))
+     true.
 
 pred mixin-for_mixin-builder i:prop, o:term.
 mixin-for_mixin-builder (mixin-for _ _ B) B.
 
-pred add-all-mixins i:term, i:factoryname, i:list mixinname, o:list prop.
-add-all-mixins T FGR MissingMixins Clauses :- std.do! [
+pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool, o:list prop.
+add-all-mixins T FGR MissingMixins MakeCanon Clauses :- std.do! [
   std.map MissingMixins (assert!-mixin-for T) MBL,
-  std.map2 MissingMixins MBL (add-mixin T FGR) ClausesL,
+  std.map2 MissingMixins MBL (add-mixin T FGR MakeCanon) ClausesL,
   std.flatten ClausesL Clauses,
 ].
 
@@ -1734,7 +1801,7 @@ declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR 
   if-verbose (coq.say "HB: new mixins from"
     {coq.term->string F} "on" {coq.term->string T} ":"
     {std.map MissingMixins nice-gref->string}),
-  MixinSrcFromF => add-all-mixins T FGR MissingMixins Clauses,
+  MixinSrcFromF => add-all-mixins T FGR MissingMixins ff Clauses,
   Clauses => declare-instances T {findall-classes}
 ].
 
@@ -1743,8 +1810,11 @@ declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR 
 % on T
 pred declare-canonical-instances-from-factory i:term, i:term.
 declare-canonical-instances-from-factory T F :-
+  coq.typecheck F TyF ok,
+  target-gref TyF GRF,
   under-canonical-mixins-of.do! T [
     under-mixin-src-from-factory.do! T F [
+      add-all-mixins T GRF {list-w-params_list {factory-provides GRF}} tt _,
       declare-instances T {findall-classes}
     ]
   ].
@@ -1999,9 +2069,9 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
 
   % HACK: work around section discharging unused stuff
   if (D = asset-mixin) (Fields1 = Fields0, HackExtraPhantNo = 0)
-      (std.map MixinSrcClauses mixin-src_mixin MLHack,
-       std.map MLHack (mn\r\ r = global mn) TheHackCrap,
+      (std.map MixinSrcClauses mixin-src_src TheHackCrap,
        HackExtraPhantNo is {std.length TheHackCrap} + {std.length TheParams},
+       coq.say "CRAP" {std.append TheParams TheHackCrap},
        hack-section-discharge-unused [TheType|{std.append TheParams TheHackCrap}] Fields0 Fields1),
 
   if-verbose (coq.say "HB: declare record axioms_"),
