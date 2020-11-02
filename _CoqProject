@@ -50,6 +50,6 @@ Coq2020_material/CoqWS_expansion/withoutHB.v
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
 tests/instance_params_no_type.v
+tests/test_CS_db_filtering.v
 
 -R . HB
-
