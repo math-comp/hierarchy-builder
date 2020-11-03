@@ -122,12 +122,12 @@ argument->gref (str S) GR :- located->gref S {coq.locate-all S} GR.
 argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
 pred argument->term i:argument, o:term.
-argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
+argument->term (str S) T :- !, argument->gref (str S) GR, coq.env.global GR T.
 argument->term (trm T) T1 :- !, std.assert-ok! (coq.elaborate-skeleton T _ T1) "not well typed term".
 argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
 pred argument->ty i:argument, o:term.
-argument->ty (str S) T1 :- !, argument->gref (str S) GR, std.assert-ok! (coq.elaborate-ty-skeleton (global GR) _ T1) "global reference is not a type".
+argument->ty (str S) T1 :- !, argument->gref (str S) GR, std.assert-ok! (coq.elaborate-ty-skeleton (global GR _) _ T1) "global reference is not a type".
 argument->ty (trm T) T1 :- !, std.assert-ok! (coq.elaborate-ty-skeleton T _ T1) "not well typed type".
 argument->ty X _ :- coq.error "Argument" X " is expected to be a type or a string".
 
@@ -165,14 +165,14 @@ argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
 argument->asset X _ :- coq.error "Unsupported asset:" X.
 
 pred builder->string i:builder, o:string.
-builder->string (builder _ _ _ B) S :- coq.term->string (global B) S.
+builder->string (builder _ _ _ B) S :- coq.term->string (global B _) S.
 
 pred nice-gref->string i:gref, o:string.
 nice-gref->string X Mod :-
   coq.gref->path X Path,
   std.rev Path [_,Mod|_], !.
 nice-gref->string X S :-
-  coq.term->string (global X) S.
+  coq.term->string (global X _) S.
 
 pred target-gref i:term, o:gref.
 target-gref T GR :- whd1 T T1, !, target-gref T1 GR.
@@ -366,13 +366,14 @@ pred from_mixin i:prop, o:mixinname.
 from_mixin (from _ X _) X.
 
 pred from_builder i:prop, o:term.
-from_builder (from _ _ X) (global X).
+from_builder (from _ _ X) T :- coq.env.global X T.
 
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
 
 pred mixin-src_src i:prop, o:term.
 mixin-src_src (mixin-src _ _ S) S.
+mixin-src_src (pi c\ mixin-src _ _ c :- F c) T :- F T. % this is a bit pulp...
 
 
 pred extract-builder i:prop, o:builder.
@@ -424,7 +425,7 @@ factory-provides.one Params T B M (triple M PL T) :- std.do! [
 pred extract-conclusion-params i:term, o:list term.
 extract-conclusion-params (prod _ S T) R :- !,
   @pi-decl _ S x\ extract-conclusion-params (T x) R.
-extract-conclusion-params (app [global GR|Args]) R :- !,
+extract-conclusion-params (app [global GR _|Args]) R :- !,
   factory-alias->gref GR Factory,
   factory-nparams Factory NP,
   std.take NP Args R.
@@ -533,26 +534,28 @@ findall-newjoins CurrentClass AllSuper TodoJoins :-
 
 % [get-structure-coercion S1 S2 F] finds the coecion F from the structure S1 to S2
 pred get-structure-coercion i:structure, i:structure, o:term.
-get-structure-coercion (global S) (global T) (global F) :-
+get-structure-coercion (global S _) (global T _) FU :-
   coq.coercion.db-for (grefclass S) (grefclass T) L,
-  if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T).
+  if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T),
+  coq.env.global F FU.
 
 % TODO
 pred get-structure-sort-projection i:structure, o:term.
 get-structure-sort-projection T Proj :-
-  safe-dest-app T (global (indt S)) Params,
+  safe-dest-app T (global (indt S) _) Params,
   coq.CS.canonical-projections S L,
   if (L = [some P, _]) true (coq.error "No canonical sort projection for" S),
-  mk-app (global (const P)) Params Proj.
+  mk-app {coq.env.global (const P)} Params Proj.
 
 pred get-structure-class-projection i:structure, o:term.
-get-structure-class-projection (global (indt S)) (global (const P)) :-
+get-structure-class-projection (global (indt S) _) T :-
   coq.CS.canonical-projections S L,
-  if (L = [_, some P]) true (coq.error "No canonical class projection for" S).
+  if (L = [_, some P]) true (coq.error "No canonical class projection for" S),
+  coq.env.global (const P) T.
 
 pred get-constructor i:term, o:gref.
-get-constructor (global (indt R) as S) (indc K) :- !,
- if (coq.env.indt R _ _ _ _ [K] _) true (coq.error "Not a record" S).
+get-constructor (global (indt R) UI as S) (indc K) :- !,
+ if (coq.env.indt R UI _ _ _ _ [K] _) true (coq.error "Not a record" S).
 
 pred safe-head i:term, o:term.
 safe-head (prod N T Body) Hd :-
@@ -564,8 +567,8 @@ safe-head T Hd :- safe-dest-app T Hd _.
 
 %% finding for locally defined structures
 pred get-cs-structure i:cs-instance, o:term.
-get-cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
-  coq.env.typeof Inst InstTy,
+get-cs-structure (cs-instance _ _ (global Inst UI)) Struct :- std.do! [
+  coq.env.typeof Inst UI InstTy,
   safe-head InstTy Struct
 ].
 
@@ -598,7 +601,7 @@ get-canonical-mixins-of T S MSL :- std.do! [
   if (coq.unify-eq T SortHolesST ok) (
     % Hum, this unification problem is not super trivial. TODO replace by something simpler
     get-constructor S KS,
-    coq.mk-app (global KS) {std.append Holes [T, C]} KSHolesC,
+    coq.mk-app {coq.env.global KS} {std.append Holes [T, C]} KSHolesC,
     std.assert-ok! (coq.unify-eq ST KSHolesC) "HB: get-canonical-mixins-of: ST = _ _ C",
     C = app Stuff,
     std.drop {calc (NParams + 2)} Stuff MIL,
@@ -669,7 +672,7 @@ phant-fun-implicit N Ty PF (phant-term [implicit-arg|AL] (fun N Ty F)) :- !,
 
 pred phant-fun-unify-mixin i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-unify-mixin T N Ty PF Out :- !, std.do! [
-  safe-dest-app Ty (global M) _,
+  safe-dest-app Ty (global M _) _,
   Msg is "phant-fun-unify-mixin: No mixin-src on " ^ {coq.term->string T},
   std.assert! (mixin-src T M Msrc) Msg,
   (@pi-decl `m` Ty m\ phant-fun-unify {{lib:hb.nomsg}} m Msrc (PF m) (PFM m)),
@@ -693,7 +696,7 @@ phant-fun-struct T Name SI PF Out :- std.do! [
 pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
 builder->term Ps T Src Tgt B :- !, std.do! [
   from Src Tgt FGR,
-  F = global FGR,
+  coq.env.global FGR F,
   factory-requires Src MLwP,
   list-w-params_list MLwP ML,
   mterm->term (mterm Ps T ML F) B,
@@ -707,7 +710,7 @@ builder->term Ps T Src Tgt B :- !, std.do! [
 % thus instanciating an abstraction on mixin M_i with X_i
 pred instantiate-mixin i:term, i:mixinname, i:term, o:term.
 instantiate-mixin T M (fun _ Tm F) R :-
-  safe-dest-app Tm (global TmGR) _,
+  safe-dest-app Tm (global TmGR _) _,
   factory-alias->gref TmGR M, !,
   mixin-for T M X, !,
   R = F X.
@@ -732,12 +735,12 @@ mterm->term (mterm Ps T ML F) SFX :- std.do! [
 pred mgref->term i:list term, i:term, i:gref, o:term.
 mgref->term Ps T GR X :- factory-requires GR MLwP, !, std.do! [
   list-w-params_list MLwP ML,
-  mterm->term (mterm Ps T ML (global GR)) X
+  mterm->term (mterm Ps T ML {coq.env.global GR}) X
 ].
 mgref->term Ps T GR X :- !, std.do! [
   std.assert! (gr-deps GR MLwP) "BUG: gr-deps should never fail",
   list-w-params_list MLwP ML,
-  mterm->term (mterm Ps T ML (global GR)) X
+  mterm->term (mterm Ps T ML {coq.env.global GR}) X
 ].
 
 % [mixin-srcs T X MSL] states that MSL is a list of [mixin-src T m X]
@@ -746,7 +749,7 @@ mgref->term Ps T GR X :- !, std.do! [
 pred mixin-srcs i:term, i:term, o:list prop.
 mixin-srcs T X MSL :- std.do! [
   std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
-  if (not (safe-dest-app XTy (global _) _))
+  if (not (safe-dest-app XTy (global _ _) _))
      (coq.error "Term:\n" {coq.term->string X}
                 "\nhas type:\n" {coq.term->string XTy}
                 "\nwhich is not a record")
@@ -816,7 +819,7 @@ assert!-mixin-for T M B :-
 
 pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
-  safe-dest-app S (global GR) Args, factory-alias->gref GR F, factory-nparams F NP, !,
+  safe-dest-app S (global GR _) Args, factory-alias->gref GR F, factory-nparams F NP, !,
   std.split-at NP Args Params [T|_].
 
 pred prod-src-is-factory i:term.
@@ -855,7 +858,7 @@ term-deps T ML :-
 
 % shorthand for gref.
 pred gr-deps i:gref, o:list-w-params mixinname.
-gr-deps GR ML :- term-deps (global GR) ML.
+gr-deps GR ML :- term-deps {coq.env.global GR} ML.
 
 % [find-max-classes Mixins Classes] states that Classes is a list of classes
 %   which contain all the mixins in Mixins.
@@ -919,14 +922,14 @@ mk-phant-abbrev N (phant-term AL T) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.typecheck T TTy) "mk-phant-abbrev: T illtyped",
   hb-add-const NC T TTy @transparent! C,
-  mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
+  mk-phant-abbrev.term 0 {coq.env.global (const C)} AL NParams AbbrevT,
   @global! => coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
 ].
 
 % [acc-phant-abbrev Str GR PhGR Abbrev] makes a phantom abbreviation for F
 pred acc-phant-abbrev i:string, i:gref, o:gref, o:abbreviation.
 acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
-  mk-phant-term (global GR) PhGR,
+  mk-phant-term {coq.env.global GR} PhGR,
   mk-phant-abbrev Str PhGR PhC Abbrev
 ].
 
@@ -938,7 +941,7 @@ pred phant-mixin-real o:mixinname.
 pred phant-fun-mixin i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-mixin N Ty PF (phant-term [Status|AL] (fun N Ty F)) :- !, std.do! [
   @pi-decl N Ty t\ PF t = phant-term AL (F t),
-  safe-dest-app Ty (global Mixin) _,
+  safe-dest-app Ty (global Mixin _) _,
   if (phant-mixin-real Mixin) (Status = real-arg N) (Status = implicit-arg)
 ].
 
@@ -980,8 +983,8 @@ mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
   (@pi-decl Nlocal Ty t\ sigma SK KC ML\ std.do! [
     std.map (MLwA t) triple_1 ML,
     std.append Params [T] ParamsT,
-    SKPT = app [global {get-constructor SI} | ParamsT],
-    ClassTy = app [global CN | ParamsT],
+    SKPT = app [{coq.env.global {get-constructor SI}} | ParamsT],
+    ClassTy = app [{coq.env.global CN} | ParamsT],
     (@pi-decl `s` SIParams s\ @pi-decl `c` ClassTy c\ sigma PF2\ std.do![
        under-mixins.then (MLwA t) (phant-fun-unify-mixin T) (mk-phant-term.mixins.aux t Params c CN PF) PF2,
        phant-fun-unify NoMsg s {mk-app SKPT [c]} PF2 (PFU t s c)])
@@ -991,7 +994,7 @@ mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
 ].
 
 mk-phant-term.mixins.aux T Params C CN PF X :- std.do![
-  get-constructor (global CN) KC,
+  get-constructor {coq.env.global CN} KC,
   mgref->term Params T KC KCM,
   phant-fun-unify {{lib:hb.nomsg}} KCM C PF X,
 ].
@@ -1097,7 +1100,7 @@ params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 pred declare-instances i:term, i:list class.
 declare-instances T [class Class Struct MLwP|Rest] :-
   params->holes MLwP Params,
-  get-constructor (global Class) KC,
+  get-constructor {coq.env.global Class} KC,
 
   if (not(local-cs? T Struct))
      true % we build it
@@ -1119,7 +1122,7 @@ declare-instances T [class Class Struct MLwP|Rest] :-
   if-verbose (coq.say "HB: declare canonical structure instance" Name),
 
   get-constructor Struct KS,
-  mk-app (global KS) {std.append Params [T, KCApp]} S,
+  mk-app {coq.env.global KS} {std.append Params [T, KCApp]} S,
   std.assert-ok! (coq.typecheck S STy) "declare-instances: S illtyped",
 
   hb-add-const Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
@@ -1135,7 +1138,7 @@ type factory-by-phantabbrev abbreviation -> factory-abbrev.
 pred declare-factory-abbrev i:id, i:factory-abbrev.
 declare-factory-abbrev Name (factory-by-classname GR) :-
   % looks fishy (the parameters are not taken into account)
-  @global! => coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
+  @global! => coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[{coq.env.global GR},t]) tt _.
 declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => coq.notation.add-abbreviation Name Nargs AbbrTrm tt _.
@@ -1180,7 +1183,7 @@ postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   if-verbose (coq.say "HB: postulating" ID),
   if (var S) (coq.fresh-type S) true,
   @local! => hb-add-const ID _ S @opaque! C,
-  Var = global (const C),
+  coq.env.global (const C) Var,
   postulate-arity (A Var) [Var|Acc] T T1 Ty.
 postulate-arity (arity Ty) ArgsRev X T Ty :-
   hd-beta X {std.rev ArgsRev} X1 Stack1,
@@ -1191,7 +1194,7 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
 % all its dependencies, previously postulated and associated
 % to the corresponding mixin using mixin-for
 pred postulate-mixin i:w-args mixinname, i:list prop, o:list prop.
-postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
+postulate-mixin (triple M Ps T) MSL [(pi c\ mixin-src T M c :- coq.env.global (const C) c)|MSL] :- MSL => std.do! [
   Name is "mixin_" ^ {gref->modname M},
 
   if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
@@ -1250,8 +1253,8 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
 
-  (pi L L1 Params Rest PoArgs\
-    copy (app [global (const Po)| L]) (app [global (const C) | L1]) :-
+  (pi L L1 Params Rest PoArgs u1 u2\
+    copy (app [global (const Po) u1 | L]) (app [global (const C) u2| L1]) :-
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1) =>
@@ -1328,13 +1331,13 @@ pred mk-coe-class-body
   i:list (w-args mixinname),
   o:term.
 mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
-  mk-app (global FC) {std.append Params [T]} Class,
+  mk-app {coq.env.global FC} {std.append Params [T]} Class,
 
   list-w-params_list TMLwP TML,
   std.map TML (from FC) Builders,
-  std.map Builders (x\r\mk-app (global x) Params r) BuildersP,
+  std.map Builders (x\r\sigma t\ coq.env.global x t, mk-app t Params r) BuildersP,
 
-  mk-app (global {get-constructor (global TC)})
+  mk-app {coq.env.global {get-constructor {coq.env.global TC}}}
     {coq.mk-n-holes {factory-nparams TC}} KCHoles,
 
   (pi c\ sigma Mixes\
@@ -1362,7 +1365,7 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
   mk-app ClassProjection Params ClassP,
   mk-app Coercion        Params CoercionP,
 
-  mk-app (global {get-constructor StructureT})
+  mk-app {coq.env.global {get-constructor StructureT}}
     {coq.mk-n-holes {factory-nparams TC}} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
@@ -1395,7 +1398,7 @@ declare-coercion SortProjection ClassProjection
   hb-add-const CName CoeBody Ty @transparent! C,
   @global! => coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
 
-  Coercion = global (const C),
+  coq.env.global (const C) Coercion,
   w-params.then FMLwP mk-fun ignore
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
@@ -1441,7 +1444,7 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
 
   if-verbose (coq.say "HB: declare unification hint" Name),
   w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
-    (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
+    {coq.env.global S2_Pack} S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
   hb-add-const Name JoinBody Ty @transparent! J,
   coq.CS.declare-instance (const J).
@@ -1484,8 +1487,9 @@ pred mk-record+sort-field i:name, i:term, i:(term -> record-decl), o:indt-decl.
 mk-record+sort-field _ T F (record "type" {{ Type }} "Pack" (field _ "sort" T F)).
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
-mk-class-field ClassName Params T _ (field _ "class" (app [global ClassName|Args]) _\end-record) :-
-  std.append Params [T] Args.
+mk-class-field ClassName Params T _ (field _ "class" (app [C|Args]) _\end-record) :-
+  std.append Params [T] Args,
+  coq.env.global ClassName C.
 
 % Builds the axioms record and the factories from this class to each mixin
 % TODO params
@@ -1516,14 +1520,14 @@ declare-class+structure MLwP (indt ClassInd) Structure SortProjection ClassProje
   coq.env.add-indt StructureDeclaration StructureName,
 
   coq.CS.canonical-projections StructureName [some SortP, some ClassP],
-  Structure = global (indt StructureName),
-  SortProjection = global (const SortP),
-  ClassProjection = global (const ClassP),
+  coq.env.global (indt StructureName) Structure,
+  coq.env.global (const SortP) SortProjection,
+  coq.env.global (const ClassP) ClassProjection,
 ].
 
 % Declares "sort" as a coercion Structurename >-> Sortclass
 pred declare-sort-coercion i:term, i:term.
-declare-sort-coercion (global StructureName) (global Proj) :-
+declare-sort-coercion (global StructureName _) (global Proj _) :-
 
   if-verbose (coq.say "HB: declare sort coercion"),
 
@@ -1540,7 +1544,7 @@ if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
 pred export-mixin-coercion i:classname, i:option constant.
 export-mixin-coercion _ none.
 export-mixin-coercion ClassName (some C) :-
-  coq.env.typeof (const C) CTy,
+  coq.env.typeof (const C) _ CTy,
   safe-dest-app {safe-head CTy} Mixin _,
   coq.term->gref Mixin MixinGR,
   if-verbose (coq.say "HB: export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
@@ -1548,19 +1552,19 @@ export-mixin-coercion ClassName (some C) :-
     coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
 pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:classname, i:term, i:option gref.
-mc-compat-structure ModuleName Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
+mc-compat-structure ModuleName _ NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
   CompatModuleName is "MathCompCompat" ^ ModuleName,
   coq.env.begin-module CompatModuleName none, % to avoid collisions
   coq.env.begin-module ModuleName none,
 
   if (Axioms = some GR)
-    (@global! => coq.notation.add-abbreviation "axiom" 0 (global GR) ff _)
+    (@global! => coq.notation.add-abbreviation "axiom" 0 {coq.env.global GR} ff _)
     true,
 
   if (NewMixins = [NewMixin]) (std.do! [
     if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms', 'mixin_of' and 'Mixin'"),
     MArgs is {factory-nparams NewMixin} + 1,
-    mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
+    mk-eta MArgs {coq.env.typeof NewMixin _} {coq.env.global NewMixin} EtaNewMixin,
     @global! => coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
     @global! => coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
     std.assert! (factory-constructor NewMixin FK) "BUG: Factory constructor missing",
@@ -1583,16 +1587,15 @@ mc-compat-structure ModuleName Module NewMixins CNParams ClassName ClassProjecti
   coq.env.end-module _,
   coq.env.end-module MCCompat,
   coq.env.export-module MCCompat,
-  %coq.env.import-module Module,
 ].
 
 pred clone-phant-body i:factoryname, i:term, i:term, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
-clone-phant-body ClassName SortProjection (global (indt I) as Structure) PL T _ PhF :- std.do! [
-  std.assert! (coq.env.indt I _ _ _ _ [PackC] _) "wtf",
-  mk-app (global (indc PackC)) {std.append PL [T]} PackPLT,
+clone-phant-body ClassName SortProjection (global (indt I) UI as Structure) PL T _ PhF :- std.do! [
+  std.assert! (coq.env.indt I UI _ _ _ _ [PackC] _) "wtf",
+  mk-app (global (indc PackC) UI) {std.append PL [T]} PackPLT,
   mk-app Structure PL SPL,
   (@pi-decl `cT` SPL cT\
-  mk-app (global ClassName) {std.append PL [T]} CPL,
+  mk-app {coq.env.global ClassName} {std.append PL [T]} CPL,
   @pi-decl `c` CPL c\
   (Ph cT c) =
     {phant-fun-unify {{lib:hb.nomsg}} T {mk-app {mk-app SortProjection PL} [cT]}
@@ -1607,13 +1610,13 @@ clone-phant-body ClassName SortProjection (global (indt I) as Structure) PL T _ 
 pred pack-body.mixins i:list term, i:term, i:gref, i:gref, o:term.
 pack-body.mixins PL T BuildC PackS Body :- !, std.do! [
   mgref->term PL T BuildC Class,
-  mk-app (global PackS) {std.append PL [T, Class]} Body
+  mk-app {coq.env.global PackS} {std.append PL [T, Class]} Body
 ].
 
 pred pack-body i:classname, i:list term, i:term, i:list (w-args mixinname), o:term.
 pack-body ClassName PL T MLwA F :- std.do! [
   class-def (class ClassName S _),
-  get-constructor (global ClassName) BuildC,
+  get-constructor {coq.env.global ClassName} BuildC,
   get-constructor S PackS,
   under-mixins.then MLwA mk-fun (pack-body.mixins PL T BuildC PackS) F
 ].
@@ -1753,23 +1756,23 @@ main-end-declare-builders :- std.do! [
 
 pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, i:term, o:list prop.
 add-mixin T FGR MakeCanon MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
-  MixinSrcCl = mixin-src T MixinName (global (const C)),
+  MixinSrcCl = (pi c\ mixin-src T MixinName c :- coq.env.global (const C) c),
   BuiderDeclCl = builder-decl (builder N FGR MixinName (const C)),
   new_int N, % timestamp
 
   std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
-  safe-dest-app Ty (global MixinNameAlias) _,
+  safe-dest-app Ty (global MixinNameAlias _) _,
   factory-alias->gref MixinNameAlias MixinName,
 
   std.assert! (MissinMixin = MixinName) "HB: anomaly: we built the wrong mixin",
 
   % If the mixin instance is alreaduy a constant there is no need to
   % alias it.
-  if (Bo = global (const C)) true
+  if (Bo = global (const C) _) true
     (Name is {nice-gref->string FGR} ^"_to_" ^ {nice-gref->string MixinName} ^ "__" ^ {std.any->string {new_int}},
      if-verbose (coq.say "HB: declare" Name),
      hb-add-const Name Bo Ty @transparent! C),
-  if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
+  if (MakeCanon = tt, whd {coq.env.global (const C)} [] (global (indc _) _) _)
      (if-verbose (coq.say "HB: declare canonical mixin instance" C),
       coq.CS.declare-instance (const C))
      true.
@@ -1828,7 +1831,7 @@ main-declare-instance T F [] :-
 
 pred declare-old-located i:string, i:located.
 declare-old-located Id (loc-gref GR) :-
-  @global! => coq.notation.add-abbreviation Id 0 (global GR) ff _.
+  @global! => coq.notation.add-abbreviation Id 0 {coq.env.global GR} ff _.
 declare-old-located Id (loc-abbreviation Abbrev) :-
   coq.notation.abbreviation Abbrev [] T,
   % FIXME: this assumes the abbreviation has no arg
@@ -1877,13 +1880,13 @@ postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
   @local! => hb-add-const Name _ Package @opaque! C,
-  TheFactory = global (const C),
+  coq.env.global (const C) TheFactory,
 ].
 
 % Only record fields can be exported as operations.
 pred define-factory-operations i:term, i:term, i:gref.
 define-factory-operations TheType TheFactory (indt I) :- !,
-  coq.env.indt I _ NParams _ _ _ _,
+  coq.env.indt I _ _ NParams _ _ _ _,
   NHoles is NParams - 1,
   coq.CS.canonical-projections I PL,
   std.forall PL (define-factory-operation TheType TheFactory NHoles).
@@ -1894,7 +1897,7 @@ define-factory-operation _ _ _ none.
 define-factory-operation TheType TheFactory NHoles (some P) :-
   coq.mk-n-holes NHoles Holes,
   std.append Holes [TheFactory] Holes_Factory,
-  T = app[global (const P), TheType|Holes_Factory],
+  T = app[{coq.env.global (const P)}, TheType|Holes_Factory],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
   @local! => coq.notation.add-abbreviation Name 0 T ff _.
@@ -1912,7 +1915,7 @@ builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF
      (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
   if-verbose (coq.say "HB: postulating type" IDT),
   @local! => hb-add-const IDT _ Ty @opaque! C, % no body, local -> a variable
-  TheType = global (const C),
+  coq.env.global (const C) TheType,
 
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
     "the last argument must be a factory applied to the type variable",
@@ -1928,7 +1931,7 @@ builders-postulate-factories (context-item ID _ TSkel none Factories) :- std.do!
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factorie: illtyped context",
   if (var T) (coq.fresh-type T) true,
   @local! => hb-add-const ID _ T @opaque! P, % no body, local -> a variable
-  TheParam = global (const P),
+  coq.env.global (const P) TheParam,
   builders-postulate-factories (Factories TheParam),
 ].
 
@@ -1966,7 +1969,7 @@ process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Param
   if (var T) (fresh-indexed-type Ty) (Ty = T),
   @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
 
-  TheType = global (const C),
+  coq.env.global (const C) TheType,
   % We postulate the dependencies
   process-asset-unnamed-parameters (Rest TheType) [] Module TheType D {std.rev Params}
 ].
@@ -1976,7 +1979,7 @@ process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- 
   if-verbose (coq.say "HB: postulate " Name),
   if (var T) (coq.fresh-type T) true,
   @local! => hb-add-const Name _ T @opaque! C, % no body, local -> a variable
-  TheParam = global (const C),
+  coq.env.global (const C) TheParam,
   process-asset-named-parameters (Rest TheParam) D Module [pr TheParam T|Params],
 ].
 
@@ -2010,19 +2013,19 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
   hb-add-const "axioms_" Ty1 _ @transparent! C,
 
-  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+  std.assert! (safe-dest-app Ty1 (global PhF _) _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
   Hyps => mgref->term TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
-  (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
+  (pi Args u1 u2\ copy (app [global F u1|Args]) (global (const C) u2)) => copy MFKTy MFKTyC,
   hb-add-const "Axioms_" MFK MFKTyC @transparent! CK,
   GRK = const CK,
 
   coq.env.end-section,
 
-  mk-phant-term (global GRK) PhGRK0,
+  mk-phant-term {coq.env.global GRK} PhGRK0,
   if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
   mk-phant-abbrev "Build" PhGRK BuildConst _,
 
@@ -2081,13 +2084,13 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
   coq.env.add-indt RDecl R,
   coq.env.end-section,
-  coq.env.indt R tt _ _ _ [K] _,
+  coq.env.indt R _ tt _ _ _ [K] _,
   GRK = indc K,
 
   % TODO: should this be in the Exports module?
   if-verbose (coq.say "HB: declare notation axioms"),
 
-  mk-phant-term (global GRK) PhGRK0,
+  mk-phant-term {coq.env.global GRK} PhGRK0,
 
   if-verbose (coq.say "HB: declare notation Axioms"),
 

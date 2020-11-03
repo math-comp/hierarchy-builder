@@ -163,8 +163,8 @@ Elpi Accumulate lp:{{
 
 pred pp-from i:prop.
 pp-from (from F M T) :-
-  coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
-  coq.say "  " {coq.term->string (global T)},
+  coq.say "From" {coq.term->string (global F _)} "to" {coq.term->string (global M _)},
+  coq.say "  " {coq.term->string (global T _)},
   coq.say "".
 
 pred pp-list-w-params i:list-w-params mixinname, i:term.
@@ -178,7 +178,7 @@ pp-list-w-params.list-triple L S :-
   coq.say {coq.term->string S} ":=",
   std.forall L pp-list-w-params.triple.
 pp-list-w-params.triple (triple M Params T) :-
-  coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
+  coq.say "  " {coq.term->string (app [global M _|{std.append Params [T]}])}.
 
 pred pp-class i:prop.
 pp-class (class-def (class _ S MLwP)) :-
@@ -345,14 +345,14 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
     postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
-  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
+  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias _) Args) "The type of the instance is not a factory",
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
   hack-section-discharging SectionBody SectionBodyHack,
   if (Name = "_")
      (TheFactory = SectionBodyHack)
      (hb-add-const Name SectionBodyHack _ @transparent! C,
-      TheFactory = (global (const C))),
+      coq.env.global (const C) TheFactory),
   std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
   with-attributes (main-declare-instance TheType TheFactory Clauses),
 
