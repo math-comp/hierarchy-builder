@@ -43,7 +43,7 @@ Elpi Db hb.db lp:{{
 typeabbrev mixinname gref.
 typeabbrev classname gref.
 typeabbrev factoryname gref.
-typeabbrev structure term.
+typeabbrev structure gref.
 
 kind triple type -> type -> type -> type.
 type triple A -> B -> C -> triple A B C.
@@ -95,7 +95,7 @@ pred factory-nparams o:factoryname, o:int.
 pred class-def o:class.
 
 % is-structure
-pred is-structure o:term.
+pred is-structure o:gref.
 
 % [phant-abbrev Cst AbbrevCst Abbrev]
 % Stores phantom abbreviation Abbrev associated with Cst
@@ -109,7 +109,7 @@ pred phant-abbrev o:gref, o:gref, o:abbreviation.
 pred factory-builder-nparams o:constant, o:int.
 
 % [sub-class C1 C2] C1 is a sub-class of C2.
-pred sub-class o:class, o:class.
+pred sub-class o:classname, o:classname.
 
 %%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
@@ -182,7 +182,7 @@ pp-list-w-params.triple (triple M Params T) :-
 
 pred pp-class i:prop.
 pp-class (class-def (class _ S MLwP)) :-
-  pp-list-w-params MLwP S.
+  pp-list-w-params MLwP {coq.env.global S}.
 
 pred pp-mixin-src i:prop.
 pp-mixin-src (mixin-src T M C) :-
