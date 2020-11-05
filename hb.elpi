@@ -384,12 +384,14 @@ w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 % no implicit arguments
 pred hb-add-const i:id, i:term, i:term, i:opaque?, o:constant.
 hb-add-const Name Bo Ty Opaque C :- std.do! [
+  @univpoly! =>
     coq.env.add-const Name Bo Ty Opaque C,
   coq.arguments.set-implicit (const C) [[]]
 ].
 
 pred hb-add-indt i:indt-decl, o:inductive.
 hb-add-indt D I :- std.do! [
+  @univpoly! =>
     coq.env.add-indt D I
 ].
 
@@ -1360,6 +1362,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
   w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
   if-verbose (coq.say "HB: export operation" Name),
+  std.assert-ok! (coq.typecheck Body BodyTy) "export-1-operation: illtyped operation",
   hb-add-const Name Body BodyTy @transparent! C,
 
   w-params.nparams MwP NP,
