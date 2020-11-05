@@ -342,6 +342,41 @@ distribute-w-params (w-params.cons N T F) L :-
 distribute-w-params (w-params.nil N T F) L :-
   pi x\ std.map (F x) (bind-nil N T x) L.
 
+pred list-w-params.fold i:list-w-params A, i:B, o:B.
+list-w-params.fold (w-params.cons N T F) S0 S2 :-
+  fold T S0 S1,
+  @pi-decl N T x\ list-w-params.fold (F x) S1 S2.
+list-w-params.fold (w-params.nil N T F) S0 S2 :-
+  fold T S0 S1,
+  @pi-decl N T x\ std.fold (F x) S1 w-args.fold S2.
+
+pred w-args.fold i:w-args A, i:B, o:B.
+w-args.fold (triple _ L T) S0 S2 :-
+  std.fold L S0 fold S1,
+  fold T S1 S2.
+
+pred univs-of-list-w-params i:list-w-params A, o:coq.univ.set.
+univs-of-list-w-params W S :-
+  (pi u s0 s1\ fold (sort (typ u)) s0 s1 :- !, coq.univ.set.add u s0 s1) =>
+  list-w-params.fold W {coq.univ.set.empty} S.
+
+pred list-w-params.copy i:list-w-params A, o:list-w-params A.
+list-w-params.copy (w-params.cons N T F) (w-params.cons N T1 F1) :-
+  copy T T1,
+  @pi-decl N T x\ list-w-params.copy (F x) (F1 x).
+list-w-params.copy (w-params.nil N T F) (w-params.nil N T1 F1) :-
+  copy T T1,
+  @pi-decl N T x\ std.map (F x) w-args.copy (F1 x).
+
+pred w-args.copy i:w-args A, o:w-args A.
+w-args.copy (triple A L T) (triple A L1 T1) :-
+  std.map L copy L1, copy T T1.
+
+pred list-w-params.bind-univs i:list-w-params A, o:univ-closed (list-w-params A).
+list-w-params.bind-univs W R :-
+  univs-of-list-w-params W S,
+  coq.bind-universes {coq.univ.set.elements S} list-w-params.copy W R.
+
 % Specific to one-w-params
 pred w-params_1 i:one-w-params A, o:A.
 w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
@@ -349,8 +384,13 @@ w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 % no implicit arguments
 pred hb-add-const i:id, i:term, i:term, i:opaque?, o:constant.
 hb-add-const Name Bo Ty Opaque C :- std.do! [
-  coq.env.add-const Name Bo Ty Opaque C,
+    coq.env.add-const Name Bo Ty Opaque C,
   coq.arguments.set-implicit (const C) [[]]
+].
+
+pred hb-add-indt i:indt-decl, o:inductive.
+hb-add-indt D I :- std.do! [
+    coq.env.add-indt D I
 ].
 
 %%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1149,6 +1189,27 @@ declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => coq.notation.add-abbreviation Name Nargs AbbrTrm tt _.
 
+% [mk-clause-with-univs Data Hyps MkHead Clause]
+%   Clause = pi u1 .. un\ Head :- coq.univ.new "" u1, ..., coq.univ.new "" un
+% where mkHead D Head
+% and Data = univ-binder u1\ ... univ-data D
+pred mk-clause-with-univs i:univ-closed A, i:list prop, i:(A -> prop -> prop), o:prop.
+mk-clause-with-univs (univ-binder F) Todo MkClauseHd (pi u\ Clause u) :-
+  pi u\ mk-clause-with-univs (F u) [coq.univ.new "" u|Todo] MkClauseHd (Clause u).
+mk-clause-with-univs (univ-data D) TodoRev MkClauseHd (Head :- Todo) :-
+  std.rev TodoRev Todo,
+  MkClauseHd D Head.
+
+pred mk-factory-requires-clause i:gref, i:list-w-params mixinname, o:prop.
+mk-factory-requires-clause GR MLwP Clause :-
+  list-w-params.bind-univs MLwP MLwPuc,
+  mk-clause-with-univs MLwPuc [] (x\r\ r = factory-requires GR x) Clause.
+
+pred mk-class-def-clause i:class, o:prop.
+mk-class-def-clause (class C S MLwP) Clause :-
+  list-w-params.bind-univs MLwP MLwPuc,
+  mk-clause-with-univs MLwPuc [] (x\r\ r = class-def (class C S x)) Clause.
+
 % [mk-factory-requires-clause-and-abbrev Str GR FL CL FactAbbrev]
 % computes the list of mixins ML provided by FL,
 % creates a clause in CL stating that GR requires ML (factory-requires ..), and
@@ -1157,7 +1218,7 @@ declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
 pred mk-factory-requires-clause-and-abbrev i:string, i:gref, i:list-w-params factoryname, o:list prop, o:factory-abbrev.
 mk-factory-requires-clause-and-abbrev Str GR GRFS [FactoryRequires|Aliases] FactAbbrev :- !, std.do! [
   factories-provide GRFS ML,
-  FactoryRequires = factory-requires GR ML,
+  mk-factory-requires-clause GR ML FactoryRequires,
   if (factory-alias->gref GR _)
      (Aliases = [],
       FactAbbrev = factory-by-classname GR)
@@ -1508,7 +1569,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
-  coq.env.add-indt ClassDeclaration ClassInd,
+  hb-add-indt ClassDeclaration ClassInd,
   coq.CS.canonical-projections ClassInd Projs,
   % TODO: put this code in a named clause
   w-params.nparams MLwP NParams,
@@ -1593,11 +1654,11 @@ mc-compat-structure ModuleName _ NewMixins CNParams ClassName ClassProjection Ax
   coq.env.export-module MCCompat,
 ].
 
-pred clone-phant-body i:factoryname, i:term, i:term, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
-clone-phant-body ClassName SortProjection (global (indt I) UI as Structure) PL T _ PhF :- std.do! [
+pred clone-phant-body i:factoryname, i:term, i:structure, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
+clone-phant-body ClassName SortProjection (indt I) PL T _ PhF :- std.do! [
   std.assert! (coq.env.indt I UI _ _ _ _ [PackC] _) "wtf",
   mk-app (global (indc PackC) UI) {std.append PL [T]} PackPLT,
-  mk-app Structure PL SPL,
+  mk-app (global (indt I) UI) PL SPL,
   (@pi-decl `cT` SPL cT\
   mk-app {coq.env.global ClassName} {std.append PL [T]} CPL,
   @pi-decl `c` CPL c\
@@ -1620,7 +1681,7 @@ pack-body.mixins PL T BuildC PackS Body :- !, std.do! [
 pred pack-body i:classname, i:list term, i:term, i:list (w-args mixinname), o:term.
 pack-body ClassName PL T MLwA F :- std.do! [
   class-def (class ClassName S _),
-  get-constructor {coq.env.global ClassName} BuildC,
+  get-constructor ClassName BuildC,
   get-constructor S PackS,
   under-mixins.then MLwA mk-fun (pack-body.mixins PL T BuildC PackS) F
 ].
@@ -1656,7 +1717,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
     ClassName Structure SortProjection ClassProjection Factories,
 
   w-params.map MLwP (_\_\_\ mk-nil) NilwP,
-  ClassRequires = factory-requires (ClassName) NilwP,
+  mk-factory-requires-clause (ClassName) NilwP ClassRequires,
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
 
@@ -1692,10 +1753,11 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: accumulating various props"),
   std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
+  mk-class-def-clause CurrentClass ClassDef,
   std.flatten [
       MixinFirstClass, EX, Factories,
       [ClassRequires], [ClassAlias], [is-structure Structure],
-      NewJoins, [class-def CurrentClass]
+      NewJoins, [ClassDef]
     ]
     NewClauses,
   std.forall NewClauses (c\ acc current (clause _ _ c)),
@@ -2086,7 +2148,7 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   Kname = "Axioms_",
   RDeclSkel = record "axioms_" Sort1 Kname Fields1,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
-  coq.env.add-indt RDecl R,
+  hb-add-indt RDecl R,
   coq.env.end-section,
   coq.env.indt R _ tt _ _ _ [K] _,
   GRK = indc K,
