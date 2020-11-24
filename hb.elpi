@@ -1548,7 +1548,7 @@ export-mixin-coercion ClassName (some C) :-
     coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
 pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:classname, i:term, i:option gref.
-mc-compat-structure ModuleName Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
+mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
   CompatModuleName is "MathCompCompat" ^ ModuleName,
   coq.env.begin-module CompatModuleName none, % to avoid collisions
   coq.env.begin-module ModuleName none,
@@ -2071,7 +2071,6 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   if (D = asset-mixin) (Fields1 = Fields0, HackExtraPhantNo = 0)
       (std.map MixinSrcClauses mixin-src_src TheHackCrap,
        HackExtraPhantNo is {std.length TheHackCrap} + {std.length TheParams},
-       coq.say "CRAP" {std.append TheParams TheHackCrap},
        hack-section-discharge-unused [TheType|{std.append TheParams TheHackCrap}] Fields0 Fields1),
 
   if-verbose (coq.say "HB: declare record axioms_"),
