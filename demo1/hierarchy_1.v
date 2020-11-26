@@ -47,14 +47,14 @@ HB.factory Record Ring_of_TYPE A := {
 
 HB.builders Context A (a : Ring_of_TYPE A).
 
-  Definition to_AddComoid_of_TYPE :=
-    AddComoid_of_TYPE.Build A zero add addrA addrC add0r.
-  HB.instance A to_AddComoid_of_TYPE.
+HB.instance
+Definition to_AddComoid_of_TYPE :=
+  AddComoid_of_TYPE.Build A zero add addrA addrC add0r.
 
-  Definition to_Ring_of_AddComoid :=
-    Ring_of_AddComoid.Build A _ _ _ addNr mulrA mul1r
-      mulr1 mulrDl mulrDr.
-  HB.instance A to_Ring_of_AddComoid.
+HB.instance
+Definition to_Ring_of_AddComoid :=
+  Ring_of_AddComoid.Build A _ _ _ addNr mulrA mul1r
+    mulr1 mulrDl mulrDr.
 
 HB.end.
 

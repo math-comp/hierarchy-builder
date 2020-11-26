@@ -1,10 +1,22 @@
 # Changelog
 
+## UNRELEASED
+
+- Use Coq's elaborator to typecheck factories and structures (coercions are
+  now inserted properly)
+- New attribute `#[mathcomp]` for `HB.structure` to synthesize backward
+  compatibility code for the Mathematical Components library.
+  When the mixin contains a single axiom its name can be given as
+  `#[mathcomp(axiom="eq_axiom")]`.
+- `HB.instance Definition name : factory T := term` works even if term is not
+  a known builder. In this case the type (key) is read from the factory
+  (the type of the definition).
+
 ## [0.10.0] - 2020-08-08
 
 - HB now supports parameters (experimental).
 - Port to Coq-Elpi 1.5.
-- NBetter error message in case classes are not defined in the right order.
+- Better error message in case classes are not defined in the right order.
 - Structure operations are not reexported by substructures.
 - Spurious trivial `TYPE` structure removed from demo1.
 

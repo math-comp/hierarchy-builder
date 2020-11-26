@@ -188,9 +188,8 @@ Section ProductTopology.
   by split => // [[x1 x2] [[/=Ax1 Bx1] [/=Ax2 Bx2]]].
   Qed.
 
-  Definition prod_topology :=
-    TopologicalBase.Build (TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type _ prod_open_base_covers prod_open_base_setU.
-  HB.instance ((TopologicalSpace.sort T1 * TopologicalSpace.sort T2)%type) prod_topology.
+  HB.instance Definition prod_topology :=
+    TopologicalBase.Build (T1 * T2)%type _ prod_open_base_covers prod_open_base_setU.
 
 End ProductTopology.
 
@@ -209,12 +208,11 @@ HB.structure Definition TAddAG := { A of Topological A & AddAG_of_TYPE A & JoinT
 
 (* Instance *)
 
-Definition Z_ring_axioms :=
+HB.instance Definition Z_ring_axioms :=
   Ring_of_TYPE.Build Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
-HB.instance Z Z_ring_axioms.
 
 Example test1 (m n : Z) : (m + n) - n + 0 = m.
 Proof. by rewrite addrK addr0. Qed.
@@ -225,12 +223,11 @@ Search _ Qc "plus" "opp".
 Lemma Qcplus_opp_l q : - q + q = 0.
 Proof. by rewrite Qcplus_comm Qcplus_opp_r. Qed.
 
-Definition Qc_ring_axioms :=
+HB.instance Definition Qc_ring_axioms :=
   Ring_of_TYPE.Build Qc 0%Qc 1%Qc Qcplus Qcopp Qcmult
     Qcplus_assoc Qcplus_comm Qcplus_0_l Qcplus_opp_l
     Qcmult_assoc Qcmult_1_l Qcmult_1_r
     Qcmult_plus_distr_l Qcmult_plus_distr_r.
-HB.instance Qc Qc_ring_axioms.
 
 Obligation Tactic := idtac.
 Definition Qcopen_base : set (set Qc) :=
