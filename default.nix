@@ -1,19 +1,19 @@
 {withEmacs ? false,
- nixpkgs ? (fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/e97fdce4e1b945c9ec30d4d90a451f1577f5cf4a.tar.gz),
+ nixpkgs ? (fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/4aa5466cbc741097218a1c494a7b832a17d1967d.tar.gz),
  coq-version ? "8.11",
  print-env ? false
 }:
 with import nixpkgs {
-  overlays = [ (super: self: {
-    coqPackages = { "8.11" = super.coqPackages_8_11;  }."${coq-version}".overrideScope' (self: super: {
-      # Coq package override example:
-      coq-elpi = super.coq-elpi.overrideAttrs (old: {
-        name = "coq8.11-elpi-1.5.0";
-        src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.5.0.tar.gz;
-      });
-    });
-    coq = self.coqPackages.coq;
-  })];
+  # overlays = [ (super: self: {
+  #   coqPackages = { "8.11" = super.coqPackages_8_11;  }."${coq-version}".overrideScope' (self: super: {
+  #     # Coq package override example:
+  #     coq-elpi = super.coq-elpi.overrideAttrs (old: {
+  #       name = "coq8.11-elpi-1.5.0";
+  #       src = fetchTarball https://github.com/LPCIC/coq-elpi/archive/v1.5.0.tar.gz;
+  #     });
+  #   });
+  #   coq = self.coqPackages.coq;
+  # })];
 };
 let pgEmacs = emacsWithPackages (epkgs: with epkgs.melpaStablePackages; [proof-general]); in
 coqPackages.hierarchy-builder.overrideAttrs (old: {
