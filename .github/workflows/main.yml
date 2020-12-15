@@ -11,13 +11,13 @@ on:
     branches: [ master ]
 
 jobs:
-  nix:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - uses: cachix/install-nix-action@v10
-    - run: nix-build
+#  nix:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - uses: actions/checkout@v2
+#    - uses: cachix/install-nix-action@v10
+#    - run: nix-build
 
   opam:
     runs-on: ubuntu-latest
@@ -26,6 +26,7 @@ jobs:
         coq_version:
           - '8.11'
           - '8.12'
+          - '8.13'
         ocaml_version:
           - 'minimal'
     steps:
