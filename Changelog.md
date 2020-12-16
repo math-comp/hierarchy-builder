@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.0.0] - 2020-12-16
+
+Requires Coq-Elpi 1.6 or 1.7 or 1.8 and Coq 8.11 or 8.12 or 8.13.
 
 - Use Coq's elaborator to typecheck factories and structures (coercions are
   now inserted properly)
