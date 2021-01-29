@@ -1,6 +1,6 @@
 From Coq Require Import ssreflect ssrfun ssrbool ZArith QArith.
 From HB Require Import structures.
-From HB.demo2 Require Import classical.
+From HB Require Import demo2.classical.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
@@ -9,8 +9,6 @@ Local Open Scope classical_set_scope.
 Local Open Scope hb_scope.
 
 Module Stage10.
-
-HB.structure Definition TYPE := { A of True }.
 
 HB.mixin Record AddAG_of_TYPE A := {
   zero : A;

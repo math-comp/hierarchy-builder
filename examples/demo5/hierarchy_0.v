@@ -1,8 +1,6 @@
 From Coq Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
-HB.structure Definition TYPE := { A of True }.
-
 HB.mixin Record AddComoid_of_TYPE A := {
   zero : A;
   add : A -> A -> A;

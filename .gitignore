@@ -34,6 +34,9 @@ nra.cache
 Makefile.coq
 Makefile.coq.conf
 .coqdeps.d
+Makefile.test-suite.coq
+Makefile.test-suite.coq.conf
+.coqdeps.test-suite
 
 _minted-*
 *.aux
