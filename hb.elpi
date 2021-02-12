@@ -164,6 +164,30 @@ argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
   std.assert! (var Ty) "Factories aliases should not be given a type".
 argument->asset X _ :- coq.error "Unsupported asset:" X.
 
+% we elaborate the entire spine of parameters and body lambdas together
+pred elaborate-params-skeleton i:term, i:arity, o:term, o:arity.
+elaborate-params-skeleton B A B3 A1 :- std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton A _ A1) "Arity illtyped",
+  elaborate-params-skeleton.aux A1 B B1 K,
+  coq.arity->term A1 TB,
+  std.assert-ok! (coq.elaborate-skeleton B1 TB B2) "Body parameters illtyped",
+  elaborate-params-skeleton.aux2 K B2 B3,
+].
+
+type bind-trm (term -> bound-term) -> bound-term.
+type bind-stop term -> bound-term.
+
+pred elaborate-params-skeleton.aux i:arity, i:term, o:term, o:bound-term.
+elaborate-params-skeleton.aux (parameter _ _ _ R) (fun N T F) (fun N T F1) (bind-trm K) :-
+  pi x\ elaborate-params-skeleton.aux (R x) (F x) (F1 x) (K x).
+elaborate-params-skeleton.aux (arity uvar) T {{ I }} (bind-stop T).
+elaborate-params-skeleton.aux _ _ _ _ :- coq.error "You cannot give a type ot this definition".
+
+pred elaborate-params-skeleton.aux2 i:bound-term, i:term, o:term.
+elaborate-params-skeleton.aux2 (bind-trm B) (fun N T F) (fun N T F1) :-
+  pi x\ elaborate-params-skeleton.aux2 (B x) (F x) (F1 x).
+elaborate-params-skeleton.aux2 (bind-stop B) _ B.
+
 pred builder->string i:builder, o:string.
 builder->string (builder _ _ _ B) S :- coq.term->string (global B) S.
 

@@ -289,8 +289,9 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
   @pi-decl N Ty t\
     product->triples (B t) (Rest t) C.
 
-main [const-decl Module (some B) _] :- !, std.do! [
-  sigT->list-w-params B GRFS ClosureCheck, !,
+main [const-decl Module (some B) A] :- !, std.do! [
+  elaborate-params-skeleton B A B1 _,
+  sigT->list-w-params B1 GRFS ClosureCheck, !,
   with-attributes (main-declare-structure Module GRFS ClosureCheck),
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
