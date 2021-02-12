@@ -116,6 +116,10 @@ located->gref S [loc-modpath _|_] _ :- coq.error S "should be a factory, but is 
 located->gref S [loc-modtypath _|_] _ :- coq.error S "should be a factory, but is a module type".
 located->gref S [] _ :- coq.error "Could not locate name" S.
 
+pred purge-id i:term, o:term.
+purge-id T T1 :-
+  (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
+
 % TODO: generalize/rename when we support parameters
 pred argument->gref i:argument, o:gref.
 argument->gref (str S) GR :- located->gref S {coq.locate-all S} GR.
