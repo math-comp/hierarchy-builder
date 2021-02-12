@@ -1857,31 +1857,39 @@ declare-old-constant (some C) :-
   std.forall {coq.locate-all Id} (declare-old-located Id).
 declare-old-constant _ :- true.
 
-pred context->factory i:context-decl, o:factoryname.
-context->factory (context-item IDT _ TTySkel none t\ context-item _ _ (TF t) none _\ context-end) GRF :- !,
-  coq.id->name IDT NameT,
-  std.assert-ok! (coq.elaborate-ty-skeleton TTySkel _ TTy) "context entry illtyped",
-  @pi-decl NameT TTy t\
-    std.assert! (factory? (TF t) (triple GRF _Params t))
-      "the last argument must be a factory applied to the type variable".
-context->factory (context-item ID _ TSkel none Factories) GRF :- !,
-  coq.id->name ID Name,
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "context entry illtyped",
-  @pi-decl Name T x\ context->factory (Factories x) GRF.
-context->factory (context-item ID _ _ (some _) _) _ :-
+pred elaborate-context-skel->factory i:context-decl, o:context-decl, o:factoryname, o:diagnostic.
+elaborate-context-skel->factory
+  (context-item IDT IT TTySkel none t\ context-item IDF IF (TFSkel t) none _\ context-end)
+  (context-item IDT IT TTy none t\ context-item IDF IF (TFSkel t) none _\ context-end) GRF Diag
+:- !, std.do-ok! Diag [
+  coq.elaborate-ty-skeleton TTySkel _ TTy,
+  (d\ coq.id->name IDT NameT),
+  (d\ @pi-decl NameT TTy t\ purge-id (TFSkel t) (TFSkel1 t), coq.elaborate-ty-skeleton (TFSkel1 t) _ (TF1 t) d),
+  (d\ @pi-decl NameT TTy t\ std.assert! (factory? (TF1 t) (triple GRF _Params t)) "the last argument must be a factory applied to the type variable"),
+].
+elaborate-context-skel->factory (context-item ID I TSkel none C) (context-item ID I T none C1) GRF Diag :- !, std.do-ok! Diag [
+  coq.elaborate-ty-skeleton TSkel _ T,
+  (d\ coq.id->name ID Name),
+  (d\ @pi-decl Name T x\ elaborate-context-skel->factory (C x) (C1 x) GRF d),
+].
+elaborate-context-skel->factory (context-item ID _ _ (some _) _) _ _ _ :-
   coq.error "context item cannot be given a body:" ID.
+
+pred purge-id i:term, o:term.
+purge-id T T1 :-
+  (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
 
 pred main-begin-declare-builders i:context-decl.
 main-begin-declare-builders CtxSkel :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO?
-  context->factory CtxSkel GRF,
+  std.assert-ok! (elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
   coq.env.begin-module Name none,
   if (GRF = indt FRecord) (std.do! [
     coq.env.begin-module "Super" none,
     std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
     coq.env.end-module _]) (true),
   coq.env.begin-section Name,
-  builders-postulate-factories CtxSkel,
+  builders-postulate-factories Ctx,
 ].
 
 pred postulate-factory-abbrev i:term, i:list term, i:id, i:factoryname, o:term.
@@ -1940,7 +1948,7 @@ builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF
 
 builders-postulate-factories (context-item ID _ TSkel none Factories) :- std.do! [
   if-verbose (coq.say "HB: postulating" ID),
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factorie: illtyped context",
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factories: illtyped context",
   if (var T) (coq.fresh-type T) true,
   @local! => hb-add-const ID _ T @opaque! P, % no body, local -> a variable
   TheParam = global (const P),
