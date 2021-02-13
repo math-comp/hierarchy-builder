@@ -7,11 +7,13 @@ Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition nomsg : option (string * Type) := None.
+Definition is_not_canonically_a : string := "is not canonically a".
 
 Register unify as hb.unify.
 Register id_phant as hb.id.
 Register Coq.Init.Datatypes.None as hb.none.
 Register nomsg as hb.nomsg.
+Register is_not_canonically_a as hb.not_a_msg.
 Register Coq.Init.Datatypes.Some as hb.some.
 Register Coq.Init.Datatypes.pair as hb.pair.
 Register Coq.Init.Datatypes.prod as hb.prod.
@@ -507,6 +509,9 @@ Elpi Typecheck.
 (** Technical notations from /Canonical Structures for the working Coq user/ *)
 Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
   (at level 0, format "`Error_cannot_unify:  t1  'with'  t2", only printing) :
+  form_scope.
+  Notation "`Error: t `is_not_canonically_a T" := (unify t _ (Some (is_not_canonically_a, T)))
+  (at level 0, T at level 0, format "`Error:  t  `is_not_canonically_a  T", only printing) :
   form_scope.
 Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
   (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :

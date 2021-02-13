@@ -104,8 +104,6 @@ if-MC-compat P :- get-option "mathcomp.axiom" S, !,
   P (some GR).
 if-MC-compat _.
 
-
-
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
 pred located->gref i:string, i:list located, o:gref.
@@ -115,10 +113,6 @@ located->gref S [loc-abbreviation _|_] _ :- coq.error S "is an abbreviation out 
 located->gref S [loc-modpath _|_] _ :- coq.error S "should be a factory, but is a module".
 located->gref S [loc-modtypath _|_] _ :- coq.error S "should be a factory, but is a module type".
 located->gref S [] _ :- coq.error "Could not locate name" S.
-
-pred purge-id i:term, o:term.
-purge-id T T1 :-
-  (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
 
 % TODO: generalize/rename when we support parameters
 pred argument->gref i:argument, o:gref.
@@ -700,7 +694,7 @@ phant-fun-struct T Name S Params PF Out :- std.do! [
   mk-app (global S) Params SParams,
   mk-app SortProj Params SortProjParams,
   % Msg = {{lib:hb.nomsg}},
-  Msg = {{lib:hb.some (lib:hb.pair "is not canonically a"%string lp:SParams)}},
+  Msg = {{lib:hb.some (lib:hb.pair lib:hb.not_a_msg lp:SParams)}},
   (@pi-decl Name SParams s\ phant-fun-unify Msg T {mk-app SortProjParams [s]} (PF s) (UnifSI s)),
   phant-fun-implicit Name SParams UnifSI Out
 ].
