@@ -1877,12 +1877,17 @@ pred main-begin-declare-builders i:context-decl.
 main-begin-declare-builders CtxSkel :- std.do! [
   Name is "Builders_" ^ {term_to_string {new_int}}, % TODO?
   std.assert-ok! (elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
+  if-verbose (coq.say "HB: context to factory"),
   coq.env.begin-module Name none,
+  if-verbose (coq.say "HB: begin module for builders"),
   if (GRF = indt FRecord) (std.do! [
+    if-verbose (coq.say "HB: begin module Super"),
     coq.env.begin-module "Super" none,
     std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
-    coq.env.end-module _]) (true),
+    coq.env.end-module _,
+    if-verbose (coq.say "HB: ended module Super")]) (true),
   coq.env.begin-section Name,
+  if-verbose (coq.say "HB: postulating factories"),
   builders-postulate-factories Ctx,
 ].
 
@@ -1898,20 +1903,21 @@ postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
 ].
 
 % Only record fields can be exported as operations.
-pred define-factory-operations i:term, i:term, i:gref.
-define-factory-operations TheType TheFactory (indt I) :- !,
-  coq.env.indt I _ NParams _ _ _ _,
-  NHoles is NParams - 1,
+pred define-factory-operations i:term, i:list term, i:term, i:gref.
+define-factory-operations TheType Params TheFactory (indt I) :- !,
+  coq.env.indt I _ NIParams _ _ _ _,
+  NHoles is NIParams - 1 - {std.length Params},
   coq.CS.canonical-projections I PL,
-  std.forall PL (define-factory-operation TheType TheFactory NHoles).
-define-factory-operations _ _ _.
+  std.forall PL (define-factory-operation TheType Params TheFactory NHoles).
+define-factory-operations _ _ _ _.
 
-pred define-factory-operation i:term, i:term, i:int, i:option constant.
-define-factory-operation _ _ _ none.
-define-factory-operation TheType TheFactory NHoles (some P) :-
+pred define-factory-operation i:term, i:list term, i:term, i:int, i:option constant.
+define-factory-operation _ _ _ _ none.
+define-factory-operation TheType Params TheFactory NHoles (some P) :-
   coq.mk-n-holes NHoles Holes,
   std.append Holes [TheFactory] Holes_Factory,
-  T = app[global (const P), TheType|Holes_Factory],
+  std.append Params [TheType|Holes_Factory] Args,
+  T = app[global (const P)|Args],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
   @local! => coq.notation.add-abbreviation Name 0 T ff _.
@@ -1936,7 +1942,7 @@ builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF
   factory-requires GRF GRFMLwP, % TODO: remove, pass to main-declare-context the list-w-params-eta-expansion of GRF
   main-declare-context TheType Params GRFMLwP _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
-  define-factory-operations TheType TheFactory GRF,
+  define-factory-operations TheType Params TheFactory GRF,
   acc current (clause _ _ (current-mode (builder-from TheFactory GRF))),
 ].
 
@@ -2039,6 +2045,8 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   coq.env.end-section,
 
+  @global! => coq.arguments.set-implicit GRK [[]],
+
   mk-phant-term (global GRK) PhGRK0,
   if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
   mk-phant-abbrev "Build" PhGRK BuildConst _,
@@ -2099,6 +2107,8 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   coq.env.end-section,
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
+  @global! => coq.arguments.set-implicit (indt R) [[]],
+  @global! => coq.arguments.set-implicit GRK [[]],
 
   % TODO: should this be in the Exports module?
   if-verbose (coq.say "HB: declare notation axioms"),
