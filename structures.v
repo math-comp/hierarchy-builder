@@ -1,5 +1,6 @@
 From Coq Require Import String ssreflect ssrfun.
 From elpi Require Import elpi.
+From HB Require Export NES.
 Export String.StringSyntax.
 
 (** Technical definition from /Canonical Structures for the working Coq user/ *)
@@ -499,6 +500,7 @@ main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
 
 }}.
 Elpi Typecheck.
+Elpi Export HB.context.
 
 *)
 
