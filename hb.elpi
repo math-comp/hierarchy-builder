@@ -2095,7 +2095,8 @@ copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
   @pi-parameter ID Ty1 x\ copy-indt-decl (D x) (D1 x).
 copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
   copy-arity A A1,
-  @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i).
+  coq.id->name ID N, coq.arity->term A1 T, @pi-decl N T i\ std.map (D i) copy-constructor (D1 i).
+  % @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i). % requires Coq-Elpi 1.9.x
 copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
   copy T T1,
   copy-fields F F1.
