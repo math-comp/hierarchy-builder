@@ -6,7 +6,7 @@ HB.mixin Record foom T := {
 
 HB.structure Definition foo := { T of foom T }.
 
-HB.instance Definition _ := foom.Build nat plus.
+HB.instance Definition i := foom.Build nat plus.
 
 HB.mixin Record barm (P : foo.type) (T : indexed Type) := {
   law : P -> T
