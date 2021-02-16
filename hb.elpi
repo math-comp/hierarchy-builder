@@ -660,6 +660,7 @@ type mterm list term -> term -> list mixinname -> term -> mterm.
 % - [id]             using [unify-arg]
 kind phant-arg type.
 type real-arg name -> phant-arg.
+type infer-type name -> phant-arg.
 type implicit-arg phant-arg.
 type unify-arg phant-arg.
 
@@ -933,6 +934,9 @@ pred mk-phant-abbrev.term i:int, i:term, i:list phant-arg, o:int, o:term.
 mk-phant-abbrev.term K F [] K F.
 mk-phant-abbrev.term K F [real-arg N|AL] K'' (fun N _ AbbrevFx) :- !,
   pi x\ mk-phant-abbrev.term K {mk-app F [x]} AL K' (AbbrevFx x),
+  K'' is K' + 1.
+mk-phant-abbrev.term K F [infer-type N|AL] K'' (fun N _ AbbrevFx) :- !,
+  pi x\ mk-phant-abbrev.term K {mk-app F [{{ lib:hb.Phant lp:x }}]} AL K' (AbbrevFx x),
   K'' is K' + 1.
 mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
   mk-phant-abbrev.term K {mk-app F [_]} AL K' FAbbrev.
@@ -1513,7 +1517,8 @@ synthesize-fields.body _Params T ML (record "axioms" {{ Type }} "Class" FS) :-
   synthesize-fields T ML FS.
 
 pred mk-record+sort-field i:name, i:term, i:(term -> record-decl), o:indt-decl.
-mk-record+sort-field _ T F (record "type" {{ Type }} "Pack" (field _ "sort" T F)).
+mk-record+sort-field _ T F (record RecordName {{ Type }} "Pack" (field _ "sort" T F)) :-
+  if (get-option "infer" _) (RecordName = "type_") (RecordName = "type").
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
 mk-class-field ClassName Params T _ (field _ "class" (app [global ClassName|Args]) _\end-record) :-
@@ -1648,6 +1653,24 @@ pack-body ClassName PL T MLwA F :- std.do! [
   under-mixins.then MLwA mk-fun (pack-body.mixins PL T BuildC PackS) F
 ].
 
+pred declare-auto-infer-params-abbrev i:structure, i:list-w-params mixinname.
+declare-auto-infer-params-abbrev GR MLwP :- get-option "infer" Map, !,
+  Map => mk-infer (global GR) MLwP PHARGS TSK,
+  std.assert-ok! (coq.elaborate-skeleton TSK _ T) "infer illtyped",
+  mk-phant-abbrev "type" (phant-term PHARGS T) _ _.
+declare-auto-infer-params-abbrev _ _.
+
+pred mk-infer i:term, i:list-w-params mixinname, o:list phant-arg, o:term.
+mk-infer T (w-params.nil _ _ _) [] T.
+mk-infer T (w-params.cons N Ty W) [implicit-arg, infer-type N|A] R1 :- coq.name->id N ID, (get-option ID "Type" ; get-option ID ""), !,
+  R1 = (fun N Ty n\ fun `ph` {{ lib:@hb.phant lp:n }} _\ R n),
+  @pi-decl N Ty n\
+    mk-infer {mk-app T [n]} (W n) A (R n).
+mk-infer T (w-params.cons N Ty W) [real-arg N|A] (fun N Ty R) :- coq.name->id N ID, not (get-option ID _), !,
+  @pi-decl N Ty x\  mk-infer {mk-app T [x]} (W x) A (R x).
+mk-infer _ (w-params.cons N _ _) _ _ :- coq.name->id N ID, get-option ID Infer,
+  coq.error "Automatic inference of paramter" N "from" Infer "not supported".
+
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred main-declare-structure i:string, i:list-w-params gref, i:bool.
@@ -1682,6 +1705,8 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   ClassRequires = factory-requires (ClassName) NilwP,
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
+  
+  declare-auto-infer-params-abbrev Structure MLwP,
 
   if-verbose (coq.say "HB: declaring clone abbreviation"),
 

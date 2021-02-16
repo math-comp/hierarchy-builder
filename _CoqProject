@@ -53,5 +53,6 @@ tests/instance_params_no_type.v
 tests/test_CS_db_filtering.v
 tests/subtype.v
 tests/exports.v
+tests/infer.v
 
 -R . HB
