@@ -83,14 +83,15 @@ under.do! Then LP :- Then (_\ std.do! LP) _.
 %%%%% HB Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% HACK: move to coq-elpi proper
+% HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
 type attmap attribute-type.
 
 % runs P in a context where Coq #[attributes] are parsed
 pred with-attributes i:prop.
 with-attributes P :-
   attributes A,
-% HACK: move to coq-elpi proper
+
+% HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
 (pi S L AS Prefix R R1 Map PS\ 
   parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
     if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
@@ -98,6 +99,7 @@ with-attributes P :-
     (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
     std.append R1 [get-option PS Map] R
 ) =>
+
   coq.parse-attributes A [
     att "verbose" bool,
     att "mathcomp" bool,
