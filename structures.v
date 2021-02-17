@@ -475,8 +475,8 @@ Elpi Export HB.export.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** [HB.exports] rexports Exports modules that have been accumulated by
-    [HB.structure] (it contains canonical, coercions and ELPI metadata) *)
+(** [HB.reexport] Exports all modules that were previously exported via [HB.export].
+   It is useful to create one big module with all exports at the end of a file. *)
 
 Elpi Command HB.reexport.
 Elpi Accumulate File "hb.elpi".
