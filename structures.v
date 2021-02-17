@@ -460,7 +460,7 @@ Elpi Export HB.end.
 
 (** [HB.export Modname] does the work of [Export Modname] but also schedules [Modname]
    to be exported later on, when [HB.reexport] is called.
-   Note that the list of modules to be exported is store in the current module,
+   Note that the list of modules to be exported is stored in the current module,
    hence the recommended way to do is
    <<<
    Module Algebra.
