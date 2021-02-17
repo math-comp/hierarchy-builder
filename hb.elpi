@@ -1105,8 +1105,8 @@ params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 % rest. For each fulfilled class it declares a local constant inhabiting the
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
-pred declare-instances i:term, i:list class.
-declare-instances T [class Class Struct MLwP|Rest] :-
+pred declare-instances i:term, i:list class, o:list constant.
+declare-instances T [class Class Struct MLwP|Rest] [CS|L] :-
   params->holes MLwP Params,
   get-constructor Class KC,
 
@@ -1135,9 +1135,9 @@ declare-instances T [class Class Struct MLwP|Rest] :-
 
   hb-add-const Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  declare-instances T Rest.
-declare-instances T [_|Rest] :- declare-instances T Rest.
-declare-instances _ [].
+  declare-instances T Rest L.
+declare-instances T [_|Rest] L :- declare-instances T Rest L.
+declare-instances _ [] [].
 
 kind factory-abbrev type.
 type factory-by-classname gref -> factory-abbrev.
@@ -1216,12 +1216,12 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
 % (section) context with all the mixins provided by the factories and all
 % the structure instances we can derive on TheType from these. Clauses
 % contain mixin-src for each postulated mixin
-pred main-declare-context i:term, i:list term, i:list-w-params factoryname, o:list prop.
-main-declare-context TheType TheParams GRFSwP MSL :-  std.do! [
+pred main-declare-context i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
+main-declare-context TheType TheParams GRFSwP MSL CL :-  std.do! [
   factories-provide GRFSwP MLwP,
   apply-w-params MLwP TheParams TheType MLwAllArgs,
   std.fold MLwAllArgs [] postulate-mixin MSL,
-  MSL => declare-instances TheType {findall-classes},
+  MSL => declare-instances TheType {findall-classes} CL,
   std.forall MSL (ms\ acc current (clause _ _ ms)),
 ].
 
@@ -1811,7 +1811,7 @@ declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR 
     {coq.term->string F} "on" {coq.term->string T} ":"
     {std.map MissingMixins nice-gref->string}),
   MixinSrcFromF => add-all-mixins T FGR MissingMixins ff Clauses,
-  Clauses => declare-instances T {findall-classes}
+  Clauses => declare-instances T {findall-classes} _
 ].
 
 % [declare-canonical-instances-from-factory T F] given a factory F
@@ -1824,7 +1824,7 @@ declare-canonical-instances-from-factory T F :-
   under-canonical-mixins-of.do! T [
     under-mixin-src-from-factory.do! T F [
       add-all-mixins T GRF {list-w-params_list {factory-provides GRF}} tt _,
-      declare-instances T {findall-classes}
+      declare-instances T {findall-classes} _
     ]
   ].
 
@@ -1940,7 +1940,7 @@ builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
     "the last argument must be a factory applied to the type variable",
   factory-requires GRF GRFMLwP, % TODO: remove, pass to main-declare-context the list-w-params-eta-expansion of GRF
-  main-declare-context TheType Params GRFMLwP _,
+  main-declare-context TheType Params GRFMLwP _ _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType Params TheFactory GRF,
   acc current (clause _ _ (current-mode (builder-from TheFactory GRF))),
@@ -2028,7 +2028,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   % TODO maybe main-declare-context should just take GRFSwP and postulate
   % the parameters and the type
-  main-declare-context TheType TheParams GRFSwP Hyps,
+  main-declare-context TheType TheParams GRFSwP Hyps _,
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
   hb-add-const "axioms_" Ty1 _ @transparent! C,
@@ -2088,23 +2088,76 @@ hack-section-discharge-unused [T|TS] F (field _ "_" {{ lib:hb.unify lp:TT lp:TT 
   std.assert-ok! (coq.typecheck T TT) "wtf",
   hack-section-discharge-unused TS F F0.
 
+
+pred copy-indt-decl i:indt-decl, o:indt-decl.
+copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
+  copy Ty Ty1,
+  @pi-parameter ID Ty1 x\ copy-indt-decl (D x) (D1 x).
+copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
+  copy-arity A A1,
+  coq.id->name ID N, coq.arity->term A1 T, @pi-decl N T i\ std.map (D i) copy-constructor (D1 i).
+  % @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i). % requires Coq-Elpi 1.9.x
+copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
+  copy T T1,
+  copy-fields F F1.
+
+pred copy-fields i:record-decl, o:record-decl.
+copy-fields end-record end-record.
+copy-fields (field Att ID T F) (field Att ID T1 F1) :-
+  copy T T1,
+  @pi-parameter ID T1 x\ copy-fields (F x) (F1 x).
+
+pred copy-constructor i:indc-decl, o:indc-decl.
+copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
+
+pred abstract-indt-decl i:list term, i:indt-decl, o:indt-decl.
+abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
+abstract-indt-decl [global (const C)|CS] X (parameter ID explicit Ty1 X1) :-
+  coq.gref->string (const C) ID,
+  coq.env.typeof (const C) Ty,
+  copy Ty Ty1,
+  @pi-parameter ID Ty x\
+    (copy (global (const C)) x :- !) =>
+    abstract-indt-decl CS X (X1 x).
+
+pred copy-clauses-for-unfold i:list constant, o:list prop.
+copy-clauses-for-unfold [] [].
+copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
+  coq.env.const C (some B) _,
+  ClauseApp = (pi B1 Args Args1 B2 Args2 R\
+    copy (app[global (const C)|Args]) R :- !,
+      copy B B1,
+      std.map Args copy Args1,
+      hd-beta B1 Args1 B2 Args2,
+      unwind B2 Args2 R),
+  Clause = (pi B1\
+    copy (global (const C)) B1 :- !, copy B B1),
+  copy-clauses-for-unfold CS L.
+
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
-declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.do! [
-  main-declare-context TheType TheParams GRFSwP MixinSrcClauses,
+declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
+  main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
 
   % HACK: work around section discharging unused stuff
-  if (D = asset-mixin) (Fields1 = Fields0, HackExtraPhantNo = 0)
-      (std.map MixinSrcClauses mixin-src_src TheHackCrap,
-       HackExtraPhantNo is {std.length TheHackCrap} + {std.length TheParams},
-       hack-section-discharge-unused [TheType|{std.append TheParams TheHackCrap}] Fields0 Fields1),
+  if (D = asset-mixin) (Section = [])
+      (std.map MixinSrcClauses mixin-src_src Mixins,
+       std.append TheParams [TheType|{std.rev Mixins}] Section),
 
   if-verbose (coq.say "HB: declare record axioms_"),
 
   Kname = "Axioms_",
-  RDeclSkel = record "axioms_" Sort1 Kname Fields1,
+  RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
-  hb-add-indt RDecl R,
-  coq.env.end-section,
+
+  % We discharge by hand the record declaration so that we can be sure all
+  % parameters and mixins are abstracted (even if unused).
+  copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
+  CopyUnfold => abstract-indt-decl Section RDecl RDeclClosed,
+  hb-add-indt RDeclClosed R,
+  coq.env.end-section, % We need to anyway declare the record inside the section
+    % since closing the section purges the unused universe level we may have
+    % allocated by typechecking the skeleton just above
+
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
   @global! => coq.arguments.set-implicit (indt R) [[]],
@@ -2113,13 +2166,10 @@ declare-mixin-or-factory Sort1 Fields0 GRFSwP Module TheType D TheParams :- std.
   % TODO: should this be in the Exports module?
   if-verbose (coq.say "HB: declare notation axioms"),
 
-  mk-phant-term (global GRK) PhGRK0,
+  mk-phant-term (global GRK) PhGRK,
 
   if-verbose (coq.say "HB: declare notation Axioms"),
 
-  % We work around the fact that Coq sections automatically prune unused
-  % variables
-  if (D = asset-mixin) (PhGRK = PhGRK0) (hack-append-phant-unify HackExtraPhantNo PhGRK0 PhGRK),
   mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
 
   % std.map Hyps mixin-src_mixin ML,
