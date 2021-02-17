@@ -459,7 +459,18 @@ Elpi Export HB.end.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** [HB.export Modname] does the work of [Export Modname] but also schedules [Modname]
-   to be exported later on, when [HB.reexport] is called. *)
+   to be exported later on, when [HB.reexport] is called.
+   Note that the list of modules to be exported is store in the current module,
+   hence the recommended way to do is
+   <<<
+   Module Algebra.
+     HB.mixin .... HB.structure ...
+     Module MoreExports. ... End MoreExports. HB.export MoreExports.
+     ...
+     Module Export. HB.reexport. End Exports.
+   End Algebra.
+   Export Algebra.Exports.
+   >>> *)
 
 Elpi Command HB.export.
 Elpi Accumulate File "hb.elpi".
