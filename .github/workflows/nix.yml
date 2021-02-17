@@ -15,10 +15,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Cache install Nix packages
-      uses: nix-actions/cache-install@v1.0.6
+    - name: Cache Nix Store
+      uses: actions/cache@v2.1.4
+      id: cache-nix
       with:
-        key: ${{ runner.os }}-2
+        path: nix-store.nar
+        key: nix-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          nix-${{ runner.os }}-
+    - name: Import Nix Store
+      if: steps.cache-nix.outputs.cache-hit
+      run: nix-store --import < nix-store.nar
     - name: Git checkout
       uses: actions/checkout@v2
       with:
@@ -33,15 +40,26 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
     - name: Build
       run: nix-build
+    - name: Compute Closure
+      run: nix path-info --recursive | tee closure.txt
+    - name: Export Nix Store
+      run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
 
   mathcomp:
     runs-on: ubuntu-latest
     needs: hb
     steps:
-    - name: Cache install Nix packages
-      uses: nix-actions/cache-install@v1.0.6
+    - name: Cache Nix Store
+      uses: actions/cache@v2.1.4
+      id: cache-nix
       with:
-        key: ${{ runner.os }}-2
+        path: nix-store.nar
+        key: nix-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          nix-${{ runner.os }}-
+    - name: Import Nix Store
+      if: steps.cache-nix.outputs.cache-hit
+      run: nix-store --import < nix-store.nar
     - name: Git checkout
       uses: actions/checkout@v2
       with:
@@ -56,3 +74,7 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
     - name: Build
       run: nix-build --arg ci true
+    - name: Compute Closure
+      run: nix path-info --recursive | tee closure.txt
+    - name: Export Nix Store
+      run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
