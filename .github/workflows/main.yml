@@ -11,19 +11,6 @@ on:
     branches: [ master ]
 
 jobs:
-  nix:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - uses: cachix/install-nix-action@v12
-    - uses: cachix/cachix-action@v8
-      with:
-        name: coq
-    - run: nix-build
-
   opam:
     runs-on: ubuntu-latest
     strategy:
