@@ -30,6 +30,7 @@ jobs:
 
   nixci:
     runs-on: ubuntu-latest
+    needs: nix
 
     steps:
     - uses: actions/checkout@v2
@@ -43,5 +44,4 @@ jobs:
       with:
         name: math-comp
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-    - needs: nix
     - run: nix-build --arg ci true
