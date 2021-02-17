@@ -42,3 +42,11 @@ jobs:
         opam_file: './coq-hierarchy-builder.opam'
         coq_version: ${{ matrix.coq_version }}
         ocaml_version: ${{ matrix.ocaml_version }}
+        after_script: |
+          mkdir /home/coq/workspace
+          cd /home/coq/workspace
+          git clone https://github.com/gares/math-comp
+          cd math-comp
+          git checkout hierarchy-builder
+          cd mathcomp
+          make -j2 algebra/ssralg.vo
