@@ -41,7 +41,7 @@ jobs:
     - name: Build
       run: nix-build
     - name: Compute Closure
-      run: nix path-info --recursive | tee closure.txt
+      run: nix path-info --all | tee closure.txt
     - name: Export Nix Store
       run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
 
@@ -75,6 +75,6 @@ jobs:
     - name: Build
       run: nix-build --arg ci true
     - name: Compute Closure
-      run: nix path-info --recursive | tee closure.txt
+      run: nix path-info --all | tee closure.txt
     - name: Export Nix Store
       run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
