@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: docker CI
+name: nix CI
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -22,23 +22,26 @@ jobs:
     - uses: cachix/cachix-action@v8
       with:
         name: coq
+    - uses: cachix/cachix-action@v8
+      with:
+        name: math-comp
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
     - run: nix-build
 
-  opam:
+  nixci:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        coq_version:
-          - '8.11'
-          - '8.12'
-          - '8.13'
-        ocaml_version:
-          - 'minimal'
+
     steps:
     - uses: actions/checkout@v2
-    - uses: coq-community/docker-coq-action@v1
       with:
-        opam_file: './coq-hierarchy-builder.opam'
-        coq_version: ${{ matrix.coq_version }}
-        ocaml_version: ${{ matrix.ocaml_version }}
+        fetch-depth: 0
+    - uses: cachix/install-nix-action@v12
+    - uses: cachix/cachix-action@v8
+      with:
+        name: coq
+    - uses: cachix/cachix-action@v8
+      with:
+        name: math-comp
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - needs: nix
+    - run: nix-build --arg ci true
