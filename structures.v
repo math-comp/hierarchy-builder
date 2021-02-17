@@ -454,6 +454,40 @@ main _ :- coq.error "Usage: HB.end.".
 Elpi Typecheck.
 Elpi Export HB.end.
 
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.exports] rexports Exports modules that have been accumulated by
+    [HB.structure] (it contains canonical, coercions and ELPI metadata) *)
+
+Elpi Command HB.export.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [str M] :- !, with-attributes (export {coq.locate-module M}).
+main _ :- coq.error "Usage: HB.export M.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.export.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.exports] rexports Exports modules that have been accumulated by
+    [HB.structure] (it contains canonical, coercions and ELPI metadata) *)
+
+Elpi Command HB.reexport.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [] :- !, with-attributes (main-reexport).
+main _ :- coq.error "Usage: HB.reexport.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.reexport.
+
 (*
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
