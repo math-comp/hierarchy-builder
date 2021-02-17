@@ -27,6 +27,7 @@ jobs:
   opam:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         coq_version:
           - '8.11'
