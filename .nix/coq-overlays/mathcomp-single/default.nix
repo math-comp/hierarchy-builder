@@ -3,5 +3,5 @@
   buildPhase = "make -j $(max_jobs) -C mathcomp ./algebra/ssralg.vo";
   propagatedBuildInputs = old.propagatedBuildInputs ++
                           [ coq-elpi hierarchy-builder ];
-  installPhase = "echo NO INSTALL"
+  installPhase = "echo NO INSTALL";
 })
