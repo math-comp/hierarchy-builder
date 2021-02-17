@@ -1,0 +1,43 @@
+# This is a basic workflow to help you get started with Actions
+
+name: nix CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  nix:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: cachix/install-nix-action@v12
+    - uses: cachix/cachix-action@v8
+      with:
+        name: math-comp
+        extraPullNames: coq
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: nix-build
+
+  nixci:
+    runs-on: ubuntu-latest
+    needs: nix
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: cachix/install-nix-action@v12
+    - uses: cachix/cachix-action@v8
+      with:
+        name: math-comp
+        extraPullNames: coq
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: nix-build --arg ci true
