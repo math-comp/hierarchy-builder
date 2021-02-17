@@ -1241,12 +1241,19 @@ main-declare-builder (builder _ SrcFactory TgtMixin B) FromClauses MoreFromClaus
   ].
 
 % [export Module] exports a Module now adds it to the collection of
-% modules to export in the end
+% modules to export in the end of the current enclosing module,
+% by the command HB.Exports
+
 pred to-export o:modpath.
 pred export i:modpath.
 export Module :- !,
   coq.env.export-module Module,
   acc current (clause _ _ (to-export Module)).
+
+pred main-reexport.
+main-reexport :- !,
+  std.findall (to-export Module_) Mods,
+  std.forall Mods (x\ sigma y\ to-export y = x, coq.env.export-module y).
 
 pred mk-mixin-fun i:list-w-params mixinname, i:term, o:term.
 mk-mixin-fun ML X MLX :- mk-mixin-fun.then ML (p\ t\ body\ body = X) MLX.
@@ -1673,11 +1680,6 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   coq.env.begin-module "Exports" none,
   declare-sort-coercion Structure SortProjection,
-  if-verbose (coq.say "HB: exporting operations"),
-  ClassAlias => ClassRequires => Factories =>
-    export-operations Structure SortProjection ClassProjection MLwP [] EX MLToExport,
-  % TODO: issue an Arguments op T : rename, where T is the name written by
-  %   the user in Definition foo := { T of ... }
 
   if-verbose (coq.say "HB: exporting unification hints"),
   ClassAlias => ClassRequires => Factories =>
@@ -1693,10 +1695,8 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
     (coq.say "declare-structure:" ClassName "should be an inductive", fail),
 
   if-verbose (coq.say "HB: accumulating various props"),
-  std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
   std.flatten [
-      MixinFirstClass, EX, Factories,
-      [ClassRequires], [ClassAlias], [is-structure Structure],
+      Factories, [ClassRequires], [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass]
     ]
     NewClauses,
@@ -1710,6 +1710,20 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: end modules; export" Exports),
 
   export Exports,
+
+  if-verbose (coq.say "HB: exporting operations"),
+    ClassAlias => ClassRequires => Factories =>
+      export-operations Structure SortProjection ClassProjection MLwP [] EX   MLToExport,
+    % TODO: issue an Arguments op T : rename, where T is the name written by
+    %   the user in Definition foo := { T of ... }
+
+  if-verbose (coq.say "HB: start operations meta-data module ElpiOperations"),
+  ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
+  coq.env.begin-module ElpiOperationModName none,
+    std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
+    std.forall {std.append EX MixinFirstClass} (c\ acc current (clause _ _ c)),
+  coq.env.end-module ElpiOperations,
+  export ElpiOperations,
 
   declare-factory-abbrev Module (factory-by-classname ClassName),
 

@@ -454,6 +454,51 @@ main _ :- coq.error "Usage: HB.end.".
 Elpi Typecheck.
 Elpi Export HB.end.
 
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.export Modname] does the work of [Export Modname] but also schedules [Modname]
+   to be exported later on, when [HB.reexport] is called.
+   Note that the list of modules to be exported is stored in the current module,
+   hence the recommended way to do is
+   <<<
+   Module Algebra.
+     HB.mixin .... HB.structure ...
+     Module MoreExports. ... End MoreExports. HB.export MoreExports.
+     ...
+     Module Export. HB.reexport. End Exports.
+   End Algebra.
+   Export Algebra.Exports.
+   >>> *)
+
+Elpi Command HB.export.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [str M] :- !, with-attributes (export {coq.locate-module M}).
+main _ :- coq.error "Usage: HB.export M.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.export.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.reexport] Exports all modules that were previously exported via [HB.export].
+   It is useful to create one big module with all exports at the end of a file. *)
+
+Elpi Command HB.reexport.
+Elpi Accumulate File "hb.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [] :- !, with-attributes (main-reexport).
+main _ :- coq.error "Usage: HB.reexport.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.reexport.
+
 (*
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
