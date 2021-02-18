@@ -354,10 +354,9 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
   hack-section-discharging SectionBody SectionBodyHack,
-  if (Name = "_")
-     (TheFactory = SectionBodyHack)
-     (hb-add-const Name SectionBodyHack _ @transparent! C,
-      TheFactory = (global (const C))),
+  if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
+  hb-add-const RealName SectionBodyHack _ @transparent! C,
+  TheFactory = (global (const C)),
   std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
   with-attributes (main-declare-instance TheType TheFactory Clauses),
 
