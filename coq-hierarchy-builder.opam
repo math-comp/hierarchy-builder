@@ -1,21 +1,37 @@
-opam-version: "2.0"
-name: "coq-hierarchy-builder"
-version: "dev"
-maintainer: "Enrico Tassi <enrico.tassi@inria.fr>"
-authors: [ "Cyril Cohen" "Kazuhiko Sakaguchi" "Enrico Tassi" ]
-license: "MIT"
-homepage: "https://github.com/math-comp/hierarchy-builder"
-bug-reports: "https://github.com/math-comp/hierarchy-builder/issues"
-dev-repo: "git+https://github.com/math-comp/hierarchy-builder"
+# This file was generated from `meta.yml`, please do not edit manually.
+# Follow the instructions on https://github.com/coq-community/templates to regenerate.
 
-build: [ make ]
-install: [ make "install" "VFILES=structures.v" ]
-depends: [ "coq-elpi" {>= "1.6" & < "1.9~"} ]
-synopsis: "High level commands to declare and evolve a hierarchy based on packed classes"
+opam-version: "2.0"
+maintainer: "Enrico Tassi <enrico.tassi@inria.fr>"
+version: "dev"
+
+homepage: "https://github.com/math-comp/hierarchy-builder"
+dev-repo: "git+https://github.com/math-comp/hierarchy-builder.git"
+bug-reports: "https://github.com/math-comp/hierarchy-builder/issues"
+license: "MIT"
+
+synopsis: "High level commands to declare and evolve a hierarchy based on packed classes."
 description: """
-Hierarchy Builder is a high level language to build hierarchies of algebraic structures and make these
-hierarchies evolve without breaking user code. The key concepts are the ones of factory, builder
-and abbreviation that let the hierarchy developer describe an actual interface for their library.
-Behind that interface the developer can provide appropriate code to ensure retro compatibility.
-"""
-tags: [ "logpath:HB" ]
+Hierarchy Builder is a high level language to build hierarchies of
+algebraic structures and make these hierarchies evolve without breaking
+user code. The key concepts are the ones of factory, builder and
+abbreviation that let the hierarchy developer describe an actual
+interface for their library. Behind that interface the developer can
+provide appropriate code to ensure retro compatibility."""
+
+build: [ make "-j%{jobs}%"  ]
+install: [ make "install" "VFILES=structures.v" ]
+depends: [
+  "coq" { (>= "8.11" & < "8.14~") | (= "dev") }
+  "coq-elpi" {>= "1.6" & < "1.9~"}
+]
+
+tags: [
+  "keyword:algebraic hierarchy"
+  "logpath:HB"
+]
+authors: [
+  "Cyril Cohen"
+  "Kazuhiko Sakaguchi"
+  "Enrico Tassi"
+]
