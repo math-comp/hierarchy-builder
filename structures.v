@@ -334,6 +334,13 @@ hack-section-discharging B B1 :- current-mode (builder-from TheFactory _), !,
   B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
 hack-section-discharging B B.
 
+pred optimize-body i:term, o:term.
+optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !,
+  coq.env.const C (some B) _,
+  hd-beta B Args HD Stack,
+  unwind HD Stack Red.
+optimize-body X X.
+
 main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
@@ -354,10 +361,10 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
   hack-section-discharging SectionBody SectionBodyHack,
-  if (Name = "_")
-     (TheFactory = SectionBodyHack)
-     (hb-add-const Name SectionBodyHack _ @transparent! C,
-      TheFactory = (global (const C))),
+  optimize-body SectionBodyHack OptimizedBody,
+  if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
+  hb-add-const RealName OptimizedBody _ @transparent! C,
+  TheFactory = (global (const C)),
   std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
   with-attributes (main-declare-instance TheType TheFactory Clauses),
 
