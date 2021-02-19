@@ -2194,10 +2194,9 @@ pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname
 declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
   main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
 
-  % HACK: work around section discharging unused stuff
-  if (D = asset-mixin) (Section = [])
-      (std.map MixinSrcClauses mixin-src_src Mixins,
-       std.append TheParams [TheType|{std.rev Mixins}] Section),
+  % compute section variables to be used for discharging
+  std.map MixinSrcClauses mixin-src_src Mixins,
+  std.append TheParams [TheType|{std.rev Mixins}] Section,
 
   if-verbose (coq.say "HB: declare record axioms_"),
 
