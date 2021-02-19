@@ -118,8 +118,10 @@ opam install coq-hierarchy-builder
 - `HB.mixin` declares a mixin
 - `HB.structure` declares a structure
 - `HB.factory` declares a factory
-- `HB.builders` and `HB.end` declares a set of builders
+- `HB.builders` and `HB.end` declare a set of builders
 - `HB.instance` declares a structure instance
+- `HB.export` exports a module and schedules it for re-export
+- `HB.reexport` exports all modules scheduled for re-export
 - `HB.status` dumps the contents of the hierarchy (debug purposes)
 
 Their documentation can be found in the comments of [structures.v](structures.v),
