@@ -28,9 +28,9 @@ jobs:
       id: cache-nix
       with:
         path: nix-store.nar
-        key: nix-${{ runner.os }}-${{ github.sha }}
+        key: nix-${{ runner.os }}-2-${{ github.sha }}
         restore-keys: |
-          nix-${{ runner.os }}-
+          nix-${{ runner.os }}-2-
     - name: Import Nix Store
       if: steps.cache-nix.outputs.cache-hit
       run: nix-store --import < nix-store.nar
