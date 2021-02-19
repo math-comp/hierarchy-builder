@@ -78,7 +78,7 @@ in full detail.
 
 <details><summary>(click to expand)</summary><p>
 
-HB works on Coq 8.10 and 8.11.
+HB works on Coq 8.11, 8.12 and 8.13
 
 - You can install it via OPAM
 
