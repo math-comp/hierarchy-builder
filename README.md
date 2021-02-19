@@ -1,11 +1,77 @@
-[![Actions Status](https://github.com/math-comp/hierarchy-builder/workflows/CI/badge.svg)](https://github.com/math-comp/hierarchy-builder/actions)
-[![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/237868-Hierarchy-Buidlder)
-
+<!---
+This file was generated from `meta.yml`, please do not edit manually.
+Follow the instructions on https://github.com/coq-community/templates to regenerate.
+--->
 # Hierarchy Builder
 
-High level commands to declare and evolve a hierarchy based on packed classes.
+[![Docker CI][docker-action-shield]][docker-action-link]
+[![Nix CI][nix-action-shield]][nix-action-link]
+[![Chat][chat-shield]][chat-link]
 
-[Presented at FSCD2020, talk available on youtube.](https://www.youtube.com/watch?v=F6iRaTlQrlo)
+[docker-action-shield]: https://github.com/math-comp/hierarchy-builder/workflows/Docker%20CI/badge.svg?branch=master
+[docker-action-link]: https://github.com/math-comp/hierarchy-builder/actions?query=workflow:"Docker%20CI"
+
+[nix-action-shield]: https://github.com/math-comp/hierarchy-builder/workflows/Nix%20CI/badge.svg?branch=master
+[nix-action-link]: https://github.com/math-comp/hierarchy-builder/actions?query=workflow:"Nix%20CI"
+[chat-shield]: https://img.shields.io/badge/zulip-join_chat-brightgreen.svg
+[chat-link]: https://coq.zulipchat.com/#narrow/stream/237868-Hierarchy-Builder
+
+
+
+
+Hierarchy Builder is a high level language to build hierarchies of
+algebraic structures and make these hierarchies evolve without breaking
+user code. The key concepts are the ones of factory, builder and
+abbreviation that let the hierarchy developer describe an actual
+interface for their library. Behind that interface the developer can
+provide appropriate code to ensure retro compatibility.
+
+## Meta
+
+- Author(s):
+  - Cyril Cohen (initial)
+  - Kazuhiko Sakaguchi (initial)
+  - Enrico Tassi (initial)
+- License: [MIT](LICENSE)
+- Compatible Coq versions: Coq 8.11 to 8.13 (or dev)
+- Additional dependencies:
+  - [Coq elpi](https://github.com/LPCIC/coq-elpi)
+- Coq namespace: `HB`
+- Related publication(s):
+  - [Hierarchy Builder: algebraic hierarchies made easy in Coq with Elpi](https://hal.inria.fr/hal-02478907) doi:[10.4230/LIPIcs.FSCD.2020.34](https://doi.org/10.4230/LIPIcs.FSCD.2020.34)
+  - [Hierarchy Builder: FSCD Talk](https://www.youtube.com/watch?v=F6iRaTlQrlo)) 
+
+## Building and installation instructions
+
+### Opam installation
+
+<details><summary>(click to expand)</summary><p>
+
+The easiest way to install the latest released version of Hierarchy Builder
+is via [OPAM](https://opam.ocaml.org/doc/Install.html):
+
+```shell
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam install coq-hierarchy-builder
+```
+
+</p></details>
+
+### Manual installation
+
+<details><summary>(click to expand)</summary><p>
+
+To instead build and install manually, do:
+
+``` shell
+git clone https://github.com/math-comp/hierarchy-builder.git
+cd hierarchy-builder
+make   # or make -j <number-of-cores-on-your-machine> 
+make install VFILES=structures.v
+```
+
+</p></details>
+
 
 ## Example
 
@@ -74,21 +140,12 @@ The current version forces the carrier to be a type, ruling hierarchies of morph
 This [draft paper](https://hal.inria.fr/hal-02478907) describes the language
 in full detail.
 
-#### Installation & availability
+#### Alternative Installation instructions
 
 <details><summary>(click to expand)</summary><p>
 
-HB works on Coq 8.10 and 8.11.
+- You can use it in nix with the attribute `coqPackages_8_13.hierarchy-builder` e.g. via `nix-shell -p coq_8_13 -p coqPackages_8_13.hierarchy-builder`
 
-- You can install it via OPAM
-
-```shell
-opam repo add coq-released https://coq.inria.fr/opam/released
-opam install coq-hierarchy-builder
-```
-
-- You can use it in nix with the attribute `coqPackages_8_11.hierarchy-builder` e.g. via `nix-shell -p coq_8_11 -p coqPackages_8_11.hierarchy-builder`
- 
 </p></details>
 
 #### Key concepts

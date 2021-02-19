@@ -1,0 +1,125 @@
+# This file was generated from `meta.yml`, please do not edit manually.
+# Follow the instructions on https://github.com/coq-community/templates to regenerate.
+name: Nix CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  prerequisites:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cachix install
+      uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixpkgs-unstable
+    - name: Cachix setup
+      uses: cachix/cachix-action@v8
+      with:
+        # Name of a cachix cache to pull/substitute
+        name: math-comp
+        extraPullNames: coq
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - name: Cache Nix Store
+      uses: actions/cache@v2.1.4
+      id: cache-nix
+      with:
+        path: nix-store.nar
+        key: nix-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          nix-${{ runner.os }}-
+    - name: Import Nix Store
+      if: steps.cache-nix.outputs.cache-hit
+      run: nix-store --import < nix-store.nar
+    - name: Git checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build
+      run: nix-build --arg ci true --arg ci-step 0
+    - name: Compute Closure
+      run: nix-build --arg ci true --arg ci-step 0 | xargs nix path-info -r | tee closure.txt
+    - name: Export Nix Store
+      run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
+
+  main:
+    runs-on: ubuntu-latest
+    needs: prerequisites
+  
+    steps:
+    - name: Cachix install
+      uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixpkgs-unstable
+    - name: Cachix setup
+      uses: cachix/cachix-action@v8
+      with:
+        # Name of a cachix cache to pull/substitute
+        name: math-comp
+        extraPullNames: coq
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - name: Cache Nix Store
+      uses: actions/cache@v2.1.4
+      id: cache-nix
+      with:
+        path: nix-store.nar
+        key: nix-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          nix-${{ runner.os }}-
+    - name: Import Nix Store
+      if: steps.cache-nix.outputs.cache-hit
+      run: nix-store --import < nix-store.nar
+    - name: Git checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build
+      run: nix-build --arg ci true --arg ci-step 1
+    - name: Compute Closure
+      run: nix-build --arg ci true --arg ci-step 1 | xargs nix path-info -r | tee closure.txt
+    - name: Export Nix Store
+      run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
+
+  CI:
+    runs-on: ubuntu-latest
+    needs: main
+  
+    steps:
+    - name: Cachix install
+      uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixpkgs-unstable
+    - name: Cachix setup
+      uses: cachix/cachix-action@v8
+      with:
+        # Name of a cachix cache to pull/substitute
+        name: math-comp
+        extraPullNames: coq
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - name: Cache Nix Store
+      uses: actions/cache@v2.1.4
+      id: cache-nix
+      with:
+        path: nix-store.nar
+        key: nix-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          nix-${{ runner.os }}-
+    - name: Import Nix Store
+      if: steps.cache-nix.outputs.cache-hit
+      run: nix-store --import < nix-store.nar
+    - name: Git checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build
+      run: nix-build --arg ci true --arg ci-step 2
+    - name: Compute Closure
+      run: nix-build --arg ci true --arg ci-step 2 | xargs nix path-info -r | tee closure.txt
+    - name: Export Nix Store
+      run: xargs --arg-file=closure.txt nix-store --export > nix-store.nar
