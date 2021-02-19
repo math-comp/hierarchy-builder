@@ -108,6 +108,35 @@ with-attributes P :-
   ] Opts, !,
   Opts => P.
 
+% TODO: move to coq-elpi proper move to coq.pp
+pred coq.indt-decl->string i:indt-decl, o:string.
+coq.indt-decl->string (parameter ID _ Ty D) S :-
+  coq.id->name ID Name,
+  (@pi-decl Name Ty x\ coq.indt-decl->string (D x) S1),
+  S is "Parameter" ^ ID ^ " : " ^ {coq.term->string Ty} ^ "\n" ^ S1.
+coq.indt-decl->string (inductive _ _ _ _) "NYI".
+coq.indt-decl->string (record ID Ty KID RD) S :-
+  coq.record-decl->string RD S1,
+  S is ID ^ " : " ^ {coq.term->string Ty} ^ " := " ^ KID ^ " {\n" ^ S1 ^ "}".
+pred coq.record-decl->string i:record-decl, o:string.
+coq.record-decl->string end-record "".
+coq.record-decl->string (field _ ID Ty D) S :-
+  coq.id->name ID Name,
+  (@pi-decl Name Ty x\ coq.record-decl->string (D x) S1),
+  S is "  " ^ ID ^ " : " ^ {coq.term->string Ty} ^ ";\n" ^ S1.
+pred coq.ground-indt-decl? i:indt-decl.
+coq.ground-indt-decl? (parameter ID _ Ty D) :-
+  ground_term Ty,
+  coq.id->name ID Name, (@pi-decl Name Ty x\ coq.ground-indt-decl? (D x)).
+coq.ground-indt-decl? (inductive _ _ _ _).
+coq.ground-indt-decl? (record _ Ty _ RD) :-
+  ground_term Ty,
+  coq.ground-record-decl? RD.
+pred coq.ground-record-decl? i:record-decl.
+coq.ground-record-decl? end-record.
+coq.ground-record-decl? (field _ ID Ty D) :-
+  ground_term Ty,
+  coq.id->name ID Name, (@pi-decl Name Ty x\ coq.ground-record-decl? (D x)).
 
 pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
@@ -363,12 +392,19 @@ w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 % no implicit arguments
 pred hb-add-const i:id, i:term, i:term, i:opaque?, o:constant.
 hb-add-const Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
   coq.env.add-const Name Bo Ty Opaque C,
   coq.arguments.set-implicit (const C) [[]]
 ].
 
 pred hb-add-indt i:indt-decl, o:inductive.
 hb-add-indt Decl I :- std.do! [
+  if (not(coq.ground-indt-decl? Decl))
+    (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
+    true,
   coq.env.add-indt Decl I,
 ].
 
