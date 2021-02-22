@@ -115,6 +115,11 @@ pred factory-builder-nparams o:constant, o:int.
 % [sub-class C1 C2] C1 is a sub-class of C2.
 pred sub-class o:classname, o:classname.
 
+% [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
+% constant. The list is topologically sorted
+:index(2)
+pred gref-deps i:gref, o:list-w-params mixinname.
+
 %%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
