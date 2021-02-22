@@ -284,10 +284,8 @@ Section TAddAGUniform.
   Lemma TAddAG_uniform_topologyE :
      open = (uniform_open _ : set (set (uniform TT))).
   Admitted.
-  Definition TAddAG_Join_Uniform_Topology : Join_Uniform_Topology TT
-    := Join_Uniform_Topology.Build _ TAddAG_uniform_topologyE.
-  HB.instance (tAddAG (TAddAG_wo_Uniform.sort T))
-    TAddAG_Join_Uniform_Topology.
+  HB.instance Definition TAddAG_Join_Uniform_Topology :=
+    Join_Uniform_Topology.Build TT TAddAG_uniform_topologyE.
 
   Lemma TAddAG_entourageE :
     entourage = (TAddAG_entourage : set (set (TT * TT))).
