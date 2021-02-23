@@ -105,6 +105,7 @@ with-attributes P :-
     att "mathcomp" bool,
     att "mathcomp.axiom" string,
     att "infer" attmap,
+    att "key" string,
   ] Opts, !,
   Opts => P.
 
@@ -1979,16 +1980,16 @@ define-factory-operation TheType Params TheFactory NHoles (some P) :-
   coq.gref->id (const P) Name,
   @local! => coq.notation.add-abbreviation Name 0 T ff _.
 
-pred fresh-indexed-type o:term.
-fresh-indexed-type Ty :-
-  Ty = {{lib:hb.indexed Type}},
+pred fresh-type o:term.
+fresh-type Ty :-
+  Ty = {{Type}},
   std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
 
 pred builders-postulate-factories i:context-decl.
 builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factory: illtyped context",
-  if (var Ty) (fresh-indexed-type Ty)
+  if (var Ty) (fresh-type Ty)
      (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
   if-verbose (coq.say "HB: postulating type" IDT),
   @local! => hb-add-const IDT _ Ty @opaque! C, % no body, local -> a variable
@@ -2018,7 +2019,7 @@ builders-postulate-factories (context-item ID _ _ (some _) _) :-
 % In an asset like HB.mixing Recoord P1 .. PN A of F1 .. & FK ..
 % we call "named" P1 .. PN A, hence A is the last named asset param
 pred is-last-named-asset-param i:asset-decl.
-is-last-named-asset-param (asset-parameter _ {{ lib:hb.indexed _ }} _) :- !.
+is-last-named-asset-param (asset-parameter ID _ _) :- get-option "key" ID, !.
 is-last-named-asset-param (asset-parameter _ _ p\ asset-parameter _ (M p) _) :- pi p\ factory? (M p) _, !.
 is-last-named-asset-param (asset-parameter _ _ _\ asset-record _ _ _ _) :- !.
 is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
@@ -2043,7 +2044,7 @@ pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (pair te
 process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
 
   if-verbose (coq.say "HB: postulate type" Name),
-  if (var T) (fresh-indexed-type Ty) (Ty = T),
+  if (var T) (fresh-type Ty) (Ty = T),
   @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
 
   TheType = global (const C),

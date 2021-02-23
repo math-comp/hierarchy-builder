@@ -8,7 +8,8 @@ HB.structure Definition foo := { T of foom T }.
 
 HB.instance Definition i := foom.Build nat plus.
 
-HB.mixin Record barm (A : Type) (P : foo.type) (B: Type) (T : indexed Type) := {
+#[key="T"]
+HB.mixin Record barm (A : Type) (P : foo.type) (B: Type) (T : Type) := {
   law : P -> T -> A -> B
 }.
 

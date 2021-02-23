@@ -20,9 +20,6 @@ Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
 Register Coq.ssr.ssreflect.phant as hb.phant.
 Register Coq.ssr.ssreflect.Phant as hb.Phant.
-Definition indexed {T} (x : T) := x.
-Bind Scope type_scope with indexed.
-Register indexed as hb.indexed.
 Definition new {T} (x : T) := x.
 Register new as hb.new.
 
