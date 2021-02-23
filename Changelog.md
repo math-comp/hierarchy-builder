@@ -1,5 +1,14 @@
 # Changelog
 
+## UNRELEASED
+
+- `indexed` is gone, one can use `#[key="T"]` instead to flag paramter `T` as
+  the key of the mixin/factory
+- `#[infer(P)]` can be used to tell `HB.structure` to set things up so that
+  parameter `P` is automatically inferred. E.g. if `P : Ring.type` then
+  `Structure.type` will take a `t : Type` and trigger a canonical inference
+  to infer the `t_is_a_Ring : Ring.type` associated to `t`.
+
 ## [1.0.0] - 2020-12-16
 
 Requires Coq-Elpi 1.6 or 1.7 or 1.8 and Coq 8.11 or 8.12 or 8.13.
