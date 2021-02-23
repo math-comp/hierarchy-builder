@@ -23,6 +23,9 @@ Register Coq.ssr.ssreflect.Phant as hb.Phant.
 Definition new {T} (x : T) := x.
 Register new as hb.new.
 
+#[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
+Notation indexed T := T (only parsing).
+
 Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
   (sigT (fun A : Type => (prod P .. (prod Q True) ..)%type))
