@@ -1709,8 +1709,8 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   ClassRequires = factory-requires (ClassName) NilwP,
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
-  ClassName = indt XXX, coq.env.indt XXX _ _ _ _ [KXXX] _,
-  GRDepsClauses = [gref-deps ClassName MLwP, gref-deps (indc KXXX) MLwP],
+  ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
+  GRDepsClauses = [gref-deps (indt ClassInd) MLwP, gref-deps (indc ClassK) MLwP],
   
   declare-auto-infer-params-abbrev Structure MLwP,
 
@@ -2124,7 +2124,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   coq.env.begin-module "Exports" none,
   std.forall Clauses (c\ acc current (clause _ _ c)),
   std.forall GRDepsClauses (c\ acc current (clause _ _ c)),
-  % std.map {gref-deps GRK} (_\ r\ r = maximal) Implicits,
+  % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
   w-params.nparams MLwP NParams,
   acc current (clause _ _ (factory-nparams (const C) NParams)),
