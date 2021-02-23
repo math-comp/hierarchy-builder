@@ -239,6 +239,9 @@ copy-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
 pred triple_1 i:triple A B C, o:A.
 triple_1 (triple A _ _) A.
 
+pred triple_2 i:triple A B C, o:B.
+triple_2 (triple _ B _) B.
+
 pred copy-list i:(A -> A1 -> prop), i:list A, o: list A1.
 copy-list _ [] [].
 copy-list F [X|XS] [Y|YS] :- F X Y, copy-list F XS YS.
@@ -376,12 +379,13 @@ list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
 % Params is a list of pairs (section variable, its type).
 % ListWParams has as many w-params.cons as TheParams and the terms
 % in Factories are abstracted wrt the first component of TheParams.
-pred build-list-w-params i:list (pair term term), i:term, i:list (w-args A), o: list-w-params A.
-build-list-w-params [pr P Pty|PS] TheType Factories (w-params.cons `p` Pty1 R) :- std.do! [
+pred build-list-w-params i:list (triple id term term), i:term, i:list (w-args A), o: list-w-params A.
+build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons Name Pty1 R) :- std.do! [
+  coq.id->name ID Name,
   copy Pty Pty1,
   (pi p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
 ].
-build-list-w-params [] TheType Factories (w-params.nil `t` TT R) :- std.do! [
+build-list-w-params [] TheType Factories (w-params.nil `TheType` TT R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
   (pi t\ (copy TheType t :- !) =>
          std.map Factories (copy-triple (=) (copy-list copy) copy) (R t)),
@@ -2039,7 +2043,7 @@ main-declare-asset Asset AssetKind :- std.do! [
   process-asset-named-parameters Asset AssetKind Module [],
 ].
 
-pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (pair term term).
+pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (triple id term term).
 % We reached TheType
 process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
 
@@ -2058,11 +2062,11 @@ process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- 
   if (var T) (coq.fresh-type T) true,
   @local! => hb-add-const Name _ T @opaque! C, % no body, local -> a variable
   TheParam = global (const C),
-  process-asset-named-parameters (Rest TheParam) D Module [pr TheParam T|Params],
+  process-asset-named-parameters (Rest TheParam) D Module [triple Name TheParam T|Params],
 ].
 
 pred process-asset-unnamed-parameters
-  i:asset-decl, i:list (w-args factoryname), i:id, i:term, i:asset, i:list (pair term term).
+  i:asset-decl, i:list (w-args factoryname), i:id, i:term, i:asset, i:list (triple id term term).
 process-asset-unnamed-parameters (asset-parameter _ T Rest) FS Module TheType D Params :- std.do! [
   std.assert! (factory? T (triple F Ps TheType)) "Not a factory applied to the type variable",
   std.assert! (pi x y\ Rest y = Rest x) "Factories cannot be explicitly mentioned in the mixin",
@@ -2073,12 +2077,12 @@ process-asset-unnamed-parameters (asset-parameter _ T Rest) FS Module TheType D 
 process-asset-unnamed-parameters (asset-alias _ Ty) GRFS Module TheType D Params :- std.do! [
   std.assert! (D = asset-factory) "Mixins cannot be aliases",
   build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
-  declare-factory-alias Ty GRFSwParams Module TheType {std.map Params fst},
+  declare-factory-alias Ty GRFSwParams Module TheType {std.map Params triple_2},
 ].
 
 process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheType D Params :- std.do! [
   build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
-  declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params fst},
+  declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params triple_2},
 ].
 
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
