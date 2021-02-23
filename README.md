@@ -122,6 +122,7 @@ opam install coq-hierarchy-builder
 - `HB.instance` declares a structure instance
 - `HB.export` exports a module and schedules it for re-export
 - `HB.reexport` exports all modules scheduled for re-export
+- `HB.graph` prints the structure hierarchy to a dot file
 - `HB.status` dumps the contents of the hierarchy (debug purposes)
 
 Their documentation can be found in the comments of [structures.v](structures.v),

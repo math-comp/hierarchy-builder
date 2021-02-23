@@ -216,3 +216,5 @@ Lemma addrNK x y : x + y - y = x.
 Proof. by rewrite -addrA subrr addr0. Qed.
 
 End Theory.
+
+HB.graph "hierarchy_5.dot".

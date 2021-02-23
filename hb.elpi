@@ -483,6 +483,9 @@ hb-accumulate S CL :- std.do! [
   coq.elpi.accumulate S "hb.db" CL,
 ].
 
+pred from_factory i:prop, o:factoryname.
+from_factory (from X _ _) X.
+
 pred from_mixin i:prop, o:mixinname.
 from_mixin (from _ X _) X.
 
