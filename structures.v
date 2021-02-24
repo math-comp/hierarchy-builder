@@ -84,10 +84,6 @@ pred join o:classname, o:classname, o:classname.
 % [from _ M _] tests whether M is a declared mixin.
 pred from o:factoryname, o:mixinname, o:gref.
 
-% [factory-requires M ML] means that factory M depends on
-% (i.e. has parameters among) mixins ML.
-pred factory-requires o:factoryname, o:list-w-params mixinname.
-
 % [factory-constructor F K] means K is a constructor for
 % the factory F.
 pred factory-constructor o:factoryname, o:gref.
@@ -118,7 +114,7 @@ pred sub-class o:classname, o:classname.
 % [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
 :index(2)
-pred gref-deps i:gref, o:list-w-params mixinname.
+pred gref-deps o:gref, o:list-w-params mixinname.
 
 %%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
