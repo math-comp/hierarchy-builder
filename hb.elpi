@@ -105,6 +105,7 @@ with-attributes P :-
     att "mathcomp" bool,
     att "mathcomp.axiom" string,
     att "infer" attmap,
+    att "key" string,
   ] Opts, !,
   Opts => P.
 
@@ -232,6 +233,9 @@ copy-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
 pred triple_1 i:triple A B C, o:A.
 triple_1 (triple A _ _) A.
 
+pred triple_2 i:triple A B C, o:B.
+triple_2 (triple _ B _) B.
+
 pred copy-list i:(A -> A1 -> prop), i:list A, o: list A1.
 copy-list _ [] [].
 copy-list F [X|XS] [Y|YS] :- F X Y, copy-list F XS YS.
@@ -338,6 +342,13 @@ list-w-params.append (w-params.nil N T ML1) (w-params.nil N T ML2) (w-params.nil
 list-w-params.append (w-params.cons N Ty ML1) (w-params.cons N Ty ML2) (w-params.cons N Ty ML) :-
   pi x\ list-w-params.append (ML1 x) (ML2 x) (ML x).
 
+pred list-w-params.rcons i:list-w-params A, i:(list term -> term -> w-args A -> prop), o:list-w-params A.
+list-w-params.rcons LwP F R :- list-w-params.rcons.aux LwP F [] R.
+list-w-params.rcons.aux (w-params.nil N T ML1) F Acc (w-params.nil N T ML2) :-
+  pi x\ sigma Last\ F {std.rev Acc} x Last, std.append (ML1 x) [Last] (ML2 x).
+list-w-params.rcons.aux (w-params.cons N Ty ML1) F Acc (w-params.cons N Ty ML2) :-
+  pi x\ list-w-params.rcons.aux (ML1 x) F [x|Acc] (ML2 x).
+
 pred list-w-params.flatten-map
   i:list-w-params A,
   i:(A -> list-w-params B -> prop),
@@ -362,12 +373,13 @@ list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
 % Params is a list of pairs (section variable, its type).
 % ListWParams has as many w-params.cons as TheParams and the terms
 % in Factories are abstracted wrt the first component of TheParams.
-pred build-list-w-params i:list (pair term term), i:term, i:list (w-args A), o: list-w-params A.
-build-list-w-params [pr P Pty|PS] TheType Factories (w-params.cons `p` Pty1 R) :- std.do! [
+pred build-list-w-params i:list (triple id term term), i:term, i:list (w-args A), o: list-w-params A.
+build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons Name Pty1 R) :- std.do! [
+  coq.id->name ID Name,
   copy Pty Pty1,
   (pi p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
 ].
-build-list-w-params [] TheType Factories (w-params.nil `t` TT R) :- std.do! [
+build-list-w-params [] TheType Factories (w-params.nil `TheType` TT R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
   (pi t\ (copy TheType t :- !) =>
          std.map Factories (copy-triple (=) (copy-list copy) copy) (R t)),
@@ -785,7 +797,7 @@ mterm->term (mterm Ps T ML F) SFX :- std.do! [
 ].
 
 % [mgref->term Params T GR X] computes the dependencies of GR in mixins,
-% (through factory-requires if it exist, otherwise gr-deps)
+% (through factory-requires if it exist, otherwise gref-deps)
 % and instanciates all of them through mixin-src, and fails if it cannot.
 pred mgref->term i:list term, i:term, i:gref, o:term.
 mgref->term Ps T GR X :- factory-requires GR MLwP, !, std.do! [
@@ -793,7 +805,7 @@ mgref->term Ps T GR X :- factory-requires GR MLwP, !, std.do! [
   mterm->term (mterm Ps T ML (global GR)) X
 ].
 mgref->term Ps T GR X :- !, std.do! [
-  std.assert! (gr-deps GR MLwP) "BUG: gr-deps should never fail",
+  std.assert! (gref-deps GR MLwP) "BUG: gref-deps should never fail",
   list-w-params_list MLwP ML,
   mterm->term (mterm Ps T ML (global GR)) X
 ].
@@ -857,21 +869,6 @@ assert!-mixin-for T M B :-
 
 % ----------- Finding and instantiating mixin arguments -------------------
 
-% [ty-deps Ty MLwP] states that ML is a list with parameters of
-% mixins with arguments which the type Ty rely on, i.e.
-% Ty = forall p_1 ... p_n (T : Type) (m_0 : M_0 T) ... (m_n : M_n T ..), (zero : T), ..... axioms_ T
-% MLwP = w-params.cons p_1 P_1 (... w-param.cons p_n P_n
-%          (w-param.nil T Type [(M_0, T, qs_0), .., (M_n, T, qs_n)]))
-% pred ty-deps i:term, o:list-w-params mixinname.
-% ty-deps (prod N S R) ML' :- !,
-%   @pi-decl N S x\
-%     ty-deps (R x) ML,
-%     safe-dest-app S HD _,
-%     if (HD = global GR, factory-alias->gref GR F, from  _ F _, !)
-%       (ML' = [F|ML]) (ML' = ML).
-% ty-deps Ty ML :- whd1 Ty Ty1, !, ty-deps Ty1 ML.
-% ty-deps _Ty [].
-
 pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
   safe-dest-app S (global GR) Args, factory-alias->gref GR F, factory-nparams F NP, !,
@@ -880,40 +877,6 @@ factory? S (triple F Params T) :-
 pred prod-src-is-factory i:term.
 prod-src-is-factory (prod _ S _) :- factory? S _.
 prod-src-is-factory Ty :- whd1 Ty Ty1, !, prod-src-is-factory Ty1.
-
-pred ty-deps i:term, o:list-w-params mixinname.
-ty-deps Ty ML :- ty-deps.aux Ty ML, !.
-ty-deps (prod N T _) (w-params.nil N T _\[]) :- T = {{Type}}, !. % TODO: relax to any type later on.
-ty-deps T _ :- % TODO: forall p1 ... pn (T : indexed Type) with indexed being the id function
-  coq.error "ty-deps: BUG: could not get the parameters and the dependencies of"
-    {coq.term->string T}.
-pred ty-deps.aux i:term, o:list-w-params mixinname.
-ty-deps.aux (prod N S R) ML :- !,
-  @pi-decl N S x\
-    if (prod-src-is-factory (R x); S = {{ lib:hb.indexed Type }})
-      (ML = w-params.nil  N S MLP, ty-deps.factories (R x) (MLP x))
-      (ML = w-params.cons N S ML1, ty-deps.aux (R x) (ML1 x)).
-ty-deps.aux Ty ML :- whd1 Ty Ty1, !, ty-deps.aux Ty1 ML.
-
-pred ty-deps.factories i:term, o:list (w-args factoryname).
-ty-deps.factories (prod N S R) FS :-
-  @pi-decl N S x\
-    if (factory? S FwP) (FS = [FwP|FS1]) (FS = FS1),
-    ty-deps.factories (R x) FS1.
-ty-deps.factories Ty FS :- whd1 Ty Ty1, !, ty-deps.factories Ty1 FS.
-ty-deps.factories _ [].
-
-% [term-deps T ML] states that ML is the list of
-% mixins which the term T rely on, i.e. T has type
-% forall (m_0 : M_0 T) ... (m_n : M_n T ..), _ and ML = [M_0, .., M_n]
-pred term-deps i:term, o:list-w-params mixinname.
-term-deps T ML :-
-  std.assert-ok! (coq.typecheck T Ty) "term-deps: T illtyped",
-  ty-deps Ty ML.
-
-% shorthand for gref.
-pred gr-deps i:gref, o:list-w-params mixinname.
-gr-deps GR ML :- term-deps (global GR) ML.
 
 % [find-max-classes Mixins Classes] states that Classes is a list of classes
 %   which contain all the mixins in Mixins.
@@ -987,7 +950,7 @@ mk-phant-abbrev N (phant-term AL T1) C Abbrev :- std.do! [
 % [acc-phant-abbrev Str GR PhGR Abbrev] makes a phantom abbreviation for F
 pred acc-phant-abbrev i:string, i:gref, o:gref, o:abbreviation.
 acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
-  mk-phant-term (global GR) PhGR,
+  mk-phant-term GR PhGR,
   mk-phant-abbrev Str PhGR PhC Abbrev
 ].
 
@@ -1072,11 +1035,11 @@ mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
 ].
 
-pred mk-phant-term i:term, o:phant-term.
-mk-phant-term F PhBody:- !, std.do! [
-  std.assert-ok! (coq.typecheck F FTy) "mk-phant-term: F illtyped",
-  ty-deps FTy MLwP,
-  mk-eta (-1) FTy F EtaF,
+pred mk-phant-term i:gref, o:phant-term.
+mk-phant-term GRF PhBody:- !, std.do! [
+  std.assert! (gref-deps GRF MLwP) "mk-phant-term: unknown gref",
+  std.assert! (coq.env.typeof GRF FTy) "mk-phant-term: F illtyped",
+  mk-eta (-1) FTy (global GRF) EtaF,
 %  toposort-mixins ML MLSorted,
   MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
   std.rev {list-w-params_list MLwPSorted} MLSortedRev,
@@ -1197,9 +1160,10 @@ pred declare-factory-abbrev i:id, i:factory-abbrev.
 declare-factory-abbrev Name (factory-by-classname GR) :-
   % looks fishy (the parameters are not taken into account)
   @global! => coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
-declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :-
+declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :- std.do! [
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
-  @global! => coq.notation.add-abbreviation Name Nargs AbbrTrm tt _.
+  @global! => coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
+].
 
 % [mk-factory-requires-clause-and-abbrev Str GR FL CL FactAbbrev]
 % computes the list of mixins ML provided by FL,
@@ -1314,7 +1278,7 @@ mk-mixin-fun ML X MLX :- mk-mixin-fun.then ML (p\ t\ body\ body = X) MLX.
 pred clean-op-ty i:list prop, i:term, i:term, o:term.
 clean-op-ty [] _ T1 T2 :- copy T1 T2.
 clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
-  gr-deps (const Po) MLwP,
+  gref-deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
 
@@ -1637,7 +1601,8 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProject
     if-verbose (coq.say "mc-compat-structure: declaring pack abbreviation"),
     class-def (class ClassName _ ClassMixins),
     w-params.then ClassMixins mk-fun mk-fun (pack-body ClassName) Pack,
-    (phant-mixin-real NewMixin => mk-phant-abbrev "pack" {mk-phant-term Pack} _ _),
+    hb-add-const "pack_" Pack _ @transparent! GRPack,
+    (phant-mixin-real NewMixin => gref-deps (const GRPack) ClassMixins => mk-phant-abbrev "pack" {mk-phant-term (const GRPack)} _ _),
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
 
@@ -1738,6 +1703,8 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   ClassRequires = factory-requires (ClassName) NilwP,
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
+  ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
+  GRDepsClauses = [gref-deps (indt ClassInd) MLwP, gref-deps (indc ClassK) MLwP],
   
   declare-auto-infer-params-abbrev Structure MLwP,
 
@@ -1769,7 +1736,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: accumulating various props"),
   std.flatten [
       Factories, [ClassRequires], [ClassAlias], [is-structure Structure],
-      NewJoins, [class-def CurrentClass]
+      NewJoins, [class-def CurrentClass], GRDepsClauses
     ]
     NewClauses,
   std.forall NewClauses (c\ acc current (clause _ _ c)),
@@ -1789,7 +1756,8 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
     % TODO: issue an Arguments op T : rename, where T is the name written by
     %   the user in Definition foo := { T of ... }
 
-  if-verbose (coq.say "HB: start operations meta-data module ElpiOperations"),
+  if-verbose (coq.say "HB: operations meta-data module: ElpiOperations"),
+
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
   coq.env.begin-module ElpiOperationModName none,
     std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
@@ -1797,7 +1765,9 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   coq.env.end-module ElpiOperations,
   export ElpiOperations,
 
-  declare-factory-abbrev Module (factory-by-classname ClassName),
+  if-verbose (coq.say "HB: abbreviation factory-by-classname"),
+
+  NewClauses => declare-factory-abbrev Module (factory-by-classname ClassName),
 
   NewClauses => if-MC-compat (mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassName ClassProjection),
 
@@ -2008,16 +1978,16 @@ define-factory-operation TheType Params TheFactory NHoles (some P) :-
   coq.gref->id (const P) Name,
   @local! => coq.notation.add-abbreviation Name 0 T ff _.
 
-pred fresh-indexed-type o:term.
-fresh-indexed-type Ty :-
-  Ty = {{lib:hb.indexed Type}},
+pred fresh-type o:term.
+fresh-type Ty :-
+  Ty = {{Type}},
   std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
 
 pred builders-postulate-factories i:context-decl.
 builders-postulate-factories (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factory: illtyped context",
-  if (var Ty) (fresh-indexed-type Ty)
+  if (var Ty) (fresh-type Ty)
      (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
   if-verbose (coq.say "HB: postulating type" IDT),
   @local! => hb-add-const IDT _ Ty @opaque! C, % no body, local -> a variable
@@ -2047,7 +2017,7 @@ builders-postulate-factories (context-item ID _ _ (some _) _) :-
 % In an asset like HB.mixing Recoord P1 .. PN A of F1 .. & FK ..
 % we call "named" P1 .. PN A, hence A is the last named asset param
 pred is-last-named-asset-param i:asset-decl.
-is-last-named-asset-param (asset-parameter _ {{ lib:hb.indexed _ }} _) :- !.
+is-last-named-asset-param (asset-parameter ID _ _) :- get-option "key" ID, !.
 is-last-named-asset-param (asset-parameter _ _ p\ asset-parameter _ (M p) _) :- pi p\ factory? (M p) _, !.
 is-last-named-asset-param (asset-parameter _ _ _\ asset-record _ _ _ _) :- !.
 is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
@@ -2067,12 +2037,12 @@ main-declare-asset Asset AssetKind :- std.do! [
   process-asset-named-parameters Asset AssetKind Module [],
 ].
 
-pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (pair term term).
+pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (triple id term term).
 % We reached TheType
 process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
 
   if-verbose (coq.say "HB: postulate type" Name),
-  if (var T) (fresh-indexed-type Ty) (Ty = T),
+  if (var T) (fresh-type Ty) (Ty = T),
   @local! => hb-add-const Name _ Ty @opaque! C, % no body, local -> a variable
 
   TheType = global (const C),
@@ -2086,11 +2056,11 @@ process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- 
   if (var T) (coq.fresh-type T) true,
   @local! => hb-add-const Name _ T @opaque! C, % no body, local -> a variable
   TheParam = global (const C),
-  process-asset-named-parameters (Rest TheParam) D Module [pr TheParam T|Params],
+  process-asset-named-parameters (Rest TheParam) D Module [triple Name TheParam T|Params],
 ].
 
 pred process-asset-unnamed-parameters
-  i:asset-decl, i:list (w-args factoryname), i:id, i:term, i:asset, i:list (pair term term).
+  i:asset-decl, i:list (w-args factoryname), i:id, i:term, i:asset, i:list (triple id term term).
 process-asset-unnamed-parameters (asset-parameter _ T Rest) FS Module TheType D Params :- std.do! [
   std.assert! (factory? T (triple F Ps TheType)) "Not a factory applied to the type variable",
   std.assert! (pi x y\ Rest y = Rest x) "Factories cannot be explicitly mentioned in the mixin",
@@ -2101,12 +2071,12 @@ process-asset-unnamed-parameters (asset-parameter _ T Rest) FS Module TheType D 
 process-asset-unnamed-parameters (asset-alias _ Ty) GRFS Module TheType D Params :- std.do! [
   std.assert! (D = asset-factory) "Mixins cannot be aliases",
   build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
-  declare-factory-alias Ty GRFSwParams Module TheType {std.map Params fst},
+  declare-factory-alias Ty GRFSwParams Module TheType {std.map Params triple_2},
 ].
 
 process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheType D Params :- std.do! [
   build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
-  declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params fst},
+  declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params triple_2},
 ].
 
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
@@ -2133,18 +2103,21 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   @global! => coq.arguments.set-implicit GRK [[]],
 
-  mk-phant-term (global GRK) PhGRK0,
-  if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  mk-phant-abbrev "Build" PhGRK BuildConst _,
-
-  % std.map Hyps mixin-src_mixin ML,
   factories-provide GRFSwP MLwP,
-  mk-factory-requires-clause-and-abbrev "axioms" (const C) MLwP Clauses FactAbbrev,
+  GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
+
+  GRDepsClauses => mk-phant-term GRK PhGRK0,
+
+  if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
+  GRDepsClauses => mk-phant-abbrev "Build" PhGRK BuildConst _,
+
+  GRDepsClauses => mk-factory-requires-clause-and-abbrev "axioms" (const C) MLwP Clauses FactAbbrev,
 
   if-verbose (coq.say "HB: start module Exports"),
 
   coq.env.begin-module "Exports" none,
   std.forall Clauses (c\ acc current (clause _ _ c)),
+  std.forall GRDepsClauses (c\ acc current (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
   % coq.arguments.set-implicit GRK [[maximal|Implicits]] tt,
   w-params.nparams MLwP NParams,
@@ -2158,7 +2131,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   export Exports,
 
-  declare-factory-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
 ].
 
 pred hack-append-phant-unify i:int, i:phant-term, o:phant-term.
@@ -2218,6 +2191,22 @@ copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
     copy (global (const C)) B1 :- !, copy B B1),
   copy-clauses-for-unfold CS L.
 
+% TODO: replace with std.map-filter when coq-elpi > 1.9.2
+pred map-filter i:list A, i:(A -> B -> prop), o:list B.
+map-filter [] _ [].
+map-filter [X|XS] F [Y|YS] :- F X Y, !, map-filter XS F YS.
+map-filter [_|XS] F YS :- map-filter XS F YS.
+
+% [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P
+% of I such that P depends on "ML @ [I]" (each operation depends on the the
+% deps of the record plus the record itself)
+pred build-deps-for-projections i:inductive, i:list-w-params mixinname, o:list prop.
+build-deps-for-projections R MLwP CL :- std.do! [
+  map-filter {coq.CS.canonical-projections R} (x\y\x = some y) MixinOps,
+  list-w-params.rcons MLwP (pl\t\r\ r = triple (indt R) pl t) MLRwP,
+  std.map MixinOps (gr\r\ r = gref-deps (const gr) MLRwP) CL,
+].
+
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
   main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
@@ -2246,30 +2235,33 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   @global! => coq.arguments.set-implicit (indt R) [[]],
   @global! => coq.arguments.set-implicit GRK [[]],
 
+  factories-provide GRFSwP MLwP,
+  w-params.nparams MLwP NParams,
+  build-deps-for-projections R MLwP GRDepsClausesProjs,
+  GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
+
   % TODO: should this be in the Exports module?
   if-verbose (coq.say "HB: declare notation axioms"),
 
-  mk-phant-term (global GRK) PhGRK,
+  GRDepsClauses => mk-phant-term GRK PhGRK,
 
   if-verbose (coq.say "HB: declare notation Axioms"),
 
-  mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
+  GRDepsClauses => mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
 
-  % std.map Hyps mixin-src_mixin ML,
-  factories-provide GRFSwP MLwP,
   if (D = asset-mixin)
-     (mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP FRClauses FactAbbrev,
-      FRClauses => declare-id-builder (indt R) IdBuilderClause,
+     (GRDepsClauses => mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP FRClauses FactAbbrev,
+      GRDepsClauses => FRClauses => declare-id-builder (indt R) IdBuilderClause,
       Clauses = [IdBuilderClause|FRClauses])
-     (mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP Clauses FactAbbrev),
+     (GRDepsClauses => mk-factory-requires-clause-and-abbrev "axioms" (indt R) MLwP Clauses FactAbbrev),
 
   if-verbose (coq.say "HB: start module Exports"),
 
   coq.env.begin-module "Exports" none,
   std.forall Clauses (c\ acc current (clause _ _ c)),
-  w-params.nparams MLwP NParams,
+  std.forall GRDepsClauses (c\ acc current (clause _ _ c)),
   acc current (clause _ _ (factory-nparams (indt R) NParams)),
-  std.map {list-w-params_list {gr-deps GRK}} (_\ r\ r = maximal) Implicits,
+  std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits,
   @global! => coq.arguments.set-implicit GRK [[maximal|Implicits]],
   acc current (clause _ _ (factory-constructor (indt R) GRK)),
   acc current (clause _ _ (factory-builder-nparams BuildConst NParams)),
@@ -2281,5 +2273,5 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   export Exports,
 
-  declare-factory-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
 ].

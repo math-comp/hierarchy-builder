@@ -20,11 +20,11 @@ Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
 Register Coq.ssr.ssreflect.phant as hb.phant.
 Register Coq.ssr.ssreflect.Phant as hb.Phant.
-Definition indexed {T} (x : T) := x.
-Bind Scope type_scope with indexed.
-Register indexed as hb.indexed.
 Definition new {T} (x : T) := x.
 Register new as hb.new.
+
+#[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
+Notation indexed T := T (only parsing).
 
 Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
@@ -114,6 +114,11 @@ pred factory-builder-nparams o:constant, o:int.
 
 % [sub-class C1 C2] C1 is a sub-class of C2.
 pred sub-class o:classname, o:classname.
+
+% [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
+% constant. The list is topologically sorted
+:index(2)
+pred gref-deps i:gref, o:list-w-params mixinname.
 
 %%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,

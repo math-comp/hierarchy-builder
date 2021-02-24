@@ -1,6 +1,7 @@
 From HB Require Import structures.
 
-HB.mixin Record m (d : unit) (T : indexed Type) := {
+#[key="T"]
+HB.mixin Record m (d : unit) (T : Type) := {
   op : T -> T -> T;
 }.
 

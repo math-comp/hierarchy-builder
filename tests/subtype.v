@@ -13,7 +13,8 @@ HB.structure Definition Nontrivial := { T of is_inhab T & is_nontrivial T }.
 
 Definition pred T := T -> Prop.
 
-HB.mixin Record is_SUB (T : Type) (P : pred T) (sub_sort : indexed Type) := SubType {
+#[key="sub_sort"]
+HB.mixin Record is_SUB (T : Type) (P : pred T) (sub_sort : Type) := SubType {
 val : sub_sort -> T;
 Sub : forall x, P x -> sub_sort;
 Sub_rect : forall K (_ : forall x Px, K (@Sub x Px)) u, K u;
@@ -26,7 +27,8 @@ HB.structure Definition SubInhab (T : Type) P := { sT of is_inhab T & is_SUB T P
 
 HB.structure Definition SubNontrivial T P := { sT of is_nontrivial sT & is_SUB T P sT }.
 
-HB.factory Record InhabForSub (T : Inhab.type) P (sT : indexed Type) of SubNontrivial T P sT := {}.
+#[key="sT"]
+HB.factory Record InhabForSub (T : Inhab.type) P (sT : Type) of SubNontrivial T P sT := {}.
 
 HB.builders Context (T : Inhab.type) (P : pred T) sT of InhabForSub T P sT.
 
