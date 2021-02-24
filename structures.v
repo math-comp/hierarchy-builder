@@ -129,7 +129,8 @@ pred mixin-first-class o:mixinname, o:classname.
 
 % To tell HB.end what we are doing
 kind declaration type.
-type builder-from term -> factoryname -> declaration. % TheFactory and it's name
+% TheFactory and it's name and the name of the module encloding all that
+type builder-from term -> factoryname -> id -> declaration.
 pred current-mode o:declaration.
 
 pred exported-op o:mixinname, o:constant, o:constant. % memory of exported operations
@@ -327,61 +328,19 @@ Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-% If you don't mention the factory in a builder, then Coq won't make
-% a lambda for it at section closing time.
-pred hack-section-discharging i:term, o:term.
-hack-section-discharging B B1 :- current-mode (builder-from TheFactory _), !,
-  std.assert-ok! (coq.typecheck TheFactory TheFactoryTy) "TheFactory is illtyped (BUG)",
-  B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
-hack-section-discharging B B.
-
-pred optimize-body i:term, o:term.
-optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !,
-  coq.env.const C (some B) _,
-  hd-beta B Args HD Stack,
-  unwind HD Stack Red.
-optimize-body X X.
-
 main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
-  std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
-  coq.arity->term TyWP Ty,
-  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
-  if (TyWP = arity SectionTy) (
-     % Do not open a section when it is not necessary (no parameters)
-     % A side effect of opening a section is loosing meta data associated
-     % with instances, in particular builder tags are lost
-     with-attributes (if-verbose (coq.say  "HB: skipping section opening")),
-     SectionBody = Body
-   ) (
-    SectionName is "hb_instance_" ^ {term_to_string {new_int} },
-    coq.env.begin-section SectionName,
-    postulate-arity TyWP [] Body SectionBody SectionTy
+  with-attributes (
+      main-declare-const-instance Name BodySkel TyWPSkel
   ),
-
-  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
-  factory-alias->gref FactoryAlias Factory,
-  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
-  hack-section-discharging SectionBody SectionBodyHack,
-  optimize-body SectionBodyHack OptimizedBody,
-  if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
-  hb-add-const RealName OptimizedBody _ @transparent! C,
-  TheFactory = (global (const C)),
-  std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
-  with-attributes (main-declare-instance TheType TheFactory Clauses),
-
-  if (TyWP = arity _) true (
-    if-verbose (coq.say "HB: closing instance section"),
-    coq.env.end-section
-  ),
-
-  % we accumulate clauses here since the section ends
-  std.forall Clauses (x\acc current (clause _ _ x)),
 ].
-main [T0, F0] :-
-  argument->ty T0 T, !, % TODO: change this when supporting morphism hierarchies
-  argument->term F0 F, !,
-  with-attributes (main-declare-instance T F Clauses), !,
-  std.forall Clauses (x\acc current (clause _ _ x)).
+main [T0, F0] :- std.do! [
+  argument->ty T0 T, % TODO: change this when supporting morphism hierarchies
+  argument->term F0 F,
+  with-attributes (
+      main-declare-instance T F Clauses,
+      std.forall Clauses (x\hb-accumulate current (clause _ _ x))
+  ),
+].
 
 main _ :- coq.error "Usage: HB.instance <CarrierType> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 
