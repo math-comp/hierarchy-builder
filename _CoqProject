@@ -57,3 +57,4 @@ tests/infer.v
 tests/display.v
 
 -R . HB
+-arg -w -arg -elpi.add-const-for-axiom-or-sectionvar
