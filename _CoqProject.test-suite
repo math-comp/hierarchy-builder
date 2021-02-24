@@ -52,6 +52,7 @@ tests/test_CS_db_filtering.v
 tests/subtype.v
 tests/infer.v
 tests/exports.v
+tests/log_impargs_record.v
 
 -R tests HB.tests
 -R examples HB.examples

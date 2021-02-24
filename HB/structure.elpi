@@ -88,7 +88,7 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
 
-  log.coq.env.import-module Exports,
+  log.coq.env.import-module "Exports" Exports,
 
   if-verbose (coq.say "HB: declaring on_ abbreviation"),
 
@@ -113,7 +113,7 @@ declare Module B :- std.do! [
 
   if-verbose (coq.say "HB: end modules; export" Exports),
 
-  export.module Exports,
+  export.module {calc (Module ^ ".Exports")} Exports,
 
   if-verbose (coq.say "HB: exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
@@ -128,7 +128,7 @@ declare Module B :- std.do! [
     std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
     std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
-  export.module ElpiOperations,
+  export.module ElpiOperationModName ElpiOperations,
 
   if-verbose (coq.say "HB: abbreviation factory-by-classname"),
 
@@ -383,7 +383,7 @@ synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
 ].
 
 pred synthesize-fields.body i:list term, i:term, i:list (w-args mixinname), o:indt-decl.
-synthesize-fields.body _Params T ML (record "axioms" {{ Type }} "Class" FS) :-
+synthesize-fields.body _Params T ML (record "axioms_" {{ Type }} "Class" FS) :-
   synthesize-fields T ML FS.
 
 pred mk-record+sort-field i:name, i:term, i:(term -> record-decl), o:indt-decl.
@@ -486,7 +486,7 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProject
 
   log.coq.env.end-module-name ModuleName _,
   log.coq.env.end-module-name CompatModuleName MCCompat,
-  log.coq.env.export-module MCCompat,
+  log.coq.env.export-module CompatModuleName MCCompat,
   %coq.env.import-module Module,
 ].
 
@@ -572,7 +572,7 @@ product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
   std.append GRA GRB L.
 product->triples {{ True }} [] tt :- !.
 product->triples {{ False }} [] ff :- !.
-product->triples A [GR] tt :- factory? A GR.
+product->triples A [GR] tt :- std.assert! (factory? A GR) "A structure can only mention known factories".
 
 pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
 sigT->list-w-params (fun N T B) L C :-

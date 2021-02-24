@@ -1,7 +1,7 @@
 From HB Require Import structures.
 From Coq Require Import ssreflect ZArith.
 
-#[verbose]
+#[verbose, log]
 HB.mixin Record AddComoid_of_Type A := {
   zero : A;
   add : A -> A -> A;
@@ -9,7 +9,7 @@ HB.mixin Record AddComoid_of_Type A := {
   addrC : forall x y, add x y = add y x;
   add0r : forall x, add zero x = x;
 }.
-#[verbose]
+#[verbose, log(raw)]
 HB.structure Definition AddComoid := { A of AddComoid_of_Type A }.
 
 Notation "0" := zero.

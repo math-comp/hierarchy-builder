@@ -205,7 +205,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
-  export.module Exports,
+  export.module {calc (Module ^ ".Exports")} Exports,
 
   GRDepsClauses => declare-abbrev Module FactAbbrev,
 ].
@@ -293,7 +293,7 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
-  export.module Exports,
+  export.module {calc (Module ^ ".Exports")} Exports,
 
   GRDepsClauses => declare-abbrev Module FactAbbrev,
 ].
