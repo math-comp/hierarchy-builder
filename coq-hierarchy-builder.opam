@@ -8,9 +8,11 @@ homepage: "https://github.com/math-comp/hierarchy-builder"
 bug-reports: "https://github.com/math-comp/hierarchy-builder/issues"
 dev-repo: "git+https://github.com/math-comp/hierarchy-builder"
 
-build: [ make ]
-install: [ make "install" "VFILES=structures.v" ]
 depends: [ "coq-elpi" {>= "1.6" & < "1.9~"} ]
+build: [ [ make "build"]
+         [ make "test-suite" ]  # {with-test} waiting https://github.com/coq-community/docker-coq-action/pull/48
+       ]
+install: [ make "install" ]
 synopsis: "High level commands to declare and evolve a hierarchy based on packed classes"
 description: """
 Hierarchy Builder is a high level language to build hierarchies of algebraic structures and make these

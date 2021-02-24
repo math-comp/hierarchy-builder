@@ -25,13 +25,13 @@ TGTS?=
 ######################################################################
 
 # local context: -----------------------------------------------------
-.PHONY: all config build only test-suite clean distclean doc doc-clean __always__
+.PHONY: all config build only test-suite clean distclean __always__
 .SUFFIXES:
 
 H:= $(if $(VERBOSE),,@)  # not used yet
 TOP     = $(dir $(lastword $(MAKEFILE_LIST)))
 COQMAKE = $(MAKE) -f Makefile.coq $(COQMAKEOPTIONS)
-COQMAKE_TESTSUITE = $(MAKE) -f Makefile.test-suite.coq VDFILE=".coqdeps.test-suite" $(COQMAKEOPTIONS)
+COQMAKE_TESTSUITE = $(MAKE) -f Makefile.test-suite.coq $(COQMAKEOPTIONS)
 BRANCH_coq:= $(shell $(COQBIN)coqtop -v | head -1 | grep -E '(trunk|master)' \
 	      | wc -l | sed 's/ *//g')
 
@@ -46,7 +46,10 @@ COQV:= $(shell echo $(COQVVV) | cut -d"." -f1)
 COQVV:= $(shell echo $(COQVVV) | cut -d"." -f1-2)
 
 # all: ---------------------------------------------------------------
-all: config build
+all: 
+	$(MAKE) config
+	$(MAKE) build
+	$(MAKE) test-suite
 
 # Makefile.coq: ------------------------------------------------------
 .PHONY: pre-makefile
@@ -56,12 +59,8 @@ Makefile.coq: pre-makefile $(COQPROJECT) Makefile
 
 # Test suite ---------------------------------------------------------
 
-test_suite/hierarchy_test.v: build
-	mkdir -p test_suite
-	COQBIN=$(COQBIN) ocaml ../etc/utils/hierarchy.ml -verify -R . mathcomp -lib all.all > test_suite/hierarchy_test.v
-
-Makefile.test-suite.coq: test_suite/hierarchy_test.v
-	$(COQMAKEFILE) $(COQMAKEFILEOPTIONS) -f Make.test-suite -o Makefile.test-suite.coq
+Makefile.test-suite.coq: $(COQPROJECT).test-suite Makefile
+	$(COQMAKEFILE) $(COQMAKEFILEOPTIONS) -f $(COQPROJECT).test-suite -o Makefile.test-suite.coq
 
 # Global config, build, clean and distclean --------------------------
 config: sub-config this-config
@@ -72,7 +71,7 @@ only: sub-only this-only
 
 test-suite: sub-test-suite this-test-suite
 
-clean: sub-clean this-clean doc-clean
+clean: sub-clean this-clean
 
 distclean: sub-distclean this-distclean
 
@@ -125,25 +124,5 @@ sub-%: __always__
 endif
 
 # Make of individual .vo ---------------------------------------------
-%.vo: __always__ Makefile.coq
+structures.vo : %.vo: __always__ Makefile.coq
 	+$(COQMAKE) $@
-
-doc: __always__ Makefile.coq
-	mkdir -p _build_doc/
-	cp -r $(COQFILES) -t _build_doc/ --parents
-	cp Make Makefile* _build_doc
-	mkdir -p _build_doc/htmldoc
-	. ../etc/utils/builddoc_lib.sh; \
-		cd _build_doc && mangle_sources $(COQFILES)
-	+cd _build_doc && $(COQMAKE)
-	cd _build_doc && if [ ! -f .Makefile.coq.d ] ; then cp .coqdeps.d .Makefile.coq.d ; fi #can be removed when coq-8.10 compatibility is dropped
-	cd _build_doc && grep -v vio: .Makefile.coq.d > depend
-	cd _build_doc && cat depend | ../../etc/buildlibgraph $(COQFILES) > htmldoc/depend.js
-	cd _build_doc && $(COQBIN)coqdoc -t "Mathematical Components" \
-		-g --utf8 -R . mathcomp \
-		--parse-comments \
-		--multi-index $(COQFILES) -d htmldoc
-	cp ../etc/artwork/coqdoc.css _build_doc/htmldoc
-
-doc-clean:
-	rm -rf _build_doc/

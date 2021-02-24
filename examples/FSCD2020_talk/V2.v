@@ -18,6 +18,6 @@ HB.structure Definition Monoid :=
   { M & monoid_of_semigroup M }.
 
 (* is_monoid does not exist anymore *)
-Fail HB.instance Definition Z_is_monoid : is_monoid Z :=
-  is_monoid.Build Z 0%Z Z.add
-    Z.add_assoc Z.add_0_l Z.add_0_r.
+Fail Check is_monoid.
+
+Fail HB.mixin Record xxxx P A := { F : bool }.
