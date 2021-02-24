@@ -269,6 +269,15 @@ Elpi Export HB.mixin.
   HB.structure Definition StructureName := { A of Factory1 A & … & FactoryN A & }.
   >>
 
+  Attributes:
+  - [#[mathcomp]] attempts to generate a backward compatibility layer with mathcomp:
+    trying to infer the right [Structure.pack],
+  - [#[infer("variable")]] provides a structure where [variable] has type [Type]
+    and will try to infer it's type by unification (with canonical strucutre inference),
+  - [#[arg_sort]] defines an alias [arg_sort] for [sort], and declares it as the
+    main coercion. [sort] is still declared as a coercion but the only reason is
+    to make sure Coq does not print it.
+    Cf https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v#L225-L243.
 *)
 
 Elpi Command HB.structure.
