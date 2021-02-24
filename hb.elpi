@@ -416,7 +416,8 @@ hb-add-const Name Bo Ty Opaque C :- std.do! [
 pred hb-add-variable i:id, i:term, o:constant.
 hb-add-variable Name Ty C :- std.do! [
   if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
-  coq.env.add-section-variable ID Ty C,
+  % coq.env.add-section-variable ID Ty C, coq-elpi >= 1.9.x
+  @local! => coq.env.add-const ID _ Ty @opaque! C,
   hb-set-implicit (const C) [],
 ].
 
