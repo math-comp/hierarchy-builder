@@ -382,7 +382,7 @@ Elpi Export HB.structure.
 *)
 
 Elpi Command HB.instance.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 

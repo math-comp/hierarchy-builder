@@ -72,6 +72,12 @@ map-filter [] _ [].
 map-filter [X|XS] F [Y|YS] :- F X Y, !, map-filter XS F YS.
 map-filter [_|XS] F YS :- map-filter XS F YS.
 
+pred head-gref-under-prods i:term, o:gref.
+head-gref-under-prods (prod N T Body) Hd :-
+  @pi-decl N T x\ head-gref-under-prods (Body x) Hd.
+head-gref-under-prods T Hd :- whd1 T T', head-gref-under-prods T' Hd.
+head-gref-under-prods T Hd :- safe-dest-app T (global Hd) _.
+
 %%%%% HB Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
@@ -201,6 +207,11 @@ nice-gref->string X Mod :-
 nice-gref->string X S :-
   coq.term->string (global X) S.
 
+pred gref->modname i:mixinname, o:id.
+gref->modname GR ModName :-
+  coq.gref->path GR Path,
+  if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for " GR).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to predicate generic constructions %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -231,6 +242,10 @@ mk-fun-prod N Ty (x\ pr (Body x) (Type x)) (pr (fun N Ty Body) (prod N Ty Type))
 
 pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> indt-decl), o:indt-decl.
 mk-parameter IK Name X F Decl :- !, Decl = parameter {coq.name->id Name} IK X F.
+
+pred params->holes i:list-w-params A, o:list term.
+params->holes (w-params.nil _ _ _) [].
+params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % w-params interface %
