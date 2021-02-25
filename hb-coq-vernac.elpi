@@ -87,8 +87,8 @@ declare-coercion C :- std.do! [
 
 }
 
-% "accumulate" is a keyword, we can't define the predicate in the namepace
-% so we just use the long name.
+% We cannot define the predicate `accumulate` in the namepace
+% because `accumulate` is a keyword of elpi, so we just use the long name.
 pred coq.vernac.accumulate i:scope, i:clause.
 coq.vernac.accumulate S CL :- std.do! [
   coq.elpi.accumulate S "hb.db" CL,
