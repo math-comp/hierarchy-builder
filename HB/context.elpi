@@ -18,7 +18,7 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
 
   mgref->term Ps T M Ty,
   std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
-  coq.vernac.add-variable Name Ty C
+  coq.vernac.add-section-variable Name Ty C
 ].
 
 % [main-declare-context TheType Parameters Factories Clauses] postulates a

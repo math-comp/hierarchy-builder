@@ -110,7 +110,7 @@ postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
   coq.notation.abbreviation Fabv {std.append Params [TheType]} Package,
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
-  coq.vernac.add-variable Name Package C,
+  coq.vernac.add-section-variable Name Package C,
   TheFactory = global (const C),
 ].
 
@@ -146,7 +146,7 @@ builders-postulate-factories ModName (context-item IDT _ TySkel none t\ context-
   if (var Ty) (fresh-type Ty)
      (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
   if-verbose (coq.say "HB: postulating type" IDT),
-  coq.vernac.add-variable IDT Ty C,
+  coq.vernac.add-section-variable IDT Ty C,
   TheType = global (const C),
 
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
@@ -162,7 +162,7 @@ builders-postulate-factories ModName (context-item ID _ TSkel none Factories) :-
   if-verbose (coq.say "HB: postulating" ID),
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factories: illtyped context",
   if (var T) (coq.fresh-type T) true,
-  coq.vernac.add-variable ID T P,
+  coq.vernac.add-section-variable ID T P,
   TheParam = global (const P),
   builders-postulate-factories ModName (Factories TheParam),
 ].

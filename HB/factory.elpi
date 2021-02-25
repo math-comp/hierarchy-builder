@@ -85,7 +85,7 @@ process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Param
 
   if-verbose (coq.say "HB: postulate type" Name),
   if (var T) (fresh-type Ty) (Ty = T),
-  coq.vernac.add-variable Name Ty C,
+  coq.vernac.add-section-variable Name Ty C,
 
   TheType = global (const C),
   % We postulate the dependencies
@@ -96,7 +96,7 @@ process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- 
   std.assert-ok! (coq.typecheck-ty T _) "Illtyped parameter",
   if-verbose (coq.say "HB: postulate " Name),
   if (var T) (coq.fresh-type T) true,
-  coq.vernac.add-variable Name T C,
+  coq.vernac.add-section-variable Name T C,
   TheParam = global (const C),
   process-asset-named-parameters (Rest TheParam) D Module [triple Name TheParam T|Params],
 ].

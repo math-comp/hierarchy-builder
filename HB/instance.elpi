@@ -87,7 +87,7 @@ postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   std.assert-ok! (coq.typecheck-ty S _) "arity parameter illtyped",
   if-verbose (coq.say "HB: postulating" ID),
   if (var S) (coq.fresh-type S) true,
-  coq.vernac.add-variable ID S C,
+  coq.vernac.add-section-variable ID S C,
   Var = global (const C),
   postulate-arity (A Var) [Var|Acc] T T1 Ty.
 postulate-arity (arity Ty) ArgsRev X T Ty :-
