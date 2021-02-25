@@ -33,3 +33,5 @@ HB.instance Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z.add_op
 
 Lemma example2 (x : Z) : x + (- x) = - 0.
 Proof. by rewrite example. Qed.
+
+HB.graph "readme.dot".

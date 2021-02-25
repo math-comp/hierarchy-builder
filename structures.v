@@ -160,7 +160,9 @@ pred builder-decl o:builder.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** This command prints the status of the hierarchy (Debug) *)
+(** This command prints the status of the hierarchy (Debug)
+
+*)
 
 Elpi Command HB.status.
 Elpi Accumulate File "hb.elpi".
@@ -211,10 +213,55 @@ main [] :- !, std.do! [
     std.forall ML pp-mixin-src
   ),
 ].
+
 main _ :- coq.error "Usage: HB.status.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.status.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This command prints the hierarchy to a dot file. You can use
+    <<
+    tred file.dot | xdot -
+    >>
+    to visualize file.dot
+*)
+
+Elpi Command HB.graph.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+pred nice-gref->string i:gref, o:string.
+nice-gref->string X Mod :-
+  coq.gref->path X Path,
+  std.rev Path [_,Mod|_], !.
+nice-gref->string X S :-
+  coq.term->string (global X) S.
+
+pred pp-coercion-dot i:out_stream, i:coercion. 
+pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
+  output OC {nice-gref->string Tgt},
+  output OC " -> ",
+  output OC {nice-gref->string Src},
+  output OC ";\n",
+].
+pp-coercion-dot _ _.
+
+main [str File] :- !, std.do! [
+  open_out File OC,
+  output OC "digraph Hierarchy { ",
+  std.forall {coq.coercion.db} (pp-coercion-dot OC),
+  output OC "}",
+  close_out OC,
+].
+ 
+main _ :- coq.error "Usage: HB.graph <filename>.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.graph.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

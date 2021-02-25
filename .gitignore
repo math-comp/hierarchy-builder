@@ -51,3 +51,5 @@ _minted-*
 *.blg
 *.fdb_latexmk
 *.vtc
+
+*.dot
