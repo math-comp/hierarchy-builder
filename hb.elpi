@@ -1151,6 +1151,10 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   std.map TodoJoins (declare-join CurrentClass) NewJoins
 ].
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HB.structure
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % For each mixin we declare a field and apply the mixin to its dependencies
 % (that are previously declared fields recorded via field-for-mixin)
 pred synthesize-fields i:term, i:list (w-args mixinname), o:record-decl.
@@ -1431,48 +1435,9 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
 ].
 
-/* HB.context?
-pred main-begin-declare i:string, i:string, i:list gref, i:declaration.
-main-begin-declare Module TName GRFS Decl :- std.do! [
-
-  if-verbose (coq.say "HB: start module and section" Module),
-
-  coq.vernac.begin-module Module none,
-  coq.vernac.begin-section Module,
-
-  if-verbose (coq.say "HB: postulate type" TName),
-
-  coq.fresh-type Ty,
-  @local! => coq.vernac.add-const TName _ Ty @opaque! T, % no body, local -> a variable
-  main-declare-context (global (const T)) [] GRFS _, % TODO params
-  coq.vernac.accumulate current (clause _ _ (current-mode Decl))
-].
-*/
-
-pred main-end-declare-builders.
-main-end-declare-builders :- std.do! [
-  current-mode (builder-from _ GR ModName),
-
-  coq.vernac.end-section ModName,
-
-  findall-builders LFIL,
-
-  std.fold LFIL [] main-declare-builder Clauses,
-
-  if (Clauses = [])
-     (coq.error "No builders to declare, did you forget HB.instance?")
-     true,
-
-  % TODO: Do we need this module?
-  gref->modname GR M,
-  Name is M ^ "_Exports",
-  coq.vernac.begin-module Name,
-  (std.forall Clauses c\ coq.vernac.accumulate current (clause _ _ c)),
-
-  coq.vernac.end-module Name Exports,
-  coq.vernac.end-module ModName _,
-  hb.export Exports,
-].
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HB.instance
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, i:term, o:list prop.
 add-mixin T FGR MakeCanon MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
@@ -1542,12 +1507,67 @@ declare-canonical-instances-from-factory T F :-
     ]
   ].
 
-% entry point for HB.instance
 pred main-declare-instance i:term, i:term, o:list prop.
 main-declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR _), !,
   declare-canonical-instances-from-factory-and-local-builders T F TheFactory FGR Clauses.
 main-declare-instance T F [] :-
   declare-canonical-instances-from-factory T F.
+
+% If you don't mention the factory in a builder, then Coq won't make
+% a lambda for it at section closing time.
+pred hack-section-discharging i:term, o:term.
+hack-section-discharging B B1 :- current-mode (builder-from TheFactory _ _), !,
+  std.assert-ok! (coq.typecheck TheFactory TheFactoryTy) "TheFactory is illtyped (BUG)",
+  B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
+hack-section-discharging B B.
+
+pred optimize-body i:term, o:term.
+optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !,
+  coq.env.const C (some B) _,
+  hd-beta B Args HD Stack,
+  unwind HD Stack Red.
+optimize-body X X.
+
+pred main-declare-const-instance i:id, i:term, i:arity.
+main-declare-const-instance Name BodySkel TyWPSkel :- std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
+  coq.arity->term TyWP Ty,
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
+  if (TyWP = arity SectionTy) (
+     % Do not open a section when it is not necessary (no parameters)
+     % A side effect of opening a section is loosing meta data associated
+     % with instances, in particular builder tags are lost
+     if-verbose (coq.say  "HB: skipping section opening"),
+     SectionBody = Body
+   ) (
+    SectionName is "hb_instance_" ^ {term_to_string {new_int} },
+    coq.vernac.begin-section SectionName,
+    postulate-arity TyWP [] Body SectionBody SectionTy
+  ),
+
+  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
+  factory-alias->gref FactoryAlias Factory,
+  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
+  hack-section-discharging SectionBody SectionBodyHack,
+  optimize-body SectionBodyHack OptimizedBody,
+  if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
+  coq.vernac.add-const RealName OptimizedBody _ @transparent! C,
+  TheFactory = (global (const C)),
+  std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
+  main-declare-instance TheType TheFactory Clauses,
+
+  if (TyWP = arity _) true (
+    if-verbose (coq.say "HB: closing instance section"),
+    coq.vernac.end-section SectionName
+  ),
+
+  % we accumulate clauses here since the section ends
+  std.forall Clauses (x\coq.vernac.accumulate current (clause _ _ x)),
+].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HB.builders
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred declare-old-located i:string, i:located.
 declare-old-located Id (loc-gref GR) :-
@@ -1586,24 +1606,6 @@ elaborate-context-skel->factory (context-item ID _ _ (some _) _) _ _ _ :-
 pred purge-id i:term, o:term.
 purge-id T T1 :-
   (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
-
-pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders CtxSkel :- std.do! [
-  Name is "Builders_" ^ {term_to_string {new_int}}, % TODO?
-  std.assert-ok! (elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
-  if-verbose (coq.say "HB: context to factory"),
-  coq.vernac.begin-module Name,
-  if-verbose (coq.say "HB: begin module for builders"),
-  if (GRF = indt FRecord) (std.do! [
-    if-verbose (coq.say "HB: begin module Super"),
-    coq.vernac.begin-module "Super",
-    std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
-    coq.vernac.end-module "Super" _,
-    if-verbose (coq.say "HB: ended module Super")]) (true),
-  coq.vernac.begin-section Name,
-  if-verbose (coq.say "HB: postulating factories"),
-  builders-postulate-factories Name Ctx,
-].
 
 pred postulate-factory-abbrev i:term, i:list term, i:id, i:factoryname, o:term.
 postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
@@ -1671,6 +1673,71 @@ builders-postulate-factories ModName (context-item ID _ TSkel none Factories) :-
 
 builders-postulate-factories _ (context-item ID _ _ (some _) _) :-
   coq.error "context item cannot be given a body:" ID.
+
+pred main-begin-declare-builders i:context-decl.
+main-begin-declare-builders CtxSkel :- std.do! [
+  Name is "Builders_" ^ {term_to_string {new_int}}, % TODO?
+  std.assert-ok! (elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
+  if-verbose (coq.say "HB: context to factory"),
+  coq.vernac.begin-module Name,
+  if-verbose (coq.say "HB: begin module for builders"),
+  if (GRF = indt FRecord) (std.do! [
+    if-verbose (coq.say "HB: begin module Super"),
+    coq.vernac.begin-module "Super",
+    std.forall {coq.CS.canonical-projections FRecord} declare-old-constant,
+    coq.vernac.end-module "Super" _,
+    if-verbose (coq.say "HB: ended module Super")]) (true),
+  coq.vernac.begin-section Name,
+  if-verbose (coq.say "HB: postulating factories"),
+  builders-postulate-factories Name Ctx,
+].
+
+/* HB.context?
+pred main-begin-declare i:string, i:string, i:list gref, i:declaration.
+main-begin-declare Module TName GRFS Decl :- std.do! [
+
+  if-verbose (coq.say "HB: start module and section" Module),
+
+  coq.vernac.begin-module Module none,
+  coq.vernac.begin-section Module,
+
+  if-verbose (coq.say "HB: postulate type" TName),
+
+  coq.fresh-type Ty,
+  @local! => coq.vernac.add-const TName _ Ty @opaque! T, % no body, local -> a variable
+  main-declare-context (global (const T)) [] GRFS _, % TODO params
+  coq.vernac.accumulate current (clause _ _ (current-mode Decl))
+].
+*/
+
+pred main-end-declare-builders.
+main-end-declare-builders :- std.do! [
+  current-mode (builder-from _ GR ModName),
+
+  coq.vernac.end-section ModName,
+
+  findall-builders LFIL,
+
+  std.fold LFIL [] main-declare-builder Clauses,
+
+  if (Clauses = [])
+     (coq.error "No builders to declare, did you forget HB.instance?")
+     true,
+
+  % TODO: Do we need this module?
+  gref->modname GR M,
+  Name is M ^ "_Exports",
+  coq.vernac.begin-module Name,
+  (std.forall Clauses c\ coq.vernac.accumulate current (clause _ _ c)),
+
+  coq.vernac.end-module Name Exports,
+  coq.vernac.end-module ModName _,
+  hb.export Exports,
+].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HB.mixin/factory
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % In an asset like HB.mixing Recoord P1 .. PN A of F1 .. & FK ..
 % we call "named" P1 .. PN A, hence A is the last named asset param
@@ -1881,54 +1948,3 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 ].
 
 
-% If you don't mention the factory in a builder, then Coq won't make
-% a lambda for it at section closing time.
-pred hack-section-discharging i:term, o:term.
-hack-section-discharging B B1 :- current-mode (builder-from TheFactory _ _), !,
-  std.assert-ok! (coq.typecheck TheFactory TheFactoryTy) "TheFactory is illtyped (BUG)",
-  B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
-hack-section-discharging B B.
-
-pred optimize-body i:term, o:term.
-optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !,
-  coq.env.const C (some B) _,
-  hd-beta B Args HD Stack,
-  unwind HD Stack Red.
-optimize-body X X.
-
-pred main-declare-const-instance i:id, i:term, i:arity.
-main-declare-const-instance Name BodySkel TyWPSkel :- std.do! [
-  std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
-  coq.arity->term TyWP Ty,
-  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
-  if (TyWP = arity SectionTy) (
-     % Do not open a section when it is not necessary (no parameters)
-     % A side effect of opening a section is loosing meta data associated
-     % with instances, in particular builder tags are lost
-     if-verbose (coq.say  "HB: skipping section opening"),
-     SectionBody = Body
-   ) (
-    SectionName is "hb_instance_" ^ {term_to_string {new_int} },
-    coq.vernac.begin-section SectionName,
-    postulate-arity TyWP [] Body SectionBody SectionTy
-  ),
-
-  std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
-  factory-alias->gref FactoryAlias Factory,
-  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
-  hack-section-discharging SectionBody SectionBodyHack,
-  optimize-body SectionBodyHack OptimizedBody,
-  if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
-  coq.vernac.add-const RealName OptimizedBody _ @transparent! C,
-  TheFactory = (global (const C)),
-  std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
-  main-declare-instance TheType TheFactory Clauses,
-
-  if (TyWP = arity _) true (
-    if-verbose (coq.say "HB: closing instance section"),
-    coq.vernac.end-section SectionName
-  ),
-
-  % we accumulate clauses here since the section ends
-  std.forall Clauses (x\coq.vernac.accumulate current (clause _ _ x)),
-].
