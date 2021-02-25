@@ -48,6 +48,29 @@ pred under-mixin-src-from-factories.do! i:term, i:list term, i:list prop.
 under-mixin-src-from-factories.do! TheType Factories LP :-
   under.do! (under-mixin-src-from-factories.then TheType Factories) LP.
 
+pred under-mixins.then i:list (w-args mixinname),
+    i:(name -> term -> (term -> A) -> A -> prop),
+    i:(A -> prop), o:A.
+under-mixins.then [] _ Pred Body :- !, Pred Body.
+under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
+  mgref->term Args T M MTy,
+  (@pi-decl `m` MTy m\ mixin-src T M m =>
+    under-mixins.then ML Mixin Pred (Body m)),
+  Mixin `m` MTy Body Out,
+].
+
+% [mk-mixin-fun.then MLwP Pred F] states that F has shape
+%   fun p_1 .. p_k T,
+%      (m_0 : M_0 ..p.. T) .. (m_n : M_n ..p.. T m_i0 .. m_ik) =>
+%      Body m_0 .. m_n
+% where  MLwP contains M_0, .., M_n (under p_1 .. p_k)
+%   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
+%   and  ..p.. is a list of terms built using p_1 .. p_k and T
+pred mk-mixin-fun.then i:list-w-params mixinname, i:(list term -> term -> term -> prop), o:term.
+mk-mixin-fun.then L P Out :- !,
+  w-params.then L mk-fun mk-fun
+    (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
+
 %%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % mterm is always of the form [mterm P T ML F], which is the data of

@@ -5,6 +5,9 @@ shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }
 
 %%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pred from_factory i:prop, o:factoryname.
+from_factory (from X _ _) X.
+
 pred from_mixin i:prop, o:mixinname.
 from_mixin (from _ X _) X.
 
@@ -27,7 +30,10 @@ pred class-def_name i:prop, o:classname.
 class-def_name (class-def (class N _ _)) N.
 
 pred classname->def i:classname, o:class.
-classname->def CN (class CN S ML) :- class-def (class CN S ML), !.
+classname->def CN (class CN S ML) :- class-def (class CN S ML).
+
+pred classname->mixins i:classname, o:list-w-params mixinname.
+classname->mixins CN MLwP :- class-def (class CN _ MLwP).
 
 pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.
@@ -259,4 +265,22 @@ pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
   safe-dest-app S (global GR) Args, factory-alias->gref GR F, factory-nparams F NP, !,
   std.split-at NP Args Params [T|_].
+
+% [find-max-classes Mixins Classes] states that Classes is a list of classes
+%   which contain all the mixins in Mixins.
+% Although it is not strictly necessary, but desirable for debugging,
+% we use a heuristic that tries to minimize the number
+% of classes by assuming Mixins are reversed topologically sorted.
+% Note: works with flat mixins, no params
+pred find-max-classes i:list mixinname, o:list classname.
+find-max-classes [] [].
+find-max-classes [M|Mixins] [C|Classes] :-
+  mixin-first-class M C,
+  std.do! [
+    class-def (class C _ MLwP),
+    list-w-params_list MLwP ML,
+    std.filter Mixins (x\ not (std.mem! ML x)) Mixins',
+    find-max-classes Mixins' Classes
+  ].
+find-max-classes [M|_] _ :- coq.error "HB: cannot find a class containing mixin" M.
 

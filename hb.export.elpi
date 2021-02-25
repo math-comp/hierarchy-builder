@@ -1,0 +1,22 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+accumulate hb-utils.
+accumulate hb-coq-vernac.
+
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+
+% [export Module] exports a Module now adds it to the collection of
+% modules to export in the end of the current enclosing module,
+% by the command HB.Exports
+
+pred hb.export i:modpath.
+hb.export Module :- !,
+  coq.vernac.export-module Module,
+  coq.vernac.accumulate current (clause _ _ (module-to-export Module)).
+
+pred main-reexport.
+main-reexport :- !,
+  std.findall (module-to-export Module_) Mods,
+  std.forall Mods (x\ sigma y\ module-to-export y = x, coq.vernac.export-module y).
+

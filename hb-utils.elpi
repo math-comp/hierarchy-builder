@@ -157,6 +157,11 @@ copy-fields (field Att ID T F) (field Att ID T1 F1) :-
 pred copy-constructor i:indc-decl, o:indc-decl.
 copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
 
+% TODO: move to coq-elpi proper
+pred coq.gref.list->set i:list mixinname, o:coq.gref.set.
+coq.gref.list->set L S :-
+  std.fold L {coq.gref.set.empty} coq.gref.set.add S.
+
 pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
@@ -393,3 +398,7 @@ copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
   Clause = (pi B1\
     copy (global (const C)) B1 :- !, copy B B1),
   copy-clauses-for-unfold CS L.
+
+pred purge-id i:term, o:term.
+purge-id T T1 :-
+  (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.

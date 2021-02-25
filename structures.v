@@ -330,7 +330,7 @@ Elpi Export HB.mixin.
 *)
 
 Elpi Command HB.structure.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -500,7 +500,7 @@ Elpi Export HB.end.
    >>> *)
 
 Elpi Command HB.export.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [str M] :- !, with-attributes (hb.export {coq.locate-module M}).
@@ -517,7 +517,7 @@ Elpi Export HB.export.
    It is useful to create one big module with all exports at the end of a file. *)
 
 Elpi Command HB.reexport.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (main-reexport).
