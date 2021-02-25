@@ -179,6 +179,7 @@ if-MC-compat _.
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
+% TODO: rename since this is HB specific and is expected to return a factory
 pred located->gref i:string, i:list located, o:gref.
 located->gref _ [loc-gref GR|_] GR.
 located->gref _ [loc-abbreviation Abbrev|_] GR :- phant-abbrev GR _ Abbrev, !.
@@ -407,3 +408,6 @@ copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
 pred purge-id i:term, o:term.
 purge-id T T1 :-
   (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
+
+
+%TODO: move all non HB related stuff to coq-elpi-extra.elpi

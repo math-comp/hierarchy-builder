@@ -207,6 +207,7 @@ mk-phant-term GRF PhBody:- !, std.do! [
     (mk-phant-term.classes EtaF CNL) PhBody,
 ].
 
+% TODO: move to HB/factory and make HB/structure depend on HB/factory
 kind factory-abbrev type.
 type factory-by-classname gref -> factory-abbrev.
 type factory-by-phantabbrev abbreviation -> factory-abbrev.
