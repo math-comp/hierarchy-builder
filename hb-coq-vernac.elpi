@@ -10,9 +10,11 @@
 
 namespace coq.vernac {
 
-pred set-implicit i:gref, i:list implicit_kind.
-set-implicit GR I :-  std.do! [
-  coq.arguments.set-implicit GR [I],
+pred set-implicit i:bool, i:gref, i:list implicit_kind.
+set-implicit Global? GR I :-  std.do! [
+  if (Global? = tt)
+    (@global! => coq.arguments.set-implicit GR [I])
+    (            coq.arguments.set-implicit GR [I]),
 ].
 
 pred add-const i:id, i:term, i:term, i:opaque?, o:constant.
@@ -24,7 +26,7 @@ add-const Name Bo Ty Opaque C :- std.do! [
     true,
   coq.env.add-const Name Bo Ty Opaque C,
   % if (var Ty) (Ty? = none) (Ty? = some Ty),
-  set-implicit (const C) [],
+  set-implicit ff (const C) [],
 ].
 
 pred add-variable i:id, i:term, o:constant.
@@ -32,7 +34,7 @@ add-variable Name Ty C :- std.do! [
   if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
   % coq.env.add-section-variable ID Ty C, coq-elpi >= 1.9.x
   @local! => coq.env.add-const ID _ Ty @opaque! C,
-  set-implicit (const C) [],
+  set-implicit ff (const C) [],
 ].
 
 pred add-indt i:indt-decl, o:inductive.
