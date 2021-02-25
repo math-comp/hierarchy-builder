@@ -1792,19 +1792,6 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
 ].
 
-pred hack-append-phant-unify i:int, i:phant-term, o:phant-term.
-hack-append-phant-unify 0 X Y :- append-phant-unify X Y.
-hack-append-phant-unify M X Y :- M > 0, !,
-  N is M - 1,
-  hack-append-phant-unify N {append-phant-unify X} Y.
-
-
-pred hack-section-discharge-unused i:list term, i:record-decl, o:record-decl.
-hack-section-discharge-unused [] F F.
-hack-section-discharge-unused [T|TS] F (field _ "_" {{ lib:hb.unify lp:TT lp:TT lp:T lp:T lib:hb.nomsg }} _\ F0) :-
-  std.assert-ok! (coq.typecheck T TT) "wtf",
-  hack-section-discharge-unused TS F F0.
-
 pred abstract-indt-decl i:list term, i:indt-decl, o:indt-decl.
 abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
 abstract-indt-decl [global (const C)|CS] X (parameter ID explicit Ty1 X1) :-
