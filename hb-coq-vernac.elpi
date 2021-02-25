@@ -1,0 +1,93 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% This file contains proxies for the API to write into the Coq state (eg add
+% an inductive, set implicit arguments...). This has two purposes:
+% - give nicer error messages
+% - we want to be able to log to a file all these actions (WIP), this file is
+%   were logging takes place. Hence we never call, say, coq.evn.add-* directly,
+%   but always via this proxy
+
+namespace coq.vernac {
+
+pred set-implicit i:gref, i:list implicit_kind.
+set-implicit GR I :-  std.do! [
+  coq.arguments.set-implicit GR [I],
+].
+
+pred add-const i:id, i:term, i:term, i:opaque?, o:constant.
+add-const Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name
+               ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
+  coq.env.add-const Name Bo Ty Opaque C,
+  % if (var Ty) (Ty? = none) (Ty? = some Ty),
+  set-implicit (const C) [],
+].
+
+pred add-variable i:id, i:term, o:constant.
+add-variable Name Ty C :- std.do! [
+  if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
+  % coq.env.add-section-variable ID Ty C, coq-elpi >= 1.9.x
+  @local! => coq.env.add-const ID _ Ty @opaque! C,
+  set-implicit (const C) [],
+].
+
+pred add-indt i:indt-decl, o:inductive.
+add-indt Decl I :- std.do! [
+  if (not(coq.ground-indt-decl? Decl))
+    (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
+    true,
+  coq.env.add-indt Decl I,
+].
+
+pred begin-module i:id.
+begin-module Name :- std.do! [
+  coq.env.begin-module Name none,
+].
+
+pred end-module i:id, o:modpath.
+end-module _ M :- std.do! [
+  coq.env.end-module M,
+].
+
+pred begin-section i:id.
+begin-section Name :- std.do! [
+  coq.env.begin-section Name,
+].
+
+pred end-section i:id.
+end-section _ :- std.do! [
+  coq.env.end-section,
+].
+
+pred declare-instance i:gref.
+declare-instance GR  :- std.do! [
+  coq.CS.declare-instance GR,
+].
+
+pred add-abbreviation i:id, i:int, i:term, i:bool, o:abbreviation.
+add-abbreviation Name NArgs Body OnlyParsing O :- std.do! [
+  coq.notation.add-abbreviation Name NArgs Body OnlyParsing O,
+].
+
+pred export-module i:modpath.
+export-module M :- std.do! [
+  coq.env.export-module M,
+].
+
+pred declare-coercion i:coercion.
+declare-coercion C :- std.do! [
+  @global! => coq.coercion.declare C,
+].
+
+}
+
+% "accumulate" is a keyword, we can't define the predicate in the namepace
+% so we just use the long name.
+pred coq.vernac.accumulate i:scope, i:clause.
+coq.vernac.accumulate S CL :- std.do! [
+  coq.elpi.accumulate S "hb.db" CL,
+].
