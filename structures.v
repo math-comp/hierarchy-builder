@@ -152,7 +152,9 @@ kind builder type.
 type builder int -> factoryname -> mixinname -> gref -> builder.
 pred builder-decl o:builder.
 
+%% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pred module-to-export o:modpath.
 
 }}.
 
@@ -338,7 +340,7 @@ main [T0, F0] :- std.do! [
   argument->term F0 F,
   with-attributes (
       main-declare-instance T F Clauses,
-      std.forall Clauses (x\hb-accumulate current (clause _ _ x))
+      std.forall Clauses (x\coq.vernac.accumulate current (clause _ _ x))
   ),
 ].
 
@@ -445,7 +447,7 @@ Elpi Command HB.export.
 Elpi Accumulate File "hb.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str M] :- !, with-attributes (export {coq.locate-module M}).
+main [str M] :- !, with-attributes (hb.export {coq.locate-module M}).
 main _ :- coq.error "Usage: HB.export M.".
 }}.
 Elpi Typecheck.
