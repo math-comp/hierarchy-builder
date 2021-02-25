@@ -37,43 +37,10 @@ accumulate hb-utils.
 accumulate hb-coq-vernac.
 accumulate hb-database.
 accumulate hb-synthesis.
-accumulate hb.instance.
-accumulate hb-phant-abbreviation.
-accumulate hb.export.
-accumulate hb.structure.
 accumulate hb.context.
+accumulate hb.export.
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
-
-
-%%%%% HB Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                              Synthesis                                     %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-% The identity builder
-pred declare-id-builder i:factoryname, o:prop.
-declare-id-builder GR (from GR GR (const C)) :- std.do! [
-  mk-mixin-fun.then {gref-deps GR}
-    (params\ t\ body\ sigma MTy\
-      mgref->term params t GR MTy,
-      body = fun `x` MTy x\x)
-    IDBody,
-  std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
-  coq.vernac.add-const "identity_builder" IDBody IDType @transparent! C,
-].
 
 
 % [main-declare-builder (builder _ F M B) From MoreFrom] Given B of type FB, it

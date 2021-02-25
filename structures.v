@@ -167,7 +167,7 @@ pred module-to-export o:modpath.
 *)
 
 Elpi Command HB.status.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb-utils.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -460,7 +460,7 @@ Elpi Export HB.factory.
     *)
 
 Elpi Command HB.builders.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [ctx-decl C] :- !, with-attributes (main-begin-declare-builders C).
@@ -472,7 +472,7 @@ Elpi Export HB.builders.
 
 
 Elpi Command HB.end.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes main-end-declare-builders.
