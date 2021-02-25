@@ -1792,30 +1792,6 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
 ].
 
-pred abstract-indt-decl i:list term, i:indt-decl, o:indt-decl.
-abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
-abstract-indt-decl [global (const C)|CS] X (parameter ID explicit Ty1 X1) :-
-  coq.gref->string (const C) ID,
-  coq.env.typeof (const C) Ty,
-  copy Ty Ty1,
-  @pi-parameter ID Ty x\
-    (copy (global (const C)) x :- !) =>
-    abstract-indt-decl CS X (X1 x).
-
-pred copy-clauses-for-unfold i:list constant, o:list prop.
-copy-clauses-for-unfold [] [].
-copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
-  coq.env.const C (some B) _,
-  ClauseApp = (pi B1 Args Args1 B2 Args2 R\
-    copy (app[global (const C)|Args]) R :- !,
-      copy B B1,
-      std.map Args copy Args1,
-      hd-beta B1 Args1 B2 Args2,
-      unwind B2 Args2 R),
-  Clause = (pi B1\
-    copy (global (const C)) B1 :- !, copy B B1),
-  copy-clauses-for-unfold CS L.
-
 % [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P
 % of I such that P depends on "ML @ [I]" (each operation depends on the the
 % deps of the record plus the record itself)
@@ -1826,13 +1802,24 @@ build-deps-for-projections R MLwP CL :- std.do! [
   std.map MixinOps (gr\r\ r = gref-deps (const gr) MLRwP) CL,
 ].
 
-pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
-declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
-  main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
-
+% Section handling in Coq is smart, in the sense it it only abstracts over
+% variables that aoccur. We don't want that for mixin/factories, so we implement
+% our own discharging. Note that definitions (like canonical instance) have
+% to be abstracted too.
+pred abstract-indt-decl-over-section i:list term, i:term, i:list prop, i:list constant, i:indt-decl, o:indt-decl.
+abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed :-
   % compute section variables to be used for discharging
   std.map MixinSrcClauses mixin-src_src Mixins,
   std.append TheParams [TheType|{std.rev Mixins}] Section,
+  std.map Section (x\r\ x = global (const r)) SectionVars,
+  % We discharge by hand the record declaration so that we can be sure all
+  % parameters and mixins are abstracted (even if unused).
+  copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
+  CopyUnfold => abstract-indt-decl SectionVars RDecl RDeclClosed.
+
+pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
+declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
+  main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
 
   if-verbose (coq.say "HB: declare record axioms_"),
 
@@ -1840,10 +1827,8 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
 
-  % We discharge by hand the record declaration so that we can be sure all
-  % parameters and mixins are abstracted (even if unused).
-  copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
-  CopyUnfold => abstract-indt-decl Section RDecl RDeclClosed,
+  abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed,
+
   coq.vernac.add-indt RDeclClosed R,
   coq.vernac.end-section Module, % We need to anyway declare the record inside the section
     % since closing the section purges the unused universe level we may have
