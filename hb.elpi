@@ -981,7 +981,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
   w-params.nparams MwP NP,
   NImplicits is NP + 1,
   std.map {std.iota NImplicits} (_\r\ r = maximal) Implicits,
-  @global! => coq.vernac.set-implicit (const C) Implicits,
+  coq.vernac.set-implicit tt (const C) Implicits,
 
   EXO = [exported-op M Poperation C|EXI]
 ].
@@ -1819,7 +1819,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   coq.vernac.end-section Module,
 
-  @global! => coq.arguments.set-implicit GRK [[]],
+  coq.vernac.set-implicit tt GRK [],
 
   factories-provide GRFSwP MLwP,
   GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
@@ -1837,7 +1837,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   std.forall Clauses (c\ coq.vernac.accumulate current (clause _ _ c)),
   std.forall GRDepsClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
-  % coq.vernac.set-implicit GRK [maximal|Implicits],
+  % coq.vernac.set-implicit tt GRK [maximal|Implicits],
   w-params.nparams MLwP NParams,
   coq.vernac.accumulate current (clause _ _ (factory-nparams (const C) NParams)),
   coq.vernac.accumulate current (clause _ _ (factory-constructor (const C) GRK)),
@@ -1896,8 +1896,8 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
-  @global! => coq.vernac.set-implicit (indt R) [],
-  @global! => coq.vernac.set-implicit GRK [],
+  coq.vernac.set-implicit tt (indt R) [],
+  coq.vernac.set-implicit tt GRK [],
 
   factories-provide GRFSwP MLwP,
   w-params.nparams MLwP NParams,
@@ -1926,7 +1926,7 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   std.forall GRDepsClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
   coq.vernac.accumulate current (clause _ _ (factory-nparams (indt R) NParams)),
   std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits,
-  @global! => coq.vernac.set-implicit GRK [maximal|Implicits],
+  coq.vernac.set-implicit tt GRK [maximal|Implicits],
   coq.vernac.accumulate current (clause _ _ (factory-constructor (indt R) GRK)),
   coq.vernac.accumulate current (clause _ _ (factory-builder-nparams BuildConst NParams)),
   coq.vernac.accumulate current (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
