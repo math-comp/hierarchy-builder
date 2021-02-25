@@ -923,8 +923,7 @@ main-reexport :- !,
   std.findall (module-to-export Module_) Mods,
   std.forall Mods (x\ sigma y\ module-to-export y = x, coq.vernac.export-module y).
 
-pred mk-mixin-fun i:list-w-params mixinname, i:term, o:term.
-mk-mixin-fun ML X MLX :- mk-mixin-fun.then ML (p\ t\ body\ body = X) MLX.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra
@@ -1946,5 +1945,3 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
 ].
-
-
