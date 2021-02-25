@@ -92,7 +92,7 @@ with-attributes P :-
   attributes A,
 
 % HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
-(pi S L AS Prefix R R1 Map PS\ 
+(pi S L AS Prefix R R1 Map PS\
   parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
     if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
     parse-attributes.aux AS Prefix R1,
@@ -106,6 +106,7 @@ with-attributes P :-
     att "mathcomp.axiom" string,
     att "infer" attmap,
     att "key" string,
+    att "arg_sort" bool,
   ] Opts, !,
   Opts => P.
 
@@ -142,6 +143,10 @@ coq.ground-record-decl? (field _ ID Ty D) :-
 pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
+
+pred if-arg-sort i:prop.
+if-arg-sort P :- get-option "arg_sort" tt, !, P.
+if-arg-sort _.
 
 pred if-MC-compat i:(option gref -> prop).
 if-MC-compat P :- get-option "mathcomp" tt, !, P none.
@@ -1596,14 +1601,13 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
   coq.CS.canonical-projections StructureInd [some SortP, some ClassP],
   global (const SortP) = SortProjection,
   global (const ClassP) = ClassProjection,
+
 ].
 
 % Declares "sort" as a coercion Structurename >-> Sortclass
 pred declare-sort-coercion i:structure, i:term.
 declare-sort-coercion StructureName (global Proj) :-
-
   if-verbose (coq.say "HB: declare sort coercion"),
-
   @global! => hb-coercion-declare (coercion Proj 0 StructureName sortclass).
 
 pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
@@ -1761,7 +1765,15 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: start module Exports"),
 
+  if-arg-sort (
+    if-verbose (coq.say "HB: define arg_sort"),
+    std.assert-ok! (coq.typecheck SortProjection SortProjTy)
+      "HB: BUG: cannot retype projection",
+    hb-add-const "arg_sort" SortProjection SortProjTy ff ArgSortCst
+  ),
+
   hb-begin-module "Exports",
+  if-arg-sort (declare-sort-coercion Structure (global (const ArgSortCst))),
   declare-sort-coercion Structure SortProjection,
 
   if-verbose (coq.say "HB: exporting unification hints"),
