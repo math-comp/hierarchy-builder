@@ -1739,14 +1739,6 @@ main-end-declare-builders :- std.do! [
 % HB.mixin/factory
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% In an asset like HB.mixing Recoord P1 .. PN A of F1 .. & FK ..
-% we call "named" P1 .. PN A, hence A is the last named asset param
-pred is-last-named-asset-param i:asset-decl.
-is-last-named-asset-param (asset-parameter ID _ _) :- get-option "key" ID, !.
-is-last-named-asset-param (asset-parameter _ _ p\ asset-parameter _ (M p) _) :- pi p\ factory? (M p) _, !.
-is-last-named-asset-param (asset-parameter _ _ _\ asset-record _ _ _ _) :- !.
-is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
-
 % [main-declare-asset Asset AssetKind] unifies the code paths for
 % mixins, factories (and alias factories)
 pred main-declare-asset i:asset-decl, i:asset.
@@ -1761,6 +1753,14 @@ main-declare-asset Asset AssetKind :- std.do! [
   % We start by postulating the parameters
   process-asset-named-parameters Asset AssetKind Module [],
 ].
+
+% In an asset like HB.mixing Recoord P1 .. PN A of F1 .. & FK ..
+% we call "named" P1 .. PN A, hence A is the last named asset param
+pred is-last-named-asset-param i:asset-decl.
+is-last-named-asset-param (asset-parameter ID _ _) :- get-option "key" ID, !.
+is-last-named-asset-param (asset-parameter _ _ p\ asset-parameter _ (M p) _) :- pi p\ factory? (M p) _, !.
+is-last-named-asset-param (asset-parameter _ _ _\ asset-record _ _ _ _) :- !.
+is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
 
 pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (triple id term term).
 % We reached TheType
