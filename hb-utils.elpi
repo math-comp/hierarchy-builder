@@ -345,3 +345,31 @@ distribute-w-params (w-params.nil N T F) L :-
 % Specific to one-w-params
 pred w-params_1 i:one-w-params A, o:A.
 w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
+
+% [abstract-indt-decl Section I AbsI] abstracts I over the Section variables
+% which becomes parameter nodes if the indt-decl type
+pred abstract-indt-decl i:list constant, i:indt-decl, o:indt-decl.
+abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
+abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
+  coq.gref->string (const C) ID,
+  coq.env.typeof (const C) Ty,
+  copy Ty Ty1,
+  @pi-parameter ID Ty x\
+    (copy (global (const C)) x :- !) =>
+    abstract-indt-decl CS X (X1 x).
+
+% [copy-clauses-for-unfold CS CL] generates clauses for the copy predicate
+% to unfold all constants in CS
+pred copy-clauses-for-unfold i:list constant, o:list prop.
+copy-clauses-for-unfold [] [].
+copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
+  coq.env.const C (some B) _,
+  ClauseApp = (pi B1 Args Args1 B2 Args2 R\
+    copy (app[global (const C)|Args]) R :- !,
+      copy B B1,
+      std.map Args copy Args1,
+      hd-beta B1 Args1 B2 Args2,
+      unwind B2 Args2 R),
+  Clause = (pi B1\
+    copy (global (const C)) B1 :- !, copy B B1),
+  copy-clauses-for-unfold CS L.
