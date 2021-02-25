@@ -405,26 +405,6 @@ mk-infer T (w-params.cons N Ty W) (phant-term [real-arg N|A] (fun N Ty R)) :-
 mk-infer _ (w-params.cons N _ _) _ :- coq.name->id N ID, get-option ID Infer,
   coq.error "Automatic inference of paramter" N "from" Infer "not supported".
 
-pred class-coverage i:list classname, o:coq.gref.set.
-class-coverage CNL CSet :-
-  std.map CNL classname->mixins CMLLwP,
-  std.map CMLLwP list-w-params_list CMLL,
-  coq.gref.list->set {std.flatten CMLL} CSet.
-
-pred assert-good-coverage! i:list mixinname, i:list classname.
-assert-good-coverage! MLSortedRev CNL :- std.do! [
-  coq.gref.list->set MLSortedRev MLSet,
-  class-coverage CNL CMLSet,
-  if (not(coq.gref.set.equal MLSet CMLSet))
-     (coq.gref.set.diff CMLSet MLSet Extra,
-      coq.error "I could not find classes covering exactly mixins:"
-        {std.any->string MLSortedRev}
-        "In particular the covering" CNL "also includes mixins:"
-        {coq.gref.set.elements Extra}
-        "This should never happen, please report a bug.")
-     true
-].
-
 pred if-coverage-not-good-error i:list mixinname.
 if-coverage-not-good-error ML :-
   coq.gref.list->set ML MS,

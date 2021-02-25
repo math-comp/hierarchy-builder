@@ -1,0 +1,269 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+accumulate hb-utils.
+accumulate hb-coq-vernac.
+accumulate hb-database.
+accumulate hb-synthesis.
+accumulate hb-phant-abbreviation.
+accumulate hb.context.
+accumulate hb.export.
+
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+
+% Type to share code between HB.mixin and HB.factory (that supports alias factories)
+kind asset type.
+type asset-mixin asset.
+type asset-factory asset.
+
+kind asset-decl type.
+type asset-parameter  id -> term -> (term -> asset-decl) -> asset-decl.
+type asset-record     id -> term -> id -> record-decl    -> asset-decl.
+type asset-alias      id -> term                         -> asset-decl.
+
+pred name-of-asset-decl i:asset-decl, o:string.
+name-of-asset-decl (asset-parameter _ _ R) X :-
+  pi x\ name-of-asset-decl (R x) X.
+name-of-asset-decl (asset-record X _ _ _) X.
+name-of-asset-decl (asset-alias X _) X.
+
+pred argument->asset i:argument, o:asset-decl.
+argument->asset (indt-decl (parameter ID _ImplicitStatus TySkel I)) (asset-parameter ID Ty A) :- !,
+  % Should we check that _ImplicitStatus is explicit?
+  coq.string->name ID Name,
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "parameter illtyped",
+  @pi-decl Name Ty a\
+    argument->asset (indt-decl (I a)) (A a).
+argument->asset (indt-decl (record Rid Ty Kid F)) (asset-record Rid Ty Kid F) :- !.
+argument->asset (const-decl Id (some (fun _ _ Bo)) (parameter ID _ SrcSkel Ty)) (asset-parameter ID Src A) :- !,
+  coq.id->name ID Name,
+  std.assert-ok! (coq.elaborate-ty-skeleton SrcSkel _ Src) "parameter illtyped",
+  @pi-decl Name Src a\
+    argument->asset (const-decl Id (some (Bo a)) (Ty a)) (A a).
+argument->asset (const-decl Id (some Bo) (arity Ty)) (asset-alias Id Bo) :- !,
+  std.assert! (var Ty) "Factories aliases should not be given a type".
+argument->asset X _ :- coq.error "Unsupported asset:" X.
+
+% The identity builder
+pred declare-id-builder i:factoryname, o:prop.
+declare-id-builder GR (from GR GR (const C)) :- std.do! [
+  mk-mixin-fun.then {gref-deps GR}
+    (params\ t\ body\ sigma MTy\
+      mgref->term params t GR MTy,
+      body = fun `x` MTy x\x)
+    IDBody,
+  std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
+  coq.vernac.add-const "identity_builder" IDBody IDType @transparent! C,
+].
+
+% [main-declare-asset Asset AssetKind] unifies the code paths for
+% mixins, factories (and alias factories)
+pred main-declare-asset i:asset-decl, i:asset.
+main-declare-asset Asset AssetKind :- std.do! [
+  name-of-asset-decl Asset Module,
+
+  if-verbose (coq.say "HB: start module and section" Module),
+
+  coq.vernac.begin-module Module,
+  coq.vernac.begin-section Module,
+
+  % We start by postulating the parameters
+  process-asset-named-parameters Asset AssetKind Module [],
+].
+
+% In an asset like HB.mixing Recoord P1 .. PN A of F1 .. & FK ..
+% we call "named" P1 .. PN A, hence A is the last named asset param
+pred is-last-named-asset-param i:asset-decl.
+is-last-named-asset-param (asset-parameter ID _ _) :- get-option "key" ID, !.
+is-last-named-asset-param (asset-parameter _ _ p\ asset-parameter _ (M p) _) :- pi p\ factory? (M p) _, !.
+is-last-named-asset-param (asset-parameter _ _ _\ asset-record _ _ _ _) :- !.
+is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
+
+pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (triple id term term).
+% We reached TheType
+process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
+
+  if-verbose (coq.say "HB: postulate type" Name),
+  if (var T) (fresh-type Ty) (Ty = T),
+  coq.vernac.add-variable Name Ty C,
+
+  TheType = global (const C),
+  % We postulate the dependencies
+  process-asset-unnamed-parameters (Rest TheType) [] Module TheType D {std.rev Params}
+].
+% This is a real parameter, we postulate it
+process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- std.do! [
+  std.assert-ok! (coq.typecheck-ty T _) "Illtyped parameter",
+  if-verbose (coq.say "HB: postulate " Name),
+  if (var T) (coq.fresh-type T) true,
+  coq.vernac.add-variable Name T C,
+  TheParam = global (const C),
+  process-asset-named-parameters (Rest TheParam) D Module [triple Name TheParam T|Params],
+].
+
+pred process-asset-unnamed-parameters
+  i:asset-decl, i:list (w-args factoryname), i:id, i:term, i:asset, i:list (triple id term term).
+process-asset-unnamed-parameters (asset-parameter _ T Rest) FS Module TheType D Params :- std.do! [
+  std.assert! (factory? T (triple F Ps TheType)) "Not a factory applied to the type variable",
+  std.assert! (pi x y\ Rest y = Rest x) "Factories cannot be explicitly mentioned in the mixin",
+  Dummy = sort prop,
+  process-asset-unnamed-parameters (Rest Dummy) [triple F Ps TheType|FS] Module TheType D Params,
+].
+
+process-asset-unnamed-parameters (asset-alias _ Ty) GRFS Module TheType D Params :- std.do! [
+  std.assert! (D = asset-factory) "Mixins cannot be aliases",
+  build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
+  declare-factory-alias Ty GRFSwParams Module TheType {std.map Params triple_2},
+].
+
+process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheType D Params :- std.do! [
+  build-list-w-params Params  TheType {std.rev GRFS} GRFSwParams,
+  declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params triple_2},
+].
+
+pred append-phant-unify i:phant-term, o:phant-term.
+append-phant-unify (phant-term LP T) (phant-term LPU T) :-
+  std.append LP [unify-arg] LPU.
+
+pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
+declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
+
+  % TODO maybe main-declare-context should just take GRFSwP and postulate
+  % the parameters and the type
+  main-declare-context TheType TheParams GRFSwP Hyps _,
+
+  std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
+  coq.vernac.add-const "axioms_" Ty1 _ @transparent! C,
+
+  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+  std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
+  std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
+
+  Hyps => mgref->term TheParams TheType FK MFK,
+  std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
+  (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
+  coq.vernac.add-const "Axioms_" MFK MFKTyC @transparent! CK,
+  GRK = const CK,
+
+  coq.vernac.end-section Module,
+
+  coq.vernac.set-implicit tt GRK [],
+
+  factories-provide GRFSwP MLwP,
+  GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
+
+  GRDepsClauses => mk-phant-term GRK PhGRK0,
+
+  if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
+  GRDepsClauses => mk-phant-abbrev "Build" PhGRK BuildConst _,
+
+  GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
+
+  if-verbose (coq.say "HB: start module Exports"),
+
+  coq.vernac.begin-module "Exports",
+  std.forall Clauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  std.forall GRDepsClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
+  % coq.vernac.set-implicit tt GRK [maximal|Implicits],
+  w-params.nparams MLwP NParams,
+  coq.vernac.accumulate current (clause _ _ (factory-nparams (const C) NParams)),
+  coq.vernac.accumulate current (clause _ _ (factory-constructor (const C) GRK)),
+  coq.vernac.accumulate current (clause _ _ (factory-builder-nparams BuildConst NParams)),
+  coq.vernac.end-module "Exports" Exports,
+  coq.vernac.end-module Module _,
+
+  if-verbose (coq.say "HB: end modules and sections; export" Exports),
+
+  hb.export Exports,
+
+  GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
+].
+
+% [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P
+% of I such that P depends on "ML @ [I]" (each operation depends on the the
+% deps of the record plus the record itself)
+pred build-deps-for-projections i:inductive, i:list-w-params mixinname, o:list prop.
+build-deps-for-projections R MLwP CL :- std.do! [
+  map-filter {coq.CS.canonical-projections R} (x\y\x = some y) MixinOps,
+  list-w-params.rcons MLwP (pl\t\r\ r = triple (indt R) pl t) MLRwP,
+  std.map MixinOps (gr\r\ r = gref-deps (const gr) MLRwP) CL,
+].
+
+% Section handling in Coq is smart, in the sense it it only abstracts over
+% variables that aoccur. We don't want that for mixin/factories, so we implement
+% our own discharging. Note that definitions (like canonical instance) have
+% to be abstracted too.
+pred abstract-indt-decl-over-section i:list term, i:term, i:list prop, i:list constant, i:indt-decl, o:indt-decl.
+abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed :-
+  % compute section variables to be used for discharging
+  std.map MixinSrcClauses mixin-src_src Mixins,
+  std.append TheParams [TheType|{std.rev Mixins}] Section,
+  std.map Section (x\r\ x = global (const r)) SectionVars,
+  % We discharge by hand the record declaration so that we can be sure all
+  % parameters and mixins are abstracted (even if unused).
+  copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
+  CopyUnfold => abstract-indt-decl SectionVars RDecl RDeclClosed.
+
+pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
+declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
+  main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
+
+  if-verbose (coq.say "HB: declare record axioms_"),
+
+  Kname = "Axioms_",
+  RDeclSkel = record "axioms_" Sort1 Kname Fields,
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
+
+  abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed,
+
+  coq.vernac.add-indt RDeclClosed R,
+  coq.vernac.end-section Module, % We need to anyway declare the record inside the section
+    % since closing the section purges the unused universe level we may have
+    % allocated by typechecking the skeleton just above
+
+  coq.env.indt R tt _ _ _ [K] _,
+  GRK = indc K,
+  coq.vernac.set-implicit tt (indt R) [],
+  coq.vernac.set-implicit tt GRK [],
+
+  factories-provide GRFSwP MLwP,
+  w-params.nparams MLwP NParams,
+  build-deps-for-projections R MLwP GRDepsClausesProjs,
+  GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
+
+  % TODO: should this be in the Exports module?
+  if-verbose (coq.say "HB: declare notation axioms"),
+
+  GRDepsClauses => mk-phant-term GRK PhGRK,
+
+  if-verbose (coq.say "HB: declare notation Axioms"),
+
+  GRDepsClauses => mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
+
+  if (D = asset-mixin)
+     (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) FRClauses FactAbbrev,
+      GRDepsClauses => FRClauses => declare-id-builder (indt R) IdBuilderClause,
+      Clauses = [IdBuilderClause|FRClauses])
+     (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) Clauses FactAbbrev),
+
+  if-verbose (coq.say "HB: start module Exports"),
+
+  coq.vernac.begin-module "Exports",
+  std.forall Clauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  std.forall GRDepsClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  coq.vernac.accumulate current (clause _ _ (factory-nparams (indt R) NParams)),
+  std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits,
+  coq.vernac.set-implicit tt GRK [maximal|Implicits],
+  coq.vernac.accumulate current (clause _ _ (factory-constructor (indt R) GRK)),
+  coq.vernac.accumulate current (clause _ _ (factory-builder-nparams BuildConst NParams)),
+  coq.vernac.accumulate current (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
+  coq.vernac.end-module "Exports" Exports,
+  coq.vernac.end-module Module _,
+
+  if-verbose (coq.say "HB: end modules and sections; export" Exports),
+
+  hb.export Exports,
+
+  GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
+].

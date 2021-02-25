@@ -252,6 +252,11 @@ pred params->holes i:list-w-params A, o:list term.
 params->holes (w-params.nil _ _ _) [].
 params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 
+pred fresh-type o:term.
+fresh-type Ty :-
+  Ty = {{Type}},
+  std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
+
 %%%%%%%%%%%%%%%%%%%%%%
 % w-params interface %
 %%%%%%%%%%%%%%%%%%%%%%

@@ -291,7 +291,7 @@ Elpi Export HB.graph.
 *)
 
 Elpi Command HB.mixin.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -413,7 +413,7 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 Elpi Command HB.factory.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "hb.factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [A] :- !,
