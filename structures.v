@@ -167,7 +167,7 @@ pred module-to-export o:modpath.
 *)
 
 Elpi Command HB.status.
-Elpi Accumulate File "hb.status.elpi".
+Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -248,7 +248,7 @@ Elpi Export HB.graph.
 *)
 
 Elpi Command HB.mixin.
-Elpi Accumulate File "hb.factory.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -287,7 +287,7 @@ Elpi Export HB.mixin.
 *)
 
 Elpi Command HB.structure.
-Elpi Accumulate File "hb.structure.elpi".
+Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -339,7 +339,7 @@ Elpi Export HB.structure.
 *)
 
 Elpi Command HB.instance.
-Elpi Accumulate File "hb.instance.elpi".
+Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -370,7 +370,7 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 Elpi Command HB.factory.
-Elpi Accumulate File "hb.factory.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [A] :- !,
@@ -417,7 +417,7 @@ Elpi Export HB.factory.
     *)
 
 Elpi Command HB.builders.
-Elpi Accumulate File "hb.builders.elpi".
+Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [ctx-decl C] :- !, with-attributes (main-begin-declare-builders C).
@@ -429,7 +429,7 @@ Elpi Export HB.builders.
 
 
 Elpi Command HB.end.
-Elpi Accumulate File "hb.builders.elpi".
+Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes main-end-declare-builders.
@@ -457,7 +457,7 @@ Elpi Export HB.end.
    >>> *)
 
 Elpi Command HB.export.
-Elpi Accumulate File "hb.export.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [str M] :- !, with-attributes (hb.export {coq.locate-module M}).
@@ -474,7 +474,7 @@ Elpi Export HB.export.
    It is useful to create one big module with all exports at the end of a file. *)
 
 Elpi Command HB.reexport.
-Elpi Accumulate File "hb.export.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (main-reexport).
@@ -516,7 +516,7 @@ Elpi Export HB.reexport.
 *)
 
 Elpi Command hb.context.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 

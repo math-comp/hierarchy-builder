@@ -1,8 +1,8 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-accumulate hb-utils.
-accumulate hb-coq-vernac.
+accumulate "HB/common/utils".
+accumulate "HB/common/coq-vernac".
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 

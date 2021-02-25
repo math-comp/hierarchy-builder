@@ -1,13 +1,13 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-accumulate hb-utils.
-accumulate hb-coq-vernac.
-accumulate hb-database.
-accumulate hb-synthesis.
-accumulate hb-phant-abbreviation.
-accumulate hb.context.
-accumulate hb.export.
+accumulate "HB/common/utils".
+accumulate "HB/common/coq-vernac".
+accumulate "HB/common/database".
+accumulate "HB/common/synthesis".
+accumulate "HB/common/phant-abbreviation".
+accumulate "HB/context".
+accumulate "HB/export".
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
