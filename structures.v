@@ -530,7 +530,6 @@ Elpi Typecheck.
 Elpi Export HB.reexport.
 
 (*
-
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -561,11 +560,12 @@ Elpi Export HB.reexport.
 
 *)
 
-Elpi Command hb.context.
+Elpi Command HB.context.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate Db hb.db.
@@ -575,11 +575,10 @@ main [S|FS] :-
   argument->term S T,
   std.map FS argument->gref GRFS, !,
   hb.declare-context T GRFS _.
-main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
+main _ :- coq.error "Usage: HB.context <CarrierTerm> <Factoryes>..".
 
 }}.
 Elpi Typecheck.
-
 *)
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
