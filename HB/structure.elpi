@@ -471,9 +471,17 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   mk-phant-abbrev "clone" PhClone _ _,
 
+  if-arg-sort (
+    if-verbose (coq.say "HB: define arg_sort"),
+    std.assert-ok! (coq.typecheck SortProjection SortProjTy)
+      "HB: BUG: cannot retype projection",
+    log.coq.env.add-const-noimplicits "arg_sort" SortProjection SortProjTy ff ArgSortCst
+  ),
+
   if-verbose (coq.say "HB: start module Exports"),
 
   log.coq.env.begin-module "Exports",
+  if-arg-sort (declare-sort-coercion Structure (global (const ArgSortCst))),
   declare-sort-coercion Structure SortProjection,
 
   if-verbose (coq.say "HB: exporting unification hints"),
