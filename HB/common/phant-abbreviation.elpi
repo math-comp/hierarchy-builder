@@ -50,6 +50,17 @@ pred phant-fun-implicit i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-implicit N Ty PF (phant-term [implicit-arg|AL] (fun N Ty F)) :- !,
   @pi-decl N Ty t\ PF t = phant-term AL (F t).
 
+% [phant-fun-infer-type N Ty PhBo PhT] states that PhT is a phant-term
+% of the form `fun T (phT : phant T) => PhBo` where `T` is implicit and
+% `phT` will be filled by `Phant X` where `X` will be explicit.
+pred phant-fun-infer-type i:name, i:term, i:(term -> phant-term), o:phant-term.
+phant-fun-infer-type N Ty PF Out :- !,
+  @pi-decl N Ty t\ sigma PhN\
+    PF t = phant-term AL (Bo t),
+    coq.string->name {calc ("ph" ^ {coq.name->id N})} PhN,
+    PF' t = phant-term [infer-type N|AL] (fun PhN {{ lib:@hb.phant lp:t }} _\ Bo t),
+    phant-fun-implicit N Ty PF' Out.
+
 pred phant-fun-unify-mixin i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-unify-mixin T N Ty PF Out :- !, std.do! [
   safe-dest-app Ty (global M) _,

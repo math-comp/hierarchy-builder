@@ -390,22 +390,30 @@ pack-body ClassName PL T MLwA F :- std.do! [
 
 pred declare-auto-infer-params-abbrev i:structure, i:list-w-params mixinname.
 declare-auto-infer-params-abbrev GR MLwP :- get-option "infer" Map, !,
-  Map => mk-infer (global GR) MLwP PHT,
-  mk-phant-abbrev "type" PHT _ _.
+  Map => mk-infer (global GR) MLwP PhT,
+  mk-phant-abbrev "type" PhT _ _.
 declare-auto-infer-params-abbrev _ _.
 
 pred mk-infer i:term, i:list-w-params mixinname, o:phant-term.
 mk-infer T (w-params.nil _ _ _) (phant-term [] T).
-mk-infer T (w-params.cons N Ty W) (phant-term [implicit-arg, infer-type N|A] R1) :-
+mk-infer T (w-params.cons N Ty W) R :-
   coq.name->id N ID, (get-option ID "Type" ; get-option ID ""), !,
-  R1 = (fun N Ty n\ fun `ph` {{ lib:@hb.phant lp:n }} _\ R n),
-  @pi-decl N Ty n\
-    mk-infer {mk-app T [n]} (W n) (phant-term A (R n)).
-mk-infer T (w-params.cons N Ty W) (phant-term [real-arg N|A] (fun N Ty R)) :-
-   coq.name->id N ID, not (get-option ID _), !,
-  @pi-decl N Ty x\  mk-infer {mk-app T [x]} (W x) (phant-term A (R x)).
+  @pi-decl N Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
+  phant-fun-infer-type N Ty PhT R.
+mk-infer T (w-params.cons N Ty W) R :-
+  coq.name->id N ID, not (get-option ID _), !,
+  @pi-decl N Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
+  phant-fun-real N Ty PhT R.
 mk-infer _ (w-params.cons N _ _) _ :- coq.name->id N ID, get-option ID Infer,
   coq.error "Automatic inference of paramter" N "from" Infer "not supported".
+
+pred mk-infer-key i:term, i:list-w-params mixinname, i:term, o:phant-term.
+mk-infer-key K (w-params.nil N _ _) St PhK :-
+  @pi-decl N St t\ PhKBo t = phant-term [] {mk-app K [t]},
+  phant-fun-infer-type N St PhKBo PhK.
+mk-infer-key K (w-params.cons N Ty W) St R :-
+  @pi-decl N Ty t\ mk-infer-key {mk-app K [t]} (W t) {mk-app St [t]} (PhT t),
+  phant-fun-implicit N Ty PhT R.
 
 pred if-coverage-not-good-error i:list mixinname.
 if-coverage-not-good-error ML :-
@@ -507,6 +515,19 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
+
+  log.coq.env.import-module Exports,
+
+  if-verbose (coq.say "HB: declaring class abbreviation"),
+
+  mk-infer-key ClassProjection NilwP (global Structure) PhClass,
+  mk-phant-abbrev "of_" PhClass _ ClassAbbrev,
+  @global! => log.coq.notation.add-abbreviation "Build" 2
+    {{fun T C => ((lp:{{ { coq.notation.abbreviation ClassAbbrev [{{C}}] } }})
+        : (lp:{{ {mk-app (global ClassName) {params->holes NilwP} } }} T)
+      ) }} tt ClassForAbbrev,
+  @global! => log.coq.notation.add-abbreviation "of" 1
+    {{fun T => lp:{{ { coq.notation.abbreviation ClassForAbbrev [{{T}}, {{T}}] } }}}} tt _,
 
   log.coq.env.end-module-name Module ModulePath,
 
