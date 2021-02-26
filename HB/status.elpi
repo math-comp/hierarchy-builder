@@ -1,0 +1,51 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+accumulate "HB/common/stdpp".
+accumulate "HB/common/utils".
+
+pred pp-from i:prop.
+pp-from (from F M T) :-
+  coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
+  coq.say "  " {coq.term->string (global T)},
+  coq.say "".
+
+pred pp-list-w-params i:list-w-params mixinname, i:term.
+pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
+pred pp-list-w-params.triple i:w-args mixinname.
+pp-list-w-params (w-params.cons N Ty LwP) T :-
+  @pi-decl N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
+pp-list-w-params (w-params.nil N TTy LwP) T :-
+  @pi-decl N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
+pp-list-w-params.list-triple L S :-
+  coq.say {coq.term->string S} ":=",
+  std.forall L pp-list-w-params.triple.
+pp-list-w-params.triple (triple M Params T) :-
+  coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
+
+pred pp-class i:prop.
+pp-class (class-def (class _ S MLwP)) :-
+  pp-list-w-params MLwP (global S).
+
+pred pp-mixin-src i:prop.
+pp-mixin-src (mixin-src T M C) :-
+  coq.say {coq.term->string T} "is a"
+          {nice-gref->string M} "thans to"
+          {coq.term->string C}.
+
+pred main-status.
+main-status :- std.do! [
+  coq.say "--------------------- Hierarchy -----------------------------------",
+  std.findall (class-def CL_) CL,
+  std.forall CL pp-class,
+
+  coq.say "--------------------- Builders -----------------------------------",
+  std.findall (from A_ B_ C_) FL,
+  std.forall FL pp-from,
+
+  std.findall (mixin-src T_ M_ V_) ML,
+  if (ML = []) true (
+    coq.say "--------------------- Local mixin instances ----------------------",
+    std.forall ML pp-mixin-src
+  ),
+].

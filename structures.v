@@ -49,8 +49,6 @@ typeabbrev classname gref.
 typeabbrev factoryname gref.
 typeabbrev structure gref.
 
-kind triple type -> type -> type -> type.
-type triple A -> B -> C -> triple A B C.
 typeabbrev (w-args A) (triple A (list term) term).
 
 kind w-params type -> type -> type.
@@ -152,7 +150,9 @@ kind builder type.
 type builder int -> factoryname -> mixinname -> gref -> builder.
 pred builder-decl o:builder.
 
+%% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pred module-to-export o:modpath.
 
 }}.
 
@@ -165,54 +165,11 @@ pred builder-decl o:builder.
 *)
 
 Elpi Command HB.status.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred pp-from i:prop.
-pp-from (from F M T) :-
-  coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
-  coq.say "  " {coq.term->string (global T)},
-  coq.say "".
-
-pred pp-list-w-params i:list-w-params mixinname, i:term.
-pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
-pred pp-list-w-params.triple i:w-args mixinname.
-pp-list-w-params (w-params.cons N Ty LwP) T :-
-  @pi-decl N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
-pp-list-w-params (w-params.nil N TTy LwP) T :-
-  @pi-decl N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
-pp-list-w-params.list-triple L S :-
-  coq.say {coq.term->string S} ":=",
-  std.forall L pp-list-w-params.triple.
-pp-list-w-params.triple (triple M Params T) :-
-  coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
-
-pred pp-class i:prop.
-pp-class (class-def (class _ S MLwP)) :-
-  pp-list-w-params MLwP (global S).
-
-pred pp-mixin-src i:prop.
-pp-mixin-src (mixin-src T M C) :-
-  coq.say {coq.term->string T} "is a"
-          {nice-gref->string M} "thans to"
-          {coq.term->string C}.
-
-main [] :- !, std.do! [
-  coq.say "--------------------- Hierarchy -----------------------------------",
-  std.findall (class-def CL_) CL,
-  std.forall CL pp-class,
-
-  coq.say "--------------------- Builders -----------------------------------",
-  std.findall (from A_ B_ C_) FL,
-  std.forall FL pp-from,
-
-  std.findall (mixin-src T_ M_ V_) ML,
-  if (ML = []) true (
-    coq.say "--------------------- Local mixin instances ----------------------",
-    std.forall ML pp-mixin-src
-  ),
-].
+main [] :- !, main-status.
 
 main _ :- coq.error "Usage: HB.status.".
 }}.
@@ -289,7 +246,7 @@ Elpi Export HB.graph.
 *)
 
 Elpi Command HB.mixin.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -328,7 +285,7 @@ Elpi Export HB.mixin.
 *)
 
 Elpi Command HB.structure.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -380,7 +337,7 @@ Elpi Export HB.structure.
 *)
 
 Elpi Command HB.instance.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
@@ -394,7 +351,7 @@ main [T0, F0] :- std.do! [
   argument->term F0 F,
   with-attributes (
       main-declare-instance T F Clauses,
-      std.forall Clauses (x\hb-accumulate current (clause _ _ x))
+      std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x))
   ),
 ].
 
@@ -411,7 +368,7 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 Elpi Command HB.factory.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [A] :- !,
@@ -458,7 +415,7 @@ Elpi Export HB.factory.
     *)
 
 Elpi Command HB.builders.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [ctx-decl C] :- !, with-attributes (main-begin-declare-builders C).
@@ -470,7 +427,7 @@ Elpi Export HB.builders.
 
 
 Elpi Command HB.end.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes main-end-declare-builders.
@@ -498,10 +455,10 @@ Elpi Export HB.end.
    >>> *)
 
 Elpi Command HB.export.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str M] :- !, with-attributes (export {coq.locate-module M}).
+main [str M] :- !, with-attributes (hb.export {coq.locate-module M}).
 main _ :- coq.error "Usage: HB.export M.".
 }}.
 Elpi Typecheck.
@@ -515,7 +472,7 @@ Elpi Export HB.export.
    It is useful to create one big module with all exports at the end of a file. *)
 
 Elpi Command HB.reexport.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (main-reexport).
@@ -557,7 +514,7 @@ Elpi Export HB.reexport.
 *)
 
 Elpi Command hb.context.
-Elpi Accumulate File "hb.elpi".
+Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 

@@ -1,0 +1,147 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+
+pred under-canonical-mixins-of.do! i:term, i:list prop.
+under-canonical-mixins-of.do! T P :-
+  get-local-structures T CS,
+  std.map CS (get-canonical-mixins-of T) MSLL,
+  std.flatten MSLL MSL,
+  MSL => std.do! P.
+
+% [mixin-srcs T X MSL] states that MSL is a list of [mixin-src T m X]
+% where m ranges all the mixins that the factory Src can provide,
+% where Src is the type of X.
+pred mixin-srcs i:term, i:term, o:list prop.
+mixin-srcs T X MSL :- std.do! [
+  std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
+  if (not (safe-dest-app XTy (global _) _))
+     (coq.error "Term:\n" {coq.term->string X}
+                "\nhas type:\n" {coq.term->string XTy}
+                "\nwhich is not a record")
+     true,
+  term->gref XTy Src,
+  factory-provides Src MLwP,
+  list-w-params_list MLwP ML,
+  % TODO: skip mixins for which there is already a source.
+  std.map ML (m\r\ r = mixin-src T m X) MSL
+].
+
+pred under-mixin-src-from-factory.then i:term, i:term, i:(term -> prop), o:term.
+under-mixin-src-from-factory.then TheType TheFactory P X :- std.do![
+  mixin-srcs TheType TheFactory ML,
+  ML => P X
+].
+
+pred under-mixin-src-from-factory.do! i:term, i:term, i:list prop.
+under-mixin-src-from-factory.do! TheType TheFactory LP :-
+  std.under.do! (under-mixin-src-from-factory.then TheType TheFactory) LP.
+
+pred under-mixin-src-from-factories.then i:term, i:list term, i:(term -> prop), o:term.
+under-mixin-src-from-factories.then TheType Factories P X :-
+  std.map Factories (mixin-srcs TheType) MLL,
+  std.flatten MLL ML,
+  ML => P X.
+
+pred under-mixin-src-from-factories.do! i:term, i:list term, i:list prop.
+under-mixin-src-from-factories.do! TheType Factories LP :-
+  std.under.do! (under-mixin-src-from-factories.then TheType Factories) LP.
+
+pred under-mixins.then i:list (w-args mixinname),
+    i:(name -> term -> (term -> A) -> A -> prop),
+    i:(A -> prop), o:A.
+under-mixins.then [] _ Pred Body :- !, Pred Body.
+under-mixins.then [triple M Args T|ML] Mixin Pred Out :- std.do! [
+  mgref->term Args T M MTy,
+  (@pi-decl `m` MTy m\ mixin-src T M m =>
+    under-mixins.then ML Mixin Pred (Body m)),
+  Mixin `m` MTy Body Out,
+].
+
+% [mk-mixin-fun.then MLwP Pred F] states that F has shape
+%   fun p_1 .. p_k T,
+%      (m_0 : M_0 ..p.. T) .. (m_n : M_n ..p.. T m_i0 .. m_ik) =>
+%      Body m_0 .. m_n
+% where  MLwP contains M_0, .., M_n (under p_1 .. p_k)
+%   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
+%   and  ..p.. is a list of terms built using p_1 .. p_k and T
+pred mk-mixin-fun.then i:list-w-params mixinname, i:(list term -> term -> term -> prop), o:term.
+mk-mixin-fun.then L P Out :- !,
+  w-params.then L mk-fun mk-fun
+    (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
+
+%%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% mterm is always of the form [mterm P T ML F], which is the data of
+% parameters PL a type T, and a list of mixins ML and a term F
+% where F should applied to PL, T and instances of the mixins in ML
+kind mterm type.
+type mterm list term -> term -> list mixinname -> term -> mterm.
+
+% [builder->term Params T Src Tgt MF] provides a term which is
+% a function to transform Src into Tgt under the right mixin-src.
+pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
+builder->term Ps T Src Tgt B :- !, std.do! [
+  from Src Tgt FGR,
+  F = global FGR,
+  gref-deps Src MLwP,
+  list-w-params_list MLwP ML,
+  mterm->term (mterm Ps T ML F) B,
+].
+
+% [instantiate-mixin T F M_i TFX] where mixin-for T M_i X_i states that
+% if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
+%            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
+% then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
+%            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
+% thus instanciating an abstraction on mixin M_i with X_i
+pred instantiate-mixin i:term, i:mixinname, i:term, o:term.
+instantiate-mixin T M (fun _ Tm F) R :-
+  safe-dest-app Tm (global TmGR) _,
+  factory-alias->gref TmGR M, !,
+  mixin-for T M X, !,
+  R = F X.
+instantiate-mixin T M (fun N Ty F) (fun N Ty FX) :- !,
+  pi m\ instantiate-mixin T M (F m) (FX m).
+instantiate-mixin _ _ F F.
+
+% [mterm->term MF TFX] assumes that MF is a mterm
+% (mterm ML F) and perform the substitution as above
+% for every mixin-for entry out of the list ML = [M_0, .., M_n].
+pred mterm->term i:mterm, o:term.
+mterm->term (mterm Ps T ML F) SFX :- std.do! [
+  std.assert-ok! (coq.typecheck F Ty) "mterm->term: F illtyped",
+  mk-eta (-1) Ty F EtaF,
+  subst-fun {std.append Ps [T]} EtaF FT,
+  std.fold ML FT (instantiate-mixin T) SFX
+].
+
+% [mgref->term Params T GR X] computes the dependencies of GR in mixins,
+% and instanciates all of them through mixin-src, and fails if it cannot.
+pred mgref->term i:list term, i:term, i:gref, o:term.
+mgref->term Ps T GR X :- !, std.do! [
+  std.assert! (gref-deps GR MLwP) "BUG: gref-deps should never fail",
+  list-w-params_list MLwP ML,
+  mterm->term (mterm Ps T ML (global GR)) X
+].
+
+
+% [mixin-for T M X] states that X has type [M T ...]
+% it is reconstructed from two databases [mixin-src] and [from]
+pred mixin-for i:term, i:mixinname, o:term.
+mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
+  std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
+
+  factory? Ty (triple Factory Params _),
+
+  if (M = Factory) (MI = Tm) (
+      builder->term Params T Factory M B,
+      subst-fun [Tm] B MI
+  )
+].
+pred assert!-mixin-for i:term, i:mixinname, o:term.
+assert!-mixin-for T M B :-
+  Msg is "HB: cannot inhabit mixin" ^
+    {nice-gref->string M} ^ "on" ^ {coq.term->string T},
+  std.assert! (mixin-for T M B) Msg.

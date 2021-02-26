@@ -1,0 +1,37 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+accumulate "HB/common/stdpp".
+accumulate "HB/common/utils".
+accumulate "HB/common/log".
+accumulate "HB/common/database".
+accumulate "HB/instance".
+
+% Given a type T, a fresh number N, and a mixin M it postulates
+% a variable "mN" inhabiting M applied to T and
+% all its dependencies, previously postulated and associated
+% to the corresponding mixin using mixin-for
+pred postulate-mixin i:w-args mixinname, i:list prop, o:list prop.
+postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
+  Name is "mixin_" ^ {gref->modname M},
+
+  if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
+
+  mgref->term Ps T M Ty,
+  std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
+  log.coq.env.add-section-variable-noimplicits Name Ty C
+].
+
+% [main-declare-context TheType Parameters Factories Clauses] postulates a
+% (section) context with all the mixins provided by the factories and all
+% the structure instances we can derive on TheType from these. Clauses
+% contain mixin-src for each postulated mixin
+pred main-declare-context i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
+main-declare-context TheType TheParams GRFSwP MSL CL :-  std.do! [
+  factories-provide GRFSwP MLwP,
+  apply-w-params MLwP TheParams TheType MLwAllArgs,
+  std.fold MLwAllArgs [] postulate-mixin MSL,
+  MSL => declare-instances TheType {findall-classes} CL,
+  std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
+].
+
