@@ -169,7 +169,7 @@ Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [] :- !, main-status.
+main [] :- !, hb.status.
 
 main _ :- coq.error "Usage: HB.status.".
 }}.
