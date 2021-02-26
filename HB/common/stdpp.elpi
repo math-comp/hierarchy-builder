@@ -4,17 +4,41 @@
 
 % This file contains additions to elpi or coq-elpi standard library
 
-shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-%%%%%%%%% Elpi Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This code could be moved in Elpi's standard library
+kind triple type -> type -> type -> type.
+type triple A -> B -> C -> triple A B C.
 
-% printing the local mixin context
-pred print-ctx.
-print-ctx :- declare_constraint print-ctx [].
-constraint print-ctx mixin-src {
-  rule \ (G ?- print-ctx) | (coq.say "The context is:" G).
-}
+pred triple_1 i:triple A B C, o:A.
+triple_1 (triple A _ _) A.
+
+pred triple_2 i:triple A B C, o:B.
+triple_2 (triple _ B _) B.
+
+pred triple_3 i:triple A B C, o:C.
+triple_3 (triple _ _ C) C.
+
+namespace std {
+
+pred list-diff i:list A, i:list A, o:list A.
+list-diff X [] X.
+list-diff L [D|DS] R :-
+  std.filter L (x\ not(x = D)) L1,
+  list-diff L1 DS R.
+
+pred list-eq-set i:list A, i:list A.
+list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
+
+pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
+under.do! Then LP :- Then (_\ std.do! LP) _.
+
+pred map-triple i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:(C -> C1 -> prop), i:triple A B C, o:triple A1 B1 C1.
+map-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
+
+pred bubblesort i:list A, i:(A -> A -> prop), o:list A.
+bubblesort [] _ [] :- !.
+bubblesort [X] _ [X] :- !.
+bubblesort [X,Y|TL] Rel [X|Rest1] :- Rel X Y, !, bubblesort [Y|TL] Rel Rest1.
+bubblesort [X,Y|TL] Rel [Y|Rest1] :- bubblesort [X|TL] Rel Rest1.
 
 % TODO: pred toposort i:(A -> A -> prop), i:list A, o:list A.
 %       pred edge? i:int, i:int.
@@ -33,37 +57,9 @@ toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
   std.filter XS' (std.mem XS) XS''.
 
-pred bubblesort i:list A, i:(A -> A -> prop), o:list A.
-bubblesort [] _ [] :- !.
-bubblesort [X] _ [X] :- !.
-bubblesort [X,Y|TL] Rel [X|Rest1] :- Rel X Y, !, bubblesort [Y|TL] Rel Rest1.
-bubblesort [X,Y|TL] Rel [Y|Rest1] :- bubblesort [X|TL] Rel Rest1.
+}
 
-pred list-diff i:list A, i:list A, o:list A.
-list-diff X [] X.
-list-diff L [D|DS] R :-
-  std.filter L (x\ not(x = D)) L1,
-  list-diff L1 DS R.
-
-pred list-eq-set i:list A, i:list A.
-list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
-
-pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
-under.do! Then LP :- Then (_\ std.do! LP) _.
-
-pred map-triple i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:(C -> C1 -> prop), i:triple A B C, o:triple A1 B1 C1.
-map-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
-
-pred triple_1 i:triple A B C, o:A.
-triple_1 (triple A _ _) A.
-
-pred triple_2 i:triple A B C, o:B.
-triple_2 (triple _ B _) B.
-
-pred target-gref i:term, o:gref.
-target-gref T GR :- whd1 T T1, !, target-gref T1 GR.
-target-gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ target-gref (Tgt x) GR.
-target-gref End GR :- term->gref End GR.
+namespace compat {
 
 % TODO: replace with std.map-filter when coq-elpi > 1.9.2
 pred map-filter i:list A, i:(A -> B -> prop), o:list B.
@@ -71,13 +67,20 @@ map-filter [] _ [].
 map-filter [X|XS] F [Y|YS] :- F X Y, !, map-filter XS F YS.
 map-filter [_|XS] F YS :- map-filter XS F YS.
 
-pred head-gref-under-prods i:term, o:gref.
-head-gref-under-prods (prod N T Body) Hd :-
-  @pi-decl N T x\ head-gref-under-prods (Body x) Hd.
-head-gref-under-prods T Hd :- whd1 T T', head-gref-under-prods T' Hd.
-head-gref-under-prods T Hd :- safe-dest-app T (global Hd) _.
+}
 
-%%%%% HB Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred print-ctx.
+print-ctx :- declare_constraint print-ctx [].
+constraint print-ctx mixin-src {
+  rule \ (G ?- print-ctx) | (coq.say "The context is:" G).
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred coq.prod-tgt->gref i:term, o:gref.
+coq.prod-tgt->gref T GR :- whd1 T T1, !, coq.prod-tgt->gref T1 GR.
+coq.prod-tgt->gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ coq.prod-tgt->gref (Tgt x) GR.
+coq.prod-tgt->gref End GR :- coq.term->gref End GR.
 
 % TODO: move to coq-elpi proper / move to coq.pp in coq-elpi >= 1.9
 pred coq.indt-decl->string i:indt-decl, o:string.
@@ -134,23 +137,23 @@ pred coq.gref.list->set i:list mixinname, o:coq.gref.set.
 coq.gref.list->set L S :-
   std.fold L {coq.gref.set.empty} coq.gref.set.add S.
 
-% [abstract-indt-decl Section I AbsI] abstracts I over the Section variables
+% [coq.abstract-indt-decl Section I AbsI] abstracts I over the Section variables
 % which becomes parameter nodes if the indt-decl type
-pred abstract-indt-decl i:list constant, i:indt-decl, o:indt-decl.
-abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
-abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
+pred coq.abstract-indt-decl i:list constant, i:indt-decl, o:indt-decl.
+coq.abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
+coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
   coq.gref->string (const C) ID,
   coq.env.typeof (const C) Ty,
   copy Ty Ty1,
   @pi-parameter ID Ty x\
     (copy (global (const C)) x :- !) =>
-    abstract-indt-decl CS X (X1 x).
+    coq.abstract-indt-decl CS X (X1 x).
 
-% [copy-clauses-for-unfold CS CL] generates clauses for the copy predicate
+% [coq.copy-clauses-for-unfold CS CL] generates clauses for the copy predicate
 % to unfold all constants in CS
-pred copy-clauses-for-unfold i:list constant, o:list prop.
-copy-clauses-for-unfold [] [].
-copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
+pred coq.copy-clauses-for-unfold i:list constant, o:list prop.
+coq.copy-clauses-for-unfold [] [].
+coq.copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
   coq.env.const C (some B) _,
   ClauseApp = (pi B1 Args Args1 B2 Args2 R\
     copy (app[global (const C)|Args]) R :- !,
@@ -160,5 +163,5 @@ copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
       unwind B2 Args2 R),
   Clause = (pi B1\
     copy (global (const C)) B1 :- !, copy B B1),
-  copy-clauses-for-unfold CS L.
+  coq.copy-clauses-for-unfold CS L.
 

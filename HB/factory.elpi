@@ -212,7 +212,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 % deps of the record plus the record itself)
 pred build-deps-for-projections i:inductive, i:list-w-params mixinname, o:list prop.
 build-deps-for-projections R MLwP CL :- std.do! [
-  map-filter {coq.CS.canonical-projections R} (x\y\x = some y) MixinOps,
+  compat.map-filter {coq.CS.canonical-projections R} (x\y\x = some y) MixinOps,
   list-w-params.rcons MLwP (pl\t\r\ r = triple (indt R) pl t) MLRwP,
   std.map MixinOps (gr\r\ r = gref-deps (const gr) MLRwP) CL,
 ].
@@ -229,8 +229,8 @@ abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonic
   std.map Section (x\r\ x = global (const r)) SectionVars,
   % We discharge by hand the record declaration so that we can be sure all
   % parameters and mixins are abstracted (even if unused).
-  copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
-  CopyUnfold => abstract-indt-decl SectionVars RDecl RDeclClosed.
+  coq.copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
+  CopyUnfold => coq.abstract-indt-decl SectionVars RDecl RDeclClosed.
 
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [

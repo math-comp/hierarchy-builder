@@ -115,7 +115,7 @@ toposort-proj Proj ES In Out :- !, toposort-proj.acc Proj ES [] In Out.
 pred topo-find i:B, o:A.
 pred toposort-proj.acc i:(A -> B -> prop), i:list (pair B B), i:list B, i:list A, o:list A.
 toposort-proj.acc _ ES Acc [] Out :- !,
-  std.map {toposort ES Acc} topo-find Out.
+  std.map {std.toposort ES Acc} topo-find Out.
 toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
   Proj A B,
   topo-find B A => toposort-proj.acc Proj ES [B|Acc] In Out
@@ -128,7 +128,7 @@ pred toposort-classes i:list classname, o:list classname.
 toposort-classes In Out :- std.do! [
   std.findall (sub-class C1_ C2_) SubClasses,
   std.map SubClasses toposort-classes.mk-class-edge ES,
-  toposort ES In Out,
+  std.toposort ES In Out,
 ].
 
 pred findall-classes o:list class.
@@ -142,7 +142,7 @@ findall-classes CLSortedDef :- std.do! [
 pred findall-builders o:list builder.
 findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
-  bubblesort LFILunsorted leq-builder LFIL.
+  std.bubblesort LFILunsorted leq-builder LFIL.
 
 % [distinct-pairs-below C AllSuper C1 C2] finds C1 and C2 in
 % AllSuper (all super classes of C) such that C1 != C2
@@ -238,7 +238,7 @@ get-constructor I _ :- coq.error "get-constructor: not an inductive" I.
 pred get-cs-structure i:cs-instance, o:structure.
 get-cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
   coq.env.typeof Inst InstTy,
-  head-gref-under-prods InstTy Struct
+  coq.prod-tgt->gref InstTy Struct
 ].
 
 pred has-cs-instance i:gref, i:cs-instance.

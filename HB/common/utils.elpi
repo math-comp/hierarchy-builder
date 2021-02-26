@@ -235,7 +235,7 @@ build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons Name P
 build-list-w-params [] TheType Factories (w-params.nil `TheType` TT R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
   (pi t\ (copy TheType t :- !) =>
-         std.map Factories (map-triple (=) (x\ std.map x copy) copy) (R t)),
+         std.map Factories (std.map-triple (=) (x\ std.map x copy) copy) (R t)),
 ].
 
 pred distribute-w-params i:list-w-params A, o:list (one-w-params A).

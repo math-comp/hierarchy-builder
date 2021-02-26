@@ -36,7 +36,7 @@ under-mixin-src-from-factory.then TheType TheFactory P X :- std.do![
 
 pred under-mixin-src-from-factory.do! i:term, i:term, i:list prop.
 under-mixin-src-from-factory.do! TheType TheFactory LP :-
-  under.do! (under-mixin-src-from-factory.then TheType TheFactory) LP.
+  std.under.do! (under-mixin-src-from-factory.then TheType TheFactory) LP.
 
 pred under-mixin-src-from-factories.then i:term, i:list term, i:(term -> prop), o:term.
 under-mixin-src-from-factories.then TheType Factories P X :-
@@ -46,7 +46,7 @@ under-mixin-src-from-factories.then TheType Factories P X :-
 
 pred under-mixin-src-from-factories.do! i:term, i:list term, i:list prop.
 under-mixin-src-from-factories.do! TheType Factories LP :-
-  under.do! (under-mixin-src-from-factories.then TheType Factories) LP.
+  std.under.do! (under-mixin-src-from-factories.then TheType Factories) LP.
 
 pred under-mixins.then i:list (w-args mixinname),
     i:(name -> term -> (term -> A) -> A -> prop),

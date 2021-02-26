@@ -122,7 +122,7 @@ declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR 
 pred declare-canonical-instances-from-factory i:term, i:term.
 declare-canonical-instances-from-factory T F :-
   coq.typecheck F TyF ok,
-  target-gref TyF GRF,
+  coq.prod-tgt->gref TyF GRF,
   under-canonical-mixins-of.do! T [
     under-mixin-src-from-factory.do! T F [
       add-all-mixins T GRF {list-w-params_list {factory-provides GRF}} tt _,

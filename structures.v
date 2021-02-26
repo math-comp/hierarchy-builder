@@ -49,8 +49,6 @@ typeabbrev classname gref.
 typeabbrev factoryname gref.
 typeabbrev structure gref.
 
-kind triple type -> type -> type -> type.
-type triple A -> B -> C -> triple A B C.
 typeabbrev (w-args A) (triple A (list term) term).
 
 kind w-params type -> type -> type.

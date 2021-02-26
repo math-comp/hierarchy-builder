@@ -304,7 +304,7 @@ pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
 if-class-already-exists-error _ [] _.
 if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
   list-w-params_list ML1wP ML1,
-  if (list-eq-set ML1 ML2)
+  if (std.list-eq-set ML1 ML2)
      (coq.error "Structure" {nice-gref->string S} "contains the same mixins of" N)
      (if-class-already-exists-error N CS ML2).
 
@@ -312,7 +312,7 @@ pred export-mixin-coercion i:classname, i:option constant.
 export-mixin-coercion _ none.
 export-mixin-coercion ClassName (some C) :-
   coq.env.typeof (const C) CTy,
-  head-gref-under-prods CTy MixinGR,
+  coq.prod-tgt->gref CTy MixinGR,
   if-verbose (coq.say "HB: export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
   log.coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
@@ -440,7 +440,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   list-w-params_list MLwP ML,
 
   if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
-     (coq.warn "HB: pulling in dependencies:" {std.map {list-diff ML PML} nice-gref->string}
+     (coq.warn "HB: pulling in dependencies:" {std.map {std.list-diff ML PML} nice-gref->string}
                "\nPlease list them or end the declaration with '&'")
      true,
 
