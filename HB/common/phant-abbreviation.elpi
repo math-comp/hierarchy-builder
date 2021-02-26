@@ -207,30 +207,3 @@ mk-phant-term GRF PhBody:- !, std.do! [
     (mk-phant-term.classes EtaF CNL) PhBody,
 ].
 
-% TODO: move to HB/factory and make HB/structure depend on HB/factory
-kind factory-abbrev type.
-type factory-by-classname gref -> factory-abbrev.
-type factory-by-phantabbrev abbreviation -> factory-abbrev.
-
-pred declare-factory-abbrev i:id, i:factory-abbrev.
-declare-factory-abbrev Name (factory-by-classname GR) :-
-  % looks fishy (the parameters are not taken into account)
-  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
-declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :- std.do! [
-  coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
-  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
-].
-
-% [mk-factory-abbrev Str GR CL FactAbbrev]
-% creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
-% FactAbbrev is the short name for the factory (either an alias of the class record)
-pred mk-factory-abbrev i:string, i:gref, o:list prop, o:factory-abbrev.
-mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
-  if (factory-alias->gref GR _)
-     (Aliases = [],
-      FactAbbrev = factory-by-classname GR)
-     (acc-phant-abbrev Str GR PhGR Abbrv,
-      Aliases = [phant-abbrev GR PhGR Abbrv],
-      FactAbbrev = factory-by-phantabbrev Abbrv),
-].
-

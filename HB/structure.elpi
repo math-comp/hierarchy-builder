@@ -1,12 +1,14 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+accumulate "HB/common/stdpp".
 accumulate "HB/common/utils".
 accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/common/synthesis".
 accumulate "HB/common/phant-abbreviation".
 accumulate "HB/export".
+accumulate "HB/factory".
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 

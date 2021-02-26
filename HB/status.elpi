@@ -1,6 +1,7 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+accumulate "HB/common/stdpp".
 accumulate "HB/common/utils".
 
 pred pp-from i:prop.
