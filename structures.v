@@ -341,19 +341,10 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
-  with-attributes (
-      main-declare-const-instance Name BodySkel TyWPSkel
-  ),
-].
-main [T0, F0] :- std.do! [
-  argument->ty T0 T, % TODO: change this when supporting morphism hierarchies
-  argument->term F0 F,
-  with-attributes (
-      main-declare-instance T F Clauses,
-      std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x))
-  ),
-].
+main [const-decl Name (some BodySkel) TyWPSkel] :- !,
+  with-attributes (hb.declare-const-instance Name BodySkel TyWPSkel).
+main [T0, F0] :- !,
+  with-attributes (hb.declare-existing-instance T0 F0).
 
 main _ :- coq.error "Usage: HB.instance <CarrierType> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 

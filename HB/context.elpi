@@ -37,7 +37,7 @@ declare-context TheType TheParams GRFSwP MSL CL :-  std.do! [
   factories-provide GRFSwP MLwP,
   apply-w-params MLwP TheParams TheType MLwAllArgs,
   std.fold MLwAllArgs [] hb.context.postulate-mixin MSL,
-  MSL => declare-instances TheType {findall-classes} CL,
+  MSL => hb.declare-instances TheType {findall-classes} CL,
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
 
