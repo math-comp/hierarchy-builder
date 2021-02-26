@@ -165,11 +165,13 @@ pred module-to-export o:modpath.
 *)
 
 Elpi Command HB.status.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [] :- !, main-status.
+main [] :- !, hb.status.
 
 main _ :- coq.error "Usage: HB.status.".
 }}.
@@ -246,12 +248,21 @@ Elpi Export HB.graph.
 *)
 
 Elpi Command HB.mixin.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [A] :- A = indt-decl _, !,
-  with-attributes (main-declare-asset {argument->asset A} asset-mixin).
+  with-attributes (hb.declare-mixin A).
 
 main _ :-
   coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
@@ -285,6 +296,16 @@ Elpi Export HB.mixin.
 *)
 
 Elpi Command HB.structure.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/export.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -311,7 +332,7 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
 main [const-decl Module (some B) _] :- !, std.do! [
   purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
   sigT->list-w-params B2 GRFS ClosureCheck, !,
-  with-attributes (main-declare-structure Module GRFS ClosureCheck),
+  with-attributes (hb.declare-structure Module GRFS ClosureCheck),
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
@@ -337,23 +358,19 @@ Elpi Export HB.structure.
 *)
 
 Elpi Command HB.instance.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl Name (some BodySkel) TyWPSkel] :- !, std.do! [
-  with-attributes (
-      main-declare-const-instance Name BodySkel TyWPSkel
-  ),
-].
-main [T0, F0] :- std.do! [
-  argument->ty T0 T, % TODO: change this when supporting morphism hierarchies
-  argument->term F0 F,
-  with-attributes (
-      main-declare-instance T F Clauses,
-      std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x))
-  ),
-].
+main [const-decl Name (some BodySkel) TyWPSkel] :- !,
+  with-attributes (hb.declare-const-instance Name BodySkel TyWPSkel).
+main [T0, F0] :- !,
+  with-attributes (hb.declare-existing-instance T0 F0).
 
 main _ :- coq.error "Usage: HB.instance <CarrierType> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
 
@@ -368,11 +385,20 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 Elpi Command HB.factory.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [A] :- !,
-  with-attributes (main-declare-asset {argument->asset A} asset-factory).
+main [A] :- (A = indt-decl _ ; A = const-decl _ _ _), !,
+  with-attributes (hb.declare-factory A).
 
 main _ :-
   coq.error "Usage: HB.factory Record <FactoryName> T of F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
@@ -415,10 +441,18 @@ Elpi Export HB.factory.
     *)
 
 Elpi Command HB.builders.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [ctx-decl C] :- !, with-attributes (main-begin-declare-builders C).
+main [ctx-decl C] :- !, with-attributes (hb.begin-declare-builders C).
 
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
 }}.
@@ -427,10 +461,18 @@ Elpi Export HB.builders.
 
 
 Elpi Command HB.end.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes main-end-declare-builders.
+main [] :- !, with-attributes hb.end-declare-builders.
 main _ :- coq.error "Usage: HB.end.".
 }}.
 Elpi Typecheck.
@@ -455,10 +497,13 @@ Elpi Export HB.end.
    >>> *)
 
 Elpi Command HB.export.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str M] :- !, with-attributes (hb.export {coq.locate-module M}).
+main [str M] :- !, with-attributes (hb.export-module {coq.locate-module M}).
 main _ :- coq.error "Usage: HB.export M.".
 }}.
 Elpi Typecheck.
@@ -472,17 +517,19 @@ Elpi Export HB.export.
    It is useful to create one big module with all exports at the end of a file. *)
 
 Elpi Command HB.reexport.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (main-reexport).
+main [] :- !, with-attributes (hb.reexport-all-modules).
 main _ :- coq.error "Usage: HB.reexport.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.reexport.
 
 (*
-
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -513,7 +560,13 @@ Elpi Export HB.reexport.
 
 *)
 
-Elpi Command hb.context.
+Elpi Command HB.context.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -521,12 +574,11 @@ Elpi Accumulate lp:{{
 main [S|FS] :-
   argument->term S T,
   std.map FS argument->gref GRFS, !,
-  main-declare-context T GRFS _.
-main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
+  hb.declare-context T GRFS _.
+main _ :- coq.error "Usage: HB.context <CarrierTerm> <Factoryes>..".
 
 }}.
 Elpi Typecheck.
-
 *)
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

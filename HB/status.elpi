@@ -1,8 +1,32 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-accumulate "HB/common/stdpp".
-accumulate "HB/common/utils".
+namespace hb {
+
+pred status.
+status :- std.do! [
+  coq.say "--------------------- Hierarchy -----------------------------------",
+  std.findall (class-def CL_) CL,
+  std.forall CL hb.status.pp-class,
+
+  coq.say "--------------------- Builders -----------------------------------",
+  std.findall (from A_ B_ C_) FL,
+  std.forall FL hb.status.pp-from,
+
+  std.findall (mixin-src T_ M_ V_) ML,
+  if (ML = []) true (
+    coq.say "--------------------- Local mixin instances ----------------------",
+    std.forall ML hb.status.pp-mixin-src
+  ),
+].
+
+}
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace hb.status {
 
 pred pp-from i:prop.
 pp-from (from F M T) :-
@@ -33,19 +57,4 @@ pp-mixin-src (mixin-src T M C) :-
           {nice-gref->string M} "thans to"
           {coq.term->string C}.
 
-pred main-status.
-main-status :- std.do! [
-  coq.say "--------------------- Hierarchy -----------------------------------",
-  std.findall (class-def CL_) CL,
-  std.forall CL pp-class,
-
-  coq.say "--------------------- Builders -----------------------------------",
-  std.findall (from A_ B_ C_) FL,
-  std.forall FL pp-from,
-
-  std.findall (mixin-src T_ M_ V_) ML,
-  if (ML = []) true (
-    coq.say "--------------------- Local mixin instances ----------------------",
-    std.forall ML pp-mixin-src
-  ),
-].
+}

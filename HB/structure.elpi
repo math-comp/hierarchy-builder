@@ -1,14 +1,139 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-accumulate "HB/common/stdpp".
-accumulate "HB/common/utils".
-accumulate "HB/common/log".
-accumulate "HB/common/database".
-accumulate "HB/common/synthesis".
-accumulate "HB/common/phant-abbreviation".
-accumulate "HB/export".
-accumulate "HB/factory".
+namespace hb {
+
+% HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
+%  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
+pred declare-structure i:string, i:list-w-params gref, i:bool.
+declare-structure Module GRFSwP ClosureCheck :- std.do! [
+  factories-provide GRFSwP PMLwP,
+
+  list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
+  list-w-params.append PMLwP RMLwP UnsortedMLwP,
+  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
+
+  list-w-params_list PMLwP PML,
+  list-w-params_list MLwP ML,
+
+  if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
+     (coq.warn "HB: pulling in dependencies:" {std.map {std.list-diff ML PML} nice-gref->string}
+               "\nPlease list them or end the declaration with '&'")
+     true,
+
+  hb.structure.if-class-already-exists-error Module {findall-classes} ML,
+  hb.structure.if-coverage-not-good-error ML,
+
+  % TODO: check we never define the superclass of an exising class
+
+  if-verbose (coq.say "HB: start module" Module),
+
+  log.coq.env.begin-module Module,
+
+  hb.structure.declare-class+structure MLwP
+    ClassName Structure SortProjection ClassProjection Factories,
+
+  w-params.map MLwP (_\_\_\ mk-nil) NilwP,
+  ClassAlias = (factory-alias->gref ClassName ClassName),
+  CurrentClass = (class ClassName Structure MLwP),
+  ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
+  GRDepsClauses = [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
+  
+  hb.structure.declare-auto-infer-params-abbrev Structure MLwP,
+
+  if-verbose (coq.say "HB: declaring clone abbreviation"),
+
+  w-params.then MLwP phant-fun-real phant-fun-real
+    (hb.structure.clone-phant-body ClassName SortProjection Structure) PhClone,
+
+  mk-phant-abbrev "clone" PhClone _ _,
+
+  if-arg-sort (
+    if-verbose (coq.say "HB: define arg_sort"),
+    std.assert-ok! (coq.typecheck SortProjection SortProjTy)
+      "HB: BUG: cannot retype projection",
+    log.coq.env.add-const-noimplicits "arg_sort" SortProjection SortProjTy ff ArgSortCst
+  ),
+
+  if-verbose (coq.say "HB: start module Exports"),
+
+  log.coq.env.begin-module "Exports",
+  if-arg-sort (hb.structure.declare-sort-coercion Structure (global (const ArgSortCst))),
+  hb.structure.declare-sort-coercion Structure SortProjection,
+
+  if-verbose (coq.say "HB: exporting unification hints"),
+  ClassAlias => Factories => GRDepsClauses =>
+    hb.structure.declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
+  % Register in Elpi's DB the new structure
+  % NOT TODO: All these acc are correctly locaed in an Export Module
+
+  if (ClassName = indt ClassInd) (std.do![
+    if-verbose (coq.say "HB: exporting coercions from class to mixins"),
+    std.forall {coq.CS.canonical-projections ClassInd}
+      (hb.structure.export-mixin-coercion ClassName)
+    ])
+    (coq.say "declare-structure:" ClassName "should be an inductive", fail),
+
+  if-verbose (coq.say "HB: accumulating various props"),
+  std.flatten [
+      Factories, [ClassAlias], [is-structure Structure],
+      NewJoins, [class-def CurrentClass], GRDepsClauses
+    ]
+    NewClauses,
+  std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+
+  if-verbose (coq.say "HB: stop module Exports"),
+  log.coq.env.end-module-name "Exports" Exports,
+
+  log.coq.env.import-module Exports,
+
+  if-verbose (coq.say "HB: declaring class abbreviation"),
+
+  hb.structure.mk-infer-key ClassProjection NilwP (global Structure) PhClass,
+  mk-phant-abbrev "of_" PhClass _ ClassAbbrev,
+  @global! => log.coq.notation.add-abbreviation "Build" 2
+    {{fun T C => ((lp:{{ { coq.notation.abbreviation ClassAbbrev [{{C}}] } }})
+        : (lp:{{ {coq.mk-app (global ClassName) {params->holes NilwP} } }} T)
+      ) }} tt ClassForAbbrev,
+  @global! => log.coq.notation.add-abbreviation "of" 1
+    {{fun T => lp:{{ { coq.notation.abbreviation ClassForAbbrev [{{T}}, {{T}}] } }}}} tt _,
+
+  log.coq.env.end-module-name Module ModulePath,
+
+  if-verbose (coq.say "HB: end modules; export" Exports),
+
+  hb.export-module Exports,
+
+  if-verbose (coq.say "HB: exporting operations"),
+    ClassAlias => Factories => GRDepsClauses =>
+      hb.structure.export-operations Structure SortProjection ClassProjection MLwP [] EX   MLToExport,
+    % TODO: issue an Arguments op T : rename, where T is the name written by
+    %   the user in Definition foo := { T of ... }
+
+  if-verbose (coq.say "HB: operations meta-data module: ElpiOperations"),
+
+  ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
+  log.coq.env.begin-module ElpiOperationModName,
+    std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
+    std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
+  hb.export-module ElpiOperations,
+
+  if-verbose (coq.say "HB: abbreviation factory-by-classname"),
+
+  NewClauses => hb.declare-abbrev Module (hb.by-classname ClassName),
+
+  NewClauses => if-MC-compat (hb.structure.mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassName ClassProjection),
+
+].
+
+}
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace hb.structure {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
@@ -434,126 +559,5 @@ if-coverage-not-good-error.one MS M :- mixin-first-class M C, !,
        "which contains at most" {std.map {coq.gref.set.elements {coq.gref.set.inter CMS MS}} nice-gref->string}).
 if-coverage-not-good-error.one _ _. % new class is the first covering M
 
-% HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
-%  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
-pred main-declare-structure i:string, i:list-w-params gref, i:bool.
-main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
-  factories-provide GRFSwP PMLwP,
 
-  list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
-  list-w-params.append PMLwP RMLwP UnsortedMLwP,
-  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
-
-  list-w-params_list PMLwP PML,
-  list-w-params_list MLwP ML,
-
-  if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
-     (coq.warn "HB: pulling in dependencies:" {std.map {std.list-diff ML PML} nice-gref->string}
-               "\nPlease list them or end the declaration with '&'")
-     true,
-
-  if-class-already-exists-error Module {findall-classes} ML,
-  if-coverage-not-good-error ML,
-
-  % TODO: check we never define the superclass of an exising class
-
-  if-verbose (coq.say "HB: start module" Module),
-
-  log.coq.env.begin-module Module,
-
-  declare-class+structure MLwP
-    ClassName Structure SortProjection ClassProjection Factories,
-
-  w-params.map MLwP (_\_\_\ mk-nil) NilwP,
-  ClassAlias = (factory-alias->gref ClassName ClassName),
-  CurrentClass = (class ClassName Structure MLwP),
-  ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
-  GRDepsClauses = [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
-  
-  declare-auto-infer-params-abbrev Structure MLwP,
-
-  if-verbose (coq.say "HB: declaring clone abbreviation"),
-
-  w-params.then MLwP phant-fun-real phant-fun-real
-    (clone-phant-body ClassName SortProjection Structure) PhClone,
-
-  mk-phant-abbrev "clone" PhClone _ _,
-
-  if-arg-sort (
-    if-verbose (coq.say "HB: define arg_sort"),
-    std.assert-ok! (coq.typecheck SortProjection SortProjTy)
-      "HB: BUG: cannot retype projection",
-    log.coq.env.add-const-noimplicits "arg_sort" SortProjection SortProjTy ff ArgSortCst
-  ),
-
-  if-verbose (coq.say "HB: start module Exports"),
-
-  log.coq.env.begin-module "Exports",
-  if-arg-sort (declare-sort-coercion Structure (global (const ArgSortCst))),
-  declare-sort-coercion Structure SortProjection,
-
-  if-verbose (coq.say "HB: exporting unification hints"),
-  ClassAlias => Factories => GRDepsClauses =>
-    declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
-  % Register in Elpi's DB the new structure
-  % NOT TODO: All these acc are correctly locaed in an Export Module
-
-  if (ClassName = indt ClassInd) (std.do![
-    if-verbose (coq.say "HB: exporting coercions from class to mixins"),
-    std.forall {coq.CS.canonical-projections ClassInd}
-      (export-mixin-coercion ClassName)
-    ])
-    (coq.say "declare-structure:" ClassName "should be an inductive", fail),
-
-  if-verbose (coq.say "HB: accumulating various props"),
-  std.flatten [
-      Factories, [ClassAlias], [is-structure Structure],
-      NewJoins, [class-def CurrentClass], GRDepsClauses
-    ]
-    NewClauses,
-  std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-
-  if-verbose (coq.say "HB: stop module Exports"),
-  log.coq.env.end-module-name "Exports" Exports,
-
-  log.coq.env.import-module Exports,
-
-  if-verbose (coq.say "HB: declaring class abbreviation"),
-
-  mk-infer-key ClassProjection NilwP (global Structure) PhClass,
-  mk-phant-abbrev "of_" PhClass _ ClassAbbrev,
-  @global! => log.coq.notation.add-abbreviation "Build" 2
-    {{fun T C => ((lp:{{ { coq.notation.abbreviation ClassAbbrev [{{C}}] } }})
-        : (lp:{{ {mk-app (global ClassName) {params->holes NilwP} } }} T)
-      ) }} tt ClassForAbbrev,
-  @global! => log.coq.notation.add-abbreviation "of" 1
-    {{fun T => lp:{{ { coq.notation.abbreviation ClassForAbbrev [{{T}}, {{T}}] } }}}} tt _,
-
-  log.coq.env.end-module-name Module ModulePath,
-
-  if-verbose (coq.say "HB: end modules; export" Exports),
-
-  hb.export Exports,
-
-  if-verbose (coq.say "HB: exporting operations"),
-    ClassAlias => Factories => GRDepsClauses =>
-      export-operations Structure SortProjection ClassProjection MLwP [] EX   MLToExport,
-    % TODO: issue an Arguments op T : rename, where T is the name written by
-    %   the user in Definition foo := { T of ... }
-
-  if-verbose (coq.say "HB: operations meta-data module: ElpiOperations"),
-
-  ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
-  log.coq.env.begin-module ElpiOperationModName,
-    std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
-    std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-  log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
-  hb.export ElpiOperations,
-
-  if-verbose (coq.say "HB: abbreviation factory-by-classname"),
-
-  NewClauses => declare-factory-abbrev Module (factory-by-classname ClassName),
-
-  NewClauses => if-MC-compat (mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassName ClassProjection),
-
-].
+}
