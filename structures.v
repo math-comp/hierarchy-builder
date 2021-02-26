@@ -409,7 +409,7 @@ Elpi Command HB.builders.
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [ctx-decl C] :- !, with-attributes (main-begin-declare-builders C).
+main [ctx-decl C] :- !, with-attributes (hb.begin-declare-builders C).
 
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
 }}.
@@ -421,7 +421,7 @@ Elpi Command HB.end.
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes main-end-declare-builders.
+main [] :- !, with-attributes hb.end-declare-builders.
 main _ :- coq.error "Usage: HB.end.".
 }}.
 Elpi Typecheck.

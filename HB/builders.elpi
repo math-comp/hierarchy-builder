@@ -9,37 +9,39 @@ accumulate "HB/common/synthesis".
 accumulate "HB/context".
 accumulate "HB/export".
 
-pred main-begin-declare-builders i:context-decl.
-main-begin-declare-builders CtxSkel :- std.do! [
+namespace hb {
+
+pred begin-declare-builders i:context-decl.
+begin-declare-builders CtxSkel :- std.do! [
   Name is "Builders_" ^ {std.any->string {new_int}}, % TODO?
   if-verbose (coq.say "HB: begin module for builders"),
   log.coq.env.begin-module Name,
 
-  std.assert-ok! (elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
+  std.assert-ok! (hb.builders.elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
 
   % the Super module to access operations/axioms shadowed by the ones in the factory
   if (GRF = indt FRecord) (std.do! [
     if-verbose (coq.say "HB: begin module Super"),
     log.coq.env.begin-module "Super",
-    std.forall {coq.CS.canonical-projections FRecord} declare-shadowed-constant,
+    std.forall {coq.CS.canonical-projections FRecord} hb.builders.declare-shadowed-constant,
     log.coq.env.end-module-name "Super" _,
     if-verbose (coq.say "HB: ended module Super")
   ]) (true),
 
   log.coq.env.begin-section Name,
   if-verbose (coq.say "HB: postulating factories"),
-  builders-postulate-factories Name Ctx,
+  hb.builders.postulate-factories Name Ctx,
 ].
 
-pred main-end-declare-builders.
-main-end-declare-builders :- std.do! [
+pred end-declare-builders.
+end-declare-builders :- std.do! [
   current-mode (builder-from _ GR ModName),
 
   log.coq.env.end-section-name ModName,
 
   findall-builders LFIL,
 
-  std.fold LFIL [] main-declare-builder Clauses,
+  std.fold LFIL [] hb.builders.declare-1-builder Clauses,
 
   if (Clauses = [])
      (coq.error "No builders to declare, did you forget HB.instance?")
@@ -56,14 +58,18 @@ main-end-declare-builders :- std.do! [
   hb.export-module Exports,
 ].
 
-% [main-declare-builder (builder _ F M B) From MoreFrom] Given B of type FB, it
+}
+
+namespace hb.builders {
+
+% [declare-1-builder (builder _ F M B) From MoreFrom] Given B of type FB, it
 % declares all the new builders F to M via B.
 % From holds the (from F Mi Bi) new clauses during folding.
-pred main-declare-builder i:builder, i:list prop, o:list prop.
-main-declare-builder (builder _ SrcFactory TgtMixin _) FromClauses FromClauses :- FromClauses => from SrcFactory TgtMixin _, !,
+pred declare-1-builder i:builder, i:list prop, o:list prop.
+declare-1-builder (builder _ SrcFactory TgtMixin _) FromClauses FromClauses :- FromClauses => from SrcFactory TgtMixin _, !,
   if-verbose (coq.say "HB: skipping duplicate builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
-main-declare-builder (builder _ SrcFactory TgtMixin B) FromClauses [from SrcFactory TgtMixin B|FromClauses] :-
+declare-1-builder (builder _ SrcFactory TgtMixin B) FromClauses [from SrcFactory TgtMixin B|FromClauses] :-
   if-verbose (coq.say "HB: declare builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
 
@@ -140,8 +146,8 @@ fresh-type Ty :-
   Ty = {{Type}},
   std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
 
-pred builders-postulate-factories i:id, i:context-decl.
-builders-postulate-factories ModName (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
+pred postulate-factories i:id, i:context-decl.
+postulate-factories ModName (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factory: illtyped context",
   if (var Ty) (fresh-type Ty)
@@ -159,15 +165,16 @@ builders-postulate-factories ModName (context-item IDT _ TySkel none t\ context-
   log.coq.env.accumulate current "hb.db" (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),
 ].
 
-builders-postulate-factories ModName (context-item ID _ TSkel none Factories) :- std.do! [
+postulate-factories ModName (context-item ID _ TSkel none Factories) :- std.do! [
   if-verbose (coq.say "HB: postulating" ID),
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factories: illtyped context",
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "postulate-factories: illtyped context",
   if (var T) (coq.fresh-type T) true,
   log.coq.env.add-section-variable-noimplicits ID T P,
   TheParam = global (const P),
-  builders-postulate-factories ModName (Factories TheParam),
+  postulate-factories ModName (Factories TheParam),
 ].
 
-builders-postulate-factories _ (context-item ID _ _ (some _) _) :-
+postulate-factories _ (context-item ID _ _ (some _) _) :-
   coq.error "context item cannot be given a body:" ID.
 
+}
