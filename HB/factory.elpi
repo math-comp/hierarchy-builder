@@ -35,6 +35,10 @@ declare-abbrev Name (by-phantabbrev Abbr) :- std.do! [
 
 }
 
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
 namespace hb.factory {
 
 shorten hb.{ by-classname , by-phantabbrev , declare-abbrev , factory-abbrev }.
