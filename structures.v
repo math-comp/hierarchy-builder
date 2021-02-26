@@ -353,7 +353,7 @@ main [T0, F0] :- std.do! [
   argument->term F0 F,
   with-attributes (
       main-declare-instance T F Clauses,
-      std.forall Clauses (x\coq.vernac.accumulate current (clause _ _ x))
+      std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x))
   ),
 ].
 

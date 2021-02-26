@@ -96,9 +96,9 @@ pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
 mk-phant-abbrev N (phant-term AL T1) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.elaborate-skeleton T1 TTy T) "mk-phant-abbrev: T illtyped",
-  coq.vernac.add-const NC T TTy @transparent! C,
+  log.coq.env.add-const-noimplicits NC T TTy @transparent! C,
   mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
-  @global! => coq.vernac.add-abbreviation N NParams AbbrevT tt Abbrev,
+  @global! => log.coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
 ].
 
 % [acc-phant-abbrev Str GR PhGR Abbrev] makes a phantom abbreviation for F
@@ -215,10 +215,10 @@ type factory-by-phantabbrev abbreviation -> factory-abbrev.
 pred declare-factory-abbrev i:id, i:factory-abbrev.
 declare-factory-abbrev Name (factory-by-classname GR) :-
   % looks fishy (the parameters are not taken into account)
-  @global! => coq.vernac.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
+  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
 declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :- std.do! [
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
-  @global! => coq.vernac.add-abbreviation Name Nargs AbbrTrm tt _,
+  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
 ].
 
 % [mk-factory-abbrev Str GR CL FactAbbrev]

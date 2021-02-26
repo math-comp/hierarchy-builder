@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 accumulate "HB/common/utils".
-accumulate "HB/common/coq-vernac".
+accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/instance".
 
@@ -18,7 +18,7 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
 
   mgref->term Ps T M Ty,
   std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
-  coq.vernac.add-section-variable Name Ty C
+  log.coq.env.add-section-variable-noimplicits Name Ty C
 ].
 
 % [main-declare-context TheType Parameters Factories Clauses] postulates a
@@ -31,6 +31,6 @@ main-declare-context TheType TheParams GRFSwP MSL CL :-  std.do! [
   apply-w-params MLwP TheParams TheType MLwAllArgs,
   std.fold MLwAllArgs [] postulate-mixin MSL,
   MSL => declare-instances TheType {findall-classes} CL,
-  std.forall MSL (ms\ coq.vernac.accumulate current (clause _ _ ms)),
+  std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
 

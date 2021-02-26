@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 accumulate "HB/common/utils".
-accumulate "HB/common/coq-vernac".
+accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/common/synthesis".
 accumulate "HB/common/phant-abbreviation".
@@ -53,7 +53,7 @@ declare-id-builder GR (from GR GR (const C)) :- std.do! [
       body = fun `x` MTy x\x)
     IDBody,
   std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
-  coq.vernac.add-const "identity_builder" IDBody IDType @transparent! C,
+  log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
 
 % [main-declare-asset Asset AssetKind] unifies the code paths for
@@ -64,8 +64,8 @@ main-declare-asset Asset AssetKind :- std.do! [
 
   if-verbose (coq.say "HB: start module and section" Module),
 
-  coq.vernac.begin-module Module,
-  coq.vernac.begin-section Module,
+  log.coq.env.begin-module Module,
+  log.coq.env.begin-section Module,
 
   % We start by postulating the parameters
   process-asset-named-parameters Asset AssetKind Module [],
@@ -85,7 +85,7 @@ process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Param
 
   if-verbose (coq.say "HB: postulate type" Name),
   if (var T) (fresh-type Ty) (Ty = T),
-  coq.vernac.add-section-variable Name Ty C,
+  log.coq.env.add-section-variable-noimplicits Name Ty C,
 
   TheType = global (const C),
   % We postulate the dependencies
@@ -96,7 +96,7 @@ process-asset-named-parameters (asset-parameter Name T Rest) D Module Params :- 
   std.assert-ok! (coq.typecheck-ty T _) "Illtyped parameter",
   if-verbose (coq.say "HB: postulate " Name),
   if (var T) (coq.fresh-type T) true,
-  coq.vernac.add-section-variable Name T C,
+  log.coq.env.add-section-variable-noimplicits Name T C,
   TheParam = global (const C),
   process-asset-named-parameters (Rest TheParam) D Module [triple Name TheParam T|Params],
 ].
@@ -133,7 +133,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   main-declare-context TheType TheParams GRFSwP Hyps _,
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
-  coq.vernac.add-const "axioms_" Ty1 _ @transparent! C,
+  log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
@@ -142,12 +142,12 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   Hyps => mgref->term TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
   (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
-  coq.vernac.add-const "Axioms_" MFK MFKTyC @transparent! CK,
+  log.coq.env.add-const-noimplicits "Axioms_" MFK MFKTyC @transparent! CK,
   GRK = const CK,
 
-  coq.vernac.end-section Module,
+  log.coq.env.end-section-name Module,
 
-  coq.vernac.set-implicit tt GRK [],
+  @global! => log.coq.arguments.set-implicit GRK [[]],
 
   factories-provide GRFSwP MLwP,
   GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
@@ -161,17 +161,17 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   if-verbose (coq.say "HB: start module Exports"),
 
-  coq.vernac.begin-module "Exports",
-  std.forall Clauses (c\ coq.vernac.accumulate current (clause _ _ c)),
-  std.forall GRDepsClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  log.coq.env.begin-module "Exports",
+  std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  std.forall GRDepsClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
-  % coq.vernac.set-implicit tt GRK [maximal|Implicits],
+  % @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
   w-params.nparams MLwP NParams,
-  coq.vernac.accumulate current (clause _ _ (factory-nparams (const C) NParams)),
-  coq.vernac.accumulate current (clause _ _ (factory-constructor (const C) GRK)),
-  coq.vernac.accumulate current (clause _ _ (factory-builder-nparams BuildConst NParams)),
-  coq.vernac.end-module "Exports" Exports,
-  coq.vernac.end-module Module _,
+  log.coq.env.accumulate current "hb.db" (clause _ _ (factory-nparams (const C) NParams)),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (factory-constructor (const C) GRK)),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (factory-builder-nparams BuildConst NParams)),
+  log.coq.env.end-module-name "Exports" Exports,
+  log.coq.env.end-module-name Module _,
 
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 
@@ -217,15 +217,15 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed,
 
-  coq.vernac.add-indt RDeclClosed R,
-  coq.vernac.end-section Module, % We need to anyway declare the record inside the section
+  log.coq.env.add-indt RDeclClosed R,
+  log.coq.env.end-section-name Module, % We need to anyway declare the record inside the section
     % since closing the section purges the unused universe level we may have
     % allocated by typechecking the skeleton just above
 
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
-  coq.vernac.set-implicit tt (indt R) [],
-  coq.vernac.set-implicit tt GRK [],
+  @global! => log.coq.arguments.set-implicit (indt R) [[]],
+  @global! => log.coq.arguments.set-implicit GRK [[]],
 
   factories-provide GRFSwP MLwP,
   w-params.nparams MLwP NParams,
@@ -249,17 +249,17 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   if-verbose (coq.say "HB: start module Exports"),
 
-  coq.vernac.begin-module "Exports",
-  std.forall Clauses (c\ coq.vernac.accumulate current (clause _ _ c)),
-  std.forall GRDepsClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
-  coq.vernac.accumulate current (clause _ _ (factory-nparams (indt R) NParams)),
+  log.coq.env.begin-module "Exports",
+  std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  std.forall GRDepsClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (factory-nparams (indt R) NParams)),
   std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits,
-  coq.vernac.set-implicit tt GRK [maximal|Implicits],
-  coq.vernac.accumulate current (clause _ _ (factory-constructor (indt R) GRK)),
-  coq.vernac.accumulate current (clause _ _ (factory-builder-nparams BuildConst NParams)),
-  coq.vernac.accumulate current (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
-  coq.vernac.end-module "Exports" Exports,
-  coq.vernac.end-module Module _,
+  @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
+  log.coq.env.accumulate current "hb.db" (clause _ _ (factory-constructor (indt R) GRK)),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (factory-builder-nparams BuildConst NParams)),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
+  log.coq.env.end-module-name "Exports" Exports,
+  log.coq.env.end-module-name Module _,
 
   if-verbose (coq.say "HB: end modules and sections; export" Exports),
 

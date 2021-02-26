@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 accumulate "HB/common/utils".
-accumulate "HB/common/coq-vernac".
+accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/common/synthesis".
 accumulate "HB/common/phant-abbreviation".
@@ -60,12 +60,12 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
   w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
   if-verbose (coq.say "HB: export operation" Name),
-  coq.vernac.add-const Name Body BodyTy @transparent! C,
+  log.coq.env.add-const-noimplicits Name Body BodyTy @transparent! C,
 
   w-params.nparams MwP NP,
   NImplicits is NP + 1,
   std.map {std.iota NImplicits} (_\r\ r = maximal) Implicits,
-  coq.vernac.set-implicit tt (const C) Implicits,
+  @global! => log.coq.arguments.set-implicit (const C) [Implicits],
 
   EXO = [exported-op M Poperation C|EXI]
 ].
@@ -146,7 +146,7 @@ pred declare-coercion i:term, i:term, i:class, i:class.
 declare-coercion SortProjection ClassProjection
     (class FC StructureF FMLwP) (class TC StructureT TMLwP) :- std.do! [
 
-  coq.vernac.accumulate current (clause _ _ (sub-class FC TC)),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (sub-class FC TC)),
 
   gref->modname StructureF ModNameF,
   gref->modname StructureT ModNameT,
@@ -162,8 +162,8 @@ declare-coercion SortProjection ClassProjection
 
   if-verbose (coq.say "HB: declare coercion hint" CName),
 
-  coq.vernac.add-const CName CoeBody Ty @transparent! C,
-  coq.vernac.declare-coercion (coercion (const C) 1 FC (grefclass TC)),
+  log.coq.env.add-const-noimplicits CName CoeBody Ty @transparent! C,
+  log.coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
 
   Coercion = global (const C),
   w-params.then FMLwP mk-fun ignore
@@ -174,9 +174,9 @@ declare-coercion SortProjection ClassProjection
 
   if-verbose (coq.say "HB: declare unification hint" SName),
 
-  coq.vernac.add-const SName SCoeBody STy @transparent! SC,
-  coq.vernac.declare-coercion (coercion (const SC) 0 StructureF (grefclass StructureT)),
-  coq.vernac.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
+  log.coq.env.add-const-noimplicits SName SCoeBody STy @transparent! SC,
+  log.coq.coercion.declare (coercion (const SC) 0 StructureF (grefclass StructureT)),
+  log.coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
 ].
 
 pred join-body i:int, i:int, i:structure, i:term, i:term, i:term, i:term, i:term,
@@ -213,8 +213,8 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
   w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
     (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
-  coq.vernac.add-const Name JoinBody Ty @transparent! J,
-  coq.vernac.declare-instance (const J).
+  log.coq.env.add-const-noimplicits Name JoinBody Ty @transparent! J,
+  log.coq.CS.declare-instance (const J).
 
 % TODO: this works under the invariant: we never have two classes that
 % contain exactly the same mixins. hb.structure should enforce this
@@ -268,7 +268,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
-  coq.vernac.add-indt ClassDeclaration ClassInd,
+  log.coq.env.add-indt ClassDeclaration ClassInd,
   coq.CS.canonical-projections ClassInd Projs,
   % TODO: put this code in a named clause
   w-params.nparams MLwP NParams,
@@ -283,7 +283,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare-structure: illtyped",
-  coq.vernac.add-indt StructureDeclaration StructureInd,
+  log.coq.env.add-indt StructureDeclaration StructureInd,
 
   coq.CS.canonical-projections StructureInd [some SortP, some ClassP],
   global (const SortP) = SortProjection,
@@ -296,7 +296,7 @@ declare-sort-coercion StructureName (global Proj) :-
 
   if-verbose (coq.say "HB: declare sort coercion"),
 
-  coq.vernac.declare-coercion (coercion Proj 0 StructureName sortclass).
+  log.coq.coercion.declare (coercion Proj 0 StructureName sortclass).
 
 pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
 if-class-already-exists-error _ [] _.
@@ -312,32 +312,32 @@ export-mixin-coercion ClassName (some C) :-
   coq.env.typeof (const C) CTy,
   head-gref-under-prods CTy MixinGR,
   if-verbose (coq.say "HB: export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
-  coq.vernac.declare-coercion (coercion (const C) _ ClassName (grefclass MixinGR)).
+  log.coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
 pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:classname, i:term, i:option gref.
 mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
   CompatModuleName is "MathCompCompat" ^ ModuleName,
-  coq.vernac.begin-module CompatModuleName, % to avoid collisions
-  coq.vernac.begin-module ModuleName,
+  log.coq.env.begin-module CompatModuleName, % to avoid collisions
+  log.coq.env.begin-module ModuleName,
 
   if (Axioms = some GR)
-    (@global! => coq.vernac.add-abbreviation "axiom" 0 (global GR) ff _)
+    (@global! => log.coq.notation.add-abbreviation "axiom" 0 (global GR) ff _)
     true,
 
   if (NewMixins = [NewMixin]) (std.do! [
     if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms', 'mixin_of' and 'Mixin'"),
     MArgs is {factory-nparams NewMixin} + 1,
     mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
-    @global! => coq.vernac.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
-    @global! => coq.vernac.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
+    @global! => log.coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
+    @global! => log.coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
     std.assert! (factory-constructor NewMixin FK) "BUG: Factory constructor missing",
     std.assert! (phant-abbrev FK _ PhAbb) "BUG: missing phant-abbrev",
-    @global! => coq.vernac.add-abbreviation "Mixin" 0
+    @global! => log.coq.notation.add-abbreviation "Mixin" 0
       {coq.notation.abbreviation PhAbb {coq.mk-n-holes MArgs}} ff _,
     if-verbose (coq.say "mc-compat-structure: declaring pack abbreviation"),
     class-def (class ClassName _ ClassMixins),
     w-params.then ClassMixins mk-fun mk-fun (pack-body ClassName) Pack,
-    coq.vernac.add-const "pack_" Pack _ @transparent! GRPack,
+    log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! GRPack,
     (phant-mixin-real NewMixin => gref-deps (const GRPack) ClassMixins => mk-phant-abbrev "pack" {mk-phant-term (const GRPack)} _ _),
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
@@ -346,11 +346,11 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProject
   std.assert-ok! (coq.typecheck ClassProjection ClassProjectionTy) "wtf",
   CArgs is CNParams + 1,
   mk-eta CArgs ClassProjectionTy ClassProjection EtaClassProjection,
-  @global! => coq.vernac.add-abbreviation "class_of" CArgs EtaClassProjection ff _,
+  @global! => log.coq.notation.add-abbreviation "class_of" CArgs EtaClassProjection ff _,
 
-  coq.vernac.end-module ModuleName _,
-  coq.vernac.end-module CompatModuleName MCCompat,
-  coq.vernac.export-module MCCompat,
+  log.coq.env.end-module-name ModuleName _,
+  log.coq.env.end-module-name CompatModuleName MCCompat,
+  log.coq.env.export-module MCCompat,
   %coq.env.import-module Module,
 ].
 
@@ -449,7 +449,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: start module" Module),
 
-  coq.vernac.begin-module Module,
+  log.coq.env.begin-module Module,
 
   declare-class+structure MLwP
     ClassName Structure SortProjection ClassProjection Factories,
@@ -471,7 +471,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: start module Exports"),
 
-  coq.vernac.begin-module "Exports",
+  log.coq.env.begin-module "Exports",
   declare-sort-coercion Structure SortProjection,
 
   if-verbose (coq.say "HB: exporting unification hints"),
@@ -493,12 +493,12 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
       NewJoins, [class-def CurrentClass], GRDepsClauses
     ]
     NewClauses,
-  std.forall NewClauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
   if-verbose (coq.say "HB: stop module Exports"),
-  coq.vernac.end-module "Exports" Exports,
+  log.coq.env.end-module-name "Exports" Exports,
 
-  coq.vernac.end-module Module ModulePath,
+  log.coq.env.end-module-name Module ModulePath,
 
   if-verbose (coq.say "HB: end modules; export" Exports),
 
@@ -513,10 +513,10 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: operations meta-data module: ElpiOperations"),
 
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
-  coq.vernac.begin-module ElpiOperationModName,
+  log.coq.env.begin-module ElpiOperationModName,
     std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
-    std.forall {std.append EX MixinFirstClass} (c\ coq.vernac.accumulate current (clause _ _ c)),
-  coq.vernac.end-module ElpiOperationModName ElpiOperations,
+    std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   hb.export ElpiOperations,
 
   if-verbose (coq.say "HB: abbreviation factory-by-classname"),

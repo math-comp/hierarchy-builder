@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 accumulate "HB/common/utils".
-accumulate "HB/common/coq-vernac".
+accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/common/synthesis".
 accumulate "HB/context".
@@ -12,20 +12,20 @@ pred main-begin-declare-builders i:context-decl.
 main-begin-declare-builders CtxSkel :- std.do! [
   Name is "Builders_" ^ {std.any->string {new_int}}, % TODO?
   if-verbose (coq.say "HB: begin module for builders"),
-  coq.vernac.begin-module Name,
+  log.coq.env.begin-module Name,
 
   std.assert-ok! (elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
 
   % the Super module to access operations/axioms shadowed by the ones in the factory
   if (GRF = indt FRecord) (std.do! [
     if-verbose (coq.say "HB: begin module Super"),
-    coq.vernac.begin-module "Super",
+    log.coq.env.begin-module "Super",
     std.forall {coq.CS.canonical-projections FRecord} declare-shadowed-constant,
-    coq.vernac.end-module "Super" _,
+    log.coq.env.end-module-name "Super" _,
     if-verbose (coq.say "HB: ended module Super")
   ]) (true),
 
-  coq.vernac.begin-section Name,
+  log.coq.env.begin-section Name,
   if-verbose (coq.say "HB: postulating factories"),
   builders-postulate-factories Name Ctx,
 ].
@@ -34,7 +34,7 @@ pred main-end-declare-builders.
 main-end-declare-builders :- std.do! [
   current-mode (builder-from _ GR ModName),
 
-  coq.vernac.end-section ModName,
+  log.coq.env.end-section-name ModName,
 
   findall-builders LFIL,
 
@@ -47,11 +47,11 @@ main-end-declare-builders :- std.do! [
   % TODO: Do we need this module?
   gref->modname GR M,
   Name is M ^ "_Exports",
-  coq.vernac.begin-module Name,
-  std.forall Clauses (c\ coq.vernac.accumulate current (clause _ _ c)),
+  log.coq.env.begin-module Name,
+  std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
-  coq.vernac.end-module Name Exports,
-  coq.vernac.end-module ModName _,
+  log.coq.env.end-module-name Name Exports,
+  log.coq.env.end-module-name ModName _,
   hb.export Exports,
 ].
 
@@ -76,10 +76,10 @@ declare-shadowed-constant (some C) :-
 
 pred declare-shadowed-located i:string, i:located.
 declare-shadowed-located Id (loc-gref GR) :-
-  @global! => coq.vernac.add-abbreviation Id 0 (global GR) ff _.
+  @global! => log.coq.notation.add-abbreviation Id 0 (global GR) ff _.
 declare-shadowed-located Id (loc-abbreviation Abbrev) :-
   coq.notation.abbreviation-body Abbrev NArgs T,
-  @global! => coq.vernac.add-abbreviation Id NArgs T ff _.
+  @global! => log.coq.notation.add-abbreviation Id NArgs T ff _.
 
 % Elaborating factory (F Params T) is hard, since we don't have (yet) all the structures
 % on T that makes the phat abbreviation (F Params T), which unfolds to (F_phant Params T _ idfun...)
@@ -110,7 +110,7 @@ postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
   coq.notation.abbreviation Fabv {std.append Params [TheType]} Package,
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
-  coq.vernac.add-section-variable Name Package C,
+  log.coq.env.add-section-variable-noimplicits Name Package C,
   TheFactory = global (const C),
 ].
 
@@ -132,7 +132,7 @@ define-factory-operation TheType Params TheFactory NHoles (some P) :-
   T = app[global (const P)|Args],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
-  @local! => coq.vernac.add-abbreviation Name 0 T ff _.
+  @local! => log.coq.notation.add-abbreviation Name 0 T ff _.
 
 pred fresh-type o:term.
 fresh-type Ty :-
@@ -146,7 +146,7 @@ builders-postulate-factories ModName (context-item IDT _ TySkel none t\ context-
   if (var Ty) (fresh-type Ty)
      (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
   if-verbose (coq.say "HB: postulating type" IDT),
-  coq.vernac.add-section-variable IDT Ty C,
+  log.coq.env.add-section-variable-noimplicits IDT Ty C,
   TheType = global (const C),
 
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
@@ -155,14 +155,14 @@ builders-postulate-factories ModName (context-item IDT _ TySkel none t\ context-
   main-declare-context TheType Params GRFMLwP _ _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType Params TheFactory GRF,
-  coq.vernac.accumulate current (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),
+  log.coq.env.accumulate current "hb.db" (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),
 ].
 
 builders-postulate-factories ModName (context-item ID _ TSkel none Factories) :- std.do! [
   if-verbose (coq.say "HB: postulating" ID),
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "builders-postulate-factories: illtyped context",
   if (var T) (coq.fresh-type T) true,
-  coq.vernac.add-section-variable ID T P,
+  log.coq.env.add-section-variable-noimplicits ID T P,
   TheParam = global (const P),
   builders-postulate-factories ModName (Factories TheParam),
 ].

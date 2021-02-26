@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 accumulate "HB/common/utils".
-accumulate "HB/common/coq-vernac".
+accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/common/synthesis".
 
@@ -42,8 +42,8 @@ declare-instances T [class Class Struct MLwP|Rest] [CS|L] :-
   mk-app (global KS) {std.append Params [T, KCApp]} S,
   std.assert-ok! (coq.typecheck S STy) "declare-instances: S illtyped",
 
-  coq.vernac.add-const Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
-  coq.vernac.declare-instance (const CS), % Bug coq/coq#11155, should be local
+  log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
+  log.coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
   declare-instances T Rest L.
 declare-instances T [_|Rest] L :- declare-instances T Rest L.
 declare-instances _ [] [].
@@ -65,10 +65,10 @@ add-mixin T FGR MakeCanon MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
   if (Bo = global (const C)) true
     (Name is {nice-gref->string FGR} ^"_to_" ^ {nice-gref->string MixinName} ^ "__" ^ {std.any->string {new_int}},
      if-verbose (coq.say "HB: declare" Name),
-     coq.vernac.add-const Name Bo Ty @transparent! C),
+     log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
   if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
      (if-verbose (coq.say "HB: declare canonical mixin instance" C),
-      coq.vernac.declare-instance (const C))
+      log.coq.CS.declare-instance (const C))
      true.
 
 pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool, o:list prop.
@@ -87,7 +87,7 @@ postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   std.assert-ok! (coq.typecheck-ty S _) "arity parameter illtyped",
   if-verbose (coq.say "HB: postulating" ID),
   if (var S) (coq.fresh-type S) true,
-  coq.vernac.add-section-variable ID S C,
+  log.coq.env.add-section-variable-noimplicits ID S C,
   Var = global (const C),
   postulate-arity (A Var) [Var|Acc] T T1 Ty.
 postulate-arity (arity Ty) ArgsRev X T Ty :-
@@ -163,7 +163,7 @@ main-declare-const-instance Name BodySkel TyWPSkel :- std.do! [
      SectionBody = Body
    ) (
     SectionName is "hb_instance_" ^ {term_to_string {new_int} },
-    coq.vernac.begin-section SectionName,
+    log.coq.env.begin-section SectionName,
     postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
@@ -173,16 +173,16 @@ main-declare-const-instance Name BodySkel TyWPSkel :- std.do! [
   hack-section-discharging SectionBody SectionBodyHack,
   optimize-body SectionBodyHack OptimizedBody,
   if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
-  coq.vernac.add-const RealName OptimizedBody _ @transparent! C,
+  log.coq.env.add-const-noimplicits RealName OptimizedBody _ @transparent! C,
   TheFactory = (global (const C)),
   std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
   main-declare-instance TheType TheFactory Clauses,
 
   if (TyWP = arity _) true (
     if-verbose (coq.say "HB: closing instance section"),
-    coq.vernac.end-section SectionName
+    log.coq.env.end-section-name SectionName
   ),
 
   % we accumulate clauses here since the section ends
-  std.forall Clauses (x\coq.vernac.accumulate current (clause _ _ x)),
+  std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
 ].
