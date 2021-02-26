@@ -123,8 +123,12 @@ pred declare-canonical-instances-from-factory i:term, i:term.
 declare-canonical-instances-from-factory T F :-
   coq.typecheck F TyF ok,
   coq.prod-tgt->gref TyF GRF,
-  under-canonical-mixins-of.do! T [
-    under-mixin-src-from-factory.do! T F [
+  % The order of the following two "under...do!"  is crucial,
+  % priority must be given to canonical mixins
+  % as they are the ones which guarantee forgetful inheritance
+  % hence we add these clauses last.
+  under-mixin-src-from-factory.do! T F [
+    under-canonical-mixins-of.do! T [
       add-all-mixins T GRF {list-w-params_list {factory-provides GRF}} tt _,
       declare-instances T {findall-classes} _
     ]

@@ -73,6 +73,11 @@ env.export-module M :- std.do! [
   coq.env.export-module M,
 ].
 
+pred env.import-module i:modpath.
+env.import-module M :- std.do! [
+  coq.env.import-module M,
+].
+
 pred coercion.declare i:coercion.
 coercion.declare C :- std.do! [
   @global! => coq.coercion.declare C,
