@@ -152,8 +152,8 @@ builders-postulate-factories ModName (context-item IDT _ TySkel none t\ context-
 
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
     "the last argument must be a factory applied to the type variable",
-  gref-deps GRF GRFMLwP, % TODO: remove, pass to main-declare-context the list-w-params-eta-expansion of GRF
-  main-declare-context TheType Params GRFMLwP _ _,
+  gref-deps GRF GRFMLwP, % TODO: remove, pass to hb.declare-context the list-w-params-eta-expansion of GRF
+  hb.declare-context TheType Params GRFMLwP _ _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType Params TheFactory GRF,
   log.coq.env.accumulate current "hb.db" (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),

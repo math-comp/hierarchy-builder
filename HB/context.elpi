@@ -7,6 +7,8 @@ accumulate "HB/common/log".
 accumulate "HB/common/database".
 accumulate "HB/instance".
 
+namespace hb.context {
+
 % Given a type T, a fresh number N, and a mixin M it postulates
 % a variable "mN" inhabiting M applied to T and
 % all its dependencies, previously postulated and associated
@@ -22,16 +24,21 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
   log.coq.env.add-section-variable-noimplicits Name Ty C
 ].
 
-% [main-declare-context TheType Parameters Factories Clauses] postulates a
+}
+
+namespace hb {
+
+% [declare-context TheType Parameters Factories Clauses] postulates a
 % (section) context with all the mixins provided by the factories and all
 % the structure instances we can derive on TheType from these. Clauses
 % contain mixin-src for each postulated mixin
-pred main-declare-context i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
-main-declare-context TheType TheParams GRFSwP MSL CL :-  std.do! [
+pred declare-context i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
+declare-context TheType TheParams GRFSwP MSL CL :-  std.do! [
   factories-provide GRFSwP MLwP,
   apply-w-params MLwP TheParams TheType MLwAllArgs,
-  std.fold MLwAllArgs [] postulate-mixin MSL,
+  std.fold MLwAllArgs [] hb.context.postulate-mixin MSL,
   MSL => declare-instances TheType {findall-classes} CL,
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
 
+}

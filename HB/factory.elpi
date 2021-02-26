@@ -155,9 +155,9 @@ append-phant-unify (phant-term LP T) (phant-term LPU T) :-
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
 declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
-  % TODO maybe main-declare-context should just take GRFSwP and postulate
+  % TODO maybe hb.declare-context should just take GRFSwP and postulate
   % the parameters and the type
-  main-declare-context TheType TheParams GRFSwP Hyps _,
+  hb.declare-context TheType TheParams GRFSwP Hyps _,
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
   log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
@@ -234,7 +234,7 @@ abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonic
 
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
-  main-declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
+  hb.declare-context TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
 
   if-verbose (coq.say "HB: declare record axioms_"),
 

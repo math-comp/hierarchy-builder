@@ -521,7 +521,7 @@ Elpi Accumulate lp:{{
 main [S|FS] :-
   argument->term S T,
   std.map FS argument->gref GRFS, !,
-  main-declare-context T GRFS _.
+  hb.declare-context T GRFS _.
 main _ :- coq.error "Usage: hb.context <CarrierTerm> <FactoryGR>".
 
 }}.

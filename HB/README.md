@@ -5,6 +5,10 @@
 
 ## Naming conventions
 
+- `hb.foo` is a main entry point for a `foo` command, to be exposed to Coq or
+  used by other commands
+- `hb.foo.stuff` is code "private" to `hb.foo` commands, if you need to access
+  it, then it is probably out of place
 - under-foobar.do! Arg [ Code ]
     enriches the context with foobar, the runs std.do! [ Code ]
 - under-foobar.then Arg F Out
