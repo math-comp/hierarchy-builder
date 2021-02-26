@@ -552,7 +552,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: abbreviation factory-by-classname"),
 
-  NewClauses => declare-factory-abbrev Module (factory-by-classname ClassName),
+  NewClauses => hb.declare-abbrev Module (hb.by-classname ClassName),
 
   NewClauses => if-MC-compat (mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassName ClassProjection),
 

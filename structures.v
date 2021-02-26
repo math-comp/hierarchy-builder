@@ -251,7 +251,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [A] :- A = indt-decl _, !,
-  with-attributes (main-declare-asset {argument->asset A} asset-mixin).
+  with-attributes (hb.declare-mixin A).
 
 main _ :-
   coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
@@ -371,8 +371,8 @@ Elpi Command HB.factory.
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [A] :- !,
-  with-attributes (main-declare-asset {argument->asset A} asset-factory).
+main [A] :- (A = indt-decl _ ; A = const-decl _ _ _), !,
+  with-attributes (hb.declare-factory A).
 
 main _ :-
   coq.error "Usage: HB.factory Record <FactoryName> T of F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".

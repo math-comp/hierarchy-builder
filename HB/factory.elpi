@@ -10,6 +10,35 @@ accumulate "HB/common/phant-abbreviation".
 accumulate "HB/context".
 accumulate "HB/export".
 
+namespace hb {
+
+pred declare-factory i:argument.
+declare-factory A :-
+  hb.factory.declare-asset {hb.factory.argument->asset A} hb.factory.asset-factory.
+
+pred declare-mixin i:argument.
+declare-mixin A :-
+  hb.factory.declare-asset {hb.factory.argument->asset A} hb.factory.asset-mixin.
+
+kind factory-abbrev type.
+type by-classname gref -> factory-abbrev.
+type by-phantabbrev abbreviation -> factory-abbrev.
+
+pred declare-abbrev i:id, i:factory-abbrev.
+declare-abbrev Name (by-classname GR) :-
+  % looks fishy (the parameters are not taken into account)
+  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
+declare-abbrev Name (by-phantabbrev Abbr) :- std.do! [
+  coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
+  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
+].
+
+}
+
+namespace hb.factory {
+
+shorten hb.{ by-classname , by-phantabbrev , declare-abbrev , factory-abbrev }.
+
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
 % Type to share code between HB.mixin and HB.factory (that supports alias factories)
@@ -57,18 +86,6 @@ declare-id-builder GR (from GR GR (const C)) :- std.do! [
   log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
 
-kind factory-abbrev type.
-type factory-by-classname gref -> factory-abbrev.
-type factory-by-phantabbrev abbreviation -> factory-abbrev.
-
-pred declare-factory-abbrev i:id, i:factory-abbrev.
-declare-factory-abbrev Name (factory-by-classname GR) :-
-  % looks fishy (the parameters are not taken into account)
-  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
-declare-factory-abbrev Name (factory-by-phantabbrev Abbr) :- std.do! [
-  coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
-  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
-].
 
 % [mk-factory-abbrev Str GR CL FactAbbrev]
 % creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
@@ -77,16 +94,16 @@ pred mk-factory-abbrev i:string, i:gref, o:list prop, o:factory-abbrev.
 mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
   if (factory-alias->gref GR _)
      (Aliases = [],
-      FactAbbrev = factory-by-classname GR)
+      FactAbbrev = by-classname GR)
      (acc-phant-abbrev Str GR PhGR Abbrv,
       Aliases = [phant-abbrev GR PhGR Abbrv],
-      FactAbbrev = factory-by-phantabbrev Abbrv),
+      FactAbbrev = by-phantabbrev Abbrv),
 ].
 
-% [main-declare-asset Asset AssetKind] unifies the code paths for
+% [declare-asset Asset AssetKind] unifies the code paths for
 % mixins, factories (and alias factories)
-pred main-declare-asset i:asset-decl, i:asset.
-main-declare-asset Asset AssetKind :- std.do! [
+pred declare-asset i:asset-decl, i:asset.
+declare-asset Asset AssetKind :- std.do! [
   name-of-asset-decl Asset Module,
 
   if-verbose (coq.say "HB: start module and section" Module),
@@ -204,7 +221,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   hb.export-module Exports,
 
-  GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-abbrev Module FactAbbrev,
 ].
 
 % [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P
@@ -292,5 +309,7 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   hb.export-module Exports,
 
-  GRDepsClauses => declare-factory-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-abbrev Module FactAbbrev,
 ].
+
+}
