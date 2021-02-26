@@ -533,7 +533,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: end modules; export" Exports),
 
-  hb.export Exports,
+  hb.export-module Exports,
 
   if-verbose (coq.say "HB: exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
@@ -548,7 +548,7 @@ main-declare-structure Module GRFSwP ClosureCheck :- std.do! [
     std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
     std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
-  hb.export ElpiOperations,
+  hb.export-module ElpiOperations,
 
   if-verbose (coq.say "HB: abbreviation factory-by-classname"),
 

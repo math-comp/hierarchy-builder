@@ -53,7 +53,7 @@ main-end-declare-builders :- std.do! [
 
   log.coq.env.end-module-name Name Exports,
   log.coq.env.end-module-name ModName _,
-  hb.export Exports,
+  hb.export-module Exports,
 ].
 
 % [main-declare-builder (builder _ F M B) From MoreFrom] Given B of type FB, it

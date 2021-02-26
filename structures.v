@@ -458,7 +458,7 @@ Elpi Command HB.export.
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str M] :- !, with-attributes (hb.export {coq.locate-module M}).
+main [str M] :- !, with-attributes (hb.export-module {coq.locate-module M}).
 main _ :- coq.error "Usage: HB.export M.".
 }}.
 Elpi Typecheck.
@@ -475,7 +475,7 @@ Elpi Command HB.reexport.
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (main-reexport).
+main [] :- !, with-attributes (hb.reexport-all-modules).
 main _ :- coq.error "Usage: HB.reexport.".
 }}.
 Elpi Typecheck.
