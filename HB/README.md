@@ -3,7 +3,7 @@
 - `HB/foo.elpi` implements the main entry point for `HB.foo` (or its variants)
 - `HB/common/bar.elpi` provides code used by more than one command
 
-## Naming converntions
+## Naming conventions
 
 - under-foobar.do! Arg [ Code ]
     enriches the context with foobar, the runs std.do! [ Code ]
@@ -32,4 +32,3 @@
 - when foo is the constructor of a data type with type A1 -> .. -> AN -> t
     we define mk-foo as:
     mk-foo A1 .. AN (foo A1 .. AN)
-
