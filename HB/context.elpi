@@ -1,13 +1,6 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-accumulate "HB/common/stdpp".
-accumulate "HB/common/utils".
-accumulate "HB/common/log".
-accumulate "HB/common/database".
-accumulate "HB/instance".
-
-
 namespace hb {
 
 % [declare-context TheType Parameters Factories Clauses] postulates a

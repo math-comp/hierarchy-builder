@@ -1,15 +1,6 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-accumulate "HB/common/stdpp".
-accumulate "HB/common/utils".
-accumulate "HB/common/log".
-accumulate "HB/common/database".
-accumulate "HB/common/synthesis".
-accumulate "HB/common/phant-abbreviation".
-accumulate "HB/export".
-accumulate "HB/factory".
-
 namespace hb {
 
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }

@@ -165,6 +165,8 @@ pred module-to-export o:modpath.
 *)
 
 Elpi Command HB.status.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -246,6 +248,15 @@ Elpi Export HB.graph.
 *)
 
 Elpi Command HB.mixin.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -285,6 +296,16 @@ Elpi Export HB.mixin.
 *)
 
 Elpi Command HB.structure.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/export.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -337,6 +358,11 @@ Elpi Export HB.structure.
 *)
 
 Elpi Command HB.instance.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -359,6 +385,15 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 Elpi Command HB.factory.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -406,6 +441,14 @@ Elpi Export HB.factory.
     *)
 
 Elpi Command HB.builders.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -418,6 +461,14 @@ Elpi Export HB.builders.
 
 
 Elpi Command HB.end.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -446,6 +497,9 @@ Elpi Export HB.end.
    >>> *)
 
 Elpi Command HB.export.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -463,6 +517,9 @@ Elpi Export HB.export.
    It is useful to create one big module with all exports at the end of a file. *)
 
 Elpi Command HB.reexport.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -505,6 +562,11 @@ Elpi Export HB.reexport.
 *)
 
 Elpi Command hb.context.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
