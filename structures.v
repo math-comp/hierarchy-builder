@@ -311,7 +311,7 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
 main [const-decl Module (some B) _] :- !, std.do! [
   purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
   sigT->list-w-params B2 GRFS ClosureCheck, !,
-  with-attributes (main-declare-structure Module GRFS ClosureCheck),
+  with-attributes (hb.declare-structure Module GRFS ClosureCheck),
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
