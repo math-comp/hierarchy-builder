@@ -280,18 +280,43 @@ Elpi Export HB.mixin.
   The second syntax has a trailing [&] to pull in factory requirements silently.
 
   <<
-  HB.structure Definition StructureName := { A of Factory1 A & … & FactoryN A }.
-  HB.structure Definition StructureName := { A of Factory1 A & … & FactoryN A & }.
+  HB.structure Definition StructureName params := { A of Factory1 … A & … & FactoryN … A }.
+  HB.structure Definition StructureName params := { A of Factory1 … A & … & FactoryN … A & }.
   >>
+
+  Synthesizes:
+  - [StructureName A] the type of the class that regroups all the factories
+    [Factory1 … A] … [FactoryN … A].
+  - [StructureName.type params] the structure type that packs together [A] and its class.
+  - [StructureName.sort params] the first projection of the previous structure,
+  - [StructureName.clone params T cT] a legacy repackaging function that eta expands
+    the canonical [StructureName.type] of [T], using [cT] if provided.
+  - [StructureName.class sT : StructureName sT] outputs the class of [sT : StructureName.type params],
+  - [StructureName.of T : StructureName sT] outputs the class of the canonical [StructureName.type] of [T].
+  - [StructureName.Build T cT : StructureName T] outputs the class of the canonical,
+    and [StructureName.type] of [cT], and give it the type [Structure]. So that it is
+    ready to use in combination with HB.instance, as in
+    <<
+    HB.instance Definition _ := StructureName.Build T cT.
+    >>
+
+  Disclaimer: any function other that the ones described above, including pattern matching
+    (using Gallina `match`, `let` or tactics (`case`, `elim`, etc)) is an internal and must
+    not be relied upon. Also hand-crafted `Canonical` declarations of such structures will
+    break the hierarchy. Use [HB.instance] instead.
 
   Attributes:
   - [#[mathcomp]] attempts to generate a backward compatibility layer with mathcomp:
-    trying to infer the right [Structure.pack],
-  - [#[infer("variable")]] provides a structure where [variable] has type [Type]
-    and will try to infer it's type by unification (with canonical strucutre inference),
-  - [#[arg_sort]] defines an alias [arg_sort] for [sort], and declares it as the
-    main coercion. [sort] is still declared as a coercion but the only reason is
-    to make sure Coq does not print it.
+    trying to infer the right [StructureName.pack],
+  - [#[infer("variable")]], where [variable : pT] belongs to [params] and is a structure
+    (e.g. from the hierarchy) with a coercion/canonical projection `pT >-> Sortclass`.
+    It modifies the notation `StructureName.type` so as to accept [variable : Type] instead,
+    and will try to infer it's [pT] by unification (using canonical structure inference),
+    This is essential in [Lmodule.type R] where [R] should have type [Ring.type]
+    but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer("R")]].
+  - [#[arg_sort]] defines an alias [StructureName.arg_sort] for [StructureName.sort],
+    and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
+    but the only reason is to make sure Coq does not print it.
     Cf https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v#L225-L243.
 *)
 

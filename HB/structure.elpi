@@ -90,13 +90,14 @@ declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: declaring class abbreviation"),
 
   hb.structure.mk-infer-key ClassProjection NilwP (global Structure) PhClass,
-  mk-phant-abbrev "of_" PhClass _ ClassAbbrev,
+  mk-phant-abbrev "of_" PhClass _ ClassOfAbbrev,
+  (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
+  coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
   @global! => log.coq.notation.add-abbreviation "Build" 2
-    {{fun T C => ((lp:{{ { coq.notation.abbreviation ClassAbbrev [{{C}}] } }})
-        : (lp:{{ {coq.mk-app (global ClassName) {params->holes NilwP} } }} T)
-      ) }} tt ClassForAbbrev,
+    {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T))}} tt ClassForAbbrev,
+  (pi t\ coq.notation.abbreviation ClassForAbbrev [t, t] (ClassForAbbrevDiag t)),
   @global! => log.coq.notation.add-abbreviation "of" 1
-    {{fun T => lp:{{ { coq.notation.abbreviation ClassForAbbrev [{{T}}, {{T}}] } }}}} tt _,
+    {{fun T => lp:(ClassForAbbrevDiag T)}} tt _,
 
   log.coq.env.end-module-name Module ModulePath,
 
@@ -558,6 +559,5 @@ if-coverage-not-good-error.one MS M :- mixin-first-class M C, !,
        "2) amend the hierarchy by declaring a structure before" {nice-gref->string C}
        "which contains at most" {std.map {coq.gref.set.elements {coq.gref.set.inter CMS MS}} nice-gref->string}).
 if-coverage-not-good-error.one _ _. % new class is the first covering M
-
 
 }
