@@ -1,9 +1,44 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+namespace phant {
+
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-% phant %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
+mk-phant-abbrev N (phant-term AL T1) C Abbrev :- std.do! [
+  NC is "phant_" ^ N,
+  std.assert-ok! (coq.elaborate-skeleton T1 TTy T) "mk-phant-abbrev: T illtyped",
+  log.coq.env.add-const-noimplicits NC T TTy @transparent! C,
+  private.mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
+  @global! => log.coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
+].
+
+% [acc-phant-abbrev Str GR PhGR Abbrev] makes a phantom abbreviation for F
+pred acc-phant-abbrev i:string, i:gref, o:gref, o:abbreviation.
+acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
+  mk-phant-term GR PhGR,
+  mk-phant-abbrev Str PhGR PhC Abbrev
+].
+
+pred mk-phant-term i:gref, o:phant-term.
+mk-phant-term GRF PhBody:- !, std.do! [
+  std.assert! (gref-deps GRF MLwP) "mk-phant-term: unknown gref",
+  std.assert! (coq.env.typeof GRF FTy) "mk-phant-term: F illtyped",
+  mk-eta (-1) FTy (global GRF) EtaF,
+%  toposort-mixins ML MLSorted,
+  MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
+  std.rev {list-w-params_list MLwPSorted} MLSortedRev,
+
+  % phant-mixin-real is used to tag mixins which are passed as arguments
+  std.filter MLSortedRev (m\not(phant-mixin-real m)) MLSortedRevFiltered,
+  find-max-classes MLSortedRevFiltered CNL,
+  assert-good-coverage! MLSortedRevFiltered CNL,
+
+  w-params.then MLwP phant-fun-real phant-fun-real
+    (private.mk-phant-term.classes EtaF CNL) PhBody,
+].
+
 
 % Notations /à la/ *pack* are always of the shape
 % [Notation N x_0 .. x_n := C x_0 .. _ _ id .. x_i .. _ id _ _ id]
@@ -27,13 +62,9 @@ type unify-arg phant-arg.
 kind phant-term type.
 type phant-term list phant-arg -> term -> phant-term.
 
-pred phant-fun i:phant-arg, i:term, i:(term -> phant-term), o:phant-term.
-phant-fun Arg Ty PhF (phant-term [Arg|ArgL] (fun N Ty F)) :-
-  if (Arg = real-arg N) true (N = `_`),
-  @pi-decl N Ty x\ PhF x = phant-term ArgL (F x).
 
 pred phant-fun-real i:name, i:term, i:(term -> phant-term), o:phant-term.
-phant-fun-real N T F Res :- !, phant-fun (real-arg N) T F Res.
+phant-fun-real N T F Res :- !, private.phant-fun (real-arg N) T F Res.
 
 % [phant-fun-unify N X1 X2 PF PUF] states that PUF is a phant-term that
 % is starts with unifing X1 and X2 and then outputs PF.
@@ -50,6 +81,19 @@ pred phant-fun-implicit i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-implicit N Ty PF (phant-term [implicit-arg|AL] (fun N Ty F)) :- !,
   @pi-decl N Ty t\ PF t = phant-term AL (F t).
 
+% [phant-fun-mixin N Ty PF PUF] states that PUF is a phant-term
+% which quantifies [PF x] over [x : Ty] (with name N)
+% Ty must be an (applied) mixin M, and the phantom status of this mixin
+% is determined by [phant-mixin-real M].
+pred phant-mixin-real o:mixinname.
+pred phant-fun-mixin i:name, i:term, i:(term -> phant-term), o:phant-term.
+phant-fun-mixin N Ty PF (phant-term [Status|AL] (fun N Ty F)) :- !, std.do! [
+  @pi-decl N Ty t\ PF t = phant-term AL (F t),
+  safe-dest-app Ty (global Mixin) _,
+  if (phant-mixin-real Mixin) (Status = real-arg N) (Status = implicit-arg)
+].
+
+
 % [phant-fun-infer-type N Ty PhBo PhT] states that PhT is a phant-term
 % of the form `fun T (phT : phant T) => PhBo` where `T` is implicit and
 % `phT` will be filled by `Phant X` where `X` will be explicit.
@@ -60,6 +104,13 @@ phant-fun-infer-type N Ty PF Out :- !,
     coq.string->name {calc ("ph" ^ {coq.name->id N})} PhN,
     PF' t = phant-term [infer-type N|AL] (fun PhN {{ lib:@hb.phant lp:t }} _\ Bo t),
     phant-fun-implicit N Ty PF' Out.
+
+namespace private {
+
+pred phant-fun i:phant-arg, i:term, i:(term -> phant-term), o:phant-term.
+phant-fun Arg Ty PhF (phant-term [Arg|ArgL] (fun N Ty F)) :-
+  if (Arg = real-arg N) true (N = `_`),
+  @pi-decl N Ty x\ PhF x = phant-term ArgL (F x).
 
 pred phant-fun-unify-mixin i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-unify-mixin T N Ty PF Out :- !, std.do! [
@@ -103,33 +154,6 @@ mk-phant-abbrev.term K F [implicit-arg|AL] K' FAbbrev :- !,
 mk-phant-abbrev.term K F [unify-arg|AL] K' FAbbrev :- !,
   mk-phant-abbrev.term K {mk-app F [{{lib:@hb.id _ _}}]} AL K' FAbbrev.
 
-pred mk-phant-abbrev i:string, i:phant-term, o:constant, o:abbreviation.
-mk-phant-abbrev N (phant-term AL T1) C Abbrev :- std.do! [
-  NC is "phant_" ^ N,
-  std.assert-ok! (coq.elaborate-skeleton T1 TTy T) "mk-phant-abbrev: T illtyped",
-  log.coq.env.add-const-noimplicits NC T TTy @transparent! C,
-  mk-phant-abbrev.term 0 (global (const C)) AL NParams AbbrevT,
-  @global! => log.coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
-].
-
-% [acc-phant-abbrev Str GR PhGR Abbrev] makes a phantom abbreviation for F
-pred acc-phant-abbrev i:string, i:gref, o:gref, o:abbreviation.
-acc-phant-abbrev Str GR (const PhC) Abbrev :- !, std.do! [
-  mk-phant-term GR PhGR,
-  mk-phant-abbrev Str PhGR PhC Abbrev
-].
-
-% [phant-fun-mixin N Ty PF PUF] states that PUF is a phant-term
-% which quantifies [PF x] over [x : Ty] (with name N)
-% Ty must be an (applied) mixin M, and the phantom status of this mixin
-% is determined by [phant-mixin-real M].
-pred phant-mixin-real o:mixinname.
-pred phant-fun-mixin i:name, i:term, i:(term -> phant-term), o:phant-term.
-phant-fun-mixin N Ty PF (phant-term [Status|AL] (fun N Ty F)) :- !, std.do! [
-  @pi-decl N Ty t\ PF t = phant-term AL (F t),
-  safe-dest-app Ty (global Mixin) _,
-  if (phant-mixin-real Mixin) (Status = real-arg N) (Status = implicit-arg)
-].
 
 % [mk-phant-term F PF] states that
 % if F = fun p1 .. p_k T m_0 .. m_n => _
@@ -200,21 +224,5 @@ mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
 ].
 
-pred mk-phant-term i:gref, o:phant-term.
-mk-phant-term GRF PhBody:- !, std.do! [
-  std.assert! (gref-deps GRF MLwP) "mk-phant-term: unknown gref",
-  std.assert! (coq.env.typeof GRF FTy) "mk-phant-term: F illtyped",
-  mk-eta (-1) FTy (global GRF) EtaF,
-%  toposort-mixins ML MLSorted,
-  MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
-  std.rev {list-w-params_list MLwPSorted} MLSortedRev,
 
-  % phant-mixin-real is used to tag mixins which are passed as arguments
-  std.filter MLSortedRev (m\not(phant-mixin-real m)) MLSortedRevFiltered,
-  find-max-classes MLSortedRevFiltered CNL,
-  assert-good-coverage! MLSortedRevFiltered CNL,
-
-  w-params.then MLwP phant-fun-real phant-fun-real
-    (mk-phant-term.classes EtaF CNL) PhBody,
-].
-
+}}

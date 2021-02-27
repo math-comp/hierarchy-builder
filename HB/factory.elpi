@@ -90,7 +90,7 @@ mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
   if (factory-alias->gref GR _)
      (Aliases = [],
       FactAbbrev = by-classname GR)
-     (acc-phant-abbrev Str GR PhGR Abbrv,
+     (phant.acc-phant-abbrev Str GR PhGR Abbrv,
       Aliases = [phant-abbrev GR PhGR Abbrv],
       FactAbbrev = by-phantabbrev Abbrv),
 ].
@@ -160,9 +160,9 @@ process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheT
   declare-mixin-or-factory Sort Fields GRFSwParams Module TheType D {std.map Params triple_2},
 ].
 
-pred append-phant-unify i:phant-term, o:phant-term.
-append-phant-unify (phant-term LP T) (phant-term LPU T) :-
-  std.append LP [unify-arg] LPU.
+pred append-phant-unify i:phant.phant-term, o:phant.phant-term.
+append-phant-unify (phant.phant-term LP T) (phant.phant-term LPU T) :-
+  std.append LP [phant.unify-arg] LPU.
 
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
 declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
@@ -191,10 +191,10 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   factories-provide GRFSwP MLwP,
   GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
 
-  GRDepsClauses => mk-phant-term GRK PhGRK0,
+  GRDepsClauses => phant.mk-phant-term GRK PhGRK0,
 
   if (mixin-first-class F _) (PhGRK = PhGRK0) (append-phant-unify PhGRK0 PhGRK),
-  GRDepsClauses => mk-phant-abbrev "Build" PhGRK BuildConst _,
+  GRDepsClauses => phant.mk-phant-abbrev "Build" PhGRK BuildConst _,
 
   GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 
@@ -274,11 +274,11 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   % TODO: should this be in the Exports module?
   if-verbose (coq.say "HB: declare notation axioms"),
 
-  GRDepsClauses => mk-phant-term GRK PhGRK,
+  GRDepsClauses => phant.mk-phant-term GRK PhGRK,
 
   if-verbose (coq.say "HB: declare notation Axioms"),
 
-  GRDepsClauses => mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
+  GRDepsClauses => phant.mk-phant-abbrev "Build" PhGRK BuildConst BuildAbbrev,
 
   if (D = asset-mixin)
      (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) FRClauses FactAbbrev,
