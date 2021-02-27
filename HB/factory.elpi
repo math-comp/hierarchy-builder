@@ -117,7 +117,8 @@ is-last-named-asset-param (asset-parameter _ _ _\ asset-alias _ _) :- !.
 
 pred process-asset-named-parameters i:asset-decl, i:asset, i:id, i:list (triple id term term).
 % We reached TheType
-process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :- is-last-named-asset-param R, !, std.do! [
+process-asset-named-parameters (asset-parameter Name T Rest as R) D Module Params :-
+  is-last-named-asset-param R, !, std.do! [
 
   if-verbose (coq.say "HB: postulate type" Name),
   if (var T) (fresh-type Ty) (Ty = T),
@@ -165,7 +166,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   context.declare TheType TheParams GRFSwP Hyps _,
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
-  log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
+  @using! "All" => log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
@@ -186,7 +187,10 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   GRDepsClauses => phant.of-gref GRK [] PhGRK0,
 
-  if (mixin-first-class F _) (PhGRK = PhGRK0) (phant.append-fun-unify PhGRK0 PhGRK),
+  GRDepsClauses => mk-tagged-type MLwP (const C) _ TaggedTypeCoe,
+
+  if (mixin-first-class F _) (PhGRK = PhGRK0)
+    (phant.append-fun-unify PhGRK0 PhGRK),
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst _,
 
   GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
@@ -202,6 +206,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-nparams (const C) NParams)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-constructor (const C) GRK)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-builder-nparams BuildConst NParams)),
+  @global! => log.coq.coercion.declare TaggedTypeCoe,
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
 
@@ -237,6 +242,20 @@ abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonic
   coq.copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
   CopyUnfold => coq.abstract-indt-decl SectionVars RDecl RDeclClosed.
 
+pred phant-fun-gref i:gref, i:list term, i:term, o:term.
+phant-fun-gref GR P T (fun `_` Ty _\ T) :- mgref->term P T GR Ty.
+
+pred mk-tagged-type i:list-w-params mixinname, i:gref, o:gref, o:coercion.
+mk-tagged-type MLwP GR (const TaggedTypeCst) Coe :-
+  if-verbose (coq.say "HB: declaring tagged type for GR=" GR),
+  mk-mixin-fun.then MLwP (phant-fun-gref GR) TaggedType,
+  std.assert-ok! (coq.typecheck TaggedType TaggedTypeTy) "HB: cannot elaborate TaggedType",
+  log.coq.env.add-const-noimplicits "type" TaggedType TaggedTypeTy ff TaggedTypeCst,
+  list-w-params-mixin_length MLwP MLwPLength,
+  std.nlist {calc (MLwPLength + 1)} implicit MLwPImplicits,
+  @global! => log.coq.arguments.set-implicit (const TaggedTypeCst) [MLwPImplicits],
+  Coe = coercion (const TaggedTypeCst) MLwPLength GR sortclass.
+
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
   context.declare TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
@@ -264,6 +283,8 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
 
+  GRDepsClauses => mk-tagged-type MLwP (indt R) _ TaggedTypeCoe,
+
   % TODO: should this be in the Exports module?
   if-verbose (coq.say "HB: declare notation axioms"),
 
@@ -290,6 +311,7 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-constructor (indt R) GRK)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-builder-nparams BuildConst NParams)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
+  @global! => log.coq.coercion.declare TaggedTypeCoe,
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
 

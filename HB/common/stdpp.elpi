@@ -19,6 +19,9 @@ triple_3 (triple _ _ C) C.
 
 namespace std {
 
+pred nlist i:int, i:A, o: list A.
+nlist N X L :- std.map {std.iota N} (x\ y\ y = X) L.
+
 pred list-diff i:list A, i:list A, o:list A.
 list-diff X [] X.
 list-diff L [D|DS] R :-

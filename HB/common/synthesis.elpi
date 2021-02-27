@@ -71,6 +71,12 @@ mk-mixin-fun.then L P Out :- !,
   w-params.then L mk-fun mk-fun
     (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
 
+pred list-w-params-mixin_length i:list-w-params mixinname, o:int.
+list-w-params-mixin_length MLwP N :-
+  w-params.nparams MLwP Nparams,
+  std.length {list-w-params_list MLwP} Nmixins,
+  N is Nparams + Nmixins.
+
 %%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % mterm is always of the form [mterm P T ML F], which is the data of
