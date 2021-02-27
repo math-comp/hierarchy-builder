@@ -43,10 +43,10 @@ declare-structure Module GRFSwP ClosureCheck :- std.do! [
 
   if-verbose (coq.say "HB: declaring clone abbreviation"),
 
-  w-params.then MLwP phant.phant-fun-real phant.phant-fun-real
+  w-params.then MLwP phant.fun-real phant.fun-real
     (hb.structure.clone-phant-body ClassName SortProjection Structure) PhClone,
 
-  phant.mk-phant-abbrev "clone" PhClone _ _,
+  phant.add-abbreviation "clone" PhClone _ _,
 
   if-arg-sort (
     if-verbose (coq.say "HB: define arg_sort"),
@@ -90,7 +90,7 @@ declare-structure Module GRFSwP ClosureCheck :- std.do! [
   if-verbose (coq.say "HB: declaring class abbreviation"),
 
   hb.structure.mk-infer-key ClassProjection NilwP (global Structure) PhClass,
-  phant.mk-phant-abbrev "of_" PhClass _ ClassOfAbbrev,
+  phant.add-abbreviation "of_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
   coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
   @global! => log.coq.notation.add-abbreviation "Build" 2
@@ -466,7 +466,7 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProject
     class-def (class ClassName _ ClassMixins),
     w-params.then ClassMixins mk-fun mk-fun (pack-body ClassName) Pack,
     log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! GRPack,
-    (phant.phant-mixin-real NewMixin => gref-deps (const GRPack) ClassMixins => phant.mk-phant-abbrev "pack" {phant.mk-phant-term (const GRPack)} _ _),
+    (gref-deps (const GRPack) ClassMixins => phant.add-abbreviation "pack" {phant.of-gref (const GRPack) [NewMixin]} _ _),
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
 
@@ -482,7 +482,7 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProject
   %coq.env.import-module Module,
 ].
 
-pred clone-phant-body i:factoryname, i:term, i:structure, i:list term, i:term, i:list (w-args mixinname), o:phant.phant-term.
+pred clone-phant-body i:factoryname, i:term, i:structure, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
 clone-phant-body ClassName SortProjection ((indt I) as Structure) PL T _ PhF :- std.do! [
   std.assert! (coq.env.indt I _ _ _ _ [PackC] _) "wtf",
   mk-app (global (indc PackC)) {std.append PL [T]} PackPLT,
@@ -491,10 +491,10 @@ clone-phant-body ClassName SortProjection ((indt I) as Structure) PL T _ PhF :- 
   mk-app (global ClassName) {std.append PL [T]} CPL,
   @pi-decl `c` CPL c\
   (Ph cT c) =
-    {phant.phant-fun-unify {{lib:hb.nomsg}} T {mk-app {mk-app SortProjection PL} [cT]}
-      {phant.phant-fun-unify {{lib:hb.nomsg}} cT {mk-app PackPLT [c]}
-        (phant.phant-term [] {mk-app PackPLT [c]}) }}),
-  PhF = {phant.phant-fun-real `cT` SPL cT\ {phant.phant-fun-implicit `c` CPL c\ Ph cT c }}
+    {phant.fun-unify none T {mk-app {mk-app SortProjection PL} [cT]}
+      {phant.fun-unify none cT {mk-app PackPLT [c]}
+        {phant.init {mk-app PackPLT [c]}} }}),
+  PhF = {phant.fun-real `cT` SPL cT\ {phant.fun-implicit `c` CPL c\ Ph cT c }}
 ].
 
 % [pack-body ClassName P T MLwA B] asserts
@@ -517,29 +517,29 @@ pack-body ClassName PL T MLwA F :- std.do! [
 pred declare-auto-infer-params-abbrev i:structure, i:list-w-params mixinname.
 declare-auto-infer-params-abbrev GR MLwP :- get-option "infer" Map, !,
   Map => mk-infer (global GR) MLwP PhT,
-  phant.mk-phant-abbrev "type" PhT _ _.
+  phant.add-abbreviation "type" PhT _ _.
 declare-auto-infer-params-abbrev _ _.
 
-pred mk-infer i:term, i:list-w-params mixinname, o:phant.phant-term.
-mk-infer T (w-params.nil _ _ _) (phant.phant-term [] T).
+pred mk-infer i:term, i:list-w-params mixinname, o:phant-term.
+mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.
 mk-infer T (w-params.cons N Ty W) R :-
   coq.name->id N ID, (get-option ID "Type" ; get-option ID ""), !,
   @pi-decl N Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.phant-fun-infer-type N Ty PhT R.
+  phant.fun-infer-type N Ty PhT R.
 mk-infer T (w-params.cons N Ty W) R :-
   coq.name->id N ID, not (get-option ID _), !,
   @pi-decl N Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.phant-fun-real N Ty PhT R.
+  phant.fun-real N Ty PhT R.
 mk-infer _ (w-params.cons N _ _) _ :- coq.name->id N ID, get-option ID Infer,
   coq.error "Automatic inference of paramter" N "from" Infer "not supported".
 
-pred mk-infer-key i:term, i:list-w-params mixinname, i:term, o:phant.phant-term.
+pred mk-infer-key i:term, i:list-w-params mixinname, i:term, o:phant-term.
 mk-infer-key K (w-params.nil N _ _) St PhK :-
-  @pi-decl N St t\ PhKBo t = phant.phant-term [] {mk-app K [t]},
-  phant.phant-fun-infer-type N St PhKBo PhK.
+  @pi-decl N St t\ phant.init {mk-app K [t]} (PhKBo t),
+  phant.fun-infer-type N St PhKBo PhK.
 mk-infer-key K (w-params.cons N Ty W) St R :-
   @pi-decl N Ty t\ mk-infer-key {mk-app K [t]} (W t) {mk-app St [t]} (PhT t),
-  phant.phant-fun-implicit N Ty PhT R.
+  phant.fun-implicit N Ty PhT R.
 
 pred if-coverage-not-good-error i:list mixinname.
 if-coverage-not-good-error ML :-
