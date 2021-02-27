@@ -41,7 +41,7 @@
         "**/_minted-*": true,
         "**/*.aux": true,
         "**/*.log": true,
-        "**/*.out": true,
+//      "**/*.out": true, // .v.out is used for expected test output
         "**/*.synctex.gz": true,
         "**/*.toc": true,
         "**/*.vrb": true,
@@ -89,7 +89,7 @@
         "**/_minted-*": true,
         "**/*.aux": true,
         "**/*.log": true,
-        "**/*.out": true,
+//      "**/*.out": true, // .v.out is used for expected test output
         "**/*.synctex.gz": true,
         "**/*.toc": true,
         "**/*.vrb": true,

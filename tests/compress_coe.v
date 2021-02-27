@@ -1,10 +1,6 @@
 From Coq Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
-(**************************************************************************)
-(* Stage 2: AddComoid -> AddAG -> Ring                                  *)
-(**************************************************************************)
-
 HB.mixin Record hasA T := { a : T }.
 HB.structure Definition A := {T of hasA T}.
 

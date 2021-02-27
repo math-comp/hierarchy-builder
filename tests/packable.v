@@ -1,12 +1,6 @@
 From Coq Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
-(**************************************************************************)
-(* Stage 1: +AddComoid+ -> Ring                                           *)
-(**************************************************************************)
-
-(* Begin change *)
-
 HB.mixin Record AddComoid_of_TYPE A := {
   zero : A;
   add : A -> A -> A;
@@ -62,35 +56,3 @@ HB.end.
 (* End change *)
 
 HB.structure Definition Ring := { A of Ring_of_TYPE A }.
-
-(* Notations *)
-
-Declare Scope hb_scope.
-Delimit Scope hb_scope with G.
-Local Open Scope hb_scope.
-Notation "0" := zero : hb_scope.
-Notation "1" := one : hb_scope.
-Infix "+" := (@add _) : hb_scope.
-Notation "- x" := (@opp _ x) : hb_scope.
-Infix "*" := (@mul _) : hb_scope.
-Notation "x - y" := (x + - y) : hb_scope.
-
-(* Theory *)
-
-Section Theory.
-Variable R : Ring.type.
-Implicit Type (x : R).
-
-Lemma addr0 : right_id (@zero R) add.
-Proof. by move=> x; rewrite addrC add0r. Qed.
-
-Lemma addrN : right_inverse (@zero R) opp add.
-Proof. by move=> x; rewrite addrC addNr. Qed.
-
-Lemma subrr x : x - x = 0.
-Proof. by rewrite addrN. Qed.
-
-Lemma addrNK x y : x + y - y = x.
-Proof. by rewrite -addrA subrr addr0. Qed.
-
-End Theory.

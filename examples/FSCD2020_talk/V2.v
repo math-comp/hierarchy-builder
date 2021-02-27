@@ -20,4 +20,4 @@ HB.structure Definition Monoid :=
 (* is_monoid does not exist anymore *)
 Fail Check is_monoid.
 
-Fail HB.mixin Record xxxx P A := { F : bool }.
+HB.mixin Record xxxx P A := { F : bool }.

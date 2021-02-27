@@ -58,6 +58,10 @@ tests/compress_coe.v
 tests/funclass.v
 tests/local_instance.v
 tests/lock.v
+tests/not_same_key.v
+tests/factory_sort.v
+tests/declare.v
+tests/short.v
 
 -R tests HB.tests
 -R examples HB.examples
