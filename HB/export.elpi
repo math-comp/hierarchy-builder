@@ -1,16 +1,17 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-namespace hb {
 
-% [export Module] exports a Module now adds it to the collection of
+% [export.module Module] exports a Module now adds it to the collection of
 % modules to export in the end of the current enclosing module,
 % by the command HB.Exports
-
-pred export-module i:modpath.
-export-module Module :- !,
+% "module" is a keyword, we put it in the namespace by hand
+pred export.module i:modpath.
+export.module Module :- !,
   log.coq.env.export-module Module,
   log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export Module)).
+
+namespace export {
 
 pred reexport-all-modules.
 reexport-all-modules :- !,
