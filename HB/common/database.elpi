@@ -32,6 +32,9 @@ classname->def CN (class CN S ML) :- class-def (class CN S ML).
 pred classname->mixins i:classname, o:list-w-params mixinname.
 classname->mixins CN MLwP :- class-def (class CN _ MLwP).
 
+pred module-to-export_module i:prop, o:modpath.
+module-to-export_module (module-to-export M) M.
+
 pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.
 
