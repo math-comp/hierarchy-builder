@@ -267,13 +267,13 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
 
   % TODO: should this be in the Exports module?
-  if-verbose (coq.say "HB: declare notation axioms"),
+
+  if-verbose (coq.say "HB: declare notation Build"),
 
   GRDepsClauses => phant.of-gref GRK [] PhGRK,
-
-  if-verbose (coq.say "HB: declare notation Axioms"),
-
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
+
+  if-verbose (coq.say "HB: declare notation axioms"),
 
   if (D = asset-mixin)
      (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) FRClauses FactAbbrev,
