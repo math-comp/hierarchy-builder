@@ -1,39 +1,42 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-namespace hb {
+namespace builders {
 
-pred begin-declare-builders i:context-decl.
-begin-declare-builders CtxSkel :- std.do! [
+pred begin i:context-decl.
+begin CtxSkel :- std.do! [
   Name is "Builders_" ^ {std.any->string {new_int}}, % TODO?
   if-verbose (coq.say "HB: begin module for builders"),
   log.coq.env.begin-module Name,
 
-  std.assert-ok! (hb.builders.elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
+  std.assert-ok! (builders.private.elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
 
   % the Super module to access operations/axioms shadowed by the ones in the factory
   if (GRF = indt FRecord) (std.do! [
     if-verbose (coq.say "HB: begin module Super"),
     log.coq.env.begin-module "Super",
-    std.forall {coq.CS.canonical-projections FRecord} hb.builders.declare-shadowed-constant,
+    std.forall {coq.CS.canonical-projections FRecord} builders.private.declare-shadowed-constant,
     log.coq.env.end-module-name "Super" _,
     if-verbose (coq.say "HB: ended module Super")
   ]) (true),
 
   log.coq.env.begin-section Name,
   if-verbose (coq.say "HB: postulating factories"),
-  hb.builders.postulate-factories Name Ctx,
+  builders.private.postulate-factories Name Ctx,
 ].
 
-pred end-declare-builders.
-end-declare-builders :- std.do! [
+}
+
+% "end" is a keyword, be put it in the namespace by hand
+pred builders.end.
+builders.end :- std.do! [
   current-mode (builder-from _ GR ModName),
 
   log.coq.env.end-section-name ModName,
 
   findall-builders LFIL,
 
-  std.fold LFIL [] hb.builders.declare-1-builder Clauses,
+  std.fold LFIL [] builders.private.declare-1-builder Clauses,
 
   if (Clauses = [])
      (coq.error "No builders to declare, did you forget HB.instance?")
@@ -47,16 +50,14 @@ end-declare-builders :- std.do! [
 
   log.coq.env.end-module-name Name Exports,
   log.coq.env.end-module-name ModName _,
-  hb.export-module Exports,
+  export.module Exports,
 ].
-
-}
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
 /* ------------------------------------------------------------------------- */
 
-namespace hb.builders {
+namespace builders.private {
 
 % [declare-1-builder (builder _ F M B) From MoreFrom] Given B of type FB, it
 % declares all the new builders F to M via B.
@@ -154,8 +155,8 @@ postulate-factories ModName (context-item IDT _ TySkel none t\ context-item IDF 
 
   std.assert! (factory? (TF TheType) (triple GRF Params TheType))
     "the last argument must be a factory applied to the type variable",
-  gref-deps GRF GRFMLwP, % TODO: remove, pass to hb.declare-context the list-w-params-eta-expansion of GRF
-  hb.declare-context TheType Params GRFMLwP _ _,
+  gref-deps GRF GRFMLwP, % TODO: remove, pass to context.declare the list-w-params-eta-expansion of GRF
+  context.declare TheType Params GRFMLwP _ _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType Params TheFactory GRF,
   log.coq.env.accumulate current "hb.db" (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),

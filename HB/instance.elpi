@@ -1,18 +1,18 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-namespace hb {
+namespace instance {
 
-pred declare-existing-instance i:argument, i:argument.
-declare-existing-instance T0 F0 :- std.do! [
+pred declare-existing i:argument, i:argument.
+declare-existing T0 F0 :- std.do! [
   argument->ty T0 T, % TODO: change this when supporting morphism hierarchies
   argument->term F0 F,
-  hb.instance.declare-instance T F Clauses,
+  private.declare-instance T F Clauses,
   std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
 ].
 
-pred declare-const-instance i:id, i:term, i:arity.
-declare-const-instance Name BodySkel TyWPSkel :- std.do! [
+pred declare-const i:id, i:term, i:arity.
+declare-const Name BodySkel TyWPSkel :- std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
@@ -25,19 +25,19 @@ declare-const-instance Name BodySkel TyWPSkel :- std.do! [
    ) (
     SectionName is "hb_instance_" ^ {term_to_string {new_int} },
     log.coq.env.begin-section SectionName,
-    hb.instance.postulate-arity TyWP [] Body SectionBody SectionTy
+    private.postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
-  hb.instance.hack-section-discharging SectionBody SectionBodyHack,
-  hb.instance.optimize-body SectionBodyHack OptimizedBody,
+  private.hack-section-discharging SectionBody SectionBodyHack,
+  private.optimize-body SectionBodyHack OptimizedBody,
   if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
   log.coq.env.add-const-noimplicits RealName OptimizedBody _ @transparent! C,
   TheFactory = (global (const C)),
   std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
-  hb.instance.declare-instance TheType TheFactory Clauses,
+  private.declare-instance TheType TheFactory Clauses,
 
   if (TyWP = arity _) true (
     if-verbose (coq.say "HB: closing instance section"),
@@ -48,14 +48,14 @@ declare-const-instance Name BodySkel TyWPSkel :- std.do! [
   std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
 ].
 
-% [declare-instances T CL MCSTL] given a type T and a list of class definition
+% [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
 % for which all the dependencies (mixins) were postulated so far and skips the
 % rest. For each fulfilled class it declares a local constant inhabiting the
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
-pred declare-instances i:term, i:list class, o:list constant.
-declare-instances T [class Class Struct MLwP|Rest] [CS|L] :-
+pred declare-all i:term, i:list class, o:list constant.
+declare-all T [class Class Struct MLwP|Rest] [CS|L] :-
   params->holes MLwP Params,
   get-constructor Class KC,
 
@@ -80,21 +80,19 @@ declare-instances T [class Class Struct MLwP|Rest] [CS|L] :-
 
   get-constructor Struct KS,
   coq.mk-app (global KS) {std.append Params [T, KCApp]} S,
-  std.assert-ok! (coq.typecheck S STy) "declare-instances: S illtyped",
+  std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   log.coq.CS.declare-instance (const CS), % Bug coq/coq#11155, should be local
-  declare-instances T Rest L.
-declare-instances T [_|Rest] L :- declare-instances T Rest L.
-declare-instances _ [] [].
-
-}
+  declare-all T Rest L.
+declare-all T [_|Rest] L :- declare-all T Rest L.
+declare-all _ [] [].
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
 /* ------------------------------------------------------------------------- */
 
-namespace hb.instance {
+namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
@@ -168,7 +166,7 @@ declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR 
     {coq.term->string F} "on" {coq.term->string T} ":"
     {std.map MissingMixins nice-gref->string}),
   MixinSrcFromF => add-all-mixins T FGR MissingMixins ff Clauses,
-  Clauses => hb.declare-instances T {findall-classes} _
+  Clauses => instance.declare-all T {findall-classes} _
 ].
 
 % [declare-canonical-instances-from-factory T F] given a factory F
@@ -185,7 +183,7 @@ declare-canonical-instances-from-factory T F :-
   under-mixin-src-from-factory.do! T F [
     under-canonical-mixins-of.do! T [
       add-all-mixins T GRF {list-w-params_list {factory-provides GRF}} tt _,
-      hb.declare-instances T {findall-classes} _
+      instance.declare-all T {findall-classes} _
     ]
   ].
 
@@ -204,4 +202,4 @@ optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !
   unwind HD Stack Red.
 optimize-body X X.
 
-}
+}}

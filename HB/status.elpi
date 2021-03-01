@@ -1,32 +1,30 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-namespace hb {
+namespace status {
 
-pred status.
-status :- std.do! [
+pred main.
+main :- std.do! [
   coq.say "--------------------- Hierarchy -----------------------------------",
   std.findall (class-def CL_) CL,
-  std.forall CL hb.status.pp-class,
+  std.forall CL private.pp-class,
 
   coq.say "--------------------- Builders -----------------------------------",
   std.findall (from A_ B_ C_) FL,
-  std.forall FL hb.status.pp-from,
+  std.forall FL private.pp-from,
 
   std.findall (mixin-src T_ M_ V_) ML,
   if (ML = []) true (
     coq.say "--------------------- Local mixin instances ----------------------",
-    std.forall ML hb.status.pp-mixin-src
+    std.forall ML private.pp-mixin-src
   ),
 ].
-
-}
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
 /* ------------------------------------------------------------------------- */
 
-namespace hb.status {
+namespace private {
 
 pred pp-from i:prop.
 pp-from (from F M T) :-
@@ -57,4 +55,4 @@ pp-mixin-src (mixin-src T M C) :-
           {nice-gref->string M} "thans to"
           {coq.term->string C}.
 
-}
+}}
