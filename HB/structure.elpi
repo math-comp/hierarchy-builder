@@ -87,14 +87,21 @@ declare Module GRFSwP ClosureCheck :- std.do! [
 
   log.coq.env.import-module Exports,
 
-  if-verbose (coq.say "HB: declaring class abbreviation"),
+  if-verbose (coq.say "HB: declaring of_ abbreviation"),
 
   private.mk-infer-key ClassProjection NilwP (global Structure) PhClass,
+
   phant.add-abbreviation "of_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
+
+  if-verbose (coq.say "HB: declaring Build abbreviation"),
+
   coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
   @global! => log.coq.notation.add-abbreviation "Build" 2
     {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T))}} tt ClassForAbbrev,
+
+  if-verbose (coq.say "HB: declaring of abbreviation"),
+
   (pi t\ coq.notation.abbreviation ClassForAbbrev [t, t] (ClassForAbbrevDiag t)),
   @global! => log.coq.notation.add-abbreviation "of" 1
     {{fun T => lp:(ClassForAbbrevDiag T)}} tt _,
