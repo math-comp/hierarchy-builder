@@ -399,7 +399,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
   % TODO: put this code in a named clause
   w-params.nparams MLwP NParams,
   std.map2 {list-w-params_list MLwP} Projs (m\ p\ r\ sigma P\
-    p = some P,
+    std.assert! (p = some P) "BUG: we build a class with an anonymous field",
     r = from (indt ClassInd) m (const P)) Factories,
   AllFactories = [factory-nparams (indt ClassInd) NParams | Factories],
 
