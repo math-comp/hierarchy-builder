@@ -165,9 +165,9 @@ operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Par
   (@pi-decl `s` StructType s\ sigma Carrier Class\ std.do! [
       mk-app PsortP [s] Carrier,
       mk-app PclassP [s] Class,
-      under-mixin-src-from-factory.do! Carrier Class [
+      synthesis.under-mixin-src-from-factory.do! Carrier Class [
         % just in case..
-        mgref->term Params Carrier (const Poperation) (Body s),
+        synthesis.infer-all-mixin-args Params Carrier (const Poperation) (Body s),
         std.assert-ok! (coq.typecheck (Body s) (DirtyTy s)) "export-1-operation: Body illtyped",
         clean-op-ty EXI s (DirtyTy s) (BodyTy s),
       ],
@@ -368,7 +368,7 @@ synthesize-fields _T []     end-record.
 synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
   Name is {gref->modname M} ^ "_mixin",
   if-verbose (coq.say "HB: typing class field" M),
-  std.assert! (mgref->term Args T M MTy) "anomaly: a field type cannot be solved",
+  std.assert! (synthesis.infer-all-mixin-args Args T M MTy) "anomaly: a field type cannot be solved",
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
 
@@ -498,18 +498,17 @@ clone-phant-body ClassName SortProjection ((indt I) as Structure) PL T _ PhF :- 
 % [pack-body ClassName P T MLwA B] asserts
 %  B = fun m0 ... mn => Pack P T (Class P T m0 ... mn)
 % under a context with P and T
-pred pack-body.mixins i:list term, i:term, i:gref, i:gref, o:term.
-pack-body.mixins PL T BuildC PackS Body :- !, std.do! [
-  mgref->term PL T BuildC Class,
-  mk-app (global PackS) {std.append PL [T, Class]} Body
-].
-
 pred pack-body i:classname, i:list term, i:term, i:list (w-args mixinname), o:term.
 pack-body ClassName PL T MLwA F :- std.do! [
   class-def (class ClassName S _),
   get-constructor ClassName BuildC,
   get-constructor S PackS,
-  under-mixins.then MLwA mk-fun (pack-body.mixins PL T BuildC PackS) F
+  synthesis.under-mixins.then MLwA mk-fun
+    (pack-body.aux PL T BuildC PackS) F
+].
+pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
+  synthesis.infer-all-mixin-args PL T BuildC Class,
+  mk-app (global PackS) {std.append PL [T, Class]} Body
 ].
 
 pred declare-auto-infer-params-abbrev i:structure, i:list-w-params mixinname.

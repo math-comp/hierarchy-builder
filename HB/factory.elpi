@@ -68,14 +68,16 @@ argument->asset X _ :- coq.error "Unsupported asset:" X.
 % The identity builder
 pred declare-id-builder i:factoryname, o:prop.
 declare-id-builder GR (from GR GR (const C)) :- std.do! [
-  mk-mixin-fun.then {gref-deps GR}
-    (params\ t\ body\ sigma MTy\
-      mgref->term params t GR MTy,
-      body = fun `x` MTy x\x)
-    IDBody,
+  w-params.then {gref-deps GR} mk-fun mk-fun
+    (declare-id-builder.aux GR) IDBody,
   std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
   log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
+declare-id-builder.aux GR Params TheType ML Out :-
+  synthesis.under-mixins.then ML mk-fun
+    (declare-id-builder.aux2 GR Params TheType) Out.
+declare-id-builder.aux2 GR Params TheType  (fun `x` Ty x\x) :-
+  synthesis.infer-all-mixin-args Params TheType GR Ty.
 
 
 % [mk-factory-abbrev Str GR CL FactAbbrev]
@@ -171,7 +173,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
-  Hyps => mgref->term TheParams TheType FK MFK,
+  Hyps => synthesis.infer-all-mixin-args TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
   (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
   log.coq.env.add-const-noimplicits "Axioms_" MFK MFKTyC @transparent! CK,

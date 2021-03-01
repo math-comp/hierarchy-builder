@@ -32,7 +32,7 @@ postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MS
 
   if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
 
-  mgref->term Ps T M Ty,
+  synthesis.infer-all-mixin-args Ps T M Ty,
   std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
   log.coq.env.add-section-variable-noimplicits Name Ty C
 ].

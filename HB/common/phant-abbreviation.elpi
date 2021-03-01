@@ -214,7 +214,7 @@ mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
     SKPT = app [global {get-constructor SI} | ParamsT],
     ClassTy = app [global CN | ParamsT],
     (@pi-decl `s` SIParams s\ @pi-decl `c` ClassTy c\ sigma PF2\ std.do![
-       under-mixins.then (MLwA t) (fun-unify-mixin T) (mk-phant-term.mixins.aux t Params c CN PF) PF2,
+       synthesis.under-mixins.then (MLwA t) (fun-unify-mixin T) (mk-phant-term.mixins.aux t Params c CN PF) PF2,
        fun-unify none s {mk-app SKPT [c]} PF2 (PFU t s c)])
   ]),
   Out = {phant-fun-struct T `s` SI Params s\
@@ -223,7 +223,7 @@ mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
 
 mk-phant-term.mixins.aux T Params C CN PF X :- std.do![
   get-constructor CN KC,
-  mgref->term Params T KC KCM,
+  synthesis.infer-all-mixin-args Params T KC KCM,
   fun-unify none KCM C PF X,
 ].
 
@@ -237,8 +237,8 @@ pred mk-phant-term.classes i:term, i:list classname, i:list term, i:term,
                       i:list (w-args mixinname), o:phant-term.
 mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
   std.map MLwA triple_1 ML,
-  under-mixins.then MLwA phant-fun-mixin (out\ sigma FPLTM\ std.do! [
-    mterm->term (mterm PL T ML EtaF) FPLTM,
+  synthesis.under-mixins.then MLwA phant-fun-mixin (out\ sigma FPLTM\ std.do! [
+    synthesis.infer-mixin-args PL T ML EtaF FPLTM,
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
 ].
 

@@ -20,9 +20,6 @@ mixin-src_mixin (mixin-src _ M _) M.
 pred mixin-src_src i:prop, o:term.
 mixin-src_src (mixin-src _ _ S) S.
 
-pred mixin-for_mixin-builder i:prop, o:term.
-mixin-for_mixin-builder (mixin-for _ _ B) B.
-
 pred class_name i:class, o:classname.
 class_name (class N _ _) N.
 
@@ -144,6 +141,10 @@ findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   std.bubblesort LFILunsorted leq-builder LFIL.
 
+pred findall-mixin-src i:term, o:list mixinname.
+findall-mixin-src T ML :-
+  std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
+
 % [distinct-pairs-below C AllSuper C1 C2] finds C1 and C2 in
 % AllSuper (all super classes of C) such that C1 != C2
 % and for which there is no join C3.
@@ -260,25 +261,6 @@ pred structure-nparams i:structure, o:int.
 structure-nparams Structure NParams :-
   class-def (class Class Structure _),
   factory-nparams Class NParams.
-
-pred get-canonical-mixins-of i:term, i:structure, o:list prop.
-get-canonical-mixins-of T S MSL :- std.do! [
-  get-structure-sort-projection S Sort,
-  structure-nparams S NParams,
-  coq.mk-n-holes NParams Holes,
-  coq.mk-app Sort {std.append Holes [ST]} SortHolesST,
-  if (coq.unify-eq T SortHolesST ok) (
-    % Hum, this unification problem is not super trivial. TODO replace by something simpler
-    get-constructor S KS,
-    coq.mk-app (global KS) {std.append Holes [T, C]} KSHolesC,
-    std.assert-ok! (coq.unify-eq ST KSHolesC) "HB: get-canonical-mixins-of: ST = _ _ C",
-    C = app Stuff,
-    std.drop {calc (NParams + 2)} Stuff MIL,
-    std.map MIL (mixin-srcs T) MSLL,
-    std.flatten MSLL MSL
-  )
-    (MSL = [])
-].
 
 pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
