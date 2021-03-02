@@ -108,7 +108,8 @@ namespace private {
 % [mixin-for T M MI] synthesizes an instance of mixin M on type T using
 % the databases [mixin-src] and [from]
 pred mixin-for i:term, i:mixinname, o:term.
-mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
+mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
+  if-verbose (coq.say "HB: Trying to infer mixin for" M),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
   factory? Ty (triple Factory Params _),
@@ -116,8 +117,17 @@ mixin-for T M MI :- mixin-src T M Tm, !, std.do! [
   if (M = Factory) (MI = Tm) (
       private.builder->term Params T Factory M B,
       coq.subst-fun [Tm] B MI
-  )
+  ),
+
+  if-verbose (coq.say "HB: Trying to compress mixin for" {coq.term->string MI}),
+  compress-coercion-paths MI MICompressed,
 ].
+
+pred compress-coercion-paths i:term, o:term.
+compress-coercion-paths MI MICompressed :-
+  if (get-option "compress_coercions" tt)
+     (compress MI MICompressed)
+     (MI = MICompressed).
 
 pred mixin-for_mixin-builder i:prop, o:term.
 mixin-for_mixin-builder (mixin-for _ _ B) B.

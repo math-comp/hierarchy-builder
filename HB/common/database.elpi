@@ -23,6 +23,9 @@ mixin-src_src (mixin-src _ _ S) S.
 pred class_name i:class, o:classname.
 class_name (class N _ _) N.
 
+pred class_structure i:class, o:structure.
+class_structure (class _ S _) S.
+
 pred class-def_name i:prop, o:classname.
 class-def_name (class-def (class N _ _)) N.
 

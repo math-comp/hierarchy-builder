@@ -15,7 +15,7 @@ with-attributes P :-
   attributes A,
 
 % HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
-(pi S L AS Prefix R R1 Map PS\ 
+(pi S L AS Prefix R R1 Map PS\
   parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
     if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
     parse-attributes.aux AS Prefix R1,
@@ -32,6 +32,7 @@ with-attributes P :-
     att "arg_sort" bool,
     att "log" bool,
     att "log.raw" bool,
+    att "compress_coercions" bool,
   ] Opts, !,
   Opts => P.
 
