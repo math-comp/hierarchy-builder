@@ -99,10 +99,10 @@ declare Module B :- std.do! [
   phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
 
-  if-verbose (coq.say "HB: declaring Build abbreviation"),
+  if-verbose (coq.say "HB: declaring `copy` abbreviation"),
 
   coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
-  @global! => log.coq.notation.add-abbreviation "Build" 2
+  @global! => log.coq.notation.add-abbreviation "copy" 2
     {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T)) }} tt _,
 
   if-verbose (coq.say "HB: declaring on abbreviation"),

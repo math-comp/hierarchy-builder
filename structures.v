@@ -43,7 +43,7 @@ Global Open Scope HB_scope.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** This data represents the hierarchy and some othe piece of state to
+(** This data represents the hierarchy and some other piece of state to
     implement the commands above *)
 
 Elpi Db hb.db lp:{{
@@ -119,7 +119,7 @@ pred factory-nparams o:factoryname, o:int.
 pred is-structure o:gref.
 
 % [factory-builder-nparams Build N] states that when the user writes
-% the `F.Build T` abbreviation the term behind it has N arguments before T
+% the [F.Build T] abbreviation the term behind it has N arguments before T
 pred factory-builder-nparams o:constant, o:int.
 
 % [sub-class C1 C2] C1 is a sub-class of C2, see also sub-class? which computes
@@ -215,9 +215,9 @@ Elpi Export HB.status.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This command prints the hierarchy to a dot file. You can use
-    <<
-    tred file.dot | xdot -
-    >>
+[[
+tred file.dot | xdot -
+]]
     to visualize file.dot
 *)
 
@@ -245,14 +245,14 @@ Elpi Export HB.graph.
   Syntax to create a mixin [MixinName]
   with requirements [Factory1] .. [FactoryN]:
 
-  <<
-  HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
-     op : T -> …
-     …
-     property : forall x : T, op …
-     …
-  }
-  >>
+[[
+HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
+   op : T -> …
+   …
+   property : forall x : T, op …
+   …
+}
+]]
 
   Synthesizes:
   - [MixinName T] abbreviation for the type of the (degenerate) factory
@@ -296,10 +296,12 @@ Elpi Export HB.mixin.
   Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
   The second syntax has a trailing [&] to pull in factory requirements silently.
 
-  <<
-  HB.structure Definition StructureName params := { A of Factory1 … A & … & FactoryN … A }.
-  HB.structure Definition StructureName params := { A of Factory1 … A & … & FactoryN … A & }.
-  >>
+[[
+HB.structure Definition StructureName params :=
+  { A of Factory1 … A & … & FactoryN … A }.
+HB.structure Definition StructureName params :=
+  { A of Factory1 … A & … & FactoryN … A & }.
+]]
 
   Synthesizes:
   - [StructureName A] the type of the class that regroups all the factories
@@ -308,26 +310,29 @@ Elpi Export HB.mixin.
   - [StructureName.sort params] the first projection of the previous structure,
   - [StructureName.clone params T cT] a legacy repackaging function that eta expands
     the canonical [StructureName.type] of [T], using [cT] if provided.
-  - [StructureName.class sT : StructureName sT] outputs the class of [sT : StructureName.type params],
-  - [StructureName.on T : StructureName sT] outputs the class of the canonical [StructureName.type] on [T].
-  - [StructureName.Build T cT : StructureName T] outputs the class of the canonical,
-    and [StructureName.type] of [cT], and give it the type [Structure]. So that it is
+  - [StructureName.class sT : StructureName sT] projects out the class of [sT : StructureName.type params],
+  - [StructureName.copy T T' : StructureName T] returns the class of the canonical
+    [StructureName.type] of [T], and gives it the type [Structure T]. It is thus
     ready to use in combination with HB.instance, as in
-    <<
-    HB.instance Definition _ := StructureName.Build T cT.
-    >>
+[[
+  (* Cloning a structure from another one, given by the user *)
+  HB.instance Definition _ := StructureName.copy T cT.
+]]
+  - [StructureName.on T : StructureName T] infers the class of the canonical
+    [StructureName.type] of [T]. This is a shortcut for [StructureName.Copy T T],
+    and it will succeeds if a reduction of [T] is canonically a [StructureName.type].
 
   Disclaimer: any function other that the ones described above, including pattern matching
-    (using Gallina `match`, `let` or tactics (`case`, `elim`, etc)) is an internal and must
-    not be relied upon. Also hand-crafted `Canonical` declarations of such structures will
+    (using Gallina [match], [let] or tactics ([case], [elim], etc)) is an internal and must
+    not be relied upon. Also hand-crafted [Canonical] declarations of such structures will
     break the hierarchy. Use [HB.instance] instead.
 
   Supported attributes:
   - [#[mathcomp]] attempts to generate a backward compatibility layer with mathcomp:
     trying to infer the right [StructureName.pack],
   - [#[infer(variable)]], where [variable : pT] belongs to [params] and is a structure
-    (e.g. from the hierarchy) with a coercion/canonical projection `pT >-> Sortclass`.
-    It modifies the notation `StructureName.type` so as to accept [variable : Type] instead,
+    (e.g. from the hierarchy) with a coercion/canonical projection [pT >-> Sortclass].
+    It modifies the notation [StructureName.type] so as to accept [variable : Type] instead,
     and will try to infer it's [pT] by unification (using canonical structure inference),
     This is essential in [Lmodule.type R] where [R] should have type [Ring.type]
     but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer(R)]].
@@ -336,9 +341,8 @@ Elpi Export HB.mixin.
   - [#[arg_sort]] defines an alias [StructureName.arg_sort] for [StructureName.sort],
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
-    Cf https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v#L225-L243.
-  - [#[verbose]]
-
+    Cf #<a href="https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v##L225-L243">#[fingroup.v]#</a>#.
+  - [#[verbose]] for a verbose output.
 *)
 
 Elpi Command HB.structure.
@@ -358,6 +362,7 @@ Elpi Accumulate lp:{{
 
 main [const-decl N (some B) _] :- !, with-attributes (with-logging (structure.declare N B)).
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.
@@ -367,19 +372,18 @@ Elpi Export HB.structure.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** [HB.instance] associates to a type all the structures that can be
-    obtaind from the provided factory inhabitant.
+    obtained from the provided factory inhabitant.
 
     Syntax for declaring a canonical instance:
 
-    <<
-    HB.instance Definition N Params := Factory.Build Params T …
-    >>
+[[
+HB.instance Definition N Params := Factory.Build Params T …
+]]
 
-    Attributes:
-    - [#[export]] to flag the instance so that it is redeclared by #[HB.reexport]
+    Supported attributes:
+    - [#[export]] to flag the instance so that it is redeclared by [#[HB.reexport]]
     - [#[local]] to indicate that the instance should not survive the section.
-    - [#[verbose]]
-
+    - [#[verbose]] for a verbose output.
 *)
 
 Elpi Command HB.instance.
@@ -441,13 +445,13 @@ Elpi Export HB.factory.
 
     Syntax to declare builders for factory [Factory]:
 
-    <<
-    HB.builders Context A (f : Factory A).
-    …
-    HB.instance A someFactoryInstance.
-    …
-    HB.end.
-    >>
+[[
+HB.builders Context A (f : Factory A).
+…
+HB.instance A someFactoryInstance.
+…
+HB.end.
+]]
 
     [HB.builders] starts a section (inside a module of unspecified name) where:
     - [A] is a type variable
@@ -464,9 +468,9 @@ Elpi Export HB.factory.
     - for each structure inhabited via [HB.instance] it defined all
       builders to known mixins
 
-    Supported attributes: [#[verbose]]
-
-    *)
+    Supported attributes:
+    - [#[verbose]] for a verbose output.
+*)
 
 Elpi Command HB.builders.
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -514,15 +518,20 @@ Elpi Export HB.end.
    to be exported later on, when [HB.reexport] is called.
    Note that the list of modules to be exported is stored in the current module,
    hence the recommended way to do is
-   <<<
-   Module Algebra.
-     HB.mixin .... HB.structure ...
-     Module MoreExports. ... End MoreExports. HB.export MoreExports.
-     ...
-     Module Export. HB.reexport. End Exports.
-   End Algebra.
-   Export Algebra.Exports.
-   >>> *)
+[[
+Module Algebra.
+  HB.mixin .... HB.structure ...
+  Module MoreExports. ... End MoreExports. HB.export MoreExports.
+  ...
+  Module Export. HB.reexport. End Exports.
+End Algebra.
+Export Algebra.Exports.
+]]
+
+    Supported attributes:
+    - [#[verbose]] for a verbose output.
+
+*)
 
 Elpi Command HB.export.
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -564,21 +573,24 @@ Elpi Export HB.reexport.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** This command populates the current section with canonical instances.
+(*
+Inactive command: [HB.context]
+This command populates the current section with canonical instances.
 
   Input:
     - the name of a section variable of type Type
     - zero or more factories
 
   Effect:
-
-    Variable m0 : m0.
-    Definition s0 := S0.Pack T (S0.Build T m0).
-    Canonical s0.
-    ..
-    Variable mn : mn dn.
-    Definition sm : SM.Pack T (SM.Build T m0 .. mn).
-    Canonical sm.
+[[
+Variable m0 : m0.
+Definition s0 := S0.Pack T (S0.Build T m0).
+Canonical s0.
+..
+Variable mn : mn dn.
+Definition sm : SM.Pack T (SM.Build T m0 .. mn).
+Canonical sm.
+]]
 
   where:
   - factories produce mixins m0 .. mn
@@ -586,9 +598,13 @@ Elpi Export HB.reexport.
   - all structures that can be generated out of the mixins are declared
     as canonical
 
-% TODO perform a check that the declarations are closed under dependencies
+    
+  Supported attributes:
+  - [#[verbose]] for a verbose output.
 
 *)
+
+(* TODO perform a check that the declarations are closed under dependencies *)
 
 Elpi Command HB.context.
 Elpi Accumulate File "HB/common/stdpp.elpi".
