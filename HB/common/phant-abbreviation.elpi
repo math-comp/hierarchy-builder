@@ -71,19 +71,16 @@ fun-unify OMsg X1 X2 (private.phant-term AL F) (private.phant-term [private.unif
 
 % [fun-implicit N T Ph Ph1] Adds an implicit argument name N of type T areound Ph
 pred fun-implicit i:name, i:term, i:(term -> phant-term), o:phant-term.
-fun-implicit N Ty PF (private.phant-term [private.implicit|AL] (fun N Ty F)) :- !,
-  @pi-decl N Ty t\ PF t = private.phant-term AL (F t).
+fun-implicit N Ty (t\private.phant-term AL (F t))
+                  (private.phant-term [private.implicit|AL] (fun N Ty F)).
 
 % [fun-infer-type N T Ph Ph1] Adds an argument N of type T such that one passes 
 % a value V of type {{ Type }} the corresponding canonical VC of type T is passed
 % for N , eg `fun T (phT : phant T) => Ph`
 pred fun-infer-type i:name, i:term, i:(term -> phant-term), o:phant-term.
-fun-infer-type N Ty PF Out :- !,
-  @pi-decl N Ty t\ sigma PhN\
-    PF t = private.phant-term AL (Bo t),
-    coq.string->name {calc ("ph" ^ {coq.name->id N})} PhN,
-    PF' t = private.phant-term [private.infer-type N|AL] (fun PhN {{ lib:@hb.phant lp:t }} _\ Bo t),
-    fun-implicit N Ty PF' Out.
+fun-infer-type N Ty (t\private.phant-term AL (Bo t)) Out :-
+  coq.name-suffix N "ph" PhN,
+  fun-implicit N Ty (t\private.phant-term [private.infer-type N|AL] (fun PhN {{ lib:@hb.phant lp:t }} _\ Bo t)) Out.
 
 % TODO: this looks like a hack to remove
 pred append-fun-unify i:phant-term, o:phant-term.
