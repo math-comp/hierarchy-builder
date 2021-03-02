@@ -102,8 +102,9 @@ declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR _), !,
 declare-instance T F [] :-
   declare-canonical-instances-from-factory T F.
 
-pred add-mixin i:term, i:factoryname, i:bool, i:(pair mixinname term), o:list prop.
-add-mixin T FGR MakeCanon (pr MissinMixin Bo) [MixinSrcCl, BuiderDeclCl] :-
+pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, o:list prop.
+add-mixin T FGR MakeCanon MissinMixin [MixinSrcCl, BuiderDeclCl] :-
+  synthesis.assert!-infer-mixin T MissinMixin Bo,
   MixinSrcCl = mixin-src T MixinName (global (const C)),
   BuiderDeclCl = builder-decl (builder N FGR MixinName (const C)),
   new_int N, % timestamp
@@ -125,9 +126,9 @@ add-mixin T FGR MakeCanon (pr MissinMixin Bo) [MixinSrcCl, BuiderDeclCl] :-
       log.coq.CS.declare-instance (const C))
      true.
 
-pred add-all-mixins i:term, i:factoryname, i:list (pair mixinname term), i:bool, o:list prop.
-add-all-mixins T FGR MBL MakeCanon Clauses :- std.do! [
-  std.map MBL (add-mixin T FGR MakeCanon) ClausesL,
+pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool, o:list prop.
+add-all-mixins T FGR ML MakeCanon Clauses :- std.do! [
+  std.map ML (add-mixin T FGR MakeCanon) ClausesL,
   std.flatten ClausesL Clauses,
 ].
 
@@ -173,9 +174,7 @@ declare-canonical-instances-from-factory T F :-
   synthesis.under-mixin-src-from-factory.do! T F [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides GRF} ML,
-      std.map ML (synthesis.assert!-infer-mixin T) MI,
-      std.zip ML MI MLI, 
-      add-all-mixins T GRF MLI tt _,
+      add-all-mixins T GRF ML tt _,
       instance.declare-all T {findall-classes} _
     ]
   ].

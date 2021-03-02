@@ -63,16 +63,12 @@ under-mixin-src-from-factory.do! TheType TheFactory LP :-
 % Given TheType and a factory instance (on it), builds all the *new* mixins
 % provided by the factory available for and passes them to the given
 % continuation
-pred under-new-mixin-src-from-factory.do! i:term, i:term, i:(list (pair mixinname term) -> prop).
+pred under-new-mixin-src-from-factory.do! i:term, i:term, i:(list mixinname -> prop).
 under-new-mixin-src-from-factory.do! TheType TheFactory LP :-
   findall-mixin-src TheType OldMixins,
   private.factory-instance->new-mixins OldMixins TheFactory NewML,
   std.map NewML (m\c\ c = mixin-src TheType m TheFactory) NewMLClauses,
-  NewMLClauses => std.do! [
-    std.map NewML (private.mixin-for TheType) NewMLInstances,
-    std.zip NewML NewMLInstances New,
-    LP New,
-  ].
+  NewMLClauses => std.do! [ LP NewML ].
 
 % [under-mixins.then MLwP Pred F] states that F has shape
 %   fun p_1 .. p_k T,
