@@ -66,7 +66,7 @@ declare-all T [class Class Struct MLwP|Rest] [CS|L] :-
                     {coq.term->string T}),
       fail),
 
-  if (mgref->term Params T KC KCApp)
+  if (synthesis.infer-all-mixin-args Params T KC KCApp)
      (if-verbose (coq.say "HB: we can build a" {nice-gref->string Struct} "on"
         {coq.term->string T}))
      fail,
@@ -102,8 +102,9 @@ declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR _), !,
 declare-instance T F [] :-
   declare-canonical-instances-from-factory T F.
 
-pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, i:term, o:list prop.
-add-mixin T FGR MakeCanon MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
+pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, o:list prop.
+add-mixin T FGR MakeCanon MissinMixin [MixinSrcCl, BuiderDeclCl] :-
+  synthesis.assert!-infer-mixin T MissinMixin Bo,
   MixinSrcCl = mixin-src T MixinName (global (const C)),
   BuiderDeclCl = builder-decl (builder N FGR MixinName (const C)),
   new_int N, % timestamp
@@ -126,9 +127,8 @@ add-mixin T FGR MakeCanon MissinMixin Bo [MixinSrcCl, BuiderDeclCl] :-
      true.
 
 pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool, o:list prop.
-add-all-mixins T FGR MissingMixins MakeCanon Clauses :- std.do! [
-  std.map MissingMixins (assert!-mixin-for T) MBL,
-  std.map2 MissingMixins MBL (add-mixin T FGR MakeCanon) ClausesL,
+add-all-mixins T FGR ML MakeCanon Clauses :- std.do! [
+  std.map ML (add-mixin T FGR MakeCanon) ClausesL,
   std.flatten ClausesL Clauses,
 ].
 
@@ -148,24 +148,15 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
   hd-beta X {std.rev ArgsRev} X1 Stack1,
   unwind X1 Stack1 T.
 
-pred findall-mixin-src i:term, o:list mixinname.
-findall-mixin-src T ML :-
-  std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
-
 % We find the new mixins that F build, we build them and shedule them
 % for becoming builders at section closing time. We also declare
 % all canonical instances these new mixins allow for, so that the user
 % can access their theory and notations
 pred declare-canonical-instances-from-factory-and-local-builders i:term, i:term, i:term, i:factoryname, o:list prop.
 declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR Clauses :- std.do! [
-  findall-mixin-src T OldMixins,
-  mixin-srcs T F MixinSrcFromF,
-  std.map MixinSrcFromF mixin-src_mixin FMixins,
-  std.filter FMixins (m\ not(std.mem! OldMixins m)) MissingMixins,
-  if-verbose (coq.say "HB: new mixins from"
-    {coq.term->string F} "on" {coq.term->string T} ":"
-    {std.map MissingMixins nice-gref->string}),
-  MixinSrcFromF => add-all-mixins T FGR MissingMixins ff Clauses,
+  synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\
+    add-all-mixins T FGR NewMixins ff Clauses
+  ),
   Clauses => instance.declare-all T {findall-classes} _
 ].
 
@@ -180,9 +171,10 @@ declare-canonical-instances-from-factory T F :-
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
   % hence we add these clauses last.
-  under-mixin-src-from-factory.do! T F [
-    under-canonical-mixins-of.do! T [
-      add-all-mixins T GRF {list-w-params_list {factory-provides GRF}} tt _,
+  synthesis.under-mixin-src-from-factory.do! T F [
+    synthesis.under-local-canonical-mixins-of.do! T [
+      list-w-params_list {factory-provides GRF} ML,
+      add-all-mixins T GRF ML tt _,
       instance.declare-all T {findall-classes} _
     ]
   ].

@@ -230,11 +230,12 @@ pred build-list-w-params i:list (triple id term term), i:term, i:list (w-args A)
 build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons Name Pty1 R) :- std.do! [
   coq.id->name ID Name,
   copy Pty Pty1,
-  (pi p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
+  (@pi-decl Name Pty1 p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
 ].
-build-list-w-params [] TheType Factories (w-params.nil `TheType` TT R) :- std.do! [
+build-list-w-params [] TheType Factories (w-params.nil `TheType` TT1 R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
-  (pi t\ (copy TheType t :- !) =>
+  copy TT TT1,
+  (@pi-decl `TheType` TT1 t\ (copy TheType t :- !) =>
          std.map Factories (std.map-triple (=) (x\ std.map x copy) copy) (R t)),
 ].
 

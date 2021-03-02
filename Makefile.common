@@ -126,3 +126,5 @@ endif
 # Make of individual .vo ---------------------------------------------
 structures.vo : %.vo: __always__ Makefile.coq
 	+$(COQMAKE) $@
+tests/%.vo: tests/%.v __always__ build Makefile.test-suite.coq
+	+$(COQMAKE_TESTSUITE) $@
