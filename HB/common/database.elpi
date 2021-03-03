@@ -52,7 +52,8 @@ factory-alias->gref PhGR GR :- phant-abbrev GR PhGR _, !.
 factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
 
 pred sub-class? i:class, i:class.
-sub-class? (class _ _ ML1P) (class _ _ ML2P) :-
+sub-class? (class C1 _ ML1P) (class C2 _ ML2P) :-
+  not (C1 = C2),
   list-w-params_list ML1P ML1,
   list-w-params_list ML2P ML2,
   std.forall ML2 (m2\ std.exists ML1 (m1\ m1 = m2)).
