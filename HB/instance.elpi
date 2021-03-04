@@ -21,6 +21,8 @@ declare-const Name BodySkel TyWPSkel :- std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
+
+  % handle parameters via a section -- begin
   if (TyWP = arity SectionTy) (
      % Do not open a section when it is not necessary (no parameters)
      % A side effect of opening a section is loosing meta data associated
@@ -28,28 +30,34 @@ declare-const Name BodySkel TyWPSkel :- std.do! [
      if-verbose (coq.say  "HB: skipping section opening"),
      SectionBody = Body
    ) (
-    SectionName is "hb_instance_" ^ {term_to_string {new_int} },
+    SectionName is "hb_instance_" ^ {std.any->string {new_int}},
     log.coq.env.begin-section SectionName,
     private.postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
+  % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
+
+  % declare the constant for the factory instance
   private.hack-section-discharging SectionBody SectionBodyHack,
   private.optimize-body SectionBodyHack OptimizedBody,
   if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
   log.coq.env.add-const-noimplicits RealName OptimizedBody _ @transparent! C,
   TheFactory = (global (const C)),
-  std.appendR {coq.mk-n-holes NParams} [TheType|_] Args,
+
+  % call HB.instance TheType TheFactory
+  std.drop NParams Args [TheType|_],
   private.declare-instance TheType TheFactory Clauses,
 
+  % handle parameters via a section -- end
   if (TyWP = arity _) true (
     if-verbose (coq.say "HB: closing instance section"),
     log.coq.env.end-section-name SectionName
   ),
 
-  % we accumulate clauses here since the section ends
+  % we accumulate clauses now that the section is over
   std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
 ].
 
