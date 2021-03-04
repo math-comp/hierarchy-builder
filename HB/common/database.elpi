@@ -94,9 +94,10 @@ extract-conclusion-params T R :- whd1 T T1, !, extract-conclusion-params T1 R.
 %    f1 p t = m1 t, m2 p t
 %  cons tp p\ nil t\ [pr m1 [t], pr m2 [p,t]]
 pred factories-provide i:list-w-params factoryname, o:list-w-params mixinname.
-factories-provide FLwP MLwP :-
+factories-provide FLwP MLwP :- std.do! [
   list-w-params.flatten-map FLwP factory-provides UnsortedMLwP,
-  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP.
+  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
+].
 
 % Mixins can be topologically sorted according to their dependencies
 pred toposort-mixins.mk-mixin-edge i:prop, o:list (pair mixinname mixinname).

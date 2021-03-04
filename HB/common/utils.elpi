@@ -93,17 +93,17 @@ gref->modname GR ModName :-
 % function to predicate generic constructions %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred mk-nil o:any.
+pred mk-nil o:list A.
 mk-nil [].
-pred mk0 i:any, o:any.
+pred mk0 i:A, o:A.
 mk0 F R :- constant R F [].
-pred mk1 i:any, i:any, o:any.
+pred mk1 i:(A -> B), i:A, o:B.
 mk1 F X1 R :- constant R F [X1].
-pred mk2 i:any, i:any, i:any, o:any.
+pred mk2 i:(A -> B -> C), i:A, i:B, o:C.
 mk2 F X1 X2 R :- constant R F [X1, X2].
-pred mk3 i:any, i:any, i:any, i:any, o:any.
+pred mk3 i:(A -> B -> C -> D), i:A, i:B, i:C, o:D.
 mk3 F X1 X2 X3 R :- constant R F [X1, X2, X3].
-pred mk4 i:any, i:any, i:any, i:any, i:any, o:any.
+pred mk4 i:(A -> B -> C -> D -> E), i:A, i:B, i:C, i:D, o:E.
 mk4 F X1 X2 X3 X4 R :- constant R F [X1, X2, X3,X4].
 
 pred mk-fun i:name, i:term, i:(term -> term), o:term.
@@ -154,11 +154,13 @@ pred w-params.fold.params i:w-params A,
    i:(list term -> name -> term -> (term -> A) -> B -> prop),
    i:list term, % accumulator
    o:B.
-w-params.fold.params (w-params.cons N PTy F) Cons Nil RevPs Out :- !, std.do! [
+w-params.fold.params (w-params.cons ID PTy F) Cons Nil RevPs Out :- !, std.do! [
+  coq.id->name ID N,
   (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
   Cons N PTy Body Out].
-w-params.fold.params (w-params.nil NT TTy F) _ Nil RevParams Out :- !,
-  std.rev RevParams Params, !, Nil Params NT TTy F Out.
+w-params.fold.params (w-params.nil ID TTy F) _ Nil RevParams Out :- !,
+  coq.id->name ID N,
+  std.rev RevParams Params, !, Nil Params N TTy F Out.
 
 % [w-params.then AwP Cons Nil Out] states that Out has shape
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty t \ Body
@@ -175,13 +177,19 @@ w-params.then L Cons Nil Pred Out :-
     Nil n ty Body out) Out.
 
 pred w-params.map i:w-params A, i:(list term -> term -> A -> B -> prop), o:w-params B.
-w-params.map AL F BL :- w-params.then AL (mk3 w-params.cons) (mk3 w-params.nil) F BL.
+w-params.map AL F BL :-
+  w-params.then AL mk-w-params.cons-name mk-w-params.nil-name F BL.
+% TODO: make combinators pass id
+type mk-w-params.cons-name name -> term -> (term -> w-params A) -> w-params A -> prop.
+mk-w-params.cons-name N T F (w-params.cons ID T F):- coq.name->id N ID.
+type mk-w-params.nil-name name -> term -> (term -> A) -> w-params A -> prop.
+mk-w-params.nil-name N T F (w-params.nil ID T F):- coq.name->id N ID.
 
 % on the fly abstraction
-pred bind-nil i:name, i:term, i:term, i:A, o:w-params A.
+pred bind-nil i:id, i:term, i:term, i:A, o:w-params A.
 bind-nil N T X V (w-params.nil N T A) :- V = A X.
 
-pred bind-cons i:name, i:term, i:term, i:w-params A, o:w-params A.
+pred bind-cons i:id, i:term, i:term, i:w-params A, o:w-params A.
 bind-cons N T X V (w-params.cons N T A) :- V = A X.
 
 % Specific to list-w-params
@@ -207,10 +215,10 @@ pred list-w-params.flatten-map
   i:(A -> list-w-params B -> prop),
   o:list-w-params B.
 list-w-params.flatten-map (w-params.cons N T L) F (w-params.cons N T L1) :-
-  @pi-decl N T p\
+  @pi-parameter N T p\
     list-w-params.flatten-map (L p) F (L1 p).
 list-w-params.flatten-map (w-params.nil N TTy L) F (w-params.nil N TTy L1) :-
-  @pi-decl N TTy t\
+  @pi-parameter N TTy t\
     list-w-params.flatten-map.aux (L t) F (L1 t).
 
 pred list-w-params.flatten-map.aux
@@ -227,15 +235,14 @@ list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
 % ListWParams has as many w-params.cons as TheParams and the terms
 % in Factories are abstracted wrt the first component of TheParams.
 pred build-list-w-params i:list (triple id term term), i:term, i:list (w-args A), o: list-w-params A.
-build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons Name Pty1 R) :- std.do! [
-  coq.id->name ID Name,
+build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons ID Pty1 R) :- std.do! [
   copy Pty Pty1,
-  (@pi-decl Name Pty1 p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
+  (@pi-parameter ID Pty1 p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
 ].
-build-list-w-params [] TheType Factories (w-params.nil `TheType` TT1 R) :- std.do! [
+build-list-w-params [] TheType Factories (w-params.nil "TheType" TT1 R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
   copy TT TT1,
-  (@pi-decl `TheType` TT1 t\ (copy TheType t :- !) =>
+  (@pi-parameter "TheType" TT1 t\ (copy TheType t :- !) =>
          std.map Factories (std.map-triple (=) (x\ std.map x copy) copy) (R t)),
 ].
 

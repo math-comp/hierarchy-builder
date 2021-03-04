@@ -5,8 +5,11 @@ namespace structure {
 
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
-pred declare i:string, i:list-w-params gref, i:bool.
-declare Module GRFSwP ClosureCheck :- std.do! [
+pred declare i:string, i:term.
+declare Module B :- std.do! [
+  purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
+  private.sigT->list-w-params B2 GRFSwP ClosureCheck,
+
   factories-provide GRFSwP PMLwP,
 
   list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
@@ -526,24 +529,22 @@ declare-auto-infer-params-abbrev _ _.
 
 pred mk-infer i:term, i:list-w-params mixinname, o:phant-term.
 mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.
-mk-infer T (w-params.cons N Ty W) R :-
-  coq.name->id N ID, (get-option ID "Type" ; get-option ID ""), !,
-  @pi-decl N Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.fun-infer-type N Ty PhT R.
-mk-infer T (w-params.cons N Ty W) R :-
-  coq.name->id N ID, not (get-option ID _), !,
-  @pi-decl N Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.fun-real N Ty PhT R.
-mk-infer _ (w-params.cons N _ _) _ :- coq.name->id N ID, get-option ID Infer,
-  coq.error "Automatic inference of paramter" N "from" Infer "not supported".
+mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "Type" ; get-option ID ""), !,
+  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
+  phant.fun-infer-type {coq.id->name ID} Ty PhT R.
+mk-infer T (w-params.cons ID Ty W) R :- not (get-option ID _), !,
+  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
+  phant.fun-real {coq.id->name ID} Ty PhT R.
+mk-infer _ (w-params.cons ID _ _) _ :- get-option ID Infer,
+  coq.error "Automatic inference of paramter" ID "from" Infer "not supported".
 
 pred mk-infer-key i:term, i:list-w-params mixinname, i:term, o:phant-term.
-mk-infer-key K (w-params.nil N _ _) St PhK :-
-  @pi-decl N St t\ phant.init {mk-app K [t]} (PhKBo t),
-  phant.fun-infer-type N St PhKBo PhK.
-mk-infer-key K (w-params.cons N Ty W) St R :-
-  @pi-decl N Ty t\ mk-infer-key {mk-app K [t]} (W t) {mk-app St [t]} (PhT t),
-  phant.fun-implicit N Ty PhT R.
+mk-infer-key K (w-params.nil ID _ _) St PhK :-
+  @pi-parameter ID St t\ phant.init {mk-app K [t]} (PhKBo t),
+  phant.fun-infer-type {coq.id->name ID} St PhKBo PhK.
+mk-infer-key K (w-params.cons ID Ty W) St R :-
+  @pi-parameter ID Ty t\ mk-infer-key {mk-app K [t]} (W t) {mk-app St [t]} (PhT t),
+  phant.fun-implicit {coq.id->name ID} Ty PhT R.
 
 pred if-coverage-not-good-error i:list mixinname.
 if-coverage-not-good-error ML :-
@@ -563,5 +564,26 @@ if-coverage-not-good-error.one MS M :- mixin-first-class M C, !,
        "2) amend the hierarchy by declaring a structure before" {nice-gref->string C}
        "which contains at most" {std.map {coq.gref.set.elements {coq.gref.set.inter CMS MS}} nice-gref->string}).
 if-coverage-not-good-error.one _ _. % new class is the first covering M
+
+pred product->triples i:term, o:list (w-args factoryname), o:bool.
+product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
+  product->triples B GRB ClosureCheck,
+  product->triples A GRA _,
+  std.append GRA GRB L.
+product->triples {{ True }} [] tt :- !.
+product->triples {{ False }} [] ff :- !.
+product->triples A [GR] tt :- factory? A GR.
+
+pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
+sigT->list-w-params (fun N T B) L C :-
+  coq.name->id N ID, % TODO: we should read the ID from the definition type which is an arity containing ids
+  L = w-params.cons ID T Rest,
+  @pi-decl N T p\
+    sigT->list-w-params (B p) (Rest p) C.
+sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
+  coq.name->id N ID, % TODO: we should read the ID from the definition type which is an arity containing ids
+  L = w-params.nil ID Ty Rest,
+  @pi-decl N Ty t\
+    product->triples (B t) (Rest t) C.
 
 }}

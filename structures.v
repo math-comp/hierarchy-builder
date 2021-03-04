@@ -44,16 +44,16 @@ Global Open Scope HB_scope.
 
 Elpi Db hb.db lp:{{
 
-typeabbrev mixinname gref.
-typeabbrev classname gref.
+typeabbrev mixinname   gref.
+typeabbrev classname   gref.
 typeabbrev factoryname gref.
-typeabbrev structure gref.
+typeabbrev structure   gref.
 
 typeabbrev (w-args A) (triple A (list term) term).
 
 kind w-params type -> type -> type.
-type w-params.cons name -> term -> (term -> w-params A) -> w-params A.
-type w-params.nil name -> term -> (term -> A) -> w-params A.
+type w-params.cons id -> term -> (term -> w-params A) -> w-params A.
+type w-params.nil id -> term -> (term -> A) -> w-params A.
 
 typeabbrev (list-w-params A) (w-params (list (w-args A))).
 typeabbrev (one-w-params A) (w-params (w-args A)).
@@ -171,7 +171,7 @@ Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [] :- !, status.main.
+main [] :- !, status.print-hierarchy.
 
 main _ :- coq.error "Usage: HB.status.".
 }}.
@@ -190,34 +190,13 @@ Elpi Export HB.status.
 *)
 
 Elpi Command HB.graph.
+Elpi Accumulate File "HB/graph.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred nice-gref->string i:gref, o:string.
-nice-gref->string X Mod :-
-  coq.gref->path X Path,
-  std.rev Path [_,Mod|_], !.
-nice-gref->string X S :-
-  coq.term->string (global X) S.
-
-pred pp-coercion-dot i:out_stream, i:coercion. 
-pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
-  output OC {nice-gref->string Tgt},
-  output OC " -> ",
-  output OC {nice-gref->string Src},
-  output OC ";\n",
-].
-pp-coercion-dot _ _.
-
-main [str File] :- !, std.do! [
-  open_out File OC,
-  output OC "digraph Hierarchy { ",
-  std.forall {coq.coercion.db} (pp-coercion-dot OC),
-  output OC "}",
-  close_out OC,
-].
- 
+main [str File] :- graph.to-file File.
 main _ :- coq.error "Usage: HB.graph <filename>.".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.graph.
@@ -335,30 +314,7 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred product->triples i:term, o:list (w-args factoryname), o:bool.
-product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
-  product->triples B GRB ClosureCheck,
-  product->triples A GRA _,
-  std.append GRA GRB L.
-product->triples {{ True }} [] tt :- !.
-product->triples {{ False }} [] ff :- !.
-product->triples A [GR] tt :- factory? A GR.
-
-pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
-sigT->list-w-params (fun N T B) L C :-
-  L = w-params.cons N T Rest,
-  @pi-decl N T p\
-    sigT->list-w-params (B p) (Rest p) C.
-sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
-  L = w-params.nil N Ty Rest,
-  @pi-decl N Ty t\
-    product->triples (B t) (Rest t) C.
-
-main [const-decl Module (some B) _] :- !, std.do! [
-  purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
-  sigT->list-w-params B2 GRFS ClosureCheck, !,
-  with-attributes (structure.declare Module GRFS ClosureCheck),
-].
+main [const-decl N (some B) _] :- with-attributes (structure.declare N B).
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
 Elpi Typecheck.
