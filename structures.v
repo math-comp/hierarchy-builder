@@ -59,12 +59,22 @@ typeabbrev (list-w-params A) (w-params (list (w-args A))).
 typeabbrev (one-w-params A) (w-params (w-args A)).
 
 % (class C S ML) represents a class C packed in S containing mixins ML.
-% example
-%  class {{Module.axioms}} {{Module.type}}
-%    (w-params.cons {{Ring.type}} R \
-%     w-params.nil TheType \
-%          [..., pr3 {{Ring.mixin}} [] TheType,
-%                pr3 {{Module.mixin}} [R] TheType ])
+% Example:
+%
+%  HB.mixin Record IsZmodule V := { ... }
+%  HB.mixin Record Zmodule_IsLmodule (R : ringType) V of Zmodule V := { ... }
+%  HB.structure Definition Lmodule R := {M of Zmodule M & Zmodule_IsLmodule R M}
+%
+% The class description for Lmodule would be:
+%
+%  class (indt «Lmodule.axioms»)                   /* The record with all mixins     */
+%        (indt «Lmodule.type»)                     /* The record with sort and class */
+%        (w-params.cons "R" {{ Ring.type }} P \    /* The first parameter, named "R" */
+%          w-params.nil "M" {{ Type }} T \         /* The key of the structure       */
+%           [...,                                  /* deps of IsZmodule.mixin        */
+%            triple (indt «IsZmodule.mixin») [] T, /* a mixins with its params       */
+%            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
+% 
 kind class type.
 type class classname -> structure -> list-w-params mixinname -> class.
 
