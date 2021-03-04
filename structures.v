@@ -44,36 +44,47 @@ Global Open Scope HB_scope.
 
 Elpi Db hb.db lp:{{
 
-typeabbrev mixinname gref.
-typeabbrev classname gref.
+typeabbrev mixinname   gref.
+typeabbrev classname   gref.
 typeabbrev factoryname gref.
-typeabbrev structure gref.
+typeabbrev structure   gref.
 
 typeabbrev (w-args A) (triple A (list term) term).
 
 kind w-params type -> type -> type.
-type w-params.cons name -> term -> (term -> w-params A) -> w-params A.
-type w-params.nil name -> term -> (term -> A) -> w-params A.
+type w-params.cons id -> term -> (term -> w-params A) -> w-params A.
+type w-params.nil id -> term -> (term -> A) -> w-params A.
 
 typeabbrev (list-w-params A) (w-params (list (w-args A))).
 typeabbrev (one-w-params A) (w-params (w-args A)).
 
+%%%%% Classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % (class C S ML) represents a class C packed in S containing mixins ML.
-% example
-%  class {{Module.axioms}} {{Module.type}}
-%    (w-params.cons {{Ring.type}} R \
-%     w-params.nil TheType \
-%          [..., pr3 {{Ring.mixin}} [] TheType,
-%                pr3 {{Module.mixin}} [R] TheType ])
+% Example:
+%
+%  HB.mixin Record IsZmodule V := { ... }
+%  HB.mixin Record Zmodule_IsLmodule (R : ringType) V of Zmodule V := { ... }
+%  HB.structure Definition Lmodule R := {M of Zmodule M & Zmodule_IsLmodule R M}
+%
+% The class description for Lmodule would be:
+%
+%  class (indt «Lmodule.axioms»)                   /* The record with all mixins     */
+%        (indt «Lmodule.type»)                     /* The record with sort and class */
+%        (w-params.cons "R" {{ Ring.type }} P \    /* The first parameter, named "R" */
+%          w-params.nil "M" {{ Type }} T \         /* The key of the structure       */
+%           [...,                                  /* deps of IsZmodule.mixin        */
+%            triple (indt «IsZmodule.mixin») [] T, /* a mixins with its params       */
+%            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
+% 
 kind class type.
 type class classname -> structure -> list-w-params mixinname -> class.
 
-%%%%%% Memory of joins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% class-def contains all the classes ever declared
+pred class-def o:class.
 
-% [join C1 C2 C3] means that C3 inherits from both C1 and C2
-pred join o:classname, o:classname, o:classname.
+%%%%% Builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% Factories %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % [from FN MN F] invariant:
 % "F : forall p1 .. pn T LMN, FN p1 .. pn T LMN1 -> MN c1 .. cm T LMN2" where
 %  - LMN1 and LMN2 are sub lists of LMN
@@ -82,18 +93,7 @@ pred join o:classname, o:classname, o:classname.
 % [from _ M _] tests whether M is a declared mixin.
 pred from o:factoryname, o:mixinname, o:gref.
 
-% [factory-constructor F K] means K is a constructor for
-% the factory F.
-pred factory-constructor o:factoryname, o:gref.
-
-% TODO params
-pred factory-nparams o:factoryname, o:int.
-
-% class-def contains all the classes ever declared
-pred class-def o:class.
-
-% is-structure
-pred is-structure o:gref.
+%%%%% Abbreviations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [phant-abbrev Cst AbbrevCst Abbrev]
 % Stores phantom abbreviation Abbrev associated with Cst
@@ -102,11 +102,24 @@ pred is-structure o:gref.
 %      Notation   Abbrev t1 := (AbbrevCst t1 _ idfun).
 pred phant-abbrev o:gref, o:gref, o:abbreviation.
 
+%%%%% Cache of known facts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [factory-constructor F K] means K is a constructor for
+% the factory F.
+pred factory-constructor o:factoryname, o:gref.
+
+% [factory-nparams F N] says that F has N parameters
+pred factory-nparams o:factoryname, o:int.
+
+% [is-structure GR] tests if GR is a known structure
+pred is-structure o:gref.
+
 % [factory-builder-nparams Build N] states that when the user writes
 % the `F.Build T` abbreviation the term behind it has N arguments before T
 pred factory-builder-nparams o:constant, o:int.
 
-% [sub-class C1 C2] C1 is a sub-class of C2.
+% [sub-class C1 C2] C1 is a sub-class of C2, see also sub-class? which computes
+% it on the fly
 pred sub-class o:classname, o:classname.
 
 % [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
@@ -114,7 +127,10 @@ pred sub-class o:classname, o:classname.
 :index(2)
 pred gref-deps o:gref, o:list-w-params mixinname.
 
-%%%%%% Memory of exported mixins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% [join C1 C2 C3] means that C3 inherits from both C1 and C2
+pred join o:classname, o:classname, o:classname.
+
+%%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
 % to keep the invariant.
@@ -125,15 +141,10 @@ pred gref-deps o:gref, o:list-w-params mixinname.
 % that contains the mixin M
 pred mixin-first-class o:mixinname, o:classname.
 
-% To tell HB.end what we are doing
-kind declaration type.
-% TheFactory and it's name and the name of the module encloding all that
-type builder-from term -> factoryname -> id -> declaration.
-pred current-mode o:declaration.
+% memory of exported operations
+pred exported-op o:mixinname, o:constant, o:constant.
 
-pred exported-op o:mixinname, o:constant, o:constant. % memory of exported operations
-
-%% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [mixin-src T M X] states that X can be used to reconstruct
 % an instance of the mixin [M T …], directly or through a builder.
@@ -142,6 +153,8 @@ pred exported-op o:mixinname, o:constant, o:constant. % memory of exported opera
 % Coq's CS database (which is just for structures).
 pred mixin-src o:term, o:mixinname, o:term.
 
+%% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % [builder N TheFactory TheMixin S] is used to
 % remember that the user run [HB.instance S] hence [HB.end] has to
 % synthesize builders from TheFactory to TheMixin mixins generated by S.
@@ -149,6 +162,12 @@ pred mixin-src o:term, o:mixinname, o:term.
 kind builder type.
 type builder int -> factoryname -> mixinname -> gref -> builder.
 pred builder-decl o:builder.
+
+% To tell HB.end what we are doing
+kind declaration type.
+% TheFactory and it's name and the name of the module encloding all that
+type builder-from term -> factoryname -> id -> declaration.
+pred current-mode o:declaration.
 
 %% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -171,7 +190,7 @@ Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [] :- !, status.main.
+main [] :- !, status.print-hierarchy.
 
 main _ :- coq.error "Usage: HB.status.".
 }}.
@@ -190,34 +209,13 @@ Elpi Export HB.status.
 *)
 
 Elpi Command HB.graph.
+Elpi Accumulate File "HB/graph.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred nice-gref->string i:gref, o:string.
-nice-gref->string X Mod :-
-  coq.gref->path X Path,
-  std.rev Path [_,Mod|_], !.
-nice-gref->string X S :-
-  coq.term->string (global X) S.
-
-pred pp-coercion-dot i:out_stream, i:coercion. 
-pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
-  output OC {nice-gref->string Tgt},
-  output OC " -> ",
-  output OC {nice-gref->string Src},
-  output OC ";\n",
-].
-pp-coercion-dot _ _.
-
-main [str File] :- !, std.do! [
-  open_out File OC,
-  output OC "digraph Hierarchy { ",
-  std.forall {coq.coercion.db} (pp-coercion-dot OC),
-  output OC "}",
-  close_out OC,
-].
- 
+main [str File] :- graph.to-file File.
 main _ :- coq.error "Usage: HB.graph <filename>.".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.graph.
@@ -335,30 +333,7 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-pred product->triples i:term, o:list (w-args factoryname), o:bool.
-product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
-  product->triples B GRB ClosureCheck,
-  product->triples A GRA _,
-  std.append GRA GRB L.
-product->triples {{ True }} [] tt :- !.
-product->triples {{ False }} [] ff :- !.
-product->triples A [GR] tt :- factory? A GR.
-
-pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
-sigT->list-w-params (fun N T B) L C :-
-  L = w-params.cons N T Rest,
-  @pi-decl N T p\
-    sigT->list-w-params (B p) (Rest p) C.
-sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
-  L = w-params.nil N Ty Rest,
-  @pi-decl N Ty t\
-    product->triples (B t) (Rest t) C.
-
-main [const-decl Module (some B) _] :- !, std.do! [
-  purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
-  sigT->list-w-params B2 GRFS ClosureCheck, !,
-  with-attributes (structure.declare Module GRFS ClosureCheck),
-].
+main [const-decl N (some B) _] :- with-attributes (structure.declare N B).
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
 Elpi Typecheck.
@@ -374,8 +349,11 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Definition f Params : Factory T := Factory.Build Params T …
-    HB.instance Params T f.
+    Section foo.
+    Variables (Params : ...) (T : Type).
+    Definition f : Factory T := Factory.Build Params T …
+    HB.instance T f.
+    End foo.
 
     HB.instance Definition N Params := Factory.Build Params T …
     >>

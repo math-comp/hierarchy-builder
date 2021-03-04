@@ -1,0 +1,38 @@
+
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+namespace graph {
+
+pred to-file i:string.
+to-file File :- !, std.do! [
+  open_out File OC,
+  output OC "digraph Hierarchy { ",
+  std.forall {coq.coercion.db} (private.pp-coercion-dot OC),
+  output OC "}",
+  close_out OC,
+].
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace private {
+
+pred nice-gref->string i:gref, o:string.
+nice-gref->string X Mod :-
+  coq.gref->path X Path,
+  std.rev Path [_,Mod|_], !.
+nice-gref->string X S :-
+  coq.term->string (global X) S.
+
+pred pp-coercion-dot i:out_stream, i:coercion. 
+pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
+  output OC {nice-gref->string Tgt},
+  output OC " -> ",
+  output OC {nice-gref->string Src},
+  output OC ";\n",
+].
+pp-coercion-dot _ _.
+
+}}

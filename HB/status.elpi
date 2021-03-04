@@ -3,8 +3,8 @@
 
 namespace status {
 
-pred main.
-main :- std.do! [
+pred print-hierarchy.
+print-hierarchy :- std.do! [
   coq.say "--------------------- Hierarchy -----------------------------------",
   std.findall (class-def CL_) CL,
   std.forall CL private.pp-class,
@@ -36,9 +36,9 @@ pred pp-list-w-params i:list-w-params mixinname, i:term.
 pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
 pred pp-list-w-params.triple i:w-args mixinname.
 pp-list-w-params (w-params.cons N Ty LwP) T :-
-  @pi-decl N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
+  @pi-parameter N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
 pp-list-w-params (w-params.nil N TTy LwP) T :-
-  @pi-decl N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
+  @pi-parameter N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
 pp-list-w-params.list-triple L S :-
   coq.say {coq.term->string S} ":=",
   std.forall L pp-list-w-params.triple.
