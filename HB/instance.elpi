@@ -3,6 +3,8 @@
 
 namespace instance {
 
+% [declare-existing T F] equips T with all the canonical structures that can be
+% built using factory instance F
 pred declare-existing i:argument, i:argument.
 declare-existing T0 F0 :- std.do! [
   argument->ty T0 T, % TODO: change this when supporting morphism hierarchies
@@ -11,6 +13,9 @@ declare-existing T0 F0 :- std.do! [
   std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
 ].
 
+% [declare-const N B Ty] adds a Definition N : Ty := B where Ty is a factory
+% and equips the type the factory is used on with all the canonical structures
+% that can be built using factory instance B
 pred declare-const i:id, i:term, i:arity.
 declare-const Name BodySkel TyWPSkel :- std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
@@ -102,6 +107,8 @@ declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR _), !,
 declare-instance T F [] :-
   declare-canonical-instances-from-factory T F.
 
+% [add-mixin T F _ M Cl] adds a constant begin the mixin instance for M on type
+% T built from factory F
 pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, o:list prop.
 add-mixin T FGR MakeCanon MissinMixin [MixinSrcCl, BuiderDeclCl] :-
   synthesis.assert!-infer-mixin T MissinMixin Bo,
@@ -187,6 +194,8 @@ hack-section-discharging B B1 :- current-mode (builder-from TheFactory _ _), !,
   B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
 hack-section-discharging B B.
 
+% unfolds the constant used for the phant abbreviation to avoid storing all
+% the phantom abstrctions and idfun that were used to trigger inference
 pred optimize-body i:term, o:term.
 optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !,
   coq.env.const C (some B) _,

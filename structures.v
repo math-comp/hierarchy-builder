@@ -349,8 +349,11 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Definition f Params : Factory T := Factory.Build Params T …
-    HB.instance Params T f.
+    Section foo.
+    Variables (Params : ...) (T : Type).
+    Definition f : Factory T := Factory.Build Params T …
+    HB.instance T f.
+    End foo.
 
     HB.instance Definition N Params := Factory.Build Params T …
     >>
