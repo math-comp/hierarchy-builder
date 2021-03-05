@@ -23,6 +23,8 @@ Register Coq.Init.Datatypes.prod as hb.prod.
 Register Coq.Init.Specif.sigT as hb.sigT.
 Register Coq.ssr.ssreflect.phant as hb.phant.
 Register Coq.ssr.ssreflect.Phant as hb.Phant.
+Register Coq.ssr.ssreflect.phantom as hb.phantom.
+Register Coq.ssr.ssreflect.Phantom as hb.Phantom.
 Register new as hb.new.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
@@ -30,10 +32,10 @@ Notation indexed T := T (only parsing).
 
 Declare Scope HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  }" :=
-  (sigT (fun A : Type => (prod P .. (prod Q True) ..)%type))
+  (sigT (fun A => (prod P .. (prod Q True) ..)%type))
   (at level 0, A at level 99) : HB_scope.
 Notation "{  A  'of'  P  &  ..  &  Q  &  }" :=
-  (sigT (fun A : Type => (prod P .. (prod Q False) ..)%type))
+  (sigT (fun A => (prod P .. (prod Q False) ..)%type))
   (at level 0, A at level 99) : HB_scope.
 Global Open Scope HB_scope.
 
@@ -143,7 +145,7 @@ pred join o:classname, o:classname, o:classname.
 % that contains the mixin M
 pred mixin-first-class o:mixinname, o:classname.
 
-% memory of exported operations
+% memory of exported operations (TODO: document fiels)
 pred exported-op o:mixinname, o:constant, o:constant.
 
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -320,12 +322,14 @@ Elpi Export HB.mixin.
   Attributes:
   - [#[mathcomp]] attempts to generate a backward compatibility layer with mathcomp:
     trying to infer the right [StructureName.pack],
-  - [#[infer("variable")]], where [variable : pT] belongs to [params] and is a structure
+  - [#[infer(variable)]], where [variable : pT] belongs to [params] and is a structure
     (e.g. from the hierarchy) with a coercion/canonical projection `pT >-> Sortclass`.
     It modifies the notation `StructureName.type` so as to accept [variable : Type] instead,
     and will try to infer it's [pT] by unification (using canonical structure inference),
     This is essential in [Lmodule.type R] where [R] should have type [Ring.type]
-    but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer("R")]].
+    but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer(R)]].
+    If the carrier of the structure [S] is not a [Type] but rather a function, one has
+    to write [#[infer(S = "_ -> _")]].
   - [#[arg_sort]] defines an alias [StructureName.arg_sort] for [StructureName.sort],
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
@@ -597,6 +601,33 @@ main _ :- coq.error "Usage: HB.context <CarrierTerm> <Factoryes>..".
 }}.
 Elpi Typecheck.
 *)
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.check T] acts like [Check T] but supports the attribute [#[skip="rex"]]
+    that skips the action on Coq version matches rex *)
+
+Elpi Command HB.check.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate lp:{{
+main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
+main _ :- coq.error "usage: HB.check (term).".
+
+pred check-or-not i:term.
+check-or-not Skel :-
+  coq.version VersionString _ _ _,
+  if (get-option "skip" R, rex_match R VersionString)
+     (coq.warn "Skipping test on Coq" VersionString "as requested")
+     (log.coq.check Skel Ty T,
+      coq.say {coq.term->string T} ":" {coq.term->string Ty}).
+}}.
+Elpi Typecheck.
+Elpi Export HB.check.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

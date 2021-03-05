@@ -61,8 +61,10 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: start module Exports"),
 
   log.coq.env.begin-module "Exports",
-  if-arg-sort (private.declare-sort-coercion Structure (global (const ArgSortCst))),
-  private.declare-sort-coercion Structure SortProjection,
+
+  private.infer-coercion-tgt MLwP CoeClass,
+  if-arg-sort (private.declare-sort-coercion CoeClass Structure (global (const ArgSortCst))),
+  private.declare-sort-coercion CoeClass Structure SortProjection,
 
   if-verbose (coq.say "HB: exporting unification hints"),
   ClassAlias => Factories => GRDepsClauses =>
@@ -92,7 +94,7 @@ declare Module B :- std.do! [
 
   if-verbose (coq.say "HB: declaring on_ abbreviation"),
 
-  private.mk-infer-key ClassProjection NilwP (global Structure) PhClass,
+  private.mk-infer-key CoeClass ClassProjection NilwP (global Structure) PhClass,
 
   phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
@@ -101,13 +103,12 @@ declare Module B :- std.do! [
 
   coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
   @global! => log.coq.notation.add-abbreviation "Build" 2
-    {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T))}} tt ClassForAbbrev,
+    {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T)) }} tt _,
 
   if-verbose (coq.say "HB: declaring on abbreviation"),
 
-  (pi t\ coq.notation.abbreviation ClassForAbbrev [t, t] (ClassForAbbrevDiag t)),
   @global! => log.coq.notation.add-abbreviation "on" 1
-    {{fun T => lp:(ClassForAbbrevDiag T)}} tt _,
+    {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt _,
 
   log.coq.env.end-module-name Module ModulePath,
 
@@ -145,6 +146,14 @@ declare Module B :- std.do! [
 namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+
+
+pred infer-coercion-tgt i:list-w-params mixinname, o:class.
+infer-coercion-tgt (w-params.cons ID Ty F) CoeClass :-
+  @pi-parameter ID Ty x\ infer-coercion-tgt (F x) CoeClass.
+infer-coercion-tgt (w-params.nil _ {{ Type }} _) sortclass.
+infer-coercion-tgt (w-params.nil _ {{ _ -> _ }} _) funclass.
+infer-coercion-tgt (w-params.nil _ _ _) _ :- coq.error "TODO1".
 
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra
@@ -272,7 +281,7 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
     {coq.mk-n-holes {factory-nparams TC}} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
-     let T : Type := lp:SortP s in
+     let T := lp:SortP s in
      lp:PackPH T (lp:CoercionP T (lp:ClassP s)) }},
 ].
 
@@ -461,13 +470,13 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
   global (const ClassP) = ClassProjection,
 ].
 
-% Declares "sort" as a coercion Structurename >-> Sortclass
-pred declare-sort-coercion i:structure, i:term.
-declare-sort-coercion StructureName (global Proj) :-
+% Declares "sort" as a Coercion Proj : Structurename >-> CoeClass.
+pred declare-sort-coercion i:class, i:structure, i:term.
+declare-sort-coercion CoeClass StructureName (global Proj) :-
 
   if-verbose (coq.say "HB: declare sort coercion"),
 
-  log.coq.coercion.declare (coercion Proj 0 StructureName sortclass).
+  log.coq.coercion.declare (coercion Proj 0 StructureName CoeClass).
 
 pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
 if-class-already-exists-error _ [] _.
@@ -566,19 +575,22 @@ pred mk-infer i:term, i:list-w-params mixinname, o:phant-term.
 mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.
 mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "Type" ; get-option ID ""), !,
   @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.fun-infer-type {coq.id->name ID} Ty PhT R.
+  phant.fun-infer-type sortclass {coq.id->name ID} Ty PhT R.
+mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "_ -> _"), !,
+  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
+  phant.fun-infer-type funclass {coq.id->name ID} Ty PhT R.
 mk-infer T (w-params.cons ID Ty W) R :- not (get-option ID _), !,
   @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
   phant.fun-real {coq.id->name ID} Ty PhT R.
 mk-infer _ (w-params.cons ID _ _) _ :- get-option ID Infer,
   coq.error "Automatic inference of paramter" ID "from" Infer "not supported".
 
-pred mk-infer-key i:term, i:list-w-params mixinname, i:term, o:phant-term.
-mk-infer-key K (w-params.nil ID _ _) St PhK :-
+pred mk-infer-key i:class, i:term, i:list-w-params mixinname, i:term, o:phant-term.
+mk-infer-key CoeClass K (w-params.nil ID _ _) St PhK :-
   @pi-parameter ID St t\ phant.init {mk-app K [t]} (PhKBo t),
-  phant.fun-infer-type {coq.id->name ID} St PhKBo PhK.
-mk-infer-key K (w-params.cons ID Ty W) St R :-
-  @pi-parameter ID Ty t\ mk-infer-key {mk-app K [t]} (W t) {mk-app St [t]} (PhT t),
+  phant.fun-infer-type CoeClass {coq.id->name ID} St PhKBo PhK.
+mk-infer-key CoeClass K (w-params.cons ID Ty W) St R :-
+  @pi-parameter ID Ty t\ mk-infer-key CoeClass {mk-app K [t]} (W t) {mk-app St [t]} (PhT t),
   phant.fun-implicit {coq.id->name ID} Ty PhT R.
 
 pred if-coverage-not-good-error i:list mixinname.

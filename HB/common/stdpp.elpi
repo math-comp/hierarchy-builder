@@ -133,7 +133,7 @@ pred copy-constructor i:indc-decl, o:indc-decl.
 copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
 
 % TODO: move to coq-elpi proper
-pred coq.gref.list->set i:list mixinname, o:coq.gref.set.
+pred coq.gref.list->set i:list gref, o:coq.gref.set.
 coq.gref.list->set L S :-
   std.fold L {coq.gref.set.empty} coq.gref.set.add S.
 

@@ -35,7 +35,7 @@ log.private.log-vernac _.
 
 shorten log.private.coq.vernac.{ begin-module , end-module , begin-section, end-section }.
 shorten log.private.coq.vernac.{ import-module , export-module }.
-shorten log.private.coq.vernac.{ definition , variable , comment }.
+shorten log.private.coq.vernac.{ definition , variable , comment , check }.
 shorten log.private.coq.{ vernac.inductive , vernac.implicit }.
 shorten log.private.coq.vernac.{ canonical , abbreviation , notation , coercion }.
 shorten log.private.{ coq.vernac }.
@@ -100,6 +100,8 @@ coq.vernac->pp1 (vernac.implicit Local Name [L]) (box h [Locality, str "Argument
   std.intersperse spc PP1 PP.
 coq.vernac->pp1 (comment A) (box (hov 2) [str"(*", str S, str"*)"]) :-
   std.any->string A S.
+coq.vernac->pp1 (check T) (box (hov 2) [str"Check", spc, PPT, str"."]) :-
+  @holes! => coq.term->pp T PPT.
 
 pred local->locality i:bool, o:coq.pp.
 local->locality tt (str "Local ").

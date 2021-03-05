@@ -34,6 +34,7 @@ with-attributes P :-
     att "log.raw" bool,
     att "compress_coercions" bool,
     att "export" bool,
+    att "skip" string,
   ] Opts, !,
   Opts => P.
 
@@ -88,7 +89,7 @@ nice-gref->string X Mod :-
 nice-gref->string X S :-
   coq.term->string (global X) S.
 
-pred gref->modname i:mixinname, o:id.
+pred gref->modname i:gref, o:id.
 gref->modname GR ModName :-
   coq.gref->path GR Path,
   if (std.rev Path [_,ModName|_]) true (coq.error "No enclosing module for " GR).
@@ -162,9 +163,11 @@ w-params.fold.params (w-params.cons ID PTy F) Cons Nil RevPs Out :- !, std.do! [
   coq.id->name ID N,
   (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
   Cons N PTy Body Out].
-w-params.fold.params (w-params.nil ID TTy F) _ Nil RevParams Out :- !,
+w-params.fold.params (w-params.nil ID TTy F) _ Nil RevParams Out :- !, std.do! [
   coq.id->name ID N,
-  std.rev RevParams Params, !, Nil Params N TTy F Out.
+  std.rev RevParams Params,
+  Nil Params N TTy F Out,
+].
 
 % [w-params.then AwP Cons Nil Out] states that Out has shape
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty t \ Body
