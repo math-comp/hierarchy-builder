@@ -163,7 +163,8 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   context.declare TheType TheParams GRFSwP Hyps _,
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
-  log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
+  @using! "All" =>
+    log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
