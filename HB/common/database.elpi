@@ -100,14 +100,11 @@ factories-provide FLwP MLwP :- std.do! [
 ].
 
 % Mixins can be topologically sorted according to their dependencies
-pred toposort-mixins.mk-mixin-edge i:prop, o:list (pair mixinname mixinname).
-toposort-mixins.mk-mixin-edge (gref-deps M Deps) L :-
-  std.map {list-w-params_list Deps} (d\r\ r = pr d M) L.
-
 pred toposort-mixins i:list (w-args mixinname), o:list (w-args mixinname).
 toposort-mixins In Out :- std.do! [
-  std.findall (gref-deps M_ Deps_) AllMixins,
-  std.flatten {std.map AllMixins toposort-mixins.mk-mixin-edge} ES,
+  std.map In triple_1 ML,
+  std.map ML (m\r\sigma D D1\ gref-deps m D1, list-w-params_list D1 D, std.map D (d\r\r = pr d m) r) ES2,
+  std.flatten ES2 ES,
   toposort-proj triple_1 ES In Out,
 ].
 
