@@ -135,10 +135,10 @@ prefixed with the attribute `#[verbose]` to get an idea of what they are doing.
 
 <details><summary>(click to expand)</summary><p>
 
-- [demo1](demo1/) and [demo3](demo3/) declare and evolve a hierarchy up to
+- [demo1](examples/demo1/) and [demo3](examples/demo3/) declare and evolve a hierarchy up to
   rings with various clients that are tested not to break when the hierarchy
   evolves
-- [demo2](demo2/) describes the subtle triangular interaction between groups,
+- [demo2](examples/demo2/) describes the subtle triangular interaction between groups,
   topological space and uniform spaces. Indeed, 1. all uniform spaces induce a
   topology, which makes them topological spaces, but 2. all topological groups
   (groups that are topological spaces such that the addition and opposite are
