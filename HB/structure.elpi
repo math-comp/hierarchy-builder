@@ -90,11 +90,11 @@ declare Module B :- std.do! [
 
   log.coq.env.import-module Exports,
 
-  if-verbose (coq.say "HB: declaring of_ abbreviation"),
+  if-verbose (coq.say "HB: declaring on_ abbreviation"),
 
   private.mk-infer-key ClassProjection NilwP (global Structure) PhClass,
 
-  phant.add-abbreviation "of_" PhClass _ ClassOfAbbrev,
+  phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
 
   if-verbose (coq.say "HB: declaring Build abbreviation"),
@@ -103,10 +103,10 @@ declare Module B :- std.do! [
   @global! => log.coq.notation.add-abbreviation "Build" 2
     {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T))}} tt ClassForAbbrev,
 
-  if-verbose (coq.say "HB: declaring of abbreviation"),
+  if-verbose (coq.say "HB: declaring on abbreviation"),
 
   (pi t\ coq.notation.abbreviation ClassForAbbrev [t, t] (ClassForAbbrevDiag t)),
-  @global! => log.coq.notation.add-abbreviation "of" 1
+  @global! => log.coq.notation.add-abbreviation "on" 1
     {{fun T => lp:(ClassForAbbrevDiag T)}} tt _,
 
   log.coq.env.end-module-name Module ModulePath,
