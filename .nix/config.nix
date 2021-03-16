@@ -6,7 +6,7 @@
   select = "coq-8.13";
   inputs."coq-8.13".coqPackages = {
     coq.override.version = "8.13";
-    mathcomp.override.version = "hierarchy-builder";
+    mathcomp.override.version = "gares:hierarchy-builder";
     mathcomp-single.ci.step = true;
   };
 }
