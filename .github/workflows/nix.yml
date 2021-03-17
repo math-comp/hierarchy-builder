@@ -47,7 +47,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Build
-      run: nix-build --arg ci true
+      run: nix-build --arg ci true --arg mathcomp-single.ci.step true
 
   mathcomp-plan-B:
     runs-on: ubuntu-latest
@@ -66,4 +66,5 @@ jobs:
       with:
         fetch-depth: 0
     - name: Build
-      run: nix-build --arg ciB true
+      run: nix-build --arg ci true --arg mathcomp-single-planB.ci.step true
+
