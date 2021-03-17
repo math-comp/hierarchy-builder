@@ -166,7 +166,7 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
 
 pred operation-body-and-ty i:list prop, i:constant, i:structure, i:term, i:term,
   i:list term, i:term, i:w-args A, o:pair term term.
-operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Params _) (pr Bo Ty) :- std.do! [
+operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ ParamsOp _) (pr Bo Ty) :- std.do! [
   mk-app (global Struct) Params StructType,
   mk-app Psort Params PsortP,
   mk-app Pclass Params PclassP,
@@ -177,7 +177,7 @@ operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Par
       mk-app PclassP [s] Class,
       synthesis.under-mixin-src-from-factory.do! Carrier Class [
         % just in case..
-        synthesis.infer-all-mixin-args Params Carrier (const Poperation) (Body s),
+        synthesis.infer-all-mixin-args ParamsOp Carrier (const Poperation) (Body s),
         std.assert-ok! (coq.typecheck (Body s) (DirtyTy s)) "export-1-operation: Body illtyped",
         clean-op-ty EXI s (DirtyTy s) (BodyTy s),
       ],
