@@ -1,6 +1,6 @@
 {
   format = "1.0.0";
-  coq-attribute = "hierarchy-builder";
+  attribute = "hierarchy-builder";
   default-task = "coq-8.13";
   tasks."coq-8.13".coqPackages = {
     coq.override.version = "8.13";
