@@ -205,7 +205,7 @@ We recommend to setup a CI job testing plan B. If you are using
           # build the project so that it generates patch files
           COQ_ELPI_ATTRIBUTES="hb(log(raw))" make -j2
           # apply the patches
-          hb patch `find . -name \*.v`
+          coq.hb patch `find . -name \*.v`
           # check something happened
           if git diff --quiet; then echo "No patch!"; exit 1; fi
           # replace HB by a package with trivial dependencies, just to make

@@ -49,7 +49,7 @@ jobs:
           export COQ_ELPI_ATTRIBUTES="hb(log(raw))"
           make test-suite -j2
           wc -l `find . -name \*.v`
-          hb patch `find . -name \*.v`
+          coq.hb patch `find . -name \*.v`
           wc -l `find . -name \*.v`
           if git diff --quiet; then echo "No patch!"; exit 1; fi
           make clean
