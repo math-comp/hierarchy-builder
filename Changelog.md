@@ -2,6 +2,12 @@
 
 ## UNRELEASED
 
+- `#[log]` and `#[log(raw)]` to get printed Coq commands equivalent to what HB
+  is doing. The raw print has higher changes to be reparsable.
+- export `COQ_ELPI_ATTRIBUTES="hb(log(raw))"` to have HB commands log patch
+  files containing Coq commands equivalent to what HB did. Patch file have
+  extension `.hb` and are named after the file they apply to.
+- `hb` command line utility to patch/reset files.
 - `indexed` is gone, one can use `#[key="T"]` instead to flag paramter `T` as
   the key of the mixin/factory
 - `#[infer(P)]` can be used to tell `HB.structure` to set things up so that
