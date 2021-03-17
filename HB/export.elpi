@@ -6,14 +6,15 @@
 % modules to export in the end of the current enclosing module,
 % by the command HB.Exports
 % CAVEAT: "module" is a keyword, we put it in the namespace by hand
-pred export.module i:modpath.
-export.module Module :- !,
-  log.coq.env.export-module Module,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export Module)).
+pred export.module i:id, i:modpath.
+export.module NiceModule Module :- !,
+  log.coq.env.export-module NiceModule Module,
+  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export NiceModule Module)).
 
 pred export.reexport-all-modules.
 export.reexport-all-modules :- std.do! [
-  std.findall (module-to-export Module_) ModsCL,
+  std.findall (module-to-export NiceModule_ Module_) ModsCL,
+  std.map ModsCL module-to-export_module-nice NiceMods,
   std.map ModsCL module-to-export_module Mods,
-  std.forall Mods log.coq.env.export-module,
+  std.forall2 NiceMods Mods log.coq.env.export-module,
 ].

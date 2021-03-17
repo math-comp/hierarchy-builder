@@ -50,7 +50,7 @@ builders.end :- std.do! [
 
   log.coq.env.end-module-name Name Exports,
   log.coq.env.end-module-name ModName _,
-  export.module Exports,
+  export.module {calc (ModName ^ "." ^ Name)} Exports,
 ].
 
 /* ------------------------------------------------------------------------- */

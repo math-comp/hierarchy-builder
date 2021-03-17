@@ -29,3 +29,36 @@ jobs:
         opam_file: './coq-hierarchy-builder.opam'
         coq_version: ${{ matrix.coq_version }}
         ocaml_version: ${{ matrix.ocaml_version }}
+
+  plan-B:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: coq-community/docker-coq-action@v1
+      with:
+        opam_file: './coq-hierarchy-builder.opam'
+        coq_version: '8.13'
+        ocaml_version: 'minimal'
+        script: |
+          mkdir /home/coq/workspace
+          cp -ra . /home/coq/workspace
+          cd /home/coq/workspace
+          opam install ./coq-hierarchy-builder.opam
+          sed -i.bak "s/-Q . HB//" _CoqProject.test-suite
+          # This is what a user does to cut HB loose
+          export COQ_ELPI_ATTRIBUTES="hb(log(raw))"
+          make test-suite -j2
+          wc -l `find . -name \*.v`
+          coq.hb patch `find . -name \*.v`
+          wc -l `find . -name \*.v`
+          if git diff --quiet; then echo "No patch!"; exit 1; fi
+          make clean
+          opam remove coq-hierarchy-builder
+          opam install ./coq-hierarchy-builder-shim.opam
+          # Does it work?
+          make test-suite -j2
+          # We also test the reset facility works (we rebuild hb locally)
+          make coq.hb
+          ./coq.hb reset `find . -name \*.v`
+          mv _CoqProject.test-suite.bak _CoqProject.test-suite
+          git diff --exit-code

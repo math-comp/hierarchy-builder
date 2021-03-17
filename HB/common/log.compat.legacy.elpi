@@ -1,0 +1,7 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% dummy implementation of logging and vernac printing
+
+with-logging P :- P.
+log.private.log-vernac _.
