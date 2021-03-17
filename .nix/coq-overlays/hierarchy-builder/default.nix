@@ -1,7 +1,12 @@
-{ lib, mkCoqDerivation, which, coq, coq-elpi, version ? null }:
+{ lib, mkCoqDerivation, which, coq, coq-elpi,
+  version ? null, shim ? false }:
 
-with lib; mkCoqDerivation {
-  pname = "hierarchy-builder";
+let installFlags =
+      [ "DESTDIR=$(out)" "COQMF_COQLIB=lib/coq/${coq.coq-version}" ];
+in
+with lib; mkCoqDerivation ({
+  pname = "hierarchy-builder" + optionalString shim "-shim";
+  repo = "hierarchy-builder";
   owner = "math-comp";
   inherit version;
   defaultVersion = with versions; switch coq.coq-version [
@@ -14,7 +19,7 @@ with lib; mkCoqDerivation {
 
   nativeBuildInputs = [ which ];
   propagatedBuildInputs = [ coq-elpi coq.ocaml ];
-  installFlags = [ "DESTDIR=$(out)" "COQMF_COQLIB=lib/coq/${coq.coq-version}" ];
+  inherit installFlags;
 
   meta = {
     description = "Coq plugin embedding ELPI.";
@@ -22,3 +27,7 @@ with lib; mkCoqDerivation {
     license = licenses.lgpl21;
   };
 }
+// optionalAttrs shim {
+  buildFlags = [ "-C shim" ];
+  installFlags = installFlags ++ [ "-C shim" ];
+})
