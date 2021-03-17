@@ -48,3 +48,22 @@ jobs:
         fetch-depth: 0
     - name: Build
       run: nix-build --arg ci true
+
+  mathcomp-plan-B:
+    runs-on: ubuntu-latest
+    needs: hb
+    steps:
+    - name: Cachix install
+      uses: cachix/install-nix-action@v12
+    - name: Cachix setup
+      uses: cachix/cachix-action@v8
+      with:
+        name: math-comp
+        extraPullNames: coq
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - name: Git checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build
+      run: nix-build --arg ciB true
