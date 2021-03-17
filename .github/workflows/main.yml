@@ -58,7 +58,7 @@ jobs:
           # Does it work?
           make test-suite -j2
           # We also test the reset facility works (we rebuild hb locally)
-          make hb
-          ./hb reset `find . -name \*.v`
+          make coq.hb
+          ./coq.hb reset `find . -name \*.v`
           mv _CoqProject.test-suite.bak _CoqProject.test-suite
           git diff --exit-code
