@@ -77,11 +77,11 @@ jobs:
       with:
         fetch-depth: 0
     - name: Dependencies
-      run: nix-build --argstr job "_deps"
+      run: nix-build --argstr job "_deps" --argstr task ${{ matrix.task }}
     - name: Hiearchy builder
-      run: nix-build --argstr job "hierarchy-builder"
+      run: nix-build --argstr job "hierarchy-builder" --argstr task ${{ matrix.task }}
     - name: Build mathcomp on HB
-      run: nix-build --argstr job "mathcomp-single"
+      run: nix-build --argstr job "mathcomp-single" --argstr task ${{ matrix.task }}
 
   mathcomp-planB-src:
     runs-on: ubuntu-latest
