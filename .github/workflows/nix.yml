@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: hb
     strategy:
-        fail-fast: false
+      fail-fast: false
       matrix:
         task: [ "coq-8.13", "coq-8.12", "coq-8.11" ]
     steps:
