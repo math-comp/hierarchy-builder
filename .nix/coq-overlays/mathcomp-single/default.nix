@@ -5,7 +5,7 @@
     echo "End Order." >> mathcomp/ssreflect/order.v
   '';
   buildPhase = ''
-    make -j$NIX_BUILD_CORES -C mathcomp only COQEXTRAFLAGS=-debug \
+    make -j$NIX_BUILD_CORES -C mathcomp only \
       TGTS="fingroup/presentation.vo algebra/ssralg.vo ssreflect/order.vo"
   '';
   propagatedBuildInputs = old.propagatedBuildInputs ++
