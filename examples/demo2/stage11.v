@@ -336,7 +336,7 @@ HB.builders Context T (a : JoinTAddAG T).
 
   (* TODO: Nice error message when factory builders do not depend on the source factory 'a'*)
   HB.instance
-  Definition to_Uniform : TAddAG_Uniform T := let _ := a in TAddAG_Uniform.Build T.
+  Definition to_Uniform : TAddAG_Uniform T := let _ : JoinTAddAG T := a in TAddAG_Uniform.Build T.
 
 HB.end.
 
