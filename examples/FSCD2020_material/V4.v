@@ -76,9 +76,9 @@ HB.builders Context (R : Type) (f : Ring_of_AbelianGroup R).
   by rewrite -mulrDr add0r addrC addNr.
   Qed.
 
+  HB.instance
   Definition to_SemiRing_of_Monoid := SemiRing_of_Monoid.Build R _ mul mulrA
      mul1r mulr1 mulrDl mulrDr mul0r mulr0.
-  HB.instance R to_SemiRing_of_Monoid.
 
 HB.end.
 HB.structure Definition Ring :=
@@ -89,8 +89,10 @@ HB.structure Definition Ring :=
 HB.factory Definition Ring_of_SemiRing R of SemiRing R := AbelianGroup_of_Monoid R.
 (* The corresponding builder is the identity. *)
 HB.builders Context (R : Type) (f : Ring_of_SemiRing R).
+
+  HB.instance
   Definition to_AbelianGroup_of_Monoid : AbelianGroup_of_Monoid R := f.
-  HB.instance R to_AbelianGroup_of_Monoid.
+
 HB.end.
 
 (* Right-most factory in Fig. 2. *)
@@ -124,14 +126,14 @@ HB.builders Context (R : Type) (f : Ring_of_Monoid R).
   Qed.
 
   (* Builder to the bottom right mixin. *)
+  HB.instance
   Definition to_AbelianGroup_of_Monoid :=
     AbelianGroup_of_Monoid.Build R opp addrC addNr.
-  HB.instance R to_AbelianGroup_of_Monoid.
 
   (* Builder to the top right factory, which is compiled to the bottom left mixin. *)
+  HB.instance
   Definition to_Ring_of_AbelianGroup := Ring_of_AbelianGroup.Build R one mul
     mulrA mul1r mulr1 mulrDl mulrDr.
-  HB.instance R to_Ring_of_AbelianGroup.
 
 HB.end.
 
@@ -148,15 +150,15 @@ Check @addNr.
 Check @addrC. (* is still an axiom of abelian groups                     *)
 (* addrC        :   forall R : AbelianGroup.type, commutative add        *)
 
+HB.instance
 Definition Z_Monoid_axioms : Monoid_of_Type Z :=
    Monoid_of_Type.Build Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
-HB.instance Z Z_Monoid_axioms.
 
+HB.instance
 Definition Z_Ring_axioms : Ring_of_Monoid Z :=
   Ring_of_Monoid.Build Z 1%Z Z.opp Z.mul
     Z.add_opp_diag_l Z.add_opp_diag_r Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
-HB.instance Z Z_Ring_axioms.
 
 Lemma exercise (m n : Z) : (n + m) - n * 1 = m.
 Proof. by rewrite mulr1 (addrC n) -(addrA m) addrN addr0. Qed.

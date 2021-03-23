@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+- `HB.instance K F` deprecated in favor of `HB.instance Definition`
 - `#[log]` and `#[log(raw)]` to get printed Coq commands equivalent to what HB
   is doing. The raw print has higher changes to be reparsable.
 - export `COQ_ELPI_ATTRIBUTES="hb(log(raw))"` to have HB commands log patch

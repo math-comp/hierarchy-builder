@@ -2,19 +2,17 @@ From Coq Require Import ZArith ssreflect.
 From HB Require Import structures.
 From HB Require Import demo1.hierarchy_5.
 
+HB.instance
 Definition Z_AddComoid := AddComoid_of_TYPE.Build
   Z 0%Z Z.add
   Z.add_assoc Z.add_comm Z.add_0_l.
 
-HB.instance Z Z_AddComoid.
-
+HB.instance
 Definition Z_SemiRing := SemiRing_of_AddComoid.Build
   Z 1%Z Z.mul
   Z.mul_assoc Z.mul_1_l Z.mul_1_r
   Z.mul_add_distr_r Z.mul_add_distr_l
   Z.mul_0_l Z.mul_0_r.
-
-HB.instance Z Z_SemiRing.
 
 Open Scope hb_scope.
 
