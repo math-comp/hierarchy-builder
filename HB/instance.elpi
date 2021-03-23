@@ -44,7 +44,7 @@ declare-const Name BodySkel TyWPSkel :- std.do! [
   private.hack-section-discharging SectionBody SectionBodyHack,
   private.optimize-body SectionBodyHack OptimizedBody,
   if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
-  log.coq.env.add-const-noimplicits RealName OptimizedBody _ @transparent! C,
+  log.coq.env.add-const-noimplicits RealName OptimizedBody SectionTy @transparent! C,
   TheFactory = (global (const C)),
 
   % call HB.instance TheType TheFactory
