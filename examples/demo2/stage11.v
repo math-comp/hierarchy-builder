@@ -108,13 +108,14 @@ HB.factory Record Ring_of_TYPE A := {
 
 HB.builders Context A (a : Ring_of_TYPE A).
 
+  HB.instance
   Definition to_AddAG := AddAG_of_TYPE.Build A
     _ _ _ addrA addrC add0r addNr.
-  HB.instance A to_AddAG.
 
+  HB.instance
   Definition to_Ring := Ring_of_AddAG.Build A
     _ _ mulrA mul1r mulr1 mulrDl mulrDr.
-  HB.instance A to_Ring.
+
 HB.end.
 
 HB.structure Definition Ring := { A of Ring_of_TYPE A }.
@@ -158,9 +159,9 @@ HB.builders Context T (a : TopologicalBase T).
   Lemma open_of_cap X Y : open_of X -> open_of Y -> open_of (X `&` Y).
   Proof. Admitted.
 
+  HB.instance
   Definition to_Topological :=
     Topological.Build T _ open_of_setT (@open_of_bigcup) open_of_cap.
-  HB.instance T to_Topological.
 
 HB.end.
 
@@ -249,8 +250,10 @@ HB.mixin Record Join_Uniform_Topology U of Topological U & Uniform_wo_Topology U
 HB.factory Record Uniform_Topology U of Uniform_wo_Topology U := { }.
 
 HB.builders Context U (f : Uniform_Topology U).
+
+  HB.instance
   Definition to_Topological : Topological U := (uniform_topology _).
-  HB.instance U to_Topological.
+
 HB.end.
 
 HB.structure Definition UniformSpace := { A of
@@ -326,11 +329,15 @@ HB.factory Definition JoinTAddAG T of AddAG_of_TYPE T & Topological T :=
   (JoinTAddAG_wo_Uniform T).
 
 HB.builders Context T (a : JoinTAddAG T).
+
+  HB.instance
   Definition to_JoinTAddAG_wo_Uniform : JoinTAddAG_wo_Uniform T := a.
-  HB.instance T to_JoinTAddAG_wo_Uniform.
+  
+
   (* TODO: Nice error message when factory builders do not depend on the source factory 'a'*)
-  Definition to_Uniform : TAddAG_Uniform T := let _ := a in TAddAG_Uniform.Build T.
-  HB.instance T to_Uniform.
+  HB.instance
+  Definition to_Uniform : TAddAG_Uniform T := let _ : JoinTAddAG T := a in TAddAG_Uniform.Build T.
+
 HB.end.
 
 (* Instance *)
@@ -368,12 +375,14 @@ Program Definition QcTopological := TopologicalBase.Build Qc Qcopen_base _ _.
   Next Obligation.
   move=> X Y [aX [bX Xeq]] [aY [bY Yeq]] z [/Xeq [aXz zbX] /Yeq [aYz zbY]].
   Admitted.
-HB.instance Qc QcTopological.
+
+HB.instance Definition _ :  TopologicalBase Qc := QcTopological.
 
 Program Definition QcJoinTAddAG := JoinTAddAG.Build Qc _ _.
   Next Obligation. Admitted.
   Next Obligation. Admitted.
-HB.instance Qc QcJoinTAddAG.
+
+HB.instance Definition _ : JoinTAddAG Qc := QcJoinTAddAG.
 
 Check (entourage : set (set (Qc * Qc))). (* TODO fix spill-factory-param-factories *)
 

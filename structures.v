@@ -354,12 +354,6 @@ Elpi Export HB.structure.
     Syntax for declaring a canonical instance:
 
     <<
-    Section foo.
-    Variables (Params : ...) (T : Type).
-    Definition f : Factory T := Factory.Build Params T …
-    HB.instance T f.
-    End foo.
-
     HB.instance Definition N Params := Factory.Build Params T …
     >>
 
@@ -378,9 +372,10 @@ Elpi Accumulate lp:{{
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
   with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel)).
 main [T0, F0] :- !,
+  coq.warn "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
 
-main _ :- coq.error "Usage: HB.instance <CarrierType> <FactoryInstanceTerm>*\nUsage: HB.instance Definition <Name> := <Builder> T ...".
+main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
 
 }}.
 Elpi Typecheck.

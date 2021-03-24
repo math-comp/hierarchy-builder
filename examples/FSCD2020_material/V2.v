@@ -60,9 +60,9 @@ Check @addNr.
 Check @addrC.  (* is now an axiom of abelian groups                 *)
 (* addrC        :   forall R : AbelianGroup.type, commutative add   *)
 
+HB.instance
 Definition Z_Monoid_axioms : Monoid_of_Type Z :=
    Monoid_of_Type.Build Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
-HB.instance Z Z_Monoid_axioms.
 
 (********************************************************)
 (* This test from V1 FAILS in V2, and is repaired in V3 *)

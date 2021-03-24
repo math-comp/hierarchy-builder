@@ -104,13 +104,15 @@ HB.factory Record Ring_of_TYPE A := {
 
 HB.builders Context A (a : Ring_of_TYPE A).
 
-Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Build A
+  HB.instance
+  Definition to_AddAG_of_TYPE := AddAG_of_TYPE.Build A
     _ _ _ addrA addrC add0r addNr.
-  HB.instance A to_AddAG_of_TYPE.
+
+  HB.instance
   Definition to_Ring_of_AddAG :=
     Ring_of_AddAG.Build _ _ _ mulrA mul1r
       mulr1 mulrDl mulrDr.
-  HB.instance A to_Ring_of_AddAG.
+
 HB.end.
 
 HB.structure Definition Ring := { A of Ring_of_TYPE A }.
@@ -153,9 +155,9 @@ HB.builders Context T (a : TopologicalBase T).
   Lemma open_of_cap X Y : open_of X -> open_of Y -> open_of (X `&` Y).
   Proof. Admitted.
 
+  HB.instance
   Definition to_Topological :=
     Topological.Build T _ open_of_setT (@open_of_bigcup) open_of_cap.
-  HB.instance T to_Topological.
 
 HB.end.
 
@@ -241,11 +243,13 @@ Qed.
 Next Obligation.
 move=> X Y [aX [bX Xeq]] [aY [bY Yeq]] z [/Xeq [aXz zbX] /Yeq [aYz zbY]].
 Admitted.
-HB.instance Qc QcTopological.
+
+HB.instance Definition _ :  TopologicalBase Qc := QcTopological.
 
 Program Definition QcJoinTAddAG := JoinTAddAG.Build Qc _ _.
 Next Obligation. Admitted.
 Next Obligation. Admitted.
-HB.instance Qc QcJoinTAddAG.
+
+HB.instance Definition _ : JoinTAddAG Qc := QcJoinTAddAG.
 
 End Stage10.

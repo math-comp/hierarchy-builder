@@ -63,15 +63,15 @@ move=> x y; apply: addKl (x) _ _ _; apply: addKr (y) _ _ _.
 by rewrite -!addrA [in RHS]addrA innerC !addrA.
 Qed.
 
+HB.instance
 Definition Z_Monoid_axioms : Monoid_of_Type Z :=
    Monoid_of_Type.Build Z 0%Z Z.add Z.add_assoc Z.add_0_l Z.add_0_r.
-HB.instance Z Z_Monoid_axioms.
 
+HB.instance
 Definition Z_Ring_axioms : Ring_of_Monoid Z :=
   Ring_of_Monoid.Build Z 1%Z Z.opp Z.mul
     Z.add_opp_diag_l Z.add_opp_diag_r Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
-HB.instance Z Z_Ring_axioms.
 
 Lemma exercise (m n : Z) : (n + m) - n * 1 = m.
 Proof. by rewrite mulr1 (addrC n) -(addrA m) addrN addr0. Qed.

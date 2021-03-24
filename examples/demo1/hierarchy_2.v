@@ -100,9 +100,10 @@ HB.builders Context A (a : Ring_of_TYPE A).
   Definition to_AddComoid_of_TYPE := AddComoid_of_TYPE.Build A
     zero add addrA addrC add0r.
 
+  HB.instance
   Definition to_Ring_of_AddComoid := Ring_of_AddComoid.Build A
     _ _ _ addNr mulrA mul1r mulr1 mulrDl mulrDr.
-  HB.instance A to_Ring_of_AddComoid.
+
 HB.end.
 
 HB.structure Definition Ring := { A of Ring_of_TYPE A }.

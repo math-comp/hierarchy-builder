@@ -42,15 +42,13 @@ HB.factory Record Ring_of_AddMulMonoid A of MulMonoid A & AddMonoid A := {
 
 HB.builders Context A (a : Ring_of_AddMulMonoid A).
 
+  HB.instance
   Definition to_AbGroup_of_AddMonoid :=
     AbGroup_of_AddMonoid.Build A opp addrC addNr.
 
-  HB.instance A to_AbGroup_of_AddMonoid.
-
+  HB.instance
   Definition to_Ring_of_AbGroupMulMonoid :=
-  Ring_of_AbGroupMulMonoid.Build A mulrDl mulrDr.
-
-  HB.instance A to_Ring_of_AbGroupMulMonoid.
+    Ring_of_AbGroupMulMonoid.Build A mulrDl mulrDr.
 
 HB.end.
 
@@ -69,19 +67,16 @@ HB.factory Record Ring_of_MulMonoid A of MulMonoid A := {
 
 HB.builders Context A (a : Ring_of_MulMonoid A).
 
+  HB.instance
   Definition to_AddMonoid_of_Type :=
     AddMonoid_of_Type.Build A zero add addrA add0r addr0.
 
-  HB.instance A to_AddMonoid_of_Type.
-
+  HB.instance
   Definition to_AbGroup_of_AddMonoid :=
     AbGroup_of_AddMonoid.Build A opp addrC addNr.
 
-  HB.instance A to_AbGroup_of_AddMonoid.
-
+  HB.instance
   Definition to_Ring_of_AddMulMonoid :=
     Ring_of_AddMulMonoid.Build A opp addrC addNr mulrDl mulrDr.
-
-  HB.instance A to_Ring_of_AddMulMonoid.
 
 HB.end.
