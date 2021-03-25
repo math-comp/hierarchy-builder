@@ -159,8 +159,6 @@ postulate-factories ModName (context-item IDT _ TySkel none t\ context-item IDF 
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType Params TheFactory GRF,
   log.coq.env.accumulate current "hb.db" (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),
-  if-verbose (coq.say "Adding clause @using!" IDF "to the context"),
-  log.coq.env.accumulate current "hb.db" (clause _ _ (@using! IDF))
 ].
 
 postulate-factories ModName (context-item ID _ TSkel none Factories) :- std.do! [
