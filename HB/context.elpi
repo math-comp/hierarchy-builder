@@ -12,7 +12,8 @@ declare TheType TheParams GRFSwP MSL CL :-  std.do! [
   factories-provide GRFSwP MLwP,
   apply-w-params MLwP TheParams TheType MLwAllArgs,
   std.fold MLwAllArgs [] private.postulate-mixin MSL,
-  MSL => instance.declare-all TheType {findall-classes} CL,
+  MSL => instance.declare-all TheType {findall-classes} CSL,
+  std.map CSL snd CL,
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
 

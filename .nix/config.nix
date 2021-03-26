@@ -18,7 +18,6 @@
     } // common;
     "coq-8.11".coqPackages = {
       coq.override.version = "8.11";
-      coq-elpi.override.version = "v1.6.1_8.11";
     } // common;
   };
 }

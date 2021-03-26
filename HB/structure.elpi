@@ -312,7 +312,8 @@ declare-coercion SortProjection ClassProjection
 
   log.coq.env.add-const-noimplicits SName SCoeBody STy @transparent! SC,
   log.coq.coercion.declare (coercion (const SC) 0 StructureF (grefclass StructureT)),
-  log.coq.CS.declare-instance (const SC), % TODO: API in Elpi, take a @constant instead of gref
+
+  log.coq.CS.declare-instance SC, % TODO: API in Elpi, take a @constant instead of gref
 
   if-verbose (coq.say "HB: declare coercion path compression rules"),
 
@@ -384,7 +385,7 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
     (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
   log.coq.env.add-const-noimplicits Name JoinBody Ty @transparent! J,
-  log.coq.CS.declare-instance (const J).
+  log.coq.CS.declare-instance J.
 
 % TODO: this works under the invariant: we never have two classes that
 % contain exactly the same mixins. HB.structure should enforce this
