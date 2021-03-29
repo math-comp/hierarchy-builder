@@ -426,7 +426,7 @@ mk-record+sort-field _ T F (record RecordName {{ Type }} "Pack" (field _ "sort" 
   if (get-option "infer" _) (RecordName = "type_") (RecordName = "type").
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
-mk-class-field ClassName Params T _ (field _ "class" (app [global ClassName|Args]) _\end-record) :-
+mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global ClassName|Args]) _\end-record) :-
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
