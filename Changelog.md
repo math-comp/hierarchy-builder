@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+- `#[export]` attribute can be given to `HB.instance` in order to have instances
+  (re)declared by `HB.reexport`.
 - `#[compress_coercions]` attribute (off by default) to shorten coercions paths
   in the synthesis of instances.
 - `HB.instance K F` deprecated in favor of `HB.instance Definition`

@@ -366,6 +366,9 @@ Elpi Export HB.structure.
     HB.instance Definition N Params := Factory.Build Params T …
     >>
 
+    Attributes:
+    - [#[export]] to flag the instance so that it is redeclared by #[HB.reexport]
+
 *)
 
 Elpi Command HB.instance.
