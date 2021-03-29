@@ -69,7 +69,7 @@ Definition Z_ring_axioms :=
 End Theory.
 
 Module Exports.
-#[verbose] HB.reexport.
+HB.reexport.
 Definition addrNK := addrNK.
 Definition addr0 := addr0.
 End Exports.
