@@ -337,7 +337,7 @@ mk-compression-clauses StructureF StructureT [StructureE|Rest] Res :- std.do! [
   coq.mk-app (global C3) {coq.mk-n-holes Nparams3} H,
   RuleSkel = {{ fun x => lp:G (lp:F x) = lp:H x}},
   std.assert-ok! (coq.elaborate-skeleton RuleSkel _ Rule) "coercion composition fails",
-  (((pi X L\ fold-map X L X [X|L] :- var X, not(std.exists L (same_var X))) => fold-map Rule [] Rule Holes,
+  (((pi X L\ coq.fold-map X L X [X|L] :- var X, not(std.exists L (same_var X))) => coq.fold-map Rule [] Rule Holes,
   mk-compression-clause Holes Rule Clause,
   mk-compression-clauses StructureF StructureT Rest Clauses,
   Res = [Clause|Clauses]) ; (Res = [])),
@@ -345,7 +345,6 @@ mk-compression-clauses StructureF StructureT [StructureE|Rest] Res :- std.do! [
 
 pred mk-compression-clause i:list term, i:term, o:prop.
 mk-compression-clause [] (fun _ _ x\ app[_,_,LHS x,RHS x]) (pi x\ C x) :-
-  %pi x\ copy (LHS x) (L x), copy (RHS x) (R x), C x = (pi tmp\ compress (L x) (R tmp) :- !, compress x tmp, !).
   pi x\ copy (LHS x) (L x), copy (RHS x) (R x), C x = (pi tmp\ compress (L x) (R x)).
 mk-compression-clause [UV|Rest] T (pi v\ R v) :-
   pi v\ (pi U\ copy U v :- same_var U UV, !) => mk-compression-clause Rest T (R v).
