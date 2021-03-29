@@ -89,7 +89,9 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   coq.gref->path TGR TPath,
   std.rev TPath [TMod|_],
   coq.gref->id TGR TID,
-  Name is TMod ^ "_" ^ TID ^ "_canonical_" ^ {gref->modname Struct},
+  if (TMod = TID)
+     (Name is TID ^ "_canonical_" ^ {gref->modname Struct})
+     (Name is TMod ^ "_" ^ TID ^ "_canonical_" ^ {gref->modname Struct}),
 
   if-verbose (coq.say "HB: declare canonical structure instance" Name),
 
