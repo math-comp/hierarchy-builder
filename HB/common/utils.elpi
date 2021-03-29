@@ -35,6 +35,8 @@ with-attributes P :-
     att "compress_coercions" bool,
     att "export" bool,
     att "skip" string,
+    att "local" bool,
+    att "fail" bool,
   ] Opts, !,
   Opts => P.
 
@@ -52,6 +54,11 @@ if-MC-compat P :- get-option "mathcomp.axiom" S, !,
   std.assert! (coq.locate S GR) "The name passed to the mathcomp.axiom attribute does not exist",
   P (some GR).
 if-MC-compat _.
+
+pred with-locality i:prop.
+with-locality P :-
+  if (get-option "local" tt) (A = @local!) (A = @global!),
+  A => P.
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
