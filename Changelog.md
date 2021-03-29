@@ -6,6 +6,10 @@
   (re)declared by `HB.reexport`.
 - `#[compress_coercions]` attribute (off by default) to shorten coercions paths
   in the synthesis of instances.
+- `HB.check` is like `Check` but supports logging and can be disabled on a
+  selection of Coq versions.
+- Experimental support for structures with a function as the carrier, that is
+  hierarchies of morphisms.
 - `HB.instance K F` deprecated in favor of `HB.instance Definition`
 - `#[log]` and `#[log(raw)]` to get printed Coq commands equivalent to what HB
   is doing. The raw print has higher changes to be reparsable.
@@ -17,8 +21,9 @@
   the key of the mixin/factory
 - `#[infer(P)]` can be used to tell `HB.structure` to set things up so that
   parameter `P` is automatically inferred. E.g. if `P : Ring.type` then
-  `Structure.type` will take a `t : Type` and trigger a canonical inference
+  `Structure.type` will take a `t : Type` and trigger a canonical inference.
   to infer the `t_is_a_Ring : Ring.type` associated to `t`.
+  If `Structure` has a function carrier, one has to write `#[infer(P = "_ -> _")]`.
 
 ## [1.0.0] - 2020-12-16
 

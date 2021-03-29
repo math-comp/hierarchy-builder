@@ -125,6 +125,12 @@ log.coq.env.accumulate S DB CL :- std.do! [
   if-verbose (log.private.log-vernac (log.private.coq.vernac.comment CL)),
 ].
 
+pred log.coq.check i:term, o:term, o:term.
+log.coq.check Skel Ty T :- std.do! [
+  std.assert-ok! (coq.elaborate-skeleton Skel Ty T) "Check fails",
+  log.private.log-vernac (log.private.coq.vernac.check Skel),
+].
+
 namespace log.private {
 
 %%%%% Logging Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -160,6 +166,7 @@ type coq.vernac.coercion      string -> gref -> class       -> coq.vernac.
 type coq.vernac.canonical     string                        -> coq.vernac.
 type coq.vernac.implicit      bool -> string -> list (list implicit_kind)  -> coq.vernac.
 type coq.vernac.comment       A                             -> coq.vernac.
+type coq.vernac.check         term                          -> coq.vernac.
 
 }
 

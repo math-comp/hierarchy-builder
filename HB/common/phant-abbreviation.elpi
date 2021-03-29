@@ -77,10 +77,16 @@ fun-implicit N Ty (t\private.phant-term AL (F t))
 % [fun-infer-type N T Ph Ph1] Adds an argument N of type T such that one passes 
 % a value V of type {{ Type }} the corresponding canonical VC of type T is passed
 % for N , eg `fun T (phT : phant T) => Ph`
-pred fun-infer-type i:name, i:term, i:(term -> phant-term), o:phant-term.
-fun-infer-type N Ty (t\private.phant-term AL (Bo t)) Out :-
+pred fun-infer-type i:class, i:name, i:term, i:(term -> phant-term), o:phant-term.
+fun-infer-type sortclass N Ty (t\private.phant-term AL (Bo t)) Out :-
   coq.name-suffix N "ph" PhN,
-  fun-implicit N Ty (t\private.phant-term [private.infer-type N|AL] (fun PhN {{ lib:@hb.phant lp:t }} _\ Bo t)) Out.
+  fun-implicit N Ty (t\private.phant-term [private.infer-type N sortclass|AL]
+                                          (fun PhN {{ lib:@hb.phant lp:t }} _\ Bo t)) Out.
+fun-infer-type funclass N Ty (t\private.phant-term AL (Bo t)) Out :-
+  coq.name-suffix N "ph" PhN,
+  fun-implicit N Ty (t\private.phant-term [private.infer-type N funclass|AL]
+                                          (fun PhN {{ lib:@hb.phantom (_ -> _) lp:t }} _\ Bo t)) Out.
+fun-infer-type C _ _ _ _  :- coq.error "HB: inference of parameters of call" C "not implemented yet".
 
 % TODO: this looks like a hack to remove
 pred append-fun-unify i:phant-term, o:phant-term.
@@ -104,7 +110,7 @@ type phant-term list phant-arg -> term -> phant-term.
 % - [Phant x]        using [infer-type]
 kind phant-arg type.
 type real name -> phant-arg.
-type infer-type name -> phant-arg.
+type infer-type name -> class -> phant-arg.
 type implicit phant-arg.
 type unify phant-arg.
 
@@ -162,9 +168,13 @@ build-abbreviation K F [] K F.
 build-abbreviation K F [real N|AL] K'' (fun N _ AbbrevFx) :- !,
   pi x\ build-abbreviation K {mk-app F [x]} AL K' (AbbrevFx x),
   K'' is K' + 1.
-build-abbreviation K F [infer-type N|AL] K'' (fun N _ AbbrevFx) :- !,
+build-abbreviation K F [infer-type N sortclass|AL] K'' (fun N _ AbbrevFx) :- !,
   pi x\ build-abbreviation K {mk-app F [{{ lib:hb.Phant lp:x }}]} AL K' (AbbrevFx x),
   K'' is K' + 1.
+build-abbreviation K F [infer-type N funclass|AL] K'' (fun N _ AbbrevFx) :- !,
+  pi x\ build-abbreviation K {mk-app F [{{ lib:hb.Phantom (_ -> _) lp:x }}]} AL K' (AbbrevFx x),
+  K'' is K' + 1.
+build-abbreviation _ _ [infer-type _ (grefclass _)|_] _ _ :- coq.error "TODO".
 build-abbreviation K F [implicit|AL] K' FAbbrev :- !,
   build-abbreviation K {mk-app F [_]} AL K' FAbbrev.
 build-abbreviation K F [unify|AL] K' FAbbrev :- !,

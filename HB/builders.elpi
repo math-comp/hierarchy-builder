@@ -147,8 +147,7 @@ pred postulate-factories i:id, i:context-decl.
 postulate-factories ModName (context-item IDT _ TySkel none t\ context-item IDF _ (TF t) none _\ context-end) :- !, std.do! [
   % TODO we should allow T to be anything.
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "builders-postulate-factory: illtyped context",
-  if (var Ty) (fresh-type Ty)
-     (std.assert-ok! (coq.unify-eq Ty {{Type}}) "The last context item before the factory must be a type variable"),
+  if (var Ty) (fresh-type Ty) true,
   if-verbose (coq.say "HB: postulating type" IDT),
   log.coq.env.add-section-variable-noimplicits IDT Ty C,
   TheType = global (const C),

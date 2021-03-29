@@ -71,8 +71,6 @@ Proof. by rewrite example. Qed.
 
 The software is beta-quality, it works but error messages should be improved.
 
-The current version forces the carrier to be a type, ruling hierarchies of morphisms out.
-
 This [draft paper](https://hal.inria.fr/hal-02478907) describes the language
 in full detail.
 
