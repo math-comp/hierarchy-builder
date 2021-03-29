@@ -110,10 +110,10 @@ coercion.declare C :- std.do! [
 
 % Since CS.foo is not a valid predicate name we can't use it
 % in the namespace, so we just define it here with the full name
-pred log.coq.CS.declare-instance i:gref.
-log.coq.CS.declare-instance GR  :- std.do! [
-  coq.CS.declare-instance GR,
-  coq.gref->id GR Name,
+pred log.coq.CS.declare-instance i:constant.
+log.coq.CS.declare-instance C  :- std.do! [
+  coq.CS.declare-instance (const C),
+  coq.gref->id (const C) Name,
   log.private.log-vernac (log.private.coq.vernac.canonical Name),
 ].
 

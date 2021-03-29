@@ -11,10 +11,20 @@ export.module NiceModule Module :- !,
   log.coq.env.export-module NiceModule Module,
   log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export NiceModule Module)).
 
-pred export.reexport-all-modules.
-export.reexport-all-modules :- std.do! [
+pred export.reexport-all-modules-and-CS.
+export.reexport-all-modules-and-CS :- std.do! [
   std.findall (module-to-export NiceModule_ Module_) ModsCL,
   std.map ModsCL module-to-export_module-nice NiceMods,
   std.map ModsCL module-to-export_module Mods,
+
+  if-verbose (coq.say "HB: exporting modules" NiceMods),
   std.forall2 NiceMods Mods log.coq.env.export-module,
+
+
+  std.findall (instance-to-export NiceInstance_ Const_) InstCL,
+  %std.map InstCL instance-to-export_instance-nice NiceInsts,
+  std.map InstCL instance-to-export_instance Insts,
+
+  if-verbose (coq.say "HB: exporting CS instances" Insts),
+  std.forall Insts log.coq.CS.declare-instance,
 ].

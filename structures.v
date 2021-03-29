@@ -174,6 +174,7 @@ pred current-mode o:declaration.
 %% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred module-to-export o:id, o:modpath.
+pred instance-to-export o:id, o:constant.
 
 % coercions chains compression rules (we only care about non applicative
 % terms, since this is what you get when you apply coercions)
@@ -365,6 +366,9 @@ Elpi Export HB.structure.
     HB.instance Definition N Params := Factory.Build Params T …
     >>
 
+    Attributes:
+    - [#[export]] to flag the instance so that it is redeclared by #[HB.reexport]
+
 *)
 
 Elpi Command HB.instance.
@@ -536,7 +540,7 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (with-logging (export.reexport-all-modules)).
+main [] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS)).
 main _ :- coq.error "Usage: HB.reexport.".
 }}.
 Elpi Typecheck.

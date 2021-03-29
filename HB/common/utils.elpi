@@ -33,6 +33,7 @@ with-attributes P :-
     att "log" bool,
     att "log.raw" bool,
     att "compress_coercions" bool,
+    att "export" bool,
   ] Opts, !,
   Opts => P.
 
