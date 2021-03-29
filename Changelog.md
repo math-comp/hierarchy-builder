@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+- `#[compress_coercions]` attribute (off by default) to shorten coercions paths
+  in the synthesis of instances.
 - `HB.instance K F` deprecated in favor of `HB.instance Definition`
 - `#[log]` and `#[log(raw)]` to get printed Coq commands equivalent to what HB
   is doing. The raw print has higher changes to be reparsable.
