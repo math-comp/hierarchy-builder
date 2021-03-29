@@ -74,7 +74,7 @@ declare-all T [class Class Struct MLwP|Rest] [CS|L] :-
 
   if (not(local-cs? T Struct))
      true % we build it
-     (if-verbose (coq.say "HB: skipping alreay existing"
+     (if-verbose (coq.say "HB: skipping already existing"
                     {nice-gref->string Struct} "instance on"
                     {coq.term->string T}),
       fail),
@@ -86,8 +86,10 @@ declare-all T [class Class Struct MLwP|Rest] [CS|L] :-
 
   !,
   coq.term->gref T TGR,
+  coq.gref->path TGR TPath,
+  std.rev TPath [TMod|_],
   coq.gref->id TGR TID,
-  Name is TID ^ "_is_a_" ^ {gref->modname Struct},
+  Name is TMod ^ "_" ^ TID ^ "_canonical_" ^ {gref->modname Struct},
 
   if-verbose (coq.say "HB: declare canonical structure instance" Name),
 

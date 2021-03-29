@@ -53,6 +53,8 @@ tests/subtype.v
 tests/infer.v
 tests/exports.v
 tests/log_impargs_record.v
+tests/compress_coe.v
+
 
 -R tests HB.tests
 -R examples HB.examples

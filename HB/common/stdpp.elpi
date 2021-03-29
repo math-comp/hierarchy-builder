@@ -165,3 +165,24 @@ coq.copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
     copy (global (const C)) B1 :- !, copy B B1),
   coq.copy-clauses-for-unfold CS L.
 
+% like fold-map, needed for coq-elpi < 1.9
+
+pred coq.fold-map i:term, i:A, o:term, o:A.
+coq.fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "coq.fold-map x A x A" at binders
+coq.fold-map (global _ as C) A C A :- !.
+coq.fold-map (sort _ as C) A C A :- !.
+coq.fold-map (fun N T F) A (fun N T1 F1) A2 :- !,
+  coq.fold-map T A T1 A1, pi x\ coq.fold-map (F x) A1 (F1 x) A2.
+coq.fold-map (let N T B F) A (let N T1 B1 F1) A3 :- !,
+  coq.fold-map T A T1 A1, coq.fold-map B A1 B1 A2, pi x\ coq.fold-map (F x) A2 (F1 x) A3.
+coq.fold-map (prod N T F) A (prod N T1 F1) A2 :- !,
+  coq.fold-map T A T1 A1, (pi x\ coq.fold-map (F x) A1 (F1 x) A2).
+coq.fold-map (app L) A (app L1) A1 :- !, std.fold-map L A coq.fold-map L1 A1.
+coq.fold-map (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+  coq.fold-map Ty A Ty1 A1, pi x\ coq.fold-map (F x) A1 (F1 x) A2.
+coq.fold-map (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+  coq.fold-map T A T1 A1, coq.fold-map Rty A1 Rty1 A2, std.fold-map B A2 coq.fold-map B1 A3.
+coq.fold-map (primitive _ as C) A C A :- !.
+coq.fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A coq.fold-map L1 A1, coq.mk-app-uvar M L1 W.
+% when used in CHR rules
+coq.fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A coq.fold-map L1 A1.
