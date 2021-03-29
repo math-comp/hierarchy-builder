@@ -57,12 +57,8 @@ declare-const Name BodySkel TyWPSkel :- std.do! [
     log.coq.env.end-section-name SectionName
   ),
 
-  coq.say "accumulating" Clauses,
-
   % we accumulate clauses now that the section is over
   std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
-
-  coq.say "stop",
 ].
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
