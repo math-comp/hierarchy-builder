@@ -313,7 +313,7 @@ declare-coercion SortProjection ClassProjection
   log.coq.env.add-const-noimplicits SName SCoeBody STy @transparent! SC,
   log.coq.coercion.declare (coercion (const SC) 0 StructureF (grefclass StructureT)),
 
-  log.coq.CS.declare-instance SC, % TODO: API in Elpi, take a @constant instead of gref
+  log.coq.CS.declare-instance SC,
 
   if-verbose (coq.say "HB: declare coercion path compression rules"),
 
