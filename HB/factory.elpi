@@ -157,22 +157,28 @@ process-asset-unnamed-parameters (asset-record _ Sort _ Fields) GRFS Module TheT
 
 pred declare-factory-alias i:term, i:list-w-params factoryname, i:id, i:term, i:list term.
 declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
-
   % TODO maybe context.declare should just take GRFSwP and postulate
   % the parameters and the type
-  context.declare TheType TheParams GRFSwP Hyps _,
+  context.declare TheType TheParams GRFSwP MixinSrcClauses SectionCanonicalInstance,
+
+  if-verbose (coq.say "HB: declare constant axioms_"),
 
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
-  log.coq.env.add-const-noimplicits "axioms_" Ty1 _ @transparent! C,
+
+  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
+  log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
-  Hyps => synthesis.infer-all-mixin-args TheParams TheType FK MFK,
+  MixinSrcClauses => synthesis.infer-all-mixin-args TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
-  (pi Args\ copy (app [global F|Args]) (global (const C))) => copy MFKTy MFKTyC,
-  log.coq.env.add-const-noimplicits "Axioms_" MFK MFKTyC @transparent! CK,
+  (pi Args\ copy (app[global F|Args]) (app[global (const C)|Section])) => copy MFKTy MFKTyC,
+
+  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr MFK MFKTyC) (pr MFKClosed MFKTyCClosed) _,
+  log.coq.env.add-const-noimplicits "Axioms_" MFKClosed MFKTyCClosed @transparent! CK,
+
   GRK = const CK,
 
   log.coq.env.end-section-name Module,
@@ -224,8 +230,8 @@ build-deps-for-projections R MLwP CL :- std.do! [
 % variables that aoccur. We don't want that for mixin/factories, so we implement
 % our own discharging. Note that definitions (like canonical instance) have
 % to be abstracted too.
-pred abstract-indt-decl-over-section i:list term, i:term, i:list prop, i:list constant, i:indt-decl, o:indt-decl.
-abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed :-
+pred abstract-over-section i:list term, i:term, i:list prop, i:list constant, i:(list constant -> A -> A -> prop), i:A, o:A, o:list term.
+abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance F X X1 Section :-
   % compute section variables to be used for discharging
   std.map MixinSrcClauses mixin-src_src Mixins,
   std.append TheParams [TheType|{std.rev Mixins}] Section,
@@ -233,7 +239,7 @@ abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonic
   % We discharge by hand the record declaration so that we can be sure all
   % parameters and mixins are abstracted (even if unused).
   coq.copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
-  CopyUnfold => coq.abstract-indt-decl SectionVars RDecl RDeclClosed.
+  CopyUnfold => F SectionVars X X1.
 
 pred declare-mixin-or-factory i:term, i:record-decl, i:list-w-params factoryname, i:id, i:term, i:asset, i:list term.
 declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.do! [
@@ -245,7 +251,7 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
 
-  abstract-indt-decl-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance RDecl RDeclClosed,
+  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
   log.coq.env.add-indt RDeclClosed R,
   log.coq.env.end-section-name Module, % We need to anyway declare the record inside the section

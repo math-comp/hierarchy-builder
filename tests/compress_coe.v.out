@@ -1,4 +1,4 @@
-prod_prod_canonical_D = 
+prod_canonical_D = 
 fun D D' : D.type =>
 {|
   D.sort := D.sort D * D.sort D';

@@ -31,7 +31,7 @@ pred infer-all-mixin-args i:list term, i:term, i:gref, o:term.
 infer-all-mixin-args Ps T GR X :- !, std.do! [
   std.assert! (gref-deps GR MLwP) "BUG: gref-deps should never fail",
   list-w-params_list MLwP ML,
-  infer-mixin-args Ps T ML (global GR) X
+  infer-mixin-args Ps T ML (global GR) X,
 ].
 
 % [assert!-infer-mixin TheType M Out] infers one mixin M on TheType and
@@ -109,7 +109,7 @@ namespace private {
 % the databases [mixin-src] and [from]
 pred mixin-for i:term, i:mixinname, o:term.
 mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
-  if-verbose (coq.say "HB: Trying to infer mixin for" M),
+  %if-verbose (coq.say "HB: Trying to infer mixin for" M),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
   factory? Ty (triple Factory Params _),
@@ -119,7 +119,7 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
       coq.subst-fun [Tm] B MI
   ),
 
-  if-verbose (coq.say "HB: Trying to compress mixin for" {coq.term->string MI}),
+  %if-verbose (coq.say "HB: Trying to compress mixin for" {coq.term->string MI}),
   compress-coercion-paths MI MICompressed,
 ].
 

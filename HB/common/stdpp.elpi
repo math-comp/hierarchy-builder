@@ -138,7 +138,7 @@ coq.gref.list->set L S :-
   std.fold L {coq.gref.set.empty} coq.gref.set.add S.
 
 % [coq.abstract-indt-decl Section I AbsI] abstracts I over the Section variables
-% which becomes parameter nodes if the indt-decl type
+% which becomes parameter nodes of the indt-decl type
 pred coq.abstract-indt-decl i:list constant, i:indt-decl, o:indt-decl.
 coq.abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
 coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
@@ -148,6 +148,19 @@ coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
   @pi-parameter ID Ty x\
     (copy (global (const C)) x :- !) =>
     coq.abstract-indt-decl CS X (X1 x).
+
+% [coq.abstract-const-decl Section I AbsI] abstracts I over the Section variables
+% which becomes fun nodes
+pred coq.abstract-const-decl i:list constant, i:pair term term, o:pair term term.
+coq.abstract-const-decl [] (pr X Y) (pr X1 Y1) :- copy X X1, copy Y Y1.
+coq.abstract-const-decl [C|CS] X (pr (fun Name Ty1 X1) (prod Name Ty1 X2)) :-
+  coq.gref->string (const C) ID,
+  coq.id->name ID Name,
+  coq.env.typeof (const C) Ty,
+  copy Ty Ty1,
+  @pi-parameter ID Ty x\
+    (copy (global (const C)) x :- !) =>
+    coq.abstract-const-decl CS X (pr (X1 x) (X2 x)).
 
 % [coq.copy-clauses-for-unfold CS CL] generates clauses for the copy predicate
 % to unfold all constants in CS

@@ -224,3 +224,6 @@ Proof. by rewrite -addrA subrr addr0. Qed.
 End Theory.
 
 HB.graph "hierarchy_5.dot".
+
+(* we check the alias factory is abstracted over the whole section *)
+HB.check (SemiRing_of_AddComoid.axioms_ : forall A, forall m : AddMonoid_of_TYPE.axioms_ A, AddComoid_of_AddMonoid.axioms_ A m -> Type).
