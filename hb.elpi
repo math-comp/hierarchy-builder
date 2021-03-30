@@ -564,7 +564,7 @@ safe-head T Hd :- safe-dest-app T Hd _.
 
 %% finding for locally defined structures
 pred get-cs-structure i:cs-instance, o:term.
-get-cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
+get-cs-structure (cs-instance _ _ Inst) Struct :- std.do! [
   coq.env.typeof Inst InstTy,
   safe-head InstTy Struct
 ].
