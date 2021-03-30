@@ -8,7 +8,7 @@ Hierarchy Builder (HB) provides high level commands to declare a hierarchy of al
 
 Given a structure one can develop its theory, and that theory becomes automatically applicable to
 all the examples of the structure. One can also declare alternative interfaces, for convenience
-or backward compatibility, and provide glue code linking thse interfaces to the structures part of
+or backward compatibility, and provide glue code linking these interfaces to the structures part of
 the hierarchy.
 
 HB commands compile down to Coq modules, sections, records, coercions, canonical structure instances
@@ -22,7 +22,7 @@ a few concepts and a few declarative Coq commands.
 From HB Require Import structures.
 From Coq Require Import ssreflect ZArith.
 
-HB.mixin Record is_AddComoid A := {
+HB.mixin Record IsAddComoid A := {
   zero : A;
   add : A -> A -> A;
   addrA : forall x y z, add x (add y z) = add (add x y) z;
@@ -30,7 +30,7 @@ HB.mixin Record is_AddComoid A := {
   add0r : forall x, add zero x = x;
 }.
 
-HB.structure Definition AddComoid := { A of is_AddComoid A }.
+HB.structure Definition AddComoid := { A of IsAddComoid A }.
 
 Notation "0" := zero.
 Infix "+" := add.
@@ -45,18 +45,18 @@ We proceed by declaring how to obtain an Abelian group out of the
 additive, commutative, monoid.
 
 ```coq
-HB.mixin Record is_AbelianGrp A of AddComoid A := {
+HB.mixin Record AddComoid_IsAbelianGrp A of IsAddComoid A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.
 
-HB.structure Definition AbelianGrp := { A of is_AbelianGrp A & is_AddComoid A }.
+HB.structure Definition AbelianGrp := { A of AddComoid_IsAbelianGrp A & IsAddComoid A }.
 
 Notation "- x" := (opp x).
 ```
 
 Abelian groups feature the operations and properties given by the
-`is_AbelianGrp` mixin (and its dependency `is_AddComoid`).
+`IsAbelianGrp` mixin (and its dependency `IsAddComoid`).
 
 ```coq
 Lemma example (G : AbelianGrp.type) (x : G) : x + (- x) = - 0.
@@ -68,10 +68,10 @@ the lemma just proved on a statement about `Z`.
 
 ```coq
 HB.instance Definition Z_CoMoid :=
-  is_AddComoid.Build Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
+  IsAddComoid.Build Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
  
 HB.instance Definition Z_AbGrp :=
-  is_AbelianGrp.Build Z Z.opp Z.add_opp_diag_l.
+  IsAbelianGrp.Build Z Z.opp Z.add_opp_diag_l.
 
 Lemma example2 (x : Z) : x + (- x) = - 0.
 Proof. by rewrite example. Qed.
