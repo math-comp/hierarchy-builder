@@ -1,29 +1,72 @@
 # Changelog
 
-## UNRELEASED
+## [1.1.0] - 2021-03-30
 
-- `#[export]` attribute can be given to `HB.instance` in order to have instances
-  (re)declared by `HB.reexport`.
-- `#[compress_coercions]` attribute (off by default) to shorten coercions paths
-  in the synthesis of instances.
-- `HB.check` is like `Check` but supports logging and can be disabled on a
-  selection of Coq versions.
-- Experimental support for structures with a function as the carrier, that is
+Compatible with
+- Coq 8.11 with Coq-Elpi 1.6.2,
+- Coq 8.12 with Coq-Elpi 1.8.2,
+- Coq 8.13 with Coq-Elpi 1.9.5.
+
+### General
+
+- **Experimental** support for structures with a function as the carrier, for e.g.
   hierarchies of morphisms.
-- `HB.instance K F` deprecated in favor of `HB.instance Definition`
-- `#[log]` and `#[log(raw)]` to get printed Coq commands equivalent to what HB
-  is doing. The raw print has higher changes to be reparsable.
-- export `COQ_ELPI_ATTRIBUTES="hb(log(raw))"` to have HB commands log patch
-  files containing Coq commands equivalent to what HB did. Patch file have
-  extension `.hb` and are named after the file they apply to.
-- `coq.hb` command line utility to patch/reset files.
-- `indexed` is gone, one can use `#[key="T"]` instead to flag paramter `T` as
-  the key of the mixin/factory
-- `#[infer(P)]` can be used to tell `HB.structure` to set things up so that
+- **Fix** Type inference of parameters for HB commands improved, it can now rely on
+  the right hand side of factories and mixins
+- **Fix** Removed a hack that included phantom fields in mixins and factories in order
+  to prevent erasure from section discharge.
+- **Cosmetic** Changed naming convention for canonical instances e.g. `T_is_a_Ring` is now
+  renamed to `T_Ring`. This name should still not be relied upon.
+- **Cleanup** The elpi code has been split into several files,
+  one for each command and a folder for common code.
+- **Fix** Speedup `toposort` in elpi code.
+- **Doc** The file `structures.v` contains a detailed documentation of each command.
+
+### Commands
+
+- **Deprecated** `HB.instance K F` in favor of `HB.instance Definition`.
+- **New** `HB.export` is like `Export` except that the module is stored
+  in a database for later rexport.
+- **New** `HB.reexport` reexports all the modules that have been previously
+  flagged by `HB.export`, as well as all the `HB.instance` that have been flagged
+  by the attribute `#[export]`.
+- **New** `HB.check` is like `Check` but supports logging and can be
+  disabled on a selection of Coq versions.
+- **New** `HB.graph` generates the graph of structures as a dot file.
+  (One may use `tred file.dot | xdot -` to visualize the output).
+- **Extended** `HB.structure` to generate methods `.on` and `.copy`
+  (see `structures.v` for their documentation).
+
+### Attributes
+
+- **New** `#[export]` attribute can be given to `HB.instance` in order to have instances
+  (re)declared by `HB.reexport`.
+- **New** `#[compress_coercions]` attribute (off by default) to shorten coercions paths
+  in the synthesis of instances. When instanciating structures one by one,
+  (e.g. T is declared as a Semiring, then as a Ring, then as a Field, etc)
+  the coercions used to pile up, we now compress these chains of application.
+- **New** `#[log]` and `#[log(raw)]` to print Coq commands equivalent to what HB
+  is doing. The raw print is the only one which is reparsable.
+- **New** `#[key="T"]` to flag paramter `T` as the key of the mixin/factory.
+  The definition `indexed` used to serve this purpose is deprecated and will not do anything.
+- **New** `#[infer(P)]` can be used to tell `HB.structure` to set things up so that
   parameter `P` is automatically inferred. E.g. if `P : Ring.type` then
   `Structure.type` will take a `t : Type` and trigger a canonical inference.
   to infer the `t_is_a_Ring : Ring.type` associated to `t`.
   If `Structure` has a function carrier, one has to write `#[infer(P = "_ -> _")]`.
+- **New** `#[arg_sort]` for `HB.structure` generates an intermediate
+  sort projection called `arg_sort` which is prioritary as a coercion and which
+  unfolds to `sort`. It is meant to be the sort of arguments of operations
+  (see `mathcomp/fingroup/fingroup.v` for more information).
+- **New** `#[local]` for `HB.instance` so that they do not survive sections.
+
+### Tooling 
+ 
+- **New** environment variable `COQ_ELPI_ATTRIBUTES="hb(log(raw))"` to have HB commands
+  write patch files containing Coq commands equivalent to what HB did.
+  These patch files have extension `.v.hb` and are named after the file they apply to.
+- **New** `coq.hb` command line utility to patch/reset files.
+- **New** The CI is now testing mathcomp and plan B (using nix).
 
 ## [1.0.0] - 2020-12-16
 
