@@ -256,12 +256,16 @@ get-cs-structure (cs-instance _ _ (global Inst)) Struct :- std.do! [
   coq.prod-tgt->gref InstTy Struct
 ].
 
-pred has-cs-instance i:gref, i:cs-instance.
-has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
+pred has-cs-instance i:term, i:cs-instance.
+has-cs-instance (global GR) (cs-instance _ (cs-gref GR) _) :- !.
+has-cs-instance (app[global GR|_]) (cs-instance _ (cs-gref GR) _) :- !.
+has-cs-instance (prod _ _ _) (cs-instance _ cs-prod _) :- !.
+has-cs-instance (sort U) (cs-instance _ (cs-sort U) _) :- !.
+has-cs-instance _ (cs-instance _ cs-default _) :- !.
 
 pred get-local-structures i:term, o:list structure.
 get-local-structures TyTrm StructL :- std.do! [
-  std.filter {coq.CS.db} (has-cs-instance {term->gref TyTrm}) DBGTyL,
+  std.filter {coq.CS.db} (has-cs-instance TyTrm) DBGTyL,
   std.map DBGTyL get-cs-structure RecL,
   std.filter RecL is-structure StructL
 ].
