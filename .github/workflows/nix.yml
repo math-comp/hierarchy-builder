@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [ "coq-8.13", "coq-8.12", "coq-8.11" ]
+        bundle: [ "coq-8.13", "coq-8.12", "coq-8.11" ]
     steps:
     - name: Cachix install
       uses: cachix/install-nix-action@v12
@@ -31,15 +31,15 @@ jobs:
       with:
         fetch-depth: 0
     - name: Dependencies
-      run: nix-build --argstr job "_deps" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "_deps" --argstr bundle ${{ matrix.bundle }}
     - name: Build HB
-      run: nix-build --argstr job "hierarchy-builder" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "hierarchy-builder" --argstr bundle ${{ matrix.bundle }}
 
   hb-shim:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        task: [ "coq-8.13" ]
+        bundle: [ "coq-8.13" ]
     steps:
     - name: Cachix install
       uses: cachix/install-nix-action@v12
@@ -54,9 +54,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Dependencies
-      run: nix-build --argstr job "_deps" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "_deps" --argstr bundle ${{ matrix.bundle }}
     - name: Build HB shim
-      run: nix-build --argstr job "hierarchy-builder-shim" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "hierarchy-builder-shim" --argstr bundle ${{ matrix.bundle }}
 
   mathcomp:
     runs-on: ubuntu-latest
@@ -65,7 +65,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [ "coq-8.13", "coq-8.12", "coq-8.11" ]
+        bundle: [ "coq-8.13", "coq-8.12", "coq-8.11" ]
     steps:
     - name: Cachix install
       uses: cachix/install-nix-action@v12
@@ -80,11 +80,11 @@ jobs:
       with:
         fetch-depth: 0
     - name: Dependencies
-      run: nix-build --argstr job "_deps" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "_deps" --argstr bundle ${{ matrix.bundle }}
     - name: Hiearchy builder
-      run: nix-build --argstr job "hierarchy-builder" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "hierarchy-builder" --argstr bundle ${{ matrix.bundle }}
     - name: Build mathcomp on HB
-      run: nix-build --argstr job "mathcomp-single" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "mathcomp-single" --argstr bundle ${{ matrix.bundle }}
 
   mathcomp-planB-src:
     runs-on: ubuntu-latest
@@ -92,7 +92,7 @@ jobs:
     if: always()
     strategy:
       matrix:
-        task: [ "coq-8.13" ]
+        bundle: [ "coq-8.13" ]
     steps:
     - name: Cachix install
       uses: cachix/install-nix-action@v12
@@ -107,18 +107,18 @@ jobs:
       with:
         fetch-depth: 0
     - name: Dependencies
-      run: nix-build --argstr job "_deps" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "_deps" --argstr bundle ${{ matrix.bundle }}
     - name: Hiearchy builder
-      run: nix-build --argstr job "hierarchy-builder" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "hierarchy-builder" --argstr bundle ${{ matrix.bundle }}
     - name: Build planB sources
-      run: nix-build --argstr job "mathcomp-single-planB-src" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "mathcomp-single-planB-src" --argstr bundle ${{ matrix.bundle }}
 
   mathcomp-planB:
     runs-on: ubuntu-latest
     if: always()
     strategy:
       matrix:
-        task: [ "coq-8.13" ]
+        bundle: [ "coq-8.13" ]
     needs:
     - hb-shim
     - mathcomp-planB-src
@@ -136,10 +136,10 @@ jobs:
       with:
         fetch-depth: 0
     - name: Dependencies
-      run: nix-build --argstr job "_deps" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "_deps" --argstr bundle ${{ matrix.bundle }}
     - name: Hiearchy builder
-      run: nix-build --argstr job "hierarchy-builder-shim" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "hierarchy-builder-shim" --argstr bundle ${{ matrix.bundle }}
     - name: Build plan B sources
-      run: nix-build --argstr job "mathcomp-single-planB-src" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "mathcomp-single-planB-src" --argstr bundle ${{ matrix.bundle }}
     - name: Build plan B
-      run: nix-build --argstr job "mathcomp-single-planB" --argstr task ${{ matrix.task }}
+      run: nix-build --argstr job "mathcomp-single-planB" --argstr bundle ${{ matrix.bundle }}

@@ -1,8 +1,8 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-task = "coq-8.13";
-  tasks = let common = {
+  default-bundle = "coq-8.13";
+  bundles = let common = {
       mathcomp.override.version = "hierarchy-builder";
       mathcomp.job = false;
       mathcomp-single.job = true;
