@@ -196,7 +196,7 @@ HB.builders
   Context A of Ring_of_Type A.
 
 (* We are in a Context with a type A that with operations
-   and properties, but wich is not yet known to be a Ring *)
+   and properties, but which is not yet known to be a Ring *)
 Check add.
 Local Infix "+" := add.
 
