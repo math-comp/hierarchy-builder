@@ -177,7 +177,7 @@ This is a "plan B", by looking at the output of`#[log]` you will realize that
 HB commands are much nicer (and shorter) than the equivalent Coq code. The
 point of a "plan B" is to avoid nightmares, not to be nicer than plan A ;-)
 
-How can you be ensure plan B works? We provide tools to check that, see
+How can you be sure plan B works? We provide tools to check that in your CI, see
 the details below.
 
 <details><summary>(click to expand)</summary><p>
