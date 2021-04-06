@@ -295,8 +295,8 @@ declare-coercion SortProjection ClassProjection
 
   gref->modname StructureF ModNameF,
   gref->modname StructureT ModNameT,
-  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class" ^ {std.any->string {new_int}},
-  SName is ModNameF ^ "_to_" ^ ModNameT ^ {std.any->string {new_int}},
+  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class_" ^ {std.any->string {new_int}},
+  SName is ModNameF ^ "_to_" ^ ModNameT ^ "_" ^ {std.any->string {new_int}},
 
   if-verbose (coq.say "HB: declare coercion" SName),
 
@@ -378,7 +378,7 @@ join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
 pred declare-join i:class, i:pair class class, o:prop.
 declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
   Name is "join_" ^ {gref->modname S3} ^
-    "_between_" ^ {gref->modname S1} ^ "_and_" ^ {gref->modname S2} ^ {std.any->string {new_int}},
+    "_between_" ^ {gref->modname S1} ^ "_and_" ^ {gref->modname S2} ^ "_" ^ {std.any->string {new_int}},
 
   get-structure-coercion S3 S2 S3_to_S2,
   get-structure-coercion S3 S1 S3_to_S1,
