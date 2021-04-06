@@ -4,9 +4,9 @@ fun D D' : D.type =>
   D.sort := D.sort D * D.sort D';
   D.class :=
     {|
-      D.hasA_mixin := prodA (D_to_A D) (D_to_A D');
-      D.hasB_mixin := prodB tt (D_to_B D) (D_to_B D');
-      D.hasC_mixin := prodC tt tt (D_to_C D) (D_to_C D');
+      D.hasA_mixin := prodA (D_to_A11 D) (D_to_A11 D');
+      D.hasB_mixin := prodB tt (D_to_B13 D) (D_to_B13 D');
+      D.hasC_mixin := prodC tt tt (D_to_C15 D) (D_to_C15 D');
       D.hasD_mixin := prodD D D'
     |}
 |}
