@@ -119,7 +119,7 @@ declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR _), !,
 declare-instance T F Clauses :-
   declare-canonical-instances-from-factory T F CS,
   if (get-option "export" tt)
-     (rex_split "," {get-option "elpi.loc"} [File|_],
+     (coq.env.current-library File,
       std.map CS (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
      (Clauses = []).
 

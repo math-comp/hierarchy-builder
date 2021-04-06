@@ -9,12 +9,12 @@
 pred export.module i:id, i:modpath.
 export.module NiceModule Module :- !,
   log.coq.env.export-module NiceModule Module,
-  rex_split "," {get-option "elpi.loc"} [File|_],
+  coq.env.current-library File,
   log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule Module)).
 
 pred export.reexport-all-modules-and-CS.
 export.reexport-all-modules-and-CS :- std.do! [
-  rex_split "," {get-option "elpi.loc"} [File|_],
+  coq.env.current-library File,
   std.findall (module-to-export File NiceModule_ Module_) ModsCL,
   std.map ModsCL module-to-export_module-nice NiceMods,
   std.map ModsCL module-to-export_module Mods,
