@@ -295,8 +295,8 @@ declare-coercion SortProjection ClassProjection
 
   gref->modname StructureF ModNameF,
   gref->modname StructureT ModNameT,
-  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class",
-  SName is ModNameF ^ "_to_" ^ ModNameT,
+  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class" ^ {std.any->string {new_int}},
+  SName is ModNameF ^ "_to_" ^ ModNameT ^ {std.any->string {new_int}},
 
   if-verbose (coq.say "HB: declare coercion" SName),
 
