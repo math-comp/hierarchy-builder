@@ -9,11 +9,13 @@
 pred export.module i:id, i:modpath.
 export.module NiceModule Module :- !,
   log.coq.env.export-module NiceModule Module,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export NiceModule Module)).
+  rex_split "," {get-option "elpi.loc"} [File|_],
+  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule Module)).
 
 pred export.reexport-all-modules-and-CS.
 export.reexport-all-modules-and-CS :- std.do! [
-  std.findall (module-to-export NiceModule_ Module_) ModsCL,
+  rex_split "," {get-option "elpi.loc"} [File|_],
+  std.findall (module-to-export File NiceModule_ Module_) ModsCL,
   std.map ModsCL module-to-export_module-nice NiceMods,
   std.map ModsCL module-to-export_module Mods,
 
@@ -21,7 +23,7 @@ export.reexport-all-modules-and-CS :- std.do! [
   std.forall2 NiceMods Mods log.coq.env.export-module,
 
 
-  std.findall (instance-to-export NiceInstance_ Const_) InstCL,
+  std.findall (instance-to-export File NiceInstance_ Const_) InstCL,
   %std.map InstCL instance-to-export_instance-nice NiceInsts,
   std.map InstCL instance-to-export_instance Insts,
 
