@@ -4,6 +4,6 @@ post-all::
 	rm -f tests/compress_coe.v.hb
 	@$(COQC) $(COQFLAGS) $(COQLIBS) tests/compress_coe.v > tests/compress_coe.v.out.aux
 	case $(COQ_MINOR) in \
-	11|12) echo "No coercion compression on Coq 8.$(COQ_MINOR), skipping diff" ;;\
+	11|12|13) echo "No coercion compression on Coq 8.$(COQ_MINOR), skipping diff" ;;\
 	*)	diff -u tests/compress_coe.v.out tests/compress_coe.v.out.aux ;;\
 	esac
