@@ -240,6 +240,7 @@ optimize-class-body NParams (app[K|Args]) (app[K|NamedArgs]) Clauses :- std.do! 
 pred declare-mixin-name i:term, o:(pair term (list prop)).
 declare-mixin-name (global GR) (pr (global GR) []).
 declare-mixin-name T (pr (global GR) []) :- mixin-mem T GR.
+declare-mixin-name T (pr T []) :- coq.safe-dest-app T (global GR) _, from _ _ GR.
 declare-mixin-name T (pr (global (const C)) [mixin-mem T (const C)]) :- std.do! [
   if-verbose (coq.say "HB: declare-mixin-name" T),
   Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
