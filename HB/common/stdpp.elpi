@@ -77,6 +77,12 @@ constraint print-ctx mixin-src {
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% approximation, it should be logical path, not the file name
+pred coq.env.current-library o:string.
+coq.env.current-library L :- coq.version _ _ N _, N >= 13, !,
+  rex_split "," {get-option "elpi.loc"} [L|_].
+coq.env.current-library "dummy.v".
+
 pred coq.prod-tgt->gref i:term, o:gref.
 coq.prod-tgt->gref T GR :- whd1 T T1, !, coq.prod-tgt->gref T1 GR.
 coq.prod-tgt->gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ coq.prod-tgt->gref (Tgt x) GR.

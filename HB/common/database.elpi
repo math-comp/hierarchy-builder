@@ -36,16 +36,16 @@ pred classname->mixins i:classname, o:list-w-params mixinname.
 classname->mixins CN MLwP :- class-def (class CN _ MLwP).
 
 pred module-to-export_module i:prop, o:modpath.
-module-to-export_module (module-to-export _ M) M.
+module-to-export_module (module-to-export _ _ M) M.
 
 pred module-to-export_module-nice i:prop, o:id.
-module-to-export_module-nice (module-to-export M _) M.
+module-to-export_module-nice (module-to-export _ M _) M.
 
 pred instance-to-export_instance i:prop, o:constant.
-instance-to-export_instance (instance-to-export _ M) M.
+instance-to-export_instance (instance-to-export _ _ M) M.
 
 pred instance-to-export_instance-nice i:prop, o:id.
-instance-to-export_instance-nice (instance-to-export M _) M.
+instance-to-export_instance-nice (instance-to-export _ M _) M.
 
 pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.

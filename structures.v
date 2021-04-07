@@ -175,8 +175,9 @@ pred current-mode o:declaration.
 
 %% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred module-to-export o:id, o:modpath.
-pred instance-to-export o:id, o:constant.
+% library, nice-name, object
+pred module-to-export   o:string, o:id, o:modpath.
+pred instance-to-export o:string, o:id, o:constant.
 
 % coercions chains compression rules (we only care about non applicative
 % terms, since this is what you get when you apply coercions)
