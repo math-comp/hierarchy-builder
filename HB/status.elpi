@@ -9,14 +9,30 @@ print-hierarchy :- std.do! [
   std.findall (class-def CL_) CL,
   std.forall CL private.pp-class,
 
+  coq.say "",
   coq.say "--------------------- Builders -----------------------------------",
   std.findall (from A_ B_ C_) FL,
   std.forall FL private.pp-from,
 
   std.findall (mixin-src T_ M_ V_) ML,
   if (ML = []) true (
+    coq.say "",
     coq.say "--------------------- Local mixin instances ----------------------",
     std.forall ML private.pp-mixin-src
+  ),
+
+  std.findall (builder-decl BD_) BDL,
+  if (BDL = []) true (
+    coq.say "",
+    coq.say "--------------------- Builder declarations ----------------------",
+    std.forall BDL private.pp-builder-decl
+  ),
+
+  std.findall (current-mode BF_) BFL,
+  if (BFL = []) true (
+    coq.say "",
+    coq.say "--------------------- Current mode ----------------------",
+    std.forall BFL private.pp-current-mode
   ),
 ].
 
@@ -52,7 +68,17 @@ pp-class (class-def (class _ S MLwP)) :-
 pred pp-mixin-src i:prop.
 pp-mixin-src (mixin-src T M C) :-
   coq.say {coq.term->string T} "is a"
-          {nice-gref->string M} "thans to"
+          {nice-gref->string M} "thanks to"
           {coq.term->string C}.
 
+pred pp-builder-decl i:prop.
+pp-builder-decl (builder-decl (builder N F M GR)) :-
+  coq.say "builder" GR "with serial number" N 
+    "will build mixin" M "from factory" F.
+
+pred pp-current-mode i:prop.
+pp-current-mode (current-mode (builder-from TheType TheFactory GRF Mod)) :-
+  coq.say "The current key is" TheType "with factory" TheFactory
+    "corresponding to Global Ref" GRF "in module" Mod.
+  
 }}

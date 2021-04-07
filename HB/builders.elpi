@@ -30,7 +30,7 @@ begin CtxSkel :- std.do! [
 % "end" is a keyword, be put it in the namespace by hand
 pred builders.end.
 builders.end :- std.do! [
-  current-mode (builder-from _ GR ModName),
+  current-mode (builder-from _ _ GR ModName),
 
   log.coq.env.end-section-name ModName,
 
@@ -158,7 +158,8 @@ postulate-factories ModName (context-item IDT _ TySkel none t\ context-item IDF 
   context.declare TheType Params GRFMLwP _ _,
   postulate-factory-abbrev TheType Params IDF GRF TheFactory,
   define-factory-operations TheType Params TheFactory GRF,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (current-mode (builder-from TheFactory GRF ModName))),
+  log.coq.env.accumulate current "hb.db" (clause _ _
+    (current-mode (builder-from TheType TheFactory GRF ModName))),
 ].
 
 postulate-factories ModName (context-item ID _ TSkel none Factories) :- std.do! [

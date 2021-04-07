@@ -169,8 +169,8 @@ pred builder-decl o:builder.
 
 % To tell HB.end what we are doing
 kind declaration type.
-% TheFactory and it's name and the name of the module encloding all that
-type builder-from term -> factoryname -> id -> declaration.
+% TheType, TheFactory and it's name and the name of the module encloding all that
+type builder-from term -> term -> factoryname -> id -> declaration.
 pred current-mode o:declaration.
 
 %% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

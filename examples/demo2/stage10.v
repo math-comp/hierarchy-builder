@@ -110,7 +110,7 @@ HB.builders Context A (a : Ring_of_TYPE A).
 
   HB.instance
   Definition to_Ring_of_AddAG :=
-    Ring_of_AddAG.Build _ _ _ mulrA mul1r
+    Ring_of_AddAG.Build A _ _ mulrA mul1r
       mulr1 mulrDl mulrDr.
 
 HB.end.
