@@ -70,6 +70,9 @@ Definition Z_ring_axioms :=
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
+Module Exports.
+HB.reexport Instances.
+End Exports.
 End Instances.
 
 Module Exports.
@@ -80,7 +83,7 @@ Definition addr0 := addr0.
 End Exports.
 
 Module ExportsOnlyInstance.
-HB.reexport Instances.
+Export Instances.Exports.
 End ExportsOnlyInstance.
 
 End Enclosing.
