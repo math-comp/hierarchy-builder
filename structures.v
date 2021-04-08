@@ -553,7 +553,8 @@ Elpi Export HB.export.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** [HB.reexport] Exports all modules that were previously exported via [HB.export].
-   It is useful to create one big module with all exports at the end of a file. *)
+   It is useful to create one big module with all exports at the end of a file.
+   It optionally takes the name of a module *)
 
 Elpi Command HB.reexport.
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -564,7 +565,7 @@ Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS none)).
-main [str M] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS (some {coq.locate-module M}))).
+main [str M] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS (some M))).
 main _ :- coq.error "Usage: HB.reexport.".
 }}.
 Elpi Typecheck.

@@ -12,10 +12,12 @@ export.module NiceModule MFilter :- !,
   coq.env.current-library File,
   log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule MFilter)).
 
-pred export.reexport-all-modules-and-CS i:option modpath.
+pred export.reexport-all-modules-and-CS i:option string.
 export.reexport-all-modules-and-CS Filter :- std.do! [
   coq.env.current-library File,
-  if (Filter = some M) (coq.modpath->path M MFilter) (MFilter = []),
+  private.compute-filter Filter MFilter,
+  if-verbose (coq.say "HB: exporting under the module path" MFilter),
+
   std.findall (module-to-export File NiceModule_ Module_) ModsCL,
   std.filter ModsCL (private.module-in-module MFilter) ModsCLFiltered,
   std.map ModsCLFiltered module-to-export_module-nice NiceMods,
@@ -46,5 +48,18 @@ pred instance-in-module i:list string, i:prop.
 instance-in-module PM (instance-to-export _ _ C) :-
   coq.gref->path (const C) PC,
   std.appendR PM _ PC. % sublist
+
+pred compute-filter i:option string, o:list string.
+compute-filter none [].
+compute-filter (some S) MFilter :- % S is a component of the current modpath
+  coq.env.current-path P,
+  rex_split "\\." S L,
+  compute-filter.aux P L MFilter, !.
+compute-filter (some S) MFilter :-
+  coq.locate-module S M,
+  coq.modpath->path M MFilter.
+compute-filter.aux [S|_] [S] [S] :- !.
+compute-filter.aux [S|XS] [S|SS] [S|YS] :- compute-filter.aux XS SS YS.
+compute-filter.aux [X|XS] L [X|YS] :- compute-filter.aux XS L YS.
 
 }
