@@ -96,12 +96,13 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   if-verbose (coq.say "HB: declare canonical structure instance" Name),
 
   get-constructor Struct KS,
-  coq.mk-app (global KS) {std.append Params [T, KCApp]} S,
+  private.optimize-class-body {std.length Params} KCApp KCAppNames Clauses,
+  coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
-  declare-all T Rest L.
+  Clauses => declare-all T Rest L.
 declare-all T [_|Rest] L :- declare-all T Rest L.
 declare-all _ [] [].
 
@@ -219,10 +220,31 @@ hack-section-discharging B B.
 % unfolds the constant used for the phant abbreviation to avoid storing all
 % the phantom abstrctions and idfun that were used to trigger inference
 pred optimize-body i:term, o:term.
-optimize-body (app[global (const C)| Args]) Red :- phant-abbrev _ (const C) _, !,
+optimize-body (app[global (const C)| Args]) Red :- (phant-abbrev _ (const C) _ ; (rex_match "phant_" {coq.gref->id (const C)})), !,
   coq.env.const C (some B) _,
   hd-beta B Args HD Stack,
   unwind HD Stack Red.
+optimize-body (let _ _ T x\x) Red :- !, optimize-body T Red.
 optimize-body X X.
+
+
+pred optimize-class-body i:int, i:term, o:term, o:list prop.
+optimize-class-body NParams (app[K|Args]) (app[K|NamedArgs]) Clauses :- std.do! [
+  std.split-at {calc (NParams + 1)} Args ParamsT Mixins,
+  std.map Mixins declare-mixin-name MixinsNamesAndProp,
+  std.map MixinsNamesAndProp fst MixinsNames,
+  std.flatten {std.map MixinsNamesAndProp snd} Clauses,
+  std.append ParamsT MixinsNames NamedArgs,
+].
+
+pred declare-mixin-name i:term, o:(pair term (list prop)).
+declare-mixin-name (global GR) (pr (global GR) []).
+declare-mixin-name T (pr (global GR) []) :- mixin-mem T GR.
+declare-mixin-name T (pr T []) :- coq.safe-dest-app T (global GR) _, not (from _ _ GR).
+declare-mixin-name T (pr (global (const C)) [mixin-mem T (const C)]) :- std.do! [
+  if-verbose (coq.say "HB: declare-mixin-name" T),
+  Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
+  log.coq.env.add-const-noimplicits Name T _ @transparent! C,
+].
 
 }}
