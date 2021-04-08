@@ -108,5 +108,6 @@ Fail Check Enclosing.zero : Z.
 Export Enclosing.ExportsOnlyInstance.
 
 Check Enclosing.zero : Z.
+Fail Check 0%G. (* notation not there *)
 
 End Test2.
