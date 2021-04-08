@@ -58,6 +58,10 @@ Proof. by rewrite addrN. Qed.
 Lemma addrNK x y : x + y - y = x.
 Proof. by rewrite -addrA subrr addr0. Qed.
 
+End Theory.
+
+Module Import Instances.
+
 #[export]
 HB.instance
 Definition Z_ring_axioms :=
@@ -66,14 +70,25 @@ Definition Z_ring_axioms :=
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
-End Theory.
+Module Exports.
+HB.reexport Instances.
+End Exports.
+End Instances.
 
 Module Exports.
+#[verbose]
 HB.reexport.
 Definition addrNK := addrNK.
 Definition addr0 := addr0.
 End Exports.
+
+Module ExportsOnlyInstance.
+Export Instances.Exports.
+End ExportsOnlyInstance.
+
 End Enclosing.
+
+Module Test1.
 
 (* We miss the coercions, canonical and elpi metadata *)
 Fail Check forall (R : Enclosing.Ring.type) (x : R), x = x.
@@ -85,3 +100,17 @@ Check forall (R : Enclosing.Ring.type) (x : R), x = x.
 Check 0%G.
 Example test1 (m n : Z) : ((m + n) - n + 0 = m)%G.
 Proof. by rewrite addrNK addr0. Qed.
+
+End Test1.
+
+
+Module Test2.
+
+Fail Check Enclosing.zero : Z.
+
+Export Enclosing.ExportsOnlyInstance.
+
+Check Enclosing.zero : Z.
+Fail Check 0%G. (* notation not there *)
+
+End Test2.
