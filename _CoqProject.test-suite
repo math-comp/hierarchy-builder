@@ -75,6 +75,7 @@ tests/non_forgetful_inheritance.v
 tests/fix_loop.v
 tests/test_synthesis_params.v
 tests/hnf.v
+tests/interleaved_context.v
 
 -R tests HB.tests
 -R examples HB.examples

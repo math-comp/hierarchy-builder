@@ -204,16 +204,20 @@ declare-asset Arg AssetKind :- std.do! [
   if-verbose (coq.say {header} "declaring context" FLwP),
   context.declare FLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
 
-  if (Arg = indt-decl _) (
-    apply-w-params ArgwP Params TheKey (indt-decl (record _ Sort _ Fields)),
-    if-verbose (coq.say {header} "declare mixin or factory"),
-    declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
-      Params TheKey Sort Fields MLwP Module AssetKind
+   if (get-option "interrupt.context" tt) (
+    coq.say "interrupting after context declaration"
   ) (
-    apply-w-params ArgwP Params TheKey (const-decl _ (some Sort) _),
-    if-verbose (coq.say {header} "declare factory alias"),
-    declare-factory-alias MixinSrcClauses SectionCanonicalInstance
-      Params TheKey Sort MLwP Module
+    if (Arg = indt-decl _) (
+      apply-w-params ArgwP Params TheKey (indt-decl (record _ Sort _ Fields)),
+      if-verbose (coq.say {header} "declare mixin or factory"),
+      declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
+        Params TheKey Sort Fields MLwP Module AssetKind
+    ) (
+      apply-w-params ArgwP Params TheKey (const-decl _ (some Sort) _),
+      if-verbose (coq.say {header} "declare factory alias"),
+      declare-factory-alias MixinSrcClauses SectionCanonicalInstance
+        Params TheKey Sort MLwP Module
+    )
   )
 ].
 
@@ -304,28 +308,28 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "declare constant axioms_:" Ty1Skel),
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
 
-  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
-  log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
+    abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
+    log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
 
-  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
-  std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
-  std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
+    std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+    std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
+    std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
   MixinSrcClauses => synthesis.infer-all-gref-deps TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
   (pi Args\ copy (app[global F|Args]) (app[global (const C)|Section])) => copy MFKTy MFKTyC,
 
-  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr MFK MFKTyC) (pr MFKClosed MFKTyCClosed) _,
-  log.coq.env.add-const-noimplicits "Axioms_" MFKClosed MFKTyCClosed @transparent! CK,
+    abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr MFK MFKTyC) (pr MFKClosed MFKTyCClosed) _,
+    log.coq.env.add-const-noimplicits "Axioms_" MFKClosed MFKTyCClosed @transparent! CK,
 
-  GRK = const CK,
+    GRK = const CK,
 
-  log.coq.env.end-section-name Module,
+    log.coq.env.end-section-name Module,
 
-  @global! => log.coq.arguments.set-implicit GRK [[]],
+    @global! => log.coq.arguments.set-implicit GRK [[]],
 
-  factories-provide GRFSwP MLwP,
-  GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
+    factories-provide GRFSwP MLwP,
+    GRDepsClauses = [gref-deps (const C) MLwP, gref-deps (const CK) MLwP],
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK0,
 
@@ -336,7 +340,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
     (phant.append-fun-unify PhGRK0 PhGRK),
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst _,
 
-  GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
+    GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 
   if-verbose (coq.say {header} "start module Exports"),
 
@@ -365,7 +369,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
-  GRDepsClauses => declare-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-abbrev Module FactAbbrev
 ].
 
 % [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P
@@ -406,7 +410,5 @@ mk-factory-sort MLwP GR (const FactorySortCst) Coe :-
   Coe = coercion (const FactorySortCst) MLwPLength GR CoeClass.
 pred mk-factory-sort.term i:gref, i:list term, i:term, o:term.
 mk-factory-sort.term GR P T (fun `_` Ty _\ T) :- synthesis.infer-all-gref-deps P T GR Ty.
-
-
 
 }}

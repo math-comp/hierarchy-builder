@@ -10,6 +10,7 @@ Definition nomsg : error_msg := NoMsg.
 Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
 Definition eta {T} (x : T) := x.
+Definition ignore {T} (x: T) := x.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
@@ -31,6 +32,7 @@ Register Coq.Init.Logic.eq as hb.eq.
 Register Coq.Init.Logic.eq_refl as hb.erefl.
 Register new as hb.new.
 Register eta as hb.eta.
+Register ignore as hb.ignore.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
 Notation indexed T := T (only parsing).
@@ -355,7 +357,9 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 
   Supported attributes:
   - [#[primitive]] experimental attribute to make the mixin/factory primitive,
-  - [#[verbose]] for a verbose output.
+  - [#[interrupt(context)]] interrupts the command after declaring
+    all the local context and before declaring the record.
+  - [#[verbose]]
 
 *)
 
