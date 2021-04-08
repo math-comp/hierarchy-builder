@@ -162,7 +162,7 @@ instantiate-mixin _ _ F F.
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins
-% which can be options from that class instance
+% which can be candidates from that class instance
 pred structure-instance->mixin-srcs i:term, i:structure, o:list prop.
 structure-instance->mixin-srcs T S MSLC :- std.do! [
   get-structure-sort-projection S Sort,
@@ -174,8 +174,12 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
     get-constructor S KS,
     coq.mk-app (global KS) {std.append Holes [T, C]} KSHolesC,
     std.assert-ok! (coq.unify-eq ST KSHolesC) "HB: structure-instance->mixin-srcs: ST = _ _ C",
-    C = app Stuff,
-    std.drop {calc (NParams + 2)} Stuff MIL,
+    class-def (class CN S CMLwP),
+    get-constructor CN KC,
+    std.length {list-w-params_list CMLwP} CMixinsN,
+    coq.mk-n-holes CMixinsN MIL,
+    coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
+    std.assert-ok! (coq.unify-eq C CBody) "HB: structure-instance->mixin-srcs: C = KC ... T MIL",
     std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
     std.flatten MSLL MSLC)
     (MSLC = [])
