@@ -2,31 +2,49 @@
     This software is released under the terms of the MIT license              */
 
 
-% [export.module Module] exports a Module now adds it to the collection of
+% [export.module MFilter] exports a MFilter now adds it to the collection of
 % modules to export in the end of the current enclosing module,
 % by the command HB.Exports
 % CAVEAT: "module" is a keyword, we put it in the namespace by hand
 pred export.module i:id, i:modpath.
-export.module NiceModule Module :- !,
-  log.coq.env.export-module NiceModule Module,
+export.module NiceModule MFilter :- !,
+  log.coq.env.export-module NiceModule MFilter,
   coq.env.current-library File,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule Module)).
+  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule MFilter)).
 
-pred export.reexport-all-modules-and-CS.
-export.reexport-all-modules-and-CS :- std.do! [
+pred export.reexport-all-modules-and-CS i:option modpath.
+export.reexport-all-modules-and-CS Filter :- std.do! [
   coq.env.current-library File,
+  if (Filter = some M) (coq.modpath->path M MFilter) (MFilter = []),
   std.findall (module-to-export File NiceModule_ Module_) ModsCL,
-  std.map ModsCL module-to-export_module-nice NiceMods,
-  std.map ModsCL module-to-export_module Mods,
+  std.filter ModsCL (private.module-in-module MFilter) ModsCLFiltered,
+  std.map ModsCLFiltered module-to-export_module-nice NiceMods,
+  std.map ModsCLFiltered module-to-export_module Mods,
 
   if-verbose (coq.say "HB: exporting modules" NiceMods),
   std.forall2 NiceMods Mods log.coq.env.export-module,
 
 
   std.findall (instance-to-export File NiceInstance_ Const_) InstCL,
+  std.filter InstCL (private.instance-in-module MFilter) InstCLFiltered,
   %std.map InstCL instance-to-export_instance-nice NiceInsts,
-  std.map InstCL instance-to-export_instance Insts,
+  std.map InstCLFiltered instance-to-export_instance Insts,
 
   if-verbose (coq.say "HB: exporting CS instances" Insts),
   std.forall Insts log.coq.CS.declare-instance,
 ].
+
+
+namespace private {
+
+pred module-in-module i:list string, i:prop.
+module-in-module PM (module-to-export _ _ M) :-
+  coq.modpath->path M PC,
+  std.appendR PM _ PC. % sublist
+
+pred instance-in-module i:list string, i:prop.
+instance-in-module PM (instance-to-export _ _ C) :-
+  coq.gref->path (const C) PC,
+  std.appendR PM _ PC. % sublist
+
+}

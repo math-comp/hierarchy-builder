@@ -563,7 +563,8 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS)).
+main [] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS none)).
+main [str M] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS (some {coq.locate-module M}))).
 main _ :- coq.error "Usage: HB.reexport.".
 }}.
 Elpi Typecheck.
