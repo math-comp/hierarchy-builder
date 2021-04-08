@@ -554,7 +554,8 @@ Elpi Export HB.export.
 
 (** [HB.reexport] Exports all modules that were previously exported via [HB.export].
    It is useful to create one big module with all exports at the end of a file.
-   It optionally takes the name of a module *)
+   It optionally takes the name of a module or a component of the current module path
+   (a module which is not closed yet) *)
 
 Elpi Command HB.reexport.
 Elpi Accumulate File "HB/common/stdpp.elpi".
