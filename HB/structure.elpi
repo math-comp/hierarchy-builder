@@ -483,7 +483,7 @@ if-class-already-exists-error _ [] _.
 if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
   list-w-params_list ML1wP ML1,
   if (std.list-eq-set ML1 ML2)
-     (coq.error "Structure" {nice-gref->string S} "contains the same mixins of" N)
+     (coq.error "Structure" {nice-gref->string S} "contains the same mixins as" N)
      (if-class-already-exists-error N CS ML2).
 
 pred export-mixin-coercion i:classname, i:option constant.

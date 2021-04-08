@@ -114,7 +114,12 @@ namespace private {
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
 pred declare-instance i:term, i:term, o:list prop.
-declare-instance T F Clauses :- current-mode (builder-from TheFactory FGR _), !,
+declare-instance T F Clauses :-
+  current-mode (builder-from T TheFactory FGR _), !,
+  if (get-option "local" tt)
+    (coq.error "HB: declare-instance: cannot make builders local.
+    If you want temporary instances, make an alias, e.g. with let T' := T") true,
+  !,
   declare-canonical-instances-from-factory-and-local-builders T F TheFactory FGR Clauses.
 declare-instance T F Clauses :-
   declare-canonical-instances-from-factory T F CS,
@@ -126,17 +131,18 @@ declare-instance T F Clauses :-
 % [add-mixin T F _ M Cl] adds a constant begin the mixin instance for M on type
 % T built from factory F
 pred add-mixin i:term, i:factoryname, i:bool, i:mixinname, o:list prop.
-add-mixin T FGR MakeCanon MissinMixin [MixinSrcCl, BuiderDeclCl] :-
-  synthesis.assert!-infer-mixin T MissinMixin Bo,
-  MixinSrcCl = mixin-src T MixinName (global (const C)),
-  BuiderDeclCl = builder-decl (builder N FGR MixinName (const C)),
+add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] :-
   new_int N, % timestamp
+
+  synthesis.assert!-infer-mixin T MissingMixin Bo,
+  MixinSrcCl = mixin-src T MixinName (global (const C)),
+  BuilderDeclCl = builder-decl (builder N FGR MixinName (const C)),
 
   std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
   safe-dest-app Ty (global MixinNameAlias) _,
   factory-alias->gref MixinNameAlias MixinName,
 
-  std.assert! (MissinMixin = MixinName) "HB: anomaly: we built the wrong mixin",
+  std.assert! (MissingMixin = MixinName) "HB: anomaly: we built the wrong mixin",
 
   % If the mixin instance is already a constant there is no need to
   % alias it.
@@ -178,7 +184,7 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
 pred declare-canonical-instances-from-factory-and-local-builders i:term, i:term, i:term, i:factoryname, o:list prop.
 declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR Clauses :- std.do! [
   synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\
-    add-all-mixins T FGR NewMixins ff Clauses
+      add-all-mixins T FGR NewMixins ff Clauses
   ),
   Clauses => instance.declare-all T {findall-classes} _
 ].
@@ -205,7 +211,7 @@ declare-canonical-instances-from-factory T F CS :-
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
 pred hack-section-discharging i:term, o:term.
-hack-section-discharging B B1 :- current-mode (builder-from TheFactory _ _), !,
+hack-section-discharging B B1 :- current-mode (builder-from _ TheFactory _ _), !,
   std.assert-ok! (coq.typecheck TheFactory TheFactoryTy) "TheFactory is illtyped (BUG)",
   B1 = {{ let _ : lp:TheFactoryTy := lp:TheFactory in lp:B }}.
 hack-section-discharging B B.
