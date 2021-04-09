@@ -37,6 +37,7 @@ with-attributes P :-
     att "skip" string,
     att "local" bool,
     att "fail" bool,
+    att "interrupt.context" bool,
   ] Opts, !,
   Opts => P.
 

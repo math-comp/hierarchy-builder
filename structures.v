@@ -266,7 +266,10 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 
   Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
 
-  Supported attributes: [#[verbose]]
+  Supported attributes:
+  - [#[interrupt(context)]] interrupts the command after declaring
+    all the local context and before declaring the record.
+  - [#[verbose]]
 
 *)
 
