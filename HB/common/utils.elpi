@@ -97,6 +97,12 @@ nice-gref->string X Mod :-
 nice-gref->string X S :-
   coq.term->string (global X) S.
 
+pred compat.concat i:string, i:list string, o:string.
+compat.concat S L O :- coq.version _ _ N _, N > 12, !, std.string.concat S L O.
+compat.concat S L O :- compat.concat.aux L S O.
+compat.concat.aux [] _ "".
+compat.concat.aux [X] _ X :- !.
+compat.concat.aux [X|XS] Sep O :- compat.concat.aux XS Sep O1, O is X ^ Sep ^ O1.
 
 pred gref->modname i:gref, i:int, i:string, o:string.
 gref->modname GR NComp Sep ModName :-
@@ -106,7 +112,7 @@ gref->modname GR NComp Sep ModName :-
   if (Len > NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
   std.drop 1 PathRev Mods, % drop the label
   std.take NComp Mods L,
-  std.string.concat Sep {std.rev L} ModName.
+  compat.concat Sep {std.rev L} ModName.
 pred gref->modname-label i:gref, i:int, i:string, o:string.
 gref->modname-label GR NComp Sep ModName :-
   coq.gref->path GR Path,
@@ -114,7 +120,7 @@ gref->modname-label GR NComp Sep ModName :-
   std.length PathRev Len,
   if (Len >= NComp) (N = NComp) (N = Len),
   std.take N PathRev L,
-  std.string.concat Sep {std.rev [ID|L]} ModName.
+  compat.concat Sep {std.rev [ID|L]} ModName.
 
 pred avoid-name-collision i:string, o:string.
 avoid-name-collision S S1 :-
