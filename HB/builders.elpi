@@ -42,11 +42,16 @@ builders.end :- std.do! [
      (coq.error "No builders to declare, did you forget HB.instance?")
      true,
 
+  std.findall (abbrev-to-export F_ N_ A_) ExportClauses,
+  coq.env.current-path CurModPath,
+  std.filter ExportClauses (export.private.abbrev-in-module CurModPath) ExportClausesFiltered,
+
   % TODO: Do we need this module?
   gref->modname GR 1 "" M,
   Name is M ^ "_Exports",
   log.coq.env.begin-module Name,
   std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  std.forall ExportClausesFiltered (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
   log.coq.env.end-module-name Name Exports,
   log.coq.env.end-module-name ModName _,

@@ -28,11 +28,11 @@ export.abbrev NiceName GR :- !,
 pred export.reexport-all-modules-and-CS i:option string.
 export.reexport-all-modules-and-CS Filter :- std.do! [
   coq.env.current-library File,
-  private.compute-filter Filter MFilter,
+  export.private.compute-filter Filter MFilter,
   if-verbose (coq.say "HB: exporting under the module path" MFilter),
 
   std.findall (module-to-export File NiceModule_ Module_) ModsCL,
-  std.filter ModsCL (private.module-in-module MFilter) ModsCLFiltered,
+  std.filter ModsCL (export.private.module-in-module MFilter) ModsCLFiltered,
   std.map ModsCLFiltered module-to-export_module-nice NiceMods,
   std.map ModsCLFiltered module-to-export_module Mods,
 
@@ -41,14 +41,14 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 
 
   std.findall (instance-to-export File NiceInstance_ Const_) InstCL,
-  std.filter InstCL (private.instance-in-module MFilter) InstCLFiltered,
+  std.filter InstCL (export.private.instance-in-module MFilter) InstCLFiltered,
   std.map InstCLFiltered instance-to-export_instance Insts,
 
   if-verbose (coq.say "HB: exporting CS instances" Insts),
   std.forall Insts log.coq.CS.declare-instance,
 
   std.findall (abbrev-to-export File NiceAbbrev_ GR_) InstAbbL,
-  std.filter InstAbbL (private.abbrev-in-module MFilter) InstAbbLFiltered,
+  std.filter InstAbbL (export.private.abbrev-in-module MFilter) InstAbbLFiltered,
   std.map InstAbbLFiltered abbrev-to-export_name AbbNames,
   std.map InstAbbLFiltered abbrev-to-export_body AbbBodies,
 
@@ -58,7 +58,7 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 ].
 
 
-namespace private {
+namespace export.private {
 
 pred abbrev-in-module i:list string, i:prop.
 abbrev-in-module PM (abbrev-to-export _ _ GR) :-
