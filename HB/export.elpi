@@ -31,8 +31,10 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
   export.private.compute-filter Filter MFilter,
   if-verbose (coq.say "HB: exporting under the module path" MFilter),
 
+  % NODE: std.list-uniq is for coq < 8.13
+
   std.findall (module-to-export File NiceModule_ Module_) ModsCL,
-  std.filter ModsCL (export.private.module-in-module MFilter) ModsCLFiltered,
+  std.filter {std.list-uniq ModsCL} (export.private.module-in-module MFilter) ModsCLFiltered,
   std.map ModsCLFiltered module-to-export_module-nice NiceMods,
   std.map ModsCLFiltered module-to-export_module Mods,
 
@@ -41,14 +43,14 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 
 
   std.findall (instance-to-export File NiceInstance_ Const_) InstCL,
-  std.filter InstCL (export.private.instance-in-module MFilter) InstCLFiltered,
+  std.filter {std.list-uniq InstCL} (export.private.instance-in-module MFilter) InstCLFiltered,
   std.map InstCLFiltered instance-to-export_instance Insts,
 
   if-verbose (coq.say "HB: exporting CS instances" Insts),
   std.forall Insts log.coq.CS.declare-instance,
 
   std.findall (abbrev-to-export File NiceAbbrev_ GR_) InstAbbL,
-  std.filter InstAbbL (export.private.abbrev-in-module MFilter) InstAbbLFiltered,
+  std.filter {std.list-uniq InstAbbL} (export.private.abbrev-in-module MFilter) InstAbbLFiltered,
   std.map InstAbbLFiltered abbrev-to-export_name AbbNames,
   std.map InstAbbLFiltered abbrev-to-export_body AbbBodies,
 
