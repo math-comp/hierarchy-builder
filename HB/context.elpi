@@ -29,7 +29,7 @@ namespace private {
 % to the corresponding mixin using mixin-for
 pred postulate-mixin i:w-args mixinname, i:list prop, o:list prop.
 postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
-  Name is "mixin_" ^ {gref->modname M},
+  Name is "mixin_" ^ {gref->modname M 2 "_"},
 
   if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
 

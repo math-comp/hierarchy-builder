@@ -43,7 +43,7 @@ builders.end :- std.do! [
      true,
 
   % TODO: Do we need this module?
-  gref->modname GR M,
+  gref->modname GR 1 "" M,
   Name is M ^ "_Exports",
   log.coq.env.begin-module Name,
   std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),

@@ -1,4 +1,3 @@
-
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
@@ -19,18 +18,21 @@ to-file File :- !, std.do! [
 
 namespace private {
 
-pred nice-gref->string i:gref, o:string.
-nice-gref->string X Mod :-
-  coq.gref->path X Path,
-  std.rev Path [_,Mod|_], !.
-nice-gref->string X S :-
-  coq.term->string (global X) S.
+pred gref->modname i:gref, i:int, i:string, o:string.
+gref->modname GR NComp Sep ModName :-
+  coq.gref->path GR Path,
+  std.rev Path PathRev,
+  std.length Path Len,
+  if (Len > NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
+  std.drop 1 PathRev Mods, % drop the label
+  std.take NComp Mods L,
+  std.string.concat Sep {std.rev L} ModName.
 
 pred pp-coercion-dot i:out_stream, i:coercion. 
 pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
-  output OC {nice-gref->string Tgt},
+  output OC {gref->modname Tgt 2 "_"},
   output OC " -> ",
-  output OC {nice-gref->string Src},
+  output OC {gref->modname Src 2 "_"},
   output OC ";\n",
 ].
 pp-coercion-dot _ _.

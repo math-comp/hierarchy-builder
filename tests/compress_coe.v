@@ -34,4 +34,4 @@ HB.instance Definition prodD (D D' : D.type) :=
   hasD.Build (D * D')%type (d, d).
 
 Set Printing Coercions.
-Print prod_canonical_D_34.
+Print Datatypes_prod__canonical__compress_coe_D.
