@@ -1,16 +1,29 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+pred export.any i:id.
+export.any S :-
+  coq.locate-all S L,
+  if (L = []) (coq.error "HB: cannot locate" S) true,
+  if (L = [X]) (export.any.aux S X) (coq.error "HB:" S "is ambiguous:" L).
+export.any.aux S (loc-gref GR) :- export.abbrev S GR.
+export.any.aux S (loc-modpath MP) :- export.module S MP.
+export.any.aux S X :- coq.error "HB:" S "denotes" X "which is not supported for exporting".
 
-% [export.module MFilter] exports a MFilter now adds it to the collection of
+% [export.module Module] exports a Module now adds it to the collection of
 % modules to export in the end of the current enclosing module,
 % by the command HB.Exports
 % CAVEAT: "module" is a keyword, we put it in the namespace by hand
 pred export.module i:id, i:modpath.
-export.module NiceModule MFilter :- !,
-  log.coq.env.export-module NiceModule MFilter,
+export.module NiceModule Module :- !,
+  log.coq.env.export-module NiceModule Module,
   coq.env.current-library File,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule MFilter)).
+  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule Module)).
+
+pred export.abbrev i:id, i:gref.
+export.abbrev NiceName GR :- !,
+  coq.env.current-library File,
+  log.coq.env.accumulate current "hb.db" (clause _ _ (abbrev-to-export File NiceName GR)).
 
 pred export.reexport-all-modules-and-CS i:option string.
 export.reexport-all-modules-and-CS Filter :- std.do! [
@@ -29,15 +42,28 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 
   std.findall (instance-to-export File NiceInstance_ Const_) InstCL,
   std.filter InstCL (private.instance-in-module MFilter) InstCLFiltered,
-  %std.map InstCL instance-to-export_instance-nice NiceInsts,
   std.map InstCLFiltered instance-to-export_instance Insts,
 
   if-verbose (coq.say "HB: exporting CS instances" Insts),
   std.forall Insts log.coq.CS.declare-instance,
+
+  std.findall (abbrev-to-export File NiceAbbrev_ GR_) InstAbbL,
+  std.filter InstAbbL (private.abbrev-in-module MFilter) InstAbbLFiltered,
+  std.map InstAbbLFiltered abbrev-to-export_name AbbNames,
+  std.map InstAbbLFiltered abbrev-to-export_body AbbBodies,
+
+  if-verbose (coq.say "HB: exporting Abbreviations" AbbNames),
+  std.forall2 AbbNames AbbBodies (n\b\@global! => log.coq.notation.add-abbreviation n 0 b ff _),
+
 ].
 
 
 namespace private {
+
+pred abbrev-in-module i:list string, i:prop.
+abbrev-in-module PM (abbrev-to-export _ _ GR) :-
+  coq.gref->path GR PC,
+  std.appendR PM _ PC. % sublist
 
 pred module-in-module i:list string, i:prop.
 module-in-module PM (module-to-export _ _ M) :-

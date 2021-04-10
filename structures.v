@@ -183,6 +183,7 @@ pred current-mode o:declaration.
 % library, nice-name, object
 pred module-to-export   o:string, o:id, o:modpath.
 pred instance-to-export o:string, o:id, o:constant.
+pred abbrev-to-export   o:string, o:id, o:gref.
 
 % coercions chains compression rules (we only care about non applicative
 % terms, since this is what you get when you apply coercions)
@@ -522,12 +523,21 @@ Elpi Export HB.end.
 
 (** [HB.export Modname] does the work of [Export Modname] but also schedules [Modname]
    to be exported later on, when [HB.reexport] is called.
-   Note that the list of modules to be exported is stored in the current module,
+   [HB.export Constname] does nothing, but schedules [Constname] to be made
+   available via a Notation at HB.reexport time.
+
+   Note that the list of things to be exported is stored in the current module,
    hence the recommended way to do is
 [[
 Module Algebra.
   HB.mixin .... HB.structure ...
   Module MoreExports. ... End MoreExports. HB.export MoreExports.
+  ...
+  HB.builders ...
+  Lemma aux_fact : ....
+  HB.export aux_fact.
+  ...
+  HB.end.
   ...
   Module Export. HB.reexport. End Exports.
 End Algebra.
@@ -547,7 +557,7 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
-main [str M] :- !, with-attributes (with-logging (export.module M {coq.locate-module M})).
+main [str M] :- !, with-attributes (with-logging (export.any M)).
 main _ :- coq.error "Usage: HB.export M.".
 }}.
 Elpi Typecheck.
@@ -557,7 +567,8 @@ Elpi Export HB.export.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** [HB.reexport] Exports all modules that were previously exported via [HB.export].
+(** [HB.reexport] Exports all modules, canonical instances and constants that
+   were previously exported via [HB.export].
    It is useful to create one big module with all exports at the end of a file.
    It optionally takes the name of a module or a component of the current module path
    (a module which is not closed yet) *)
