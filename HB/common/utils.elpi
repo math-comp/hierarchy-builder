@@ -119,7 +119,7 @@ gref->modname-label GR NComp Sep ModName :-
 pred avoid-name-collision i:string, o:string.
 avoid-name-collision S S1 :-
   coq.locate-all S L,
-  if (std.mem L (loc-gref _) ; std.mem L (loc-abbreviation _))
+  if (std.mem L (loc-gref GR), coq.gref->path GR P, coq.env.current-path P)
      (S1 is S ^ "__" ^ {std.any->string {new_int}})
      (S1 is S).
 
