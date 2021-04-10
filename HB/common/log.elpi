@@ -27,6 +27,19 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   avoid-name-collision Name Name1,
   coq.env.add-const Name1 Bo Ty Opaque C,
   if (var Ty) (Ty? = none) (Ty? = some Ty),
+  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
+  @local! => arguments.set-implicit (const C) [[]],
+].
+
+pred env.add-const-noimplicits-failondup i:id, i:term, i:term, i:opaque?, o:constant.
+env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name
+               ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
+  coq.env.add-const Name Bo Ty Opaque C,
+  if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo),
   @local! => arguments.set-implicit (const C) [[]],
 ].
