@@ -47,6 +47,11 @@ instance-to-export_instance (instance-to-export _ _ M) M.
 pred instance-to-export_instance-nice i:prop, o:id.
 instance-to-export_instance-nice (instance-to-export _ M _) M.
 
+pred abbrev-to-export_name i:prop, o:id.
+abbrev-to-export_name (abbrev-to-export _ N _) N.
+pred abbrev-to-export_body i:prop, o:term.
+abbrev-to-export_body (abbrev-to-export _ _ B) (global B).
+
 pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.
 

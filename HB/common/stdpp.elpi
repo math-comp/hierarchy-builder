@@ -25,6 +25,12 @@ list-diff L [D|DS] R :-
   std.filter L (x\ not(x = D)) L1,
   list-diff L1 DS R.
 
+pred list-uniq i:list A, o:list A.
+pred list-uniq.seen i:A.
+list-uniq [] [].
+list-uniq [X|XS] YS :- list-uniq.seen X, !, list-uniq XS YS.
+list-uniq [X|XS] [X|YS] :- list-uniq.seen X => list-uniq XS YS.
+
 pred list-eq-set i:list A, i:list A.
 list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
 

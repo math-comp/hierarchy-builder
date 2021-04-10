@@ -293,10 +293,10 @@ declare-coercion SortProjection ClassProjection
 
   log.coq.env.accumulate current "hb.db" (clause _ _ (sub-class FC TC)),
 
-  gref->modname StructureF ModNameF,
-  gref->modname StructureT ModNameT,
-  CName is ModNameF ^ "_class_to_" ^ ModNameT ^ "_class_" ^ {std.any->string {new_int}},
-  SName is ModNameF ^ "_to_" ^ ModNameT ^ "_" ^ {std.any->string {new_int}},
+  gref->modname StructureF 2 "_" ModNameF,
+  gref->modname StructureT 2 "_" ModNameT,
+  CName is ModNameF ^ "_class__to__" ^ ModNameT ^ "_class",
+  SName is ModNameF ^ "__to__" ^ ModNameT,
 
   if-verbose (coq.say "HB: declare coercion" SName),
 
@@ -377,8 +377,8 @@ join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
 
 pred declare-join i:class, i:pair class class, o:prop.
 declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
-  Name is "join_" ^ {gref->modname S3} ^
-    "_between_" ^ {gref->modname S1} ^ "_and_" ^ {gref->modname S2} ^ "_" ^ {std.any->string {new_int}},
+  Name is "join_" ^ {gref->modname S3 2 "_"} ^
+    "_between_" ^ {gref->modname S1 2 "_"} ^ "_and_" ^ {gref->modname S2 2 "_"},
 
   get-structure-coercion S3 S2 S3_to_S2,
   get-structure-coercion S3 S1 S3_to_S1,
@@ -420,7 +420,7 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
 pred synthesize-fields i:term, i:list (w-args mixinname), o:record-decl.
 synthesize-fields _T []     end-record.
 synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
-  Name is {gref->modname M} ^ "_mixin",
+  Name is {gref->modname M 2 "_"} ^ "_mixin",
   if-verbose (coq.say "HB: typing class field" M),
   std.assert! (synthesis.infer-all-mixin-args Args T M MTy) "anomaly: a field type cannot be solved",
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)

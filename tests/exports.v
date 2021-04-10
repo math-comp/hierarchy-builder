@@ -48,6 +48,7 @@ Implicit Type (x : R).
 
 Lemma addr0 : right_id (@zero R) add.
 Proof. by move=> x; rewrite addrC add0r. Qed.
+HB.export addr0.
 
 Lemma addrN : right_inverse (@zero R) opp add.
 Proof. by move=> x; rewrite addrC addNr. Qed.
@@ -59,6 +60,16 @@ Lemma addrNK x y : x + y - y = x.
 Proof. by rewrite -addrA subrr addr0. Qed.
 
 End Theory.
+
+HB.mixin Record Dummy T := { u : unit }.
+HB.structure Definition URing := { R of Ring R & Dummy R }.
+
+HB.factory Record dummy R of Ring R := {}.
+HB.builders Context T of dummy T.
+HB.instance Definition _ := Dummy.Build T tt.
+Definition addrNK := addrNK.
+HB.export addrNK.
+HB.end.
 
 Module Import Instances.
 
@@ -78,8 +89,6 @@ End Instances.
 Module Exports.
 #[verbose]
 HB.reexport.
-Definition addrNK := addrNK.
-Definition addr0 := addr0.
 End Exports.
 
 Module ExportsOnlyInstance.
@@ -93,6 +102,7 @@ Module Test1.
 (* We miss the coercions, canonical and elpi metadata *)
 Fail Check forall (R : Enclosing.Ring.type) (x : R), x = x.
 Fail Check 0%G.
+Fail Check addr0.
 
 Export Enclosing.Exports.
 
