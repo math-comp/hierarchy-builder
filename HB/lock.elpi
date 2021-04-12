@@ -23,7 +23,9 @@ pred lock-module-type i:id, i:term, i:term, o:modtypath.
 lock-module-type Name Ty Bo M :- std.do! [
   log.coq.env.begin-module-type Name,
   log.coq.env.add-parameter "body" Ty C, B = global (const C),
-  log.coq.env.add-parameter "unlock" {{ lib:@hb.eq lp:Ty lp:B lp:Bo }} _,
+  PTY = {{ lib:@hb.eq _ lp:B lp:Bo }},
+  std.assert-ok! (coq.typecheck-ty PTY _) "HB unlock statement illtyped",
+  log.coq.env.add-parameter "unlock" PTY _,
   log.coq.env.end-module-type-name Name M,
 ].
 
@@ -31,7 +33,9 @@ pred lock-module-body o:modtypath, i:id, i:term, i:term, o:constant.
 lock-module-body Signature Name Ty Bo C:- std.do! [
   log.coq.env.begin-module Name (some Signature),
   log.coq.env.add-const "body" Bo Ty @transparent! C, B = global (const C),
-  log.coq.env.add-const "unlock" {{ lib:@hb.erefl lp:Ty lp:B }} {{ lib:@hb.eq lp:Ty lp:B lp:B }} @opaque! _,
+  P = {{ lib:@hb.erefl lp:Ty lp:B }},
+  std.assert-ok! (coq.typecheck P PTY) "HB unlock proof illtyped",
+  log.coq.env.add-const "unlock" P PTY @opaque! _,
   log.coq.env.end-module-name Name _,
 ].
  
