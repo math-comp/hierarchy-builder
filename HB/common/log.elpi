@@ -31,6 +31,19 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   @local! => arguments.set-implicit (const C) [[]],
 ].
 
+pred env.add-const i:id, i:term, i:term, i:opaque?, o:constant.
+env.add-const Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name
+               ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
+  avoid-name-collision Name Name1,
+  coq.env.add-const Name1 Bo Ty Opaque C,
+  if (var Ty) (Ty? = none) (Ty? = some Ty),
+  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
+].
+
 pred env.add-const-noimplicits-failondup i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
   % TODO: refine when we switch to add-section-variable/add-const
@@ -53,6 +66,12 @@ env.add-section-variable-noimplicits Name Ty C :- std.do! [
   @local! => arguments.set-implicit (const C) [[]],
 ].
 
+pred env.add-parameter i:id, i:term, o:constant.
+env.add-parameter ID Ty C :- std.do! [
+  @global! => coq.env.add-const ID _ Ty @opaque! C,
+  log.private.log-vernac (log.private.coq.vernac.parameter ID Ty),
+].
+
 pred env.add-indt i:indt-decl, o:inductive.
 env.add-indt Decl I :- std.do! [
   if (not(coq.ground-indt-decl? Decl))
@@ -69,16 +88,26 @@ env.add-indt Decl I :- std.do! [
     (p\ sigma c\ if (p = some c) (log.private.log-implicits-of ff (const c)) true),
 ].
 
-pred env.begin-module i:id.
-env.begin-module Name :- std.do! [
-  coq.env.begin-module Name none,
+pred env.begin-module i:id, i:option modtypath.
+env.begin-module Name Sig :- std.do! [
+  coq.env.begin-module Name Sig,
   log.private.log-vernac (log.private.coq.vernac.begin-module Name none),
+].
+pred env.begin-module-type i:id.
+env.begin-module-type Name :- std.do! [
+  coq.env.begin-module-type Name,
+  log.private.log-vernac (log.private.coq.vernac.begin-module-type Name),
 ].
 
 pred env.end-module-name i:id, o:modpath.
 env.end-module-name Name M :- std.do! [
   coq.env.end-module M,
   log.private.log-vernac (log.private.coq.vernac.end-module Name),
+].
+pred env.end-module-type-name i:id, o:modtypath.
+env.end-module-type-name Name M :- std.do! [
+  coq.env.end-module-type M,
+  log.private.log-vernac (log.private.coq.vernac.end-module-type Name),
 ].
 
 pred env.begin-section i:id.
@@ -169,12 +198,15 @@ log-implicits-of Local GR :-
 kind coq.vernac type.
 type coq.vernac.begin-module  string -> option string       -> coq.vernac.
 type coq.vernac.end-module    string                        -> coq.vernac.
+type coq.vernac.begin-module-type string                    -> coq.vernac.
+type coq.vernac.end-module-type   string                    -> coq.vernac.
 type coq.vernac.begin-section string                        -> coq.vernac.
 type coq.vernac.end-section   string                        -> coq.vernac.
 type coq.vernac.import-module string                        -> coq.vernac.
 type coq.vernac.export-module string                        -> coq.vernac.
 type coq.vernac.definition    string -> option term -> term -> coq.vernac.
 type coq.vernac.variable      string -> term                -> coq.vernac.
+type coq.vernac.parameter     string -> term                -> coq.vernac.
 type coq.vernac.inductive     indt-decl                     -> coq.vernac.
 type coq.vernac.abbreviation  string -> int -> term         -> coq.vernac.
 type coq.vernac.notation      string -> int -> term         -> coq.vernac.

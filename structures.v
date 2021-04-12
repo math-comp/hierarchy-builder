@@ -25,6 +25,8 @@ Register Coq.ssr.ssreflect.phant as hb.phant.
 Register Coq.ssr.ssreflect.Phant as hb.Phant.
 Register Coq.ssr.ssreflect.phantom as hb.phantom.
 Register Coq.ssr.ssreflect.Phantom as hb.Phantom.
+Register Coq.Init.Logic.eq as hb.eq.
+Register Coq.Init.Logic.eq_refl as hb.erefl.
 Register new as hb.new.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
@@ -588,6 +590,49 @@ main _ :- coq.error "Usage: HB.reexport.".
 Elpi Typecheck.
 Elpi Export HB.reexport.
 
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.lock] hides the body of a definition behind a sealed module.
+
+    Syntax to lock:
+
+[[
+HB.lock Definition foo : ty := t.
+]]
+
+    Pseudocode:
+
+[[
+Module Type fooLocked.
+Parameter body : ty.
+Parameter unlock : body = t.
+End fooLocked.
+
+Module foo : fooLocked.
+Definition body : ty := t.
+Lemma unlock : body = t. Proof. by []. Qed.
+End foo.
+
+Notation foo := foo.body.
+]]
+*)
+
+Elpi Command HB.lock.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/lock.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [const-decl Name (some BoSkel) TySkel] :- !,
+  with-attributes (with-logging (lock.lock-def Name TySkel BoSkel)).
+main _ :- coq.error "Usage: HB.lock Definition name : ty := t.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.lock.
+   
 (*
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

@@ -1,0 +1,38 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+
+namespace lock {
+
+pred lock-def i:id, i:arity, i:term.
+lock-def Name AritySkel BoSkel :- std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton AritySkel _ Arity) "HB: type illtyped",
+  coq.arity->term Arity Ty,
+  std.assert-ok! (coq.elaborate-skeleton BoSkel Ty Bo) "HB: body illtyped",
+
+  NameTy is Name ^ "Locked",
+  private.lock-module-type NameTy Ty Bo Signature,
+  private.lock-module-body Signature Name Ty Bo C,
+
+  log.coq.notation.add-abbreviation Name 0 (global (const C)) ff _,
+].
+
+namespace private {
+
+pred lock-module-type i:id, i:term, i:term, o:modtypath.
+lock-module-type Name Ty Bo M :- std.do! [
+  log.coq.env.begin-module-type Name,
+  log.coq.env.add-parameter "body" Ty C, B = global (const C),
+  log.coq.env.add-parameter "unlock" {{ lib:@hb.eq lp:Ty lp:B lp:Bo }} _,
+  log.coq.env.end-module-type-name Name M,
+].
+
+pred lock-module-body o:modtypath, i:id, i:term, i:term, o:constant.
+lock-module-body Signature Name Ty Bo C:- std.do! [
+  log.coq.env.begin-module Name (some Signature),
+  log.coq.env.add-const "body" Bo Ty @transparent! C, B = global (const C),
+  log.coq.env.add-const "unlock" {{ lib:@hb.erefl lp:Ty lp:B }} {{ lib:@hb.eq lp:Ty lp:B lp:B }} @opaque! _,
+  log.coq.env.end-module-name Name _,
+].
+ 
+}}

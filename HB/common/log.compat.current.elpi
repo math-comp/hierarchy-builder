@@ -34,9 +34,10 @@ log.private.log-vernac _.
 % The main entry point to print vernacular commands is coq.vernac->pp
 
 shorten log.private.coq.vernac.{ begin-module , end-module , begin-section, end-section }.
+shorten log.private.coq.vernac.{ begin-module-type , end-module-type }.
 shorten log.private.coq.vernac.{ import-module , export-module }.
 shorten log.private.coq.vernac.{ definition , variable , comment , check }.
-shorten log.private.coq.{ vernac.inductive , vernac.implicit }.
+shorten log.private.coq.{ vernac.inductive , vernac.implicit , vernac.parameter }.
 shorten log.private.coq.vernac.{ canonical , abbreviation , notation , coercion }.
 shorten log.private.{ coq.vernac }.
 shorten coq.pp.{ box , h , spc , v , str , hv , hov, glue, brk }.
@@ -66,6 +67,10 @@ coq.vernac->pp1 (begin-module Name (some TyName)) PP :-
   PP = box h [str "Module ", str Name, str " : ", str TyName, str "."].
 coq.vernac->pp1 (end-module Name) PP :-
   PP = box h [str "End ", str Name, str "."].
+coq.vernac->pp1 (begin-module-type Name) PP :-
+  PP = box h [str "Module Type ", str Name, str "."].
+coq.vernac->pp1 (end-module-type Name) PP :-
+  PP = box h [str "End ", str Name, str "."].
 coq.vernac->pp1 (begin-section Name) PP :-
   PP = box h [str "Section ", str Name, str "."].
 coq.vernac->pp1 (end-section Name) PP :-
@@ -78,6 +83,8 @@ coq.vernac->pp1 (definition Name (some Ty) Body) PP :-
   coq.term->pp Ty T,
   coq.term->pp Body B.
 coq.vernac->pp1 (variable Name Ty) (box (hv 2) [box h [str "Variable ", str Name, str " :"], spc, TY, str "."]) :-
+  coq.term->pp Ty TY.
+coq.vernac->pp1 (vernac.parameter Name Ty) (box (hv 2) [box h [str "Parameter ", str Name, str " :"], spc, TY, str "."]) :-
   coq.term->pp Ty TY.
 coq.vernac->pp1 (import-module Name) (box h [str "Import ", str Name, str "."]).
 coq.vernac->pp1 (export-module Name) (box h [str "Export ", str Name, str "."]).
