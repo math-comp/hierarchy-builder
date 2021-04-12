@@ -14,7 +14,7 @@ lock-def Name AritySkel BoSkel :- std.do! [
   private.lock-module-type NameTy Ty Bo Signature,
   private.lock-module-body Signature Name Ty Bo C,
 
-  log.coq.notation.add-abbreviation Name 0 (global (const C)) ff _,
+  @global! => log.coq.notation.add-abbreviation Name 0 (global (const C)) ff _,
 ].
 
 namespace private {
