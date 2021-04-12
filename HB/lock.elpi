@@ -34,7 +34,9 @@ lock-module-body Signature Name Ty Bo C:- std.do! [
   log.coq.env.begin-module Name (some Signature),
   log.coq.env.add-const "body" Bo Ty @transparent! C, B = global (const C),
   P = {{ lib:@hb.erefl lp:Ty lp:B }},
-  std.assert-ok! (coq.typecheck P PTY) "HB unlock proof illtyped",
+  std.assert-ok! (coq.typecheck P _) "HB unlock proof illtyped",
+  PTY = {{ lib:@hb.eq _ lp:B lp:Bo }},
+  std.assert-ok! (coq.typecheck-ty PTY _) "HB unlock statement illtyped",
   log.coq.env.add-const "unlock" P PTY @opaque! _,
   log.coq.env.end-module-name Name _,
 ].
