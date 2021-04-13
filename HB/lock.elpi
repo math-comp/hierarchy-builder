@@ -12,7 +12,7 @@ lock-def Name AritySkel BoSkel :- std.do! [
 
   NameTy is Name ^ "Locked",
   private.lock-module-type NameTy Ty Bo Signature,
-  private.lock-module-body Signature Name Ty Bo C,
+  private.lock-module-body Signature NameTy Name Ty Bo C,
 
   @global! => log.coq.notation.add-abbreviation Name 0 (global (const C)) ff _,
 ].
@@ -29,9 +29,9 @@ lock-module-type Name Ty Bo M :- std.do! [
   log.coq.env.end-module-type-name Name M,
 ].
 
-pred lock-module-body o:modtypath, i:id, i:term, i:term, o:constant.
-lock-module-body Signature Name Ty Bo C:- std.do! [
-  log.coq.env.begin-module Name (some Signature),
+pred lock-module-body o:modtypath, i:id, i:id, i:term, i:term, o:constant.
+lock-module-body Signature SignatureName Name Ty Bo C:- std.do! [
+  log.coq.env.begin-module Name (some (pr Signature SignatureName)),
   log.coq.env.add-const "body" Bo Ty @transparent! C, B = global (const C),
   P = {{ lib:@hb.erefl lp:Ty lp:B }},
   std.assert-ok! (coq.typecheck P _) "HB unlock proof illtyped",

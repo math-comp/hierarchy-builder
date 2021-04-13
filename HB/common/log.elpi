@@ -88,11 +88,16 @@ env.add-indt Decl I :- std.do! [
     (p\ sigma c\ if (p = some c) (log.private.log-implicits-of ff (const c)) true),
 ].
 
-pred env.begin-module i:id, i:option modtypath.
-env.begin-module Name Sig :- std.do! [
-  coq.env.begin-module Name Sig,
+pred env.begin-module i:id, i:option (pair modtypath id).
+env.begin-module Name none :- std.do! [
+  coq.env.begin-module Name none,
   log.private.log-vernac (log.private.coq.vernac.begin-module Name none),
 ].
+env.begin-module Name (some (pr Sig SigName)) :- std.do! [
+  coq.env.begin-module Name (some Sig),
+  log.private.log-vernac (log.private.coq.vernac.begin-module Name (some SigName)),
+].
+
 pred env.begin-module-type i:id.
 env.begin-module-type Name :- std.do! [
   coq.env.begin-module-type Name,
