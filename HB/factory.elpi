@@ -98,7 +98,7 @@ declare-asset Asset AssetKind :- std.do! [
 
   if-verbose (coq.say "HB: start module and section" Module),
 
-  log.coq.env.begin-module Module,
+  log.coq.env.begin-module Module none,
   log.coq.env.begin-section Module,
 
   % We start by postulating the parameters
@@ -197,7 +197,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
 
   if-verbose (coq.say "HB: start module Exports"),
 
-  log.coq.env.begin-module "Exports",
+  log.coq.env.begin-module "Exports" none,
   std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   std.forall GRDepsClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   % std.map {gr-deps GRK} (_\ r\ r = maximal) Implicits,
@@ -285,7 +285,7 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
 
   if-verbose (coq.say "HB: start module Exports"),
 
-  log.coq.env.begin-module "Exports",
+  log.coq.env.begin-module "Exports" none,
   std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   std.forall GRDepsClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-nparams (indt R) NParams)),

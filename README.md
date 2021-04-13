@@ -134,6 +134,7 @@ opam install coq-hierarchy-builder
 - HB support commands:
   - `HB.export` exports a module and schedules it for re-export
   - `HB.reexport` exports all modules and instances scheduled for re-export
+  - `HB.lock` locks a definition behind a symbol and an unfolding equation
   - `HB.graph` prints the structure hierarchy to a dot file
   - `HB.status` dumps the contents of the hierarchy (debug purposes)
   - `HB.check` is similar to `Check` (test purposes)

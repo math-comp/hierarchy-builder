@@ -31,7 +31,7 @@ declare Module B :- std.do! [
 
   if-verbose (coq.say "HB: start module" Module),
 
-  log.coq.env.begin-module Module,
+  log.coq.env.begin-module Module none,
 
   private.declare-class+structure MLwP
     ClassName Structure SortProjection ClassProjection Factories,
@@ -60,7 +60,7 @@ declare Module B :- std.do! [
 
   if-verbose (coq.say "HB: start module Exports"),
 
-  log.coq.env.begin-module "Exports",
+  log.coq.env.begin-module "Exports" none,
 
   private.infer-coercion-tgt MLwP CoeClass,
   if-arg-sort (private.declare-sort-coercion CoeClass Structure (global (const ArgSortCst))),
@@ -125,7 +125,7 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: operations meta-data module: ElpiOperations"),
 
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
-  log.coq.env.begin-module ElpiOperationModName,
+  log.coq.env.begin-module ElpiOperationModName none,
     std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
     std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
@@ -497,8 +497,8 @@ export-mixin-coercion ClassName (some C) :-
 pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:classname, i:term, i:option gref.
 mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
   CompatModuleName is "MathCompCompat" ^ ModuleName,
-  log.coq.env.begin-module CompatModuleName, % to avoid collisions
-  log.coq.env.begin-module ModuleName,
+  log.coq.env.begin-module CompatModuleName none, % to avoid collisions
+  log.coq.env.begin-module ModuleName none,
 
   if (Axioms = some GR)
     (@global! => log.coq.notation.add-abbreviation "axiom" 0 (global GR) ff _)

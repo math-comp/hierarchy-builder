@@ -7,14 +7,14 @@ pred begin i:context-decl.
 begin CtxSkel :- std.do! [
   Name is "Builders_" ^ {std.any->string {new_int}}, % TODO?
   if-verbose (coq.say "HB: begin module for builders"),
-  log.coq.env.begin-module Name,
+  log.coq.env.begin-module Name none,
 
   std.assert-ok! (builders.private.elaborate-context-skel->factory CtxSkel Ctx GRF) "Context illtyped",
 
   % the Super module to access operations/axioms shadowed by the ones in the factory
   if (GRF = indt FRecord) (std.do! [
     if-verbose (coq.say "HB: begin module Super"),
-    log.coq.env.begin-module "Super",
+    log.coq.env.begin-module "Super" none,
     std.forall {coq.CS.canonical-projections FRecord} builders.private.declare-shadowed-constant,
     log.coq.env.end-module-name "Super" _,
     if-verbose (coq.say "HB: ended module Super")
@@ -49,7 +49,7 @@ builders.end :- std.do! [
   % TODO: Do we need this module?
   gref->modname GR 1 "" M,
   Name is M ^ "_Exports",
-  log.coq.env.begin-module Name,
+  log.coq.env.begin-module Name none,
   std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   std.forall ExportClausesFiltered (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
