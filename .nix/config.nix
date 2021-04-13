@@ -3,7 +3,7 @@
   attribute = "hierarchy-builder";
   default-bundle = "coq-8.13";
   bundles = let common = {
-      mathcomp.override.version = "hierarchy-builder-lock";
+      mathcomp.override.version = "hierarchy-builder";
       mathcomp.job = false;
       mathcomp-single.job = true;
   }; in {
