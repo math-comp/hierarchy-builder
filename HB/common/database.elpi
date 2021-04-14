@@ -257,7 +257,7 @@ get-constructor I _ :- coq.error "get-constructor: not an inductive" I.
 %% finding for locally defined structures
 pred get-cs-structure i:cs-instance, o:structure.
 get-cs-structure (cs-instance _ _ Inst) Struct :- std.do! [
-  coq.env.typeof (global Inst) InstTy,
+  coq.env.typeof Inst InstTy,
   coq.prod-tgt->gref InstTy Struct
 ].
 
