@@ -1,0 +1,114 @@
+HB: AddMonoid_of_TYPE is a factory
+    (from "./examples/demo1/hierarchy_5.v", line 2)
+HB: AddMonoid_of_TYPE operations and axioms are:
+    - zero
+    - add
+    - addrA
+    - add0r
+    - addr0
+HB: AddMonoid_of_TYPE requires the following mixins:
+HB: AddMonoid_of_TYPE provides the following mixins:
+    - hierarchy_5.AddMonoid_of_TYPE
+
+HB: AddMonoid_of_TYPE.Build is a factory constructor
+    (from "./examples/demo1/hierarchy_5.v", line 2)
+HB: AddMonoid_of_TYPE.Build requires its subject to be already equipped with:
+HB: AddMonoid_of_TYPE.Build provides the following mixins:
+    - hierarchy_5.AddMonoid_of_TYPE
+HB: arguments: AddMonoid_of_TYPE.Build T zero add addrA add0r addr0
+
+HB: AddAG.type is a structure (from "./examples/demo1/hierarchy_5.v", line 72)
+HB: AddAG.type characterizing operations and axioms are:
+    - addNr
+    - opp
+HB: hierarchy_5.AddAG is a factory for the following mixins:
+    - hierarchy_5.AddMonoid_of_TYPE
+    - hierarchy_5.AddComoid_of_AddMonoid
+    - hierarchy_5.AddAG_of_AddComoid (* new, not from inheritance *)
+HB: hierarchy_5.AddAG inherits from:
+    - hierarchy_5.AddMonoid
+    - hierarchy_5.AddComoid
+HB: hierarchy_5.AddAG is inherited by:
+    - hierarchy_5.Ring
+
+HB: hierarchy_5.AddMonoid.type is a structure
+    (from "./examples/demo1/hierarchy_5.v", line 16)
+HB: hierarchy_5.AddMonoid.type characterizing operations and axioms are:
+    - addr0
+    - add0r
+    - addrA
+    - add
+    - zero
+HB: hierarchy_5.AddMonoid is a factory for the following mixins:
+    - hierarchy_5.AddMonoid_of_TYPE (* new, not from inheritance *)
+HB: hierarchy_5.AddMonoid inherits from:
+HB: hierarchy_5.AddMonoid is inherited by:
+    - hierarchy_5.AddComoid
+    - hierarchy_5.AddAG
+    - hierarchy_5.BiNearRing
+    - hierarchy_5.SemiRing
+    - hierarchy_5.Ring
+
+HB: Ring_of_AddAG is a factory
+    (from "./examples/demo1/hierarchy_5.v", line 106)
+HB: Ring_of_AddAG operations and axioms are:
+    - one
+    - mul
+    - mulrA
+    - mulr1
+    - mul1r
+    - mulrDl
+    - mulrDr
+HB: Ring_of_AddAG requires the following mixins:
+    - hierarchy_5.AddMonoid_of_TYPE
+    - hierarchy_5.AddComoid_of_AddMonoid
+    - hierarchy_5.AddAG_of_AddComoid
+HB: Ring_of_AddAG provides the following mixins:
+    - hierarchy_5.BiNearRing_of_AddMonoid
+
+HB: Ring_of_AddAG.Build is a factory constructor
+    (from "./examples/demo1/hierarchy_5.v", line 106)
+HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
+    - hierarchy_5.AddMonoid_of_TYPE
+    - hierarchy_5.AddComoid_of_AddMonoid
+    - hierarchy_5.AddAG_of_AddComoid
+HB: Ring_of_AddAG.Build provides the following mixins:
+    - hierarchy_5.BiNearRing_of_AddMonoid
+HB: arguments: Ring_of_AddAG.Build T [one] [mul] mulrA mulr1 mul1r mulrDl mulrDr
+
+HB: add is an operation of structure hierarchy_5.AddMonoid
+    (from "./examples/demo1/hierarchy_5.v", line 16)
+HB: add comes from mixin hierarchy_5.AddMonoid_of_TYPE
+    (from "./examples/demo1/hierarchy_5.v", line 2)
+
+HB: AddAG.sort is canonically equipped with mixins:
+    - hierarchy_5.AddMonoid 
+    - hierarchy_5.BiNearRing 
+    - hierarchy_5.AddComoid 
+    - hierarchy_5.SemiRing 
+
+HB: AddAG.sort is a canonical projection
+    (from "./examples/demo1/hierarchy_5.v", line 72)
+HB: AddAG.sort has the following canonical values:
+    - Z 
+    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 191)
+
+HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
+    (from "./examples/demo1/hierarchy_5.v", line 72)
+
+HB: Z is canonically equipped with mixins:
+    - hierarchy_5.AddMonoid (from "./tests/about.v", line 3)
+    - hierarchy_5.BiNearRing (from "./tests/about.v", line 3)
+    - hierarchy_5.AddComoid (from "./tests/about.v", line 3)
+    - hierarchy_5.SemiRing (from "./tests/about.v", line 3)
+    - hierarchy_5.Ring (from "./tests/about.v", line 3)
+    - hierarchy_5.AddAG (from "./tests/about.v", line 3)
+
+HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
+    hierarchy_5.Ring to hierarchy_5.SemiRing 
+
+HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
+    hierarchy_5.Ring to hierarchy_5.SemiRing 
+
+HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
+hierarchy_5.BiNearRing_of_AddMonoid

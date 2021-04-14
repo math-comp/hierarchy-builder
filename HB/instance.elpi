@@ -97,6 +97,11 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
+
+  if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
+     (log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location (const CS) Loc)))
+     true,
+
   Clauses => declare-all T Rest L.
 declare-all T [_|Rest] L :- declare-all T Rest L.
 declare-all _ [] [].
