@@ -1,0 +1,303 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+
+% This file contains some HB specific utilities
+
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+
+% HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
+type attmap attribute-type.
+
+% runs P in a context where Coq #[attributes] are parsed
+pred with-attributes i:prop.
+with-attributes P :-
+  attributes A,
+
+% HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
+(pi S L AS Prefix R R1 Map PS\
+  parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
+    if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
+    parse-attributes.aux AS Prefix R1,
+    (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
+    std.append R1 [get-option PS Map] R
+) =>
+
+  coq.parse-attributes A [
+    att "verbose" bool,
+    att "mathcomp" bool,
+    att "mathcomp.axiom" string,
+    att "infer" attmap,
+    att "key" string,
+    att "arg_sort" bool,
+    att "log" bool,
+    att "log.raw" bool,
+    att "compress_coercions" bool,
+    att "export" bool,
+    att "skip" string,
+    att "local" bool,
+    att "fail" bool,
+  ] Opts, !,
+  Opts => P.
+
+pred if-verbose i:prop.
+if-verbose P :- get-option "verbose" tt, !, P.
+if-verbose _.
+
+pred if-arg-sort i:prop.
+if-arg-sort P :- get-option "arg_sort" tt, !, P.
+if-arg-sort _.
+
+pred if-MC-compat i:(option gref -> prop).
+if-MC-compat P :- get-option "mathcomp" tt, !, P none.
+if-MC-compat P :- get-option "mathcomp.axiom" S, !,
+  std.assert! (coq.locate S GR) "The name passed to the mathcomp.axiom attribute does not exist",
+  P (some GR).
+if-MC-compat _.
+
+pred with-locality i:prop.
+with-locality P :-
+  if (get-option "local" tt) (A = @local!) (A = @global!),
+  A => P.
+
+% TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
+% Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
+% TODO: rename since this is HB specific and is expected to return a factory
+pred located->gref i:string, i:list located, o:gref.
+located->gref _ [loc-gref GR|_] GR.
+located->gref _ [loc-abbreviation Abbrev|_] GR :- phant-abbrev GR _ Abbrev, !.
+located->gref S [loc-abbreviation _|_] _ :- coq.error S "is an abbreviation out of the control of HB".
+located->gref S [loc-modpath _|_] _ :- coq.error S "should be a factory, but is a module".
+located->gref S [loc-modtypath _|_] _ :- coq.error S "should be a factory, but is a module type".
+located->gref S [] _ :- coq.error "Could not locate name" S.
+
+% TODO: generalize/rename when we support parameters
+pred argument->gref i:argument, o:gref.
+argument->gref (str S) GR :- located->gref S {coq.locate-all S} GR.
+argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
+
+pred argument->term i:argument, o:term.
+argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
+argument->term (trm T) T1 :- !, std.assert-ok! (coq.elaborate-skeleton T _ T1) "not well typed term".
+argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
+
+pred argument->ty i:argument, o:term.
+argument->ty (str S) T1 :- !, argument->gref (str S) GR, std.assert-ok! (coq.elaborate-ty-skeleton (global GR) _ T1) "global reference is not a type".
+argument->ty (trm T) T1 :- !, std.assert-ok! (coq.elaborate-ty-skeleton T _ T1) "not well typed type".
+argument->ty X _ :- coq.error "Argument" X " is expected to be a type or a string".
+
+pred builder->string i:builder, o:string.
+builder->string (builder _ _ _ B) S :- coq.term->string (global B) S.
+
+pred nice-gref->string i:gref, o:string.
+nice-gref->string X Mod :-
+  coq.gref->path X Path,
+  std.rev Path [_,Mod1,Mod2|_], !,
+  Mod is Mod2 ^ "_" ^ Mod1.
+nice-gref->string X S :-
+  coq.term->string (global X) S.
+
+pred compat.concat i:string, i:list string, o:string.
+compat.concat S L O :- coq.version _ _ N _, N > 12, !, std.string.concat S L O.
+compat.concat S L O :- compat.concat.aux L S O.
+compat.concat.aux [] _ "".
+compat.concat.aux [X] _ X :- !.
+compat.concat.aux [X|XS] Sep O :- compat.concat.aux XS Sep O1, O is X ^ Sep ^ O1.
+
+pred gref->modname i:gref, i:int, i:string, o:string.
+gref->modname GR NComp Sep ModName :-
+  coq.gref->path GR Path,
+  std.rev Path PathRev,
+  std.length Path Len,
+  if (Len > NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
+  std.drop 1 PathRev Mods, % drop the label
+  std.take NComp Mods L,
+  compat.concat Sep {std.rev L} ModName.
+pred gref->modname-label i:gref, i:int, i:string, o:string.
+gref->modname-label GR NComp Sep ModName :-
+  coq.gref->path GR Path,
+  std.rev Path [ID|PathRev],
+  std.length PathRev Len,
+  if (Len >= NComp) (N = NComp) (N = Len),
+  std.take N PathRev L,
+  compat.concat Sep {std.rev [ID|L]} ModName.
+
+pred avoid-name-collision i:string, o:string.
+avoid-name-collision S S1 :-
+  coq.locate-all S L,
+  if (std.mem L (loc-gref GR), coq.gref->path GR P, coq.env.current-path P)
+     (S1 is S ^ "__" ^ {std.any->string {new_int}})
+     (S1 is S).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% function to predicate generic constructions %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred mk-nil o:list A.
+mk-nil [].
+pred mk0 i:A, o:A.
+mk0 F R :- constant R F [].
+pred mk1 i:(A -> B), i:A, o:B.
+mk1 F X1 R :- constant R F [X1].
+pred mk2 i:(A -> B -> C), i:A, i:B, o:C.
+mk2 F X1 X2 R :- constant R F [X1, X2].
+pred mk3 i:(A -> B -> C -> D), i:A, i:B, i:C, o:D.
+mk3 F X1 X2 X3 R :- constant R F [X1, X2, X3].
+pred mk4 i:(A -> B -> C -> D -> E), i:A, i:B, i:C, i:D, o:E.
+mk4 F X1 X2 X3 X4 R :- constant R F [X1, X2, X3,X4].
+
+pred mk-fun i:name, i:term, i:(term -> term), o:term.
+mk-fun N Ty Body (fun N Ty Body).
+
+% generic argument to pass to w-params
+pred ignore i:name, i:term, i:(term -> A), o:A.
+ignore _ _ F X :- (pi x y\ F x = F y), X = F (sort prop).
+
+% combining body and type
+pred mk-fun-prod i:name, i:term, o:(term -> pair term term), o:pair term term.
+mk-fun-prod N Ty (x\ pr (Body x) (Type x)) (pr (fun N Ty Body) (prod N Ty Type)).
+
+pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> indt-decl), o:indt-decl.
+mk-parameter IK Name X F Decl :- !, Decl = parameter {coq.name->id Name} IK X F.
+
+pred params->holes i:list-w-params A, o:list term.
+params->holes (w-params.nil _ _ _) [].
+params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
+
+pred fresh-type o:term.
+fresh-type Ty :-
+  Ty = {{Type}},
+  std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
+
+%%%%%%%%%%%%%%%%%%%%%%
+% w-params interface %
+%%%%%%%%%%%%%%%%%%%%%%
+
+pred apply-w-params i:w-params A, i:list term, i:term, o:A.
+apply-w-params (w-params.cons _ _ PL) [P|PS] T R :- !, apply-w-params (PL P) PS T R.
+apply-w-params (w-params.nil _ _ L) [] T R :- !, R = L T.
+apply-w-params _ _ _ _ :- coq.error "apply-w-params".
+
+pred w-params.nparams i:w-params A, o:int.
+w-params.nparams (w-params.cons _ _ F) N :- pi x\ w-params.nparams (F x) M, N is M + 1.
+w-params.nparams (w-params.nil _ _ _) 0.
+
+% [w-params.fold AwP Cons Nil Out] states that Out has shape
+%   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty F
+%   where AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
+pred w-params.fold i:w-params A, i:(name -> term -> (term -> B) -> B -> prop),
+   i:(list term -> name -> term -> (term -> A) -> B -> prop), o:B.
+w-params.fold L Cons Nil Out :- w-params.fold.params L Cons Nil [] Out.
+
+pred w-params.fold.params i:w-params A,
+   i:(name -> term -> (term -> B) -> B -> prop),
+   i:(list term -> name -> term -> (term -> A) -> B -> prop),
+   i:list term, % accumulator
+   o:B.
+w-params.fold.params (w-params.cons ID PTy F) Cons Nil RevPs Out :- !, std.do! [
+  coq.id->name ID N,
+  (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
+  Cons N PTy Body Out].
+w-params.fold.params (w-params.nil ID TTy F) _ Nil RevParams Out :- !, std.do! [
+  coq.id->name ID N,
+  std.rev RevParams Params,
+  Nil Params N TTy F Out,
+].
+
+% [w-params.then AwP Cons Nil Out] states that Out has shape
+%   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty t \ Body
+%   where Pred [p_1 .. p_n] T Body
+%   and AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
+pred w-params.then i:w-params A,
+   i:(name -> term -> (term -> C) -> C -> prop),
+   i:(name -> term -> (term -> B) -> C -> prop),
+   i:(list term -> term -> A -> B -> prop),
+   o:C.
+w-params.then L Cons Nil Pred Out :-
+  w-params.fold L Cons (ps\ n\ ty\ f\ out\ sigma Body\
+    (@pi-decl n ty t\ Pred ps t (f t) (Body t)),
+    Nil n ty Body out) Out.
+
+pred w-params.map i:w-params A, i:(list term -> term -> A -> B -> prop), o:w-params B.
+w-params.map AL F BL :-
+  w-params.then AL mk-w-params.cons-name mk-w-params.nil-name F BL.
+% TODO: make combinators pass id
+type mk-w-params.cons-name name -> term -> (term -> w-params A) -> w-params A -> prop.
+mk-w-params.cons-name N T F (w-params.cons ID T F):- coq.name->id N ID.
+type mk-w-params.nil-name name -> term -> (term -> A) -> w-params A -> prop.
+mk-w-params.nil-name N T F (w-params.nil ID T F):- coq.name->id N ID.
+
+% on the fly abstraction
+pred bind-nil i:id, i:term, i:term, i:A, o:w-params A.
+bind-nil N T X V (w-params.nil N T A) :- V = A X.
+
+pred bind-cons i:id, i:term, i:term, i:w-params A, o:w-params A.
+bind-cons N T X V (w-params.cons N T A) :- V = A X.
+
+% Specific to list-w-params
+pred list-w-params_list i:list-w-params A, o:list A.
+list-w-params_list AwP R :- w-params.then AwP ignore ignore
+   (p\ t\ x\ std.map x triple_1) R.
+
+pred list-w-params.append i:list-w-params A, i:list-w-params A, o:list-w-params A.
+list-w-params.append (w-params.nil N T ML1) (w-params.nil N T ML2) (w-params.nil N T ML) :-
+  pi x\ std.append (ML1 x) (ML2 x) (ML x).
+list-w-params.append (w-params.cons N Ty ML1) (w-params.cons N Ty ML2) (w-params.cons N Ty ML) :-
+  pi x\ list-w-params.append (ML1 x) (ML2 x) (ML x).
+
+pred list-w-params.rcons i:list-w-params A, i:(list term -> term -> w-args A -> prop), o:list-w-params A.
+list-w-params.rcons LwP F R :- list-w-params.rcons.aux LwP F [] R.
+list-w-params.rcons.aux (w-params.nil N T ML1) F Acc (w-params.nil N T ML2) :-
+  pi x\ sigma Last\ F {std.rev Acc} x Last, std.append (ML1 x) [Last] (ML2 x).
+list-w-params.rcons.aux (w-params.cons N Ty ML1) F Acc (w-params.cons N Ty ML2) :-
+  pi x\ list-w-params.rcons.aux (ML1 x) F [x|Acc] (ML2 x).
+
+pred list-w-params.flatten-map
+  i:list-w-params A,
+  i:(A -> list-w-params B -> prop),
+  o:list-w-params B.
+list-w-params.flatten-map (w-params.cons N T L) F (w-params.cons N T L1) :-
+  @pi-parameter N T p\
+    list-w-params.flatten-map (L p) F (L1 p).
+list-w-params.flatten-map (w-params.nil N TTy L) F (w-params.nil N TTy L1) :-
+  @pi-parameter N TTy t\
+    list-w-params.flatten-map.aux (L t) F (L1 t).
+
+pred list-w-params.flatten-map.aux
+  i:list (w-args A), i:(A -> list-w-params B -> prop), o:list (w-args B).
+list-w-params.flatten-map.aux [] _ [].
+list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
+  F M MwP,
+  apply-w-params MwP Ps T ML,
+  list-w-params.flatten-map.aux L F Res,
+  std.append ML Res Res1.
+
+% [build-list-w-params TheParams TheType Factorties ListWParams]
+% Params is a list of pairs (section variable, its type).
+% ListWParams has as many w-params.cons as TheParams and the terms
+% in Factories are abstracted wrt the first component of TheParams.
+pred build-list-w-params i:list (triple id term term), i:term, i:list (w-args A), o: list-w-params A.
+build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons ID Pty1 R) :- std.do! [
+  copy Pty Pty1,
+  (@pi-parameter ID Pty1 p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
+].
+build-list-w-params [] TheType Factories (w-params.nil "TheType" TT1 R) :- std.do! [
+  std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
+  copy TT TT1,
+  (@pi-parameter "TheType" TT1 t\ (copy TheType t :- !) =>
+         std.map Factories (std.map-triple (=) (x\ std.map x copy) copy) (R t)),
+].
+
+pred distribute-w-params i:list-w-params A, o:list (one-w-params A).
+distribute-w-params (w-params.cons N T F) L :-
+  pi x\ distribute-w-params (F x) (L1 x), std.map (L1 x) (bind-cons N T x) L.
+distribute-w-params (w-params.nil N T F) L :-
+  pi x\ std.map (F x) (bind-nil N T x) L.
+
+% Specific to one-w-params
+pred w-params_1 i:one-w-params A, o:A.
+w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
+
+pred purge-id i:term, o:term.
+purge-id T T1 :-
+  (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
