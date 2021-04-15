@@ -8,8 +8,7 @@ homepage: "https://github.com/math-comp/hierarchy-builder"
 bug-reports: "https://github.com/math-comp/hierarchy-builder/issues"
 dev-repo: "git+https://github.com/math-comp/hierarchy-builder"
 
-build: [ [ make "config"]
-         [ make "build"]
+build: [ [ make "build"]
          [ make "test-suite" ]  # {with-test} waiting https://github.com/coq-community/docker-coq-action/pull/48
        ]
 install: [ make "install" ]
