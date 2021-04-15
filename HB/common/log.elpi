@@ -1,0 +1,228 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% This file contains proxies for the API to write into the Coq state (eg add
+% an inductive, set implicit arguments...). This has two purposes:
+% - give nicer error messages
+% - we want to be able to log to a file all these actions (WIP), this file is
+%   were logging takes place. Hence we never call, say, coq.evn.add-* directly,
+%   but always via this proxy
+
+namespace log.coq {
+
+pred arguments.set-implicit i:gref, i:list (list implicit_kind).
+arguments.set-implicit GR I :-  std.do! [
+  coq.arguments.set-implicit GR I,
+  if (@local!) (Local = tt) (Local = ff),
+  log.private.log-vernac (log.private.coq.vernac.implicit Local {coq.gref->id GR} I),
+].
+
+pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
+env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name
+               ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
+  avoid-name-collision Name Name1,
+  coq.env.add-const Name1 Bo Ty Opaque C,
+  if (var Ty) (Ty? = none) (Ty? = some Ty),
+  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
+  @local! => arguments.set-implicit (const C) [[]],
+].
+
+pred env.add-const i:id, i:term, i:term, i:opaque?, o:constant.
+env.add-const Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name
+               ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
+  avoid-name-collision Name Name1,
+  coq.env.add-const Name1 Bo Ty Opaque C,
+  if (var Ty) (Ty? = none) (Ty? = some Ty),
+  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
+].
+
+pred env.add-const-noimplicits-failondup i:id, i:term, i:term, i:opaque?, o:constant.
+env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
+  % TODO: refine when we switch to add-section-variable/add-const
+  if (not(ground_term Ty ; ground_term Bo))
+    (coq.error "HB: cannot infer some information in" Name
+               ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
+    true,
+  coq.env.add-const Name Bo Ty Opaque C,
+  if (var Ty) (Ty? = none) (Ty? = some Ty),
+  log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo),
+  @local! => arguments.set-implicit (const C) [[]],
+].
+
+pred env.add-section-variable-noimplicits i:id, i:term, o:constant.
+env.add-section-variable-noimplicits Name Ty C :- std.do! [
+  if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
+  % coq.env.add-section-variable ID Ty C, coq-elpi >= 1.9.x
+  @local! => coq.env.add-const ID _ Ty @opaque! C,
+  log.private.log-vernac (log.private.coq.vernac.variable ID Ty),
+  @local! => arguments.set-implicit (const C) [[]],
+].
+
+pred env.add-parameter i:id, i:term, o:constant.
+env.add-parameter ID Ty C :- std.do! [
+  @global! => coq.env.add-const ID _ Ty @opaque! C,
+  log.private.log-vernac (log.private.coq.vernac.parameter ID Ty),
+].
+
+pred env.add-indt i:indt-decl, o:inductive.
+env.add-indt Decl I :- std.do! [
+  if (not(coq.ground-indt-decl? Decl))
+    (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
+    true,
+  coq.env.add-indt Decl I,
+  log.private.log-vernac (log.private.coq.vernac.inductive Decl),
+
+  % copy the current value of implicit arguments
+  coq.env.indt I _ _ _ _ KS _,
+  log.private.log-implicits-of ff (indt I),
+  std.forall KS (k\ log.private.log-implicits-of ff (indc k)),
+  std.forall {coq.CS.canonical-projections I}
+    (p\ sigma c\ if (p = some c) (log.private.log-implicits-of ff (const c)) true),
+].
+
+pred env.begin-module i:id, i:option (pair modtypath id).
+env.begin-module Name none :- std.do! [
+  coq.env.begin-module Name none,
+  log.private.log-vernac (log.private.coq.vernac.begin-module Name none),
+].
+env.begin-module Name (some (pr Sig SigName)) :- std.do! [
+  coq.env.begin-module Name (some Sig),
+  log.private.log-vernac (log.private.coq.vernac.begin-module Name (some SigName)),
+].
+
+pred env.begin-module-type i:id.
+env.begin-module-type Name :- std.do! [
+  coq.env.begin-module-type Name,
+  log.private.log-vernac (log.private.coq.vernac.begin-module-type Name),
+].
+
+pred env.end-module-name i:id, o:modpath.
+env.end-module-name Name M :- std.do! [
+  coq.env.end-module M,
+  log.private.log-vernac (log.private.coq.vernac.end-module Name),
+].
+pred env.end-module-type-name i:id, o:modtypath.
+env.end-module-type-name Name M :- std.do! [
+  coq.env.end-module-type M,
+  log.private.log-vernac (log.private.coq.vernac.end-module-type Name),
+].
+
+pred env.begin-section i:id.
+env.begin-section Name :- std.do! [
+  coq.env.begin-section Name,
+  log.private.log-vernac (log.private.coq.vernac.begin-section Name),
+].
+
+pred env.end-section-name i:id.
+env.end-section-name Name :- std.do! [
+  coq.env.end-section,
+  log.private.log-vernac (log.private.coq.vernac.end-section Name),
+].
+
+pred notation.add-abbreviation i:id, i:int, i:term, i:bool, o:abbreviation.
+notation.add-abbreviation Name NArgs Body OnlyParsing O :- std.do! [
+  coq.notation.add-abbreviation Name NArgs Body OnlyParsing O,
+  log.private.log-vernac (log.private.coq.vernac.abbreviation Name NArgs Body),
+].
+
+pred env.export-module i:id, i:modpath.
+env.export-module MPNice M :- std.do! [
+  coq.env.export-module M,
+  log.private.log-vernac (log.private.coq.vernac.export-module MPNice),
+].
+
+pred env.import-module i:id, i:modpath.
+env.import-module MPNice M :- std.do! [
+  coq.env.import-module M,
+  log.private.log-vernac (log.private.coq.vernac.import-module MPNice),
+].
+
+pred coercion.declare i:coercion.
+coercion.declare C :- std.do! [
+  @global! => coq.coercion.declare C,
+  C = coercion GR _ SRCGR TGTCL,
+  coq.gref->id GR Name,
+  log.private.log-vernac (log.private.coq.vernac.coercion Name SRCGR TGTCL),
+]. 
+
+
+}
+
+% Since CS.foo is not a valid predicate name we can't use it
+% in the namespace, so we just define it here with the full name
+pred log.coq.CS.declare-instance i:constant.
+log.coq.CS.declare-instance C  :- std.do! [
+  if (@local!) (Local = tt) (Local = ff),
+  coq.CS.declare-instance (const C),
+  coq.gref->id (const C) Name,
+  log.private.log-vernac (log.private.coq.vernac.canonical Name Local),
+].
+
+% Since "accumulate" is a keyword we can't use it as a predicate name
+% in the namespace, so we just define it here with the full name
+pred log.coq.env.accumulate i:scope, i:string, i:clause.
+log.coq.env.accumulate S DB CL :- std.do! [
+  coq.elpi.accumulate S DB CL,
+  if-verbose (log.private.log-vernac (log.private.coq.vernac.comment CL)),
+].
+
+pred log.coq.check i:term, o:term, o:term, o:diagnostic.
+log.coq.check Skel Ty T D :- std.do! [
+  coq.elaborate-skeleton Skel Ty T D,
+  if (get-option "fail" tt) (Fail = tt) (Fail = ff),
+  log.private.log-vernac (log.private.coq.vernac.check Skel Fail),
+].
+
+namespace log.private {
+
+%%%%% Logging Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred log-implicits-of i:bool, i:gref.
+log-implicits-of Local GR :-
+  coq.arguments.implicit GR I,
+  if (std.forall I (i\ std.forall i (x\ x = explicit))) (IMP = [[]]) (IMP = I),
+  log.private.log-vernac (log.private.coq.vernac.implicit Local {coq.gref->id GR} IMP).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Coq document
+
+% This is a very minimalistic AST to represent a Coq document equipped with
+% pretty printing facilities.
+%
+% When "complete enough" this should be moved to coq-elpi proper.
+
+kind coq.vernac type.
+type coq.vernac.begin-module  string -> option string       -> coq.vernac.
+type coq.vernac.end-module    string                        -> coq.vernac.
+type coq.vernac.begin-module-type string                    -> coq.vernac.
+type coq.vernac.end-module-type   string                    -> coq.vernac.
+type coq.vernac.begin-section string                        -> coq.vernac.
+type coq.vernac.end-section   string                        -> coq.vernac.
+type coq.vernac.import-module string                        -> coq.vernac.
+type coq.vernac.export-module string                        -> coq.vernac.
+type coq.vernac.definition    string -> option term -> term -> coq.vernac.
+type coq.vernac.variable      string -> term                -> coq.vernac.
+type coq.vernac.parameter     string -> term                -> coq.vernac.
+type coq.vernac.inductive     indt-decl                     -> coq.vernac.
+type coq.vernac.abbreviation  string -> int -> term         -> coq.vernac.
+type coq.vernac.notation      string -> int -> term         -> coq.vernac.
+type coq.vernac.coercion      string -> gref -> class       -> coq.vernac.
+type coq.vernac.canonical     string -> bool                -> coq.vernac.
+type coq.vernac.implicit      bool -> string -> list (list implicit_kind)  -> coq.vernac.
+type coq.vernac.comment       A                             -> coq.vernac.
+type coq.vernac.check         term -> bool                  -> coq.vernac.
+
+}
+
+pred with-logging i:prop.
+pred log.private.log-vernac i:log.private.coq.vernac.
+accumulate "log.compat".

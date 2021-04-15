@@ -34,6 +34,13 @@ nra.cache
 Makefile.coq
 Makefile.coq.conf
 .coqdeps.d
+Makefile.test-suite.coq
+Makefile.test-suite.coq.conf
+.coqdeps.test-suite
+*.v.hb
+*.v.hb.old
+coq.hb
+HB/common/log.compat.elpi
 
 _minted-*
 *.aux
@@ -48,3 +55,5 @@ _minted-*
 *.blg
 *.fdb_latexmk
 *.vtc
+
+*.dot

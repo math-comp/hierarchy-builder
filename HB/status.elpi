@@ -1,0 +1,84 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+namespace status {
+
+pred print-hierarchy.
+print-hierarchy :- std.do! [
+  coq.say "--------------------- Hierarchy -----------------------------------",
+  std.findall (class-def CL_) CL,
+  std.forall CL private.pp-class,
+
+  coq.say "",
+  coq.say "--------------------- Builders -----------------------------------",
+  std.findall (from A_ B_ C_) FL,
+  std.forall FL private.pp-from,
+
+  std.findall (mixin-src T_ M_ V_) ML,
+  if (ML = []) true (
+    coq.say "",
+    coq.say "--------------------- Local mixin instances ----------------------",
+    std.forall ML private.pp-mixin-src
+  ),
+
+  std.findall (builder-decl BD_) BDL,
+  if (BDL = []) true (
+    coq.say "",
+    coq.say "--------------------- Builder declarations ----------------------",
+    std.forall BDL private.pp-builder-decl
+  ),
+
+  std.findall (current-mode BF_) BFL,
+  if (BFL = []) true (
+    coq.say "",
+    coq.say "--------------------- Current mode ----------------------",
+    std.forall BFL private.pp-current-mode
+  ),
+].
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace private {
+
+pred pp-from i:prop.
+pp-from (from F M T) :-
+  coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
+  coq.say "  " {coq.term->string (global T)},
+  coq.say "".
+
+pred pp-list-w-params i:list-w-params mixinname, i:term.
+pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
+pred pp-list-w-params.triple i:w-args mixinname.
+pp-list-w-params (w-params.cons N Ty LwP) T :-
+  @pi-parameter N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
+pp-list-w-params (w-params.nil N TTy LwP) T :-
+  @pi-parameter N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
+pp-list-w-params.list-triple L S :-
+  coq.say {coq.term->string S} ":=",
+  std.forall L pp-list-w-params.triple.
+pp-list-w-params.triple (triple M Params T) :-
+  coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
+
+pred pp-class i:prop.
+pp-class (class-def (class _ S MLwP)) :-
+  pp-list-w-params MLwP (global S).
+
+pred pp-mixin-src i:prop.
+pp-mixin-src (mixin-src T M C) :-
+  coq.say {coq.term->string T} "is a"
+          {nice-gref->string M} "thanks to"
+          {coq.term->string C}.
+
+pred pp-builder-decl i:prop.
+pp-builder-decl (builder-decl (builder N F M GR)) :-
+  coq.say "builder" GR "with serial number" N 
+    "will build mixin" M "from factory" F.
+
+pred pp-current-mode i:prop.
+pp-current-mode (current-mode (builder-from TheType TheFactory GRF Mod)) :-
+  coq.say "The current key is" TheType "with factory" TheFactory
+    "corresponding to Global Ref" GRF "in module" Mod.
+  
+}}
