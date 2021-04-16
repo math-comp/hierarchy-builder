@@ -11,7 +11,6 @@ post-all::
 	case $(COQ_MINOR) in \
 	11|12) echo "No HB.about on Coq 8.$(COQ_MINOR), skipping diff" ;;\
     *)\
-	  rm -f tests/about.v.hb;\
 	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/about.v > tests/about.v.out.aux; \
 	  diff -u tests/about.v.out tests/about.v.out.aux ;;\
 	esac

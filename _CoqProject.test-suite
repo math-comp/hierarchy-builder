@@ -58,7 +58,6 @@ tests/compress_coe.v
 tests/funclass.v
 tests/local_instance.v
 tests/lock.v
-tests/about.v
 
 -R tests HB.tests
 -R examples HB.examples
