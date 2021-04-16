@@ -8,9 +8,11 @@ post-all::
 	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/compress_coe.v > tests/compress_coe.v.out.aux; \
 	  diff -u tests/compress_coe.v.out tests/compress_coe.v.out.aux ;;\
 	esac
+	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	case $(COQ_MINOR) in \
 	11|12) echo "No HB.about on Coq 8.$(COQ_MINOR), skipping diff" ;;\
     *)\
-	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/about.v > tests/about.v.out.aux; \
+	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/about.v > tests/about.v.out.aux;\
 	  diff -u tests/about.v.out tests/about.v.out.aux ;;\
-	esac
+	esac;\
+	fi
