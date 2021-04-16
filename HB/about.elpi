@@ -1,0 +1,290 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+namespace about {
+
+pred main i:string, i:located.
+main S (loc-gref GR) :- class-def (class Class GR MLwP), !,
+  private.main-structure S Class GR MLwP.
+
+main _ (loc-gref Class) :- class-def (class Class GR MLwP), !,
+  gref->modname GR 2 "." M,
+  coq.gref->id GR St,
+  S is M ^ "." ^ St,
+  private.main-structure S Class GR MLwP.
+
+main S (loc-gref (indt I)) :- factory-constructor (indt I) _, !,
+  private.main-factory S I.
+
+main S (loc-gref (const C)) :- factory-constructor (const C) _, !,
+  private.main-factory-alias S C.
+
+main S (loc-gref (const C)) :- exported-op M _ C, !,
+  private.main-operation S M C.
+
+main S (loc-gref GR) :- factory-alias->gref GR F, not (F = GR), !,
+  main S (loc-gref F).
+
+main S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructor (indt F) GR, !,
+  private.main-factory-constructor S F PhB GR.
+
+main S (loc-abbreviation A) :-
+  coq.notation.abbreviation-body A NArgs _,
+  coq.notation.abbreviation A {coq.mk-n-holes NArgs} T,
+  coq.safe-dest-app T (global GR) _, !,
+  main S (loc-gref GR).
+
+main S (loc-gref GR) :- from Factory Mixin GR, !,
+  private.main-builder S Factory Mixin.
+
+main S (loc-gref GR) :-
+  coq.CS.db-for _ (cs-gref GR) LV,
+  coq.CS.db-for GR _ LP,
+  std.filter {coq.coercion.db} (c\c = coercion GR _ _ _) LC,
+  if (LV = [], LP = [], LC = []) (coq.error "HB: unknown constant" S) true,
+  if (not (LV = [])) (private.main-canonical-value S LV) true,
+  if (not (LP = [])) (private.main-canonical-projection S GR LP) true,
+  if (not (LC = [])) (private.main-coercion S LC) true.
+
+main S (loc-abbreviation _) :- coq.error "HB: unknown abbreviation" S.
+
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace private {
+
+shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
+
+pred main-canonical-value i:string, i:list cs-instance.
+main-canonical-value S CanonicalValues :-
+  %format
+  PpCanonicalValues = box (v 4) [
+    str "HB: ", str S, str " is canonically equipped with mixins:",
+    {bulletize CanonicalValues pp-canonical-solution}],
+  % print
+  coq.say {coq.pp->string PpCanonicalValues},
+  coq.say.
+
+pred pp-canonical-solution i:cs-instance, o:coq.pp.
+pp-canonical-solution (cs-instance _Proj _Pat (global GR)) Pp :-
+  coq.env.typeof GR T,
+  coq.prod-tgt->gref T F,
+  if (class-def (class _ F _)) (gref->modname F 2 "." ID) (coq.gref->string F ID),
+  Pp = box (hov 0) [ str ID , spc, {pp-loc-of GR} ].
+
+pred main-canonical-projection i:string, i:gref, i:list cs-instance.
+main-canonical-projection S Proj CanonicalProjectionValues :-
+  %format
+  PpCanonicalProjectionOrigin = box (hov 4) [
+    str "HB:", spc, str S, spc, str "is a canonical projection",
+    spc, {pp-loc-of Proj}],
+  PpCanonicalProjectionValues = box (v 4) [
+    str "HB: ", str S, str " has the following canonical values:",
+    {bulletize CanonicalProjectionValues pp-canonical-value}],
+  % print
+  coq.say {coq.pp->string PpCanonicalProjectionOrigin},
+  coq.say {coq.pp->string PpCanonicalProjectionValues},
+  coq.say.
+
+pred pp-canonical-value i:cs-instance, o:coq.pp.
+pp-canonical-value (cs-instance _Proj (cs-gref GR) _Sol) Pp :-
+  coq.term->pp (global GR) V,
+  Pp = box (hov 2) [ V , spc, {pp-loc-of GR} ].
+
+pred main-coercion i:string, i:list coercion.
+main-coercion S [coercion GR _ Src Tgt|_] :-
+  % format
+  if (class-def (class _ Src _) ; class-def (class Src _ _))
+     (Source = str {gref->modname Src 2 "."})
+     (coq.term->pp (global Src) Source),
+  if2 (Tgt = grefclass TGR)
+        (if (class-def (class _ TGR _) ; class-def (class TGR _ _))
+          (Target = str {gref->modname TGR 2 "."})
+          (coq.term->pp (global TGR) Target))
+      (Tgt = sortclass)
+        (Target = str "Sortclass")
+      (Target = str "Funclass"),
+  PpCoercionOrigin = box (hov 4) [
+    str "HB:", spc, str S, spc, str "is a coercion from", spc,
+    Source, str" to ", Target, spc, {pp-loc-of GR}],
+  % print
+  coq.say {coq.pp->string PpCoercionOrigin},
+  coq.say.
+
+pred main-operation i:string, i:mixinname, i:constant.
+main-operation S MixinSource _ :-
+  % fetch
+  mixin-first-class MixinSource Class,
+  class-def (class Class Structure _),
+  % format
+  PpOriginStructure = box (hov 4) [
+    str "HB:", spc, str S, spc, str "is an operation of structure", spc,
+    {pp-module Structure}, spc, {pp-loc-of Structure}],
+  PpOriginMixin = box (hov 4) [
+    str "HB:", spc, str S, spc, str "comes from mixin", spc,
+    {pp-module MixinSource}, spc, {pp-loc-of MixinSource}],
+  % print
+  coq.say {coq.pp->string PpOriginStructure},
+  coq.say {coq.pp->string PpOriginMixin},
+  coq.say.
+
+pred main-structure i:string, i:classname, i:structure, i:list-w-params mixinname.
+main-structure S Class Structure MLwP :-
+  % fetch
+  list-w-params_list MLwP ML,
+  std.map-filter ML (m\r\ sigma P O OPS\
+    mixin-first-class m Class,
+    std.findall (exported-op m P O) OPS,
+    std.map OPS (c\out\ sigma p\ c = exported-op m p out) r) OPLL,
+  std.flatten OPLL Operations,
+  std.map {std.findall (sub-class Class C_)} (x\r\ x = sub-class Class r) SubClasses,
+  std.map {std.findall (sub-class C_ Class)} (x\r\ x = sub-class r Class) SuperClasses,
+  % format
+  PpOrigin = box (hov 4) [
+    str "HB: ", str S, str " is a structure", spc,
+    {pp-loc-of Structure} ],
+  PpOperations = box (v 4) [
+    str "HB: ", str S, str " characterizing operations and axioms are:",
+    {bulletize Operations pp-const}],
+  PpClass = box (v 4) [
+    str "HB: ", {pp-module Class}, str " is a factory for the following mixins:",
+    {bulletize ML (m\r\ sigma tmp\
+      if (mixin-first-class m Class)
+         (pp-module m tmp, r = glue [tmp, str " (* new, not from inheritance *)"])
+         (pp-module m r))}],
+  PpSubClasses = box (v 4) [
+    str "HB: ", {pp-module Class}, str " inherits from:",
+    {bulletize SubClasses pp-module}],
+  PpSuperClasses = box (v 4) [
+    str "HB: ", {pp-module Class}, str " is inherited by:",
+    {bulletize SuperClasses pp-module}],
+  % print
+  coq.say {coq.pp->string PpOrigin},
+  coq.say {coq.pp->string PpOperations},  
+  coq.say {coq.pp->string PpClass},  
+  coq.say {coq.pp->string PpSubClasses},  
+  coq.say {coq.pp->string PpSuperClasses},  
+  coq.say.
+
+pred main-factory-constructor i:string, i:inductive, i:gref, i:gref.
+main-factory-constructor S F PhBuild Build :-
+  % fetch
+  gref-deps Build DMLwP,
+  list-w-params_list DMLwP DML,
+  factory-provides (indt F) PMLwP,
+  list-w-params_list PMLwP PML,
+  factory-nparams (indt F) NParams,
+  coq.CS.canonical-projections F FieldsOpts,
+  std.map-filter FieldsOpts (x\r\ x = some r) Fields,
+  std.map Fields (c\r\coq.gref->id (const c) r) FieldsNames,
+  coq.arguments.implicit PhBuild [Implicits],
+  std.map {std.iota NParams} std.any->string Params,
+  std.map Params (i\r\r is "P" ^ i) ParamsNames,
+  std.map ParamsNames (n\r\r = str n) ParamsPp,
+  compute-field-info FieldsNames Implicits FieldsInfo,
+  % format
+  PpOrigin = box (hov 4) [
+    str "HB: ", str S, str " is a factory constructor", spc,
+    {pp-loc-of Build} ],
+  PpRequires = box (v 4) [
+    str "HB: ", str S, str " requires its subject to be already equipped with:",
+    {bulletize DML pp-module}],
+  PpProvides = box (v 4) [
+    str "HB: ", str S, str " provides the following mixins:",
+    {bulletize PML pp-module}],
+  PpUsage = box h {std.intersperse spc [
+    str "HB: arguments:",
+    glue {std.intersperse spc [str S | ParamsPp]},
+    str "T",
+    glue FieldsInfo]},
+  % print
+  coq.say {coq.pp->string PpOrigin},  
+  coq.say {coq.pp->string PpRequires},  
+  coq.say {coq.pp->string PpProvides},  
+  coq.say {coq.pp->string PpUsage},  
+  coq.say.
+
+pred main-factory i:string, i:inductive.
+main-factory S Factory :-
+  % fetch
+  coq.CS.canonical-projections Factory Ps,
+  std.map-filter Ps (x\r\ x = some r) Fields,
+  gref-deps (indt Factory) DMLwP,
+  list-w-params_list DMLwP DML,
+  factory-provides (indt Factory) PMLwP,
+  list-w-params_list PMLwP PML,
+  % format
+  PpOrigin = box (hov 4) [
+    str "HB: ", str S, str " is a factory", spc,
+    {pp-loc-of (indt Factory)} ],
+  PpOperations = box (v 4) [
+    str "HB: ", str S, str " operations and axioms are:",
+    {bulletize Fields pp-const}],
+  PpRequires = box (v 4) [
+    str "HB: ", str S, str " requires the following mixins:",
+    {bulletize DML pp-module}],
+  PpProvides = box (v 4) [
+    str "HB: ", str S, str " provides the following mixins:",
+    {bulletize PML pp-module}],
+  % print
+  coq.say {coq.pp->string PpOrigin},  
+  coq.say {coq.pp->string PpOperations},  
+  coq.say {coq.pp->string PpRequires},  
+  coq.say {coq.pp->string PpProvides},  
+  coq.say.
+
+pred main-factory-alias i:string, i:constant.
+main-factory-alias S _Const :-
+  coq.say "HB: todo HB.about for factory alias" S.
+
+pred main-builder i:string, i:factoryname, i:mixinname.
+main-builder _S From To :-
+  coq.say "HB: todo HB.about for builder from"
+    {gref->modname From 2 "."} "to" {gref->modname To 2 "."}.
+
+pred compute-field-info.aux i:list id, i:list implicit_kind, o:list coq.pp.
+compute-field-info.aux [] _ [].
+compute-field-info.aux [Name|NS] [explicit|IS] [str Name|PS] :-
+  compute-field-info.aux NS IS PS.
+compute-field-info.aux [Name|NS] [implicit|IS] [glue[str"[",str Name,str"]"]|PS] :-
+  compute-field-info.aux NS IS PS.
+compute-field-info.aux [Name|NS] [maximal|IS] [glue[str"{",str Name,str"}"]|PS] :-
+  compute-field-info.aux NS IS PS.
+compute-field-info.aux [Name|NS] [] [str Name|PS] :-
+  compute-field-info.aux NS [] PS.
+pred compute-field-info i:list id, i:list implicit_kind, o:list coq.pp.
+compute-field-info Names Impls O :-
+  compute-field-info.aux {std.rev Names} {std.rev Impls} Pp,
+  std.intersperse spc {std.rev Pp} O.
+
+pred pp-module i:gref, o:coq.pp.
+pp-module M (str ID) :- gref->modname M 2 "." ID.
+
+pred pp-const i:constant, o:coq.pp.
+pp-const F (str ID) :- coq.gref->id (const F) ID.
+
+pred pp-if-verbose o:coq.pp, i:(coq.pp -> prop).
+pp-if-verbose V P :- get-option "verbose" tt, !, P V.
+pp-if-verbose empty _.
+
+pred bulletize1 i:(A -> coq.pp -> prop), i:A, o:coq.pp.
+bulletize1 F X (glue [str "- ", M]) :- F X M.
+
+pred bulletize i:list A, i:(A -> coq.pp -> prop), o:coq.pp.
+bulletize [] _ empty.
+bulletize L F (glue [brk 0 0 | PLB]) :-
+  std.map L (bulletize1 F) PL,
+  std.intersperse (brk 0 0) PL PLB.
+
+pred pp-loc-of i:gref, o:coq.pp.
+pp-loc-of GR (coq.pp.glue PP) :- decl-location GR Loc, !,
+  std.any->string Loc SLoc,
+  % VSCode friendly
+  rex_split "," SLoc [File,_,Line|_],
+  QFile is "\"" ^ File ^ "\"," ^ Line,
+  PP = [str "(from ", str QFile, str")"].
+pp-loc-of _ coq.pp.empty.
+
+}}

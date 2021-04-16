@@ -294,6 +294,10 @@ declare-mixin-or-factory Sort1 Fields GRFSwP Module TheType D TheParams :- std.d
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-constructor (indt R) GRK)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (factory-builder-nparams BuildConst NParams)),
   log.coq.env.accumulate current "hb.db" (clause _ _ (phant-abbrev GRK (const BuildConst) BuildAbbrev)),
+  if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
+     (log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location GRK Loc)),
+      log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location (indt R) Loc)))
+     true,
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
 

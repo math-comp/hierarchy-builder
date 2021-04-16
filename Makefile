@@ -12,7 +12,7 @@
 # and __always__:: may be extended.                                  #
 #                                                                    #
 # Additionally, the following variables may be customized:           #
-SUBDIRS?=HB/common
+SUBDIRS?=
 COQBIN?=$(dir $(shell which coqtop))
 COQMAKEFILE?=$(COQBIN)coq_makefile
 COQDEP?=$(COQBIN)coqdep

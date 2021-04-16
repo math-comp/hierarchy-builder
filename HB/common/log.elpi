@@ -225,4 +225,4 @@ type coq.vernac.check         term -> bool                  -> coq.vernac.
 
 pred with-logging i:prop.
 pred log.private.log-vernac i:log.private.coq.vernac.
-accumulate "log.compat".
+

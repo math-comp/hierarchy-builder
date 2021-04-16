@@ -187,6 +187,11 @@ pred module-to-export   o:string, o:id, o:modpath.
 pred instance-to-export o:string, o:id, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
 
+%% database for HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred decl-location o:gref, o:loc.
+
+%% database for #[compress_coercions] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % coercions chains compression rules (we only care about non applicative
 % terms, since this is what you get when you apply coercions)
 :index (4)
@@ -196,6 +201,44 @@ compress (app L) (app L1) :- !, std.map L compress L1.
 compress X X.
 
 }}.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This is like About but understands HB generated stuff, namely
+    - structures, eg Foo.type
+    - classes, eg Foo
+    - factories, eg Bar
+    - factory constructors, eg Bar.Build
+    - canonical projections, eg Foo.sort
+    - canonical value, eg Z, prod, ...
+*)
+
+Elpi Command HB.about.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main _ :- coq.version _ _ N _, N < 13, !,
+  coq.say "HB: HB.about requires Coq version 8.13 or above".
+main [str S] :- !,
+  coq.locate-all S All,
+  std.filter All (x\sigma gr a\x = loc-gref gr ; x = loc-abbreviation a) L,
+  if (L = []) (coq.error "HB: unable to locate" S) true,
+  with-attributes (with-logging (std.forall L (about.main S))).
+
+main _ :- coq.error "Usage: HB.about <name>.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.about.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -234,6 +277,8 @@ Elpi Command HB.graph.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/graph.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -277,6 +322,8 @@ Elpi Command HB.mixin.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -358,6 +405,8 @@ Elpi Command HB.structure.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -399,6 +448,8 @@ Elpi Command HB.instance.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -427,6 +478,8 @@ Elpi Command HB.factory.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -485,6 +538,8 @@ Elpi Command HB.builders.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -505,6 +560,8 @@ Elpi Command HB.end.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -555,6 +612,8 @@ Elpi Command HB.export.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
@@ -579,6 +638,8 @@ Elpi Command HB.reexport.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
@@ -623,6 +684,8 @@ Elpi Command HB.lock.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/lock.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -675,6 +738,8 @@ Elpi Command HB.context.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -705,6 +770,8 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
+#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate lp:{{
 main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
 main _ :- coq.error "usage: HB.check (term).".
