@@ -16,3 +16,8 @@ post-all::
 	  diff -u tests/about.v.out tests/about.v.out.aux ;;\
 	esac;\
 	fi
+	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile tests/missing_join_error.v \
+	  < tests/missing_join_error.v \
+	  | grep -v -e 'Skipping rcfile' -e 'is declared$$' -e 'is defined$$' -e 'Loading ML file' -e 'Welcome to Coq \
+	  > tests/missing_join_error.v.out.aux
+	diff -u tests/missing_join_error.v.out tests/missing_join_error.v.out.aux
