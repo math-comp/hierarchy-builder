@@ -37,8 +37,9 @@ with-attributes P :-
     att "skip" string,
     att "local" bool,
     att "fail" bool,
+    att "doc" string,
   ] Opts, !,
-  Opts => P.
+  Opts => (save-docstring, P).
 
 pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
@@ -59,6 +60,12 @@ pred with-locality i:prop.
 with-locality P :-
   if (get-option "local" tt) (A = @local!) (A = @global!),
   A => P.
+
+pred save-docstring.
+save-docstring :-
+  if (get-option "elpi.loc" Loc, get-option "doc" Txt)
+     (coq.elpi.accumulate _ "hb.db" (clause _ _ (docstring Loc Txt)))
+     true.
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"

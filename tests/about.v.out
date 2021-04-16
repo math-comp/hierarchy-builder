@@ -50,7 +50,7 @@ HB: hierarchy_5.AddMonoid is inherited by:
     - hierarchy_5.Ring
 
 HB: Ring_of_AddAG is a factory
-    (from "./examples/demo1/hierarchy_5.v", line 106)
+    (from "./examples/demo1/hierarchy_5.v", line 114)
 HB: Ring_of_AddAG operations and axioms are:
     - one
     - mul
@@ -65,9 +65,16 @@ HB: Ring_of_AddAG requires the following mixins:
     - hierarchy_5.AddAG_of_AddComoid
 HB: Ring_of_AddAG provides the following mixins:
     - hierarchy_5.BiNearRing_of_AddMonoid
+Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
+     mul0r are derived from addrC and the other ring axioms, following a proof
+     of Hankel (Gerhard Betsch. On the beginnings and development of near-ring
+     theory. In Near-rings and near-fields. Proceedings of the conference held
+     in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics
+     and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht,
+     1995).
 
 HB: Ring_of_AddAG.Build is a factory constructor
-    (from "./examples/demo1/hierarchy_5.v", line 106)
+    (from "./examples/demo1/hierarchy_5.v", line 114)
 HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
     - hierarchy_5.AddMonoid_of_TYPE
     - hierarchy_5.AddComoid_of_AddMonoid
@@ -75,6 +82,13 @@ HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
 HB: Ring_of_AddAG.Build provides the following mixins:
     - hierarchy_5.BiNearRing_of_AddMonoid
 HB: arguments: Ring_of_AddAG.Build T [one] [mul] mulrA mulr1 mul1r mulrDl mulrDr
+Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
+     mul0r are derived from addrC and the other ring axioms, following a proof
+     of Hankel (Gerhard Betsch. On the beginnings and development of near-ring
+     theory. In Near-rings and near-fields. Proceedings of the conference held
+     in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics
+     and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht,
+     1995).
 
 HB: add is an operation of structure hierarchy_5.AddMonoid
     (from "./examples/demo1/hierarchy_5.v", line 16)
@@ -91,7 +105,7 @@ HB: AddAG.sort is a canonical projection
     (from "./examples/demo1/hierarchy_5.v", line 72)
 HB: AddAG.sort has the following canonical values:
     - Z 
-    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 191)
+    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 200)
 
 HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
     (from "./examples/demo1/hierarchy_5.v", line 72)

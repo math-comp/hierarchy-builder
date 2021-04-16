@@ -3,41 +3,48 @@
 
 namespace about {
 
-pred main i:string, i:located.
-main S (loc-gref GR) :- class-def (class Class GR MLwP), !,
+pred main i:string.
+main S :-
+  coq.locate-all S All,
+  std.filter All (x\sigma gr a\x = loc-gref gr ; x = loc-abbreviation a) L,
+  if (L = []) (coq.error "HB: unable to locate" S) true,
+  std.forall L (about.main-located S).
+
+pred main-located i:string, i:located.
+main-located S (loc-gref GR) :- class-def (class Class GR MLwP), !,
   private.main-structure S Class GR MLwP.
 
-main _ (loc-gref Class) :- class-def (class Class GR MLwP), !,
+main-located _ (loc-gref Class) :- class-def (class Class GR MLwP), !,
   gref->modname GR 2 "." M,
   coq.gref->id GR St,
   S is M ^ "." ^ St,
   private.main-structure S Class GR MLwP.
 
-main S (loc-gref (indt I)) :- factory-constructor (indt I) _, !,
+main-located S (loc-gref (indt I)) :- factory-constructor (indt I) _, !,
   private.main-factory S I.
 
-main S (loc-gref (const C)) :- factory-constructor (const C) _, !,
+main-located S (loc-gref (const C)) :- factory-constructor (const C) _, !,
   private.main-factory-alias S C.
 
-main S (loc-gref (const C)) :- exported-op M _ C, !,
+main-located S (loc-gref (const C)) :- exported-op M _ C, !,
   private.main-operation S M C.
 
-main S (loc-gref GR) :- factory-alias->gref GR F, not (F = GR), !,
-  main S (loc-gref F).
+main-located S (loc-gref GR) :- factory-alias->gref GR F, not (F = GR), !,
+  main-located S (loc-gref F).
 
-main S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructor (indt F) GR, !,
+main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructor (indt F) GR, !,
   private.main-factory-constructor S F PhB GR.
 
-main S (loc-abbreviation A) :-
+main-located S (loc-abbreviation A) :-
   coq.notation.abbreviation-body A NArgs _,
   coq.notation.abbreviation A {coq.mk-n-holes NArgs} T,
   coq.safe-dest-app T (global GR) _, !,
-  main S (loc-gref GR).
+  main-located S (loc-gref GR).
 
-main S (loc-gref GR) :- from Factory Mixin GR, !,
+main-located S (loc-gref GR) :- from Factory Mixin GR, !,
   private.main-builder S Factory Mixin.
 
-main S (loc-gref GR) :-
+main-located S (loc-gref GR) :-
   coq.CS.db-for _ (cs-gref GR) LV,
   coq.CS.db-for GR _ LP,
   std.filter {coq.coercion.db} (c\c = coercion GR _ _ _) LC,
@@ -46,7 +53,7 @@ main S (loc-gref GR) :-
   if (not (LP = [])) (private.main-canonical-projection S GR LP) true,
   if (not (LC = [])) (private.main-coercion S LC) true.
 
-main S (loc-abbreviation _) :- coq.error "HB: unknown abbreviation" S.
+main-located S (loc-abbreviation _) :- coq.error "HB: unknown abbreviation" S.
 
 
 /* ------------------------------------------------------------------------- */
@@ -56,6 +63,12 @@ main S (loc-abbreviation _) :- coq.error "HB: unknown abbreviation" S.
 namespace private {
 
 shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
+
+pred docstring-for-file i:string, o:prop.
+docstring-for-file Rex (docstring Loc Doc) :- docstring Loc Doc,
+  std.any->string Loc LocS,
+  rex.split "," LocS [File|_],
+  rex.match {calc(".*" ^ Rex)} File.
 
 pred main-canonical-value i:string, i:list cs-instance.
 main-canonical-value S CanonicalValues :-
@@ -166,6 +179,7 @@ main-structure S Class Structure MLwP :-
   coq.say {coq.pp->string PpClass},  
   coq.say {coq.pp->string PpSubClasses},  
   coq.say {coq.pp->string PpSuperClasses},  
+  print-docstring Structure,
   coq.say.
 
 pred main-factory-constructor i:string, i:inductive, i:gref, i:gref.
@@ -203,7 +217,8 @@ main-factory-constructor S F PhBuild Build :-
   coq.say {coq.pp->string PpOrigin},  
   coq.say {coq.pp->string PpRequires},  
   coq.say {coq.pp->string PpProvides},  
-  coq.say {coq.pp->string PpUsage},  
+  coq.say {coq.pp->string PpUsage},
+  print-docstring Build,
   coq.say.
 
 pred main-factory i:string, i:inductive.
@@ -232,7 +247,8 @@ main-factory S Factory :-
   coq.say {coq.pp->string PpOrigin},  
   coq.say {coq.pp->string PpOperations},  
   coq.say {coq.pp->string PpRequires},  
-  coq.say {coq.pp->string PpProvides},  
+  coq.say {coq.pp->string PpProvides},
+  print-docstring (indt Factory),
   coq.say.
 
 pred main-factory-alias i:string, i:constant.
@@ -282,9 +298,31 @@ pred pp-loc-of i:gref, o:coq.pp.
 pp-loc-of GR (coq.pp.glue PP) :- decl-location GR Loc, !,
   std.any->string Loc SLoc,
   % VSCode friendly
-  rex_split "," SLoc [File,_,Line|_],
+  rex.split "," SLoc [File,_,Line|_],
   QFile is "\"" ^ File ^ "\"," ^ Line,
   PP = [str "(from ", str QFile, str")"].
 pp-loc-of _ coq.pp.empty.
+
+pred docstring->pp i:string, o:coq.pp.
+docstring->pp Txt (glue Doc) :-
+  rex.replace "\n" " " Txt PlainTxt,
+  rex.split " " PlainTxt Words,
+  std.filter Words (w\not (w = "")) NEWords,
+  std.map NEWords (w\r\ r = str w) PpWords,
+  std.intersperse spc PpWords Doc.
+
+pred docstring-of i:gref, o:option coq.pp.
+docstring-of GR (some Doc) :- decl-location GR Loc, docstring Loc Txt, !, docstring->pp Txt Doc.
+docstring-of _ none.
+
+pred pp-docstring-of i:gref, o:coq.pp.
+pp-docstring-of GR D :- docstring-of GR (some D), !.
+pp-docstring-of _ coq.pp.empty.
+
+pred print-docstring i:gref.
+print-docstring GR :-
+  if (docstring-of GR (some Doc))
+     (coq.say {coq.pp->string (box (hov 5) [str"Doc: ",Doc])})
+     true.
 
 }}
