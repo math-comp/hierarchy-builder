@@ -95,12 +95,6 @@ HB: add is an operation of structure hierarchy_5.AddMonoid
 HB: add comes from mixin hierarchy_5.AddMonoid_of_TYPE
     (from "./examples/demo1/hierarchy_5.v", line 2)
 
-HB: AddAG.sort is canonically equipped with mixins:
-    - hierarchy_5.AddMonoid 
-    - hierarchy_5.BiNearRing 
-    - hierarchy_5.AddComoid 
-    - hierarchy_5.SemiRing 
-
 HB: AddAG.sort is a canonical projection
     (from "./examples/demo1/hierarchy_5.v", line 72)
 HB: AddAG.sort has the following canonical values:
