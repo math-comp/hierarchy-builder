@@ -194,7 +194,7 @@ declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR 
 % it uses all known builders to declare canonical instances of structures
 % on T
 pred declare-canonical-instances-from-factory i:term, i:term, o:list (pair id constant).
-declare-canonical-instances-from-factory T F CS :-
+declare-canonical-instances-from-factory T F CS :- std.do! [
   coq.typecheck F TyF ok,
   coq.prod-tgt->gref TyF GRF,
   % The order of the following two "under...do!"  is crucial,
@@ -207,7 +207,8 @@ declare-canonical-instances-from-factory T F CS :-
       add-all-mixins T GRF ML tt _,
       instance.declare-all T {findall-classes} CS
     ]
-  ].
+  ]
+].
 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.

@@ -63,6 +63,14 @@ toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
   std.filter XS' (std.mem XS) XS''.
 
+pred time-do! i:list prop.
+time-do! [].
+time-do! [P|PS] :-
+  std.time P Time, !,
+  if (constant P C _) true (C = P),
+  coq.say Time ">>" C,
+  time-do! PS.
+
 }
 
 namespace compat {
