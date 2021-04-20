@@ -187,7 +187,7 @@ pred module-to-export   o:string, o:id, o:modpath.
 pred instance-to-export o:string, o:id, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
 
-%% database for HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% database for HB.locate and HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred decl-location o:gref, o:loc.
 
@@ -205,6 +205,31 @@ compress (app L) (app L1) :- !, std.map L compress L1.
 compress X X.
 
 }}.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This is like Locate but tells you the file and line at which the constant
+    or inductive was generated.
+*)
+
+Elpi Command HB.locate.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main _ :- coq.version _ _ N _, N < 13, !,
+  coq.say "HB: HB.locate requires Coq version 8.13 or above".
+main [str S] :- !,
+  if (decl-location {coq.locate S} Loc)
+     (coq.say "HB: synthesized in file" Loc)
+     (coq.say "HB:" S "not synthesized by HB").
+
+main _ :- coq.error "Usage: HB.about <name>.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.locate.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

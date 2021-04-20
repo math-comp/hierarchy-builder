@@ -137,6 +137,8 @@ opam install coq-hierarchy-builder
   - `HB.lock` locks a definition behind a symbol and an unfolding equation
   - `HB.graph` prints the structure hierarchy to a dot file
   - `HB.status` dumps the contents of the hierarchy (debug purposes)
+  - `HB.about` is similar to `About` but prints more info on HB structures
+  - `HB.locate` is similar to `Locate`, prints file name and line
   - `HB.check` is similar to `Check` (test purposes)
 
 The documentation of all commands can be found in the comments of
