@@ -419,6 +419,8 @@ HB.structure Definition StructureName params :=
     but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer(R)]].
     If the carrier of the structure [S] is not a [Type] but rather a function, one has
     to write [#[infer(S = "_ -> _")]].
+    If a parameter P is a structure, then HB expects an #[infer(..)] directive, or a
+    #[noinfer(P)] one.
   - [#[arg_sort]] defines an alias [StructureName.arg_sort] for [StructureName.sort],
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
