@@ -46,19 +46,21 @@ assert!-infer-mixin T M B :-
 % Given TheType it looks all canonical structure instances on it and makes
 % all their mixins available for inference
 pred under-local-canonical-mixins-of.do! i:term, i:list prop.
-under-local-canonical-mixins-of.do! T P :-
+under-local-canonical-mixins-of.do! T P :- std.do! [
   get-local-structures T CS,
   std.map CS (private.structure-instance->mixin-srcs T) MSLL,
   std.flatten MSLL MSL,
-  MSL => std.do! P.
+  MSL => std.do! P
+].
 
 % Given TheType and a factory instance (on it), makes all the mixins provided by
 % the factory available for inference.
 pred under-mixin-src-from-factory.do! i:term, i:term, i:list prop.
-under-mixin-src-from-factory.do! TheType TheFactory LP :-
+under-mixin-src-from-factory.do! TheType TheFactory LP :- std.do! [
   private.factory-instance->new-mixins [] TheFactory ML,
   std.map ML (m\c\ c = mixin-src TheType m TheFactory) MLClauses,
-  MLClauses => std.do! LP.
+  MLClauses => std.do! LP
+].
 
 % Given TheType and a factory instance (on it), builds all the *new* mixins
 % provided by the factory available for and passes them to the given
