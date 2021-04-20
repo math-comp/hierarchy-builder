@@ -272,7 +272,7 @@ has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 pred get-local-structures i:term, o:list structure.
 get-local-structures TyTrm StructL :- std.do! [
   term->gref TyTrm CanonValue,
-  if (coq.version _ _ V _, 13 =< V)
+  if (coq.version _ _ N _, N > 12)
      (coq.CS.db-for _ (cs-gref CanonValue) DBGTyL)
      (std.filter {coq.CS.db} (has-cs-instance CanonValue) DBGTyL),
   std.map DBGTyL get-cs-structure RecL,
@@ -280,7 +280,7 @@ get-local-structures TyTrm StructL :- std.do! [
 ].
 
 pred local-cs? i:term, i:structure.
-local-cs? TyTerm (indt Struct) :- coq.version _ _ V _, 13 =< V, !,
+local-cs? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
   term->gref TyTerm Value,
   coq.CS.canonical-projections Struct [some Proj, _],
   coq.CS.db-for (const Proj) (cs-gref Value) L,
