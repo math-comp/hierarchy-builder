@@ -88,14 +88,6 @@ declare Module B :- std.do! [
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
 
-  if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
-     (log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location Structure Loc)),
-      log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location (indt ClassInd) Loc)),
-      log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location (indc ClassK) Loc)),
-      SortProjection = global SortProjectionGR,
-      log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location SortProjectionGR Loc)))
-     true,
-
   if-verbose (coq.say "HB: stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
 
@@ -169,7 +161,6 @@ infer-coercion-tgt (w-params.nil _ _ _) _ :- coq.error "TODO1".
 % Po P1 .. PM T M1 .. MN PoArgs -> C P1 .. PM S PoArgs
 pred clean-op-ty i:list prop, i:term, i:term, o:term.
 clean-op-ty [] _ T1 T2 :- copy T1 T2.
-clean-op-ty [decl-location _ _|Ops] S T1 T2 :- clean-op-ty Ops S T1 T2.
 clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   gref-deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
@@ -222,11 +213,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
   std.map {std.iota NImplicits} (_\r\ r = maximal) Implicits,
   @global! => log.coq.arguments.set-implicit (const C) [Implicits],
 
-  if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
-     (LOC_EXI = [decl-location (const C) Loc|EXI])
-     (LOC_EXI = EXI),
-
-  EXO = [exported-op M Poperation C|LOC_EXI]
+  EXO = [exported-op M Poperation C|EXI]
 ].
 
 % Given a list of mixins, it exports all operations in there

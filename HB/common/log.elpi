@@ -17,6 +17,12 @@ arguments.set-implicit GR I :-  std.do! [
   log.private.log-vernac (log.private.coq.vernac.implicit Local {coq.gref->id GR} I),
 ].
 
+pred env.add-location i:gref.
+env.add-location GR :-
+  if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
+     (log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location GR Loc)))
+     true.
+
 pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   % TODO: refine when we switch to add-section-variable/add-const
@@ -26,6 +32,7 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
     true,
   avoid-name-collision Name Name1,
   coq.env.add-const Name1 Bo Ty Opaque C,
+  env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
   @local! => arguments.set-implicit (const C) [[]],
@@ -40,6 +47,7 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
     true,
   avoid-name-collision Name Name1,
   coq.env.add-const Name1 Bo Ty Opaque C,
+  env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
 ].
@@ -52,6 +60,7 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   coq.env.add-const Name Bo Ty Opaque C,
+  env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo),
   @local! => arguments.set-implicit (const C) [[]],
@@ -79,13 +88,14 @@ env.add-indt Decl I :- std.do! [
     true,
   coq.env.add-indt Decl I,
   log.private.log-vernac (log.private.coq.vernac.inductive Decl),
+  env.add-location (indt I),
 
   % copy the current value of implicit arguments
   coq.env.indt I _ _ _ _ KS _,
   log.private.log-implicits-of ff (indt I),
-  std.forall KS (k\ log.private.log-implicits-of ff (indc k)),
+  std.forall KS (k\ env.add-location (indc k), log.private.log-implicits-of ff (indc k)),
   std.forall {coq.CS.canonical-projections I}
-    (p\ sigma c\ if (p = some c) (log.private.log-implicits-of ff (const c)) true),
+    (p\ sigma c\ if (p = some c) (env.add-location (const c), log.private.log-implicits-of ff (const c)) true),
 ].
 
 pred env.begin-module i:id, i:option (pair modtypath id).

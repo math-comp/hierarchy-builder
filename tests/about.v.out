@@ -113,10 +113,14 @@ HB: Z is canonically equipped with mixins:
       (from "./tests/about.v", line 8)
 
 HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
-    hierarchy_5.Ring to hierarchy_5.SemiRing 
+    hierarchy_5.Ring to hierarchy_5.SemiRing
+    (from "./examples/demo1/hierarchy_5.v", line 200)
 
 HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
-    hierarchy_5.Ring to hierarchy_5.SemiRing 
+    hierarchy_5.Ring to hierarchy_5.SemiRing
+    (from "./examples/demo1/hierarchy_5.v", line 200)
 
 HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
 hierarchy_5.BiNearRing_of_AddMonoid
+HB: synthesized in file 
+./tests/about.v, characters 118-242, line 3, column 165
