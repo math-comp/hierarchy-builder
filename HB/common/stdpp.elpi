@@ -34,6 +34,11 @@ list-uniq [X|XS] [X|YS] :- list-uniq.seen X => list-uniq XS YS.
 pred list-eq-set i:list A, i:list A.
 list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
 
+pred partition i:list A, i:(A -> prop), o:list A, o:list A.
+partition [] _ [] [].
+partition [X|XS] P [X|YS] ZS :- P X, !, partition XS P YS ZS.
+partition [X|XS] P YS [X|ZS] :- partition XS P YS ZS.
+
 pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
 under.do! Then LP :- Then (_\ std.do! LP) _.
 

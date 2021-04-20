@@ -188,7 +188,11 @@ pred instance-to-export o:string, o:id, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
 
 %% database for HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 pred decl-location o:gref, o:loc.
+
+% [docstring Loc Doc] links a location in the source text and some doc
+pred docstring o:loc, o:string.
 
 %% database for #[compress_coercions] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -228,11 +232,7 @@ Elpi Accumulate lp:{{
 
 main _ :- coq.version _ _ N _, N < 13, !,
   coq.say "HB: HB.about requires Coq version 8.13 or above".
-main [str S] :- !,
-  coq.locate-all S All,
-  std.filter All (x\sigma gr a\x = loc-gref gr ; x = loc-abbreviation a) L,
-  if (L = []) (coq.error "HB: unable to locate" S) true,
-  with-attributes (with-logging (std.forall L (about.main S))).
+main [str S] :- !, with-attributes (with-logging (about.main S)).
 
 main _ :- coq.error "Usage: HB.about <name>.".
 }}.

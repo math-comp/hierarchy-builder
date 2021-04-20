@@ -3,7 +3,12 @@ From HB Require Import structures.
 From HB Require Import demo1.hierarchy_5.
 
 HB.instance
-Definition Z_ring_axioms :=
+Definition _ :=
+  AddAG_of_TYPE.Build Z 0%Z Z.add Z.opp
+    Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l.
+
+HB.instance
+Definition _ :=
   Ring_of_TYPE.Build Z 0%Z 1%Z Z.add Z.opp Z.mul
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
     Z.mul_assoc Z.mul_1_l Z.mul_1_r
