@@ -230,7 +230,7 @@ mk-phant-term.mixins T CN PF Params N Ty MLwA Out :- std.do! [
 
 mk-phant-term.mixins.aux T Params C CN PF X :- std.do![
   get-constructor CN KC,
-  synthesis.infer-all-mixin-args Params T KC KCM,
+  synthesis.infer-all-gref-deps Params T KC KCM,
   fun-unify none KCM C PF X,
 ].
 
@@ -245,7 +245,7 @@ pred mk-phant-term.classes i:term, i:list classname, i:list term, i:term,
 mk-phant-term.classes EtaF CNF PL T MLwA PhF :- !, std.do! [
   std.map MLwA triple_1 ML,
   synthesis.under-mixins.then MLwA phant-fun-mixin (out\ sigma FPLTM\ std.do! [
-    synthesis.infer-mixin-args PL T ML EtaF FPLTM,
+    synthesis.infer-all-these-mixin-args PL T ML EtaF FPLTM,
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class T) out]) PhF
 ].
 

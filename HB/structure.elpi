@@ -187,7 +187,7 @@ operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Par
       mk-app PclassP [s] Class,
       synthesis.under-mixin-src-from-factory.do! Carrier Class [
         % just in case..
-        synthesis.infer-all-mixin-args ParamsOp Carrier (const Poperation) (Body s),
+        synthesis.infer-all-gref-deps ParamsOp Carrier (const Poperation) (Body s),
         std.assert-ok! (coq.typecheck (Body s) (DirtyTy s)) "export-1-operation: Body illtyped",
         clean-op-ty EXI s (DirtyTy s) (BodyTy s),
       ],
@@ -423,7 +423,7 @@ synthesize-fields _T []     end-record.
 synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
   Name is {gref->modname M 2 "_"} ^ "_mixin",
   if-verbose (coq.say "HB: typing class field" M),
-  std.assert! (synthesis.infer-all-mixin-args Args T M MTy) "anomaly: a field type cannot be solved",
+  std.assert! (synthesis.infer-all-gref-deps Args T M MTy) "anomaly: a field type cannot be solved",
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
 
@@ -562,7 +562,7 @@ pack-body ClassName PL T MLwA F :- std.do! [
     (pack-body.aux PL T BuildC PackS) F
 ].
 pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
-  synthesis.infer-all-mixin-args PL T BuildC Class,
+  synthesis.infer-all-gref-deps PL T BuildC Class,
   mk-app (global PackS) {std.append PL [T, Class]} Body
 ].
 
