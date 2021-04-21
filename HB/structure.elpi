@@ -431,9 +431,9 @@ pred synthesize-fields.body i:list term, i:term, i:list (w-args mixinname), o:in
 synthesize-fields.body _Params T ML (record "axioms_" {{ Type }} "Class" FS) :-
   synthesize-fields T ML FS.
 
-pred mk-record+sort-field i:name, i:term, i:(term -> record-decl), o:indt-decl.
-mk-record+sort-field _ T F (record RecordName {{ Type }} "Pack" (field _ "sort" T F)) :-
-  if (get-option "infer" _) (RecordName = "type_") (RecordName = "type").
+pred mk-record+sort-field i:list-w-params mixinname, i:name, i:term, i:(term -> record-decl), o:indt-decl.
+mk-record+sort-field (w-params.nil _ _ _) _ T F (record "type" {{ Type }} "Pack" (field _ "sort" T F)) :- !.
+mk-record+sort-field _ _ T F (record "type_" {{ Type }} "Pack" (field _ "sort" T F)).
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
 mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global ClassName|Args]) _\end-record) :-
@@ -460,7 +460,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
 
   if-verbose (coq.say "HB: declare type record"),
 
-  w-params.then MLwP (mk-parameter explicit) mk-record+sort-field
+  w-params.then MLwP (mk-parameter explicit) (mk-record+sort-field MLwP)
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
@@ -567,24 +567,34 @@ pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
 ].
 
 pred declare-auto-infer-params-abbrev i:structure, i:list-w-params mixinname.
-declare-auto-infer-params-abbrev GR MLwP :- get-option "infer" Map, !,
-  Map => mk-infer (global GR) MLwP PhT,
+declare-auto-infer-params-abbrev _ (w-params.nil _ _ _) :- !.
+declare-auto-infer-params-abbrev GR MLwP :-
+  mk-infer (global GR) MLwP PhT,
   phant.add-abbreviation "type" PhT _ _.
-declare-auto-infer-params-abbrev _ _.
+
+pred get-option-map i:id, i:id, o:string.
+get-option-map MID ID V :-
+  get-option MID Map, std.mem! Map (get-option ID V).
 
 pred mk-infer i:term, i:list-w-params mixinname, o:phant-term.
 mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.
-mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "Type" ; get-option ID ""), !,
+mk-infer T (w-params.cons ID Ty W) R :- (get-option-map "infer" ID "Type" ; get-option-map "infer" ID ""), !,
   @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
   phant.fun-infer-type sortclass {coq.id->name ID} Ty PhT R.
-mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "_ -> _"), !,
+mk-infer T (w-params.cons ID Ty W) R :- (get-option-map "infer" ID "_ -> _"), !,
   @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
   phant.fun-infer-type funclass {coq.id->name ID} Ty PhT R.
-mk-infer T (w-params.cons ID Ty W) R :- not (get-option ID _), !,
+mk-infer T (w-params.cons ID Ty W) R :- get-option-map "noinfer" ID "", !,
   @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
   phant.fun-real {coq.id->name ID} Ty PhT R.
-mk-infer _ (w-params.cons ID _ _) _ :- get-option ID Infer,
+mk-infer _ (w-params.cons ID _ _) _ :- get-option-map "infer" ID Infer, !,
   coq.error "Automatic inference of paramter" ID "from" Infer "not supported".
+mk-infer T (w-params.cons ID Ty W) R :-
+  if (coq.safe-dest-app Ty (global GR) _, (is-structure GR ; coq.gref->id GR "phant_type"))
+     (coq.error "HB: parameter" ID "is a structure but no form of inference specified")
+     true,
+  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
+  phant.fun-real {coq.id->name ID} Ty PhT R.
 
 pred mk-infer-key i:class, i:term, i:list-w-params mixinname, i:term, o:phant-term.
 mk-infer-key CoeClass K (w-params.nil ID _ _) St PhK :-

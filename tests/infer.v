@@ -13,6 +13,14 @@ HB.mixin Record barm (A : Type) (P : foo.type) (B: Type) (T : Type) := {
   law : P -> T -> A -> B
 }.
 
+Fail
+HB.structure Definition bar A P B := { T of barm A P B T }.
+
+Module  TMP.
+#[noinfer(P)]
+HB.structure Definition bar A P B := { T of barm A P B T }.
+End TMP.
+
 #[infer(P)]
 HB.structure Definition bar A P B := { T of barm A P B T }.
 
