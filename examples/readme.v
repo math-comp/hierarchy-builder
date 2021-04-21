@@ -37,3 +37,4 @@ Proof. by rewrite example. Qed.
 Check AbelianGrp.on Z.
 
 HB.graph "readme.dot".
+HB.about Z.

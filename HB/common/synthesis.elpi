@@ -13,26 +13,40 @@
 
 namespace synthesis {
 
-% [infer-mixin-args Params TheType ML Bo Out]
-% Out is morally (fun rest => Bo Params TheType ...) where all arguments in ...
-% which are mixins in ML were inferrend (the other argumets are abstracted back
-% as rest).
-pred infer-mixin-args i:list term, i:term, i:list mixinname, i:term, o:term.
-infer-mixin-args Ps T ML F SFX :- std.do! [
-  std.assert-ok! (coq.typecheck F Ty) "infer-mixin-args: F illtyped",
+% [infer-all-these-mixin-args Ps T ML F X] fills in all the arguments of F
+% which are misxins in ML, abstracts the others
+pred infer-all-these-mixin-args i:list term, i:term, i:list mixinname, i:term, o:term.
+infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
+  std.assert-ok! (coq.typecheck F Ty) "try-infer-these-mixin-args: F illtyped",
   coq.mk-eta (-1) Ty F EtaF,
   coq.subst-fun {std.append Ps [T]} EtaF FT,
-  std.fold ML FT (private.instantiate-mixin T) SFX
+  private.instantiate-all-these-mixin-args FT T ML SFX,
 ].
 
-% [infer-all-mixin-args Params TheType GR X] fills in all the arguments of GR
-% which are misxins (as per infer-mixin-args)
-pred infer-all-mixin-args i:list term, i:term, i:gref, o:term.
-infer-all-mixin-args Ps T GR X :- !, std.do! [
+% [infer-all-gref-deps Ps T GR X] fills in all the arguments of GR
+% which are misxins in gref-deps GR, other arguments are abstracted
+pred infer-all-gref-deps i:list term, i:term, i:gref, o:term.
+infer-all-gref-deps Ps T GR X :- std.do! [
   std.assert! (gref-deps GR MLwP) "BUG: gref-deps should never fail",
   list-w-params_list MLwP ML,
-  infer-mixin-args Ps T ML (global GR) X,
+  coq.env.typeof GR Ty,
+  coq.mk-eta (-1) Ty (global GR) EtaF,
+  coq.subst-fun {std.append Ps [T]} EtaF FT,
+  private.instantiate-all-these-mixin-args FT T ML X,
 ].
+
+% [infer-all-args-let Ps T GR X] fills in all the Args in
+%   app[global GR, Ps, T | Args]
+% and generates a term
+%   let `a1` ty1 t1 a1\ .... app[global GR, p1, .. pn, T, a1, .. , an]
+pred infer-all-args-let i:list term, i:term, i:gref, o:term.
+infer-all-args-let Ps T GR X :- std.do! [
+  coq.env.typeof GR Ty,
+  coq.mk-eta (-1) Ty (global GR) EtaF,
+  coq.subst-fun {std.append Ps [T]} EtaF FT,
+  private.instantiate-all-args-let FT T X,
+].
+
 
 % [assert!-infer-mixin TheType M Out] infers one mixin M on TheType and
 % aborts with an error message if the mixin cannot be inferred
@@ -84,7 +98,7 @@ pred under-mixins.then i:list (w-args mixinname),
     i:(A -> prop), o:A.
 under-mixins.then [] _ Pred Body :- !, Pred Body.
 under-mixins.then [triple M Args T|ML] MkFun Pred Out :- std.do! [
-  infer-all-mixin-args Args T M MTy,
+  infer-all-gref-deps Args T M MTy,
   (@pi-decl `m` MTy m\ mixin-src T M m =>
     under-mixins.then ML MkFun Pred (Body m)),
   MkFun `m` MTy Body Out,
@@ -143,24 +157,35 @@ builder->term Ps T Src Tgt B :- !, std.do! [
   F = global FGR,
   gref-deps Src MLwP,
   list-w-params_list MLwP ML,
-  infer-mixin-args Ps T ML F B,
+  infer-all-these-mixin-args Ps T ML F B,
 ].
 
-% [instantiate-mixin T F M_i TFX] where mixin-for T M_i X_i states that
+% [instantiate-all-these-mixin-args T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
 %            => F xs m_0 .. m_{i-1} m_i m_{i+1} .. m_n ys
 % then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
 %            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
 % thus instanciating an abstraction on mixin M_i with X_i
-pred instantiate-mixin i:term, i:mixinname, i:term, o:term.
-instantiate-mixin T M (fun _ Tm F) R :-
+pred instantiate-all-these-mixin-args i:term, i:term, i:list mixinname,o:term.
+instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
-  factory-alias->gref TmGR M, !,
+  factory-alias->gref TmGR M,
+  std.mem! ML M,
+  !,
   mixin-for T M X, !,
-  R = F X.
-instantiate-mixin T M (fun N Ty F) (fun N Ty FX) :- !,
-  @pi-decl N Ty m\ instantiate-mixin T M (F m) (FX m).
-instantiate-mixin _ _ F F.
+  instantiate-all-these-mixin-args (F X) T ML R.
+instantiate-all-these-mixin-args (fun N Ty F) T ML (fun N Ty FX) :- !,
+  @pi-decl N Ty m\ instantiate-all-these-mixin-args (F m) T ML (FX m).
+instantiate-all-these-mixin-args F _ _ F.
+
+pred instantiate-all-args-let i:term, i:term, o:term.
+instantiate-all-args-let (fun N Tm F) T (let N Tm X R) :- !, std.do! [
+  coq.safe-dest-app Tm (global TmGR) _,
+  factory-alias->gref TmGR M,
+  mixin-for T M X,
+  (@pi-def N Tm X m\ instantiate-all-args-let (F m) T (R m)),
+].
+instantiate-all-args-let F _ F.
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins

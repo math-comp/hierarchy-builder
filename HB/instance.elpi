@@ -79,7 +79,7 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
                     {coq.term->string T}),
       fail),
 
-  if (synthesis.infer-all-mixin-args Params T KC KCApp)
+  if (synthesis.infer-all-args-let Params T KC KCApp)
      (if-verbose (coq.say "HB: we can build a" {nice-gref->string Struct} "on"
         {coq.term->string T}))
      fail,
@@ -224,15 +224,13 @@ optimize-body (app[global (const C)| Args]) Red :- (phant-abbrev _ (const C) _ ;
 optimize-body (let _ _ T x\x) Red :- !, optimize-body T Red.
 optimize-body X X.
 
-
 pred optimize-class-body i:int, i:term, o:term, o:list prop.
-optimize-class-body NParams (app[K|Args]) (app[K|NamedArgs]) Clauses :- std.do! [
-  std.split-at {calc (NParams + 1)} Args ParamsT Mixins,
-  std.map Mixins declare-mixin-name MixinsNamesAndProp,
-  std.map MixinsNamesAndProp fst MixinsNames,
-  std.flatten {std.map MixinsNamesAndProp snd} Clauses,
-  std.append ParamsT MixinsNames NamedArgs,
+optimize-class-body NParams (let _ _ MBo R) R1 Clauses :- std.do! [
+  declare-mixin-name MBo (pr MC CL1),
+  optimize-class-body NParams (R MC) R1 CL2,
+  std.append CL1 CL2 Clauses,
 ].
+optimize-class-body _ (app L) (app L) [].
 
 pred declare-mixin-name i:term, o:(pair term (list prop)).
 declare-mixin-name (global GR) (pr (global GR) []).

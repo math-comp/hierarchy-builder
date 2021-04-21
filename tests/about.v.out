@@ -105,10 +105,12 @@ HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
     (from "./examples/demo1/hierarchy_5.v", line 72)
 
 HB: Z is canonically equipped with mixins:
-    - hierarchy_5.AddComoid
+    - hierarchy_5.AddMonoid
+      hierarchy_5.AddComoid
       hierarchy_5.AddAG
       (from "./tests/about.v", line 3)
-    - hierarchy_5.SemiRing
+    - hierarchy_5.BiNearRing
+      hierarchy_5.SemiRing
       hierarchy_5.Ring
       (from "./tests/about.v", line 8)
 

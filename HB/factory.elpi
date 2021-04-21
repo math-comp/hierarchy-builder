@@ -73,7 +73,7 @@ declare-id-builder GR (from GR GR (const C)) :- std.do! [
   log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
 declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
-  synthesis.infer-all-mixin-args Params TheType GR Ty.
+  synthesis.infer-all-gref-deps Params TheType GR Ty.
 
 
 % [mk-factory-abbrev Str GR CL FactAbbrev]
@@ -172,7 +172,7 @@ declare-factory-alias Ty1Skel GRFSwP Module TheType TheParams :- std.do! [
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
-  MixinSrcClauses => synthesis.infer-all-mixin-args TheParams TheType FK MFK,
+  MixinSrcClauses => synthesis.infer-all-gref-deps TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
   (pi Args\ copy (app[global F|Args]) (app[global (const C)|Section])) => copy MFKTy MFKTyC,
 
