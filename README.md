@@ -45,7 +45,7 @@ We proceed by declaring how to obtain an Abelian group out of the
 additive, commutative, monoid.
 
 ```coq
-HB.mixin Record AddComoid_IsAbelianGrp A of IsAddComoid A := {
+HB.mixin Record IsAbelianGrp A of IsAddComoid A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.
