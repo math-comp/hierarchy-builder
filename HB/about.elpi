@@ -83,7 +83,7 @@ main-canonical-value S CanonicalValues :-
 
 pred group-by-loc i:list cs-instance, o:list (pair (option loc) (list cs-instance)).
 group-by-loc [] [].
-group-by-loc [cs-instance _ _ (global GR)|L] [pr (some Loc) SameLoc|Rest1] :- decl-location GR Loc, !,
+group-by-loc [cs-instance P V (global GR)|L] [pr (some Loc) [cs-instance P V (global GR)|SameLoc]|Rest1] :- decl-location GR Loc, !,
   std.partition L (x\ sigma GR1\ x = cs-instance _ _ (global GR1), decl-location GR1 Loc) SameLoc Rest,
   group-by-loc Rest Rest1.
 group-by-loc [I|Rest] [pr none [I]|Rest1] :- group-by-loc Rest Rest1.
