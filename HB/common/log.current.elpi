@@ -38,7 +38,7 @@ shorten log.private.coq.vernac.{ begin-module-type , end-module-type }.
 shorten log.private.coq.vernac.{ import-module , export-module }.
 shorten log.private.coq.vernac.{ definition , variable , comment , check }.
 shorten log.private.coq.{ vernac.inductive , vernac.implicit , vernac.parameter }.
-shorten log.private.coq.vernac.{ canonical , abbreviation , notation , coercion }.
+shorten log.private.coq.vernac.{ canonical , abbreviation , notation , coercion , strategy }.
 shorten log.private.{ coq.vernac }.
 shorten coq.pp.{ box , h , spc , v , str , hv , hov, glue, brk }.
 
@@ -111,6 +111,13 @@ coq.vernac->pp1 (comment A) (box (hov 2) [str"(*", str S, str"*)"]) :-
 coq.vernac->pp1 (check T Fail) (box (hov 2) [Failure, str"Check", spc, PPT, str"."]) :-
   @holes! => coq.term->pp T PPT,
   fail->failure Fail Failure.
+coq.vernac->pp1 (strategy L opaque) (box (hov 2) [str"Strategy opaque [", glue PPL , str"]."]) :-
+  std.map L (c\r\sigma id\coq.gref->id (const c) id, r = str id) LID, std.intersperse spc LID PPL.
+coq.vernac->pp1 (strategy L expand) (box (hov 2) [str"Strategy expand [", glue PPL , str"]."]) :-
+  std.map L (c\r\sigma id\coq.gref->id (const c) id, r = str id) LID, std.intersperse spc LID PPL.
+coq.vernac->pp1 (strategy L (level N)) (box (hov 2) [str"Strategy ",str NPP,str" [", glue PPL , str"]."]) :-
+  std.any->string N NPP,
+  std.map L (c\r\sigma id\coq.gref->id (const c) id, r = str id) LID, std.intersperse spc LID PPL.
 
 pred local->locality i:bool, o:coq.pp.
 local->locality tt (str "Local ").

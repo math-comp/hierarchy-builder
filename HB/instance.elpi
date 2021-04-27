@@ -91,7 +91,7 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   if-verbose (coq.say "HB: declare canonical structure instance" Name),
 
   get-constructor Struct KS,
-  private.optimize-class-body {std.length Params} KCApp KCAppNames Clauses,
+  private.optimize-class-body TGR {std.length Params} KCApp KCAppNames Clauses,
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
 
@@ -224,13 +224,15 @@ optimize-body (app[global (const C)| Args]) Red :- (phant-abbrev _ (const C) _ ;
 optimize-body (let _ _ T x\x) Red :- !, optimize-body T Red.
 optimize-body X X.
 
-pred optimize-class-body i:int, i:term, o:term, o:list prop.
-optimize-class-body NParams (let _ _ MBo R) R1 Clauses :- std.do! [
+pred optimize-class-body i:gref, i:int, i:term, o:term, o:list prop.
+optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
   declare-mixin-name MBo (pr MC CL1),
-  optimize-class-body NParams (R MC) R1 CL2,
+  if (TGR = indt _, MC = global (const C), not(coq.env.const-opaque? C))
+     (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
+  optimize-class-body TGR NParams (R MC) R1 CL2,
   std.append CL1 CL2 Clauses,
 ].
-optimize-class-body _ (app L) (app L) [].
+optimize-class-body _ _ (app L) (app L) [].
 
 pred declare-mixin-name i:term, o:(pair term (list prop)).
 declare-mixin-name (global GR) (pr (global GR) []).

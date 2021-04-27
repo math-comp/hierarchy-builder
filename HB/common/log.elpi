@@ -20,8 +20,13 @@ arguments.set-implicit GR I :-  std.do! [
 pred env.add-location i:gref.
 env.add-location GR :-
   if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
-     (log.coq.env.accumulate current "hb.db" (clause _ _ (decl-location GR Loc)))
+     (log.coq.env.accumulate library "hb.db" (clause _ _ (decl-location GR Loc)))
      true.
+
+pred strategy.set i:list constant, i:conversion_strategy.
+strategy.set CL S :-
+  coq.strategy.set CL S,
+  log.private.log-vernac (log.private.coq.vernac.strategy CL S).
 
 pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
@@ -230,6 +235,7 @@ type coq.vernac.canonical     string -> bool                -> coq.vernac.
 type coq.vernac.implicit      bool -> string -> list (list implicit_kind)  -> coq.vernac.
 type coq.vernac.comment       A                             -> coq.vernac.
 type coq.vernac.check         term -> bool                  -> coq.vernac.
+type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac.
 
 }
 
