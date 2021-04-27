@@ -23,6 +23,11 @@ env.add-location GR :-
      (log.coq.env.accumulate library "hb.db" (clause _ _ (decl-location GR Loc)))
      true.
 
+pred strategy.set i:list constant, i:conversion_strategy.
+strategy.set CL S :-
+  coq.strategy.set CL S,
+  log.private.log-vernac (log.private.coq.vernac.strategy CL S).
+
 pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   % TODO: refine when we switch to add-section-variable/add-const
@@ -230,6 +235,7 @@ type coq.vernac.canonical     string -> bool                -> coq.vernac.
 type coq.vernac.implicit      bool -> string -> list (list implicit_kind)  -> coq.vernac.
 type coq.vernac.comment       A                             -> coq.vernac.
 type coq.vernac.check         term -> bool                  -> coq.vernac.
+type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac.
 
 }
 

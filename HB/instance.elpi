@@ -228,7 +228,7 @@ pred optimize-class-body i:gref, i:int, i:term, o:term, o:list prop.
 optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
   declare-mixin-name MBo (pr MC CL1),
   if (TGR = indt _, MC = global (const C), not(coq.env.const-opaque? C))
-     (coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
+     (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
   optimize-class-body TGR NParams (R MC) R1 CL2,
   std.append CL1 CL2 Clauses,
 ].
