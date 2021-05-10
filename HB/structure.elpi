@@ -26,7 +26,7 @@ declare Module B :- std.do! [
                "\nPlease list them or end the declaration with '&'")
      true,
 
-  private.if-class-already-exists-error Module {findall-classes} ML,
+  private.if-class-already-exists-error Module {findall-classes-for ML} ML,
   private.if-coverage-not-good-error ML,
 
   % TODO: check we never define the superclass of an exising class
@@ -44,6 +44,7 @@ declare Module B :- std.do! [
   ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
   GRDepsClauses =
     [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
+  std.map ML (m\ o\ o = mixin-class m ClassName) MixinMems,
   std.filter ML (m\ not (mixin-first-class m _)) NewMixins,
   std.map NewMixins (m\ r\ r = mixin-first-class m ClassName) MixinFirstClass,
 
@@ -60,7 +61,7 @@ declare Module B :- std.do! [
   phant.add-abbreviation "clone" PhClone _ _,
 
   if-verbose (coq.say {header} "declaring pack_ constant"),
-  (ClassAlias => class-def CurrentClass => GRDepsClauses =>
+  (ClassAlias => class-def CurrentClass => GRDepsClauses => MixinMems =>
     w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
   if-verbose (coq.say {header} "declaring pack_ constant =" Pack),
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
@@ -129,11 +130,10 @@ declare Module B :- std.do! [
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
-      [gref-deps GRPack MLwP], [StructKeyClause], PHClauses
+      [gref-deps GRPack MLwP], MixinMems, [StructKeyClause], PHClauses
     ]
     NewClauses,
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-
 
   if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,

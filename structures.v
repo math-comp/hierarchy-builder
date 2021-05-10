@@ -166,6 +166,14 @@ pred factory-sort o:coercion.
 % memory of canonical projections for a structure (X.sort, X.class, X.type)
 pred structure-key o:constant, o:constant, o:structure.
 
+%%%%%% Membership of mixins to a  class %%%%%%%%%%%%%%%%
+% [mixin-class M C] means M belongs to C
+pred mixin-class o:mixinname, o:classname.
+
+%%%%%% Local cache of already decalared mixins %%%%%%%%%%%
+% [mixin-canonical T M] means M is already canonical on T
+pred mixin-canonical o:term, o:mixinname.
+
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [mixin-src T M X] states that X can be used to reconstruct

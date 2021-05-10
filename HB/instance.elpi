@@ -142,7 +142,8 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
   factory-sort (coercion GRFSort _ GR _),
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GRFSort KSort,
   coq.mk-app KSort [GCF] KFSortEta,
-  std.length {list-w-params_list MLwP} NMLArgs,
+  list-w-params_list MLwP ML,
+  std.length ML NMLArgs,
   coq.mk-n-holes NMLArgs SortMLHoles,
   std.append {std.append SortParams [SortKey|SortMLHoles]} [GCF] KFSortArgs,
   coq.mk-app (global GRFSort) KFSortArgs KFSort,
@@ -152,7 +153,7 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
     KFSortMSL,
   KFSortMSL =>
     synthesis.under-mixin-src-from-factory.do! KFSort GCF
-      [declare-all KFSort {findall-classes} CSL]
+      [declare-all KFSort {findall-classes-for ML} CSL]
 ].
 
 pred mk-factory-sort-factory i:gref, o:list (pair id constant).
@@ -255,9 +256,9 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
 % can access their theory and notations
 pred declare-canonical-instances-from-factory-and-local-builders i:term, i:term, i:term, i:factoryname, o:list prop, o:list (pair id constant).
 declare-canonical-instances-from-factory-and-local-builders T F _TheFactory FGR Clauses CSL :- std.do! [
-  synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\
-      add-all-mixins T FGR NewMixins ff Clauses MCSL
-  ),
+  synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\ std.do! [
+      add-all-mixins T FGR NewMixins ff Clauses MCSL,
+  ]),
   Clauses => instance.declare-all T {findall-classes} CCSL,
   std.append MCSL CCSL CSL
 ].
@@ -277,7 +278,7 @@ declare-canonical-instances-from-factory T F CSL :- std.do! [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides GRF} ML,
       add-all-mixins T GRF ML tt _ MCSL,
-      instance.declare-all T {findall-classes} CCSL,
+      instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
   std.append MCSL CCSL CSL
