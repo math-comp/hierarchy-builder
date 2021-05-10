@@ -382,6 +382,7 @@ Program Definition QcJoinTAddAG := JoinTAddAG.Build Qc _ _.
   Next Obligation. Admitted.
   Next Obligation. Admitted.
 
+#[verbose]
 HB.instance Definition _ : JoinTAddAG Qc := QcJoinTAddAG.
 
 Check (entourage : set (set (Qc * Qc))). (* TODO fix spill-factory-param-factories *)
