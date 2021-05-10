@@ -8,6 +8,7 @@ Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition nomsg : option (string * Type) := None.
 Definition is_not_canonically_a : string := "is not canonically a".
 Definition new {T} (x : T) := x.
+Definition eta {T} (x : T) := x.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
@@ -28,6 +29,7 @@ Register Coq.ssr.ssreflect.Phantom as hb.Phantom.
 Register Coq.Init.Logic.eq as hb.eq.
 Register Coq.Init.Logic.eq_refl as hb.erefl.
 Register new as hb.new.
+Register eta as hb.eta.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
 Notation indexed T := T (only parsing).
@@ -63,6 +65,8 @@ type w-params.nil id -> term -> (term -> A) -> w-params A.
 
 typeabbrev (list-w-params A) (w-params (list (w-args A))).
 typeabbrev (one-w-params A) (w-params (w-args A)).
+typeabbrev mixins (list-w-params mixinname).
+typeabbrev (w-mixins A) (pair mixins (w-params A)).
 
 %%%%% Classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -84,7 +88,7 @@ typeabbrev (one-w-params A) (w-params (w-args A)).
 %            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
 % 
 kind class type.
-type class classname -> structure -> list-w-params mixinname -> class.
+type class classname -> structure -> mixins -> class.
 
 % class-def contains all the classes ever declared
 pred class-def o:class.
@@ -131,7 +135,7 @@ pred sub-class o:classname, o:classname.
 % [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
 :index(2)
-pred gref-deps o:gref, o:list-w-params mixinname.
+pred gref-deps o:gref, o:mixins.
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:classname, o:classname, o:classname.
@@ -154,6 +158,9 @@ pred mixin-first-class o:mixinname, o:classname.
 
 % memory of exported operations (TODO: document fiels)
 pred exported-op o:mixinname, o:constant, o:constant.
+
+% memory of factory sort coercion
+pred factory-sort o:coercion.
 
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -178,6 +185,7 @@ pred builder-decl o:builder.
 kind declaration type.
 % TheType, TheFactory and it's name and the name of the module encloding all that
 type builder-from term -> term -> factoryname -> id -> declaration.
+type no-builder declaration.
 pred current-mode o:declaration.
 
 %% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -391,6 +399,9 @@ HB.structure Definition StructureName params :=
   - [StructureName.sort params] the first projection of the previous structure,
   - [StructureName.clone params T cT] a legacy repackaging function that eta expands
     the canonical [StructureName.type] of [T], using [cT] if provided.
+  - [StructureName.pack params T F] a packaging function that takes a key T
+    and some data F, which can be a convertible type or any factory or mixins
+    and attempts to package them together.
   - [StructureName.class sT : StructureName sT] projects out the class of [sT : StructureName.type params],
   - [StructureName.copy T T' : StructureName T] returns the class of the canonical
     [StructureName.type] of [T], and gives it the type [Structure T]. It is thus
@@ -423,6 +434,8 @@ HB.structure Definition StructureName params :=
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
     Cf #<a href="https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v##L225-L243">#[fingroup.v]#</a>#.
+  - [#[short(type="shortName")]] produces the abbreviation [shortName] for [Structure.type]
+  - [#[short(pack="shortName")]] produces the abbreviation [shortName] for [Structure.pack]
   - [#[verbose]] for a verbose output.
 *)
 
@@ -477,12 +490,13 @@ Elpi Accumulate File "HB/common/log.elpi".
 #[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
-  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel)).
+  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)).
 main [T0, F0] :- !,
   coq.warn "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
@@ -567,9 +581,11 @@ Elpi Accumulate File "HB/common/log.elpi".
 #[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/export.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -720,46 +736,40 @@ main _ :- coq.error "Usage: HB.lock Definition name : ty := t.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.lock.
-   
-(*
+
+
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (*
-Inactive command: [HB.context]
+Inactive command: [HB.declare]
 This command populates the current section with canonical instances.
 
-  Input:
-    - the name of a section variable of type Type
-    - zero or more factories
-
+  Syntax:
+[[
+HB.declare Context (p1 : P1) ... (pn : Pn) (t : T) of F0 ... Fk.
+]]
   Effect:
 [[
-Variable m0 : m0.
-Definition s0 := S0.Pack T (S0.Build T m0).
-Canonical s0.
+Variables (p1 : P1) ... (pn : Pn) (t : T).
+
+Variable m0 : M0 ... T.
+HB.instance Definition _ : M0 ... T := m0.
 ..
-Variable mn : mn dn.
-Definition sm : SM.Pack T (SM.Build T m0 .. mn).
-Canonical sm.
+Variable mk : Ml ... T.
+HB.instance Definition _ : Ml ... T := ml.
 ]]
 
   where:
-  - factories produce mixins m0 .. mn
-  - mixin mn depends on mixins dn
-  - all structures that can be generated out of the mixins are declared
-    as canonical
-
+  - factories F0 .. Fk produce mixins M0 .. Ml.
     
   Supported attributes:
   - [#[verbose]] for a verbose output.
 
 *)
 
-(* TODO perform a check that the declarations are closed under dependencies *)
-
-Elpi Command HB.context.
+Elpi Command HB.declare.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
@@ -767,20 +777,23 @@ Elpi Accumulate File "HB/common/log.elpi".
 #[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [S|FS] :-
-  argument->term S T,
-  std.map FS argument->gref GRFS, !,
-  context.declare T GRFS _.
-main _ :- coq.error "Usage: HB.context <CarrierTerm> <Factoryes>..".
+main [Ctx] :- Ctx = ctx-decl _, !, std.do! [
+  factory.argument->w-mixins Ctx (pr FLwP _),
+  context.declare FLwP _ _ _ _
+].
+main _ :- coq.error "Usage: HB.declare Context <Parameters> <Key> <Factories>".
 
 }}.
 Elpi Typecheck.
-*)
+Elpi Export HB.declare.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

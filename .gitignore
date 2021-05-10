@@ -46,6 +46,7 @@ _minted-*
 *.aux
 *.log
 *.out
+!*.v.out
 *.synctex.gz
 *.toc
 *.vrb

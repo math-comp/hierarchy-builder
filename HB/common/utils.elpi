@@ -27,6 +27,8 @@ with-attributes P :-
     att "verbose" bool,
     att "mathcomp" bool,
     att "mathcomp.axiom" string,
+    att "short.type" string,
+    att "short.pack" string,
     att "infer" attmap,
     att "key" string,
     att "arg_sort" bool,
@@ -165,6 +167,7 @@ pred mk-fun-prod i:name, i:term, o:(term -> pair term term), o:pair term term.
 mk-fun-prod N Ty (x\ pr (Body x) (Type x)) (pr (fun N Ty Body) (prod N Ty Type)).
 
 pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> indt-decl), o:indt-decl.
+pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> arity), o:arity.
 mk-parameter IK Name X F Decl :- !, Decl = parameter {coq.name->id Name} IK X F.
 
 pred params->holes i:list-w-params A, o:list term.

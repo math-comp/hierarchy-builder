@@ -3,16 +3,43 @@
 
 namespace context {
 
-% [declare TheType Parameters Factories Clauses] postulates a
+pred declare i:mixins,
+  o:list term, o:term, o:list prop, o:list constant.
+declare FLwP Params TheKey MSL CL :- !, std.do! [
+  factories-provide FLwP MLwP,
+  declare.params-key MLwP Params TheKey _MLwA,
+  declare.mixins TheKey Params FLwP MSL CL
+].
+
+pred declare.params-key i:w-params A, o:list term, o:term, o:A.
+declare.params-key MLwP Params TheKey Out :- !, std.do! [
+  if-verbose (coq.say "HB: declaring parameters and key as section variables"),
+  declare.params MLwP Params KId KTy F,
+  log.coq.env.add-section-variable-noimplicits KId KTy C,
+  TheKey = global (const C),
+  Out = F TheKey
+].
+
+pred declare.params i:w-params A, o:list term, o:id, o:term, o:(term -> A).
+declare.params (w-params.cons PId PTy F) [P|Params] KId KTy Out :- !, std.do! [
+  log.coq.env.add-section-variable-noimplicits PId PTy C,
+  P = global (const C),
+  declare.params (F P) Params KId KTy Out
+].
+declare.params (w-params.nil KId KTy F) [] KId KTy F :- !.
+
+% [declare.mixins TheType Parameters Factories Clauses] postulates a
 % (section) context with all the mixins provided by the factories and all
 % the structure instances we can derive on TheType from these. Clauses
 % contain mixin-src for each postulated mixin
-pred declare i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
-declare TheType TheParams GRFSwP MSL CL :-  std.do! [
+pred declare.mixins i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
+declare.mixins TheType TheParams GRFSwP MSL CL :-  std.do! [
   factories-provide GRFSwP MLwP,
   apply-w-params MLwP TheParams TheType MLwAllArgs,
+  % TODO: change to interleave cf PR #213
   std.fold MLwAllArgs [] private.postulate-mixin MSL,
-  MSL => instance.declare-all TheType {findall-classes} CSL,
+  MSL => get-option "local" tt =>
+    instance.declare-all TheType {findall-classes} CSL,
   std.map CSL snd CL,
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
@@ -29,7 +56,7 @@ namespace private {
 % to the corresponding mixin using mixin-for
 pred postulate-mixin i:w-args mixinname, i:list prop, o:list prop.
 postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
-  Name is "mixin_" ^ {gref->modname M 2 "_"},
+  Name is "local_mixin_" ^ {gref->modname M 2 "_"},
 
   if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
 

@@ -159,7 +159,7 @@ main-operation S MixinSource _ :-
   coq.say {coq.pp->string PpOriginMixin},
   coq.say.
 
-pred main-structure i:string, i:classname, i:structure, i:list-w-params mixinname.
+pred main-structure i:string, i:classname, i:structure, i:mixins.
 main-structure S Class Structure MLwP :-
   % fetch
   list-w-params_list MLwP ML,

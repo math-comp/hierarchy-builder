@@ -125,11 +125,12 @@ opam install coq-hierarchy-builder
 <details><summary>(click to expand)</summary><p>
 
 - HB core commands:
-  - `HB.mixin` declares a mixin
-  - `HB.structure` declares a structure
-  - `HB.factory` declares a factory
-  - `HB.builders` and `HB.end` declare a set of builders
-  - `HB.instance` declares a structure instance
+  - `HB.mixin` declares a mixin,
+  - `HB.structure` declares a structure,
+  - `HB.factory` declares a factory,
+  - `HB.builders` and `HB.end` declare a set of builders,
+  - `HB.instance` declares a structure instance,
+  - `HB.declare` declares a context with parameters, key and mixins.
 
 - HB utility commands:
   - `HB.export` exports a module and schedules it for re-export

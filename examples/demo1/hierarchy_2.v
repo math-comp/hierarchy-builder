@@ -52,6 +52,10 @@ HB.mixin Record Ring_of_AddAG A of AddAG A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
+
+
+HB.structure Definition Ring := { A of Ring_of_AddAG A }.
+
 HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   one : A;
@@ -64,6 +68,15 @@ HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   mulrDr : right_distributive mul add;
 }.
 
+Section test.
+HB.declare Context A of AddComoid A.
+Print Canonical Projections A.
+Variable (f : Ring_of_AddComoid A).
+HB.instance Definition _ : AddComoid_of_TYPE f := AddComoid.on f.
+End test.
+Print Canonical Projections Ring_of_AddComoid.sort.
+
+
 HB.builders Context A (a : Ring_of_AddComoid A).
 
   HB.instance
@@ -73,6 +86,7 @@ HB.builders Context A (a : Ring_of_AddComoid A).
   Definition to_Ring_of_AddAG := Ring_of_AddAG.Build A
     _ _ mulrA mul1r mulr1 mulrDl mulrDr.
 
+  #[verbose]
 HB.end.
 
 (* End change *)
@@ -106,7 +120,6 @@ HB.builders Context A (a : Ring_of_TYPE A).
 
 HB.end.
 
-HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 
 (* Notations *)
 

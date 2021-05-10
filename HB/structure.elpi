@@ -19,6 +19,8 @@ declare Module B :- std.do! [
   list-w-params_list PMLwP PML,
   list-w-params_list MLwP ML,
 
+  synthesis.list-w-params.check-key MLwP,
+
   if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
      (coq.warn "HB: pulling in dependencies:" {std.map {std.list-diff ML PML} nice-gref->string}
                "\nPlease list them or end the declaration with '&'")
@@ -40,16 +42,36 @@ declare Module B :- std.do! [
   ClassAlias = (factory-alias->gref ClassName ClassName),
   CurrentClass = (class ClassName Structure MLwP),
   ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
-  GRDepsClauses = [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
-  
-  private.declare-auto-infer-params-abbrev Structure MLwP,
+  GRDepsClauses =
+    [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
+  std.filter ML (m\ not (mixin-first-class m _)) NewMixins,
+  std.map NewMixins (m\ r\ r = mixin-first-class m ClassName) MixinFirstClass,
+
+
+  if-verbose (coq.say "HB: structure: new mixins" NewMixins),
+  if-verbose (coq.say "HB: structure: mixin first class" MixinFirstClass),
+
+
+  private.declare-auto-infer-params-abbrev Structure MLwP LocType,
 
   if-verbose (coq.say "HB: declaring clone abbreviation"),
-
   w-params.then MLwP phant.fun-real phant.fun-real
     (private.clone-phant-body ClassName SortProjection Structure) PhClone,
-
   phant.add-abbreviation "clone" PhClone _ _,
+
+  if-verbose (coq.say "HB: declaring pack_ constant"),
+  (ClassAlias => class-def CurrentClass => GRDepsClauses =>
+    w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
+  if-verbose (coq.say "HB: declaring pack_ constant =" Pack),
+  log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
+  GRPack = const ConstPack,
+
+  if-verbose (coq.say "HB: declaring pack abbreviation"),
+  (ClassAlias => class-def CurrentClass =>
+    GRDepsClauses => MixinFirstClass => gref-deps GRPack MLwP =>
+      phant.of-gref tt GRPack [] PhRepack),
+  if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
+  phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
 
   if-arg-sort (
     if-verbose (coq.say "HB: define arg_sort"),
@@ -62,8 +84,25 @@ declare Module B :- std.do! [
 
   log.coq.env.begin-module "Exports" none,
 
-  private.infer-coercion-tgt MLwP CoeClass,
-  if-arg-sort (private.declare-sort-coercion CoeClass Structure (global (const ArgSortCst))),
+  if (get-option "short.type" ShortType) (
+    if-verbose (coq.say "HB: short name for type:" ShortType),
+    if (LocType = loc-abbreviation StrTypeAbbrev) (std.do! [
+      coq.notation.abbreviation-body StrTypeAbbrev NStrTypeAbbrev StrTypeTm,
+      @global! => log.coq.notation.add-abbreviation
+        ShortType NStrTypeAbbrev StrTypeTm ff _
+    ]) (@global! => log.coq.notation.add-abbreviation
+      ShortType 0 (global Structure) ff _)) true,
+
+  if (get-option "short.pack" ShortPack) (std.do! [
+    if-verbose (coq.say "HB: short name for type:" ShortPack),
+    coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
+    @global! => log.coq.notation.add-abbreviation
+      ShortPack NPackAbbrev PackAbbrevTrm ff _]) true,
+
+  if-verbose (coq.say "HB: making coercion from type to target"),
+  synthesis.infer-coercion-tgt MLwP CoeClass,
+  if-arg-sort (private.declare-sort-coercion CoeClass Structure
+    (global (const ArgSortCst))),
   private.declare-sort-coercion CoeClass Structure SortProjection,
 
   if-verbose (coq.say "HB: exporting unification hints"),
@@ -82,7 +121,8 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: accumulating various props"),
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
-      NewJoins, [class-def CurrentClass], GRDepsClauses
+      NewJoins, [class-def CurrentClass], GRDepsClauses,
+      [gref-deps GRPack MLwP]
     ]
     NewClauses,
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
@@ -109,7 +149,25 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: declaring on abbreviation"),
 
   @global! => log.coq.notation.add-abbreviation "on" 1
-    {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt _,
+    {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt
+    OnAbbrev,
+
+  log.coq.env.begin-module "EtaAndMixinExports" none,
+
+  if-verbose (coq.say "HB: eta expanded instances"),
+  NewClauses => std.do! [
+    w-params.fold MLwP mk-fun
+      (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
+    w-params.fold MLwP (mk-parameter explicit)
+      (private.mk-hb-eta.arity Structure ClassName SortProjection)
+      EtaInstanceArity,
+    instance.declare-const "_" EtaInstanceBody EtaInstanceArity _
+  ],
+
+  std.flatten {std.map NewMixins mixin->factories} NewFactories,
+  NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
+
+  log.coq.env.end-module-name "EtaAndMixinExports" EtaExports,
 
   log.coq.env.end-module-name Module ModulePath,
 
@@ -117,9 +175,13 @@ declare Module B :- std.do! [
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
+  if-verbose (coq.say "HB: export" EtaExports),
+
+  export.module {calc (Module ^ ".EtaExports")} EtaExports,
+
   if-verbose (coq.say "HB: exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
-      private.export-operations Structure SortProjection ClassProjection MLwP [] EX   MLToExport,
+      private.export-operations Structure SortProjection ClassProjection MLwP [] EX MLToExport,
     % TODO: issue an Arguments op T : rename, where T is the name written by
     %   the user in Definition foo := { T of ... }
 
@@ -127,7 +189,6 @@ declare Module B :- std.do! [
 
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
   log.coq.env.begin-module ElpiOperationModName none,
-    std.map MLToExport (m\r\ r = mixin-first-class m ClassName) MixinFirstClass,
     std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
@@ -136,8 +197,8 @@ declare Module B :- std.do! [
 
   NewClauses => factory.declare-abbrev Module (factory.by-classname ClassName),
 
-  NewClauses => if-MC-compat (private.mc-compat-structure Module ModulePath MLToExport {w-params.nparams MLwP} ClassName ClassProjection),
-
+  NewClauses => if-MC-compat (private.mc-compat-structure Module ModulePath MLToExport
+    {w-params.nparams MLwP} ClassProjection GRPack)
 ].
 
 /* ------------------------------------------------------------------------- */
@@ -147,14 +208,6 @@ declare Module B :- std.do! [
 namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
-
-
-pred infer-coercion-tgt i:list-w-params mixinname, o:class.
-infer-coercion-tgt (w-params.cons ID Ty F) CoeClass :-
-  @pi-parameter ID Ty x\ infer-coercion-tgt (F x) CoeClass.
-infer-coercion-tgt (w-params.nil _ {{ Type }} _) sortclass.
-infer-coercion-tgt (w-params.nil _ {{ _ -> _ }} _) funclass.
-infer-coercion-tgt (w-params.nil _ _ _) _ :- coq.error "TODO1".
 
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra
@@ -171,7 +224,6 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1) =>
-
   clean-op-ty Ops S T1 T2.
 
 pred operation-body-and-ty i:list prop, i:constant, i:structure, i:term, i:term,
@@ -228,7 +280,7 @@ pred mixin-not-already-declared i:one-w-params mixinname.
 mixin-not-already-declared MwP :-
   w-params_1 MwP M, not(mixin-first-class M _), M = indt _.
 
-pred export-operations i:structure, i:term, i:term, i:list-w-params mixinname, i:list prop, o:list prop, o:list mixinname.
+pred export-operations i:structure, i:term, i:term, i:mixins, i:list prop, o:list prop, o:list mixinname.
 export-operations Structure ProjSort ProjClass MLwP EX1 EX2 MLToExport :- std.do! [
   distribute-w-params MLwP LMwP,
   std.filter LMwP mixin-not-already-declared LMwPToExport,
@@ -239,7 +291,7 @@ export-operations Structure ProjSort ProjClass MLwP EX1 EX2 MLToExport :- std.do
 pred mk-coe-class-body
   i:factoryname, % From class
   i:factoryname, % To class
-  i:list-w-params mixinname, % To mixins
+  i:mixins, % To mixins
   i:list term, i:term, % Params, T
   i:list (w-args mixinname),
   o:term.
@@ -440,7 +492,7 @@ mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global C
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
-pred declare-class+structure i:list-w-params mixinname, o:factoryname, o:structure, o:term, o:term, o:list prop.
+pred declare-class+structure i:mixins, o:factoryname, o:structure, o:term, o:term, o:list prop.
 declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories :- std.do! [
 
   if-verbose (coq.say "HB: declare axioms record"MLwP ),
@@ -495,8 +547,8 @@ export-mixin-coercion ClassName (some C) :-
   if-verbose (coq.say "HB: export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
   log.coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
-pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:classname, i:term, i:option gref.
-mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProjection Axioms :- std.do! [
+pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:term, i:gref, i:option gref.
+mc-compat-structure ModuleName _Module NewMixins CNParams ClassProjection GRPack Axioms :- std.do! [
   CompatModuleName is "MathCompCompat" ^ ModuleName,
   log.coq.env.begin-module CompatModuleName none, % to avoid collisions
   log.coq.env.begin-module ModuleName none,
@@ -510,16 +562,16 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassName ClassProject
     MArgs is {factory-nparams NewMixin} + 1,
     mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
     @global! => log.coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
+    @deprecated! "mathcomp 2.0.0" "use the factory instead" =>
     @global! => log.coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
     std.assert! (factory-constructor NewMixin FK) "BUG: Factory constructor missing",
     std.assert! (phant-abbrev FK _ PhAbb) "BUG: missing phant-abbrev",
-    @global! => log.coq.notation.add-abbreviation "Mixin" 0
-      {coq.notation.abbreviation PhAbb {coq.mk-n-holes MArgs}} ff _,
+    @deprecated! "mathcomp 2.0.0" "use the F.Build instead" =>
+      @global! => log.coq.notation.add-abbreviation "Mixin" 0
+        {coq.notation.abbreviation PhAbb {coq.mk-n-holes MArgs}} ff _,
     if-verbose (coq.say "mc-compat-structure: declaring pack abbreviation"),
-    class-def (class ClassName _ ClassMixins),
-    w-params.then ClassMixins mk-fun mk-fun (pack-body ClassName) Pack,
-    log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! GRPack,
-    (gref-deps (const GRPack) ClassMixins => phant.add-abbreviation "pack" {phant.of-gref (const GRPack) [NewMixin]} _ _),
+    @deprecated! "mathcomp 2.0.0" "use native HB Structure.pack instead" =>
+    phant.add-abbreviation "mcpack" {phant.of-gref ff GRPack [NewMixin]} _ _,
     ])
     (if-verbose (coq.say "mc-compat-structure: not exactly one new mixin")),
 
@@ -559,20 +611,21 @@ pack-body ClassName PL T MLwA F :- std.do! [
   get-constructor ClassName BuildC,
   get-constructor S PackS,
   synthesis.under-mixins.then MLwA mk-fun
-    (pack-body.aux PL T BuildC PackS) F
+    (pack-body.aux PL T BuildC PackS) F,
 ].
 pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
   synthesis.infer-all-gref-deps PL T BuildC Class,
   mk-app (global PackS) {std.append PL [T, Class]} Body
 ].
 
-pred declare-auto-infer-params-abbrev i:structure, i:list-w-params mixinname.
-declare-auto-infer-params-abbrev GR MLwP :- get-option "infer" Map, !,
+pred declare-auto-infer-params-abbrev i:structure, i:mixins, o:located.
+declare-auto-infer-params-abbrev GR MLwP (loc-abbreviation Abbrev) :-
+  get-option "infer" Map, !,
   Map => mk-infer (global GR) MLwP PhT,
-  phant.add-abbreviation "type" PhT _ _.
-declare-auto-infer-params-abbrev _ _.
+  phant.add-abbreviation "type" PhT _ Abbrev.
+declare-auto-infer-params-abbrev GR _ (loc-gref GR).
 
-pred mk-infer i:term, i:list-w-params mixinname, o:phant-term.
+pred mk-infer i:term, i:mixins, o:phant-term.
 mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.
 mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "Type" ; get-option ID ""), !,
   @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
@@ -586,7 +639,7 @@ mk-infer T (w-params.cons ID Ty W) R :- not (get-option ID _), !,
 mk-infer _ (w-params.cons ID _ _) _ :- get-option ID Infer,
   coq.error "Automatic inference of paramter" ID "from" Infer "not supported".
 
-pred mk-infer-key i:class, i:term, i:list-w-params mixinname, i:term, o:phant-term.
+pred mk-infer-key i:class, i:term, i:mixins, i:term, o:phant-term.
 mk-infer-key CoeClass K (w-params.nil ID _ _) St PhK :-
   @pi-parameter ID St t\ phant.init {mk-app K [t]} (PhKBo t),
   phant.fun-infer-type CoeClass {coq.id->name ID} St PhKBo PhK.
@@ -633,5 +686,33 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
   L = w-params.nil ID Ty Rest,
   @pi-decl N Ty t\
     product->triples (B t) (Rest t) C.
+
+pred mk-hb-eta.on i:structure, i:term, i:abbreviation,
+  i:list term, i:name, i:term, i:A, o:term.
+mk-hb-eta.on Structure SortProjection OnAbbrev
+    Params NT _T _ (fun NT Ty Body) :- !, std.do! [
+  coq.mk-app (global Structure) Params Ty,
+  @pi-decl NT Ty s\ sigma Tm\ std.do! [
+    coq.mk-app {{lib:@hb.eta}}
+      [_, {coq.mk-app SortProjection {std.append Params [s]}}]
+      Tm,
+    std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
+    coq.notation.abbreviation OnAbbrev [Tm] (Body s)
+  ]
+].
+
+pred mk-hb-eta.arity i:structure, i:classname, i:term, i:list term,
+  i:name, i:term, i:A, o:arity.
+mk-hb-eta.arity Structure ClassName SortProjection
+    Params NT _T _ Out :- !, std.do! [
+  coq.mk-app (global Structure) Params Ty,
+  (@pi-decl NT Ty s\ sigma Tm\ std.do! [
+    coq.mk-app {{lib:@hb.eta}}
+      [_, {coq.mk-app SortProjection {std.append Params [s]}}] Tm,
+    std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
+    coq.mk-app (global ClassName) {std.append Params [Tm]} (Concl s)
+  ]),
+  Out = parameter {coq.name->id NT} explicit Ty s\ arity (Concl s)
+].
 
 }}
