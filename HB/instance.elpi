@@ -71,16 +71,18 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
 pred declare-all i:term, i:list class, o:list (pair id constant).
+% declare-all T [class _ Struct _|Rest] Out :-
+%   structure-canonical T Struct, !, declare-all T Rest Out, !.
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
-  params->holes MLwP Params,
-  get-constructor Class KC,
-
   if (not(local-cs? T Struct))
      true % we build it
      (if-verbose (coq.say {header} "skipping already existing"
                     {nice-gref->string Struct} "instance on"
                     {coq.term->string T}),
       fail),
+
+  params->holes MLwP Params,
+  get-constructor Class KC,
 
   if (synthesis.infer-all-args-let Params T KC KCApp ok)
      (if-verbose (coq.say {header} "we can build a" {nice-gref->string Struct} "on"
