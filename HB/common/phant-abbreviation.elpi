@@ -72,7 +72,7 @@ pred fun-unify i:option term, i:term, i:term, i:phant-term, o:phant-term.
 fun-unify OMsg X1 X2 (private.phant-term AL F) (private.phant-term [private.unify|AL] UF) :-
   std.assert-ok! (coq.typecheck X1 T1) "fun-unify: X1 illtyped",
   std.assert-ok! (coq.typecheck X2 T2) "fun-unify: X2 illtyped",
-  if (OMsg = some M) (Msg = {{lib:hb.some lp:M}}) (Msg = {{lib:hb.nomsg}}),
+  if (OMsg = some M) (Msg = {{lib:hb.not_a_msg lp:M}}) (Msg = {{lib:hb.nomsg}}),
   UF = {{fun unif_arbitrary : lib:hb.unify lp:T1 lp:T2 lp:X1 lp:X2 lp:Msg => lp:F}}.
 
 % [fun-implicit N T Ph Ph1] Adds an implicit argument name N of type T areound Ph
@@ -158,7 +158,7 @@ phant-fun-struct T Name S Params PF Out :- std.do! [
   mk-app (global S) Params SParams,
   mk-app SortProj Params SortProjParams,
   % Msg = {{lib:hb.nomsg}},
-  Msg = some {{lib:hb.pair lib:hb.not_a_msg lp:SParams}},
+  Msg = some {{lp:SParams}},
   (@pi-decl Name SParams s\ fun-unify Msg T {mk-app SortProjParams [s]} (PF s) (UnifSI s)),
   fun-implicit Name SParams UnifSI Out
 ].
