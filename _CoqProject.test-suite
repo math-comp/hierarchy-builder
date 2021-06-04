@@ -62,6 +62,7 @@ tests/not_same_key.v
 tests/factory_sort.v
 tests/declare.v
 tests/short.v
+tests/primitive_records.v
 
 -R tests HB.tests
 -R examples HB.examples

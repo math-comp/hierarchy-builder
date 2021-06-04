@@ -154,15 +154,16 @@ declare Module B :- std.do! [
 
   log.coq.env.begin-module "EtaAndMixinExports" none,
 
-  if-verbose (coq.say "HB: eta expanded instances"),
-  NewClauses => std.do! [
-    w-params.fold MLwP mk-fun
-      (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
-    w-params.fold MLwP (mk-parameter explicit)
-      (private.mk-hb-eta.arity Structure ClassName SortProjection)
-      EtaInstanceArity,
-    instance.declare-const "_" EtaInstanceBody EtaInstanceArity _
-  ],
+  if (get-option "primitive" tt) true (
+    if-verbose (coq.say "HB: eta expanded instances"),
+    NewClauses => std.do! [
+      w-params.fold MLwP mk-fun
+        (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
+      w-params.fold MLwP (mk-parameter explicit)
+        (private.mk-hb-eta.arity Structure ClassName SortProjection)
+        EtaInstanceArity,
+      instance.declare-const "_" EtaInstanceBody EtaInstanceArity _
+    ]),
 
   std.flatten {std.map NewMixins mixin->factories} NewFactories,
   NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
@@ -501,7 +502,10 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
-  log.coq.env.add-indt ClassDeclaration ClassInd,
+  if (get-option "primitive_class" tt)
+    (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd)
+    (log.coq.env.add-indt ClassDeclaration ClassInd),
+
   coq.CS.canonical-projections ClassInd Projs,
   % TODO: put this code in a named clause
   w-params.nparams MLwP NParams,
@@ -516,7 +520,9 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
-  log.coq.env.add-indt StructureDeclaration StructureInd,
+  if (get-option "primitive" tt)
+    (@primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
+    (log.coq.env.add-indt StructureDeclaration StructureInd),
 
   coq.CS.canonical-projections StructureInd [some SortP, some ClassP],
   global (const SortP) = SortProjection,
