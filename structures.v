@@ -87,7 +87,7 @@ typeabbrev (w-mixins A) (pair mixins (w-params A)).
 %           [...,                                  /* deps of IsZmodule.mixin        */
 %            triple (indt «IsZmodule.mixin») [] T, /* a mixins with its params       */
 %            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
-% 
+%
 kind class type.
 type class classname -> structure -> mixins -> class.
 
@@ -348,7 +348,9 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 
   Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
 
-  Supported attributes: [#[verbose]]
+  Supported attributes:
+  - [#[primitive]] experimental attribute to make the mixin/factory primitive,
+  - [#[verbose]] for a verbose output.
 
 *)
 
@@ -437,6 +439,8 @@ HB.structure Definition StructureName params :=
     Cf #<a href="https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v##L225-L243">#[fingroup.v]#</a>#.
   - [#[short(type="shortName")]] produces the abbreviation [shortName] for [Structure.type]
   - [#[short(pack="shortName")]] produces the abbreviation [shortName] for [Structure.pack]
+  - [#[primitive]] experimental attribute to make the structure a primitive record,
+  - [#[primitive_class]] experimental attribute to make the class a primitive record,
   - [#[verbose]] for a verbose output.
 *)
 
@@ -764,7 +768,7 @@ HB.instance Definition _ : Ml ... T := ml.
 
   where:
   - factories F0 .. Fk produce mixins M0 .. Ml.
-    
+
   Supported attributes:
   - [#[verbose]] for a verbose output.
 

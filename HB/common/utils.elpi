@@ -40,6 +40,8 @@ with-attributes P :-
     att "local" bool,
     att "fail" bool,
     att "doc" string,
+    att "primitive_class" bool,
+    att "primitive" bool,
   ] Opts, !,
   Opts => (save-docstring, P).
 
