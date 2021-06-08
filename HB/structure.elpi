@@ -220,11 +220,12 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
 
-  (pi L L1 Params Rest PoArgs\
-    copy (app [global (const Po)| L]) (app [global (const C) | L1]) :-
+  (pi L L1 L2 Params Rest PoArgs\
+    copy (app [global (const Po)| L]) (app [global (const C) | L2]) :-
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
-      std.append Params [S|PoArgs] L1) =>
+      std.append Params [S|PoArgs] L1,
+      std.map L1 copy L2) =>
   clean-op-ty Ops S T1 T2.
 
 pred operation-body-and-ty i:list prop, i:constant, i:structure, i:term, i:term,
