@@ -63,6 +63,7 @@ tests/factory_sort.v
 tests/declare.v
 tests/short.v
 tests/primitive_records.v
+tests/non_forgetful_inheritance.v
 
 -R tests HB.tests
 -R examples HB.examples

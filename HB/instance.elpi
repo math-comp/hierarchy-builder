@@ -49,6 +49,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   % call HB.instance TheType TheFactory
   std.drop NParams Args [TheType|_],
+
+  private.check-non-forgetful-inheritance TheType Factory,
+
   private.declare-instance TheType TheFactory Clauses CSL,
 
   % handle parameters via a section -- end
@@ -314,6 +317,30 @@ declare-mixin-name T (pr (global (const C)) [mixin-mem T (const C)]) :- std.do! 
   if-verbose (coq.say "HB: declare-mixin-name" T),
   Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
   log.coq.env.add-const-noimplicits Name T _ @transparent! C,
+].
+
+pred check-non-forgetful-inheritance i:term, i:gref.
+check-non-forgetful-inheritance _ _ :-
+  get-option "non_forgetful_inheritance" tt, !.
+check-non-forgetful-inheritance T Factory :- std.do! [
+  coq.safe-dest-app T HdSym _,
+  if (structure-key HdSym Super) (
+    coq.error "HB: non forgetful inheritance detected.\n"
+      "You have two solutions:"
+      "1. (Best practice) Reorganize your hierarchy to make"
+      {nice-gref->string Factory}
+      "depend on"
+      { calc ({nice-gref->string Super} ^ ".") }
+      "See the paper \"Competing inheritance paths in"
+      "dependent type theory\" (https://hal.inria.fr/hal-02463336) for more"
+      "explanations"
+      "2. Use the attribute #[non_forgetful_inheritance] to disable this check."
+      "We strongly advise you encapsulate this instance inside a module,"
+      "in order to isolate it from the rest of the code, and to be able"
+      "to import it on demand. See the above paper and the file"
+      "https://github.com/math-comp/hierarchy-builder/blob/master/tests/non-forgetful-inheritance.v"
+      "to witness devastating effects."
+    ) true
 ].
 
 }}
