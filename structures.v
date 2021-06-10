@@ -163,6 +163,9 @@ pred exported-op o:mixinname, o:constant, o:constant.
 % memory of factory sort coercion
 pred factory-sort o:coercion.
 
+% memory of keys
+pred structure-key o:term, o:gref.
+
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [mixin-src T M X] states that X can be used to reconstruct
@@ -484,6 +487,11 @@ HB.instance Definition N Params := Factory.Build Params T …
     Supported attributes:
     - [#[export]] to flag the instance so that it is redeclared by [#[HB.reexport]]
     - [#[local]] to indicate that the instance should not survive the section.
+    - [#[non_forgetful_inheritance]] allows non forgetful inheritance, i.e.
+      inheritance via an instance declaration rather than via dependencies.
+      See tests/non_forgetful_inheritance.v and
+      "Competing inheritance paths in dependent type theory"
+      (https://hal.inria.fr/hal-02463336)
     - [#[verbose]] for a verbose output.
 *)
 
