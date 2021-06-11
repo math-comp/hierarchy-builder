@@ -88,7 +88,8 @@ env.add-indt Decl I :- std.do! [
     (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
     true,
   coq.env.add-indt Decl I,
-  log.private.log-vernac (log.private.coq.vernac.inductive Decl),
+  (coq.env.record? I P ; P = ff),
+  log.private.log-vernac (log.private.coq.vernac.inductive Decl P),
   env.add-location (indt I),
 
   % copy the current value of implicit arguments
@@ -226,7 +227,7 @@ type coq.vernac.export-module string                        -> coq.vernac.
 type coq.vernac.definition    string -> option term -> term -> coq.vernac.
 type coq.vernac.variable      string -> term                -> coq.vernac.
 type coq.vernac.parameter     string -> term                -> coq.vernac.
-type coq.vernac.inductive     indt-decl                     -> coq.vernac.
+type coq.vernac.inductive     indt-decl -> bool             -> coq.vernac.
 type coq.vernac.abbreviation  string -> int -> term         -> coq.vernac.
 type coq.vernac.notation      string -> int -> term         -> coq.vernac.
 type coq.vernac.coercion      string -> gref -> class       -> coq.vernac.
@@ -338,12 +339,15 @@ coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notati
 coq.vernac->pp1 (canonical Name Local) (box h [Locality, str "Canonical ", str Name, str "."]) :-
   local->locality Local Locality.
 coq.vernac->pp1 (coercion Name SRC TGT) (box h [str "Coercion ", str Name, str " : ", str S, str " >-> ", str T, str "."]) :-
-  coq.gref->path SRC SP, std.string.concat "." {std.take-last 3 SP} S,
+  coq.gref->path SRC SP, std.string.concat "." {std.take-last 2 SP} S', S is S' ^ "." ^ {coq.gref->id SRC},
   if2 (TGT = sortclass) (T = "Sortclass")
       (TGT = funclass)  (T = "Funclass")
-                        (TGT = grefclass GR, coq.gref->path GR GRP, std.string.concat "." {std.take-last 3 GRP} T).
-coq.vernac->pp1 (vernac.inductive I) PP :-
-  coq.vernac->ppinductive I [] PP.
+                        (TGT = grefclass GR, coq.gref->path GR GRP, std.string.concat "." {std.take-last 2 GRP} T', T is T' ^ "." ^ {coq.gref->id GR}).
+coq.vernac->pp1 (vernac.inductive I Primitive) (glue [str Start, PP, str Stop]) :-
+  coq.vernac->ppinductive I [] PP,
+  if (Primitive = tt)
+     (Start = "Set Primitive Projections. ", Stop = "Unset Primitive Projections. ")
+     (Start = "", Stop = "").
 coq.vernac->pp1 (vernac.implicit Local Name [[]]) (box h [Locality, str "Arguments ", str Name, str " : clear implicits."]) :- local->locality Local Locality.
 coq.vernac->pp1 (vernac.implicit Local Name [L]) (box h [Locality, str "Arguments ", str Name, spc, glue PP, str "."]) :-
   local->locality Local Locality,

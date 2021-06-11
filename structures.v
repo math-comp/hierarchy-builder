@@ -772,10 +772,11 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [Ctx] :- Ctx = ctx-decl _, !, std.do! [
-  factory.argument->w-mixins Ctx (pr FLwP _),
-  context.declare FLwP _ _ _ _
-].
+main [Ctx] :- Ctx = ctx-decl _, !,
+  with-attributes (with-logging (
+    factory.argument->w-mixins Ctx (pr FLwP _),
+    context.declare FLwP _ _ _ _)).
+
 main _ :- coq.error "Usage: HB.declare Context <Parameters> <Key> <Factories>".
 
 }}.
