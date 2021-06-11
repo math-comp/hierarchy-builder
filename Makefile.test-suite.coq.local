@@ -1,20 +1,12 @@
 COQ_MINOR=$(shell echo $(COQ_VERSION) | cut -d . -f 2 | cut -d + -f 1)
 
 post-all::
-	case $(COQ_MINOR) in \
-	11|12) echo "No coercion compression on Coq 8.$(COQ_MINOR), skipping diff" ;;\
-	*)\
-	  rm -f tests/compress_coe.v.hb;\
+	rm -f tests/compress_coe.v.hb;\
 	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/compress_coe.v > tests/compress_coe.v.out.aux; \
-	  diff -u tests/compress_coe.v.out tests/compress_coe.v.out.aux ;;\
-	esac
+	  diff -u tests/compress_coe.v.out tests/compress_coe.v.out.aux
 	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
-	case $(COQ_MINOR) in \
-	11|12) echo "No HB.about on Coq 8.$(COQ_MINOR), skipping diff" ;;\
-    *)\
 	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/about.v > tests/about.v.out.aux;\
-	  diff -u tests/about.v.out tests/about.v.out.aux ;;\
-	esac;\
+	  diff -u tests/about.v.out tests/about.v.out.aux\
 	fi
 	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile tests/missing_join_error.v \
