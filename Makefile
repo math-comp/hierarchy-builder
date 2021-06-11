@@ -81,7 +81,7 @@ build: sub-build this-build
 
 only: sub-only this-only
 
-test-suite: sub-test-suite this-test-suite
+test-suite: build sub-test-suite this-test-suite
 
 clean: sub-clean this-clean
 	rm -f coq.hb
