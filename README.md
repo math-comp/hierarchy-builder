@@ -80,7 +80,7 @@ Proof. by rewrite example. Qed.
 ## Documentation
 
 This [paper](https://hal.inria.fr/hal-02478907) describes the language
-in details, and the corresponding talk [is available on youtube.](https://www.youtube.com/watch?v=F6iRaTlQrlo).
+in details, and the corresponding talk [is available on youtube](https://www.youtube.com/watch?v=F6iRaTlQrlo).
 The [wiki](https://github.com/math-comp/hierarchy-builder/wiki) gathers some
 tricks and FAQs.
 
