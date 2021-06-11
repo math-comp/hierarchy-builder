@@ -177,7 +177,10 @@ pred log.coq.CS.declare-instance i:constant.
 log.coq.CS.declare-instance C  :- std.do! [
   if (@local!) (Local = tt) (Local = ff),
   coq.CS.declare-instance (const C),
-  coq.gref->id (const C) Name,
+  coq.gref->id (const C) Id,
+  std.last {coq.gref->path (const C)} M,
+  std.last {coq.env.current-path} M1,
+  if (M = M1) (Name = Id) (Name is M ^ "." ^ Id),
   log.private.log-vernac (log.private.coq.vernac.canonical Name Local),
 ].
 
