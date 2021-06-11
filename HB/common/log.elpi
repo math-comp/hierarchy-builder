@@ -30,7 +30,6 @@ strategy.set CL S :-
 
 pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
-  % TODO: refine when we switch to add-section-variable/add-const
   if (not(ground_term Ty ; ground_term Bo))
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
@@ -45,7 +44,6 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
 
 pred env.add-const i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const Name Bo Ty Opaque C :- std.do! [
-  % TODO: refine when we switch to add-section-variable/add-const
   if (not(ground_term Ty ; ground_term Bo))
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
@@ -59,7 +57,6 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
 
 pred env.add-const-noimplicits-failondup i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
-  % TODO: refine when we switch to add-section-variable/add-const
   if (not(ground_term Ty ; ground_term Bo))
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
@@ -74,15 +71,14 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
 pred env.add-section-variable-noimplicits i:id, i:term, o:constant.
 env.add-section-variable-noimplicits Name Ty C :- std.do! [
   if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
-  % coq.env.add-section-variable ID Ty C, coq-elpi >= 1.9.x
-  @local! => coq.env.add-const ID _ Ty @opaque! C,
+  @local! => coq.env.add-section-variable ID Ty C,
   log.private.log-vernac (log.private.coq.vernac.variable ID Ty),
   @local! => arguments.set-implicit (const C) [[]],
 ].
 
 pred env.add-parameter i:id, i:term, o:constant.
 env.add-parameter ID Ty C :- std.do! [
-  @global! => coq.env.add-const ID _ Ty @opaque! C,
+  @global! => coq.env.add-axiom ID Ty C,
   log.private.log-vernac (log.private.coq.vernac.parameter ID Ty),
 ].
 

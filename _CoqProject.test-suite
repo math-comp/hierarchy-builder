@@ -70,4 +70,3 @@ tests/non_forgetful_inheritance.v
 -R examples HB.examples
 
 -Q . HB
--arg -w -arg -elpi.add-const-for-axiom-or-sectionvar
