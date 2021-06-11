@@ -81,7 +81,7 @@ build: sub-build this-build
 
 only: sub-only this-only
 
-test-suite: build sub-test-suite this-test-suite
+test-suite: sub-test-suite this-test-suite
 
 clean: sub-clean this-clean
 	rm -f coq.hb
@@ -99,7 +99,7 @@ this-build:: this-config coq.hb Makefile.coq
 this-only:: this-config Makefile.coq
 	+$(COQMAKE) only "TGTS=$(TGTS)"
 
-this-test-suite:: Makefile.test-suite.coq
+this-test-suite:: build Makefile.test-suite.coq
 	+$(COQMAKE_TESTSUITE)
 
 this-distclean:: this-clean
