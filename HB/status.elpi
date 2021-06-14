@@ -48,7 +48,7 @@ pp-from (from F M T) :-
   coq.say "  " {coq.term->string (global T)},
   coq.say "".
 
-pred pp-list-w-params i:list-w-params mixinname, i:term.
+pred pp-list-w-params i:mixins, i:term.
 pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
 pred pp-list-w-params.triple i:w-args mixinname.
 pp-list-w-params (w-params.cons N Ty LwP) T :-

@@ -103,6 +103,9 @@ HB.end.
 
 HB.structure Definition SemiRing := { A of AddComoid A & SemiRing_of_AddComoid A }.
 
+Set Implicit Arguments. (* The factory builder will have implicit arguments *)
+
+#[doc="Builds a Ring from an Abelian Group: the absorbing properties mul0r and mul0r are derived from addrC and the other ring axioms, following a proof of Hankel (Gerhard Betsch. On the beginnings and development of near-ring theory. In Near-rings and near-fields. Proceedings of the conference held in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht, 1995)."]
 HB.factory Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
@@ -112,6 +115,8 @@ HB.factory Record Ring_of_AddAG A of AddAG A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
+
+Unset Implicit Arguments.
 
 HB.builders Context A (a : Ring_of_AddAG A).
 
@@ -155,7 +160,7 @@ HB.builders Context A (a :Ring_of_AddComoid A).
 
   HB.instance
   Definition to_Ring_of_AddAG := Ring_of_AddAG.Build A
-    _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+    mulrA mul1r mulr1 mulrDl mulrDr.
 
 HB.end.
 
@@ -186,7 +191,7 @@ HB.builders Context A (a : Ring_of_TYPE A).
   Definition to_Ring_of_AddComoid := Ring_of_AddComoid.Build A
     _ _ _ addNr mulrA mul1r mulr1 mulrDl mulrDr.
 
-    HB.end.
+HB.end.
 
 HB.structure Definition Ring := { A of Ring_of_TYPE A }.
 

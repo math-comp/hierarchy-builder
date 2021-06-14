@@ -12,7 +12,7 @@
 # and __always__:: may be extended.                                  #
 #                                                                    #
 # Additionally, the following variables may be customized:           #
-SUBDIRS?=HB/common
+SUBDIRS?=
 COQBIN?=$(dir $(shell which coqtop))
 COQMAKEFILE?=$(COQBIN)coq_makefile
 COQDEP?=$(COQBIN)coqdep
@@ -99,7 +99,7 @@ this-build:: this-config coq.hb Makefile.coq
 this-only:: this-config Makefile.coq
 	+$(COQMAKE) only "TGTS=$(TGTS)"
 
-this-test-suite:: Makefile.test-suite.coq
+this-test-suite:: build Makefile.test-suite.coq
 	+$(COQMAKE_TESTSUITE)
 
 this-distclean:: this-clean

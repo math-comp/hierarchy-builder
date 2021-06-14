@@ -23,14 +23,16 @@ SubK : forall x Px, val (@Sub x Px) = x
 
 HB.structure Definition SUB (T : Type) (P : pred T) := { S of is_SUB T P S }.
 
-HB.structure Definition SubInhab (T : Type) P := { sT of is_inhab T & is_SUB T P sT }.
+#[verbose]
+HB.structure Definition SubInhab (T : Type) P :=
+  { sT of is_inhab sT & is_SUB T P sT }.
 
 HB.structure Definition SubNontrivial T P := { sT of is_nontrivial sT & is_SUB T P sT }.
 
 #[key="sT"]
 HB.factory Record InhabForSub (T : Inhab.type) P (sT : Type) of SubNontrivial T P sT := {}.
 
-HB.builders Context (T : Inhab.type) (P : pred T) sT of InhabForSub T P sT.
+HB.builders Context (T : Inhab.type) P sT of InhabForSub T P sT.
 
 Axiom xxx : P (default : T).
 HB.instance Definition SubInhabMix := is_inhab.Build sT (Sub (default : T) xxx).

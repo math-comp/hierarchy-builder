@@ -45,7 +45,7 @@ We proceed by declaring how to obtain an Abelian group out of the
 additive, commutative, monoid.
 
 ```coq
-HB.mixin Record AddComoid_IsAbelianGrp A of IsAddComoid A := {
+HB.mixin Record IsAbelianGrp A of IsAddComoid A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.
@@ -80,7 +80,9 @@ Proof. by rewrite example. Qed.
 ## Documentation
 
 This [paper](https://hal.inria.fr/hal-02478907) describes the language
-in details, and the corresponding talk [is available on youtube.](https://www.youtube.com/watch?v=F6iRaTlQrlo)
+in details, and the corresponding talk [is available on youtube](https://www.youtube.com/watch?v=F6iRaTlQrlo).
+The [wiki](https://github.com/math-comp/hierarchy-builder/wiki) gathers some
+tricks and FAQs.
 
 ### Installation & availability
 
@@ -125,19 +127,30 @@ opam install coq-hierarchy-builder
 <details><summary>(click to expand)</summary><p>
 
 - HB core commands:
-  - `HB.mixin` declares a mixin
-  - `HB.structure` declares a structure
-  - `HB.factory` declares a factory
-  - `HB.builders` and `HB.end` declare a set of builders
-  - `HB.instance` declares a structure instance
+  - `HB.mixin` declares a mixin,
+  - `HB.structure` declares a structure,
+  - `HB.factory` declares a factory,
+  - `HB.builders` and `HB.end` declare a set of builders,
+  - `HB.instance` declares a structure instance,
+  - `HB.declare` declares a context with parameters, key and mixins.
 
-- HB support commands:
+- HB utility commands:
   - `HB.export` exports a module and schedules it for re-export
-  - `HB.reexport` exports all modules and instances scheduled for re-export
-  - `HB.lock` locks a definition behind a symbol and an unfolding equation
+  - `HB.reexport` exports all modules, instances and constants scheduled for
+    re-export
+  - `HB.lock` locks a definition behind an opaque symbol and an unfolding
+    equation using Coq module system
+
+- HB queries:
+  - `HB.about` is similar to `About` but prints more info on HB structures, like
+    the known instances and where they are declared
+  - `HB.locate` is similar to `Locate`, prints file name and line of any global
+    constant synthesized by HB
   - `HB.graph` prints the structure hierarchy to a dot file
+
+- HB debug commands:
   - `HB.status` dumps the contents of the hierarchy (debug purposes)
-  - `HB.check` is similar to `Check` (test purposes)
+  - `HB.check` is similar to `Check` (testing purposes)
 
 The documentation of all commands can be found in the comments of
 [structures.v](structures.v), search for `Elpi Command` and you will

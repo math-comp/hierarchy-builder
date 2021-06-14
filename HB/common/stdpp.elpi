@@ -19,6 +19,9 @@ triple_3 (triple _ _ C) C.
 
 namespace std {
 
+pred nlist i:int, i:A, o: list A.
+nlist N X L :- std.map {std.iota N} (_\ y\ y = X) L.
+
 pred list-diff i:list A, i:list A, o:list A.
 list-diff X [] X.
 list-diff L [D|DS] R :-
@@ -33,6 +36,11 @@ list-uniq [X|XS] [X|YS] :- list-uniq.seen X => list-uniq XS YS.
 
 pred list-eq-set i:list A, i:list A.
 list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
+
+pred partition i:list A, i:(A -> prop), o:list A, o:list A.
+partition [] _ [] [].
+partition [X|XS] P [X|YS] ZS :- P X, !, partition XS P YS ZS.
+partition [X|XS] P YS [X|ZS] :- partition XS P YS ZS.
 
 pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
 under.do! Then LP :- Then (_\ std.do! LP) _.
@@ -62,6 +70,14 @@ pred toposort i: list (pair A A), i: list A, o: list A.
 toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
   std.filter XS' (std.mem XS) XS''.
+
+pred time-do! i:list prop.
+time-do! [].
+time-do! [P|PS] :-
+  std.time P Time, !,
+  if (constant P C _) true (C = P),
+  coq.say Time ">>" C,
+  time-do! PS.
 
 }
 
@@ -154,7 +170,7 @@ coq.gref.list->set L S :-
 pred coq.abstract-indt-decl i:list constant, i:indt-decl, o:indt-decl.
 coq.abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
 coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
-  coq.gref->string (const C) ID,
+  coq.gref->id (const C) ID,
   coq.env.typeof (const C) Ty,
   copy Ty Ty1,
   @pi-parameter ID Ty x\
@@ -166,7 +182,7 @@ coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
 pred coq.abstract-const-decl i:list constant, i:pair term term, o:pair term term.
 coq.abstract-const-decl [] (pr X Y) (pr X1 Y1) :- copy X X1, copy Y Y1.
 coq.abstract-const-decl [C|CS] X (pr (fun Name Ty1 X1) (prod Name Ty1 X2)) :-
-  coq.gref->string (const C) ID,
+  coq.gref->id (const C) ID,
   coq.id->name ID Name,
   coq.env.typeof (const C) Ty,
   copy Ty Ty1,

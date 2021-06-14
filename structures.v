@@ -2,12 +2,14 @@
 From Coq Require Import String ssreflect ssrfun.
 Export String.StringSyntax.
 
-Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : option (string * Type)) :=
+Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
+Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
-Definition nomsg : option (string * Type) := None.
-Definition is_not_canonically_a : string := "is not canonically a".
+Definition nomsg : error_msg := NoMsg.
+Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
+Definition eta {T} (x : T) := x.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
@@ -28,6 +30,7 @@ Register Coq.ssr.ssreflect.Phantom as hb.Phantom.
 Register Coq.Init.Logic.eq as hb.eq.
 Register Coq.Init.Logic.eq_refl as hb.erefl.
 Register new as hb.new.
+Register eta as hb.eta.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
 Notation indexed T := T (only parsing).
@@ -63,6 +66,8 @@ type w-params.nil id -> term -> (term -> A) -> w-params A.
 
 typeabbrev (list-w-params A) (w-params (list (w-args A))).
 typeabbrev (one-w-params A) (w-params (w-args A)).
+typeabbrev mixins (list-w-params mixinname).
+typeabbrev (w-mixins A) (pair mixins (w-params A)).
 
 %%%%% Classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -82,9 +87,9 @@ typeabbrev (one-w-params A) (w-params (w-args A)).
 %           [...,                                  /* deps of IsZmodule.mixin        */
 %            triple (indt «IsZmodule.mixin») [] T, /* a mixins with its params       */
 %            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
-% 
+%
 kind class type.
-type class classname -> structure -> list-w-params mixinname -> class.
+type class classname -> structure -> mixins -> class.
 
 % class-def contains all the classes ever declared
 pred class-def o:class.
@@ -131,7 +136,7 @@ pred sub-class o:classname, o:classname.
 % [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
 :index(2)
-pred gref-deps o:gref, o:list-w-params mixinname.
+pred gref-deps o:gref, o:mixins.
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:classname, o:classname, o:classname.
@@ -154,6 +159,12 @@ pred mixin-first-class o:mixinname, o:classname.
 
 % memory of exported operations (TODO: document fiels)
 pred exported-op o:mixinname, o:constant, o:constant.
+
+% memory of factory sort coercion
+pred factory-sort o:coercion.
+
+% memory of keys
+pred structure-key o:term, o:gref.
 
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -178,6 +189,7 @@ pred builder-decl o:builder.
 kind declaration type.
 % TheType, TheFactory and it's name and the name of the module encloding all that
 type builder-from term -> term -> factoryname -> id -> declaration.
+type no-builder declaration.
 pred current-mode o:declaration.
 
 %% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -186,6 +198,15 @@ pred current-mode o:declaration.
 pred module-to-export   o:string, o:id, o:modpath.
 pred instance-to-export o:string, o:id, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
+
+%% database for HB.locate and HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred decl-location o:gref, o:loc.
+
+% [docstring Loc Doc] links a location in the source text and some doc
+pred docstring o:loc, o:string.
+
+%% database for #[compress_coercions] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % coercions chains compression rules (we only care about non applicative
 % terms, since this is what you get when you apply coercions)
@@ -196,6 +217,61 @@ compress (app L) (app L1) :- !, std.map L compress L1.
 compress X X.
 
 }}.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This is like Locate but tells you the file and line at which the constant
+    or inductive was generated.
+*)
+
+Elpi Command HB.locate.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main _ :- coq.version _ _ N _, N < 13, !,
+  coq.say "HB: HB.locate requires Coq version 8.13 or above".
+main [str S] :- !,
+  if (decl-location {coq.locate S} Loc)
+     (coq.say "HB: synthesized in file" Loc)
+     (coq.say "HB:" S "not synthesized by HB").
+
+main _ :- coq.error "Usage: HB.about <name>.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.locate.
+
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This is like About but understands HB generated stuff, namely
+    - structures, eg Foo.type
+    - classes, eg Foo
+    - factories, eg Bar
+    - factory constructors, eg Bar.Build
+    - canonical projections, eg Foo.sort
+    - canonical value, eg Z, prod, ...
+*)
+
+Elpi Command HB.about.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main [str S] :- !, with-attributes (with-logging (about.main S)).
+
+main _ :- coq.error "Usage: HB.about <name>.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.about.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -269,7 +345,9 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 
   Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
 
-  Supported attributes: [#[verbose]]
+  Supported attributes:
+  - [#[primitive]] experimental attribute to make the mixin/factory primitive,
+  - [#[verbose]] for a verbose output.
 
 *)
 
@@ -319,6 +397,9 @@ HB.structure Definition StructureName params :=
   - [StructureName.sort params] the first projection of the previous structure,
   - [StructureName.clone params T cT] a legacy repackaging function that eta expands
     the canonical [StructureName.type] of [T], using [cT] if provided.
+  - [StructureName.pack params T F] a packaging function that takes a key T
+    and some data F, which can be a convertible type or any factory or mixins
+    and attempts to package them together.
   - [StructureName.class sT : StructureName sT] projects out the class of [sT : StructureName.type params],
   - [StructureName.copy T T' : StructureName T] returns the class of the canonical
     [StructureName.type] of [T], and gives it the type [Structure T]. It is thus
@@ -351,6 +432,10 @@ HB.structure Definition StructureName params :=
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
     Cf #<a href="https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v##L225-L243">#[fingroup.v]#</a>#.
+  - [#[short(type="shortName")]] produces the abbreviation [shortName] for [Structure.type]
+  - [#[short(pack="shortName")]] produces the abbreviation [shortName] for [Structure.pack]
+  - [#[primitive]] experimental attribute to make the structure a primitive record,
+  - [#[primitive_class]] experimental attribute to make the class a primitive record,
   - [#[verbose]] for a verbose output.
 *)
 
@@ -392,6 +477,11 @@ HB.instance Definition N Params := Factory.Build Params T …
     Supported attributes:
     - [#[export]] to flag the instance so that it is redeclared by [#[HB.reexport]]
     - [#[local]] to indicate that the instance should not survive the section.
+    - [#[non_forgetful_inheritance]] allows non forgetful inheritance, i.e.
+      inheritance via an instance declaration rather than via dependencies.
+      See tests/non_forgetful_inheritance.v and
+      "Competing inheritance paths in dependent type theory"
+      (https://hal.inria.fr/hal-02463336)
     - [#[verbose]] for a verbose output.
 *)
 
@@ -401,12 +491,13 @@ Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
-  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel)).
+  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)).
 main [T0, F0] :- !,
   coq.warn "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
@@ -487,9 +578,11 @@ Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/export.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -632,65 +725,63 @@ main _ :- coq.error "Usage: HB.lock Definition name : ty := t.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.lock.
-   
-(*
+
+
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (*
-Inactive command: [HB.context]
+Inactive command: [HB.declare]
 This command populates the current section with canonical instances.
 
-  Input:
-    - the name of a section variable of type Type
-    - zero or more factories
-
+  Syntax:
+[[
+HB.declare Context (p1 : P1) ... (pn : Pn) (t : T) of F0 ... Fk.
+]]
   Effect:
 [[
-Variable m0 : m0.
-Definition s0 := S0.Pack T (S0.Build T m0).
-Canonical s0.
+Variables (p1 : P1) ... (pn : Pn) (t : T).
+
+Variable m0 : M0 ... T.
+HB.instance Definition _ : M0 ... T := m0.
 ..
-Variable mn : mn dn.
-Definition sm : SM.Pack T (SM.Build T m0 .. mn).
-Canonical sm.
+Variable mk : Ml ... T.
+HB.instance Definition _ : Ml ... T := ml.
 ]]
 
   where:
-  - factories produce mixins m0 .. mn
-  - mixin mn depends on mixins dn
-  - all structures that can be generated out of the mixins are declared
-    as canonical
+  - factories F0 .. Fk produce mixins M0 .. Ml.
 
-    
   Supported attributes:
   - [#[verbose]] for a verbose output.
 
 *)
 
-(* TODO perform a check that the declarations are closed under dependencies *)
-
-Elpi Command HB.context.
+Elpi Command HB.declare.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [S|FS] :-
-  argument->term S T,
-  std.map FS argument->gref GRFS, !,
-  context.declare T GRFS _.
-main _ :- coq.error "Usage: HB.context <CarrierTerm> <Factoryes>..".
+main [Ctx] :- Ctx = ctx-decl _, !,
+  with-attributes (with-logging (
+    factory.argument->w-mixins Ctx (pr FLwP _),
+    context.declare FLwP _ _ _ _)).
+
+main _ :- coq.error "Usage: HB.declare Context <Parameters> <Key> <Factories>".
 
 }}.
 Elpi Typecheck.
-*)
+Elpi Export HB.declare.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
