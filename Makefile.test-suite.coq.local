@@ -3,22 +3,22 @@ COQ_MINOR=$(shell echo $(COQ_VERSION) | cut -d . -f 2 | cut -d + -f 1)
 post-all::
 	rm -f tests/compress_coe.v.hb;\
 	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/compress_coe.v > tests/compress_coe.v.out.aux; \
-	  diff -u tests/compress_coe.v.out tests/compress_coe.v.out.aux
+	  diff -u --strip-trailing-cr tests/compress_coe.v.out tests/compress_coe.v.out.aux
 	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	  $(COQC) $(COQFLAGS) $(COQLIBS) tests/about.v > tests/about.v.out.aux;\
-	  diff -u tests/about.v.out tests/about.v.out.aux;\
+	  diff -u --strip-trailing-cr tests/about.v.out tests/about.v.out.aux;\
 	fi
 	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile tests/missing_join_error.v \
 	  < tests/missing_join_error.v \
 	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
 	  > tests/missing_join_error.v.out.aux;\
-	diff -u tests/missing_join_error.v.out tests/missing_join_error.v.out.aux;\
+	diff -u --strip-trailing-cr tests/missing_join_error.v.out tests/missing_join_error.v.out.aux;\
 	fi
 	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile tests/not_same_key.v \
 	  < tests/not_same_key.v \
 	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
 	  > tests/not_same_key.v.out.aux;\
-	diff -u tests/not_same_key.v.out tests/not_same_key.v.out.aux;\
+	diff -u --strip-trailing-cr tests/not_same_key.v.out tests/not_same_key.v.out.aux;\
 	fi
