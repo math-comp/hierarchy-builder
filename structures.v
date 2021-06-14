@@ -260,15 +260,11 @@ Elpi Command HB.about.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate File "HB/about.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main _ :- coq.version _ _ N _, N < 13, !,
-  coq.say "HB: HB.about requires Coq version 8.13 or above".
 main [str S] :- !, with-attributes (with-logging (about.main S)).
 
 main _ :- coq.error "Usage: HB.about <name>.".
@@ -314,8 +310,6 @@ Elpi Command HB.graph.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/graph.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -361,8 +355,6 @@ Elpi Command HB.mixin.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -451,8 +443,6 @@ Elpi Command HB.structure.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -499,8 +489,6 @@ Elpi Command HB.instance.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
@@ -530,8 +518,6 @@ Elpi Command HB.factory.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -590,8 +576,6 @@ Elpi Command HB.builders.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -614,8 +598,6 @@ Elpi Command HB.end.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -666,8 +648,6 @@ Elpi Command HB.export.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
@@ -692,8 +672,6 @@ Elpi Command HB.reexport.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
@@ -738,8 +716,6 @@ Elpi Command HB.lock.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/lock.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -786,8 +762,6 @@ Elpi Command HB.declare.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
@@ -798,10 +772,11 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [Ctx] :- Ctx = ctx-decl _, !, std.do! [
-  factory.argument->w-mixins Ctx (pr FLwP _),
-  context.declare FLwP _ _ _ _
-].
+main [Ctx] :- Ctx = ctx-decl _, !,
+  with-attributes (with-logging (
+    factory.argument->w-mixins Ctx (pr FLwP _),
+    context.declare FLwP _ _ _ _)).
+
 main _ :- coq.error "Usage: HB.declare Context <Parameters> <Key> <Factories>".
 
 }}.
@@ -821,8 +796,6 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[only="8.1[12]"] Elpi Accumulate File "HB/common/log.legacy.elpi".
-#[skip="8.1[12]"] Elpi Accumulate File "HB/common/log.current.elpi".
 Elpi Accumulate lp:{{
 main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
 main _ :- coq.error "usage: HB.check (term).".

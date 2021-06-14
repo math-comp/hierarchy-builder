@@ -178,7 +178,7 @@ declare Module B :- std.do! [
 
   if-verbose (coq.say "HB: export" EtaExports),
 
-  export.module {calc (Module ^ ".EtaExports")} EtaExports,
+  export.module {calc (Module ^ ".EtaAndMixinExports")} EtaExports,
 
   if-verbose (coq.say "HB: exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>

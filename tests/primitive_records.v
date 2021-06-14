@@ -1,4 +1,5 @@
 From Coq Require Import ssreflect ssrfun.
+From elpi Require Import elpi.
 From HB Require Import structures.
 
 Elpi Command HB.test.

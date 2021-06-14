@@ -50,7 +50,7 @@ HB: hierarchy_5.AddMonoid is inherited by:
     - hierarchy_5.Ring
 
 HB: Ring_of_AddAG is a factory
-    (from "./examples/demo1/hierarchy_5.v", line 114)
+    (from "./examples/demo1/hierarchy_5.v", line 108)
 HB: Ring_of_AddAG operations and axioms are:
     - one
     - mul
@@ -74,7 +74,7 @@ Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
      1995).
 
 HB: Ring_of_AddAG.Build is a factory constructor
-    (from "./examples/demo1/hierarchy_5.v", line 114)
+    (from "./examples/demo1/hierarchy_5.v", line 108)
 HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
     - hierarchy_5.AddMonoid_of_TYPE
     - hierarchy_5.AddComoid_of_AddMonoid
@@ -99,10 +99,10 @@ HB: AddAG.sort is a canonical projection
     (from "./examples/demo1/hierarchy_5.v", line 72)
 HB: AddAG.sort has the following canonical values:
     - Z 
-    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 200)
-    - Ring_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 171)
-    - Ring_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 148)
-    - Ring_of_AddAG.sort (from "./examples/demo1/hierarchy_5.v", line 114)
+    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 194)
+    - Ring_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 165)
+    - Ring_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 142)
+    - Ring_of_AddAG.sort (from "./examples/demo1/hierarchy_5.v", line 108)
     - AddAG_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 51)
     - AddAG_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 44)
     - @eta 
@@ -122,11 +122,11 @@ HB: Z is canonically equipped with mixins:
 
 HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
     hierarchy_5.Ring to hierarchy_5.SemiRing
-    (from "./examples/demo1/hierarchy_5.v", line 200)
+    (from "./examples/demo1/hierarchy_5.v", line 194)
 
 HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
     hierarchy_5.Ring to hierarchy_5.SemiRing
-    (from "./examples/demo1/hierarchy_5.v", line 200)
+    (from "./examples/demo1/hierarchy_5.v", line 194)
 
 HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
 hierarchy_5.BiNearRing_of_AddMonoid

@@ -105,13 +105,7 @@ HB.structure Definition SemiRing := { A of AddComoid A & SemiRing_of_AddComoid A
 
 Set Implicit Arguments. (* The factory builder will have implicit arguments *)
 
-#[doc="Builds a Ring from an Abelian Group: the absorbing properties
-mul0r and mul0r are derived from addrC and the other ring axioms,
-following a proof of Hankel (Gerhard Betsch. On the beginnings and
-development of near-ring theory. In Near-rings and near-fields.
-Proceedings of the conference held in Fredericton, New Brunswick,
-July 18-24, 1993, pages 1–11. Mathematics and its Applications, 336.
-Kluwer Academic Publishers Group, Dordrecht, 1995)."]
+#[doc="Builds a Ring from an Abelian Group: the absorbing properties mul0r and mul0r are derived from addrC and the other ring axioms, following a proof of Hankel (Gerhard Betsch. On the beginnings and development of near-ring theory. In Near-rings and near-fields. Proceedings of the conference held in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht, 1995)."]
 HB.factory Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
