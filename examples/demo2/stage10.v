@@ -1,6 +1,7 @@
 From Coq Require Import ssreflect ssrfun ssrbool ZArith QArith.
 From HB Require Import structures.
-From HB Require Import demo2.classical.
+
+Require Import classical.
 
 Declare Scope hb_scope.
 Delimit Scope hb_scope with G.
