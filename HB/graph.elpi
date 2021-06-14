@@ -30,7 +30,7 @@ gref->modname GR NComp Sep ModName :-
   coq.gref->path GR Path,
   std.rev Path Mods,
   std.length Path Len,
-  if (Len > NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
+  if (Len >= NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
   std.take NComp Mods L,
   compat.concat Sep {std.rev L} ModName.
 
