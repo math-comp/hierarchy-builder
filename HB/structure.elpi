@@ -36,7 +36,7 @@ declare Module B :- std.do! [
   log.coq.env.begin-module Module none,
 
   private.declare-class+structure MLwP
-    ClassName Structure SortProjection ClassProjection Factories,
+    ClassName Structure SortProjection ClassProjection Factories StructKeyClause,
 
   w-params.map MLwP (_\_\_\ mk-nil) NilwP,
   ClassAlias = (factory-alias->gref ClassName ClassName),
@@ -122,7 +122,7 @@ declare Module B :- std.do! [
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
-      [gref-deps GRPack MLwP], [structure-key SortProjection Structure]
+      [gref-deps GRPack MLwP], [StructKeyClause]
     ]
     NewClauses,
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
@@ -494,8 +494,8 @@ mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global C
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
-pred declare-class+structure i:mixins, o:factoryname, o:structure, o:term, o:term, o:list prop.
-declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories :- std.do! [
+pred declare-class+structure i:mixins, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
+declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories (structure-key SortP ClassP StructureInd):- std.do! [
 
   if-verbose (coq.say "HB: declare axioms record"MLwP ),
 
