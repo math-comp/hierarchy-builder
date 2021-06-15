@@ -378,6 +378,52 @@ Elpi Export HB.mixin.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+Elpi Tactic hb_instance.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ Ty _ [trm TSkel, trm FactorySkel] as G) GLS :- std.spy-do! [
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
+  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
+  std.assert! (factory? FTy _) "not a factory",
+
+  if (T = app[global (const SortProj)|Args], structure-key SortProj ClassProj _)
+    (TClass = app[global (const ClassProj)|Args]) % already existing class on T
+    (TClass = Factory), % it's a factory, won't add anything
+
+  coq.safe-dest-app Ty (global Structure) _,
+  std.assert! (class-def (class Class Structure MLwP)) "not a structure",
+  params->holes MLwP Params,
+  get-constructor Class KC,
+  synthesis.under-mixin-src-from-factory.do! T TClass [
+    synthesis.under-mixin-src-from-factory.do! T Factory [ % FIXME: should be under-new-mixins-src
+      std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer"
+    ]
+  ],
+  get-constructor Structure KS,
+  std.append Params [T, ClassInstance] InstanceArgs,
+  Instance = app[global KS | InstanceArgs],
+  std.assert! (refine Instance G GLS) "",
+].
+
+}}.
+Elpi Typecheck.
+Tactic Notation "hb_instance" open_constr(s) open_constr(f) :=
+  elpi hb_instance ltac_term:(s) ltac_term:(f).
+Tactic Notation "HB.pose" ident(id) ":" open_constr(Ty) ":=" "xpack" open_constr(s) open_constr(f) :=
+  pose (id := (ltac:(hb_instance s f) : Ty)).
+Tactic Notation "HB.pose" ident(id) ":=" open_constr(Ty) open_constr(s) open_constr(f) :=
+  pose (id := (ltac:(hb_instance s f) : Ty)).
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** [HB.structure] declares a packed structure.
 
   Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
@@ -817,6 +863,7 @@ check-or-not Skel :-
 }}.
 Elpi Typecheck.
 Elpi Export HB.check.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

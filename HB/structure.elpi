@@ -72,6 +72,8 @@ declare Module B :- std.do! [
       phant.of-gref tt GRPack [] PhRepack),
   if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
   phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
+  
+  @global! => log.coq.notation.add-abbreviation "xpack" 0 (global Structure) ff _,
 
   if-arg-sort (
     if-verbose (coq.say "HB: define arg_sort"),
