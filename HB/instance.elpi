@@ -323,7 +323,7 @@ pred check-non-forgetful-inheritance i:term, i:gref.
 check-non-forgetful-inheritance _ _ :-
   get-option "non_forgetful_inheritance" tt, !.
 check-non-forgetful-inheritance T Factory :- std.do! [
-  if (coq.safe-dest-app T HdSym _, structure-key HdSym Super) (
+  if (coq.safe-dest-app T (global (const HdSym)) _, structure-key HdSym _ Super) (
     coq.warning "HB" "HB.non-forgetful-inheritance"
       "non forgetful inheritance detected.\n"
       "You have two solutions:"
