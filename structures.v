@@ -401,9 +401,9 @@ solve (goal _ _ Ty _ [trm TSkel, trm FactorySkel] as G) GLS :- std.spy-do! [
   params->holes MLwP Params,
   get-constructor Class KC,
   synthesis.under-mixin-src-from-factory.do! T TClass [
-    synthesis.under-mixin-src-from-factory.do! T Factory [ % FIXME: should be under-new-mixins-src
+    synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
       std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer"
-    ]
+    )
   ],
   get-constructor Structure KS,
   std.append Params [T, ClassInstance] InstanceArgs,
