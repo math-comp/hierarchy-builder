@@ -45,7 +45,7 @@ jobs:
           cp -ra . /home/coq/workspace
           cd /home/coq/workspace
           opam install ./coq-hierarchy-builder.opam
-          sed -i.bak "s/-Q . HB//" _CoqProject.test-suite
+          sed -i.bak -e "s/-Q . HB//" -e "s|tests/factory_sort_tac.v||" _CoqProject.test-suite
           # This is what a user does to cut HB loose
           export COQ_ELPI_ATTRIBUTES="hb(log(raw))"
           make test-suite -j2

@@ -387,7 +387,7 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate lp:{{
 
-solve (goal _ _ Ty _ [trm TSkel, trm FactorySkel] as G) GLS :- std.spy-do! [
+solve (goal _ _ Ty _ [trm TSkel, trm FactorySkel] as G) GLS :- with-attributes (std.do! [
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
   std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
   std.assert! (factory? FTy _) "not a factory",
@@ -409,7 +409,7 @@ solve (goal _ _ Ty _ [trm TSkel, trm FactorySkel] as G) GLS :- std.spy-do! [
   std.append Params [T, ClassInstance] InstanceArgs,
   Instance = app[global KS | InstanceArgs],
   std.assert! (refine Instance G GLS) "",
-].
+]).
 
 }}.
 Elpi Typecheck.
