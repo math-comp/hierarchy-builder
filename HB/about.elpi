@@ -66,8 +66,7 @@ shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
 
 pred docstring-for-file i:string, o:prop.
 docstring-for-file Rex (docstring Loc Doc) :- docstring Loc Doc,
-  std.any->string Loc LocS,
-  rex.split "," LocS [File|_],
+  loc.fields Loc File _ _ _ _,
   rex.match {calc(".*" ^ Rex)} File.
 
 pred main-canonical-value i:string, i:list cs-instance.
@@ -316,10 +315,8 @@ pp-loc-of _ coq.pp.empty.
 
 pred pp-loc i:loc, o:coq.pp.
 pp-loc Loc (coq.pp.glue PP) :-
-  std.any->string Loc SLoc,
-  % VSCode friendly
-  rex.split "," SLoc [File,_,Line|_],
-  QFile is "\"" ^ File ^ "\"," ^ Line,
+  loc.fields Loc File _ _ Line _,
+  QFile is "\"" ^ File ^ "\", line " ^ {std.any->string Line},
   PP = [str "(from ", str QFile, str")"].
 
 pred docstring->pp i:string, o:coq.pp.
