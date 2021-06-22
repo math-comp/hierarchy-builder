@@ -387,38 +387,51 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate lp:{{
 
-solve (goal _ _ Ty _ [trm TSkel, trm FactorySkel] as G) GLS :- with-attributes (std.do! [
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
-  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
-  std.assert! (factory? FTy _) "not a factory",
-
+pred hb-instance i:term, i:term, i:term, o:term.
+hb-instance Ty T Factory Instance :- std.do! [
   if (T = app[global (const SortProj)|Args], structure-key SortProj ClassProj _)
     (TClass = app[global (const ClassProj)|Args]) % already existing class on T
     (TClass = Factory), % it's a factory, won't add anything
 
   coq.safe-dest-app Ty (global Structure) _,
-  std.assert! (class-def (class Class Structure MLwP)) "not a structure",
+  std.assert! (class-def (class Class Structure MLwP)) "not a structure known to HB",
+
   params->holes MLwP Params,
   get-constructor Class KC,
   synthesis.under-mixin-src-from-factory.do! T TClass [
     synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
-      std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer"
+      std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer the instance"
     )
   ],
   get-constructor Structure KS,
   std.append Params [T, ClassInstance] InstanceArgs,
   Instance = app[global KS | InstanceArgs],
-  std.assert! (refine Instance G GLS) "",
-]).
+].
+
+solve (goal _ _ Statement _ Args as G) GLS :- with-attributes (with-logging (std.do! [
+  if2 (Args = [trm Ty, trm TSkel, trm FactorySkel]) true
+      (Args = [trm TSkel, trm FactorySkel], Ty = Statement) true
+      (coq.error "usage: hb_instance [Ty] T F"),
+
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
+  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
+  std.assert! (factory? FTy _) "not a factory",
+
+  hb-instance Ty T Factory Instance,
+
+  std.assert! (refine Instance G GLS) "the instance does not solve the goal",
+])).
 
 }}.
 Elpi Typecheck.
 Tactic Notation "hb_instance" open_constr(s) open_constr(f) :=
   elpi hb_instance ltac_term:(s) ltac_term:(f).
-Tactic Notation "HB.pose" ident(id) ":" open_constr(Ty) ":=" "xpack" open_constr(s) open_constr(f) :=
-  pose (id := (ltac:(hb_instance s f) : Ty)).
-Tactic Notation "HB.pose" ident(id) ":=" open_constr(Ty) open_constr(s) open_constr(f) :=
-  pose (id := (ltac:(hb_instance s f) : Ty)).
+Tactic Notation "hb_instance" open_constr(t) open_constr(s) open_constr(f) :=
+  elpi hb_instance ltac_term:(t) ltac_term:(s) ltac_term:(f).
+
+Elpi Query lp:{{
+  coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_instance" []
+}}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

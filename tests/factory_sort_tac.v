@@ -38,9 +38,9 @@ Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
 pose Ta := hasA.Build _ a.
-HB.pose A : A.type := xpack T Ta.
+pose A := ltac:(hb_instance A.type T Ta).
 pose Tab := hasB.Build A b.
-HB.pose AB : AB.type := xpack A Tab.
+pose AB := ltac:(hb_instance AB.type A Tab).
 exact: P AB.
 Qed.
 
@@ -48,11 +48,22 @@ Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
 pose Ta := hasA.Build _ a.
-HB.pose A := A.xpack T Ta.
+pose A : A.type := HB.pack T Ta.
 pose Tab := hasB.Build A b.
-HB.pose AB := AB.xpack A Tab.
+pose AB : AB.type := HB.pack A Tab.
 exact: P AB.
 Qed.
+
+Goal forall T (a b : T), G.
+Proof.
+move=> T a b.
+pose Ta := hasA.Build _ a.
+pose A := A.xpack T Ta.
+pose Tab := hasB.Build A b.
+pose AB := AB.xpack A Tab.
+exact: P AB.
+Qed.
+
 
 Goal forall T (a b : T), G.
 Proof.

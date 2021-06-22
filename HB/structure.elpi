@@ -73,7 +73,7 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
   phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
   
-  @global! => log.coq.notation.add-abbreviation "xpack" 0 (global Structure) ff _,
+  coq.notation.add-abbreviation-for-tactic [Module, "xpack"] "hb_instance" [trm (global Structure)],
 
   if-arg-sort (
     if-verbose (coq.say "HB: define arg_sort"),
