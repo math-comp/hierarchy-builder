@@ -97,9 +97,11 @@ declare Module B :- std.do! [
 
   if (get-option "short.pack" ShortPack) (std.do! [
     if-verbose (coq.say "HB: short name for type:" ShortPack),
-    coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
-    @global! => log.coq.notation.add-abbreviation
-      ShortPack NPackAbbrev PackAbbrevTrm ff _]) true,
+    % coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
+    % @global! => log.coq.notation.add-abbreviation
+    %   ShortPack NPackAbbrev PackAbbrevTrm ff _]
+      coq.notation.add-abbreviation-for-tactic [ShortPack] "hb_instance" [trm (global Structure)]
+    ]) true,
 
   if-verbose (coq.say "HB: making coercion from type to target"),
   synthesis.infer-coercion-tgt MLwP CoeClass,
