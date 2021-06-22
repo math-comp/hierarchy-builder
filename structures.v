@@ -419,7 +419,7 @@ solve (goal _ _ Statement _ Args as G) GLS :- with-attributes (with-logging (std
 
   hb-instance Ty T Factory Instance,
 
-  std.assert! (refine Instance G GLS) "the instance does not solve the goal",
+  std.assert! (log.refine Instance G GLS) "the instance does not solve the goal",
 ])).
 
 }}.

@@ -196,6 +196,14 @@ log.coq.check Skel Ty T D :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.check Skel Fail),
 ].
 
+pred refine i:term, i:goal, o:list sealed-goal. % to silence a warning, since this is only in tactics
+pred log.refine i:term, i:goal, o:list sealed-goal.
+log.refine T G GL :- std.do! [
+  refine T G GL,
+  G = goal _ _ _ Solution _,
+  log.private.log-tactic Solution,
+].
+
 namespace log.private {
 
 %%%%% Logging Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -241,6 +249,7 @@ type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac
 
 pred with-logging i:prop.
 pred log.private.log-vernac i:log.private.coq.vernac.
+pred log.private.log-tactic i:term.
 
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
@@ -275,6 +284,11 @@ log.private.log-vernac V :- log.private.logger L Nice, !,
   if (Nice = tt) (PPALL = []) (PPALL = [@ppall!]),
   log.private.logger-extend L {PPALL => log.private.coq.vernac->pp [V]}.
 log.private.log-vernac _.
+
+log.private.log-tactic P :- log.private.logger L Nice, !,
+  if (Nice = tt) (PPALL = []) (PPALL = [@ppall!]),
+  log.private.logger-extend L {PPALL => coq.term->pp P}.
+log.private.log-tactic _.
 
 % The main entry point to print vernacular commands is coq.vernac->pp
 
