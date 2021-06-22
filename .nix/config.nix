@@ -6,6 +6,7 @@
       mathcomp.override.version = "hierarchy-builder";
       mathcomp.job = false;
       mathcomp-single.job = true;
+      coq-elpi.override.version = "#257";
   }; in {
     "coq-8.13".coqPackages = {
       coq.override.version = "8.13";
