@@ -387,37 +387,42 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate lp:{{
 
-pred hb-instance i:term, i:term, i:term, o:term.
-hb-instance Ty T Factory Instance :- std.do! [
-  if (T = app[global (const SortProj)|Args], structure-key SortProj ClassProj _)
-    (TClass = app[global (const ClassProj)|Args]) % already existing class on T
-    (TClass = Factory), % it's a factory, won't add anything
-
+pred hb-instance i:term, i:term, i:list term, o:term.
+hb-instance Ty T [Factory|Factories] Instance :-
+  synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
+     hb-instance Ty T Factories Instance).
+hb-instance Ty T [] Instance :- std.do! [
   coq.safe-dest-app Ty (global Structure) _,
   std.assert! (class-def (class Class Structure MLwP)) "not a structure known to HB",
-
   params->holes MLwP Params,
   get-constructor Class KC,
-  synthesis.under-mixin-src-from-factory.do! T TClass [
-    synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
-      std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer the instance"
-    )
-  ],
+  std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer the instance",
   get-constructor Structure KS,
   std.append Params [T, ClassInstance] InstanceArgs,
   Instance = app[global KS | InstanceArgs],
 ].
 
+pred elab-factories i:list argument, o:list term.
+elab-factories [] [].
+elab-factories [trm FactorySkel|More] [Factory|Factories] :-
+  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
+  std.assert! (factory? FTy _) "not a factory",
+  elab-factories More Factories.
+
 solve (goal _ _ Statement _ Args as G) GLS :- with-attributes (with-logging (std.do! [
-  if2 (Args = [trm Ty, trm TSkel, trm FactorySkel]) true
-      (Args = [trm TSkel, trm FactorySkel], Ty = Statement) true
+  if2 (Args = [trm Ty, trm TSkel, FactorySkel | MoreFactories]) true
+      (Args = [trm TSkel, FactorySkel], Ty = Statement, MoreFactories = []) true
       (coq.error "usage: hb_instance [Ty] T F"),
 
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
-  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
-  std.assert! (factory? FTy _) "not a factory",
 
-  hb-instance Ty T Factory Instance,
+  elab-factories [FactorySkel|MoreFactories] Factories,
+
+  if (T = app[global (const SortProj)|Params], structure-key SortProj ClassProj _)
+    (AllFactories = [app[global (const ClassProj)|Params] | Factories]) % already existing class on T
+    (AllFactories = Factories), % it's a factory, won't add anything
+
+  hb-instance Ty T AllFactories Instance,
 
   std.assert! (log.refine Instance G GLS) "the instance does not solve the goal",
 ])).
