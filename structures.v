@@ -412,7 +412,7 @@ elab-factories [trm FactorySkel|More] [Factory|Factories] :-
 solve (goal _ _ Statement _ Args as G) GLS :- with-attributes (with-logging (std.do! [
   if2 (Args = [trm Ty, trm TSkel, FactorySkel | MoreFactories]) true
       (Args = [trm TSkel, FactorySkel], Ty = Statement, MoreFactories = []) true
-      (coq.error "usage: hb_instance [Ty] T F"),
+      (coq.error "usage: hb_instance [Ty] T F1 .. FN"),
 
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
 
@@ -429,10 +429,10 @@ solve (goal _ _ Statement _ Args as G) GLS :- with-attributes (with-logging (std
 
 }}.
 Elpi Typecheck.
-Tactic Notation "hb_instance" open_constr(s) open_constr(f) :=
-  elpi hb_instance ltac_term:(s) ltac_term:(f).
-Tactic Notation "hb_instance" open_constr(t) open_constr(s) open_constr(f) :=
-  elpi hb_instance ltac_term:(t) ltac_term:(s) ltac_term:(f).
+Tactic Notation "hb_instance" open_constr(s) open_constr_list(f) :=
+  elpi hb_instance ltac_term:(s) ltac_term_list:(f).
+Tactic Notation "hb_instance" open_constr(t) open_constr(s) open_constr_list(f) :=
+  elpi hb_instance ltac_term:(t) ltac_term:(s) ltac_term_list:(f).
 
 Elpi Query lp:{{
   coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_instance" []
