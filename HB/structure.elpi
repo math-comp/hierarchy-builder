@@ -71,9 +71,9 @@ declare Module B :- std.do! [
     GRDepsClauses => MixinFirstClass => gref-deps GRPack MLwP =>
       phant.of-gref tt GRPack [] PhRepack),
   if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
-  phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
+  %phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
   
-  coq.notation.add-abbreviation-for-tactic [Module, "xpack"] "hb_instance" [trm (global Structure)],
+  coq.notation.add-abbreviation-for-tactic [Module, "pack"] "hb_instance" [trm (global Structure)],
 
   if-arg-sort (
     if-verbose (coq.say "HB: define arg_sort"),
