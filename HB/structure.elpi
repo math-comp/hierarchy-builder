@@ -99,7 +99,7 @@ declare Module B :- std.do! [
     if-verbose (coq.say "HB: short name for type:" ShortPack),
     % coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
     % @global! => log.coq.notation.add-abbreviation
-    %   ShortPack NPackAbbrev PackAbbrevTrm ff _]
+    %  ShortPack NPackAbbrev PackAbbrevTrm ff _
       coq.notation.add-abbreviation-for-tactic [ShortPack] "hb_instance" [trm (global Structure)]
     ]) true,
 
