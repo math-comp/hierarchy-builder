@@ -3,7 +3,7 @@
   attribute = "hierarchy-builder";
   default-bundle = "coq-8.13";
   bundles = let common = {
-      mathcomp.override.version = "hierarchy-builder";
+      mathcomp.override.version = "hierarchy-builder+factory_sort_tac";
       mathcomp.job = false;
       mathcomp-single.job = true;
       coq-elpi.override.version = "#257";
