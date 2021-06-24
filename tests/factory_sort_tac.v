@@ -13,7 +13,7 @@ HB.structure Definition AB := {T of hasA T & hasB T}.
 
 HB.factory Record hasAB T := { a : T; b : T }.
 HB.builders Context T of hasAB T.
-Definition xxx := AB.xpack T (hasB.Build T b) (hasA.Build T a).
+Definition xxx := AB.pack T (hasB.Build T b) (hasA.Build T a).
 HB.instance Definition _ := AB.copy T xxx.
 HB.end.
 About hasAB.type.
@@ -58,17 +58,10 @@ Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
 pose Ta := hasA.Build _ a.
-pose A := A.xpack T Ta.
+pose A := A.pack T Ta.
 pose Tab := hasB.Build A b.
-pose AB := AB.xpack A Tab.
+pose AB := AB.pack A Tab.
 exact: P AB.
-Qed.
-
-
-Goal forall T (a b : T), G.
-Proof.
-move=> T a b.
-exact: P [the AB.type of hasAB.Build T a b : Type].
 Qed.
 
 End test.
@@ -84,7 +77,7 @@ Variable P : A -> Prop.
 
 Goal forall T, (forall x, P x -> T) -> True.
 intros T H.
-pose X := Foo.xpack A P T (HasFoo.Build A P T H).
+pose X := Foo.pack A P T (HasFoo.Build A P T H).
 Check X : Foo.type A P.
 Abort.
 

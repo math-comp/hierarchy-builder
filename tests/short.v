@@ -35,10 +35,4 @@ pose Tb := hasB.Build T b.
 exact: P (ABType T Ta Tb).
 Qed.
 
-Goal forall T (a b : T), G.
-Proof.
-move=> T a b.
-exact: P [the abType of hasAB.Build T a b : Type].
-Qed.
-
 End test.

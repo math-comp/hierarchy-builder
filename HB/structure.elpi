@@ -73,7 +73,7 @@ declare Module B :- std.do! [
   if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
   phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
   
-  coq.notation.add-abbreviation-for-tactic [Module, "xpack"] "hb_instance" [trm (global Structure)],
+  coq.notation.add-abbreviation-for-tactic [Module, "pack"] "hb_instance" [trm (global Structure)],
 
   if-arg-sort (
     if-verbose (coq.say "HB: define arg_sort"),
@@ -170,7 +170,7 @@ declare Module B :- std.do! [
     ]),
 
   std.flatten {std.map NewMixins mixin->factories} NewFactories,
-  NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
+  % NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
 
   log.coq.env.end-module-name "EtaAndMixinExports" EtaExports,
 

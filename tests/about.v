@@ -46,6 +46,6 @@ HB.about hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class.
 HB.about hierarchy_5_Ring__to__hierarchy_5_SemiRing.
 
 (* builder *)
-HB.about Builders_87.hierarchy_5_Ring_of_AddAG__to__hierarchy_5_BiNearRing_of_AddMonoid.
+HB.about Builders_40.hierarchy_5_Ring_of_AddAG__to__hierarchy_5_BiNearRing_of_AddMonoid.
 
 HB.locate BinNums_Z__canonical__hierarchy_5_AddAG.
