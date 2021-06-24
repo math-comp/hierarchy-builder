@@ -391,10 +391,16 @@ pred hb-instance i:list term, i:gref, i:gref, i:term, i:list term, o:term.
 hb-instance Params KC KS T [Factory|Factories] Instance :-
   synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
     hb-instance Params KC KS T Factories Instance).
+hb-instance Params KC KS T [] Instance :- coq.safe-dest-app T (global _) _, !,
+  synthesis.under-local-canonical-mixins-of.do! T [
+    std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB: cannot infer the instance",
+    std.append Params [T, ClassInstance] InstanceArgs,
+      Instance = app[global KS | InstanceArgs]
+].
 hb-instance Params KC KS T [] Instance :- std.do! [
   std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB: cannot infer the instance",
   std.append Params [T, ClassInstance] InstanceArgs,
-      Instance = app[global KS | InstanceArgs]
+    Instance = app[global KS | InstanceArgs]
 ].
 
 pred elab-factories i:list argument, o:list term.
