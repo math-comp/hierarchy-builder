@@ -387,19 +387,14 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate lp:{{
 
-pred hb-instance i:term, i:term, i:list term, o:term.
-hb-instance Ty T [Factory|Factories] Instance :-
+pred hb-instance i:list term, i:gref, i:gref, i:term, i:list term, o:term.
+hb-instance Params KC KS T [Factory|Factories] Instance :-
   synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
-     hb-instance Ty T Factories Instance).
-hb-instance Ty T [] Instance :- std.do! [
-  coq.safe-dest-app Ty (global Structure) _,
-  std.assert! (class-def (class Class Structure MLwP)) "not a structure known to HB",
-  params->holes MLwP Params,
-  get-constructor Class KC,
-  std.assert! (synthesis.infer-all-args-let Params T KC ClassInstance) "cannot infer the instance",
-  get-constructor Structure KS,
+    hb-instance Params KC KS T Factories Instance).
+hb-instance Params KC KS T [] Instance :- std.do! [
+  std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB: cannot infer the instance",
   std.append Params [T, ClassInstance] InstanceArgs,
-  Instance = app[global KS | InstanceArgs],
+      Instance = app[global KS | InstanceArgs]
 ].
 
 pred elab-factories i:list argument, o:list term.
@@ -409,33 +404,46 @@ elab-factories [trm FactorySkel|More] [Factory|Factories] :-
   std.assert! (factory? FTy _) "not a factory",
   elab-factories More Factories.
 
-solve (goal _ _ Statement _ Args as G) GLS :- with-attributes (with-logging (std.do! [
-  if2 (Args = [trm Ty, trm TSkel, FactorySkel | MoreFactories]) true
-      (Args = [trm TSkel, FactorySkel], Ty = Statement, MoreFactories = []) true
-      (coq.error "usage: hb_instance [Ty] T F1 .. FN"),
+solve (goal Ctx R Statement E [str"context"|Args]) GLS :-
+  solve (goal Ctx R Statement E [trm Statement|Args]) GLS.
+
+solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
+
+  std.assert! (coq.safe-dest-app Ty (global Structure) _) "not a structure known to HB",
+  std.assert! (class-def (class Class Structure MLwP)) "not a structure known to HB",
+  w-params.nparams MLwP NParams,
+  std.assert! (std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel]) "not enough arguments",
+
+  std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "only terms are accepted",
+
+  get-constructor Class KC,
+  get-constructor Structure KS,
+  coq.mk-app (global KC) ParamsSkel KCParamsSkel,
+  std.assert-ok! (coq.elaborate-skeleton KCParamsSkel _ KCParams) "bad parameters",
+  coq.safe-dest-app KCParams _ Params,
+
+  elab-factories FactoriesSkel Factories,
 
   std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
 
-  elab-factories [FactorySkel|MoreFactories] Factories,
-
-  if (T = app[global (const SortProj)|Params], structure-key SortProj ClassProj _)
-    (AllFactories = [app[global (const ClassProj)|Params] | Factories]) % already existing class on T
+  if (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
+    (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories]) % already existing class on T
     (AllFactories = Factories), % it's a factory, won't add anything
 
-  hb-instance Ty T AllFactories Instance,
+  hb-instance Params KC KS T AllFactories Instance,
 
   std.assert! (log.refine Instance G GLS) "the instance does not solve the goal",
 ])).
 
 }}.
 Elpi Typecheck.
-Tactic Notation "hb_instance" open_constr(s) open_constr_list(f) :=
-  elpi hb_instance ltac_term:(s) ltac_term_list:(f).
-Tactic Notation "hb_instance" open_constr(t) open_constr(s) open_constr_list(f) :=
-  elpi hb_instance ltac_term:(t) ltac_term:(s) ltac_term_list:(f).
+Tactic Notation "hb_instance" open_constr_list(f) :=
+  elpi hb_instance "context" ltac_term_list:(f).
+Tactic Notation "hb_instance_of" open_constr_list(f) :=
+  elpi hb_instance ltac_term_list:(f).
 
 Elpi Query lp:{{
-  coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_instance" []
+  coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_instance" [str "context"]
 }}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

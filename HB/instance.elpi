@@ -82,7 +82,7 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
                     {coq.term->string T}),
       fail),
 
-  if (synthesis.infer-all-args-let Params T KC KCApp)
+  if (synthesis.infer-all-args-let Params T KC KCApp ok)
      (if-verbose (coq.say "HB: we can build a" {nice-gref->string Struct} "on"
         {coq.term->string T}))
      fail,
