@@ -393,53 +393,58 @@ hb-instance Params KC KS T [Factory|Factories] Instance :-
     hb-instance Params KC KS T Factories Instance).
 hb-instance Params KC KS T [] Instance :- coq.safe-dest-app T (global _) _, !,
   synthesis.under-local-canonical-mixins-of.do! T [
-    std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB: cannot infer the instance",
+    std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
     std.append Params [T, ClassInstance] InstanceArgs,
       Instance = app[global KS | InstanceArgs]
 ].
 hb-instance Params KC KS T [] Instance :- std.do! [
-  std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB: cannot infer the instance",
+  std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
   std.append Params [T, ClassInstance] InstanceArgs,
     Instance = app[global KS | InstanceArgs]
 ].
 
-pred elab-factories i:list argument, o:list term.
-elab-factories [] [].
-elab-factories [trm FactorySkel|More] [Factory|Factories] :-
-  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "illtyped factory",
-  std.assert! (factory? FTy _) "not a factory",
-  elab-factories More Factories.
+pred elab-factories i:list argument, i:term, o:list term.
+elab-factories [] _ [].
+elab-factories [trm FactorySkel|More] T [Factory|Factories] :-
+  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "HB.pack: illtyped factory",
+  if (factory? FTy (triple _ _ T1))
+     true
+     (coq.error "HB: argument" {coq.term->string Factory} "is not a factory, it has type:" {coq.term->string FTy}),
+  std.assert-ok! (coq.unify-eq T T1) "HB.pack: factory for the wrong type",
+  elab-factories More T Factories.
 
 solve (goal Ctx R Statement E [str"context"|Args]) GLS :-
   solve (goal Ctx R Statement E [trm Statement|Args]) GLS.
 
 solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
 
-  std.assert! (coq.safe-dest-app Ty (global Structure) _) "not a structure known to HB",
-  std.assert! (class-def (class Class Structure MLwP)) "not a structure known to HB",
+  std.assert! (coq.safe-dest-app Ty (global Structure) _) "HB.pack: not a structure",
+  std.assert! (class-def (class Class Structure MLwP)) "HB.pack: not a structure",
   w-params.nparams MLwP NParams,
-  std.assert! ({std.length Args} > NParams) "not enough arguments",
+  std.assert! ({std.length Args} > NParams) "HB.pack: not enough arguments",
   std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel],
 
-  std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "only terms are accepted",
+  std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "HB.pack: only terms are accepted",
 
   get-constructor Class KC,
-  get-constructor Structure KS,
+  get-constructor Structure KS, /*
   coq.mk-app (global KC) ParamsSkel KCParamsSkel,
   std.assert-ok! (coq.elaborate-skeleton KCParamsSkel _ KCParams) "bad parameters",
-  coq.safe-dest-app KCParams _ Params,
+  coq.safe-dest-app KCParams _ Params, */
 
-  elab-factories FactoriesSkel Factories,
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "HB.pack: not a type",
 
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "not a type",
+  elab-factories FactoriesSkel T Factories,
+
+  if (var T) (coq.error "HB.pack: you must pass a type or at least one factory") true,
 
   if (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
     (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories]) % already existing class on T
     (AllFactories = Factories), % it's a factory, won't add anything
 
-  hb-instance Params KC KS T AllFactories Instance,
+  hb-instance ParamsSkel KC KS T AllFactories Instance,
 
-  std.assert! (log.refine Instance G GLS) "the instance does not solve the goal",
+  std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
 ])).
 
 }}.
