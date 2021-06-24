@@ -418,7 +418,8 @@ solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (
   std.assert! (coq.safe-dest-app Ty (global Structure) _) "not a structure known to HB",
   std.assert! (class-def (class Class Structure MLwP)) "not a structure known to HB",
   w-params.nparams MLwP NParams,
-  std.assert! (std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel]) "not enough arguments",
+  std.assert! ({std.length Args} > NParams) "not enough arguments",
+  std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel],
 
   std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "only terms are accepted",
 
