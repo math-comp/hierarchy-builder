@@ -406,7 +406,26 @@ Elpi Export HB.mixin.
 
 *)
 
-Elpi Tactic hb_pack.
+Elpi Tactic HB.pack_for.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.spy-do! [
+  pack.main Ty Args Instance,
+  std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
+])).
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.pack_for.
+
+Elpi Tactic HB.pack.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -423,29 +442,7 @@ solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
 
 }}.
 Elpi Typecheck.
-
-Elpi Tactic hb_pack_for.
-Elpi Accumulate Db hb.db.
-Elpi Accumulate File "HB/common/stdpp.elpi".
-Elpi Accumulate File "HB/common/utils.elpi".
-Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
-Elpi Accumulate File "HB/common/synthesis.elpi".
-Elpi Accumulate File "HB/pack.elpi".
-Elpi Accumulate lp:{{
-
-solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
-  pack.main Ty Args Instance,
-  std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
-])).
-
-}}.
-Elpi Typecheck.
-
-Elpi Query lp:{{
-  coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_pack" [],
-  coq.notation.add-abbreviation-for-tactic ["HB", "pack_for"] "hb_pack_for" []
-}}.
+Elpi Export HB.pack.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
