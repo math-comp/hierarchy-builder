@@ -378,84 +378,73 @@ Elpi Export HB.mixin.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-Elpi Tactic hb_instance.
+(** [HB.pack] and [HB.pack_for] are tactic-in-term synthesizing a structure
+    instance.
+    
+    In the middle of a term, in a context expecting a [Structure.type],
+    you can write [HB.pack T F] to use factory [F] to equip type [T] with
+    [Structure]. If [T] is already a rich type, eg [T : OtherStructure.type]
+    or if [T] is a global constant with canonical structure instances attached
+    to it, then this piece of info is used to infer a [Structure].
+
+    If the context does not impose a [Structure.type] typing constraint, then
+    you can use [HB.pack_for Structure.type T F].
+    
+    You can pass zero or more factories like [F] but they must all typecheck
+    in the current context (the type is not enriched progressively). Examples:
+
+[[
+    pose Fa : IsSomething T := IsSomething.Build T ...
+    pose A : A.type := HB.pack T Fa.
+    pose Fb : IsMore A := IsMore.Build ...
+    pose B := HB.pack_for B.type A Fb.
+]]
+
+    If [Structure.type] as parameters [P1..Pn] then you should use
+    [HB.pack P1..Pn T F1..Fn] or
+    [HB.pack_for (Structure.type P1..Pn) T F1..Fn]
+
+*)
+
+Elpi Tactic hb_pack.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
 
-pred hb-instance i:list term, i:gref, i:gref, i:term, i:list term, o:term.
-hb-instance Params KC KS T [Factory|Factories] Instance :-
-  synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
-    hb-instance Params KC KS T Factories Instance).
-hb-instance Params KC KS T [] Instance :- coq.safe-dest-app T (global _) _, !,
-  synthesis.under-local-canonical-mixins-of.do! T [
-    std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
-    std.append Params [T, ClassInstance] InstanceArgs,
-      Instance = app[global KS | InstanceArgs]
-].
-hb-instance Params KC KS T [] Instance :- std.do! [
-  std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
-  std.append Params [T, ClassInstance] InstanceArgs,
-    Instance = app[global KS | InstanceArgs]
-].
-
-pred elab-factories i:list argument, i:term, o:list term.
-elab-factories [] _ [].
-elab-factories [trm FactorySkel|More] T [Factory|Factories] :-
-  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "HB.pack: illtyped factory",
-  if (factory? FTy (triple _ _ T1))
-     true
-     (coq.error "HB: argument" {coq.term->string Factory} "is not a factory, it has type:" {coq.term->string FTy}),
-  std.assert-ok! (coq.unify-eq T T1) "HB.pack: factory for the wrong type",
-  elab-factories More T Factories.
-
-solve (goal Ctx R Statement E [str"context"|Args]) GLS :-
-  solve (goal Ctx R Statement E [trm Statement|Args]) GLS.
-
-solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
-
-  std.assert! (coq.safe-dest-app Ty (global Structure) _) "HB.pack: not a structure",
-  std.assert! (class-def (class Class Structure MLwP)) "HB.pack: not a structure",
-  w-params.nparams MLwP NParams,
-  std.assert! ({std.length Args} > NParams) "HB.pack: not enough arguments",
-  std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel],
-
-  std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "HB.pack: only terms are accepted",
-
-  get-constructor Class KC,
-  get-constructor Structure KS, /*
-  coq.mk-app (global KC) ParamsSkel KCParamsSkel,
-  std.assert-ok! (coq.elaborate-skeleton KCParamsSkel _ KCParams) "bad parameters",
-  coq.safe-dest-app KCParams _ Params, */
-
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "HB.pack: not a type",
-
-  elab-factories FactoriesSkel T Factories,
-
-  if (var T) (coq.error "HB.pack: you must pass a type or at least one factory") true,
-
-  if (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
-    (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories]) % already existing class on T
-    (AllFactories = Factories), % it's a factory, won't add anything
-
-  hb-instance ParamsSkel KC KS T AllFactories Instance,
-
+solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main Ty Args Instance,
   std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
 ])).
 
 }}.
 Elpi Typecheck.
-Tactic Notation "hb_instance" open_constr_list(f) :=
-  elpi hb_instance "context" ltac_term_list:(f).
-Tactic Notation "hb_instance_of" open_constr_list(f) :=
-  elpi hb_instance ltac_term_list:(f).
+
+Elpi Tactic hb_pack_for.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main Ty Args Instance,
+  std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
+])).
+
+}}.
+Elpi Typecheck.
 
 Elpi Query lp:{{
-  coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_instance" [str "context"]
+  coq.notation.add-abbreviation-for-tactic ["HB", "pack"] "hb_pack" [],
+  coq.notation.add-abbreviation-for-tactic ["HB", "pack_for"] "hb_pack_for" []
 }}.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

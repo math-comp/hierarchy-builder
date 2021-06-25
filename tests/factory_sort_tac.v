@@ -1,4 +1,5 @@
 Require Import ssreflect ssrfun ssrbool.
+From elpi Require Import elpi.
 From HB Require Import structures.
 
 #[verbose] HB.mixin Record hasA T := { a : T }.
@@ -28,9 +29,9 @@ Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
 pose Ta := hasA.Build _ a.
-pose A : A.type := ltac:(hb_instance T Ta).
+pose A := ltac:(elpi hb_pack_for (A.type) (T) (Ta)).
 pose Tab := hasB.Build A b.
-pose AB : AB.type := ltac:(hb_instance A Tab).
+pose AB : AB.type := ltac:(elpi hb_pack (A) (Tab)).
 exact: P AB.
 Qed.
 
@@ -38,9 +39,9 @@ Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
 pose Ta := hasA.Build _ a.
-pose A := ltac:(hb_instance_of A.type T Ta).
+pose A := HB.pack_for A.type T Ta.
 pose Tab := hasB.Build A b.
-pose AB := ltac:(hb_instance_of AB.type A Tab).
+pose AB := HB.pack_for AB.type A Tab.
 exact: P AB.
 Qed.
 

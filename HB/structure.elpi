@@ -83,10 +83,6 @@ declare Module B :- std.do! [
   %if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
   % phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
   
-  coq.mk-app (global Structure) {coq.mk-n-holes {w-params.nparams MLwP}} HB_Instance,
-
-  coq.notation.add-abbreviation-for-tactic [Module, "pack"] "hb_instance" [trm HB_Instance],
-
   if (get-option "short.type" ShortType) (
     if-verbose (coq.say "HB: short name for type:" ShortType),
     if (LocType = loc-abbreviation StrTypeAbbrev) (std.do! [
@@ -102,10 +98,10 @@ declare Module B :- std.do! [
     % coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
     % @global! => log.coq.notation.add-abbreviation
     %  ShortPack NPackAbbrev PackAbbrevTrm ff _
-      coq.notation.add-abbreviation-for-tactic [ShortPack] "hb_instance" [trm HB_Instance]
+      coq.notation.add-abbreviation-for-tactic [ShortPack] "hb_pack_for" [trm HB_Instance]
     ]) (std.do! [
     if-verbose (coq.say "HB: declaring pack abbreviation"),
-    coq.notation.add-abbreviation-for-tactic [Module, "pack"] "hb_instance" [trm HB_Instance],
+    coq.notation.add-abbreviation-for-tactic [Module, "pack"] "hb_pack_for" [trm HB_Instance],
     ]),
 
   if-verbose (coq.say "HB: making coercion from type to target"),

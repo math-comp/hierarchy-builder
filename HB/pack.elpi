@@ -1,0 +1,66 @@
+
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+namespace pack {
+
+pred main i:term, i:list argument, o:term.
+main Ty Args Instance :- std.do! [
+  std.assert! (coq.safe-dest-app Ty (global Structure) _) "HB.pack: not a structure",
+  std.assert! (class-def (class Class Structure MLwP)) "HB.pack: not a structure",
+  w-params.nparams MLwP NParams,
+  std.assert! ({std.length Args} > NParams) "HB.pack: not enough arguments",
+  std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel],
+
+  std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "HB.pack: only terms are accepted",
+
+  get-constructor Class KC,
+  get-constructor Structure KS,
+
+  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "HB.pack: not a type",
+
+  private.elab-factories FactoriesSkel T Factories,
+
+  if (var T) (coq.error "HB.pack: you must pass a type or at least one factory") true,
+
+  if (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
+    (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories]) % already existing class on T
+    (AllFactories = Factories), % it's a factory, won't add anything
+
+  private.synth-instance ParamsSkel KC KS T AllFactories Instance,
+
+].
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace private {
+
+pred synth-instance i:list term, i:gref, i:gref, i:term, i:list term, o:term.
+synth-instance Params KC KS T [Factory|Factories] Instance :-
+  synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
+    synth-instance Params KC KS T Factories Instance).
+synth-instance Params KC KS T [] Instance :- coq.safe-dest-app T (global _) _, !,
+  synthesis.under-local-canonical-mixins-of.do! T [
+    std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
+    std.append Params [T, ClassInstance] InstanceArgs,
+      Instance = app[global KS | InstanceArgs]
+].
+synth-instance Params KC KS T [] Instance :- std.do! [
+  std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
+  std.append Params [T, ClassInstance] InstanceArgs,
+    Instance = app[global KS | InstanceArgs]
+].
+
+pred elab-factories i:list argument, i:term, o:list term.
+elab-factories [] _ [].
+elab-factories [trm FactorySkel|More] T [Factory|Factories] :-
+  std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy Factory) "HB.pack: illtyped factory",
+  if (factory? FTy (triple _ _ T1))
+     true
+     (coq.error "HB: argument" {coq.term->string Factory} "is not a factory, it has type:" {coq.term->string FTy}),
+  std.assert-ok! (coq.unify-eq T T1) "HB.pack: factory for the wrong type",
+  elab-factories More T Factories.
+
+}}
