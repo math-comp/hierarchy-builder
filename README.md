@@ -50,7 +50,7 @@ HB.mixin Record IsAbelianGrp A of IsAddComoid A := {
   addNr : forall x, opp x + x = 0;
 }.
 
-HB.structure Definition AbelianGrp := { A of AddComoid_IsAbelianGrp A & IsAddComoid A }.
+HB.structure Definition AbelianGrp := { A of IsAbelianGrp A & IsAddComoid A }.
 
 Notation "- x" := (opp x).
 ```
