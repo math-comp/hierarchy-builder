@@ -23,9 +23,11 @@ main Ty Args Instance :- std.do! [
 
   if (var T) (coq.error "HB.pack: you must pass a type or at least one factory") true,
 
-  if (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
-    (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories]) % already existing class on T
-    (AllFactories = Factories), % it's a factory, won't add anything
+  if2 (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
+        (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories], Tkey = T) % already existing class on T
+      (def T _ _ Tkey) % we unfold letins if we can, they may hide constants with CS instances
+        (AllFactories = Factories)
+      (AllFactories = Factories), % it's a factory, won't add anything
 
   private.synth-instance ParamsSkel KC KS T AllFactories Instance,
 

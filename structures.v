@@ -416,7 +416,7 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
 
-solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.spy-do! [
+solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
   pack.main Ty Args Instance,
   std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
 ])).
