@@ -164,7 +164,7 @@ pred exported-op o:mixinname, o:constant, o:constant.
 pred factory-sort o:coercion.
 
 % memory of canonical projections for a structure (X.sort, X.class, X.type)
-pred structure-key o:constant, o:constant, o:inductive.
+pred structure-key o:constant, o:constant, o:structure.
 
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

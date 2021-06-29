@@ -331,7 +331,7 @@ check-non-forgetful-inheritance T Factory :- std.do! [
       "1. (Best practice) Reorganize your hierarchy to make"
       {nice-gref->string Factory}
       "depend on"
-      { calc ({nice-gref->string (indt Super)} ^ ".") }
+      { calc ({nice-gref->string Super} ^ ".") }
       "See the paper \"Competing inheritance paths in"
       "dependent type theory\" (https://hal.inria.fr/hal-02463336) for more"
       "explanations"

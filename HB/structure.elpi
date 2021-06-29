@@ -501,7 +501,7 @@ mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global C
 
 % Builds the axioms record and the factories from this class to each mixin
 pred declare-class+structure i:mixins, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
-declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories (structure-key SortP ClassP StructureInd):- std.do! [
+declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories (structure-key SortP ClassP (indt StructureInd)):- std.do! [
 
   if-verbose (coq.say "HB: declare axioms record"MLwP ),
 
