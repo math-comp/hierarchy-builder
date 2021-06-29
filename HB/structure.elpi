@@ -156,20 +156,22 @@ declare Module B :- std.do! [
 
   @global! => log.coq.notation.add-abbreviation "on" 1
     {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt
-    OnAbbrev,
+    _OnAbbrev,
 
   log.coq.env.begin-module "EtaAndMixinExports" none,
 
   if (get-option "primitive" tt) true (
-    if-verbose (coq.say "HB: eta expanded instances"),
-    NewClauses => std.do! [
-      w-params.fold MLwP mk-fun
-        (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
-      w-params.fold MLwP (mk-parameter explicit)
-        (private.mk-hb-eta.arity Structure ClassName SortProjection)
-        EtaInstanceArity,
-      instance.declare-const "_" EtaInstanceBody EtaInstanceArity _
-    ]),
+    true
+    % if-verbose (coq.say "HB: eta expanded instances"),
+    % NewClauses => std.do! [
+    %   w-params.fold MLwP mk-fun
+    %     (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
+    %   w-params.fold MLwP (mk-parameter explicit)
+    %     (private.mk-hb-eta.arity Structure ClassName SortProjection)
+    %     EtaInstanceArity,
+    %   instance.declare-const "_" EtaInstanceBody EtaInstanceArity _
+    % ]
+    ),
 
   % std.flatten {std.map NewMixins mixin->factories} NewFactories,
   % NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
@@ -700,32 +702,32 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
   @pi-decl N Ty t\
     product->triples (B t) (Rest t) C.
 
-pred mk-hb-eta.on i:structure, i:term, i:abbreviation,
-  i:list term, i:name, i:term, i:A, o:term.
-mk-hb-eta.on Structure SortProjection OnAbbrev
-    Params NT _T _ (fun NT Ty Body) :- !, std.do! [
-  coq.mk-app (global Structure) Params Ty,
-  @pi-decl NT Ty s\ sigma Tm\ std.do! [
-    coq.mk-app {{lib:@hb.eta}}
-      [_, {coq.mk-app SortProjection {std.append Params [s]}}]
-      Tm,
-    std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
-    coq.notation.abbreviation OnAbbrev [Tm] (Body s)
-  ]
-].
-
-pred mk-hb-eta.arity i:structure, i:classname, i:term, i:list term,
-  i:name, i:term, i:A, o:arity.
-mk-hb-eta.arity Structure ClassName SortProjection
-    Params NT _T _ Out :- !, std.do! [
-  coq.mk-app (global Structure) Params Ty,
-  (@pi-decl NT Ty s\ sigma Tm\ std.do! [
-    coq.mk-app {{lib:@hb.eta}}
-      [_, {coq.mk-app SortProjection {std.append Params [s]}}] Tm,
-    std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
-    coq.mk-app (global ClassName) {std.append Params [Tm]} (Concl s)
-  ]),
-  Out = parameter {coq.name->id NT} explicit Ty s\ arity (Concl s)
-].
-
+% pred mk-hb-eta.on i:structure, i:term, i:abbreviation,
+%   i:list term, i:name, i:term, i:A, o:term.
+% mk-hb-eta.on Structure SortProjection OnAbbrev
+%     Params NT _T _ (fun NT Ty Body) :- !, std.do! [
+%   coq.mk-app (global Structure) Params Ty,
+%   @pi-decl NT Ty s\ sigma Tm\ std.do! [
+%     coq.mk-app {{lib:@hb.eta}}
+%       [_, {coq.mk-app SortProjection {std.append Params [s]}}]
+%       Tm,
+%     std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
+%     coq.notation.abbreviation OnAbbrev [Tm] (Body s)
+%   ]
+% ].
+% 
+% pred mk-hb-eta.arity i:structure, i:classname, i:term, i:list term,
+%   i:name, i:term, i:A, o:arity.
+% mk-hb-eta.arity Structure ClassName SortProjection
+%     Params NT _T _ Out :- !, std.do! [
+%   coq.mk-app (global Structure) Params Ty,
+%   (@pi-decl NT Ty s\ sigma Tm\ std.do! [
+%     coq.mk-app {{lib:@hb.eta}}
+%       [_, {coq.mk-app SortProjection {std.append Params [s]}}] Tm,
+%     std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
+%     coq.mk-app (global ClassName) {std.append Params [Tm]} (Concl s)
+%   ]),
+%   Out = parameter {coq.name->id NT} explicit Ty s\ arity (Concl s)
+% ].
+% 
 }}

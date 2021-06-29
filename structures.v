@@ -9,7 +9,6 @@ Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition nomsg : error_msg := NoMsg.
 Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
-Definition eta {T} (x : T) := x.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
@@ -30,7 +29,6 @@ Register Coq.ssr.ssreflect.Phantom as hb.Phantom.
 Register Coq.Init.Logic.eq as hb.eq.
 Register Coq.Init.Logic.eq_refl as hb.erefl.
 Register new as hb.new.
-Register eta as hb.eta.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
 Notation indexed T := T (only parsing).

@@ -14,6 +14,7 @@ HB.structure Definition AB := {T of hasA T & hasB T}.
 
 HB.factory Record hasAB T := { a : T; b : T * T }.
 HB.builders Context T of hasAB T.
+
 Definition xxx := AB.pack T (hasB.Build T b) (hasA.Build T a).
 HB.instance Definition _ := AB.copy T xxx.
 HB.end.
@@ -65,6 +66,10 @@ pose AB := AB.pack A Tab.
 exact: 
 P AB.
 Qed.
+
+Check forall T : AB.type,
+  let x := AB.pack T in
+  x.
 
 Goal forall T (a b : T), G.
 Proof.
