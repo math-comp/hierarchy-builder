@@ -203,6 +203,14 @@ log.refine T G GL :- std.do! [
   G = goal _ _ _ Solution _,
   log.private.log-tactic Solution,
 ].
+pred refine.no_check i:term, i:goal, o:list sealed-goal. % to silence a warning, since this is only in tactics
+pred log.refine.no_check i:term, i:goal, o:list sealed-goal.
+log.refine.no_check T G GL :- std.do! [
+  refine.no_check T G GL,
+  G = goal _ _ _ Solution _,
+  log.private.log-tactic Solution,
+].
+
 
 namespace log.private {
 

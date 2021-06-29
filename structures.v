@@ -416,9 +416,10 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
 
-solve (goal _ _ _ _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
-  pack.main Ty Args Instance,
-  std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
+solve (goal _ _ S _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main Ty Args InstanceSkel,
+  std.assert-ok! (coq.elaborate-skeleton InstanceSkel S Instance) "HB.pack_for: the instance does not solve the goal",
+  log.refine.no_check Instance G GLS,
 ])).
 
 }}.
@@ -436,8 +437,9 @@ Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
 
 solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
-  pack.main Ty Args Instance,
-  std.assert! (log.refine Instance G GLS) "HB.pack: the instance does not solve the goal",
+  pack.main Ty Args InstanceSkel,
+  std.assert-ok! (coq.elaborate-skeleton InstanceSkel Ty Instance) "HB.pack: the instance does not solve the goal",
+  log.refine.no_check Instance G GLS,
 ])).
 
 }}.
