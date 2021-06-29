@@ -27,9 +27,9 @@ main Ty Args Instance :- std.do! [
         (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories], Tkey = T) % already existing class on T
       (def T _ _ Tkey) % we unfold letins if we can, they may hide constants with CS instances
         (AllFactories = Factories)
-      (AllFactories = Factories), % it's a factory, won't add anything
+      (AllFactories = Factories, Tkey = T), % it's a factory, won't add anything
 
-  private.synth-instance ParamsSkel KC KS T AllFactories Instance,
+  private.synth-instance ParamsSkel KC KS Tkey AllFactories Instance,
 
 ].
 
