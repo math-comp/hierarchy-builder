@@ -222,25 +222,21 @@ instantiate-all-args-let F _ F ok.
 % which can be candidates from that class instance
 pred structure-instance->mixin-srcs i:term, i:structure, o:list prop.
 structure-instance->mixin-srcs T S MSLC :- std.do! [
-  get-structure-sort-projection S Sort,
+  structure-key SortProj ClassProj S,
+  class-def (class (indt Class) S _),
   structure-nparams S NParams,
-  coq.mk-n-holes NParams Holes,
-  coq.mk-app Sort {std.append Holes [ST]} SortHolesST,
+  coq.mk-n-holes {calc (NParams + 1)} HolesST,
+  coq.mk-app (global (const SortProj)) HolesST SortHolesST,
   if (coq.unify-eq T SortHolesST ok) (
-    % Hum, this unification problem is not super trivial. TODO replace by something simpler
-    get-constructor S KS,
-    coq.mk-app (global KS) {std.append Holes [T, C]} KSHolesC,
-    std.assert-ok! (coq.unify-eq ST KSHolesC) "HB: structure-instance->mixin-srcs: ST = _ _ C",
-    class-def (class CN S CMLwP),
-    get-constructor CN KC,
-    std.length {list-w-params_list CMLwP} CMixinsN,
-    coq.mk-n-holes CMixinsN MIL,
-    coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
-    std.assert-ok! (coq.unify-eq C CBody) "HB: structure-instance->mixin-srcs: C = KC ... T MIL",
+    coq.mk-app (global (const ClassProj)) HolesST ClassST,
+    coq.CS.canonical-projections Class Projs,
+    std.map-filter Projs (structure-instance->mixin-srcs.aux2 {std.take NParams HolesST} T ClassST) MIL,
     std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
     std.flatten MSLL MSLC)
     (MSLC = [])
 ].
+structure-instance->mixin-srcs.aux2 Params T Class (some P) M :-
+  coq.mk-app (global (const P)) {std.append Params [T,Class]} M.
 structure-instance->mixin-srcs.aux T  F CL :-
   factory-instance->new-mixins [] F ML,
   std.map ML (m\c\ c = mixin-src T m F) CL.
