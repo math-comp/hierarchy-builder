@@ -19,7 +19,7 @@ jobs:
         coq_version:
           - '8.13'
         ocaml_version:
-          - 'minimal'
+          - '4.07-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
@@ -39,7 +39,7 @@ jobs:
       with:
         opam_file: './coq-hierarchy-builder.opam'
         coq_version: '8.13'
-        ocaml_version: 'minimal'
+        ocaml_version: '4.07-flambda'
         script: |
           mkdir /home/coq/workspace
           cp -ra . /home/coq/workspace
