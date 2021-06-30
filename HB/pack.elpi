@@ -29,7 +29,7 @@ main Ty Args Instance :- std.do! [
         (AllFactories = Factories)
       (AllFactories = Factories, Tkey = T), % it's a factory, won't add anything
 
-  private.synth-instance ParamsSkel KC KS Tkey AllFactories Instance,
+  private.synth-instance ParamsSkel KC KS T Tkey AllFactories Instance,
 
 ].
 
@@ -39,19 +39,19 @@ main Ty Args Instance :- std.do! [
 
 namespace private {
 
-pred synth-instance i:list term, i:gref, i:gref, i:term, i:list term, o:term.
-synth-instance Params KC KS T [Factory|Factories] Instance :-
-  synthesis.under-new-mixin-src-from-factory.do! T Factory (_\
-    synth-instance Params KC KS T Factories Instance).
-synth-instance Params KC KS T [] Instance :- coq.safe-dest-app T (global _) _, !,
-  synthesis.under-local-canonical-mixins-of.do! T [
-    std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
-    std.append Params [T, ClassInstance] InstanceArgs,
+pred synth-instance i:list term, i:gref, i:gref, i:term, i:term, i:list term, o:term.
+synth-instance Params KC KS T Tkey [Factory|Factories] Instance :-
+  synthesis.under-new-mixin-src-from-factory.do! Tkey Factory (_\
+    synth-instance Params KC KS T Tkey Factories Instance).
+synth-instance Params KC KS T Tkey [] Instance :- coq.safe-dest-app Tkey (global _) _, !,
+  synthesis.under-local-canonical-mixins-of.do! Tkey [
+    std.assert-ok! (synthesis.infer-all-args-let Params Tkey KC ClassInstance) "HB.pack: cannot infer the instance",
+    std.append Params [T, {unwind {hd-beta-zeta ClassInstance []}}] InstanceArgs,
       Instance = app[global KS | InstanceArgs]
 ].
-synth-instance Params KC KS T [] Instance :- std.do! [
-  std.assert-ok! (synthesis.infer-all-args-let Params T KC ClassInstance) "HB.pack: cannot infer the instance",
-  std.append Params [T, ClassInstance] InstanceArgs,
+synth-instance Params KC KS T Tkey [] Instance :- std.do! [
+  std.assert-ok! (synthesis.infer-all-args-let Params Tkey KC ClassInstance) "HB.pack: cannot infer the instance",
+  std.append Params [T, {unwind {hd-beta-zeta ClassInstance []}}] InstanceArgs,
     Instance = app[global KS | InstanceArgs]
 ].
 
