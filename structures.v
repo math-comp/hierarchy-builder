@@ -9,7 +9,6 @@ Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition nomsg : error_msg := NoMsg.
 Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
-Definition eta {T} (x : T) := x.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
@@ -30,7 +29,6 @@ Register Coq.ssr.ssreflect.Phantom as hb.Phantom.
 Register Coq.Init.Logic.eq as hb.eq.
 Register Coq.Init.Logic.eq_refl as hb.erefl.
 Register new as hb.new.
-Register eta as hb.eta.
 
 #[deprecated(since="HB 1.0.1", note="use #[key=...] instead")]
 Notation indexed T := T (only parsing).
@@ -163,8 +161,8 @@ pred exported-op o:mixinname, o:constant, o:constant.
 % memory of factory sort coercion
 pred factory-sort o:coercion.
 
-% memory of keys
-pred structure-key o:term, o:gref.
+% memory of canonical projections for a structure (X.sort, X.class, X.type)
+pred structure-key o:constant, o:constant, o:structure.
 
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -378,6 +376,78 @@ Elpi Export HB.mixin.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+(** [HB.pack] and [HB.pack_for] are tactic-in-term synthesizing a structure
+    instance.
+    
+    In the middle of a term, in a context expecting a [Structure.type],
+    you can write [HB.pack T F] to use factory [F] to equip type [T] with
+    [Structure]. If [T] is already a rich type, eg [T : OtherStructure.type]
+    or if [T] is a global constant with canonical structure instances attached
+    to it, then this piece of info is used to infer a [Structure].
+
+    If the context does not impose a [Structure.type] typing constraint, then
+    you can use [HB.pack_for Structure.type T F].
+    
+    You can pass zero or more factories like [F] but they must all typecheck
+    in the current context (the type is not enriched progressively). Examples:
+
+[[
+    pose Fa : IsSomething T := IsSomething.Build T ...
+    pose A : A.type := HB.pack T Fa.
+    pose Fb : IsMore A := IsMore.Build ...
+    pose B := HB.pack_for B.type A Fb.
+]]
+
+    If [Structure.type] as parameters [P1..Pn] then you should use
+    [HB.pack P1..Pn T F1..Fn] or
+    [HB.pack_for (Structure.type P1..Pn) T F1..Fn]
+
+*)
+
+Elpi Tactic HB.pack_for.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ S _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main Ty Args InstanceSkel,
+  std.assert-ok! (coq.elaborate-skeleton InstanceSkel S Instance) "HB.pack_for: the instance does not solve the goal",
+  log.refine.no_check Instance G GLS,
+])).
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.pack_for.
+
+Elpi Tactic HB.pack.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main Ty Args InstanceSkel,
+  std.assert-ok! (coq.elaborate-skeleton InstanceSkel Ty Instance) "HB.pack: the instance does not solve the goal",
+  log.refine.no_check Instance G GLS,
+])).
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.pack.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** [HB.structure] declares a packed structure.
 
   Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
@@ -499,7 +569,7 @@ Elpi Accumulate lp:{{
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
   with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)).
 main [T0, F0] :- !,
-  coq.warn "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
+  coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
 
 main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
@@ -804,7 +874,7 @@ pred check-or-not i:term.
 check-or-not Skel :-
   coq.version VersionString _ _ _,
   if (get-option "skip" R, rex_match R VersionString)
-     (coq.warn "Skipping test on Coq" VersionString "as requested")
+     (coq.warning "HB" "HB.skip" {get-option "elpi.loc"} "Skipping test on Coq" VersionString "as requested")
      (log.coq.check Skel Ty T Result,
       if (Result = error Msg)
          (if (get-option "fail" tt)
@@ -817,6 +887,7 @@ check-or-not Skel :-
 }}.
 Elpi Typecheck.
 Elpi Export HB.check.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

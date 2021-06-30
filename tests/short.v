@@ -16,8 +16,8 @@ HB.structure Definition AB := {T of hasA T & hasB T}.
 
 HB.factory Record hasAB T := { a : T; b : T }.
 HB.builders Context T of hasAB T.
-HB.instance Definition _ := AB.copy T
-  (ABType T (hasB.Build (hasA.Build T a) b)).
+Definition xxx := ABType T (hasB.Build T b) (hasA.Build T a).
+HB.instance Definition _ := AB.copy T xxx.
 HB.end.
 About hasAB.type.
 
@@ -30,15 +30,9 @@ Variables (G : Prop) (P : AB.type -> G).
 Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
-pose Ta := hasA.Build _ a.
-pose Tab := hasB.Build Ta b.
-exact: P (ABType T Tab).
-Qed.
-
-Goal forall T (a b : T), G.
-Proof.
-move=> T a b.
-exact: P [the abType of hasAB.Build T a b : Type].
+pose Ta := hasA.Build T a.
+pose Tb := hasB.Build T b.
+exact: P (ABType T Ta Tb).
 Qed.
 
 End test.

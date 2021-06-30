@@ -32,6 +32,7 @@ HB.instance Definition _ (T : Sq.type) := HasSq.Build (option T) option_square.
 https://math-comp.github.io/competing-inheritance-paths-in-dependent-type-theory/
 hence, HB prevents us from using it without care.
 *)
+Set Warnings "+HB.non-forgetful-inheritance".
 Fail HB.instance Definition _ (T : Mul.type) :=
   HasSq.Build T (fun x => mul x x).
 

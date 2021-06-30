@@ -38,3 +38,11 @@ Check AbelianGrp.on Z.
 
 HB.graph "readme.dot".
 HB.about Z.
+
+Section Test.
+HB.declare Context (T : Type) (p : AddComoid_of_Type T) (q : AbelianGrp_of_AddComoid T).
+
+Goal forall x : T, x + -x = 0.
+Abort.
+
+End Test.

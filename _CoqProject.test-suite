@@ -1,3 +1,9 @@
+-arg -w -arg -redundant-canonical-projection
+-arg -w -arg -projection-no-head-constant
+-arg -w -arg -abstract-large-number
+-arg -w -arg -disj-pattern-notation
+-arg -w -arg -notation-overridden
+
 examples/readme.v
 examples/hulk.v
 
@@ -60,11 +66,13 @@ tests/funclass.v
 tests/local_instance.v
 tests/lock.v
 tests/not_same_key.v
-tests/factory_sort.v
+#tests/factory_sort.v
+tests/factory_sort_tac.v
 tests/declare.v
 tests/short.v
 tests/primitive_records.v
 tests/non_forgetful_inheritance.v
+tests/fix_loop.v
 
 -R tests HB.tests
 -R examples HB.examples

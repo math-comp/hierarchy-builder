@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect ssrfun ssrbool ZArith QArith.
+From Coq Require Import ssreflect ssrfun ssrbool ZArith QArith Qcanon.
 From HB Require Import structures.
 
 Require Import classical.
@@ -130,7 +130,7 @@ HB.mixin Record Topological T := {
 }.
 HB.structure Definition TopologicalSpace := { A of Topological A }.
 
-Hint Extern 0 (open setT) => now apply: open_setT : core.
+#[export] Hint Extern 0 (open setT) => now apply: open_setT : core.
 
 HB.factory Record TopologicalBase T := {
   open_base : set (set T);
@@ -218,7 +218,7 @@ HB.instance Definition Z_ring_axioms :=
 Example test1 (m n : Z) : (m + n) - n + 0 = m.
 Proof. by rewrite addrK addr0. Qed.
 
-Require Import Qcanon.
+Import Qcanon.
 Search _ Qc "plus" "opp".
 
 Lemma Qcplus_opp_l q : - q + q = 0.

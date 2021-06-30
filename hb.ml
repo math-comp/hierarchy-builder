@@ -35,7 +35,7 @@ type patch = {
 }
 
 let parse_one_patch text =
-  let r = Str.regexp "[^,]+, characters \\([0-9]+\\)-\\([0-9]+\\).*" in
+  let r = Str.regexp ".*characters \\([0-9]+\\)-\\([0-9]+\\).*" in
   let beginning = String.index text '\n' in
   let header = String.sub text 0 beginning in
   let start = int_of_string @@ Str.replace_first r "\\1" header in

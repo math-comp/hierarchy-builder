@@ -195,7 +195,7 @@ HB.instance Definition _ := IsContractible.Build (link canfg) link_def link_all_
 End TransferSingleton.
 
 (* We assume a known type B which is both an Equality and a Singleton *)
-Axioms B : Type.
+Axiom B : Type.
 
 Axiom testB : B -> B -> bool.
 Axiom testOKB : forall x y, reflect (x = y) (testB x y).
