@@ -355,9 +355,9 @@ coq.vernac->pp1 (vernac.parameter Name Ty) (box (hv 2) [box h [str "Parameter ",
   coq.term->pp Ty TY.
 coq.vernac->pp1 (import-module Name) (box h [str "Import ", str Name, str "."]).
 coq.vernac->pp1 (export-module Name) (box h [str "Export ", str Name, str "."]).
-coq.vernac->pp1 (notation KM NParams Term) (box (hv 2) [box h [str "Notation \"'",str KM,str"' "|StrParams], str "\" :=", spc, B, str " (at level 1)."]) :- !,
+coq.vernac->pp1 (notation KM NParams Term) (box (hv 2) [box h [str "Notation \"'",str KM,str"' "|StrParams], str "\" := (", spc, B, str ") (at level 1)."]) :- !,
   coq.vernac->ppabbrterm NParams Term StrParams B.
-coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notation ",str Name|StrParams], str " :=", spc, B, str "."]) :-
+coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notation ",str Name|StrParams], str " := (", spc, B, str ")."]) :-
   coq.vernac->ppabbrterm NParams Term StrParams B.
 coq.vernac->pp1 (canonical Name Local) (box h [Locality, str "Canonical ", str Name, str "."]) :-
   local->locality Local Locality.
