@@ -22,7 +22,7 @@ declare Module B :- std.do! [
   synthesis.list-w-params.check-key MLwP,
 
   if (ClosureCheck = tt, not({std.length PML} = {std.length ML}))
-     (coq.warn "HB: pulling in dependencies:" {std.map {std.list-diff ML PML} nice-gref->string}
+     (coq.warning "HB" "HB.implicit-structure-dependency" "pulling in dependencies:" {std.map {std.list-diff ML PML} nice-gref->string}
                "\nPlease list them or end the declaration with '&'")
      true,
 
@@ -119,7 +119,7 @@ declare Module B :- std.do! [
 
   if (ClassName = indt ClassInd) (std.do![
     if-verbose (coq.say "HB: exporting coercions from class to mixins"),
-    std.forall {coq.CS.canonical-projections ClassInd}
+    std.forall {coq.env.projections ClassInd}
       (private.export-mixin-coercion ClassName)
     ])
     (coq.say "declare:" ClassName "should be an inductive", fail),
@@ -282,7 +282,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
 pred export-operations.aux i:structure, i:term, i:term, i:one-w-params mixinname, i:list prop, o:list prop.
 export-operations.aux Struct ProjSort ProjClass MwP EX1 EX2 :- !, std.do! [
   w-params_1 MwP (indt M),
-  coq.CS.canonical-projections M Poperations,
+  coq.env.projections M Poperations,
   std.fold Poperations EX1 (export-1-operation (indt M) Struct ProjSort ProjClass MwP) EX2,
 ].
 
@@ -515,7 +515,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd)
     (log.coq.env.add-indt ClassDeclaration ClassInd),
 
-  coq.CS.canonical-projections ClassInd Projs,
+  coq.env.projections ClassInd Projs,
   % TODO: put this code in a named clause
   w-params.nparams MLwP NParams,
   std.map2 {list-w-params_list MLwP} Projs (m\ p\ r\ sigma P\
@@ -533,7 +533,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     (@primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
     (log.coq.env.add-indt StructureDeclaration StructureInd),
 
-  coq.CS.canonical-projections StructureInd [some SortP, some ClassP],
+  coq.env.projections StructureInd [some SortP, some ClassP],
   global (const SortP) = SortProjection,
   global (const ClassP) = ClassProjection,
 ].

@@ -439,8 +439,8 @@ Definition ex_in C B x y :=  let: F^* := B in (C && F)^*.
 End Definitions.
 
 
-Notation "`[ x | B ]" := (quant0p (fun x => B x)) (at level 0, x ident).
-Notation "`[ x : T | B ]" := (quant0p (fun x : T => B x)) (at level 0, x ident).
+Notation "`[ x | B ]" := (quant0p (fun x => B x)) (at level 0, x name).
+Notation "`[ x : T | B ]" := (quant0p (fun x : T => B x)) (at level 0, x name).
 
 Module Exports.
 
@@ -603,7 +603,7 @@ apply: (asbool_equiv_eqP existsp_asboolPn);
   by split=> -[x h]; exists x; apply/negP.
 Qed.
 Reserved Notation "[ 'set' x : T | P ]"
-  (at level 0, x at level 99, only parsing).
+  (at level 0, x at level 99).
 Reserved Notation "[ 'set' x | P ]"
   (at level 0, x, P at level 99, format "[ 'set'  x  |  P ]").
 Reserved Notation "[ 'set' E | x 'in' A ]" (at level 0, E, x at level 99,
@@ -972,6 +972,7 @@ Definition xget {T} x0 (P : set T) : T :=
   if pselect (exists x : T, `[<P x>]) isn't left exP then x0
   else projT1 (cid exP).
 
+Unset Auto Template Polymorphism.
 CoInductive xget_spec {T} x0 (P : set T) : T -> Prop -> Type :=
 | XGetSome x of x = xget x0 P & P x : xget_spec x0 P x True
 | XGetNone of (forall x, ~ P x) : xget_spec x0 P x0 False.

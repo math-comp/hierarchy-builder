@@ -15,7 +15,7 @@ begin CtxSkel :- std.do! [
   if (GRF = indt FRecord) (std.do! [
     if-verbose (coq.say "HB: begin module Super"),
     log.coq.env.begin-module "Super" none,
-    std.forall {coq.CS.canonical-projections FRecord}
+    std.forall {coq.env.projections FRecord}
       builders.private.declare-shadowed-constant,
     log.coq.env.end-module-name "Super" _,
     if-verbose (coq.say "HB: ended module Super")
@@ -115,7 +115,7 @@ pred define-factory-operations i:term, i:list term, i:term, i:gref.
 define-factory-operations TheType Params TheFactory (indt I) :- !,
   coq.env.indt I _ NIParams _ _ _ _,
   NHoles is NIParams - 1 - {std.length Params},
-  coq.CS.canonical-projections I PL,
+  coq.env.projections I PL,
   std.forall PL (define-factory-operation TheType Params TheFactory NHoles).
 define-factory-operations _ _ _ _.
 

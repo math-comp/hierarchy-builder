@@ -244,7 +244,7 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
        std.flatten MSLL MSLC)
       (% otherwise we project
        coq.mk-app (global (const ClassProj)) HolesST ClassST,
-       coq.CS.canonical-projections Class Projs,
+       coq.env.projections Class Projs,
        std.map-filter Projs (structure-instance->mixin-srcs.aux2 {std.take NParams HolesST} T ClassST) MIL,
        std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
        std.flatten MSLL MSLC))

@@ -569,7 +569,7 @@ Elpi Accumulate lp:{{
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
   with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)).
 main [T0, F0] :- !,
-  coq.warn "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
+  coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
 
 main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
@@ -874,7 +874,7 @@ pred check-or-not i:term.
 check-or-not Skel :-
   coq.version VersionString _ _ _,
   if (get-option "skip" R, rex_match R VersionString)
-     (coq.warn "Skipping test on Coq" VersionString "as requested")
+     (coq.warning "HB" "HB.skip" {get-option "elpi.loc"} "Skipping test on Coq" VersionString "as requested")
      (log.coq.check Skel Ty T Result,
       if (Result = error Msg)
          (if (get-option "fail" tt)

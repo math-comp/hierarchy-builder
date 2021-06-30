@@ -82,8 +82,8 @@ main-canonical-value S CanonicalValues :-
 
 pred group-by-loc i:list cs-instance, o:list (pair (option loc) (list cs-instance)).
 group-by-loc [] [].
-group-by-loc [cs-instance P V (global GR)|L] [pr (some Loc) [cs-instance P V (global GR)|SameLoc]|Rest1] :- decl-location GR Loc, !,
-  std.partition L (x\ sigma GR1\ x = cs-instance _ _ (global GR1), decl-location GR1 Loc) SameLoc Rest,
+group-by-loc [cs-instance P V GR|L] [pr (some Loc) [cs-instance P V GR|SameLoc]|Rest1] :- decl-location GR Loc, !,
+  std.partition L (x\ sigma GR1\ x = cs-instance _ _ GR1, decl-location GR1 Loc) SameLoc Rest,
   group-by-loc Rest Rest1.
 group-by-loc [I|Rest] [pr none [I]|Rest1] :- group-by-loc Rest Rest1.
 
@@ -96,7 +96,7 @@ pp-canonical-solution-list (pr (some Loc) L) Pp :-
                  [ spc, {pp-loc Loc} ] }.
 
 pred pp-canonical-solution i:cs-instance, o:coq.pp.
-pp-canonical-solution (cs-instance _Proj _Pat (global GR)) Pp :-
+pp-canonical-solution (cs-instance _Proj _Pat GR) Pp :-
   coq.env.typeof GR T,
   coq.prod-tgt->gref T F,
   if (class-def (class _ F _)) (gref->modname F 2 "." ID) (coq.gref->string F ID),
@@ -204,7 +204,7 @@ main-factory-constructor S F PhBuild Build :-
   list-w-params_list DMLwP DML,
   factory-provides (indt F) PMLwP,
   list-w-params_list PMLwP PML,
-  coq.CS.canonical-projections F FieldsOpts,
+  coq.env.projections F FieldsOpts,
   std.map-filter FieldsOpts (x\r\ x = some r) Fields,
   coq.arguments.implicit PhBuild [Implicits],
 
@@ -270,7 +270,7 @@ compute-arg-type.fields [OP|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :-
 pred main-factory i:string, i:inductive.
 main-factory S Factory :-
   % fetch
-  coq.CS.canonical-projections Factory Ps,
+  coq.env.projections Factory Ps,
   std.map-filter Ps (x\r\ x = some r) Fields,
   gref-deps (indt Factory) DMLwP,
   list-w-params_list DMLwP DML,

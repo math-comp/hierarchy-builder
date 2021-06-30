@@ -96,7 +96,7 @@ env.add-indt Decl I :- std.do! [
   coq.env.indt I _ _ _ _ KS _,
   log.private.log-implicits-of ff (indt I),
   std.forall KS (k\ env.add-location (indc k), log.private.log-implicits-of ff (indc k)),
-  std.forall {coq.CS.canonical-projections I}
+  std.forall {coq.env.projections I}
     (p\ sigma c\ if (p = some c) (env.add-location (const c), log.private.log-implicits-of ff (const c)) true),
 ].
 

@@ -373,7 +373,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 % deps of the record plus the record itself)
 pred build-deps-for-projections i:inductive, i:mixins, o:list prop.
 build-deps-for-projections R MLwP CL :- std.do! [
-  compat.map-filter {coq.CS.canonical-projections R} (x\y\x = some y) MixinOps,
+  compat.map-filter {coq.env.projections R} (x\y\x = some y) MixinOps,
   list-w-params.rcons MLwP (pl\t\r\ r = triple (indt R) pl t) MLRwP,
   std.map MixinOps (gr\r\ r = gref-deps (const gr) MLRwP) CL,
 ].
