@@ -1,10 +1,8 @@
--arg -w -arg +all
 -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -projection-no-head-constant
 -arg -w -arg -abstract-large-number
 -arg -w -arg -disj-pattern-notation
 -arg -w -arg -notation-overridden
--arg -w -arg HB
 
 examples/readme.v
 examples/hulk.v
