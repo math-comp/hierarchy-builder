@@ -48,7 +48,9 @@ main-located S (loc-gref GR) :-
   std.filter {coq.CS.db-for _ (cs-gref GR)} (private.not1 private.unif-hint?) LV,
   coq.CS.db-for GR _ LP,
   std.filter {coq.coercion.db} (c\c = coercion GR _ _ _) LC,
-  if (LV = [], LP = [], LC = []) (coq.error "HB: unknown constant" S) true,
+  if (LV = [], LP = [], LC = [])
+     (coq.error "HB: uninteresting constant" {coq.pp->string {private.pp-loc-of GR}})
+     true,
   if (not (LV = [])) (private.main-canonical-value S LV) true,
   if (not (LP = [])) (private.main-canonical-projection S GR LP) true,
   if (not (LC = [])) (private.main-coercion S LC) true.
