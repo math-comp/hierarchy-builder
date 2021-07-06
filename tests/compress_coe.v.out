@@ -17,3 +17,5 @@ fun D D' : D.type =>
     |}
 |}
      : D.type -> D.type -> D.type
+
+Arguments Datatypes_prod__canonical__compress_coe_D D D'
