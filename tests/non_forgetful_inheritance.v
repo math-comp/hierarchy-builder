@@ -28,10 +28,11 @@ Definition option_square {T : Sq.type} (o : option T) : option T :=
 HB.instance Definition _ (T : Sq.type) := HasSq.Build (option T) option_square.
 
 (* Now we mix the two unrelated structures by building Sq out of Mul.
-               *** This breaks Non Forgetful Inheritance ***
+               *** This breaks Forgetful Inheritance ***
 https://math-comp.github.io/competing-inheritance-paths-in-dependent-type-theory/
 hence, HB prevents us from using it without care.
 *)
+Set Warnings "+HB.non-forgetful-inheritance".
 Fail HB.instance Definition _ (T : Mul.type) :=
   HasSq.Build T (fun x => mul x x).
 

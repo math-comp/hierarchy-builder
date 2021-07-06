@@ -323,9 +323,9 @@ pred check-non-forgetful-inheritance i:term, i:gref.
 check-non-forgetful-inheritance _ _ :-
   get-option "non_forgetful_inheritance" tt, !.
 check-non-forgetful-inheritance T Factory :- std.do! [
-  coq.safe-dest-app T HdSym _,
-  if (structure-key HdSym Super) (
-    coq.error "HB: non forgetful inheritance detected.\n"
+  if (coq.safe-dest-app T HdSym _, structure-key HdSym Super) (
+    coq.warning "HB" "HB.non-forgetful-inheritance"
+      "non forgetful inheritance detected.\n"
       "You have two solutions:"
       "1. (Best practice) Reorganize your hierarchy to make"
       {nice-gref->string Factory}
