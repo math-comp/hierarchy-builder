@@ -56,7 +56,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
-    if-verbose (coq.say "HB: closing instance section"),
+    if-verbose (coq.say {header} "closing instance section"),
     log.coq.env.end-section-name SectionName
   ),
 
@@ -77,13 +77,13 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
   if (not(local-cs? T Struct))
      true % we build it
-     (if-verbose (coq.say "HB: skipping already existing"
+     (if-verbose (coq.say {header} "skipping already existing"
                     {nice-gref->string Struct} "instance on"
                     {coq.term->string T}),
       fail),
 
   if (synthesis.infer-all-args-let Params T KC KCApp ok)
-     (if-verbose (coq.say "HB: we can build a" {nice-gref->string Struct} "on"
+     (if-verbose (coq.say {header} "we can build a" {nice-gref->string Struct} "on"
         {coq.term->string T}))
      fail,
 
@@ -91,15 +91,17 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   coq.term->gref T TGR,
   Name is  {gref->modname-label TGR 1 "_"} ^ "__canonical__" ^ {gref->modname Struct 2 "_"},
 
-  if-verbose (coq.say "HB: declare canonical structure instance" Name),
+  if-verbose (coq.say {header} "declare canonical structure instance" Name),
 
   get-constructor Struct KS,
   private.optimize-class-body TGR {std.length Params} KCApp KCAppNames Clauses,
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
+  if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
   std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
+  if-verbose (coq.say {header} "structure instance" Name "declared"),
 
   Clauses => declare-all T Rest L.
 declare-all T [_|Rest] L :- declare-all T Rest L.
@@ -107,7 +109,7 @@ declare-all _ [] [].
 
 pred declare-factory-sort-deps i:gref.
 declare-factory-sort-deps  GR :- std.do! [
-  if-verbose (coq.say "HB: required instances on factory sort for" GR),
+  if-verbose (coq.say {header} "required instances on factory sort for" GR),
   Name is "SortInstances" ^ {std.any->string {new_int}},
   log.coq.env.begin-module Name none,
   log.coq.env.begin-section Name,
@@ -119,7 +121,7 @@ declare-factory-sort-deps  GR :- std.do! [
 
 pred declare-factory-sort-factory i:gref.
 declare-factory-sort-factory GR :- std.do! [
-  if-verbose (coq.say "HB: required instances on factory sort for" GR),
+  if-verbose (coq.say {header} "required instances on factory sort for" GR),
   Name is "SortInstances" ^ {std.any->string {new_int}},
   log.coq.env.begin-module Name none,
   log.coq.env.begin-section Name,
@@ -211,11 +213,11 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
   % alias it.
   if (Bo = global (const C)) true
     (Name is {gref->modname FGR 2 "_"} ^"__to__" ^ {gref->modname MixinName 2 "_"},
-     if-verbose (coq.say "HB: declare mixin instance" Name),
+     if-verbose (coq.say {header} "declare mixin instance" Name),
      log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
   if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
      (std.do! [
-         if-verbose (coq.say "HB: declare canonical mixin instance" C),
+         if-verbose (coq.say {header} "declare canonical mixin instance" C),
          with-locality (log.coq.CS.declare-instance C),
          CSL = [pr "_" C]
      ]) (CSL = []),
@@ -238,7 +240,7 @@ add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
 pred postulate-arity i:arity, i:list term, i:term, o:term, o:term.
 postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   std.assert-ok! (coq.typecheck-ty S _) "arity parameter illtyped",
-  if-verbose (coq.say "HB: postulating" ID),
+  if-verbose (coq.say {header} "postulating" ID),
   if (var S) (coq.fresh-type S) true,
   log.coq.env.add-section-variable-noimplicits ID S C,
   Var = global (const C),
@@ -302,7 +304,8 @@ optimize-body X X.
 
 pred optimize-class-body i:gref, i:int, i:term, o:term, o:list prop.
 optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
-  declare-mixin-name MBo (pr MC CL1),
+  (pi X Y\ copy (let _ _ X x\x) Y :- copy X Y) => copy MBo MBo1,
+  declare-mixin-name MBo1 MC CL1,
   if (TGR = indt _, MC = global (const C), not(coq.env.opaque? C))
      (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
   optimize-class-body TGR NParams (R MC) R1 CL2,
@@ -310,13 +313,22 @@ optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
 ].
 optimize-class-body _ _ (app L) (app L) [].
 
-pred declare-mixin-name i:term, o:(pair term (list prop)).
-declare-mixin-name (global GR) (pr (global GR) []).
-declare-mixin-name T (pr (global GR) []) :- mixin-mem T GR.
-declare-mixin-name T (pr T []) :- coq.safe-dest-app T (global GR) _, not (from _ _ GR).
-declare-mixin-name T (pr (global (const C)) [mixin-mem T (const C)]) :- std.do! [
-  if-verbose (coq.say "HB: declare-mixin-name" T),
+pred term-size i:term, i:int, o:int.
+term-size (app L) N M :- !, std.fold L N term-size M.
+term-size (fun _ T F) N M :- !,
+  (pi x\ term-size (F x) N M0),
+  term-size T M0 M1,
+  M is M1 + 1.
+term-size _ N M :- M is N + 1.
+
+pred declare-mixin-name i:term, o:term, o:list prop.
+%declare-mixin-name T T [] :- {term-size T 0} < 2, !.
+declare-mixin-name (global _ as T) T [].
+declare-mixin-name T (global GR) [] :- mixin-mem T GR.
+declare-mixin-name T T [] :- coq.safe-dest-app T (global GR) _, not (from _ _ GR).
+declare-mixin-name T (global (const C)) [mixin-mem T (const C)] :- std.do! [
   Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
+  if-verbose (coq.say {header} "Giving name" Name "to mixin instance" {coq.term->string T}),
   log.coq.env.add-const-noimplicits Name T _ @transparent! C,
 ].
 

@@ -150,7 +150,7 @@ namespace private {
 % the databases [mixin-src] and [from]
 pred mixin-for i:term, i:mixinname, o:term.
 mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
-  %if-verbose (coq.say "HB: Trying to infer mixin for" M),
+  %if-verbose (coq.say {header} "Trying to infer mixin for" M),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
 %%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -162,7 +162,7 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
       coq.subst-fun [Tm] B MI
   ),
 
-  %if-verbose (coq.say "HB: Trying to compress mixin for" {coq.term->string MI}),
+  %if-verbose (coq.say {header} "Trying to compress mixin for" {coq.term->string MI}),
   compress-coercion-paths MI MICompressed,
 ].
 

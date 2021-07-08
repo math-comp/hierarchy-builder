@@ -6,23 +6,23 @@ namespace builders {
 pred begin i:context-decl.
 begin CtxSkel :- std.do! [
   Name is "Builders_" ^ {std.any->string {new_int}}, % TODO?
-  if-verbose (coq.say "HB: begin module for builders"),
+  if-verbose (coq.say {header} "begin module for builders"),
   log.coq.env.begin-module Name none,
 
   builders.private.factory CtxSkel IDF GRF,
 
   % the Super module to access operations/axioms shadowed by the ones in the factory
   if (GRF = indt FRecord) (std.do! [
-    if-verbose (coq.say "HB: begin module Super"),
+    if-verbose (coq.say {header} "begin module Super"),
     log.coq.env.begin-module "Super" none,
     std.forall {coq.env.projections FRecord}
       builders.private.declare-shadowed-constant,
     log.coq.env.end-module-name "Super" _,
-    if-verbose (coq.say "HB: ended module Super")
+    if-verbose (coq.say {header} "ended module Super")
   ]) (true),
 
   log.coq.env.begin-section Name,
-  if-verbose (coq.say "HB: postulating factories"),
+  if-verbose (coq.say {header} "postulating factories"),
   builders.private.postulate-factories Name IDF CtxSkel,
 ].
 
@@ -78,10 +78,10 @@ namespace builders.private {
 % From holds the (from F Mi Bi) new clauses during folding.
 pred declare-1-builder i:builder, i:list prop, o:list prop.
 declare-1-builder (builder _ SrcFactory TgtMixin _) FromClauses FromClauses :- FromClauses => from SrcFactory TgtMixin _, !,
-  if-verbose (coq.say "HB: skipping duplicate builder from"
+  if-verbose (coq.say {header} "skipping duplicate builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
 declare-1-builder (builder _ SrcFactory TgtMixin B) FromClauses [from SrcFactory TgtMixin B|FromClauses] :-
-  if-verbose (coq.say "HB: declare builder from"
+  if-verbose (coq.say {header} "declare builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
 
 % We add breviations for all constants what will be shadowed by projections
