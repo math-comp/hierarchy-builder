@@ -50,6 +50,10 @@ pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
 
+% header of if-verbose messages
+pred header o:string.
+header Msg :- Msg is "[" ^ {std.any->string {gettimeofday}} ^ "] HB: ".
+
 pred if-arg-sort i:prop.
 if-arg-sort P :- get-option "arg_sort" tt, !, P.
 if-arg-sort _.

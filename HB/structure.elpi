@@ -31,7 +31,7 @@ declare Module B :- std.do! [
 
   % TODO: check we never define the superclass of an exising class
 
-  if-verbose (coq.say "HB: start module" Module),
+  if-verbose (coq.say {header} "start module" Module),
 
   log.coq.env.begin-module Module none,
 
@@ -48,43 +48,43 @@ declare Module B :- std.do! [
   std.map NewMixins (m\ r\ r = mixin-first-class m ClassName) MixinFirstClass,
 
 
-  if-verbose (coq.say "HB: structure: new mixins" NewMixins),
-  if-verbose (coq.say "HB: structure: mixin first class" MixinFirstClass),
+  if-verbose (coq.say {header} "structure: new mixins" NewMixins),
+  if-verbose (coq.say {header} "structure: mixin first class" MixinFirstClass),
 
 
   private.declare-auto-infer-params-abbrev Structure MLwP LocType,
 
-  if-verbose (coq.say "HB: declaring clone abbreviation"),
+  if-verbose (coq.say {header} "declaring clone abbreviation"),
   w-params.then MLwP phant.fun-real phant.fun-real
     (private.clone-phant-body ClassName SortProjection Structure) PhClone,
   phant.add-abbreviation "clone" PhClone _ _,
 
-  if-verbose (coq.say "HB: declaring pack_ constant"),
+  if-verbose (coq.say {header} "declaring pack_ constant"),
   (ClassAlias => class-def CurrentClass => GRDepsClauses =>
     w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
-  if-verbose (coq.say "HB: declaring pack_ constant =" Pack),
+  if-verbose (coq.say {header} "declaring pack_ constant =" Pack),
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
   GRPack = const ConstPack,
 
   if-arg-sort (
-    if-verbose (coq.say "HB: define arg_sort"),
+    if-verbose (coq.say {header} "define arg_sort"),
     std.assert-ok! (coq.typecheck SortProjection SortProjTy)
       "HB: BUG: cannot retype projection",
     log.coq.env.add-const-noimplicits "arg_sort" SortProjection SortProjTy ff ArgSortCst
   ),
 
-  if-verbose (coq.say "HB: start module Exports"),
+  if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
 
   %(ClassAlias => class-def CurrentClass =>
   %  GRDepsClauses => MixinFirstClass => gref-deps GRPack MLwP =>
   %    phant.of-gref tt GRPack [] PhRepack),
-  %if-verbose (coq.say "HB: declaring pack abbreviation =" PhRepack),
+  %if-verbose (coq.say {header} "declaring pack abbreviation =" PhRepack),
   % phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
   
   if (get-option "short.type" ShortType) (
-    if-verbose (coq.say "HB: short name for type:" ShortType),
+    if-verbose (coq.say {header} "short name for type:" ShortType),
     if (LocType = loc-abbreviation StrTypeAbbrev) (std.do! [
       coq.notation.abbreviation-body StrTypeAbbrev NStrTypeAbbrev StrTypeTm,
       @global! => log.coq.notation.add-abbreviation
@@ -94,37 +94,37 @@ declare Module B :- std.do! [
 
   coq.mk-app (global Structure) {coq.mk-n-holes {w-params.nparams MLwP}} HB_Instance,
   if (get-option "short.pack" ShortPack) (std.do! [
-    if-verbose (coq.say "HB: declaring pack abbreviation:" ShortPack),
+    if-verbose (coq.say {header} "declaring pack abbreviation:" ShortPack),
     % coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
     % @global! => log.coq.notation.add-abbreviation
     %  ShortPack NPackAbbrev PackAbbrevTrm ff _
       coq.notation.add-abbreviation-for-tactic ShortPack "HB.pack_for" [trm HB_Instance]
     ]) (std.do! [
     PackAbbrevName is Module ^ ".pack",
-    if-verbose (coq.say "HB: declaring pack abbreviation:" PackAbbrevName),
+    if-verbose (coq.say {header} "declaring pack abbreviation:" PackAbbrevName),
     coq.notation.add-abbreviation-for-tactic PackAbbrevName "HB.pack_for" [trm HB_Instance],
     ]),
 
-  if-verbose (coq.say "HB: making coercion from type to target"),
+  if-verbose (coq.say {header} "making coercion from type to target"),
   synthesis.infer-coercion-tgt MLwP CoeClass,
   if-arg-sort (private.declare-sort-coercion CoeClass Structure
     (global (const ArgSortCst))),
   private.declare-sort-coercion CoeClass Structure SortProjection,
 
-  if-verbose (coq.say "HB: exporting unification hints"),
+  if-verbose (coq.say {header} "exporting unification hints"),
   ClassAlias => Factories => GRDepsClauses =>
     private.declare-unification-hints SortProjection ClassProjection CurrentClass NewJoins,
   % Register in Elpi's DB the new structure
   % NOT TODO: All these acc are correctly locaed in an Export Module
 
   if (ClassName = indt ClassInd) (std.do![
-    if-verbose (coq.say "HB: exporting coercions from class to mixins"),
+    if-verbose (coq.say {header} "exporting coercions from class to mixins"),
     std.forall {coq.env.projections ClassInd}
       (private.export-mixin-coercion ClassName)
     ])
     (coq.say "declare:" ClassName "should be an inductive", fail),
 
-  if-verbose (coq.say "HB: accumulating various props"),
+  if-verbose (coq.say {header} "accumulating various props"),
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
@@ -134,25 +134,25 @@ declare Module B :- std.do! [
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
 
-  if-verbose (coq.say "HB: stop module Exports"),
+  if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
 
   log.coq.env.import-module "Exports" Exports,
 
-  if-verbose (coq.say "HB: declaring on_ abbreviation"),
+  if-verbose (coq.say {header} "declaring on_ abbreviation"),
 
   private.mk-infer-key CoeClass ClassProjection NilwP (global Structure) PhClass,
 
   phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
 
-  if-verbose (coq.say "HB: declaring `copy` abbreviation"),
+  if-verbose (coq.say {header} "declaring `copy` abbreviation"),
 
   coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
   @global! => log.coq.notation.add-abbreviation "copy" 2
     {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T)) }} tt _,
 
-  if-verbose (coq.say "HB: declaring on abbreviation"),
+  if-verbose (coq.say {header} "declaring on abbreviation"),
 
   @global! => log.coq.notation.add-abbreviation "on" 1
     {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt
@@ -162,7 +162,7 @@ declare Module B :- std.do! [
 
   if (get-option "primitive" tt) true (
     true
-    % if-verbose (coq.say "HB: eta expanded instances"),
+    % if-verbose (coq.say {header} "eta expanded instances"),
     % NewClauses => std.do! [
     %   w-params.fold MLwP mk-fun
     %     (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
@@ -180,21 +180,21 @@ declare Module B :- std.do! [
 
   log.coq.env.end-module-name Module ModulePath,
 
-  if-verbose (coq.say "HB: end modules; export" Exports),
+  if-verbose (coq.say {header} "end modules; export" Exports),
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
-  if-verbose (coq.say "HB: export" EtaExports),
+  if-verbose (coq.say {header} "export" EtaExports),
 
   export.module {calc (Module ^ ".EtaAndMixinExports")} EtaExports,
 
-  if-verbose (coq.say "HB: exporting operations"),
+  if-verbose (coq.say {header} "exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
       private.export-operations Structure SortProjection ClassProjection MLwP [] EX MLToExport,
     % TODO: issue an Arguments op T : rename, where T is the name written by
     %   the user in Definition foo := { T of ... }
 
-  if-verbose (coq.say "HB: operations meta-data module: ElpiOperations"),
+  if-verbose (coq.say {header} "operations meta-data module: ElpiOperations"),
 
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
   log.coq.env.begin-module ElpiOperationModName none,
@@ -202,7 +202,7 @@ declare Module B :- std.do! [
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
 
-  if-verbose (coq.say "HB: abbreviation factory-by-classname"),
+  if-verbose (coq.say {header} "abbreviation factory-by-classname"),
 
   NewClauses => factory.declare-abbrev Module (factory.by-classname ClassName),
 
@@ -267,7 +267,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
 
   w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
-  if-verbose (coq.say "HB: export operation" Name),
+  if-verbose (coq.say {header} "export operation" Name),
   log.coq.env.add-const-noimplicits Name Body BodyTy @transparent! C,
 
   w-params.nparams MwP NP,
@@ -361,14 +361,14 @@ declare-coercion SortProjection ClassProjection
   CName is ModNameF ^ "_class__to__" ^ ModNameT ^ "_class",
   SName is ModNameF ^ "__to__" ^ ModNameT,
 
-  if-verbose (coq.say "HB: declare coercion" SName),
+  if-verbose (coq.say {header} "declare coercion" SName),
 
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
 
   std.assert-ok! (coq.typecheck CoeBody Ty) "declare-coercion: CoeBody illtyped",
 
-  if-verbose (coq.say "HB: declare coercion hint" CName),
+  if-verbose (coq.say {header} "declare coercion hint" CName),
 
   log.coq.env.add-const-noimplicits CName CoeBody Ty @transparent! C,
   log.coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
@@ -380,14 +380,14 @@ declare-coercion SortProjection ClassProjection
 
   std.assert-ok! (coq.typecheck SCoeBody STy) "declare-coercion: SCoeBody illtyped",
 
-  if-verbose (coq.say "HB: declare unification hint" SName),
+  if-verbose (coq.say {header} "declare unification hint" SName),
 
   log.coq.env.add-const-noimplicits SName SCoeBody STy @transparent! SC,
   log.coq.coercion.declare (coercion (const SC) 0 StructureF (grefclass StructureT)),
 
   log.coq.CS.declare-instance SC,
 
-  if-verbose (coq.say "HB: declare coercion path compression rules"),
+  if-verbose (coq.say {header} "declare coercion path compression rules"),
 
   findall-classes All,
   CurrentTgtClass = (class TC StructureT TMLwP),
@@ -452,7 +452,7 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
   factory-nparams C1 N1,
   factory-nparams C2 N2,
 
-  if-verbose (coq.say "HB: declare unification hint" Name),
+  if-verbose (coq.say {header} "declare unification hint" Name),
   w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
     (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
@@ -484,7 +484,7 @@ pred synthesize-fields i:term, i:list (w-args mixinname), o:record-decl.
 synthesize-fields _T []     end-record.
 synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
   Name is {gref->modname M 2 "_"} ^ "_mixin",
-  if-verbose (coq.say "HB: typing class field" M),
+  if-verbose (coq.say {header} "typing class field" M),
   std.assert! (synthesis.infer-all-gref-deps Args T M MTy) "anomaly: a field type cannot be solved",
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
@@ -505,7 +505,7 @@ mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global C
 pred declare-class+structure i:mixins, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
 declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories (structure-key SortP ClassP (indt StructureInd)):- std.do! [
 
-  if-verbose (coq.say "HB: declare axioms record"MLwP ),
+  if-verbose (coq.say {header} "declare axioms record"MLwP ),
 
   w-params.then MLwP (mk-parameter explicit) (mk-parameter explicit)
     synthesize-fields.body ClassDeclaration,
@@ -523,7 +523,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
     r = from (indt ClassInd) m (const P)) Factories,
   AllFactories = [factory-nparams (indt ClassInd) NParams | Factories],
 
-  if-verbose (coq.say "HB: declare type record"),
+  if-verbose (coq.say {header} "declare type record"),
 
   w-params.then MLwP (mk-parameter explicit) mk-record+sort-field
     (mk-class-field (indt ClassInd)) StructureDeclaration,
@@ -542,7 +542,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
 pred declare-sort-coercion i:class, i:structure, i:term.
 declare-sort-coercion CoeClass StructureName (global Proj) :-
 
-  if-verbose (coq.say "HB: declare sort coercion"),
+  if-verbose (coq.say {header} "declare sort coercion"),
 
   log.coq.coercion.declare (coercion Proj 0 StructureName CoeClass).
 
@@ -559,7 +559,7 @@ export-mixin-coercion _ none.
 export-mixin-coercion ClassName (some C) :-
   coq.env.typeof (const C) CTy,
   coq.prod-tgt->gref CTy MixinGR,
-  if-verbose (coq.say "HB: export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
+  if-verbose (coq.say {header} "export class to mixin coercion for mixin" {nice-gref->string MixinGR}),
   log.coq.coercion.declare (coercion (const C) _ ClassName (grefclass MixinGR)).
 
 pred mc-compat-structure i:string, i:modpath, i:list mixinname, i:int, i:term, i:gref, i:option gref.

@@ -33,9 +33,9 @@ argument->w-mixins (const-decl Id none Decl) (pr MLwP ArgwP) :- !, std.do! [
 ].
 argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     (pr MLwP ArgwP) :- !, std.do! [
-  if-verbose (coq.say "HB: arguments->w-mixins on const-decl Decl=" CDecl),
+  if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" CDecl),
   pdecl->w-mixins Decl (pr MLwP DeclwP),
-  if-verbose (coq.say "HB: arguments->w-mixins on const-decl Decl=" Decl
+  if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" Decl
     "\nwith MLwP =" MLwP),
   std.length {list-w-params_list MLwP} NML,
   if-verbose (coq.say "ML length =" NML),
@@ -114,7 +114,7 @@ pred mixin-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
   i:(A -> pair (list (w-args mixinname)) A -> prop),
   o:pair (list (w-args mixinname)) A.
 mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
-  if-verbose (coq.say "HB: processing mixin" DeclKind ID),
+  if-verbose (coq.say {header} "processing mixin" DeclKind ID),
   std.assert! (not (var TySkel)) "HB: no type provided for mixin",
   purge-id TySkel TySkelNoId,
   std.assert-ok! (coq.elaborate-ty-skeleton TySkelNoId _ Ty)
@@ -130,7 +130,7 @@ pred key-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
   i:(A -> pair (list (w-args mixinname)) A -> prop),
   o:pair mixins (w-params A).
 key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
-  if-verbose (coq.say "HB: processing key" DeclKind),
+  if-verbose (coq.say {header} "processing key" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "key illtyped",
   coq.string->name ID N, @pi-decl N Ty t\ Conv (Rest t) (pr (MLwA t) (R t)),
   if (var Ty) (fresh-type Ty) true,
@@ -139,7 +139,7 @@ key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
 pred param-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
   i:(A -> pair mixins (w-params A) -> prop), o:pair mixins (w-params A).
 param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
-  if-verbose (coq.say "HB: processing param" DeclKind),
+  if-verbose (coq.say {header} "processing param" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "param illtyped",
   coq.string->name ID N, @pi-decl N Ty p\ Conv (Rest p) (pr (MLwP p) (R p)),
   if (var Ty) (fresh-type Ty) true,
@@ -191,27 +191,27 @@ mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
 pred declare-asset i:argument, i:asset.
 declare-asset Arg AssetKind :- std.do! [
   argument-name Arg Module,
-  if-verbose (coq.say "HB: start module and section" Module),
+  if-verbose (coq.say {header} "start module and section" Module),
   log.coq.env.begin-module Module none,
   log.coq.env.begin-section Module,
 
-  if-verbose (coq.say "HB: converting arguments" Arg "to factories"),
+  if-verbose (coq.say {header} "converting arguments" Arg "to factories"),
   argument->w-mixins Arg (pr FLwP ArgwP),
 
-  if-verbose (coq.say "HB: converting factories" FLwP "to mixins"),
+  if-verbose (coq.say {header} "converting factories" FLwP "to mixins"),
   factories-provide FLwP MLwP,
 
-  if-verbose (coq.say "HB: declaring context" FLwP),
+  if-verbose (coq.say {header} "declaring context" FLwP),
   context.declare FLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
 
   if (Arg = indt-decl _) (
     apply-w-params ArgwP Params TheKey (indt-decl (record _ Sort _ Fields)),
-    if-verbose (coq.say "HB: declare mixin or factory"),
+    if-verbose (coq.say {header} "declare mixin or factory"),
     declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
       Params TheKey Sort Fields MLwP Module AssetKind
   ) (
     apply-w-params ArgwP Params TheKey (const-decl _ (some Sort) _),
-    if-verbose (coq.say "HB: declare factory alias"),
+    if-verbose (coq.say {header} "declare factory alias"),
     declare-factory-alias MixinSrcClauses SectionCanonicalInstance
       Params TheKey Sort MLwP Module
   )
@@ -222,7 +222,7 @@ pred declare-mixin-or-factory i:list prop, i:list constant, i:list term, i:term,
 declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Sort1 Fields GRFSwP Module D :- std.do! [
 
-  if-verbose (coq.say "HB: declare record axioms_:" Sort1),
+  if-verbose (coq.say {header} "declare record axioms_:" Sort1),
   Kname = "Axioms_",
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
@@ -252,12 +252,12 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   % TODO: should this be in the Exports module?
 
-  if-verbose (coq.say "HB: declare notation Build"),
+  if-verbose (coq.say {header} "declare notation Build"),
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
 
-  if-verbose (coq.say "HB: declare notation axioms"),
+  if-verbose (coq.say {header} "declare notation axioms"),
 
   if (D = asset-mixin)
      (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) FRClauses FactAbbrev,
@@ -265,7 +265,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
       Clauses = [IdBuilderClause|FRClauses])
      (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) Clauses FactAbbrev),
 
-  if-verbose (coq.say "HB: start module Exports"),
+  if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
   std.flatten [Clauses, GRDepsClauses, [
@@ -288,7 +288,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
 
-  if-verbose (coq.say "HB: end modules and sections; export" Exports),
+  if-verbose (coq.say {header} "end modules and sections; export" Exports),
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
@@ -301,7 +301,7 @@ pred declare-factory-alias  i:list prop, i:list constant, i:list term, i:term,
 declare-factory-alias MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Ty1Skel GRFSwP Module :- std.do! [
 
-  if-verbose (coq.say "HB: declare constant axioms_:" Ty1Skel),
+  if-verbose (coq.say {header} "declare constant axioms_:" Ty1Skel),
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
@@ -338,7 +338,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 
-  if-verbose (coq.say "HB: start module Exports"),
+  if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
 
@@ -361,7 +361,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
 
-  if-verbose (coq.say "HB: end modules and sections; export" Exports),
+  if-verbose (coq.say {header} "end modules and sections; export" Exports),
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
@@ -395,7 +395,7 @@ abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance
 
 pred mk-factory-sort i:mixins, i:gref, o:gref, o:coercion.
 mk-factory-sort MLwP GR (const FactorySortCst) Coe :-
-  if-verbose (coq.say "HB: declaring tagged sort for GR=" GR),
+  if-verbose (coq.say {header} "declaring tagged sort for GR=" GR),
   synthesis.mixins-w-params.fun MLwP (mk-factory-sort.term GR) FactorySort,
   std.assert-ok! (coq.typecheck FactorySort FactorySortTy) "HB: cannot elaborate sort",
   log.coq.env.add-const-noimplicits "sort" FactorySort FactorySortTy ff FactorySortCst,
