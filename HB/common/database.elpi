@@ -29,6 +29,12 @@ class_structure (class _ S _) S.
 pred class-def_name i:prop, o:classname.
 class-def_name (class-def (class N _ _)) N.
 
+pred mixin-class_class i:prop, o:classname.
+mixin-class_class (mixin-class _ C) C.
+
+pred mixin-class_mixin i:prop, o:mixinname.
+mixin-class_mixin (mixin-class M _) M.
+
 pred classname->def i:classname, o:class.
 classname->def CN (class CN S ML) :- class-def (class CN S ML).
 
@@ -157,6 +163,22 @@ pred findall-classes o:list class.
 findall-classes CLSortedDef :- std.do! [
   std.findall (class-def C_) All,
   std.map All class-def_name CL,
+  toposort-classes CL CLSorted,
+  std.map CLSorted classname->def CLSortedDef,
+].
+
+pred findall-classes-for.unsorted
+  i:list mixinname, i:list classname, o:list classname.
+findall-classes-for.unsorted [] CL CL :- !.
+findall-classes-for.unsorted [M|ML] CLAcc Out :- std.do! [
+  std.findall (mixin-class M C_) All,
+  std.map All mixin-class_class CL,
+  findall-classes-for.unsorted ML {std.append CL CLAcc} Out
+].
+
+pred findall-classes-for i:list mixinname, o:list class.
+findall-classes-for ML CLSortedDef :- std.do! [
+  findall-classes-for.unsorted ML [] CL,
   toposort-classes CL CLSorted,
   std.map CLSorted classname->def CLSortedDef,
 ].

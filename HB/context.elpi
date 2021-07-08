@@ -36,10 +36,11 @@ pred declare.mixins i:term, i:list term, i:list-w-params factoryname, o:list pro
 declare.mixins TheType TheParams GRFSwP MSL CL :-  std.do! [
   factories-provide GRFSwP MLwP,
   apply-w-params MLwP TheParams TheType MLwAllArgs,
+  list-w-params_list MLwP ML,
   % TODO: change to interleave cf PR #213
   std.fold MLwAllArgs [] private.postulate-mixin MSL,
   MSL => get-option "local" tt =>
-    instance.declare-all TheType {findall-classes} CSL,
+    instance.declare-all TheType {findall-classes-for ML} CSL,
   std.map CSL snd CL,
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
