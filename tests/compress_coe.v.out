@@ -4,9 +4,9 @@ fun D D' : D.type =>
   D.sort := D.sort D * D.sort D';
   D.class :=
     {|
-      D.compress_coe_hasA_mixin := HB_unnamed_mixin_16 D D';
-      D.compress_coe_hasB_mixin := HB_unnamed_mixin_17 D D';
-      D.compress_coe_hasC_mixin := HB_unnamed_mixin_18 D D';
+      D.compress_coe_hasA_mixin := HB_unnamed_mixin_66 D D';
+      D.compress_coe_hasB_mixin := HB_unnamed_mixin_67 D D';
+      D.compress_coe_hasC_mixin := HB_unnamed_mixin_68 D D';
       D.compress_coe_hasD_mixin := prodD D D'
     |}
 |}

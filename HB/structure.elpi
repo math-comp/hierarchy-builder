@@ -66,6 +66,13 @@ declare Module B :- std.do! [
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
   GRPack = const ConstPack,
 
+  if-verbose (coq.say {header} "declaring pack abbreviation"),
+  (ClassAlias => class-def CurrentClass =>
+    GRDepsClauses => MixinFirstClass => gref-deps GRPack MLwP =>
+      phant.of-gref tt GRPack [] PhRepack),
+  if-verbose (coq.say {header} "declaring pack abbreviation =" PhRepack),
+  phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
+
   if-arg-sort (
     if-verbose (coq.say {header} "define arg_sort"),
     std.assert-ok! (coq.typecheck SortProjection SortProjTy)
@@ -76,12 +83,6 @@ declare Module B :- std.do! [
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
-
-  %(ClassAlias => class-def CurrentClass =>
-  %  GRDepsClauses => MixinFirstClass => gref-deps GRPack MLwP =>
-  %    phant.of-gref tt GRPack [] PhRepack),
-  %if-verbose (coq.say {header} "declaring pack abbreviation =" PhRepack),
-  % phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
   
   if (get-option "short.type" ShortType) (
     if-verbose (coq.say {header} "short name for type:" ShortType),
@@ -92,18 +93,12 @@ declare Module B :- std.do! [
     ]) (@global! => log.coq.notation.add-abbreviation
       ShortType 0 (global Structure) ff _)) true,
 
-  coq.mk-app (global Structure) {coq.mk-n-holes {w-params.nparams MLwP}} HB_Instance,
   if (get-option "short.pack" ShortPack) (std.do! [
     if-verbose (coq.say {header} "declaring pack abbreviation:" ShortPack),
-    % coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
-    % @global! => log.coq.notation.add-abbreviation
-    %  ShortPack NPackAbbrev PackAbbrevTrm ff _
-      coq.notation.add-abbreviation-for-tactic ShortPack "HB.pack_for" [trm HB_Instance]
-    ]) (std.do! [
-    PackAbbrevName is Module ^ ".pack",
-    if-verbose (coq.say {header} "declaring pack abbreviation:" PackAbbrevName),
-    coq.notation.add-abbreviation-for-tactic PackAbbrevName "HB.pack_for" [trm HB_Instance],
-  ]),
+    coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
+    @global! => log.coq.notation.add-abbreviation
+      ShortPack NPackAbbrev PackAbbrevTrm ff _
+    ]) true,
 
   if-verbose (coq.say {header} "making coercion from type to target"),
   synthesis.infer-coercion-tgt MLwP CoeClass,
@@ -172,8 +167,8 @@ declare Module B :- std.do! [
     ]
     ),
 
-  % std.flatten {std.map NewMixins mixin->factories} NewFactories,
-  % NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
+  std.flatten {std.map NewMixins mixin->factories} NewFactories,
+  NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
 
   log.coq.env.end-module-name "EtaAndMixinExports" EtaExports,
 
