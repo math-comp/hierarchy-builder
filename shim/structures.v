@@ -8,3 +8,4 @@ Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition nomsg : error_msg := NoMsg.
 Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
+Definition eta {T} (x : T) := x.
