@@ -16,7 +16,7 @@ HB.structure Definition AB := {T of hasA T & hasB T}.
 
 HB.factory Record hasAB T := { a : T; b : T }.
 HB.builders Context T of hasAB T.
-Definition xxx := ABType T (hasB.Build T b) (hasA.Build T a).
+Definition xxx := HB.pack_for AB.type T (hasB.Build T b) (hasA.Build T a).
 HB.instance Definition _ := AB.copy T xxx.
 HB.end.
 About hasAB.type.
@@ -32,7 +32,7 @@ Proof.
 move=> T a b.
 pose Ta := hasA.Build T a.
 pose Tb := hasB.Build T b.
-exact: P (ABType T Ta Tb).
+exact: P (HB.pack T Ta Tb).
 Qed.
 
 End test.

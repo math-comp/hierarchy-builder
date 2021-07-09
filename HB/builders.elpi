@@ -55,8 +55,8 @@ builders.end :- std.do! [
   std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
   std.forall ExportClausesFiltered (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
-  % Clauses => ExportClausesFiltered => current-mode no-builder =>
-  %   instance.declare-factory-sort-factory GR,
+  Clauses => ExportClausesFiltered => current-mode no-builder =>
+    instance.declare-factory-sort-factory GR,
 
   log.coq.env.end-module-name Name Exports,
   log.coq.env.end-module-name ModName _,
