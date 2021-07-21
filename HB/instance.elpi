@@ -312,16 +312,7 @@ optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
 ].
 optimize-class-body _ _ (app L) (app L) [].
 
-pred term-size i:term, i:int, o:int.
-term-size (app L) N M :- !, std.fold L N term-size M.
-term-size (fun _ T F) N M :- !,
-  (pi x\ term-size (F x) N M0),
-  term-size T M0 M1,
-  M is M1 + 1.
-term-size _ N M :- M is N + 1.
-
 pred declare-mixin-name i:term, o:term, o:list prop.
-%declare-mixin-name T T [] :- {term-size T 0} < 2, !.
 declare-mixin-name (global _ as T) T [].
 declare-mixin-name T (global GR) [] :- mixin-mem T GR.
 declare-mixin-name T T [] :- coq.safe-dest-app T (global GR) _, not (from _ _ GR).
