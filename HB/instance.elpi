@@ -304,8 +304,7 @@ optimize-body X X.
 
 pred optimize-class-body i:gref, i:int, i:term, o:term, o:list prop.
 optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
-  (pi X Y\ copy (let _ _ X x\x) Y :- copy X Y) => copy MBo MBo1,
-  declare-mixin-name MBo1 MC CL1,
+  declare-mixin-name MBo MC CL1,
   if (TGR = indt _, MC = global (const C), not(coq.env.opaque? C))
      (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
   optimize-class-body TGR NParams (R MC) R1 CL2,
