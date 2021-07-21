@@ -232,7 +232,7 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
 
     % if the structure instance is concrete, we take the parts
     get-constructor S KS,
-    coq.mk-app (global KS) {std.append Holes [ST, CT]} KSHolesC,
+    coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
     if (coq.unify-eq ST KSHolesC ok)
       (% if the structure instance is concrete, we take the parts
        get-constructor (indt Class) KC,
