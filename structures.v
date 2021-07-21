@@ -391,13 +391,17 @@ Elpi Export HB.mixin.
     you can use [HB.pack_for Structure.type T F].
     
     You can pass zero or more factories like [F] but they must all typecheck
-    in the current context (the type is not enriched progressively). Examples:
+    in the current context (the type is not enriched progressively).
+    Structure instances are projected to their class in order to obtain a
+    factory.
+
+    Examples:
 
 [[
     pose Fa : IsSomething T := IsSomething.Build T ...
     pose A : A.type := HB.pack T Fa.
     pose Fb : IsMore A := IsMore.Build ...
-    pose B := HB.pack_for B.type A Fb.
+    pose B := HB.pack_for B.type T A Fb.
 ]]
 
     If [Structure.type] as parameters [P1..Pn] then you should use
