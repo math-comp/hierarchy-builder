@@ -114,11 +114,6 @@ HB: AddAG.sort is a canonical projection
 HB: AddAG.sort has the following canonical values:
     - Z 
     - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 194)
-    - Ring_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 165)
-    - Ring_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 142)
-    - Ring_of_AddAG.sort (from "./examples/demo1/hierarchy_5.v", line 108)
-    - AddAG_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 51)
-    - AddAG_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 44)
     - @eta 
 
 HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass

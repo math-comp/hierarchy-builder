@@ -247,8 +247,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
 
-  GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
-  FactorySortCoe = coercion GRFSort _ _ _,
+  % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
+  % FactorySortCoe = coercion GRFSort _ _ _,
 
   % TODO: should this be in the Exports module?
 
@@ -273,17 +273,17 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     factory-nparams (indt R) NParams,
     factory-builder-nparams BuildConst NParams,
     phant-abbrev GRK (const BuildConst) BuildAbbrev,
-    gref-deps GRFSort MLwP,
-    factory-sort FactorySortCoe,
+    % gref-deps GRFSort MLwP,
+    % factory-sort FactorySortCoe,
   ]] NewClauses,
   std.forall NewClauses
     (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 
   std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits,
   @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
-  @global! => log.coq.coercion.declare FactorySortCoe,
+  % @global! => log.coq.coercion.declare FactorySortCoe,
 
-  NewClauses => instance.declare-factory-sort-deps (indt R),
+  % NewClauses => instance.declare-factory-sort-deps (indt R),
 
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
@@ -329,8 +329,8 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK0,
 
-  GRDepsClauses => mk-factory-sort MLwP (const C) _ FactorySortCoe,
-  FactorySortCoe = coercion GRFSort _ _ _,
+  % GRDepsClauses => mk-factory-sort MLwP (const C) _ FactorySortCoe,
+  % FactorySortCoe = coercion GRFSort _ _ _,
 
   if (mixin-first-class F _) (PhGRK = PhGRK0)
     (phant.append-fun-unify PhGRK0 PhGRK),
@@ -347,16 +347,16 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
       [ factory-nparams (const C) NParams,
         factory-constructor (const C) GRK,
         factory-builder-nparams BuildConst NParams,
-        gref-deps GRFSort MLwP,
-        factory-sort FactorySortCoe
+        % gref-deps GRFSort MLwP,
+        % factory-sort FactorySortCoe
       ]
     ] NewClauses,
 
   std.forall NewClauses (c\
     log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-  @global! => log.coq.coercion.declare FactorySortCoe,
+  %@global! => log.coq.coercion.declare FactorySortCoe,
 
-  NewClauses => instance.declare-factory-sort-deps (const C),
+  % NewClauses => instance.declare-factory-sort-deps (const C),
 
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
