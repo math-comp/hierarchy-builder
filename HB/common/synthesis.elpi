@@ -35,16 +35,17 @@ infer-all-gref-deps Ps T GR X :- std.do! [
   private.instantiate-all-these-mixin-args FT T ML X,
 ].
 
-% [infer-all-args-let Ps T GR X] fills in all the Args in
+% [infer-all-args-let Ps T GR X Diagnostic] fills in all the Args in
 %   app[global GR, Ps, T | Args]
 % and generates a term
 %   let `a1` ty1 t1 a1\ .... app[global GR, p1, .. pn, T, a1, .. , an]
-pred infer-all-args-let i:list term, i:term, i:gref, o:term.
-infer-all-args-let Ps T GR X :- std.do! [
+% if Diagnostic is ok, else X is unassigned
+pred infer-all-args-let i:list term, i:term, i:gref, o:term, o:diagnostic.
+infer-all-args-let Ps T GR X Diag :- std.do! [
   coq.env.typeof GR Ty,
   coq.mk-eta (-1) Ty (global GR) EtaF,
   coq.subst-fun {std.append Ps [T]} EtaF FT,
-  private.instantiate-all-args-let FT T X,
+  private.instantiate-all-args-let FT T X Diag,
 ].
 
 
@@ -149,7 +150,7 @@ namespace private {
 % the databases [mixin-src] and [from]
 pred mixin-for i:term, i:mixinname, o:term.
 mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
-  %if-verbose (coq.say "HB: Trying to infer mixin for" M),
+  %if-verbose (coq.say {header} "Trying to infer mixin for" M),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
 %%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -161,7 +162,7 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
       coq.subst-fun [Tm] B MI
   ),
 
-  %if-verbose (coq.say "HB: Trying to compress mixin for" {coq.term->string MI}),
+  %if-verbose (coq.say {header} "Trying to compress mixin for" {coq.term->string MI}),
   compress-coercion-paths MI MICompressed,
 ].
 
@@ -192,7 +193,7 @@ builder->term Ps T Src Tgt B :- !, std.do! [
 % then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
 %            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
 % thus instanciating an abstraction on mixin M_i with X_i
-pred instantiate-all-these-mixin-args i:term, i:term, i:list mixinname,o:term.
+pred instantiate-all-these-mixin-args i:term, i:term, i:list mixinname, o:term.
 instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M,
@@ -204,39 +205,53 @@ instantiate-all-these-mixin-args (fun N Ty F) T ML (fun N Ty FX) :- !,
   @pi-decl N Ty m\ instantiate-all-these-mixin-args (F m) T ML (FX m).
 instantiate-all-these-mixin-args F _ _ F.
 
-pred instantiate-all-args-let i:term, i:term, o:term.
-instantiate-all-args-let (fun N Tm F) T (let N Tm X R) :- !, std.do! [
+pred instantiate-all-args-let i:term, i:term, o:term, o:diagnostic.
+instantiate-all-args-let (fun N Tm F) T (let N Tm X R) Diag :- !, std.do! [
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M,
-  mixin-for T M X,
-  (@pi-def N Tm X m\ instantiate-all-args-let (F m) T (R m)),
+  if (mixin-for T M X)
+     (@pi-def N Tm X m\ instantiate-all-args-let (F m) T (R m) Diag)
+     (Diag = error Msg,
+      Msg is "cannot synthesize mixin " ^ {nice-gref->string M} ^
+             " for " ^ {coq.term->string T}),
 ].
-instantiate-all-args-let F _ F.
+instantiate-all-args-let F _ F ok.
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins
 % which can be candidates from that class instance
 pred structure-instance->mixin-srcs i:term, i:structure, o:list prop.
 structure-instance->mixin-srcs T S MSLC :- std.do! [
-  get-structure-sort-projection S Sort,
+  structure-key SortProj ClassProj S,
+  class-def (class (indt Class) S CMLwP),
   structure-nparams S NParams,
   coq.mk-n-holes NParams Holes,
-  coq.mk-app Sort {std.append Holes [ST]} SortHolesST,
+  std.append Holes [ST] HolesST,
+  coq.mk-app (global (const SortProj)) HolesST SortHolesST,
   if (coq.unify-eq T SortHolesST ok) (
-    % Hum, this unification problem is not super trivial. TODO replace by something simpler
+
+    % if the structure instance is concrete, we take the parts
     get-constructor S KS,
-    coq.mk-app (global KS) {std.append Holes [T, C]} KSHolesC,
-    std.assert-ok! (coq.unify-eq ST KSHolesC) "HB: structure-instance->mixin-srcs: ST = _ _ C",
-    class-def (class CN S CMLwP),
-    get-constructor CN KC,
-    std.length {list-w-params_list CMLwP} CMixinsN,
-    coq.mk-n-holes CMixinsN MIL,
-    coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
-    std.assert-ok! (coq.unify-eq C CBody) "HB: structure-instance->mixin-srcs: C = KC ... T MIL",
-    std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
-    std.flatten MSLL MSLC)
+    coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
+    if (coq.unify-eq ST KSHolesC ok)
+      (% if the structure instance is concrete, we take the parts
+       get-constructor (indt Class) KC,
+       std.length {list-w-params_list CMLwP} CMixinsN,
+       coq.mk-n-holes CMixinsN MIL,
+       coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
+       std.assert-ok! (coq.unify-eq CT CBody) "HB: structure-instance->mixin-srcs: C = KC ... T MIL",
+       std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
+       std.flatten MSLL MSLC)
+      (% otherwise we project
+       coq.mk-app (global (const ClassProj)) HolesST ClassST,
+       coq.env.projections Class Projs,
+       std.map-filter Projs (structure-instance->mixin-srcs.aux2 {std.take NParams HolesST} T ClassST) MIL,
+       std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
+       std.flatten MSLL MSLC))
     (MSLC = [])
 ].
+structure-instance->mixin-srcs.aux2 Params T Class (some P) M :-
+  coq.mk-app (global (const P)) {std.append Params [T,Class]} M.
 structure-instance->mixin-srcs.aux T  F CL :-
   factory-instance->new-mixins [] F ML,
   std.map ML (m\c\ c = mixin-src T m F) CL.

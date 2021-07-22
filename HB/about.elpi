@@ -48,7 +48,9 @@ main-located S (loc-gref GR) :-
   std.filter {coq.CS.db-for _ (cs-gref GR)} (private.not1 private.unif-hint?) LV,
   coq.CS.db-for GR _ LP,
   std.filter {coq.coercion.db} (c\c = coercion GR _ _ _) LC,
-  if (LV = [], LP = [], LC = []) (coq.error "HB: unknown constant" S) true,
+  if (LV = [], LP = [], LC = [])
+     (coq.error "HB: uninteresting constant" {coq.pp->string {private.pp-loc-of GR}})
+     true,
   if (not (LV = [])) (private.main-canonical-value S LV) true,
   if (not (LP = [])) (private.main-canonical-projection S GR LP) true,
   if (not (LC = [])) (private.main-coercion S LC) true.
@@ -204,15 +206,14 @@ main-factory-constructor S F PhBuild Build :-
   list-w-params_list DMLwP DML,
   factory-provides (indt F) PMLwP,
   list-w-params_list PMLwP PML,
-  factory-nparams (indt F) NParams,
-  coq.CS.canonical-projections F FieldsOpts,
+  coq.env.projections F FieldsOpts,
   std.map-filter FieldsOpts (x\r\ x = some r) Fields,
-  std.map Fields (c\r\coq.gref->id (const c) r) FieldsNames,
   coq.arguments.implicit PhBuild [Implicits],
-  std.map {std.iota NParams} std.any->string Params,
-  std.map Params (i\r\r is "P" ^ i) ParamsNames,
+
+  compute-arg-type DMLwP Fields [] ParamsNames TName FieldsNames ArgsTypes,
+  compute-field-info FieldsNames Implicits FieldsNamesInfo,
   std.map ParamsNames (n\r\r = str n) ParamsPp,
-  compute-field-info FieldsNames Implicits FieldsInfo,
+
   % format
   PpOrigin = box (hov 4) [
     str "HB: ", str S, str " is a factory constructor", spc,
@@ -223,11 +224,12 @@ main-factory-constructor S F PhBuild Build :-
   PpProvides = box (v 4) [
     str "HB: ", str S, str " provides the following mixins:",
     {bulletize PML pp-module}],
-  PpUsage = box h {std.intersperse spc [
+  PpUsage = box (v 4) [box h {std.intersperse spc [
     str "HB: arguments:",
     glue {std.intersperse spc [str S | ParamsPp]},
-    str "T",
-    glue FieldsInfo]},
+    str TName,
+    glue FieldsNamesInfo]},
+    {bulletize ArgsTypes pp-arg-type}],
   % print
   coq.say {coq.pp->string PpOrigin},  
   coq.say {coq.pp->string PpRequires},  
@@ -236,10 +238,41 @@ main-factory-constructor S F PhBuild Build :-
   print-docstring Build,
   coq.say.
 
+pred compute-arg-type i:list-w-params mixinname, i:list constant, i:list term, o:list id, o:id, o:list id, o:list (pair id coq.pp).
+compute-arg-type (w-params.cons ID Ty Rest) F Acc [ID|PN] TN FN [pr ID PPTy |Xs] :-
+  coq.term->pp Ty PPTy,
+  @pi-parameter ID Ty x\ compute-arg-type (Rest x) F [x|Acc] PN TN FN Xs.
+compute-arg-type (w-params.nil ID Ty Rest) F Acc [] ID FN [pr ID PPTy|Xs] :-
+  coq.term->pp Ty PPTy,
+  @pi-parameter ID Ty x\ compute-arg-type.fields F {std.length (Rest x)} {std.rev [x|Acc]} Xs FN.
+pred compute-arg-type.fields i:list constant, i:int, i:list term, o:list (pair id coq.pp), o:list id.
+compute-arg-type.fields [] _ _ [] [].
+compute-arg-type.fields [C|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :- exported-op _ C OP, !,
+  coq.env.typeof (const OP) Ty,
+  coq.gref->id (const OP) ID,
+  coq.subst-prod Args Ty TyArgs,
+  @pplevel! 200 => coq.term->pp TyArgs PPTy,
+  compute-arg-type.fields Cs NDeps Args Xs FN.
+compute-arg-type.fields [OP|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :-
+  % factories don't get exported ops, so we hack their types :-/
+  coq.env.typeof (const OP) OrigTy,
+  copy OrigTy Ty,
+  coq.gref->id (const OP) ID,
+  coq.subst-prod Args Ty TyArgs,
+  coq.mk-n-holes NDeps Deps,
+  coq.subst-prod Deps TyArgs TyArgsDeps,
+  coq.subst-prod [_] TyArgsDeps TyArgsDepsRecord,
+  ToDrop is NDeps + 2,
+  @pplevel! 200 => coq.term->pp TyArgsDepsRecord PPTy,
+  @pi-parameter ID TyArgsDepsRecord op\
+  (pi L L1 X\
+    copy (app[global(const OP)|L]) X :- std.drop ToDrop L L1, coq.mk-app op L1 X) =>
+    compute-arg-type.fields Cs NDeps Args Xs FN.
+
 pred main-factory i:string, i:inductive.
 main-factory S Factory :-
   % fetch
-  coq.CS.canonical-projections Factory Ps,
+  coq.env.projections Factory Ps,
   std.map-filter Ps (x\r\ x = some r) Fields,
   gref-deps (indt Factory) DMLwP,
   list-w-params_list DMLwP DML,
@@ -295,6 +328,9 @@ pp-module M (str ID) :- gref->modname M 2 "." ID.
 
 pred pp-const i:constant, o:coq.pp.
 pp-const F (str ID) :- coq.gref->id (const F) ID.
+
+pred pp-arg-type i:pair id coq.pp, o:coq.pp.
+pp-arg-type (pr ID PPTy) (box (hov 2) [str ID, str" :", spc, PPTy]).
 
 pred pp-if-verbose o:coq.pp, i:(coq.pp -> prop).
 pp-if-verbose V P :- get-option "verbose" tt, !, P V.

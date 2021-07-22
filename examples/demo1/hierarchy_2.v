@@ -68,14 +68,6 @@ HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   mulrDr : right_distributive mul add;
 }.
 
-Section test.
-HB.declare Context A of AddComoid A.
-Print Canonical Projections A.
-Variable (f : Ring_of_AddComoid A).
-HB.instance Definition _ : AddComoid_of_TYPE f := AddComoid.on f.
-End test.
-Print Canonical Projections Ring_of_AddComoid.sort.
-
 
 HB.builders Context A (a : Ring_of_AddComoid A).
 

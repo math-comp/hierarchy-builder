@@ -134,6 +134,9 @@ opam install coq-hierarchy-builder
   - `HB.instance` declares a structure instance,
   - `HB.declare` declares a context with parameters, key and mixins.
 
+- HB core tactic-in-term:
+  - `HB.pack` to synthesize a structure instance in the middle of a term.
+
 - HB utility commands:
   - `HB.export` exports a module and schedules it for re-export
   - `HB.reexport` exports all modules, instances and constants scheduled for
