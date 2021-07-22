@@ -344,8 +344,8 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
     {coq.mk-n-holes {factory-nparams TC}} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
-     let T := lp:SortP s in
-     lp:PackPH T (lp:CoercionP T (lp:ClassP s)) }},
+     (* let T := lp:SortP s in*)
+     lp:PackPH (lp:SortP s) (lp:CoercionP (lp:SortP s) (lp:ClassP s)) }},
 ].
 
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
