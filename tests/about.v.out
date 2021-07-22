@@ -15,7 +15,13 @@ HB: AddMonoid_of_TYPE.Build is a factory constructor
 HB: AddMonoid_of_TYPE.Build requires its subject to be already equipped with:
 HB: AddMonoid_of_TYPE.Build provides the following mixins:
     - hierarchy_5.AddMonoid_of_TYPE
-HB: arguments: AddMonoid_of_TYPE.Build T zero add addrA add0r addr0
+HB: arguments: AddMonoid_of_TYPE.Build S zero add addrA add0r addr0
+    - S : Type
+    - zero : AddMonoid.sort S
+    - add : S -> S -> S
+    - addrA : associative add
+    - add0r : left_id 0%G add
+    - addr0 : right_id 0%G add
 
 HB: AddAG.type is a structure (from "./examples/demo1/hierarchy_5.v", line 72)
 HB: AddAG.type characterizing operations and axioms are:
@@ -81,7 +87,15 @@ HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
     - hierarchy_5.AddAG_of_AddComoid
 HB: Ring_of_AddAG.Build provides the following mixins:
     - hierarchy_5.BiNearRing_of_AddMonoid
-HB: arguments: Ring_of_AddAG.Build T [one] [mul] mulrA mulr1 mul1r mulrDl mulrDr
+HB: arguments: Ring_of_AddAG.Build A [one] [mul] mulrA mulr1 mul1r mulrDl mulrDr
+    - A : Type
+    - one : A
+    - mul : A -> A -> A
+    - mulrA : associative mul
+    - mulr1 : left_id one mul
+    - mul1r : right_id one mul
+    - mulrDl : left_distributive mul add
+    - mulrDr : right_distributive mul add
 Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
      mul0r are derived from addrC and the other ring axioms, following a proof
      of Hankel (Gerhard Betsch. On the beginnings and development of near-ring
@@ -100,11 +114,6 @@ HB: AddAG.sort is a canonical projection
 HB: AddAG.sort has the following canonical values:
     - Z 
     - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 194)
-    - Ring_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 165)
-    - Ring_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 142)
-    - Ring_of_AddAG.sort (from "./examples/demo1/hierarchy_5.v", line 108)
-    - AddAG_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 51)
-    - AddAG_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 44)
     - @eta 
 
 HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
@@ -131,4 +140,4 @@ HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
 HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
 hierarchy_5.BiNearRing_of_AddMonoid
 HB: synthesized in file 
-./tests/about.v, characters 118-242, line 3, column 165
+File "./tests/about.v", line 3, column 165, characters 125-249:
