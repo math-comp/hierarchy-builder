@@ -9,7 +9,7 @@ bug-reports: "https://github.com/math-comp/hierarchy-builder/issues"
 dev-repo: "git+https://github.com/math-comp/hierarchy-builder"
 
 build: [ [ make "build"]
-         [ make "test-suite" ]  # {with-test} waiting https://github.com/coq-community/docker-coq-action/pull/48
+         [ make "test-suite" ] {with-test}
        ]
 install: [ make "install" ]
 depends: [ "coq-elpi" ]

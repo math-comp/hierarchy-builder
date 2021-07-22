@@ -248,14 +248,14 @@ get-structure-coercion S T (global F) :-
 
 pred get-structure-sort-projection i:structure, o:term.
 get-structure-sort-projection (indt S) Proj :- !,
-  coq.CS.canonical-projections S L,
+  coq.env.projections S L,
   if (L = [some P, _]) true (coq.error "No canonical sort projection for" S),
   Proj = global (const P).
 get-structure-sort-projection S _ :- coq.error "get-structure-sort-projection: not a structure" S.
 
 pred get-structure-class-projection i:structure, o:term.
 get-structure-class-projection (indt S) T :- !,
-  coq.CS.canonical-projections S L,
+  coq.env.projections S L,
   if (L = [_, some P]) true (coq.error "No canonical class projection for" S),
   T = global (const P).
 get-structure-class-projection S _ :- coq.error "get-structure-class-projection: not a structure" S.
@@ -288,7 +288,7 @@ get-local-structures TyTrm StructL :- std.do! [
 pred local-cs? i:term, i:structure.
 local-cs? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
   term->gref TyTerm Value,
-  coq.CS.canonical-projections Struct [some Proj, _],
+  coq.env.projections Struct [some Proj, _],
   coq.CS.db-for (const Proj) (cs-gref Value) L,
   not(L = []).
 local-cs? TyTerm Struct :-

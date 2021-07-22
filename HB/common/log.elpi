@@ -249,10 +249,11 @@ pred log.private.log-vernac i:log.private.coq.vernac.
 
 with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.log.raw" _, NICE = ff), !,
   get-option "elpi.loc" Loc,
-  rex_split "," Loc [FILE|_],
+  loc.fields Loc FILE _ _ _ _,
+  std.any->string Loc LocStr,
   FILENAME is FILE ^ ".hb",
   open_append FILENAME OC1,
-  std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",Loc,""] PATCH1,
+  std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",LocStr,""] PATCH1,
   output OC1 PATCH1,
   close_out OC1,
   log.private.logger L NICE => P,
