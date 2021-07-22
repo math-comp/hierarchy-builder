@@ -52,7 +52,7 @@ declare Module B :- std.do! [
   if-verbose (coq.say {header} "structure: mixin first class" MixinFirstClass),
 
 
-  private.declare-auto-infer-params-abbrev Structure MLwP LocType,
+  private.declare-auto-infer-params-abbrev Structure MLwP LocType PHClauses,
 
   if-verbose (coq.say {header} "declaring clone abbreviation"),
   w-params.then MLwP phant.fun-real phant.fun-real
@@ -99,11 +99,12 @@ declare Module B :- std.do! [
     % @global! => log.coq.notation.add-abbreviation
     %  ShortPack NPackAbbrev PackAbbrevTrm ff _
       coq.notation.add-abbreviation-for-tactic ShortPack "HB.pack_for" [trm HB_Instance]
-    ]) (std.do! [
-    PackAbbrevName is Module ^ ".pack",
-    if-verbose (coq.say {header} "declaring pack abbreviation:" PackAbbrevName),
-    coq.notation.add-abbreviation-for-tactic PackAbbrevName "HB.pack_for" [trm HB_Instance],
-  ]),
+    ]) true,
+  %  (std.do! [
+  %  PackAbbrevName is Module ^ ".pack",
+  %  if-verbose (coq.say {header} "declaring pack abbreviation:" PackAbbrevName),
+  %  coq.notation.add-abbreviation-for-tactic PackAbbrevName "HB.pack_for" [trm HB_Instance],
+  %]),
 
   if-verbose (coq.say {header} "making coercion from type to target"),
   synthesis.infer-coercion-tgt MLwP CoeClass,
@@ -128,7 +129,7 @@ declare Module B :- std.do! [
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
-      [gref-deps GRPack MLwP], [StructKeyClause]
+      [gref-deps GRPack MLwP], [StructKeyClause], PHClauses
     ]
     NewClauses,
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
@@ -632,12 +633,12 @@ pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
   mk-app (global PackS) {std.append PL [T, Class]} Body
 ].
 
-pred declare-auto-infer-params-abbrev i:structure, i:mixins, o:located.
-declare-auto-infer-params-abbrev GR MLwP (loc-abbreviation Abbrev) :-
+pred declare-auto-infer-params-abbrev i:structure, i:mixins, o:located, o:list prop.
+declare-auto-infer-params-abbrev GR MLwP (loc-abbreviation Abbrev) [phant-abbrev GR (const PhC) Abbrev] :-
   get-option "infer" Map, !,
   Map => mk-infer (global GR) MLwP PhT,
-  phant.add-abbreviation "type" PhT _ Abbrev.
-declare-auto-infer-params-abbrev GR _ (loc-gref GR).
+  phant.add-abbreviation "type" PhT PhC Abbrev.
+declare-auto-infer-params-abbrev GR _ (loc-gref GR) [].
 
 pred mk-infer i:term, i:mixins, o:phant-term.
 mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.

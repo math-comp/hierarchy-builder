@@ -9,13 +9,13 @@ HB.structure Definition A := {T of hasA T}.
 HB.mixin Record hasB T := { b : T * T }.
 About hasB.type.
 HB.structure Definition B := {T of hasB T}.
-
+#[short(pack="AB.pack")]
 HB.structure Definition AB := {T of hasA T & hasB T}.
 
 HB.factory Record hasAB T := { a : T; b : T * T }.
 HB.builders Context T of hasAB T.
 
-Definition xxx := AB.pack T (hasB.Build T b) (hasA.Build T a).
+Definition xxx := HB.pack_for AB.type T (hasB.Build T b) (hasA.Build T a).
 HB.instance Definition _ := AB.copy T xxx.
 HB.end.
 About hasAB.type.
@@ -56,16 +56,6 @@ pose AB : AB.type := HB.pack A Tab.
 exact: P AB.
 Qed.
 
-Goal forall T (a b : T), G.
-Proof.
-move=> T a b.
-pose Ta := hasA.Build _ a.
-pose A := A.pack T Ta.
-pose Tab := hasB.Build A (b,b).
-pose AB := AB.pack A Tab.
-exact: 
-P AB.
-Qed.
 
 Check forall T : AB.type,
   let x := AB.pack T in
@@ -75,11 +65,11 @@ Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
 
-unshelve epose (A := A.pack T (_ : hasA T)).
+unshelve epose (A := HB.pack_for A.type T (_ : hasA T)).
   by exact: (hasA.Build _ a).
 Check A : A.type.
 
-unshelve epose (A1 := A.pack T (hasA.Build T _)).
+unshelve epose (A1 := HB.pack_for A.type T (hasA.Build T _)).
   by exact: a.
 Check A : A.type.
 
@@ -108,6 +98,7 @@ End test.
 HB.mixin Record HasFoo (A : Type) (P : A -> Prop) T := {
   foo : forall x, P x -> T;
 }.
+#[short(pack="Foo.pack")]
 HB.structure Definition Foo A P := { T of HasFoo A P T }.
 
 Section test2.
@@ -116,7 +107,7 @@ Variable P : A -> Prop.
 
 Goal forall T, (forall x, P x -> T) -> True.
 intros T H.
-pose X := Foo.pack A P T (HasFoo.Build A P T H).
+pose X := Foo.pack T (HasFoo.Build A P T H).
 Check X : Foo.type A P.
 Abort.
 

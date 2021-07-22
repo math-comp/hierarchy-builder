@@ -405,7 +405,7 @@ Elpi Export HB.mixin.
 ]]
 
     If [Structure.type] as parameters [P1..Pn] then you should use
-    [HB.pack P1..Pn T F1..Fn] or
+    [HB.pack T F1..Fn] or
     [HB.pack_for (Structure.type P1..Pn) T F1..Fn]
 
 *)
@@ -473,9 +473,6 @@ HB.structure Definition StructureName params :=
   - [StructureName.sort params] the first projection of the previous structure,
   - [StructureName.clone params T cT] a legacy repackaging function that eta expands
     the canonical [StructureName.type] of [T], using [cT] if provided.
-  - [StructureName.pack params T F] a packaging function that takes a key T
-    and some data F, which can be a convertible type or any factory or mixins
-    and attempts to package them together.
   - [StructureName.class sT : StructureName sT] projects out the class of [sT : StructureName.type params],
   - [StructureName.copy T T' : StructureName T] returns the class of the canonical
     [StructureName.type] of [T], and gives it the type [Structure T]. It is thus
@@ -509,7 +506,7 @@ HB.structure Definition StructureName params :=
     but the only reason is to make sure Coq does not print it.
     Cf #<a href="https://github.com/math-comp/math-comp/blob/17dd3091e7f809c1385b0c0be43d1f8de4fa6be0/mathcomp/fingroup/fingroup.v##L225-L243">#[fingroup.v]#</a>#.
   - [#[short(type="shortName")]] produces the abbreviation [shortName] for [Structure.type]
-  - [#[short(pack="shortName")]] produces the abbreviation [shortName] for [Structure.pack]
+  - [#[short(pack="shortName")]] produces the abbreviation [shortName] for [HB.pack_for Structure.type]
   - [#[primitive]] experimental attribute to make the structure a primitive record,
   - [#[primitive_class]] experimental attribute to make the class a primitive record,
   - [#[verbose]] for a verbose output.

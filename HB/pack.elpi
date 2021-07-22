@@ -6,13 +6,10 @@ namespace pack {
 
 pred main i:term, i:list argument, o:term.
 main Ty Args Instance :- std.do! [
-  std.assert! (coq.safe-dest-app Ty (global Structure) _) "HB.pack: not a structure",
-  std.assert! (class-def (class Class Structure MLwP)) "HB.pack: not a structure",
-  w-params.nparams MLwP NParams,
-  std.assert! ({std.length Args} > NParams) "HB.pack: not enough arguments",
-  std.split-at NParams Args ParamsSkelArgs [trm TSkel|FactoriesSkel],
-
-  std.assert! (std.map ParamsSkelArgs (x\r\x = trm r) ParamsSkel) "HB.pack: only terms are accepted",
+  std.assert! (not(var Ty)) "HB.pack: the structure to pack cannot be unknown, use HB.pack_for",
+  std.assert! (coq.safe-dest-app {unwind {whd Ty []}} (global Structure) Params) "HB.pack: not a structure",
+  std.assert! (class-def (class Class Structure _)) "HB.pack: not a structure",
+  std.assert! (Args = [trm TSkel|FactoriesSkel]) "HB.pack: not enough arguments",
 
   get-constructor Class KC,
   get-constructor Structure KS,
@@ -29,7 +26,7 @@ main Ty Args Instance :- std.do! [
         (AllFactories = Factories)
       (AllFactories = Factories, Tkey = T), % it's a factory, won't add anything
 
-  private.synth-instance ParamsSkel KC KS T Tkey AllFactories Instance,
+  private.synth-instance Params KC KS T Tkey AllFactories Instance,
 
 ].
 
@@ -59,14 +56,14 @@ pred elab-factories i:list argument, i:term, o:list term.
 elab-factories [] _ [].
 elab-factories [trm FactorySkel|More] T [Factory|Factories] :-
   std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy MaybeFactory) "HB.pack: illtyped factory",
-  if2 (factory? FTy (triple _ _ T1)) % a factory
+  if2 (factory? {unwind {whd FTy []}} (triple _ _ T1)) % a factory
         (Factory = MaybeFactory)
-      (coq.safe-dest-app FTy (global GR) _, structure-key SortP ClassP GR) % a structure instance
+      (coq.safe-dest-app {unwind {whd FTy []}}  (global GR) _, structure-key SortP ClassP GR) % a structure instance
         (coq.mk-n-holes {structure-nparams GR} Params,
          std.append Params [MaybeFactory] ParamsF,
          coq.mk-app (global (const SortP)) ParamsF T1,
          coq.mk-app (global (const ClassP)) ParamsF Factory)
-      (coq.error "HB: argument" {coq.term->string Factory} "is not a factory, it has type:" {coq.term->string FTy}),
+      (coq.error "HB: argument" {coq.term->string MaybeFactory} "is not a factory, it has type:" {coq.term->string FTy}),
   std.assert-ok! (coq.unify-eq T T1) "HB.pack: factory for the wrong type",
   elab-factories More T Factories.
 
