@@ -366,11 +366,11 @@ declare-coercion SortProjection ClassProjection
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
 
-  std.assert-ok! (coq.typecheck CoeBody Ty) "declare-coercion: CoeBody illtyped",
+  std.assert-ok! (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped",
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 
-  log.coq.env.add-const-noimplicits CName CoeBody Ty @transparent! C,
+  log.coq.env.add-const-noimplicits CName CoeBody' Ty @transparent! C,
   log.coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
 
   Coercion = global (const C),
@@ -378,11 +378,11 @@ declare-coercion SortProjection ClassProjection
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
 
-  std.assert-ok! (coq.typecheck SCoeBody STy) "declare-coercion: SCoeBody illtyped",
+  std.assert-ok! (coq.elaborate-skeleton SCoeBody STy SCoeBody') "declare-coercion: SCoeBody illtyped",
 
   if-verbose (coq.say {header} "declare unification hint" SName),
 
-  log.coq.env.add-const-noimplicits SName SCoeBody STy @transparent! SC,
+  log.coq.env.add-const-noimplicits SName SCoeBody' STy @transparent! SC,
   log.coq.coercion.declare (coercion (const SC) 0 StructureF (grefclass StructureT)),
 
   log.coq.CS.declare-instance SC,
