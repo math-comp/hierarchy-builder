@@ -96,7 +96,7 @@ env.add-indt Decl I :- std.do! [
   coq.env.indt I _ _ _ _ KS _,
   log.private.log-implicits-of ff (indt I),
   std.forall KS (k\ env.add-location (indc k), log.private.log-implicits-of ff (indc k)),
-  std.forall {coq.CS.canonical-projections I}
+  std.forall {coq.env.projections I}
     (p\ sigma c\ if (p = some c) (env.add-location (const c), log.private.log-implicits-of ff (const c)) true),
 ].
 
@@ -196,6 +196,22 @@ log.coq.check Skel Ty T D :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.check Skel Fail),
 ].
 
+pred refine i:term, i:goal, o:list sealed-goal. % to silence a warning, since this is only in tactics
+pred log.refine i:term, i:goal, o:list sealed-goal.
+log.refine T G GL :- std.do! [
+  refine T G GL,
+  G = goal _ _ _ Solution _,
+  log.private.log-tactic Solution,
+].
+pred refine.no_check i:term, i:goal, o:list sealed-goal. % to silence a warning, since this is only in tactics
+pred log.refine.no_check i:term, i:goal, o:list sealed-goal.
+log.refine.no_check T G GL :- std.do! [
+  refine.no_check T G GL,
+  G = goal _ _ _ Solution _,
+  log.private.log-tactic Solution,
+].
+
+
 namespace log.private {
 
 %%%%% Logging Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -241,6 +257,7 @@ type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac
 
 pred with-logging i:prop.
 pred log.private.log-vernac i:log.private.coq.vernac.
+pred log.private.log-tactic i:term.
 
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
@@ -249,10 +266,11 @@ pred log.private.log-vernac i:log.private.coq.vernac.
 
 with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.log.raw" _, NICE = ff), !,
   get-option "elpi.loc" Loc,
-  rex_split "," Loc [FILE|_],
+  loc.fields Loc FILE _ _ _ _,
+  std.any->string Loc LocStr,
   FILENAME is FILE ^ ".hb",
   open_append FILENAME OC1,
-  std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",Loc,""] PATCH1,
+  std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",LocStr,""] PATCH1,
   output OC1 PATCH1,
   close_out OC1,
   log.private.logger L NICE => P,
@@ -274,6 +292,11 @@ log.private.log-vernac V :- log.private.logger L Nice, !,
   if (Nice = tt) (PPALL = []) (PPALL = [@ppall!]),
   log.private.logger-extend L {PPALL => log.private.coq.vernac->pp [V]}.
 log.private.log-vernac _.
+
+log.private.log-tactic P :- log.private.logger L Nice, !,
+  if (Nice = tt) (PPALL = []) (PPALL = [@ppall!]),
+  log.private.logger-extend L {PPALL => coq.term->pp P}.
+log.private.log-tactic _.
 
 % The main entry point to print vernacular commands is coq.vernac->pp
 
@@ -332,9 +355,9 @@ coq.vernac->pp1 (vernac.parameter Name Ty) (box (hv 2) [box h [str "Parameter ",
   coq.term->pp Ty TY.
 coq.vernac->pp1 (import-module Name) (box h [str "Import ", str Name, str "."]).
 coq.vernac->pp1 (export-module Name) (box h [str "Export ", str Name, str "."]).
-coq.vernac->pp1 (notation KM NParams Term) (box (hv 2) [box h [str "Notation \"'",str KM,str"' "|StrParams], str "\" :=", spc, B, str " (at level 1)."]) :- !,
+coq.vernac->pp1 (notation KM NParams Term) (box (hv 2) [box h [str "Notation \"'",str KM,str"' "|StrParams], str "\" := (", spc, B, str ") (at level 1)."]) :- !,
   coq.vernac->ppabbrterm NParams Term StrParams B.
-coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notation ",str Name|StrParams], str " :=", spc, B, str "."]) :-
+coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notation ",str Name|StrParams], str " := (", spc, B, str ")."]) :-
   coq.vernac->ppabbrterm NParams Term StrParams B.
 coq.vernac->pp1 (canonical Name Local) (box h [Locality, str "Canonical ", str Name, str "."]) :-
   local->locality Local Locality.

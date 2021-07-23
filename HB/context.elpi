@@ -13,7 +13,7 @@ declare FLwP Params TheKey MSL CL :- !, std.do! [
 
 pred declare.params-key i:w-params A, o:list term, o:term, o:A.
 declare.params-key MLwP Params TheKey Out :- !, std.do! [
-  if-verbose (coq.say "HB: declaring parameters and key as section variables"),
+  if-verbose (coq.say {header} "declaring parameters and key as section variables"),
   declare.params MLwP Params KId KTy F,
   log.coq.env.add-section-variable-noimplicits KId KTy C,
   TheKey = global (const C),
@@ -58,7 +58,7 @@ pred postulate-mixin i:w-args mixinname, i:list prop, o:list prop.
 postulate-mixin (triple M Ps T) MSL [mixin-src T M (global (const C))|MSL] :- MSL => std.do! [
   Name is "local_mixin_" ^ {gref->modname M 2 "_"},
 
-  if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
+  if-verbose (coq.say {header} "postulate" Name "on" {coq.term->string T}),
 
   synthesis.infer-all-gref-deps Ps T M Ty,
   std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
