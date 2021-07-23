@@ -113,12 +113,7 @@ HB: AddAG.sort is a canonical projection
     (from "./examples/demo1/hierarchy_5.v", line 73)
 HB: AddAG.sort has the following canonical values:
     - @eta 
-    - AddAG_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 48)
-    - AddAG_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 52)
     - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 196)
-    - Ring_of_AddAG.sort (from "./examples/demo1/hierarchy_5.v", line 108)
-    - Ring_of_AddComoid.sort (from "./examples/demo1/hierarchy_5.v", line 144)
-    - Ring_of_TYPE.sort (from "./examples/demo1/hierarchy_5.v", line 167)
     - Z 
 
 HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
@@ -145,4 +140,4 @@ HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
 HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
 hierarchy_5.BiNearRing_of_AddMonoid
 HB: synthesized in file 
-File "./tests/about.v", line 3, column 165, characters 125-249:
+File "./tests/about.v", line 5, column 122, characters 127-249:
