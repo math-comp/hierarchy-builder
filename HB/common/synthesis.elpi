@@ -62,11 +62,10 @@ assert!-infer-mixin T M B :-
 % all their mixins available for inference
 pred under-local-canonical-mixins-of.do! i:term, i:list prop.
 under-local-canonical-mixins-of.do! T P :- std.do! [
-  get-local-structures T CS,
+  get-canonical-structures T CS,
   std.map CS (private.structure-instance->mixin-srcs T) MSLL,
   std.flatten MSLL MSL,
-  std.map CS (s\ o\ o = structure-canonical T s) CSSL,
-  MSL => CSSL => std.do! P
+  MSL => std.do! P
 ].
 
 % Given TheType and a factory instance (on it), makes all the mixins provided by

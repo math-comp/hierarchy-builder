@@ -170,10 +170,6 @@ pred structure-key o:constant, o:constant, o:structure.
 % [mixin-class M C] means M belongs to C
 pred mixin-class o:mixinname, o:classname.
 
-%%%%%% Local cache of already canonical structures %%%%%%%%%%%
-% [structure-canonical T S] means S is already canonical on T
-pred structure-canonical o:term, o:structure.
-
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [mixin-src T M X] states that X can be used to reconstruct
