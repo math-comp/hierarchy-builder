@@ -217,41 +217,27 @@ instantiate-all-args-let (fun N Tm F) T (let N Tm X R) Diag :- !, std.do! [
 ].
 instantiate-all-args-let F _ F ok.
 
+pred saturate i:term, i:term, o:term.
+saturate T (prod _ _ F) R :- !, saturate {coq.mk-app T [_]} (F (sort prop)) R.
+saturate T Ty R :- whd1 Ty Ty1, !, saturate T Ty1 R.
+saturate T _ T.
+
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins
 % which can be candidates from that class instance
-pred structure-instance->mixin-srcs i:term, i:structure, o:list prop.
-structure-instance->mixin-srcs T S MSLC :- std.do! [
-  structure-key SortProj ClassProj S,
-  class-def (class (indt Class) S CMLwP),
+pred structure-instance->mixin-srcs i:term, i:(pair constant structure), o:list prop.
+structure-instance->mixin-srcs T (pr Inst S) MSLC :- std.do! [
+  saturate (global (const Inst)) {coq.env.typeof (const Inst)} Bo,
+  coq.safe-dest-app {unwind {whd Bo []}} _KS Args,
+  std.rev Args [Class|_],
+  coq.safe-dest-app {unwind {whd Class []}} _KC ClassArgs,
   structure-nparams S NParams,
-  coq.mk-n-holes NParams Holes,
-  std.append Holes [ST] HolesST,
-  coq.mk-app (global (const SortProj)) HolesST SortHolesST,
-  if (coq.unify-eq T SortHolesST ok) (
-
-    % if the structure instance is concrete, we take the parts
-    get-constructor S KS,
-    coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
-    if (coq.unify-eq ST KSHolesC ok)
-      (% if the structure instance is concrete, we take the parts
-       get-constructor (indt Class) KC,
-       std.length {list-w-params_list CMLwP} CMixinsN,
-       coq.mk-n-holes CMixinsN MIL,
-       coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
-       std.assert-ok! (coq.unify-eq CT CBody) "HB: structure-instance->mixin-srcs: C = KC ... T MIL",
-       std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
-       std.flatten MSLL MSLC)
-      (% otherwise we project
-       coq.mk-app (global (const ClassProj)) HolesST ClassST,
-       coq.env.projections Class Projs,
-       std.map-filter Projs (structure-instance->mixin-srcs.aux2 {std.take NParams HolesST} T ClassST) MIL,
-       std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
-       std.flatten MSLL MSLC))
-    (MSLC = [])
+  std.drop NParams ClassArgs [TheType|Mixins],
+  coq.unify-leq TheType T ok,
+  std.map Mixins (structure-instance->mixin-srcs.aux T) MSLL,
+  std.flatten MSLL MSLC,
 ].
-structure-instance->mixin-srcs.aux2 Params T Class (some P) M :-
-  coq.mk-app (global (const P)) {std.append Params [T,Class]} M.
+structure-instance->mixin-srcs _ _ [].
 structure-instance->mixin-srcs.aux T  F CL :-
   factory-instance->new-mixins [] F ML,
   std.map ML (m\c\ c = mixin-src T m F) CL.
