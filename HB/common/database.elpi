@@ -29,6 +29,12 @@ class_structure (class _ S _) S.
 pred class-def_name i:prop, o:classname.
 class-def_name (class-def (class N _ _)) N.
 
+pred mixin-class_class i:prop, o:classname.
+mixin-class_class (mixin-class _ C) C.
+
+pred mixin-class_mixin i:prop, o:mixinname.
+mixin-class_mixin (mixin-class M _) M.
+
 pred classname->def i:classname, o:class.
 classname->def CN (class CN S ML) :- class-def (class CN S ML).
 
@@ -161,6 +167,22 @@ findall-classes CLSortedDef :- std.do! [
   std.map CLSorted classname->def CLSortedDef,
 ].
 
+pred findall-classes-for.unsorted
+  i:list mixinname, i:list classname, o:list classname.
+findall-classes-for.unsorted [] CL CL :- !.
+findall-classes-for.unsorted [M|ML] CLAcc Out :- std.do! [
+  std.findall (mixin-class M C_) All,
+  std.map All mixin-class_class CL,
+  findall-classes-for.unsorted ML {std.append CL CLAcc} Out
+].
+
+pred findall-classes-for i:list mixinname, o:list class.
+findall-classes-for ML CLSortedDef :- std.do! [
+  findall-classes-for.unsorted ML [] CL,
+  toposort-classes CL CLSorted,
+  std.map CLSorted classname->def CLSortedDef,
+].
+
 pred findall-builders o:list builder.
 findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
@@ -267,32 +289,32 @@ get-constructor I _ :- coq.error "get-constructor: not an inductive" I.
 
 %% finding for locally defined structures
 pred get-cs-structure i:cs-instance, o:structure.
-get-cs-structure (cs-instance _ _ Inst) Struct :- std.do! [
-  coq.env.typeof Inst InstTy,
-  coq.prod-tgt->gref InstTy Struct
+get-cs-structure (cs-instance _ _ (const Inst)) Struct :- std.do! [
+  coq.env.typeof (const Inst) InstTy,
+  coq.prod-tgt->gref InstTy Struct,
+  is-structure Struct,
 ].
 
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
-pred get-local-structures i:term, o:list structure.
-get-local-structures TyTrm StructL :- std.do! [
+pred get-canonical-structures i:term, o:list structure.
+get-canonical-structures TyTrm StructL :- std.do! [
   term->gref TyTrm CanonValue,
   if (coq.version _ _ N _, N > 12)
      (coq.CS.db-for _ (cs-gref CanonValue) DBGTyL)
      (std.filter {coq.CS.db} (has-cs-instance CanonValue) DBGTyL),
-  std.map DBGTyL get-cs-structure RecL,
-  std.filter RecL is-structure StructL
+  std.map-filter DBGTyL get-cs-structure StructL,
 ].
 
-pred local-cs? i:term, i:structure.
-local-cs? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
+pred has-CS-instance? i:term, i:structure.
+has-CS-instance? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
   term->gref TyTerm Value,
   coq.env.projections Struct [some Proj, _],
   coq.CS.db-for (const Proj) (cs-gref Value) L,
   not(L = []).
-local-cs? TyTerm Struct :-
-  get-local-structures TyTerm StructL,
+has-CS-instance? TyTerm Struct :-
+  get-canonical-structures TyTerm StructL,
   std.mem! StructL Struct.
 
 pred structure-nparams i:structure, o:int.
