@@ -233,7 +233,7 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
   get-constructor S KS,
   coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
   coq.unify-eq ST KSHolesC ok,
-  % if the structure instance is concrete, we take the parts
+  % if the class instance is concrete, we take the parts
   get-constructor (indt Class) KC,
   std.length {list-w-params_list CMLwP} CMixinsN,
   coq.mk-n-holes CMixinsN MIL,
@@ -242,6 +242,9 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
   std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
   std.flatten MSLL MSLC,
 ].
+% this catch all sucks a bit, but is very relevant. Some instance, like
+% unification hints (canonical coercions) which require a type which is too rich
+% fail the second unif problem
 structure-instance->mixin-srcs _ _ [].
 
 structure-instance->mixin-srcs.aux2 Params T Class (some P) M :-
