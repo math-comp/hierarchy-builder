@@ -229,8 +229,9 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
   coq.mk-n-holes NParams Holes,
   std.append Holes [ST] HolesST,
   coq.mk-app (global (const SortProj)) HolesST SortHolesST,
+  % find an instance in ST
   coq.unify-eq T SortHolesST ok,
-  % if the structure instance is concrete, we take the parts
+  % we look for an instance which is concrete, we take the parts
   get-constructor S KS,
   coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
   coq.unify-eq ST KSHolesC ok,
@@ -239,7 +240,8 @@ structure-instance->mixin-srcs T S MSLC :- std.do! [
   std.length {list-w-params_list CMLwP} CMixinsN,
   coq.mk-n-holes CMixinsN MIL,
   coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
-  std.assert-ok! (coq.unify-eq CT CBody) "HB: structure-instance->mixin-srcs: C = KC ... T MIL",
+  coq.unify-eq CT CBody ok,
+  % we finally generare micin-src clauses for all mixins
   std.map MIL (structure-instance->mixin-srcs.aux T) MSLL,
   std.flatten MSLL MSLC,
 ].
