@@ -63,7 +63,7 @@ assert!-infer-mixin T M B :-
 pred under-local-canonical-mixins-of.do! i:term, i:list prop.
 under-local-canonical-mixins-of.do! T P :- std.do! [
   get-canonical-structures T CS,
-  std.map {std.map CS snd} (private.structure-instance->mixin-srcs T) MSLL,
+  std.map CS (private.structure-instance->mixin-srcs T) MSLL,
   std.flatten MSLL MSL,
   MSL => std.do! P
 ].
@@ -219,7 +219,8 @@ instantiate-all-args-let F _ F ok.
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins
-% which can be candidates from that class instance
+% which can be candidates from that class instance. It finds instances which are
+% concrete, that is not by projecting a rich type (a variable) to its class.
 pred structure-instance->mixin-srcs i:term, i:structure, o:list prop.
 structure-instance->mixin-srcs T S MSLC :- std.do! [
   structure-key SortProj _ S,

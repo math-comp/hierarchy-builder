@@ -77,7 +77,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 % Each mixin used in order to fulfill a class is returned together with its name.
 pred declare-all i:term, i:list class, o:list (pair id constant).
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
-  if (not(local-cs? T Struct))
+  if (not(has-CS-instance? T Struct))
      true % we build it
      (if-verbose (coq.say {header} "skipping already existing"
                     {nice-gref->string Struct} "instance on"

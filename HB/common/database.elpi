@@ -288,8 +288,8 @@ get-constructor (indt R) (indc K) :- !,
 get-constructor I _ :- coq.error "get-constructor: not an inductive" I.
 
 %% finding for locally defined structures
-pred get-cs-structure i:cs-instance, o:(pair constant structure).
-get-cs-structure (cs-instance _ _ (const Inst)) (pr Inst Struct) :- std.do! [
+pred get-cs-structure i:cs-instance, o:structure.
+get-cs-structure (cs-instance _ _ (const Inst)) Struct :- std.do! [
   coq.env.typeof (const Inst) InstTy,
   coq.prod-tgt->gref InstTy Struct,
   is-structure Struct,
@@ -298,7 +298,7 @@ get-cs-structure (cs-instance _ _ (const Inst)) (pr Inst Struct) :- std.do! [
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
-pred get-canonical-structures i:term, o:list (pair constant structure).
+pred get-canonical-structures i:term, o:list structure.
 get-canonical-structures TyTrm StructL :- std.do! [
   term->gref TyTrm CanonValue,
   if (coq.version _ _ N _, N > 12)
@@ -307,15 +307,14 @@ get-canonical-structures TyTrm StructL :- std.do! [
   std.map-filter DBGTyL get-cs-structure StructL,
 ].
 
-pred local-cs? i:term, i:structure.
-local-cs? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
+pred has-CS-instance? i:term, i:structure.
+has-CS-instance? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
   term->gref TyTerm Value,
   coq.env.projections Struct [some Proj, _],
   coq.CS.db-for (const Proj) (cs-gref Value) L,
   not(L = []).
-local-cs? TyTerm Struct :-
-  get-canonical-structures TyTerm StructL2,
-  std.map StructL2 snd StructL,
+has-CS-instance? TyTerm Struct :-
+  get-canonical-structures TyTerm StructL,
   std.mem! StructL Struct.
 
 pred structure-nparams i:structure, o:int.
