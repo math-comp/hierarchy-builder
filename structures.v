@@ -560,6 +560,8 @@ HB.instance Definition N Params := Factory.Build Params T …
       "Competing inheritance paths in dependent type theory"
       (https://hal.inria.fr/hal-02463336)
     - [#[verbose]] for a verbose output.
+    - [#[hnf] to compute the head normal form of CS instances before declaring
+      them
 *)
 
 Elpi Command HB.instance.
