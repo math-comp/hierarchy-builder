@@ -3,24 +3,29 @@
 ## UNRELEASED
 
 Compatible with
-- Coq 8.13 with Coq-Elpi 1.10.2.
+- Coq 8.13 or 8.14 with Coq-Elpi 1.11.x
 
 ### General
 
-- Check for instances which break Forgetful Inheritance, attribute
+- **New** Check for instances which break Forgetful Inheritance, attribute
   `#[non_forgetful_inheritance]` to disable the check.
-- Do not impose useless universe constraints on `option` and `prod` by using
+- **Fix** Do not impose useless universe constraints on `option` and `prod` by using
   custom inductive types.
-- Attributes `#[primitive]` and `#[primitive_class]` for
+- **New** Attributes `#[primitive]` and `#[primitive_class]` for
   `HB.structure/mixin/factory` to generate primitive records.
-- `Strategy Opaque` for named mixins
-- Factory instances are canonically (key `Factory.sort`) instances of all
+- **New** `Strategy Opaque` for named mixins, improving conversion performance
+  on generated terms
+- **New** Factory instances are canonically (key `Factory.sort`) instances of all
   the structures they can fulfill. This can be used inside proofs to provide
   canonical instances on a type.
-- Attribute `#[doc="text"]` supported by all commands and used by `HB.about`
+- **New** Tactic in term `HB.pack` and `HB.pack_for` taking a key `K` and a bunch of
+  factories and building a structure instance on `K`
+- **New** Attribute `#[doc="text"]` supported by all commands and used by `HB.about`
+- **New** Attribute `#[hnf]` supported by `HB.instance`
+ 
 ### Commands
 
-- `HB.locate` and `HB.about`
+- **New** `HB.locate` and `HB.about`
 
 ## [1.1.0] - 2021-03-30
 
