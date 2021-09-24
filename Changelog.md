@@ -1,31 +1,40 @@
 # Changelog
 
-## UNRELEASED
+## [1.2.0] - 2021-09-24
 
 Compatible with
 - Coq 8.13 or 8.14 with Coq-Elpi 1.11.x
 
 ### General
 
-- **New** Check for instances which break Forgetful Inheritance, attribute
-  `#[non_forgetful_inheritance]` to disable the check.
 - **Fix** Do not impose useless universe constraints on `option` and `prod` by using
   custom inductive types.
-- **New** Attributes `#[primitive]` and `#[primitive_class]` for
-  `HB.structure/mixin/factory` to generate primitive records.
-- **New** `Strategy Opaque` for named mixins, improving conversion performance
-  on generated terms
+- **New** Check for instances which break Forgetful Inheritance, attribute
+  `#[non_forgetful_inheritance]` to disable the check.
 - **New** Factory instances are canonically (key `Factory.sort`) instances of all
   the structures they can fulfill. This can be used inside proofs to provide
   canonical instances on a type.
-- **New** Tactic in term `HB.pack` and `HB.pack_for` taking a key `K` and a bunch of
-  factories and building a structure instance on `K`
+  E.g. `(factoryInstance : SomeStructure.sort _)` works if `factoryInstance` can
+  be used to build `SomeStructure`
+- **New** `Strategy Opaque` for named mixins, improving conversion performance
+  on generated terms
+- **New** Attributes `#[primitive]` and `#[primitive_class]` for
+  `HB.structure/mixin/factory` to generate primitive records.
 - **New** Attribute `#[doc="text"]` supported by all commands and used by `HB.about`
 - **New** Attribute `#[hnf]` supported by `HB.instance`
  
 ### Commands
 
-- **New** `HB.locate` and `HB.about`
+- **New** `HB.locate` to find where an instance comes from
+- **New** `HB.about` to display HB specific info attached to a HB
+  generated constant
+
+### Tactics
+
+- **New** Tactic in term `HB.pack` and `HB.pack_for` taking a key `K` and a bunch of
+  factories and building a structure instance on `K`.
+  E.g. `pose K_fooType : Foo.type := HB.pack K f1 f2 ..` works if factories `f1 f2 ..`
+  provide all mixins needed by structure `Foo`.
 
 ## [1.1.0] - 2021-03-30
 
