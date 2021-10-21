@@ -18,6 +18,7 @@ jobs:
       matrix:
         coq_version:
           - '8.13'
+          - '8.14'
         ocaml_version:
           - '4.07-flambda'
     steps:
@@ -38,7 +39,7 @@ jobs:
     - uses: coq-community/docker-coq-action@v1
       with:
         opam_file: './coq-hierarchy-builder.opam'
-        coq_version: '8.13'
+        coq_version: '8.14'
         ocaml_version: '4.07-flambda'
         script: |
           mkdir /home/coq/workspace
