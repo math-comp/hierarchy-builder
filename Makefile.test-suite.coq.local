@@ -1,4 +1,10 @@
 COQ_MINOR=$(shell echo $(COQ_VERSION) | cut -d . -f 2 | cut -d + -f 1)
+output_for=`\
+	if [ -e $(1).out.$(COQ_MINOR) ]; then\
+		echo $(1).out.$(COQ_MINOR);\
+	else\
+		echo $(1).out;\
+	fi`
 
 DIFF=\
 	@if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
@@ -7,7 +13,7 @@ DIFF=\
 	  < $(1) 2>/dev/null \
 	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
 	  > $(1).out.aux;\
-	diff -u --strip-trailing-cr $(1).out $(1).out.aux;\
+	diff -u --strip-trailing-cr $(call output_for,$(1)) $(1).out.aux;\
 	fi
 
 post-all::
