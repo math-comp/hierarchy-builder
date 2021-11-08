@@ -5,7 +5,7 @@
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
-      mathcomp.job = false;
+      mathcomp.job = true;
       mathcomp-single.job = true;
       hierarchy-builder-shim.job = true;
       mathcomp-single-planB-src.job = true;
