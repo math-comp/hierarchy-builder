@@ -5,12 +5,15 @@
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
-      mathcomp.job = false;
+      mathcomp.job = true;
       mathcomp-single.job = true;
       hierarchy-builder-shim.job = true;
       mathcomp-single-planB-src.job = true;
       mathcomp-single-planB.job = true;
       graph-theory.job = false;
+      fourcolor.override.version = "master";
+      odd-order.override.version = "master";
+      mathcomp-finmap.override.version = "#84";
     };
   in {
     "coq-mcHB-8.14".coqPackages = {
