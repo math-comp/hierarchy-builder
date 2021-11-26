@@ -318,3 +318,7 @@ w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 pred purge-id i:term, o:term.
 purge-id T T1 :-
   (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
+
+pred prod-last i:term, o:term.
+prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.
+prod-last X X :- !.
