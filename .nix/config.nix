@@ -29,4 +29,8 @@
       coq.override.version = "8.13";
     };
   };
+  cachix.coq = {};
+  cachix.coq-community = {};
+  cachix.math-comp.authToken = "CACHIX_AUTH_TOKEN";
+
 }

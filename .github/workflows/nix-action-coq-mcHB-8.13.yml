@@ -18,14 +18,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target QuickChick
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -71,14 +72,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target Verdi
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -125,14 +127,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target addition-chains
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -178,14 +181,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target autosubst
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -223,14 +227,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target category-theory
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -270,14 +275,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target coq
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -307,14 +313,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target coq-bits
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -352,14 +359,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target coquelicot
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -397,14 +405,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target deriving
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -443,14 +452,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target extructures
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -492,14 +502,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target fourcolor
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -536,14 +547,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target hierarchy-builder
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -580,14 +592,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target hierarchy-builder-shim
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -625,14 +638,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target interval
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -684,14 +698,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -759,14 +774,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-algebra
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -816,14 +832,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-bigenough
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -866,14 +883,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-character
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -939,14 +957,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-field
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1005,14 +1024,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-fingroup
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1058,14 +1078,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-finmap
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1104,14 +1125,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-single
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1162,14 +1184,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-single-planB
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1220,14 +1243,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-single-planB-src
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1280,14 +1304,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-solvable
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1341,14 +1366,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target mathcomp-ssreflect
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1390,14 +1416,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target odd-order
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1435,14 +1462,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target reglang
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
@@ -1480,14 +1508,15 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v14
+      uses: cachix/install-nix-action@v16
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq
+    - name: Cachix setup math-comp
       uses: cachix/cachix-action@v10
       with:
-        extraPullNames: ''
-        name: coq
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, coq-community
+        name: math-comp
     - id: stepCheck
       name: Checking presence of CI target relation-algebra
       run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr\
