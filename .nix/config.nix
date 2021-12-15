@@ -12,7 +12,7 @@
       mathcomp-single-planB.job = true;
       graph-theory.job = false;
       fourcolor.override.version = "master";
-      odd-order.override.version = "master";
+      odd-order.override.version = "hirarchy-builder";
       mathcomp-finmap.override.version = "#84";
     };
   in {
