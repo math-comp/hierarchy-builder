@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.1] - 2022-01-10
+
+Compatible with
+- Coq 8.13 or 8.14 with Coq-Elpi 1.11.x
+- Coq 8.15 with Coq-Elpi 1.12.x
+
+### General
+
+- **Fix** Do not unfold let-ins in instances (speedup)
+- **Fix** Test suite for Coq 8.15
+
 ## [1.2.0] - 2021-09-24
 
 Compatible with
