@@ -19,6 +19,7 @@ jobs:
         coq_version:
           - '8.13'
           - '8.14'
+          - '8.15'
         ocaml_version:
           - '4.07-flambda'
     steps:
