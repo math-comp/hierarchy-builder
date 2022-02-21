@@ -1,7 +1,8 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.14";
+  default-bundle = "reverse-coercions";
+  # default-bundle = "master";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
@@ -16,6 +17,14 @@
       mathcomp-finmap.override.version = "#84";
     };
   in {
+    "master".coqPackages = {
+      coq.override.version = "master";
+      coq-elpi.override.version = "CohenCyril:nixing_around";
+    } // mcHBcommon;
+    "reverse-coercions".coqPackages = {
+      coq.override.version = "gares:reverse-coercions";
+      coq-elpi.override.version = "CohenCyril:nixing_around";
+    } // mcHBcommon;
     "coq-mcHB-8.14".coqPackages = {
       coq.override.version = "8.14";
     } // mcHBcommon;
