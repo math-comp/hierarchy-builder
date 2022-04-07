@@ -12,8 +12,9 @@ DIFF=\
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile $(1) \
 	  < $(1) 2>/dev/null \
 	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
+	  | sed -E 's/characters? [0-9-]+://' \
 	  > $(1).out.aux;\
-	diff -u --strip-trailing-cr $(call output_for,$(1)) $(1).out.aux;\
+	wdiff $(call output_for,$(1)) $(1).out.aux;\
 	fi
 
 post-all::
