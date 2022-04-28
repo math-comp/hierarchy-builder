@@ -1,5 +1,5 @@
 HB: AddMonoid_of_TYPE is a factory
-    (from "./examples/demo1/hierarchy_5.v", line 10)
+    (from "./examples/demo1/hierarchy_5.v", line 2)
 HB: AddMonoid_of_TYPE operations and axioms are:
     - zero
     - add
@@ -11,7 +11,7 @@ HB: AddMonoid_of_TYPE provides the following mixins:
     - hierarchy_5.AddMonoid_of_TYPE
 
 HB: AddMonoid_of_TYPE.Build is a factory constructor
-    (from "./examples/demo1/hierarchy_5.v", line 10)
+    (from "./examples/demo1/hierarchy_5.v", line 2)
 HB: AddMonoid_of_TYPE.Build requires its subject to be already equipped with:
 HB: AddMonoid_of_TYPE.Build provides the following mixins:
     - hierarchy_5.AddMonoid_of_TYPE
@@ -23,7 +23,7 @@ HB: arguments: AddMonoid_of_TYPE.Build S zero add addrA add0r addr0
     - add0r : left_id 0%G add
     - addr0 : right_id 0%G add
 
-HB: AddAG.type is a structure (from "./examples/demo1/hierarchy_5.v", line 73)
+HB: AddAG.type is a structure (from "./examples/demo1/hierarchy_5.v", line 72)
 HB: AddAG.type characterizing operations and axioms are:
     - addNr
     - opp
@@ -38,7 +38,7 @@ HB: hierarchy_5.AddAG is inherited by:
     - hierarchy_5.Ring
 
 HB: hierarchy_5.AddMonoid.type is a structure
-    (from "./examples/demo1/hierarchy_5.v", line 17)
+    (from "./examples/demo1/hierarchy_5.v", line 16)
 HB: hierarchy_5.AddMonoid.type characterizing operations and axioms are:
     - addr0
     - add0r
@@ -105,39 +105,39 @@ Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
      1995).
 
 HB: add is an operation of structure hierarchy_5.AddMonoid
-    (from "./examples/demo1/hierarchy_5.v", line 17)
+    (from "./examples/demo1/hierarchy_5.v", line 16)
 HB: add comes from mixin hierarchy_5.AddMonoid_of_TYPE
-    (from "./examples/demo1/hierarchy_5.v", line 10)
+    (from "./examples/demo1/hierarchy_5.v", line 2)
 
 HB: AddAG.sort is a canonical projection
-    (from "./examples/demo1/hierarchy_5.v", line 73)
+    (from "./examples/demo1/hierarchy_5.v", line 72)
 HB: AddAG.sort has the following canonical values:
-    - @eta 
-    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 196)
     - Z 
+    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 194)
+    - @eta 
 
 HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
-    (from "./examples/demo1/hierarchy_5.v", line 73)
+    (from "./examples/demo1/hierarchy_5.v", line 72)
 
 HB: Z is canonically equipped with mixins:
     - hierarchy_5.AddMonoid
       hierarchy_5.AddComoid
       hierarchy_5.AddAG
-      (from "(stdin)", line 5)
+      (from "(stdin)", line 3)
     - hierarchy_5.BiNearRing
       hierarchy_5.SemiRing
       hierarchy_5.Ring
-      (from "(stdin)", line 10)
+      (from "(stdin)", line 8)
 
 HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
     hierarchy_5.Ring to hierarchy_5.SemiRing
-    (from "./examples/demo1/hierarchy_5.v", line 196)
+    (from "./examples/demo1/hierarchy_5.v", line 194)
 
 HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
     hierarchy_5.Ring to hierarchy_5.SemiRing
-    (from "./examples/demo1/hierarchy_5.v", line 196)
+    (from "./examples/demo1/hierarchy_5.v", line 194)
 
 HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
 hierarchy_5.BiNearRing_of_AddMonoid
 HB: synthesized in file 
-File "(stdin)", line 5, column 122, 
+File "(stdin)", line 3, column 165, characters 125-249:

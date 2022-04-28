@@ -166,6 +166,10 @@ pred factory-sort o:coercion.
 % memory of canonical projections for a structure (X.sort, X.class, X.type)
 pred structure-key o:constant, o:constant, o:structure.
 
+%%%%%% Membership of mixins to a  class %%%%%%%%%%%%%%%%
+% [mixin-class M C] means M belongs to C
+pred mixin-class o:mixinname, o:classname.
+
 %% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [mixin-src T M X] states that X can be used to reconstruct
@@ -226,6 +230,7 @@ compress X X.
     or inductive was generated.
 *)
 
+#[arguments(raw)]
 Elpi Command HB.locate.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -256,6 +261,7 @@ Elpi Export HB.locate.
     - canonical value, eg Z, prod, ...
 *)
 
+#[arguments(raw)]
 Elpi Command HB.about.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -281,6 +287,7 @@ Elpi Export HB.about.
 
 *)
 
+#[arguments(raw)]
 Elpi Command HB.status.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -306,6 +313,7 @@ tred file.dot | xdot -
     to visualize file.dot
 *)
 
+#[arguments(raw)]
 Elpi Command HB.graph.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -351,6 +359,7 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 
 *)
 
+#[arguments(raw)]
 Elpi Command HB.mixin.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -512,6 +521,7 @@ HB.structure Definition StructureName params :=
   - [#[verbose]] for a verbose output.
 *)
 
+#[arguments(raw)]
 Elpi Command HB.structure.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -556,8 +566,11 @@ HB.instance Definition N Params := Factory.Build Params T …
       "Competing inheritance paths in dependent type theory"
       (https://hal.inria.fr/hal-02463336)
     - [#[verbose]] for a verbose output.
+    - [#[hnf] to compute the head normal form of CS instances before declaring
+      them
 *)
 
+#[arguments(raw)]
 Elpi Command HB.instance.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -587,6 +600,7 @@ Elpi Export HB.instance.
 
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
+#[arguments(raw)]
 Elpi Command HB.factory.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -645,6 +659,7 @@ HB.end.
     - [#[verbose]] for a verbose output.
 *)
 
+#[arguments(raw)]
 Elpi Command HB.builders.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -667,6 +682,7 @@ Elpi Typecheck.
 Elpi Export HB.builders.
 
 
+#[arguments(raw)]
 Elpi Command HB.end.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -717,6 +733,7 @@ Export Algebra.Exports.
 
 *)
 
+#[arguments(raw)]
 Elpi Command HB.export.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -741,6 +758,7 @@ Elpi Export HB.export.
    It optionally takes the name of a module or a component of the current module path
    (a module which is not closed yet) *)
 
+#[arguments(raw)]
 Elpi Command HB.reexport.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -785,6 +803,7 @@ Notation foo := foo.body.
 ]]
 *)
 
+#[arguments(raw)]
 Elpi Command HB.lock.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -831,6 +850,7 @@ HB.instance Definition _ : Ml ... T := ml.
 
 *)
 
+#[arguments(raw)]
 Elpi Command HB.declare.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -864,6 +884,7 @@ Elpi Export HB.declare.
     that skips the action on Coq version matches rex. It also understands the
     [#[fail]] attribute. *)
 
+#[arguments(raw)]
 Elpi Command HB.check.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
