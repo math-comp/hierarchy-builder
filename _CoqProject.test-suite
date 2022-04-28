@@ -73,6 +73,8 @@ tests/short.v
 tests/primitive_records.v
 tests/non_forgetful_inheritance.v
 tests/fix_loop.v
+tests/test_synthesis_params.v
+tests/hnf.v
 
 -R tests HB.tests
 -R examples HB.examples

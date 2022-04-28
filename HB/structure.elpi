@@ -26,7 +26,7 @@ declare Module B :- std.do! [
                "\nPlease list them or end the declaration with '&'")
      true,
 
-  private.if-class-already-exists-error Module {findall-classes} ML,
+  private.if-class-already-exists-error Module {findall-classes-for ML} ML,
   private.if-coverage-not-good-error ML,
 
   % TODO: check we never define the superclass of an exising class
@@ -44,6 +44,7 @@ declare Module B :- std.do! [
   ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
   GRDepsClauses =
     [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
+  std.map ML (m\ o\ o = mixin-class m ClassName) MixinMems,
   std.filter ML (m\ not (mixin-first-class m _)) NewMixins,
   std.map NewMixins (m\ r\ r = mixin-first-class m ClassName) MixinFirstClass,
 
@@ -60,7 +61,7 @@ declare Module B :- std.do! [
   phant.add-abbreviation "clone" PhClone _ _,
 
   if-verbose (coq.say {header} "declaring pack_ constant"),
-  (ClassAlias => class-def CurrentClass => GRDepsClauses =>
+  (ClassAlias => class-def CurrentClass => GRDepsClauses => MixinMems =>
     w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
   if-verbose (coq.say {header} "declaring pack_ constant =" Pack),
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
@@ -129,11 +130,10 @@ declare Module B :- std.do! [
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
-      [gref-deps GRPack MLwP], [StructKeyClause], PHClauses
+      [gref-deps GRPack MLwP], MixinMems, [StructKeyClause], PHClauses
     ]
     NewClauses,
   std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-
 
   if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
@@ -366,11 +366,11 @@ declare-coercion SortProjection ClassProjection
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
 
-  std.assert-ok! (coq.typecheck CoeBody Ty) "declare-coercion: CoeBody illtyped",
+  std.assert-ok! (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped",
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 
-  log.coq.env.add-const-noimplicits CName CoeBody Ty @transparent! C,
+  log.coq.env.add-const-noimplicits CName CoeBody' Ty @transparent! C,
   log.coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
 
   Coercion = global (const C),
@@ -378,11 +378,11 @@ declare-coercion SortProjection ClassProjection
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
 
-  std.assert-ok! (coq.typecheck SCoeBody STy) "declare-coercion: SCoeBody illtyped",
+  std.assert-ok! (coq.elaborate-skeleton SCoeBody STy SCoeBody') "declare-coercion: SCoeBody illtyped",
 
   if-verbose (coq.say {header} "declare unification hint" SName),
 
-  log.coq.env.add-const-noimplicits SName SCoeBody STy @transparent! SC,
+  log.coq.env.add-const-noimplicits SName SCoeBody' STy @transparent! SC,
   log.coq.coercion.declare (coercion (const SC) 0 StructureF (grefclass StructureT)),
 
   log.coq.CS.declare-instance SC,

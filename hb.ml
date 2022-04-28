@@ -149,7 +149,7 @@ way but without all details they may not be parsable without manual editing.
 
 usage:
   hb patch [-f] <file.v>..  Applies the patches in <file.v.hb> to <file.v>.
-                            -f forces patch application even if the soure file
+                            -f forces patch application even if the source file
                             is newer than the patch.
   hb reset <file.v>..       Erases all generated code from source file. It does
                             nothing if the file is not patched. If a patch file

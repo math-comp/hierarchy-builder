@@ -1,0 +1,19 @@
+Datatypes_prod__canonical__compress_coe_D = 
+fun D D' : D.type =>
+{|
+  D.sort := D.sort D * D.sort D';
+  D.class :=
+    {|
+      D.compress_coe_hasA_mixin :=
+        prodA (compress_coe_D__to__compress_coe_A D)
+          (compress_coe_D__to__compress_coe_A D');
+      D.compress_coe_hasB_mixin :=
+        prodB tt (compress_coe_D__to__compress_coe_B D)
+          (compress_coe_D__to__compress_coe_B D');
+      D.compress_coe_hasC_mixin :=
+        prodC tt tt (compress_coe_D__to__compress_coe_C D)
+          (compress_coe_D__to__compress_coe_C D');
+      D.compress_coe_hasD_mixin := prodD D D'
+    |}
+|}
+     : D.type -> D.type -> D.type
