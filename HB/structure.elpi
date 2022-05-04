@@ -6,9 +6,11 @@ namespace structure {
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred declare i:string, i:term, i:universe.
-declare Module B Sort :- std.do! [
-  purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
-  private.sigT->list-w-params B2 GRFSwP ClosureCheck,
+declare Module BSkel Sort :- std.do! [
+  disable-id-phant BSkel BSkelNoId,
+  std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
+  re-enable-id-phant BNoId B,
+  private.sigT->list-w-params B GRFSwP ClosureCheck,
 
   factories-provide GRFSwP PMLwP,
 

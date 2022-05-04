@@ -139,8 +139,8 @@ declare-factory-sort-factory GR :- std.do! [
 pred mk-factory-sort-deps i:gref, o:list (pair id constant).
 mk-factory-sort-deps AliasGR CSL :- std.do! [
   factory-alias->gref AliasGR GR,
-  gref-deps GR MLwP,
-  context.declare MLwP SortParams SortKey SortMSL _,
+  gref-deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
   log.coq.env.add-section-variable-noimplicits "f" FSort CF,
   GCF = global (const CF),
@@ -164,8 +164,8 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
 pred mk-factory-sort-factory i:gref, o:list (pair id constant).
 mk-factory-sort-factory AliasGR CSL :- std.do! [
   factory-alias->gref AliasGR GR,
-  gref-deps GR MLwP,
-  context.declare MLwP SortParams SortKey SortMSL _,
+  gref-deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
   log.coq.env.add-section-variable-noimplicits "f" FSort CF,
   std.length {list-w-params_list MLwP} NMLArgs,

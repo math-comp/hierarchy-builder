@@ -4,14 +4,15 @@
 namespace context {
 
 pred declare i:mixins,
-  o:list term, o:term, o:list prop, o:list constant.
-declare FLwP Params TheKey MSL CL :- !, std.do! [
-  factories-provide FLwP MLwP,
-  declare.params-key MLwP Params TheKey _MLwA,
-  declare.mixins TheKey Params FLwP MSL CL
+  o:mixins, o:list term, o:term, o:list prop, o:list constant.
+declare FLwP MLwP Params TheKey MSL CL :- !, std.do! [
+  factories-provide FLwP MLwPRaw,
+  declare.params-key MLwPRaw ParamsSection TheKey _MLwA,
+  std.map ParamsSection triple_2 Params,
+  declare.mixins TheKey ParamsSection MLwPRaw MLwP MSL CL
 ].
 
-pred declare.params-key i:w-params A, o:list term, o:term, o:A.
+pred declare.params-key i:w-params A, o:list (triple id term term), o:term, o:A.
 declare.params-key MLwP Params TheKey Out :- !, std.do! [
   if-verbose (coq.say {header} "declaring parameters and key as section variables"),
   declare.params MLwP Params KId KTy F,
@@ -20,8 +21,8 @@ declare.params-key MLwP Params TheKey Out :- !, std.do! [
   Out = F TheKey
 ].
 
-pred declare.params i:w-params A, o:list term, o:id, o:term, o:(term -> A).
-declare.params (w-params.cons PId PTy F) [P|Params] KId KTy Out :- !, std.do! [
+pred declare.params i:w-params A, o:list (triple id term term), o:id, o:term, o:(term -> A).
+declare.params (w-params.cons PId PTy F) [triple PId P PTy|Params] KId KTy Out :- !, std.do! [
   log.coq.env.add-section-variable-noimplicits PId PTy C,
   P = global (const C),
   declare.params (F P) Params KId KTy Out
@@ -32,13 +33,15 @@ declare.params (w-params.nil KId KTy F) [] KId KTy F :- !.
 % (section) context with all the mixins provided by the factories and all
 % the structure instances we can derive on TheType from these. Clauses
 % contain mixin-src for each postulated mixin
-pred declare.mixins i:term, i:list term, i:list-w-params factoryname, o:list prop, o:list constant.
-declare.mixins TheType TheParams GRFSwP MSL CL :-  std.do! [
-  factories-provide GRFSwP MLwP,
+pred declare.mixins i:term, i:list (triple id term term), i:mixins, o:mixins, o:list prop, o:list constant.
+declare.mixins TheType TheParamsSection MLwPRaw MLwP MSL CL :-  std.do! [
   if-verbose (coq.say "Here is the list of mixins to declare (the order matters): "
-    {list-w-params_list MLwP}),
-  apply-w-params MLwP TheParams TheType MLwAllArgs,
-  std.fold MLwAllArgs (pr [] []) (private.postulate-mixin TheType) (pr CL MSL),
+    {list-w-params_list MLwPRaw}),
+  std.map TheParamsSection triple_2 TheParams,
+  apply-w-params MLwPRaw TheParams TheType MLwAllArgsRaw,
+  std.fold MLwAllArgsRaw (triple [] [] []) (private.postulate-mixin TheType) (triple CL MSL MLwPRev),
+  std.rev MLwPRev MLwPxxx, % prpprpr
+  build-list-w-params TheParamsSection TheType MLwPxxx MLwP,
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
 
@@ -52,9 +55,9 @@ namespace private {
 % a variable "mN" inhabiting M applied to T and
 % all its dependencies, previously postulated and associated
 % to the corresponding mixin using mixin-for
-pred postulate-mixin i:term, i:w-args mixinname, i:pair (list constant) (list prop),
-                     o:pair (list constant) (list prop).
-postulate-mixin TheType (triple M Ps T) (pr CL MSL) (pr OutCL [MC|MSL]) :- MSL => std.do! [
+pred postulate-mixin i:term, i:w-args mixinname, i:triple (list constant) (list prop) (list (w-args mixinname)),
+                     o:triple (list constant) (list prop) (list (w-args mixinname)).
+postulate-mixin TheType (triple M Ps T) (triple CL MSL MLwP) (triple OutCL [MC|MSL] [NewMwP|MLwP]) :- MSL => std.do! [
   Name is "local_mixin_" ^ {gref->modname M 2 "_"},
 
   if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
@@ -72,6 +75,7 @@ postulate-mixin TheType (triple M Ps T) (pr CL MSL) (pr OutCL [MC|MSL]) :- MSL =
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty)
     "postulate-mixin: Ty illtyped",
   log.coq.env.add-section-variable-noimplicits Name Ty C,
+  factory? Ty NewMwP,
 
   MC = mixin-src T M (global (const C)),
   MC => get-option "local" tt =>

@@ -6,6 +6,7 @@ Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
 Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
+Definition id_phant_disabled {T T'} {t : T} {t' : T'} (x : phantom T t) := Phantom T' t'.
 Definition nomsg : error_msg := NoMsg.
 Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
@@ -17,6 +18,7 @@ From elpi Require Import elpi.
 
 Register unify as hb.unify.
 Register id_phant as hb.id.
+Register id_phant_disabled as hb.id_disabled.
 Register Coq.Init.Datatypes.None as hb.none.
 Register nomsg as hb.nomsg.
 Register is_not_canonically_a as hb.not_a_msg.
@@ -876,7 +878,7 @@ Elpi Accumulate lp:{{
 main [Ctx] :- Ctx = ctx-decl _, !,
   with-attributes (with-logging (
     factory.argument->w-mixins Ctx (pr FLwP _),
-    context.declare FLwP _ _ _ _)).
+    context.declare FLwP _ _ _ _ _)).
 
 main _ :- coq.error "Usage: HB.declare Context <Parameters> <Key> <Factories>".
 

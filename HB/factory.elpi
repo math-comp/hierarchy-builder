@@ -116,9 +116,10 @@ pred mixin-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
 mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing mixin" DeclKind ID),
   std.assert! (not (var TySkel)) "HB: no type provided for mixin",
-  purge-id TySkel TySkelNoId,
-  std.assert-ok! (coq.elaborate-ty-skeleton TySkelNoId _ Ty)
+  disable-id-phant TySkel TySkelNoId,
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkelNoId _ TyNoId)
     "HB: mixin illtyped",
+  re-enable-id-phant TyNoId Ty,
   std.assert! (factory? Ty (triple F Ps T))
     "HB: Not a factory applied to the key variable",
   std.assert! (pi x y\ Rest y = Rest x)
@@ -199,10 +200,10 @@ declare-asset Arg AssetKind :- std.do! [
   argument->w-mixins Arg (pr FLwP ArgwP),
 
   if-verbose (coq.say {header} "converting factories" FLwP "to mixins"),
-  factories-provide FLwP MLwP,
+  %factories-provide FLwP MLwP,
 
   if-verbose (coq.say {header} "declaring context" FLwP),
-  context.declare FLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
+  context.declare FLwP MLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
 
    if (get-option "interrupt.context" tt) (
     coq.say "interrupting after context declaration"
@@ -259,6 +260,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "declare notation Build"),
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
+  coq.say {coq.env.typeof GRK} "-->" PhGRK,
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
 
   if-verbose (coq.say {header} "declare notation axioms"),

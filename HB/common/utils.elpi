@@ -316,11 +316,15 @@ distribute-w-params (w-params.nil N T F) L :-
 pred w-params_1 i:one-w-params A, o:A.
 w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 
-pred purge-id i:term, o:term.
-purge-id T T1 :-
-  [ (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !),
-    (pi fresh t v\ copy {{lib:@hb.ignore lp:t lp:v}} fresh :- !)
-  ] => copy T T1.
+pred disable-id-phant i:term, o:term.
+disable-id-phant T T1 :-
+  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !)
+  => copy T T1.
+
+pred re-enable-id-phant i:term, o:term.
+re-enable-id-phant T T1 :-
+  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !)
+  => copy T T1.
 
 pred prod-last i:term, o:term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.

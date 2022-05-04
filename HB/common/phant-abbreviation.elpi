@@ -20,9 +20,11 @@ namespace phant {
 % term T and an abbreviation Name as per Ph.
 % Use the API below to build a PhT as you like.
 pred add-abbreviation i:string, i:phant-term, o:constant, o:abbreviation.
-add-abbreviation N (private.phant-term AL T1) C Abbrev :- std.do! [
+add-abbreviation N (private.phant-term AL TSkel) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
-  std.assert-ok! (coq.elaborate-skeleton T1 TTy T) "add-abbreviation: T illtyped",
+  % disable-id-phant TSkel TSkelNoId,
+  std.assert-ok! (coq.elaborate-skeleton TSkel /*NoId*/ TTy T /*NoId*/) "add-abbreviation: T illtyped",
+  % re-enable-id-phant TNoId T,
   log.coq.env.add-const-noimplicits NC T TTy @transparent! C,
   private.build-abbreviation 0 (global (const C)) AL NParams AbbrevT,
   @global! => log.coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
@@ -38,6 +40,7 @@ add-abbreviation N (private.phant-term AL T1) C Abbrev :- std.do! [
 pred of-gref i:bool, i:gref, i:list mixinname, o:phant-term.
 of-gref WithCopy GRF RealMixinArgs PhBody:- !, std.do! [
   std.assert! (gref-deps GRF MLwP) "mk-phant-term: unknown gref",
+  coq.say "FINALLY" MLwP,
   std.assert! (coq.env.typeof GRF FTy) "mk-phant-term: F illtyped",
   coq.mk-eta (-1) FTy (global GRF) EtaF,
   % toposort-mixins ML MLSorted,
@@ -53,7 +56,7 @@ of-gref WithCopy GRF RealMixinArgs PhBody:- !, std.do! [
       (ps\ t\ ml\ o\ private.mk-phant-term.classes EtaF CNL ps t t ml o) PhBody)
     (w-params.fold MLwP fun-real
       (private.mk-phant-term-with-copy EtaF CNL) PhBody
-  )
+  ),
 ].
 
 % API à la carte: start with a term and wrap it up -------------------------
