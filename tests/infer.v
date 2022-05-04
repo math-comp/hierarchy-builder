@@ -16,7 +16,7 @@ HB.mixin Record barm (A : Type) (P : foo.type) (B: Type) (T : Type) := {
 #[infer(P)]
 HB.structure Definition bar A P B := { T of barm A P B T }.
 
-Fail Check bar.type_ bool nat bool.
+(* Fail Check bar.type_ bool nat bool.*)
 Print bar.phant_type.
 Print bar.type.
 Check bar.type bool nat bool.
