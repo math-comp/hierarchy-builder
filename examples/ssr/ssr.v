@@ -1,6 +1,8 @@
 From HB Require Import structures.
 From Coq Require Import ssreflect ssrfun ssrbool.
 
+Unset Universe Checking.
+
 Axiom propext : forall (P Q : Prop), (P <-> Q) -> P = Q.
 
 HB.mixin Record HasEquality T := {
@@ -37,7 +39,7 @@ Next Obligation. Admitted.
 Check fun (T : Equality.type) (x y : T) =>
   if [x = y /\ y = x] then 1 else 0.
 
-Definition reduce (P Q : dProp) : solve (P = Q :> bool) -> P <-> Q.
+Definition reduce (P Q : dProp) : (P = Q :> bool) -> P <-> Q.
 Proof.
 Admitted.
 
@@ -60,7 +62,7 @@ Restart.
 move=> p q /=.
 rewrite (PT p) (PT q).
 apply/to_propP => /=.
-Qed.
+Abort.
 
 
 (* Record hasN T := { *)
