@@ -6,9 +6,9 @@ name: docker CI
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ coq-master ]
   pull_request:
-    branches: [ master ]
+    branches: [ coq-master ]
 
 jobs:
   opam:
@@ -17,17 +17,18 @@ jobs:
       fail-fast: false
       matrix:
         coq_version:
-          - '8.16'
-        ocaml_version:
-          - '4.09-flambda'
+          - 'dev'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
       with:
         opam_file: './coq-hierarchy-builder.opam'
         coq_version: ${{ matrix.coq_version }}
-        ocaml_version: ${{ matrix.ocaml_version }}
         export: 'OPAMWITHTEST'  # space-separated list of variables
+        before_script: |
+          startGroup "Install wdiff"
+            sudo apt-get install -y -q wdiff
+          endGroup
       env:
         OPAMWITHTEST: 'true'
       
@@ -38,12 +39,12 @@ jobs:
     - uses: coq-community/docker-coq-action@v1
       with:
         opam_file: './coq-hierarchy-builder.opam'
-        coq_version: '8.16'
-        ocaml_version: '4.09-flambda'
+        coq_version: 'dev'
         script: |
           mkdir /home/coq/workspace
           cp -ra . /home/coq/workspace
           cd /home/coq/workspace
+          sudo apt-get install -y -q wdiff
           opam install ./coq-hierarchy-builder.opam
           sed -i.bak -e "s/-Q . HB//" -e "s|tests/factory_sort_tac.v||" _CoqProject.test-suite
           # This is what a user does to cut HB loose
