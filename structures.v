@@ -537,7 +537,11 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl N (some B) _] :- !, with-attributes (with-logging (structure.declare N B)).
+main [const-decl N (some B) Arity] :- !, std.do! [
+  prod-last {coq.arity->term Arity} Ty,
+  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
+  with-attributes (with-logging (structure.declare N B Univ))
+].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 
 }}.
