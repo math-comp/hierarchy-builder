@@ -247,6 +247,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   @global! => log.coq.arguments.set-implicit (indt R) [[]],
   @global! => log.coq.arguments.set-implicit GRK [[]],
 
+  coq.say "GRFSwP" GRFSwP,
   factories-provide GRFSwP MLwP,
   w-params.nparams MLwP NParams,
   build-deps-for-projections R MLwP GRDepsClausesProjs,
