@@ -20,7 +20,7 @@ namespace phant {
 % term T and an abbreviation Name as per Ph.
 % Use the API below to build a PhT as you like.
 pred add-abbreviation i:string, i:phant-term, o:constant, o:abbreviation.
-add-abbreviation N (private.phant-term AL TSkel) C Abbrev :- std.do! [
+add-abbreviation N (private.phant-term AL TSkel) C Abbrev :- std.spy-do! [
   NC is "phant_" ^ N,
   % disable-id-phant TSkel TSkelNoId,
   std.assert-ok! (coq.elaborate-skeleton TSkel /*NoId*/ TTy T /*NoId*/) "add-abbreviation: T illtyped",
@@ -28,6 +28,13 @@ add-abbreviation N (private.phant-term AL TSkel) C Abbrev :- std.do! [
   log.coq.env.add-const-noimplicits NC T TTy @transparent! C,
   private.build-abbreviation 0 (global (const C)) AL NParams AbbrevT,
   @global! => log.coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
+].
+pred add-silly-abbreviation i:string, i:gref, o:constant, o:abbreviation.
+add-silly-abbreviation N GR C Abbrev :- std.spy-do! [
+  NC is "phant_" ^ N,
+  log.coq.env.add-const-noimplicits NC (global GR) _ @transparent! C,
+  private.build-abbreviation 0 (global (const C)) [] 0 AbbrevT,
+  @global! => log.coq.notation.add-abbreviation N 0 AbbrevT tt Abbrev,
 ].
 
 % [of-gref WithCopy GR RealMixinArgs PT]

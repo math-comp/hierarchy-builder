@@ -166,8 +166,9 @@ cdecl->w-mixins.mixins (context-item ID _ TySkel none Rest) Out :- !,
 % The identity builder
 pred declare-id-builder i:factoryname, o:prop.
 declare-id-builder GR (from GR GR (const C)) :- std.do! [
-  synthesis.mixins-w-params.fun {gref-deps GR} (declare-id-builder.aux GR) IDBody,
-  std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
+  synthesis.mixins-w-params.fun {gref-deps GR} (declare-id-builder.aux GR) IDBodySkel,
+  coq.say {coq.term->string }
+  std.assert-ok! (coq.elaborate-skeleton IDBodySkel IDType IDBody) "identity builder illtyped",
   log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
 declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
@@ -178,13 +179,15 @@ declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
 % FactAbbrev is the short name for the factory (either an alias of the class record)
 pred mk-factory-abbrev i:string, i:gref, o:list prop, o:factory-abbrev.
 mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
-  if (factory-alias->gref GR _)
+  if (factory-alias->gref GR _) % on classes we don't do it
      (Aliases = [],
       FactAbbrev = by-classname GR)
-     (phant.of-gref ff GR [] PhTerm,
-      phant.add-abbreviation Str PhTerm PhC Abbrv,
-      Aliases = [phant-abbrev GR (const PhC) Abbrv],
-      FactAbbrev = by-phantabbrev Abbrv),
+     (%phant.of-gref ff GR [] PhTerm,
+      std.spy-do! [
+        phant.add-silly-abbreviation Str GR PhC Abbrv,
+        Aliases = [phant-abbrev GR (const PhC) Abbrv],
+        FactAbbrev = by-phantabbrev Abbrv,
+     ])
 ].
 
 % [declare-asset Asset AssetKind] unifies the code paths for
@@ -262,7 +265,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
   coq.say {coq.env.typeof GRK} "-->" PhGRK,
-  GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
+  GRDepsClauses => phant.add-silly-abbreviation "Build" GRK BuildConst BuildAbbrev,
 
   if-verbose (coq.say {header} "declare notation axioms"),
 
@@ -299,7 +302,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
-  GRDepsClauses => declare-abbrev Module FactAbbrev,
+  % GRDepsClauses => declare-abbrev Module FactAbbrev,
 ].
 
 
@@ -341,7 +344,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   if (mixin-first-class F _) (PhGRK = PhGRK0)
     (phant.append-fun-unify PhGRK0 PhGRK),
-  GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst _,
+  GRDepsClauses => phant.add-silly-abbreviation "Build" GRK BuildConst _,
 
     GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 

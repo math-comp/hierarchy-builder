@@ -301,8 +301,8 @@ build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons ID Pty
 ].
 build-list-w-params [] TheType Factories (w-params.nil "TheType" TT1 R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
-  copy TT TT1,
-  (@pi-parameter "TheType" TT1 t\ (copy TheType t :- !) =>
+  copy TT TT1, TheType = global TV,
+  (@pi-parameter "TheType" TT1 t\ (copy TheType t :- !) => (pi GR L P P1 K\ copy (global GR) t :- coq.CS.db-for P1 (cs-gref TV) L, std.mem L (cs-instance P K GR)) =>
          std.map Factories (std.map-triple (=) (x\ std.map x copy) copy) (R t)),
 ].
 
@@ -318,13 +318,15 @@ w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 
 pred disable-id-phant i:term, o:term.
 disable-id-phant T T1 :-
-  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !)
-  => copy T T1.
+  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  copy T T1.
 
 pred re-enable-id-phant i:term, o:term.
 re-enable-id-phant T T1 :-
-  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !)
-  => copy T T1.
+  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
+  (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
+  copy T T1.
 
 pred prod-last i:term, o:term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.

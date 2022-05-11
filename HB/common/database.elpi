@@ -69,7 +69,7 @@ leq-builder (builder N _ _ _) (builder M _ _ _) :- N =< M.
 % factory gref GR associated to it.
 pred factory-alias->gref i:gref, o:gref.
 factory-alias->gref PhGR GR :- phant-abbrev GR PhGR _, !.
-factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
+factory-alias->gref GR GR. % :- phant-abbrev GR _ _, !.
 
 pred sub-class? i:class, i:class.
 sub-class? (class C1 _ ML1P) (class C2 _ ML2P) :-

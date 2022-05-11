@@ -12,6 +12,7 @@ Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
 Definition eta {T} (x : T) := x.
 Definition ignore {T} (x: T) := x.
+Definition ignore_disabled {T T'} (x : T) (x' : T') := x'.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
@@ -19,6 +20,8 @@ From elpi Require Import elpi.
 Register unify as hb.unify.
 Register id_phant as hb.id.
 Register id_phant_disabled as hb.id_disabled.
+Register ignore as hb.ignore.
+Register ignore_disabled as hb.ignore_disabled.
 Register Coq.Init.Datatypes.None as hb.none.
 Register nomsg as hb.nomsg.
 Register is_not_canonically_a as hb.not_a_msg.

@@ -41,7 +41,7 @@ declare.mixins TheType TheParamsSection MLwPRaw MLwP MSL CL :-  std.do! [
   apply-w-params MLwPRaw TheParams TheType MLwAllArgsRaw,
   std.fold MLwAllArgsRaw (triple [] [] []) (private.postulate-mixin TheType) (triple CL MSL MLwPRev),
   std.rev MLwPRev MLwPxxx, % prpprpr
-  build-list-w-params TheParamsSection TheType MLwPxxx MLwP,
+  std.spy(build-list-w-params TheParamsSection TheType MLwPxxx MLwP),
   std.forall MSL (ms\ log.coq.env.accumulate current "hb.db" (clause _ _ ms)),
 ].
 
