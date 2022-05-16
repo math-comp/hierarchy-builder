@@ -16,7 +16,7 @@ with lib; mkCoqDerivation {
   release."0.10.0".sha256 = "1a3vry9nzavrlrdlq3cys3f8kpq3bz447q8c4c7lh2qal61wb32h";
   releaseRev = v: "v${v}";
 
-  extraNativeBuildInputs = [ which ];
+  nativeBuildInputs = [ which ];
   propagatedBuildInputs = [ coq-elpi ];
 
   mlPlugin = true;

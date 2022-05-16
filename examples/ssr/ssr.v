@@ -1,8 +1,6 @@
 From HB Require Import structures.
 From Coq Require Import ssreflect ssrfun ssrbool.
 
-Unset Universe Checking.
-
 Axiom propext : forall (P Q : Prop), (P <-> Q) -> P = Q.
 
 HB.mixin Record HasEquality T := {
