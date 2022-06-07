@@ -52,9 +52,9 @@ builders.end :- std.do! [
   Name is M ^ "_Exports",
   log.coq.env.begin-module Name none,
 
-  std.forall Clauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-  std.forall ExportClausesFiltered (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
-
+  acc-clauses current Clauses,
+  acc-clauses current ExportClausesFiltered,
+  
   % Clauses => ExportClausesFiltered => current-mode no-builder =>
   %   instance.declare-factory-sort-factory GR,
 
@@ -139,15 +139,15 @@ factory _ _ _ :- !, coq.error "the last context item is not a factory".
 pred postulate-factories i:id, i:string, i:context-decl.
 postulate-factories ModName IDF CDecl :- std.do! [
   factory.cdecl->w-mixins CDecl (pr FLwP _),
-  context.declare.params-key FLwP _ _ FLwA,
-  std.assert! (FLwA = [triple GRF FParams FKey])
+  context.declare.params-key FLwP ParamsSection FKey FLwA,
+  std.assert! (FLwA = [triple GRF _ _])
     "HB: cannot declare builders for more than one factory at a time",
-  gref-deps GRF DepswP,
-  context.declare.mixins FKey FParams DepswP _ _,
+  gref-deps GRF DepswPRaw,
+  context.declare.mixins FKey ParamsSection DepswPRaw _ _ _,
+  std.map ParamsSection triple_2 FParams,
   postulate-factory-abbrev FKey FParams IDF GRF TheFactory,
   define-factory-operations FKey FParams TheFactory GRF,
-  log.coq.env.accumulate current "hb.db" (clause _ _
-    (current-mode (builder-from FKey TheFactory GRF ModName))),
+  acc-clause current (current-mode (builder-from FKey TheFactory GRF ModName)),
 ].
 
 }

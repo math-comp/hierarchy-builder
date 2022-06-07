@@ -1,7 +1,7 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.14";
+  default-bundle = "coq-8.15";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
@@ -14,19 +14,26 @@
       fourcolor.override.version = "master";
       odd-order.override.version = "hirarchy-builder";
       mathcomp-finmap.override.version = "#84";
+      mathcomp.analyis.override.version = "#694";
     };
   in {
-    "coq-mcHB-8.14".coqPackages = {
-      coq.override.version = "8.14";
+    "coq-mcHB-8.16".coqPackages = {
+      coq.override.version = "8.16";
+      coq-elpi.override.version = "master";
+      mathcomp-analysis.override.version = "coq816";
     } // mcHBcommon;
-    "coq-mcHB-8.13".coqPackages = {
-      coq.override.version = "8.13";
+
+    "coq-mcHB-8.15".coqPackages = {
+      coq.override.version = "8.15";
     } // mcHBcommon;
-    "coq-8.14".coqPackages = {
-      coq.override.version = "8.14";
+
+    "coq-8.16".coqPackages = {
+      coq.override.version = "8.16";
+      coq-elpi.override.version = "master";
+      mathcomp.override.version = "mathcomp-1.15.0";
     };
-    "coq-8.13".coqPackages = {
-      coq.override.version = "8.13";
+    "coq-8.15".coqPackages = {
+      coq.override.version = "8.15";
     };
   };
   cachix.coq = {};

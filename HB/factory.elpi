@@ -116,9 +116,10 @@ pred mixin-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
 mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing mixin" DeclKind ID),
   std.assert! (not (var TySkel)) "HB: no type provided for mixin",
-  purge-id TySkel TySkelNoId,
-  std.assert-ok! (coq.elaborate-ty-skeleton TySkelNoId _ Ty)
+  disable-id-phant TySkel TySkelNoId,
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkelNoId _ TyNoId)
     "HB: mixin illtyped",
+  re-enable-id-phant TyNoId Ty,
   std.assert! (factory? Ty (triple F Ps T))
     "HB: Not a factory applied to the key variable",
   std.assert! (pi x y\ Rest y = Rest x)
@@ -165,8 +166,8 @@ cdecl->w-mixins.mixins (context-item ID _ TySkel none Rest) Out :- !,
 % The identity builder
 pred declare-id-builder i:factoryname, o:prop.
 declare-id-builder GR (from GR GR (const C)) :- std.do! [
-  synthesis.mixins-w-params.fun {gref-deps GR} (declare-id-builder.aux GR) IDBody,
-  std.assert-ok! (coq.typecheck IDBody IDType) "identity builder illtyped",
+  synthesis.mixins-w-params.fun {gref-deps GR} (declare-id-builder.aux GR) IDBodySkel,
+  std.assert-ok! (coq.elaborate-skeleton IDBodySkel IDType IDBody) "identity builder illtyped",
   log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
 declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
@@ -199,10 +200,10 @@ declare-asset Arg AssetKind :- std.do! [
   argument->w-mixins Arg (pr FLwP ArgwP),
 
   if-verbose (coq.say {header} "converting factories" FLwP "to mixins"),
-  factories-provide FLwP MLwP,
+  %%% factories-provide FLwP MLwP,
 
   if-verbose (coq.say {header} "declaring context" FLwP),
-  context.declare FLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
+  context.declare FLwP MLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
 
   if (Arg = indt-decl _) (
     apply-w-params ArgwP Params TheKey (indt-decl (record _ Sort _ Fields)),
@@ -222,12 +223,14 @@ pred declare-mixin-or-factory i:list prop, i:list constant, i:list term, i:term,
 declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Sort1 Fields GRFSwP Module D :- std.do! [
 
-  if-verbose (coq.say {header} "declare record axioms_:" Sort1),
+  if-verbose (coq.say {header} "declare record axioms_"),
   Kname = "Axioms_",
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
+
+  % coq.say RDecl RDeclClosed,
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
@@ -276,8 +279,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     % gref-deps GRFSort MLwP,
     % factory-sort FactorySortCoe,
   ]] NewClauses,
-  std.forall NewClauses
-    (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current NewClauses,
 
   std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits,
   @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
@@ -301,7 +303,7 @@ pred declare-factory-alias  i:list prop, i:list constant, i:list term, i:term,
 declare-factory-alias MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Ty1Skel GRFSwP Module :- std.do! [
 
-  if-verbose (coq.say {header} "declare constant axioms_:" Ty1Skel),
+  if-verbose (coq.say {header} "declare constant axioms_"),
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
@@ -352,8 +354,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
       ]
     ] NewClauses,
 
-  std.forall NewClauses (c\
-    log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current NewClauses,
   %@global! => log.coq.coercion.declare FactorySortCoe,
 
   % NewClauses => instance.declare-factory-sort-deps (const C),
