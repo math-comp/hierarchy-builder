@@ -13,7 +13,7 @@
       graph-theory.job = false;
       fourcolor.override.version = "master";
       odd-order.override.version = "hirarchy-builder";
-      mathcomp-finmap.override.version = "#84";
+      mathcomp-finmap.override.version = "proux01:hierarchy-builder";
       mathcomp.analyis.override.version = "#694";
     };
   in {
