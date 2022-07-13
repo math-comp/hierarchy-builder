@@ -20,7 +20,7 @@ arguments.set-implicit GR I :-  std.do! [
 pred env.add-location i:gref.
 env.add-location GR :-
   if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
-     (log.coq.env.accumulate library "hb.db" (clause _ _ (decl-location GR Loc)))
+     (acc-clause library (decl-location GR Loc))
      true.
 
 pred strategy.set i:list constant, i:conversion_strategy.

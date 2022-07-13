@@ -6,10 +6,12 @@ namespace structure {
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
 pred declare i:string, i:term, i:universe.
-declare Module B Sort :- std.do! [
-  purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
-  private.sigT->list-w-params B2 GRFSwP ClosureCheck,
-
+declare Module BSkel Sort :- std.do! [
+  disable-id-phant BSkel BSkelNoId,
+  std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
+  re-enable-id-phant BNoId B,
+  private.sigT->list-w-params B GRFSwP ClosureCheck,
+  
   factories-provide GRFSwP PMLwP,
 
   list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
@@ -133,7 +135,7 @@ declare Module B Sort :- std.do! [
       [gref-deps GRPack MLwP], MixinMems, [StructKeyClause], PHClauses
     ]
     NewClauses,
-  std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current NewClauses,
 
   if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
@@ -198,7 +200,7 @@ declare Module B Sort :- std.do! [
 
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
   log.coq.env.begin-module ElpiOperationModName none,
-    std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current {std.append EX MixinFirstClass},
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
 
@@ -354,7 +356,7 @@ pred declare-coercion i:term, i:term, i:class, i:class.
 declare-coercion SortProjection ClassProjection
     (class FC StructureF FMLwP) (class TC StructureT TMLwP) :- std.do! [
 
-  log.coq.env.accumulate current "hb.db" (clause _ _ (sub-class FC TC)),
+  acc-clause current (sub-class FC TC),
 
   gref->modname StructureF 2 "_" ModNameF,
   gref->modname StructureT 2 "_" ModNameT,
@@ -427,10 +429,10 @@ pred join-body i:int, i:int, i:structure, i:term, i:term, i:term, i:term, i:term
 join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
   P N _Ty _F (fun N S3P Pack) :- !,
   mk-app (global S3) P S3P, !,
-  coq.mk-n-holes N2 Holes2, !,
-  coq.mk-n-holes N1 Holes1, !,
   @pi-decl N S3P s\
-  sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps \ std.do! [
+  sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps Holes1 Holes2 \ std.do! [
+    coq.mk-n-holes N2 Holes2,
+    coq.mk-n-holes N1 Holes1,
     mk-app S3_to_S1 {std.append P [s]} S3_to_S1_Ps,
     mk-app S1_sort {std.append Holes1 [S3_to_S1_Ps]} S1_sortS3Ps,
     mk-app S3_to_S2 {std.append P [s]} S3_to_S2_Ps,
