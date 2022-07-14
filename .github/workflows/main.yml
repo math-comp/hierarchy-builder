@@ -17,7 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         coq_version:
-          - '8.15'
           - '8.16'
         ocaml_version:
           - '4.09-flambda'
