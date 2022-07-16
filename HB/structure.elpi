@@ -5,6 +5,7 @@ namespace structure {
 
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
+pred declare i:string, i:term, i:sort.
 pred declare i:string, i:term, i:universe.
 declare Module BSkel Sort :- std.do! [
   disable-id-phant BSkel BSkelNoId,
@@ -495,6 +496,7 @@ pred synthesize-fields.body i:list term, i:term, i:list (w-args mixinname), o:in
 synthesize-fields.body _Params T ML (record "axioms_" {{ Type }} "Class" FS) :-
   synthesize-fields T ML FS.
 
+pred mk-record+sort-field i:sort, i:name, i:term, i:(term -> record-decl), o:indt-decl.
 pred mk-record+sort-field i:universe, i:name, i:term, i:(term -> record-decl), o:indt-decl.
 mk-record+sort-field Sort _ T F (record RecordName (sort Sort) "Pack" (field _ "sort" T F)) :- !, std.do! [
   if (get-option "infer" _) (RecordName = "type_") (RecordName = "type")
@@ -505,6 +507,7 @@ mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global C
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
+pred declare-class+structure i:mixins, i:sort, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
 pred declare-class+structure i:mixins, i:universe, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
 declare-class+structure MLwP Sort
     (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories
