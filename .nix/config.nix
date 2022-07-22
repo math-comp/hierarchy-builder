@@ -19,7 +19,6 @@
   in {
     "coq-mcHB-8.16".coqPackages = {
       coq.override.version = "8.16";
-      coq-elpi.override.version = "master";
       mathcomp-analysis.override.version = "coq816";
     } // mcHBcommon;
 
@@ -29,7 +28,6 @@
 
     "coq-8.16".coqPackages = {
       coq.override.version = "8.16";
-      coq-elpi.override.version = "master";
       mathcomp.override.version = "mathcomp-1.15.0";
     };
     "coq-8.15".coqPackages = {

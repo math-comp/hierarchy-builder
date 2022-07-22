@@ -248,6 +248,7 @@ compress X X.
 
 #[arguments(raw)] Elpi Command HB.locate.
 Elpi Accumulate Db hb.db.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate lp:{{
 
 main _ :- coq.version _ _ N _, N < 13, !,
@@ -277,6 +278,7 @@ Elpi Export HB.locate.
 *)
 
 #[arguments(raw)] Elpi Command HB.about.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -302,6 +304,7 @@ Elpi Export HB.about.
 *)
 
 #[arguments(raw)] Elpi Command HB.status.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -328,6 +331,7 @@ tred file.dot | xdot -
 *)
 
 #[arguments(raw)] Elpi Command HB.graph.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -374,6 +378,7 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 *)
 
 #[arguments(raw)] Elpi Command HB.mixin.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -434,6 +439,7 @@ Elpi Export HB.mixin.
 
 Elpi Tactic HB.pack_for.
 Elpi Accumulate Db hb.db.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -454,6 +460,7 @@ Elpi Export HB.pack_for.
 
 Elpi Tactic HB.pack.
 Elpi Accumulate Db hb.db.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -535,6 +542,7 @@ HB.structure Definition StructureName params :=
 *)
 
 #[arguments(raw)] Elpi Command HB.structure.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -587,6 +595,7 @@ HB.instance Definition N Params := Factory.Build Params T …
 *)
 
 #[arguments(raw)] Elpi Command HB.instance.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -616,6 +625,7 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 #[arguments(raw)] Elpi Command HB.factory.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -674,6 +684,7 @@ HB.end.
 *)
 
 #[arguments(raw)] Elpi Command HB.builders.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -696,6 +707,7 @@ Elpi Export HB.builders.
 
 
 #[arguments(raw)] Elpi Command HB.end.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -746,6 +758,7 @@ Export Algebra.Exports.
 *)
 
 #[arguments(raw)] Elpi Command HB.export.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -770,6 +783,7 @@ Elpi Export HB.export.
    (a module which is not closed yet) *)
 
 #[arguments(raw)] Elpi Command HB.reexport.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -814,6 +828,7 @@ Notation foo := foo.body.
 *)
 
 #[arguments(raw)] Elpi Command HB.lock.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -861,6 +876,7 @@ HB.instance Definition _ : Ml ... T := ml.
 *)
 
 #[arguments(raw)] Elpi Command HB.declare.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -895,6 +911,7 @@ Elpi Export HB.declare.
 
 #[arguments(raw)] Elpi Command HB.check.
 Elpi Accumulate Db hb.db.
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
