@@ -309,33 +309,39 @@ get-cs-instance (cs-instance _ _ (const Inst)) Inst.
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
+pred term->cs-pattern i:term, o:cs-pattern.
+term->cs-pattern (prod _ _ _) cs-prod.
+term->cs-pattern (sort U) (cs-sort U).
+term->cs-pattern T (cs-gref GR) :- term->gref T GR.
+term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
+
+pred cs-pattern->name i:cs-pattern, o:string.
+cs-pattern->name cs-prod "prod".
+cs-pattern->name (cs-sort _) "sort".
+cs-pattern->name cs-default "default".
+cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
+
 pred get-canonical-structures i:term, o:list structure.
 get-canonical-structures TyTrm StructL :- std.do! [
-  term->gref TyTrm CanonValue,
-  if (coq.version _ _ N _, N > 12)
-     (coq.CS.db-for _ (cs-gref CanonValue) DBGTyL)
-     (std.filter {coq.CS.db} (has-cs-instance CanonValue) DBGTyL),
+  term->cs-pattern TyTrm Pat, !,
+  coq.CS.db-for _ Pat DBGTyL,
   std.map-filter DBGTyL get-cs-structure StructL,
 ].
 
 pred get-canonical-instances i:term, o:list constant.
-get-canonical-instances TyTrm CL :- std.do! [
-  term->gref TyTrm CanonValue,
-  if (coq.version _ _ N _, N > 12)
-     (coq.CS.db-for _ (cs-gref CanonValue) DBGTyL)
-     (std.filter {coq.CS.db} (has-cs-instance CanonValue) DBGTyL),
-  std.map-filter DBGTyL get-cs-instance CL,
+get-canonical-instances TyTrm StructL :- std.do! [
+  term->cs-pattern TyTrm Pat, !,
+  coq.CS.db-for _ Pat DBGTyL,
+  std.map-filter DBGTyL get-cs-instance StructL,
 ].
 
 pred has-CS-instance? i:term, i:structure.
-has-CS-instance? TyTerm (indt Struct) :- coq.version _ _ N _, N > 12, !,
-  term->gref TyTerm Value,
+has-CS-instance? TyTerm (indt Struct) :- std.do! [
+  term->cs-pattern TyTerm Pat,
   coq.env.projections Struct [some Proj, _],
-  coq.CS.db-for (const Proj) (cs-gref Value) L,
-  not(L = []).
-has-CS-instance? TyTerm Struct :-
-  get-canonical-structures TyTerm StructL,
-  std.mem! StructL Struct.
+  coq.CS.db-for (const Proj) Pat L,
+  not(L = [])
+].
 
 pred structure-nparams i:structure, o:int.
 structure-nparams Structure NParams :-

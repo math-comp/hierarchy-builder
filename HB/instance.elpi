@@ -102,13 +102,15 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
      fail,
 
   !,
-  coq.term->gref T TGR,
-  Name is  {gref->modname-label TGR 1 "_"} ^ "__canonical__" ^ {gref->modname Struct 2 "_"},
+
+  Name is {cs-pattern->name {term->cs-pattern T}}
+    ^ "__canonical__" ^ {gref->modname Struct 2 "_" },
 
   if-verbose (coq.say {header} "declare canonical structure instance" Name),
 
   get-constructor Struct KS,
-  private.optimize-class-body TGR {std.length Params} KCApp KCAppNames Clauses,
+  coq.safe-dest-app T THD _,
+  private.optimize-class-body THD {std.length Params} KCApp KCAppNames Clauses,
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
   std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
@@ -329,12 +331,12 @@ pred hnf i:term, o:term.
 hnf X R :- get-option "hnf" tt, !, unwind {whd X []} R.
 hnf X X.
 
-pred optimize-class-body i:gref, i:int, i:term, o:term, o:list prop.
-optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
+pred optimize-class-body i:term, i:int, i:term, o:term, o:list prop.
+optimize-class-body T NParams (let _ _ MBo R) R1 Clauses :- std.do! [
   declare-mixin-name {hnf MBo} MC CL1,
-  if (TGR = indt _, MC = global (const C), not(coq.env.opaque? C))
+  if (T = global (indt _), MC = global (const C), not(coq.env.opaque? C))
      (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
-  optimize-class-body TGR NParams (R MC) R1 CL2,
+  optimize-class-body T NParams (R MC) R1 CL2,
   std.append CL1 CL2 Clauses,
 ].
 optimize-class-body _ _ (app L) (app L) [].
