@@ -159,7 +159,7 @@ env.import-module MPNice M :- std.do! [
 
 pred coercion.declare i:coercion.
 coercion.declare C :- std.do! [
-  @global! => @reversible! => coq.coercion.declare C,
+  compat.coercion.declare C,
   C = coercion GR _ SRCGR TGTCL,
   coq.gref->id GR Name,
   log.private.log-vernac (log.private.coq.vernac.coercion Name SRCGR TGTCL),

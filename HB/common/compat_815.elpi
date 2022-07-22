@@ -1,1 +1,2 @@
-macro @reversible! :- true.
+pred compat.coercion.declare i:coercion.
+compat.coercion.declare C :- @global! => coq.coercion.declare C.
