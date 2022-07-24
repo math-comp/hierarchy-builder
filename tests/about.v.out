@@ -139,4 +139,4 @@ HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
 
 HB: todo HB.about for builder from hierarchy_5.Ring_of_AddAG to 
 hierarchy_5.BiNearRing_of_AddMonoid
-HB: synthesized in file File "(stdin)", line 5, column 0, character 0:
+HB: synthesized in file File "(stdin)", line 5, column 0:
