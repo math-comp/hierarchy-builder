@@ -1,7 +1,7 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.15";
+  default-bundle = "coq-master";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
@@ -17,25 +17,23 @@
       mathcomp.analyis.override.version = "#694";
     };
   in {
-    "coq-mcHB-8.16".coqPackages = {
-      coq.override.version = "8.16";
-      mathcomp-analysis.override.version = "coq816";
+    "coq-mcHB-master".coqPackages = {
+      coq.override.version = "master";
+      coq-elpi.override.version = "coq-master";
     } // mcHBcommon;
-
-    "coq-mcHB-8.15".coqPackages = {
-      coq.override.version = "8.15";
-    } // mcHBcommon;
-
-    "coq-8.16".coqPackages = {
-      coq.override.version = "8.16";
-      mathcomp.override.version = "mathcomp-1.15.0";
+    "coq-mcHB-master".ocamlPackages = {
+      elpi.override.version = "1.16.5";
     };
-    "coq-8.15".coqPackages = {
-      coq.override.version = "8.15";
+    "coq-master".coqPackages = {
+      coq.override.version = "master";
+      coq-elpi.override.version = "coq-master";
+    };
+    "coq-master".ocamlPackages = {
+      elpi.override.version = "1.16.5";
     };
   };
   cachix.coq = {};
   cachix.coq-community = {};
-  cachix.math-comp.authToken = "CACHIX_AUTH_TOKEN";
+   cachix.math-comp.authToken = "CACHIX_AUTH_TOKEN";
 
 }
