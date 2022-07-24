@@ -71,10 +71,16 @@ with-locality P :-
   if (get-option "local" tt) (A = @local!) (A = @global!),
   A => P.
 
+pred acc-clause i:scope, i:prop.
+acc-clause Scope C :- coq.elpi.accumulate Scope "hb.db" (clause _ _ C).
+
+pred acc-clauses i:scope, i:list prop.
+acc-clauses Scope CL :- std.forall CL (acc-clause Scope).
+
 pred save-docstring.
 save-docstring :-
   if (get-option "elpi.loc" Loc, get-option "doc" Txt)
-     (coq.elpi.accumulate _ "hb.db" (clause _ _ (docstring Loc Txt)))
+     (acc-clause _ (docstring Loc Txt))
      true.
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
@@ -289,7 +295,7 @@ list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
   list-w-params.flatten-map.aux L F Res,
   std.append ML Res Res1.
 
-% [build-list-w-params TheParams TheType Factorties ListWParams]
+% [build-list-w-params TheParams TheType Factories ListWParams]
 % Params is a list of pairs (section variable, its type).
 % ListWParams has as many w-params.cons as TheParams and the terms
 % in Factories are abstracted wrt the first component of TheParams.
@@ -298,12 +304,31 @@ build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons ID Pty
   copy Pty Pty1,
   (@pi-parameter ID Pty1 p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
 ].
-build-list-w-params [] TheType Factories (w-params.nil "TheType" TT1 R) :- std.do! [
+build-list-w-params [] TheType Factories (w-params.nil Name TT1 R) :- std.do! [
   std.assert-ok! (coq.typecheck TheType TT) "BUG: TheType does not typecheck",
   copy TT TT1,
-  (@pi-parameter "TheType" TT1 t\ (copy TheType t :- !) =>
-         std.map Factories (std.map-triple (=) (x\ std.map x copy) copy) (R t)),
+  coq.gref->id {coq.term->gref TheType} Name,
+  (@pi-parameter Name TT1 t\
+    (copy TheType t :- !) =>
+      std.map Factories
+        (std.map-triple (=) (x\ std.map x (copy-pack-holes TheType t))
+        (copy-pack-holes TheType t)) (R t)),
 ].
+
+pred copy-pack-holes i:term, i:term, i:term, o:term.
+copy-pack-holes TheType NewType Term Out :- std.do! [
+  (pi Args NewArgs CSInstance ParamsRev ParamsRevCopy Pack \
+    (copy (app[global Pack | Args]) (app[global Pack | NewArgs]) :- pack? Pack _, !,
+      std.rev Args [CSInstance,TheType|ParamsRev],
+      std.map ParamsRev copy ParamsRevCopy,
+      std.rev [{{ lib:elpi.hole }},NewType|ParamsRevCopy] NewArgs)) =>
+  copy Term Out,
+].
+
+pred pack? i:gref, o:classname.
+pack? (indc K) C :-
+  coq.env.indc K _ _ _ KTy, prod-last-gref KTy (indt I), % TODO: use new API
+  class-def (class C (indt I) _).
 
 pred distribute-w-params i:list-w-params A, o:list (one-w-params A).
 distribute-w-params (w-params.cons N T F) L :-
@@ -315,10 +340,22 @@ distribute-w-params (w-params.nil N T F) L :-
 pred w-params_1 i:one-w-params A, o:A.
 w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 
-pred purge-id i:term, o:term.
-purge-id T T1 :-
-  (pi fresh t v\ copy {{lib:@hb.id lp:t lp:v}} fresh :- !) => copy T T1.
+pred disable-id-phant i:term, o:term.
+disable-id-phant T T1 :-
+  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  copy T T1.
+
+pred re-enable-id-phant i:term, o:term.
+re-enable-id-phant T T1 :-
+  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
+  (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
+  copy T T1.
 
 pred prod-last i:term, o:term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.
 prod-last X X :- !.
+
+pred prod-last-gref i:term, o:gref.
+prod-last-gref (prod N S X) GR :- !, @pi-decl N S x\ prod-last-gref (X x) GR.
+prod-last-gref X GR :- coq.term->gref X GR.

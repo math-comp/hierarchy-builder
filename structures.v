@@ -6,16 +6,22 @@ Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
 Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
+Definition id_phant_disabled {T T'} {t : T} {t' : T'} (x : phantom T t) := Phantom T' t'.
 Definition nomsg : error_msg := NoMsg.
 Definition is_not_canonically_a x := IsNotCanonicallyA x.
 Definition new {T} (x : T) := x.
 Definition eta {T} (x : T) := x.
+Definition ignore {T} (x: T) := x.
+Definition ignore_disabled {T T'} (x : T) (x' : T') := x'.
 
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
 
 Register unify as hb.unify.
 Register id_phant as hb.id.
+Register id_phant_disabled as hb.id_disabled.
+Register ignore as hb.ignore.
+Register ignore_disabled as hb.ignore_disabled.
 Register Coq.Init.Datatypes.None as hb.none.
 Register nomsg as hb.nomsg.
 Register is_not_canonically_a as hb.not_a_msg.
@@ -67,6 +73,7 @@ type w-params.nil id -> term -> (term -> A) -> w-params A.
 typeabbrev (list-w-params A) (w-params (list (w-args A))).
 typeabbrev (one-w-params A) (w-params (w-args A)).
 typeabbrev mixins (list-w-params mixinname).
+typeabbrev factories (list-w-params mixinname).
 typeabbrev (w-mixins A) (pair mixins (w-params A)).
 
 %%%%% Classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -88,6 +95,12 @@ typeabbrev (w-mixins A) (pair mixins (w-params A)).
 %            triple (indt «IsZmodule.mixin») [] T, /* a mixins with its params       */
 %            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
 %
+% If some mixin parameters depend on other mixins (through a canonical instance that
+% can be inferred from them). Since our structure does not account for dependencies
+% between mixins (the list in the end is flat), we compensate by replacing canonical
+% instances by calls to `S.Pack T {{lib:elpi.hole}}`, and extending the reconstruction
+% mecanism of mixins to also reinfer these holes.
+
 kind class type.
 type class classname -> structure -> mixins -> class.
 
@@ -189,6 +202,9 @@ kind builder type.
 type builder int -> factoryname -> mixinname -> gref -> builder.
 pred builder-decl o:builder.
 
+%% database for builder-local canonical instances %%%%%%%%%%%%%%%%%%%%%%%
+pred local-canonical o:constant.
+
 % To tell HB.end what we are doing
 kind declaration type.
 % TheType, TheFactory and it's name and the name of the module encloding all that
@@ -230,9 +246,10 @@ compress X X.
     or inductive was generated.
 *)
 
-#[arguments(raw)]
-Elpi Command HB.locate.
+#[arguments(raw)] Elpi Command HB.locate.
 Elpi Accumulate Db hb.db.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate lp:{{
 
 main _ :- coq.version _ _ N _, N < 13, !,
@@ -261,12 +278,13 @@ Elpi Export HB.locate.
     - canonical value, eg Z, prod, ...
 *)
 
-#[arguments(raw)]
-Elpi Command HB.about.
+#[arguments(raw)] Elpi Command HB.about.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/about.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -287,9 +305,11 @@ Elpi Export HB.about.
 
 *)
 
-#[arguments(raw)]
-Elpi Command HB.status.
+#[arguments(raw)] Elpi Command HB.status.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
@@ -313,9 +333,11 @@ tred file.dot | xdot -
     to visualize file.dot
 *)
 
-#[arguments(raw)]
-Elpi Command HB.graph.
+#[arguments(raw)] Elpi Command HB.graph.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/graph.elpi".
@@ -359,12 +381,13 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 
 *)
 
-#[arguments(raw)]
-Elpi Command HB.mixin.
+#[arguments(raw)] Elpi Command HB.mixin.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -421,10 +444,12 @@ Elpi Export HB.mixin.
 
 Elpi Tactic HB.pack_for.
 Elpi Accumulate Db hb.db.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
@@ -441,10 +466,12 @@ Elpi Export HB.pack_for.
 
 Elpi Tactic HB.pack.
 Elpi Accumulate Db hb.db.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
@@ -521,12 +548,13 @@ HB.structure Definition StructureName params :=
   - [#[verbose]] for a verbose output.
 *)
 
-#[arguments(raw)]
-Elpi Command HB.structure.
+#[arguments(raw)] Elpi Command HB.structure.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/export.elpi".
@@ -574,12 +602,13 @@ HB.instance Definition N Params := Factory.Build Params T …
       them
 *)
 
-#[arguments(raw)]
-Elpi Command HB.instance.
+#[arguments(raw)] Elpi Command HB.instance.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -604,12 +633,13 @@ Elpi Export HB.instance.
 
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
-#[arguments(raw)]
-Elpi Command HB.factory.
+#[arguments(raw)] Elpi Command HB.factory.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -663,12 +693,13 @@ HB.end.
     - [#[verbose]] for a verbose output.
 *)
 
-#[arguments(raw)]
-Elpi Command HB.builders.
+#[arguments(raw)] Elpi Command HB.builders.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/instance.elpi".
@@ -686,12 +717,13 @@ Elpi Typecheck.
 Elpi Export HB.builders.
 
 
-#[arguments(raw)]
-Elpi Command HB.end.
+#[arguments(raw)] Elpi Command HB.end.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
@@ -737,12 +769,13 @@ Export Algebra.Exports.
 
 *)
 
-#[arguments(raw)]
-Elpi Command HB.export.
+#[arguments(raw)] Elpi Command HB.export.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -762,12 +795,13 @@ Elpi Export HB.export.
    It optionally takes the name of a module or a component of the current module path
    (a module which is not closed yet) *)
 
-#[arguments(raw)]
-Elpi Command HB.reexport.
+#[arguments(raw)] Elpi Command HB.reexport.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
@@ -807,9 +841,11 @@ Notation foo := foo.body.
 ]]
 *)
 
-#[arguments(raw)]
-Elpi Command HB.lock.
+#[arguments(raw)] Elpi Command HB.lock.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/lock.elpi".
@@ -854,12 +890,13 @@ HB.instance Definition _ : Ml ... T := ml.
 
 *)
 
-#[arguments(raw)]
-Elpi Command HB.declare.
+#[arguments(raw)] Elpi Command HB.declare.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
 Elpi Accumulate File "HB/export.elpi".
@@ -872,7 +909,7 @@ Elpi Accumulate lp:{{
 main [Ctx] :- Ctx = ctx-decl _, !,
   with-attributes (with-logging (
     factory.argument->w-mixins Ctx (pr FLwP _),
-    context.declare FLwP _ _ _ _)).
+    context.declare FLwP _ _ _ _ _)).
 
 main _ :- coq.error "Usage: HB.declare Context <Parameters> <Key> <Factories>".
 
@@ -888,10 +925,12 @@ Elpi Export HB.declare.
     that skips the action on Coq version matches rex. It also understands the
     [#[fail]] attribute. *)
 
-#[arguments(raw)]
-Elpi Command HB.check.
+#[arguments(raw)] Elpi Command HB.check.
 Elpi Accumulate Db hb.db.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate lp:{{

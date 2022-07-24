@@ -18,12 +18,12 @@ pred export.module i:id, i:modpath.
 export.module NiceModule Module :- !,
   log.coq.env.export-module NiceModule Module,
   coq.env.current-library File,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (module-to-export File NiceModule Module)).
+  acc-clause current (module-to-export File NiceModule Module).
 
 pred export.abbrev i:id, i:gref.
 export.abbrev NiceName GR :- !,
   coq.env.current-library File,
-  log.coq.env.accumulate current "hb.db" (clause _ _ (abbrev-to-export File NiceName GR)).
+  acc-clause current (abbrev-to-export File NiceName GR).
 
 pred export.reexport-all-modules-and-CS i:option string.
 export.reexport-all-modules-and-CS Filter :- std.do! [

@@ -15,7 +15,7 @@ declare-existing T0 F0 :- std.do! [
      "The type of the instance is not a factory",
   factory-alias->gref FactoryAlias Factory,
   private.declare-instance Factory T F Clauses _,
-  std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
+  acc-clauses current Clauses
 ].
 
 % [declare-const N B Ty] adds a Definition N : Ty := B where Ty is a factory
@@ -49,7 +49,16 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   private.hack-section-discharging SectionBody SectionBodyHack,
   private.optimize-body SectionBodyHack OptimizedBody,
   if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
-  log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody SectionTy @transparent! C,
+
+  % unfold local instances in the type of C
+  if (current-mode (builder-from _ _ _ _)) (std.do![
+    findall-local-canonical LocalCSL,
+    coq.copy-clauses-for-unfold LocalCSL UnfoldClauses,
+    UnfoldClauses => copy SectionTy SectionTyUnfolded,
+  ]) (SectionTy = SectionTyUnfolded),
+
+  log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
+    SectionTyUnfolded @transparent! C,
   TheFactory = (global (const C)),
 
   % call HB.instance TheType TheFactory
@@ -66,7 +75,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   ),
 
   % we accumulate clauses now that the section is over
-  std.forall Clauses (x\log.coq.env.accumulate current "hb.db" (clause _ _ x)),
+  acc-clauses current Clauses
 ].
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
@@ -93,19 +102,24 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
      fail,
 
   !,
-  coq.term->gref T TGR,
-  Name is  {gref->modname-label TGR 1 "_"} ^ "__canonical__" ^ {gref->modname Struct 2 "_"},
+
+  Name is {cs-pattern->name {term->cs-pattern T}}
+    ^ "__canonical__" ^ {gref->modname Struct 2 "_" },
 
   if-verbose (coq.say {header} "declare canonical structure instance" Name),
 
   get-constructor Struct KS,
-  private.optimize-class-body TGR {std.length Params} KCApp KCAppNames Clauses,
+  coq.safe-dest-app T THD _,
+  private.optimize-class-body THD {std.length Params} KCApp KCAppNames Clauses,
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
   std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
+
+  acc-clause current (local-canonical CS),
+
   if-verbose (coq.say {header} "structure instance" Name "declared"),
 
   Clauses => declare-all T Rest L.
@@ -139,8 +153,8 @@ declare-factory-sort-factory GR :- std.do! [
 pred mk-factory-sort-deps i:gref, o:list (pair id constant).
 mk-factory-sort-deps AliasGR CSL :- std.do! [
   factory-alias->gref AliasGR GR,
-  gref-deps GR MLwP,
-  context.declare MLwP SortParams SortKey SortMSL _,
+  gref-deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
   log.coq.env.add-section-variable-noimplicits "f" FSort CF,
   GCF = global (const CF),
@@ -164,8 +178,8 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
 pred mk-factory-sort-factory i:gref, o:list (pair id constant).
 mk-factory-sort-factory AliasGR CSL :- std.do! [
   factory-alias->gref AliasGR GR,
-  gref-deps GR MLwP,
-  context.declare MLwP SortParams SortKey SortMSL _,
+  gref-deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
   log.coq.env.add-section-variable-noimplicits "f" FSort CF,
   std.length {list-w-params_list MLwP} NMLArgs,
@@ -277,7 +291,7 @@ declare-canonical-instances-from-factory-and-local-builders
 % [declare-canonical-instances-from-factory T F] given a factory F
 % it uses all known builders to declare canonical instances of structures
 % on T
-pred declare-canonical-instances-from-factory 
+pred declare-canonical-instances-from-factory
   i:factoryname, i:term, i:term, o:list (pair id constant).
 declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
@@ -317,12 +331,12 @@ pred hnf i:term, o:term.
 hnf X R :- get-option "hnf" tt, !, unwind {whd X []} R.
 hnf X X.
 
-pred optimize-class-body i:gref, i:int, i:term, o:term, o:list prop.
-optimize-class-body TGR NParams (let _ _ MBo R) R1 Clauses :- std.do! [
+pred optimize-class-body i:term, i:int, i:term, o:term, o:list prop.
+optimize-class-body T NParams (let _ _ MBo R) R1 Clauses :- std.do! [
   declare-mixin-name {hnf MBo} MC CL1,
-  if (TGR = indt _, MC = global (const C), not(coq.env.opaque? C))
+  if (T = global (indt _), MC = global (const C), not(coq.env.opaque? C))
      (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
-  optimize-class-body TGR NParams (R MC) R1 CL2,
+  optimize-class-body T NParams (R MC) R1 CL2,
   std.append CL1 CL2 Clauses,
 ].
 optimize-class-body _ _ (app L) (app L) [].
