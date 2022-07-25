@@ -65,6 +65,7 @@ tests/compress_coe.v
 tests/funclass.v
 tests/local_instance.v
 tests/lock.v
+tests/interleave_context.v
 tests/not_same_key.v
 #tests/factory_sort.v
 tests/factory_sort_tac.v
@@ -75,6 +76,9 @@ tests/non_forgetful_inheritance.v
 tests/fix_loop.v
 tests/test_synthesis_params.v
 tests/hnf.v
+tests/fun_instance.v
+tests/issue284.v
+tests/issue287.v
 
 -R tests HB.tests
 -R examples HB.examples

@@ -5,11 +5,14 @@ namespace structure {
 
 % HB.structure Definition S P1 P2 := { T of F1 P1 T & F2 P1 (P2*P2) T }
 %  cons p1\ cons p2\ nil t\ [triple f1 [p1] t,triple f2 [p1, {{p1 * p2}}] t]
-pred declare i:string, i:term.
-declare Module B :- std.do! [
-  purge-id B B1, std.assert-ok! (coq.elaborate-skeleton B1 _ B2) "illtyped structure definition",
-  private.sigT->list-w-params B2 GRFSwP ClosureCheck,
-
+pred declare i:string, i:term, i:sort.
+pred declare i:string, i:term, i:universe.
+declare Module BSkel Sort :- std.do! [
+  disable-id-phant BSkel BSkelNoId,
+  std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
+  re-enable-id-phant BNoId B,
+  private.sigT->list-w-params B GRFSwP ClosureCheck,
+  
   factories-provide GRFSwP PMLwP,
 
   list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
@@ -35,7 +38,7 @@ declare Module B :- std.do! [
 
   log.coq.env.begin-module Module none,
 
-  private.declare-class+structure MLwP
+  private.declare-class+structure MLwP Sort
     ClassName Structure SortProjection ClassProjection Factories StructKeyClause,
 
   w-params.map MLwP (_\_\_\ mk-nil) NilwP,
@@ -133,7 +136,7 @@ declare Module B :- std.do! [
       [gref-deps GRPack MLwP], MixinMems, [StructKeyClause], PHClauses
     ]
     NewClauses,
-  std.forall NewClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current NewClauses,
 
   if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
@@ -198,7 +201,7 @@ declare Module B :- std.do! [
 
   ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
   log.coq.env.begin-module ElpiOperationModName none,
-    std.forall {std.append EX MixinFirstClass} (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current {std.append EX MixinFirstClass},
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
 
@@ -354,7 +357,7 @@ pred declare-coercion i:term, i:term, i:class, i:class.
 declare-coercion SortProjection ClassProjection
     (class FC StructureF FMLwP) (class TC StructureT TMLwP) :- std.do! [
 
-  log.coq.env.accumulate current "hb.db" (clause _ _ (sub-class FC TC)),
+  acc-clause current (sub-class FC TC),
 
   gref->modname StructureF 2 "_" ModNameF,
   gref->modname StructureT 2 "_" ModNameT,
@@ -427,10 +430,10 @@ pred join-body i:int, i:int, i:structure, i:term, i:term, i:term, i:term, i:term
 join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
   P N _Ty _F (fun N S3P Pack) :- !,
   mk-app (global S3) P S3P, !,
-  coq.mk-n-holes N2 Holes2, !,
-  coq.mk-n-holes N1 Holes1, !,
   @pi-decl N S3P s\
-  sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps \ std.do! [
+  sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps Holes1 Holes2 \ std.do! [
+    coq.mk-n-holes N2 Holes2,
+    coq.mk-n-holes N1 Holes1,
     mk-app S3_to_S1 {std.append P [s]} S3_to_S1_Ps,
     mk-app S1_sort {std.append Holes1 [S3_to_S1_Ps]} S1_sortS3Ps,
     mk-app S3_to_S2 {std.append P [s]} S3_to_S2_Ps,
@@ -493,17 +496,22 @@ pred synthesize-fields.body i:list term, i:term, i:list (w-args mixinname), o:in
 synthesize-fields.body _Params T ML (record "axioms_" {{ Type }} "Class" FS) :-
   synthesize-fields T ML FS.
 
-pred mk-record+sort-field i:name, i:term, i:(term -> record-decl), o:indt-decl.
-mk-record+sort-field _ T F (record RecordName {{ Type }} "Pack" (field _ "sort" T F)) :-
-  if (get-option "infer" _) (RecordName = "type_") (RecordName = "type").
+pred mk-record+sort-field i:sort, i:name, i:term, i:(term -> record-decl), o:indt-decl.
+pred mk-record+sort-field i:universe, i:name, i:term, i:(term -> record-decl), o:indt-decl.
+mk-record+sort-field Sort _ T F (record RecordName (sort Sort) "Pack" (field _ "sort" T F)) :- !, std.do! [
+  if (get-option "infer" _) (RecordName = "type_") (RecordName = "type")
+].
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
 mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global ClassName|Args]) _\end-record) :-
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
-pred declare-class+structure i:mixins, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
-declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories (structure-key SortP ClassP (indt StructureInd)):- std.do! [
+pred declare-class+structure i:mixins, i:sort, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
+pred declare-class+structure i:mixins, i:universe, o:factoryname, o:structure, o:term, o:term, o:list prop, o:prop.
+declare-class+structure MLwP Sort
+    (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories
+    (structure-key SortP ClassP (indt StructureInd)):- std.do! [
 
   if-verbose (coq.say {header} "declare axioms record"MLwP ),
 
@@ -525,7 +533,7 @@ declare-class+structure MLwP (indt ClassInd) (indt StructureInd) SortProjection 
 
   if-verbose (coq.say {header} "declare type record"),
 
-  w-params.then MLwP (mk-parameter explicit) mk-record+sort-field
+  w-params.then MLwP (mk-parameter explicit) (mk-record+sort-field Sort)
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
