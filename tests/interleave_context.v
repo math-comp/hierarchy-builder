@@ -7,9 +7,12 @@ HB.structure Definition A n := { T of HasA n T }.
 HB.mixin Record HasB (X : A.type 0) (T : Type) := { b : X -> T }.
 HB.structure Definition B (X : A.type 0) := { T of HasB X T }.
 
-#[verbose]
+(* Since `B` expects an argument of type `A.type 0` (and not just
+   just the naked type `T`) we pass `A.clone 0 T _`
+   (of type `A.type 0`) and inference uses the first
+   parameter `A` to elaborate it. *)
 HB.mixin Record IsSelfA T of A 0 T & B (A.clone 0 T _) T := {}.
-#[verbose]
+
 HB.structure Definition SelfA := { T of IsSelfA T }.
 
 HB.factory Record IsSelfA' T := { a : T ; b : T -> T}.
@@ -19,5 +22,4 @@ HB.builders Context T of IsSelfA' T.
   HB.instance Definition _ := IsSelfA.Build T.
 HB.end.
 
-#[verbose]
-  HB.instance Definition _ := IsSelfA'.Build nat 0 id.
+HB.instance Definition _ := IsSelfA'.Build nat 0 id.
