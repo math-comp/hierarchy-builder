@@ -259,7 +259,7 @@ main [str S] :- !,
      (coq.say "HB: synthesized in file" Loc)
      (coq.say "HB:" S "not synthesized by HB").
 
-main _ :- coq.error "Usage: HB.about <name>.".
+main _ :- coq.error "Usage: HB.locate <name>.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.locate.
