@@ -101,8 +101,7 @@ constraint print-ctx mixin-src {
 
 % approximation, it should be logical path, not the file name
 pred coq.env.current-library o:string.
-coq.env.current-library L :- coq.version _ _ N _, N >= 13, !,
-  loc.fields {get-option "elpi.loc"} L _ _ _ _.
+coq.env.current-library L :- loc.fields {get-option "elpi.loc"} L _ _ _ _.
 coq.env.current-library "dummy.v".
 
 pred coq.prod-tgt->gref i:term, o:gref.

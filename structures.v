@@ -252,8 +252,6 @@ Elpi Accumulate Db hb.db.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate lp:{{
 
-main _ :- coq.version _ _ N _, N < 13, !,
-  coq.say "HB: HB.locate requires Coq version 8.13 or above".
 main [str S] :- !,
   if (decl-location {coq.locate S} Loc)
      (coq.say "HB: synthesized in file" Loc)
