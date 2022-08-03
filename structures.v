@@ -299,6 +299,39 @@ Elpi Export HB.about.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+(** [HB.howto T Foo.type d] prints possible sequences of factories
+    to equip a type [T] with a structure [Foo.type], taking into account
+    structures already instantiated on [T]. The search depth [d]
+    is the maximum length of the sequences, 3 by default.
+*)
+
+#[arguments(raw)] Elpi Command HB.howto.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate File "HB/howto.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main [str ST, str STgt] :- !,
+  with-attributes (with-logging (howto.main ST STgt 3)).
+main [str ST, str STgt, int Depth] :- !,
+  with-attributes (with-logging (howto.main ST STgt Depth)).
+
+main _ :- coq.error "Usage: HB.howto <type> <structure> [<search depth>].".
+}}.
+Elpi Typecheck.
+Elpi Export HB.howto.
+
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** This command prints the status of the hierarchy (Debug)
 
 *)
