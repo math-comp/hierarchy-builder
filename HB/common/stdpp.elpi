@@ -48,6 +48,25 @@ under.do! Then LP :- Then (_\ std.do! LP) _.
 pred map-triple i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:(C -> C1 -> prop), i:triple A B C, o:triple A1 B1 C1.
 map-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
 
+pred sort.split i:list A, o:list A, o:list A.
+sort.split [] [] [] :- !.
+sort.split [X] [X] [] :- !.
+sort.split [X,Y|TL] [X|L1] [Y|L2] :- sort.split TL L1 L2.
+
+pred sort.merge i:(A -> A -> prop), i:list A, i:list A, o:list A.
+sort.merge _ [] L L :- !.
+sort.merge _ L [] L :- !.
+sort.merge Rel [X1|L1] [X2|L2] [X1|M] :- Rel X1 X2, !,
+  sort.merge Rel L1 [X2|L2] M.
+sort.merge Rel [X1|L1] [X2|L2] [X2|M] :-
+  sort.merge Rel [X1|L1] L2 M.
+
+pred sort i:list A, i:(A -> A -> prop), o:list A.
+sort [] _ [] :- !.
+sort [X] _ [X] :- !.
+sort L Rel M :-
+  sort.split L L1 L2, sort L1 Rel S1, sort L2 Rel S2, sort.merge Rel S1 S2 M.
+
 pred bubblesort i:list A, i:(A -> A -> prop), o:list A.
 bubblesort [] _ [] :- !.
 bubblesort [X] _ [X] :- !.
