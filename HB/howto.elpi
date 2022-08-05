@@ -36,6 +36,19 @@ pred union i:list A, i:list A, o:list A.
 union L1 L2 R :-
   std.fold L2 L1 (x\l\l'\if (std.mem l x) (l' = l) (l' = [x|l])) R.
 
+pred lt-gref i:gref, i:gref.
+lt-gref X Y :-
+  gref->modname_short X "." SX, gref->modname_short Y "." SY, !, SX s< SY.
+
+pred size-order i:(list A -> list A -> prop), i:list A, i:list A.
+size-order Rel L1 L2 :-
+  std.length L1 S1, std.length L2 S2, !, (S1 i< S2; (S1 = S2, !, Rel L1 L2)).
+
+pred lexi-order i:list gref, i:list gref.
+lexi-order [] [].
+lexi-order [X1|_] [X2|_] :- lt-gref X1 X2.
+lexi-order [X|T1] [X|T2] :- lexi-order T1 T2.
+
 % [mixins-on-string S ML] list mixins in structures [S] is equipped with
 pred mixins-on-string i:string, o:list mixinname.
 mixins-on-string S ML :-
@@ -94,9 +107,7 @@ paths-from-for-step-using.aux MLSrc ML FL' K' (fdp F _ MLF) L R :-
 
 pred pp-solutions i:list (list factoryname).
 pp-solutions LLF :-
-  std.sort LLF
-    (l1\l2\sigma s1 s2\std.length l1 s1, std.length l2 s2, s1 i=< s2)
-    SLLF,
+  std.sort LLF (size-order lexi-order) SLLF,
   % format
   PpSolutions = box (v 4) [
     str "HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):",
@@ -104,7 +115,7 @@ pp-solutions LLF :-
   % print
   coq.say {coq.pp->string PpSolutions},  
   coq.say.
-    
+
 pred pp-solution i:list factoryname o:coq.pp.
 pp-solution L (box (hov 0) PLS) :-
   std.map L about.pp-module PL,
