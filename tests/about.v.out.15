@@ -119,7 +119,7 @@ HB: AddAG.sort has the following canonical values:
 HB: AddAG.sort is a coercion from hierarchy_5.AddAG to Sortclass
     (from "./examples/demo1/hierarchy_5.v", line 73)
 
-HB: Z is canonically equipped with mixins:
+HB: Z is canonically equipped with structures:
     - hierarchy_5.AddMonoid
       hierarchy_5.AddComoid
       hierarchy_5.AddAG
