@@ -45,7 +45,7 @@ main-located S (loc-gref GR) :- from Factory Mixin GR, !,
   private.main-builder S Factory Mixin.
 
 main-located S (loc-gref GR) :-
-  std.filter {coq.CS.db-for _ (cs-gref GR)} (private.not1 private.unif-hint?) LV,
+  std.filter {coq.CS.db-for _ (cs-gref GR)} (not1 unif-hint?) LV,
   coq.CS.db-for GR _ LP,
   std.filter {coq.coercion.db} (c\c = coercion GR _ _ _) LC,
   if (LV = [], LP = [], LC = [])
@@ -56,6 +56,29 @@ main-located S (loc-gref GR) :-
   if (not (LC = [])) (private.main-coercion S LC) true.
 
 main-located S (loc-abbreviation _) :- coq.error "HB: unknown abbreviation" S.
+
+/* things also used in paths.elpi ------------------------------------------ */
+
+shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
+
+pred bulletize1 i:(A -> coq.pp -> prop), i:A, o:coq.pp.
+bulletize1 F X (glue [str "- ", M]) :- F X M.
+
+pred bulletize i:list A, i:(A -> coq.pp -> prop), o:coq.pp.
+bulletize [] _ empty.
+bulletize L F (glue [brk 0 0 | PLB]) :-
+  std.map L (bulletize1 F) PL,
+  std.intersperse (brk 0 0) PL PLB.
+
+% Print shortest qualified identifier of the module containing a gref
+pred pp-module i:gref, o:coq.pp.
+pp-module GR (str ID) :- gref->modname_short GR "." ID.
+
+pred unif-hint? i:cs-instance.
+unif-hint? (cs-instance _ (cs-gref GR) _) :- coq.CS.db-for GR _ [_|_].
+
+pred not1 i:(A -> prop), i:A.
+not1 P X :- not (P X).
 
 
 /* ------------------------------------------------------------------------- */
@@ -323,10 +346,6 @@ compute-field-info Names Impls O :-
   compute-field-info.aux {std.rev Names} {std.rev Impls} Pp,
   std.intersperse spc {std.rev Pp} O.
 
-% Print shortest qualified identifier of the module containing a gref
-pred pp-module i:gref, o:coq.pp.
-pp-module GR (str ID) :- gref->modname_short GR "." ID.
-
 pred pp-const i:constant, o:coq.pp.
 pp-const F (str ID) :- coq.gref->id (const F) ID.
 
@@ -336,15 +355,6 @@ pp-arg-type (pr ID PPTy) (box (hov 2) [str ID, str" :", spc, PPTy]).
 pred pp-if-verbose o:coq.pp, i:(coq.pp -> prop).
 pp-if-verbose V P :- get-option "verbose" tt, !, P V.
 pp-if-verbose empty _.
-
-pred bulletize1 i:(A -> coq.pp -> prop), i:A, o:coq.pp.
-bulletize1 F X (glue [str "- ", M]) :- F X M.
-
-pred bulletize i:list A, i:(A -> coq.pp -> prop), o:coq.pp.
-bulletize [] _ empty.
-bulletize L F (glue [brk 0 0 | PLB]) :-
-  std.map L (bulletize1 F) PL,
-  std.intersperse (brk 0 0) PL PLB.
 
 pred pp-loc-of i:gref, o:coq.pp.
 pp-loc-of GR PP :- decl-location GR Loc, !, pp-loc Loc PP.
@@ -377,11 +387,5 @@ print-docstring GR :-
   if (docstring-of GR (some Doc))
      (coq.say {coq.pp->string (box (hov 5) [str"Doc: ",Doc])})
      true.
-
-pred unif-hint? i:cs-instance.
-unif-hint? (cs-instance _ (cs-gref GR) _) :- coq.CS.db-for GR _ [_|_].
-
-pred not1 i:(A -> prop), i:A.
-not1 P X :- not (P X).
 
 }}
