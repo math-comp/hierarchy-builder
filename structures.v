@@ -303,6 +303,8 @@ Elpi Export HB.about.
     to equip a type [T] with a structure [Foo.type], taking into account
     structures already instantiated on [T]. The search depth [d]
     is the maximum length of the sequences, 3 by default.
+    The first argument [T] is optional, when ommited [Foo.type] is built
+    from scratch.
 *)
 
 #[arguments(raw)] Elpi Command HB.howto.
@@ -325,8 +327,12 @@ main [str T, str STgt] :- !,
   with-attributes (with-logging (howto.main-str T STgt 3)).
 main [str T, str STgt, int Depth] :- !,
   with-attributes (with-logging (howto.main-str T STgt Depth)).
+main [str STgt] :- !,
+  with-attributes (with-logging (howto.main-from [] STgt 3)).
+main [str STgt, int Depth] :- !,
+  with-attributes (with-logging (howto.main-from [] STgt Depth)).
 
-main _ :- coq.error "Usage: HB.howto (<type>) <structure> [<search depth>].".
+main _ :- coq.error "Usage: HB.howto [(<type>)] <structure> [<search depth>].".
 }}.
 Elpi Typecheck.
 Elpi Export HB.howto.

@@ -2,6 +2,10 @@ From Coq Require Import ZArith ssrfun ssreflect.
 From HB Require Import structures.
 From HB Require Import demo1.hierarchy_5.
 
+HB.howto Ring.type.
+
+HB.howto Ring.type 2.
+
 HB.howto Z Ring.type.
 
 HB.howto Z Ring.type 2.

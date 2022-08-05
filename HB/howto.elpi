@@ -12,6 +12,10 @@ main-str S STgt Depth :- coq.locate S GR, main-gref GR STgt Depth.
 pred main-gref i:gref, i:string, i:int.
 main-gref GR STgt Depth :-
   private.mixins-on-gref GR MLSrc,
+  main-from MLSrc STgt Depth.
+
+pred main-from i:list mixinname, i:string, i:int.
+main-from MLSrc STgt Depth :-
   private.mixins-in-string STgt MLTgt,
   private.list-diff MLTgt MLSrc ML,
   if (ML = []) (coq.say "HB: nothing to do.")

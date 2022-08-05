@@ -18,6 +18,26 @@ HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):
     - AddAG_of_TYPE; SemiRing_of_AddComoid
     - AddComoid_of_TYPE; Ring_of_AddComoid
 
+HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):
+    - Ring_of_TYPE
+    - AddAG_of_TYPE; BiNearRing_of_AddMonoid
+    - AddAG_of_TYPE; Ring_of_AddAG
+    - AddAG_of_TYPE; SemiRing_of_AddComoid
+    - AddComoid_of_TYPE; Ring_of_AddComoid
+    - AddComoid_of_TYPE; AddAG_of_AddComoid; BiNearRing_of_AddMonoid
+    - AddComoid_of_TYPE; AddAG_of_AddComoid; Ring_of_AddAG
+    - AddComoid_of_TYPE; AddAG_of_AddComoid; SemiRing_of_AddComoid
+    - AddComoid_of_TYPE; BiNearRing_of_AddMonoid; AddAG_of_AddComoid
+    - AddComoid_of_TYPE; SemiRing_of_AddComoid; AddAG_of_AddComoid
+    - AddMonoid_of_TYPE; AddComoid_of_AddMonoid; Ring_of_AddComoid
+
+HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):
+    - Ring_of_TYPE
+    - AddAG_of_TYPE; BiNearRing_of_AddMonoid
+    - AddAG_of_TYPE; Ring_of_AddAG
+    - AddAG_of_TYPE; SemiRing_of_AddComoid
+    - AddComoid_of_TYPE; Ring_of_AddComoid
+
 The command has indeed failed with message:
 HB: no solution found, try to increase search depth.
 HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):
