@@ -15,7 +15,7 @@ main-located S (loc-gref GR) :- class-def (class Class GR MLwP), !,
   private.main-structure S Class GR MLwP.
 
 main-located _ (loc-gref Class) :- class-def (class Class GR MLwP), !,
-  gref->modname GR 2 "." M,
+  gref->modname_short GR "." M,
   coq.gref->id GR St,
   S is M ^ "." ^ St,
   private.main-structure S Class GR MLwP.
@@ -101,7 +101,7 @@ pred pp-canonical-solution i:cs-instance, o:coq.pp.
 pp-canonical-solution (cs-instance _Proj _Pat GR) Pp :-
   coq.env.typeof GR T,
   coq.prod-tgt->gref T F,
-  if (class-def (class _ F _)) (gref->modname F 2 "." ID) (coq.gref->string F ID),
+  if (class-def (class _ F _)) (gref->modname_short F "." ID) (coq.gref->string F ID),
   Pp = box (hov 0) [ str ID ].
 
 pred main-canonical-projection i:string, i:gref, i:list cs-instance.
@@ -127,11 +127,11 @@ pred main-coercion i:string, i:list coercion.
 main-coercion S [coercion GR _ Src Tgt|_] :-
   % format
   if (class-def (class _ Src _) ; class-def (class Src _ _))
-     (Source = str {gref->modname Src 2 "."})
+     (Source = str {gref->modname_short Src "."})
      (coq.term->pp (global Src) Source),
   if2 (Tgt = grefclass TGR)
         (if (class-def (class _ TGR _) ; class-def (class TGR _ _))
-          (Target = str {gref->modname TGR 2 "."})
+          (Target = str {gref->modname_short TGR "."})
           (coq.term->pp (global TGR) Target))
       (Tgt = sortclass)
         (Target = str "Sortclass")
@@ -306,7 +306,7 @@ main-factory-alias S _Const :-
 pred main-builder i:string, i:factoryname, i:mixinname.
 main-builder _S From To :-
   coq.say "HB: todo HB.about for builder from"
-    {gref->modname From 2 "."} "to" {gref->modname To 2 "."}.
+    {gref->modname_short From "."} "to" {gref->modname_short To "."}.
 
 pred compute-field-info.aux i:list id, i:list implicit_kind, o:list coq.pp.
 compute-field-info.aux [] _ [].
@@ -323,8 +323,9 @@ compute-field-info Names Impls O :-
   compute-field-info.aux {std.rev Names} {std.rev Impls} Pp,
   std.intersperse spc {std.rev Pp} O.
 
+% Print shortest qualified identifier of the module containing a gref
 pred pp-module i:gref, o:coq.pp.
-pp-module M (str ID) :- gref->modname M 2 "." ID.
+pp-module GR (str ID) :- gref->modname_short GR "." ID.
 
 pred pp-const i:constant, o:coq.pp.
 pp-const F (str ID) :- coq.gref->id (const F) ID.
