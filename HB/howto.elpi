@@ -10,13 +10,17 @@ pred main-str i:string, i:string, i:int.
 main-str S STgt Depth :- coq.locate S GR, main-gref GR STgt Depth.
 
 pred main-gref i:gref, i:string, i:int.
+main-gref GR STgt Depth :- class-def (class _ GR _), !,
+  private.mixins-in-structures [GR] MLSrc,
+  main-from MLSrc STgt Depth.
 main-gref GR STgt Depth :-
-  private.mixins-on-gref GR MLSrc,
+  private.structures-on-gref GR SL,
+  private.mixins-in-structures SL MLSrc,
   main-from MLSrc STgt Depth.
 
 pred main-from i:list mixinname, i:string, i:int.
 main-from MLSrc STgt Depth :-
-  private.mixins-in-string STgt MLTgt,
+  private.mixins-in-structures [{coq.locate STgt}] MLTgt,
   private.list-diff MLTgt MLSrc ML,
   if (ML = []) (coq.say "HB: nothing to do.")
      (private.paths-from-for-step MLSrc ML Depth R,
@@ -59,20 +63,19 @@ lexi-order [] [].
 lexi-order [X1|_] [X2|_] :- lt-gref X1 X2.
 lexi-order [X|T1] [X|T2] :- lexi-order T1 T2.
 
-% [mixins-on-gref GR ML] list mixins in structures [GR] is equipped with
-pred mixins-on-gref i:gref, o:list mixinname.
-mixins-on-gref GR ML :-
+% [structures-on-gref GR ML] list structures [GR] is equipped with
+pred structures-on-gref i:gref, o:list structure.
+structures-on-gref GR SL :-
   std.filter {coq.CS.db-for _ (cs-gref GR)} (about.not1 about.unif-hint?) LV,
-  std.fold LV [] mixins-on-gref.aux ML.
-mixins-on-gref.aux (cs-instance _ _ GR) L L' :-
-  coq.prod-tgt->gref {coq.env.typeof GR} F,
-  class-def (class _ F MLWP),
-  union L {list-w-params_list MLWP} L'.
+  std.map LV structures-on-gref.aux SL.
+structures-on-gref.aux (cs-instance _ _ GR) F :-
+  coq.prod-tgt->gref {coq.env.typeof GR} F, class-def (class _ F _).
 
-% [mixins-in-string S ML] list mixins contained in structure [S]
-pred mixins-in-string i:string, o:list mixinname.
-mixins-in-string S ML :-
-  coq.locate S GR, class-def (class _ GR MLwP), list-w-params_list MLwP ML.
+% [mixins-in-structures SL ML] list mixins in structures [SL]
+pred mixins-in-structures i:list structure, o:list mixinname.
+mixins-in-structures SL ML :- std.fold SL [] mixins-in-structures.aux ML.
+mixins-in-structures.aux F L L' :-
+  class-def (class _ F MLWP), union L {list-w-params_list MLWP} L'.
 
 % a type to store a factory along with the mixins it depends on
 % and the mixins it provides

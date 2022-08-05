@@ -12,12 +12,16 @@ HB.howto Z Ring.type 2.
 
 Fail HB.howto Z Ring.type 0.
 
+HB.howto AddComoid.type Ring.type.
+
 HB.instance
   Definition _ :=
   AddAG_of_TYPE.Build Z 0%Z Z.add Z.opp
     Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l.
 
 HB.howto Z Ring.type.
+
+HB.howto AddAG.type Ring.type.
 
 HB.instance
   Definition _ :=
