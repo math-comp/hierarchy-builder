@@ -305,6 +305,8 @@ Elpi Export HB.about.
     is the maximum length of the sequences, 3 by default.
     The first argument [T] is optional, when ommited [Foo.type] is built
     from scratch.
+    Finally, the first argument can be another structure [Bar.type],
+    in which case [Foo.type] is built starting from [Bar.type].
 *)
 
 #[arguments(raw)] Elpi Command HB.howto.
@@ -332,7 +334,9 @@ main [str STgt] :- !,
 main [str STgt, int Depth] :- !,
   with-attributes (with-logging (howto.main-from [] STgt Depth)).
 
-main _ :- coq.error "Usage: HB.howto [(<type>)] <structure> [<search depth>].".
+main _ :-
+  coq.error
+    "Usage: HB.howto [(<type>)|<structure>] <structure> [<search depth>].".
 }}.
 Elpi Typecheck.
 Elpi Export HB.howto.
