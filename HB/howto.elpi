@@ -3,9 +3,15 @@
 
 namespace howto {
 
-pred main i:string, i:string, i:int.
-main ST STgt Depth :-
-  private.mixins-on-string ST MLSrc,
+pred main-trm i:term, i:string, i:int.
+main-trm T STgt Depth :- coq.term->gref T GR, main-gref GR STgt Depth.
+
+pred main-str i:string, i:string, i:int.
+main-str S STgt Depth :- coq.locate S GR, main-gref GR STgt Depth.
+
+pred main-gref i:gref, i:string, i:int.
+main-gref GR STgt Depth :-
+  private.mixins-on-gref GR MLSrc,
   private.mixins-in-string STgt MLTgt,
   private.list-diff MLTgt MLSrc ML,
   if (ML = []) (coq.say "HB: nothing to do.")
@@ -49,13 +55,12 @@ lexi-order [] [].
 lexi-order [X1|_] [X2|_] :- lt-gref X1 X2.
 lexi-order [X|T1] [X|T2] :- lexi-order T1 T2.
 
-% [mixins-on-string S ML] list mixins in structures [S] is equipped with
-pred mixins-on-string i:string, o:list mixinname.
-mixins-on-string S ML :-
-  coq.locate S GR,
+% [mixins-on-gref GR ML] list mixins in structures [GR] is equipped with
+pred mixins-on-gref i:gref, o:list mixinname.
+mixins-on-gref GR ML :-
   std.filter {coq.CS.db-for _ (cs-gref GR)} (about.not1 about.unif-hint?) LV,
-  std.fold LV [] mixins-on-string.aux ML.
-mixins-on-string.aux (cs-instance _ _ GR) L L' :-
+  std.fold LV [] mixins-on-gref.aux ML.
+mixins-on-gref.aux (cs-instance _ _ GR) L L' :-
   coq.prod-tgt->gref {coq.env.typeof GR} F,
   class-def (class _ F MLWP),
   union L {list-w-params_list MLWP} L'.
