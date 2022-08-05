@@ -76,7 +76,7 @@ main-canonical-value S CanonicalValues :-
   group-by-loc CanonicalValues CanonicalValuesL,
   %format
   PpCanonicalValues = box (v 4) [
-    str "HB: ", str S, str " is canonically equipped with mixins:",
+    str "HB: ", str S, str " is canonically equipped with structures:",
     {bulletize CanonicalValuesL pp-canonical-solution-list}],
   % print
   coq.say {coq.pp->string PpCanonicalValues},
