@@ -322,17 +322,17 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [trm T, str STgt] :- !,
-  with-attributes (with-logging (howto.main-trm T STgt 3)).
+  with-attributes (with-logging (howto.main-trm T STgt none)).
 main [trm T, str STgt, int Depth] :- !,
-  with-attributes (with-logging (howto.main-trm T STgt Depth)).
+  with-attributes (with-logging (howto.main-trm T STgt (some Depth))).
 main [str T, str STgt] :- !,
-  with-attributes (with-logging (howto.main-str T STgt 3)).
+  with-attributes (with-logging (howto.main-str T STgt none)).
 main [str T, str STgt, int Depth] :- !,
-  with-attributes (with-logging (howto.main-str T STgt Depth)).
+  with-attributes (with-logging (howto.main-str T STgt (some Depth))).
 main [str STgt] :- !,
-  with-attributes (with-logging (howto.main-from [] STgt 3)).
+  with-attributes (with-logging (howto.main-from [] STgt none)).
 main [str STgt, int Depth] :- !,
-  with-attributes (with-logging (howto.main-from [] STgt Depth)).
+  with-attributes (with-logging (howto.main-from [] STgt (some Depth))).
 
 main _ :-
   coq.error
