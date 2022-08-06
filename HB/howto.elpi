@@ -3,13 +3,13 @@
 
 namespace howto {
 
-pred main-trm i:term, i:string, i:int.
+pred main-trm i:term, i:string, i:option int.
 main-trm T STgt Depth :- coq.term->gref T GR, main-gref GR STgt Depth.
 
-pred main-str i:string, i:string, i:int.
+pred main-str i:string, i:string, i:option int.
 main-str S STgt Depth :- coq.locate S GR, main-gref GR STgt Depth.
 
-pred main-gref i:gref, i:string, i:int.
+pred main-gref i:gref, i:string, i:option int.
 main-gref GR STgt Depth :- class-def (class _ GR _), !,
   private.mixins-in-structures [GR] MLSrc,
   main-from MLSrc STgt Depth.
@@ -18,15 +18,23 @@ main-gref GR STgt Depth :-
   private.mixins-in-structures SL MLSrc,
   main-from MLSrc STgt Depth.
 
-pred main-from i:list mixinname, i:string, i:int.
+pred main-from i:list mixinname, i:string, i:option int.
 main-from MLSrc STgt Depth :-
   private.mixins-in-structures [{coq.locate STgt}] MLTgt,
   private.list-diff MLTgt MLSrc ML,
-  if (ML = []) (coq.say "HB: nothing to do.")
-     (private.paths-from-for-step MLSrc ML Depth R,
-      if (R = [])
-         (coq.error "HB: no solution found, try to increase search depth.")
-         (private.pp-solutions R)).
+  if (ML = []) (coq.say "HB: nothing to do.") (main-from.aux MLSrc ML Depth).
+main-from.aux MLSrc ML (some Depth) :- main-increase-depth MLSrc ML Depth false.
+main-from.aux MLSrc ML none :- main-increase-depth MLSrc ML 3 true.
+
+pred main-increase-depth i:list mixinname, i:list mixinname, i:int, i:prop.
+main-increase-depth MLSrc ML Depth AutoIncrease :-
+  private.paths-from-for-step MLSrc ML Depth R,
+  if (not (R = [])) (private.pp-solutions R)
+  (if AutoIncrease
+    (Depth' is Depth + 1,
+     coq.say "HB: no solution found at depth" Depth "looking at depth" Depth',
+     main-increase-depth MLSrc ML Depth' true)
+    (coq.error "HB: no solution found, try to increase search depth.")).
 
 
 /* ------------------------------------------------------------------------- */
