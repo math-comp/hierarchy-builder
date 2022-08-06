@@ -50,6 +50,11 @@ pred union i:list A, i:list A, o:list A.
 union L1 L2 R :-
   std.fold L2 L1 (x\l\l'\if (std.mem l x) (l' = l) (l' = [x|l])) R.
 
+pred insert-sorted i:(A -> A -> prop), i:A, i:list A, o:list A.
+insert-sorted _ X [] [X] :- !.
+insert-sorted Rel X [Y|T] [X,Y|T] :- Rel X Y, !.
+insert-sorted Rel X [Y|T] [Y|T'] :- insert-sorted Rel X T T', !.
+
 pred lt-gref i:gref, i:gref.
 lt-gref X Y :-
   gref->modname_short X "." SX, gref->modname_short Y "." SY, !, SX s< SY.
@@ -97,23 +102,32 @@ pred paths-from-for-step i:list mixinname, i:list mixinname, i:int,
     o:list (list factoryname).
 paths-from-for-step MLSrc ML K R :-
   std.filter {list_factories} (fd\sigma pml\fd = fdp _ _ pml, incl pml ML) FL,
-  paths-from-for-step-using MLSrc ML K FL R.
+  paths-from-for-step-using MLSrc ML K [] [] FL _ R.
 
-% [paths-from-for-step-using MLSrc ML K FL R]
+% [paths-from-for-step-using MLSrc ML K Pre KnownPre FL KnownPre' R]
 % same as [paths-from-for-step MLSrc ML K R] using only factories in [FL]
+% [Pre] is a (sorted) prefix that is looked into the list of known (sorted)
+% prefixes [KnownPre] to avoid generating identical solutions up to permutations
 pred paths-from-for-step-using i:list mixinname, i:list mixinname, i:int,
-    i:list factory_deps_prov, o:list (list factoryname).
-paths-from-for-step-using _ _ K _ [] :- K i< 0.
-paths-from-for-step-using _ [] _ _ [[]] :- !.
-paths-from-for-step-using MLSrc ML K FL R :-
+    i:list factoryname, i:list (list factoryname), i:list factory_deps_prov,
+    o:list (list factoryname), o:list (list factoryname).
+paths-from-for-step-using _ _ K _ KnownPre _ KnownPre [] :- K i< 0.
+paths-from-for-step-using _ _ _ Pre KnownPre _ KnownPre [] :-
+  std.mem KnownPre Pre, !.
+paths-from-for-step-using _ [] _ Pre KnownPre _ [Pre|KnownPre] [[]] :- !.
+paths-from-for-step-using MLSrc ML K Pre KnownPre FL [Pre|KnownPre'] R :-
   K' is K - 1,
   std.filter FL (p\sigma dml\p = fdp _ dml _, incl dml MLSrc) FLdep,
-  std.fold FLdep [] (paths-from-for-step-using.aux MLSrc ML FL K') R.
-paths-from-for-step-using.aux MLSrc ML FL' K' (fdp F _ MLF) L R :-
+  std.fold FLdep (pr KnownPre [])
+    (paths-from-for-step-using.aux MLSrc ML FL K' Pre)
+    (pr KnownPre' R).
+paths-from-for-step-using.aux MLSrc ML FL' K' Pre (fdp F _ MLF) (pr KnPre L)
+    (pr KnPre' R) :-
   std.append MLSrc MLF MLSrc',
   list-diff ML MLF ML',
+  insert-sorted lt-gref F Pre Pre',
   std.filter FL' (p\sigma pml\p = fdp _ _ pml, incl pml ML') FML',
-  paths-from-for-step-using MLSrc' ML' K' FML' R',
+  paths-from-for-step-using MLSrc' ML' K' Pre' KnPre FML' KnPre' R',
   std.map R' (l\r\r = [F|l]) R'',
   std.append L R'' R.
 
