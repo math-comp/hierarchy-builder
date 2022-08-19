@@ -150,6 +150,7 @@ opam install coq-hierarchy-builder
   - `HB.locate` is similar to `Locate`, prints file name and line of any global
     constant synthesized by HB
   - `HB.graph` prints the structure hierarchy to a dot file
+  - `HB.howto` prints sequences of factories to equip a type with a given structure
 
 - HB debug commands:
   - `HB.status` dumps the contents of the hierarchy (debug purposes)
