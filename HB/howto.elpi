@@ -150,7 +150,7 @@ pp-solutions LLF :-
   coq.say {coq.pp->string PpSolutions},  
   coq.say.
 
-pred pp-solution i:list factoryname o:coq.pp.
+pred pp-solution i:list factoryname, o:coq.pp.
 pp-solution L (box (hov 0) PLS) :-
   std.map L about.pp-module PL,
   std.intersperse (glue [str ";", spc]) PL PLS.
