@@ -119,7 +119,7 @@ HB.structure Definition Fun T := { F of isID T F }.
 Goal forall f : nat -> nat, forall p : (forall x, f x = x ), True.
 intros f p.
 pose F := isID.Build nat f p.
-pose T : Fun nat := HB.pack nat f F.
+pose T : Fun.type nat := HB.pack f F.
 Check T : Fun.type nat.
 Abort.
 
