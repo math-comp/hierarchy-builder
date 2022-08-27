@@ -112,3 +112,14 @@ Check X : Foo.type A P.
 Abort.
 
 End test2.
+
+HB.mixin Record isID T (F : T -> T) := { p : forall x : T, F x = x }.
+HB.structure Definition Fun T := { F of isID T F }.
+
+Goal forall f : nat -> nat, forall p : (forall x, f x = x ), True.
+intros f p.
+pose F := isID.Build nat f p.
+pose T : Fun nat := HB.pack nat f F.
+Check T : Fun.type nat.
+Abort.
+

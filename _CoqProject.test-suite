@@ -68,7 +68,7 @@ tests/lock.v
 tests/interleave_context.v
 tests/not_same_key.v
 #tests/factory_sort.v
-tests/factory_sort_tac.v
+tests/hb_pack.v
 tests/declare.v
 tests/short.v
 tests/primitive_records.v
