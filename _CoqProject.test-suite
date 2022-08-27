@@ -63,6 +63,7 @@ tests/exports2.v
 tests/log_impargs_record.v
 tests/compress_coe.v
 tests/funclass.v
+tests/grefclass.v
 tests/local_instance.v
 tests/lock.v
 tests/interleave_context.v
