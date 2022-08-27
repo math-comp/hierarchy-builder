@@ -446,8 +446,8 @@ coq.vernac->ppinductiveconstructor [constructor ID Arity|Ks] PP :-
 pred coq.vernac->ppinductiveparams i:list (pair implicit_kind term), o:list coq.pp.
 coq.vernac->ppinductiveparams [] [].
 coq.vernac->ppinductiveparams [pr Imp T|Rest] PP :-
-  PP = [box (hov 2) [str A,str ID,str " : ", TY,str B]|PPRest],
-  decl T Name Ty, coq.name->id Name ID, coq.term->pp Ty TY,
+  PP = [box (hov 2) [str A,ID,str " : ", TY,str B]|PPRest],
+  coq.term->pp T ID, decl T _ Ty, coq.term->pp Ty TY,
   if2 (Imp = explicit) (A = "(", B = ")")
       (Imp = maximal)  (A = "{", B = "}")
                        (A = "[", B = "]"),
