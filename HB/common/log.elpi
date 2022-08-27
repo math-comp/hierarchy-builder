@@ -266,8 +266,8 @@ pred log.private.log-tactic i:term.
 
 with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.log.raw" _, NICE = ff), !,
   get-option "elpi.loc" Loc,
-  loc.fields Loc FILE _ _ _ _,
-  std.any->string Loc LocStr,
+  loc.fields Loc FILE Start Stop _ _,
+  LocStr is "characters " ^ {std.any->string Start} ^ "-" ^ {std.any->string Stop},
   FILENAME is FILE ^ ".hb",
   open_append FILENAME OC1,
   std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",LocStr,""] PATCH1,
