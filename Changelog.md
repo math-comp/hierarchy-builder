@@ -1,5 +1,10 @@
 # Changelog
 
+## UNRELEASED
+
+- **Fix** HB.pack works with structures about functions, and not just
+  types 
+
 ## [1.3.0] - 2022-07-27
 
 Compatible with
