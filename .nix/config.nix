@@ -20,10 +20,12 @@
     "coq-mcHB-8.16".coqPackages = {
       coq.override.version = "8.16";
       mathcomp-analysis.override.version = "coq816";
+      odd-order.override.version = "hierarchy-builder";
     } // mcHBcommon;
 
     "coq-mcHB-8.15".coqPackages = {
       coq.override.version = "8.15";
+      odd-order.override.version = "hierarchy-builder";
     } // mcHBcommon;
 
     "coq-8.16".coqPackages = {
