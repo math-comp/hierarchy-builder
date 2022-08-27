@@ -295,7 +295,7 @@ log.private.log-vernac _.
 
 log.private.log-tactic P :- log.private.logger L Nice, !,
   if (Nice = tt) (PPALL = []) (PPALL = [@ppall!]),
-  log.private.logger-extend L {PPALL => coq.term->pp P}.
+  log.private.logger-extend L {PPALL => @holes! => coq.term->pp P}.
 log.private.log-tactic _.
 
 % The main entry point to print vernacular commands is coq.vernac->pp
