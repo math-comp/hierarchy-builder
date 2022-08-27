@@ -14,7 +14,10 @@ main Ty Args Instance :- std.do! [
   get-constructor Class KC,
   get-constructor Structure KS,
 
-  std.assert-ok! (coq.elaborate-ty-skeleton TSkel _ T) "HB.pack: not a type",
+  std.assert-ok! (d\
+    (coq.elaborate-ty-skeleton TSkel _ T d, d = ok) ;
+     coq.elaborate-skeleton    TSkel _ T d
+  ) "HB.pack: not a well typed key",
 
   private.elab-factories FactoriesSkel T Factories,
 
