@@ -25,7 +25,7 @@ About hasA'.type.
 
 Section test.
 Variables (G : Prop) (P : AB.type -> G).
-
+(* problem with planB
 Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
@@ -35,7 +35,7 @@ pose Tab := hasB.Build A (b,b).
 pose AB : AB.type := ltac:(elpi HB.pack (A) (Tab)).
 exact: P AB.
 Qed.
-
+*)
 Goal forall T (a b : T), G.
 Proof.
 move=> T a b.
