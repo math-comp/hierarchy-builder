@@ -1,5 +1,21 @@
 # Changelog
 
+## UNRELEASED
+
+- **Fix** HB.pack works with structures about functions, and not just
+  types 
+
+## [1.3.0] - 2022-07-27
+
+Compatible with
+- Coq 8.15 with Coq-Elpi 1.14.x
+- Coq 8.16 with Coq-Elpi 1.15.x
+
+### General
+
+- **Fix** Structures can be keyd on sorts (eg `Prop`) and products (eg `T -> U`)
+- **New** Mixin parameters can depend on structure instances inferred using previous mixins (see [this test](tests/interleave_context.v))
+
 ## [1.2.1] - 2022-01-10
 
 Compatible with

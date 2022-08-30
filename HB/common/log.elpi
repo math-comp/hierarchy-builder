@@ -266,8 +266,8 @@ pred log.private.log-tactic i:term.
 
 with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.log.raw" _, NICE = ff), !,
   get-option "elpi.loc" Loc,
-  loc.fields Loc FILE _ _ _ _,
-  std.any->string Loc LocStr,
+  loc.fields Loc FILE Start Stop _ _,
+  LocStr is "characters " ^ {std.any->string Start} ^ "-" ^ {std.any->string Stop},
   FILENAME is FILE ^ ".hb",
   open_append FILENAME OC1,
   std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",LocStr,""] PATCH1,
@@ -295,7 +295,7 @@ log.private.log-vernac _.
 
 log.private.log-tactic P :- log.private.logger L Nice, !,
   if (Nice = tt) (PPALL = []) (PPALL = [@ppall!]),
-  log.private.logger-extend L {PPALL => coq.term->pp P}.
+  log.private.logger-extend L {PPALL => @holes! => coq.term->pp P}.
 log.private.log-tactic _.
 
 % The main entry point to print vernacular commands is coq.vernac->pp
@@ -361,7 +361,7 @@ coq.vernac->pp1 (abbreviation Name NParams Term) (box (hv 2) [box h [str "Notati
   coq.vernac->ppabbrterm NParams Term StrParams B.
 coq.vernac->pp1 (canonical Name Local) (box h [Locality, str "Canonical ", str Name, str "."]) :-
   local->locality Local Locality.
-coq.vernac->pp1 (coercion Name SRC TGT) (box h [str "Coercion ", str Name, str " : ", str S, str " >-> ", str T, str "."]) :-
+coq.vernac->pp1 (coercion Name SRC TGT) (box h [str "#[reversible] Coercion ", str Name, str " : ", str S, str " >-> ", str T, str "."]) :-
   coq.gref->path SRC SP, std.string.concat "." {std.take-last 2 SP} S', S is S' ^ "." ^ {coq.gref->id SRC},
   if2 (TGT = sortclass) (T = "Sortclass")
       (TGT = funclass)  (T = "Funclass")
@@ -446,8 +446,8 @@ coq.vernac->ppinductiveconstructor [constructor ID Arity|Ks] PP :-
 pred coq.vernac->ppinductiveparams i:list (pair implicit_kind term), o:list coq.pp.
 coq.vernac->ppinductiveparams [] [].
 coq.vernac->ppinductiveparams [pr Imp T|Rest] PP :-
-  PP = [box (hov 2) [str A,str ID,str " : ", TY,str B]|PPRest],
-  decl T Name Ty, coq.name->id Name ID, coq.term->pp Ty TY,
+  PP = [box (hov 2) [str A,ID,str " : ", TY,str B]|PPRest],
+  coq.term->pp T ID, decl T _ Ty, coq.term->pp Ty TY,
   if2 (Imp = explicit) (A = "(", B = ")")
       (Imp = maximal)  (A = "{", B = "}")
                        (A = "[", B = "]"),

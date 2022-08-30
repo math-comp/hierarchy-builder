@@ -1,0 +1,158 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+namespace howto {
+
+pred main-trm i:term, i:string, i:option int.
+main-trm T STgt Depth :- coq.term->gref T GR, main-gref GR STgt Depth.
+
+pred main-str i:string, i:string, i:option int.
+main-str S STgt Depth :- coq.locate S GR, main-gref GR STgt Depth.
+
+pred main-gref i:gref, i:string, i:option int.
+main-gref GR STgt Depth :- class-def (class _ GR _), !,
+  private.mixins-in-structures [GR] MLSrc,
+  main-from MLSrc STgt Depth.
+main-gref GR STgt Depth :-
+  private.structures-on-gref GR SL,
+  private.mixins-in-structures SL MLSrc,
+  main-from MLSrc STgt Depth.
+
+pred main-from i:list mixinname, i:string, i:option int.
+main-from MLSrc STgt Depth :-
+  private.mixins-in-structures [{coq.locate STgt}] MLTgt,
+  private.list-diff MLTgt MLSrc ML,
+  if (ML = []) (coq.say "HB: nothing to do.") (main-from.aux MLSrc ML Depth).
+main-from.aux MLSrc ML (some Depth) :- main-increase-depth MLSrc ML Depth false.
+main-from.aux MLSrc ML none :- main-increase-depth MLSrc ML 3 true.
+
+pred main-increase-depth i:list mixinname, i:list mixinname, i:int, i:prop.
+main-increase-depth MLSrc ML Depth AutoIncrease :-
+  private.paths-from-for-step MLSrc ML Depth R,
+  if (not (R = [])) (private.pp-solutions R)
+  (if AutoIncrease
+    (Depth' is Depth + 1,
+     coq.say "HB: no solution found at depth" Depth "looking at depth" Depth',
+     main-increase-depth MLSrc ML Depth' true)
+    (coq.error "HB: no solution found, try to increase search depth.")).
+
+
+/* ------------------------------------------------------------------------- */
+/* ----------------------------- private code ------------------------------ */
+/* ------------------------------------------------------------------------- */
+
+namespace private {
+
+shorten coq.pp.{ v , hov , spc , str , box , glue }.
+
+% L1 \subseteq L2
+pred incl i:list A, i:list A.
+incl L1 L2 :- std.forall L1 (std.mem L2).
+
+% R = L1 \ L2
+pred list-diff i:list A, i:list A, o:list A.
+list-diff L1 L2 R :- std.filter L1 (about.not1 (std.mem L2)) R.
+
+% R = L1 U L2
+pred union i:list A, i:list A, o:list A.
+union L1 L2 R :-
+  std.fold L2 L1 (x\l\l'\if (std.mem l x) (l' = l) (l' = [x|l])) R.
+
+pred insert-sorted i:(A -> A -> prop), i:A, i:list A, o:list A.
+insert-sorted _ X [] [X] :- !.
+insert-sorted Rel X [Y|T] [X,Y|T] :- Rel X Y, !.
+insert-sorted Rel X [Y|T] [Y|T'] :- insert-sorted Rel X T T', !.
+
+pred lt-gref i:gref, i:gref.
+lt-gref X Y :-
+  gref->modname_short X "." SX, gref->modname_short Y "." SY, !, SX s< SY.
+
+pred size-order i:(list A -> list A -> prop), i:list A, i:list A.
+size-order Rel L1 L2 :-
+  std.length L1 S1, std.length L2 S2, !, (S1 i< S2; (S1 = S2, !, Rel L1 L2)).
+
+pred lexi-order i:list gref, i:list gref.
+lexi-order [] [].
+lexi-order [X1|_] [X2|_] :- lt-gref X1 X2.
+lexi-order [X|T1] [X|T2] :- lexi-order T1 T2.
+
+% [structures-on-gref GR ML] list structures [GR] is equipped with
+pred structures-on-gref i:gref, o:list structure.
+structures-on-gref GR SL :-
+  std.filter {coq.CS.db-for _ (cs-gref GR)} (about.not1 about.unif-hint?) LV,
+  std.map LV structures-on-gref.aux SL.
+structures-on-gref.aux (cs-instance _ _ GR) F :-
+  coq.prod-tgt->gref {coq.env.typeof GR} F, class-def (class _ F _).
+
+% [mixins-in-structures SL ML] list mixins in structures [SL]
+pred mixins-in-structures i:list structure, o:list mixinname.
+mixins-in-structures SL ML :- std.fold SL [] mixins-in-structures.aux ML.
+mixins-in-structures.aux F L L' :-
+  class-def (class _ F MLWP), union L {list-w-params_list MLWP} L'.
+
+% a type to store a factory along with the mixins it depends on
+% and the mixins it provides
+kind factory_deps_prov type.
+type fdp factoryname -> list mixinname -> list mixinname -> factory_deps_prov.
+
+% get all available factories in the above type
+pred list_factories o:list factory_deps_prov.
+list_factories FL :-
+  std.map-filter {std.findall (factory-constructor _ _)} list_factories.aux FL.
+list_factories.aux (factory-constructor F _) (fdp F DML PML) :-
+  list-w-params_list {gref-deps F} DML,
+  list-w-params_list {factory-provides F} PML.
+
+% [paths-from-for-step MLSrc ML K R] returns in [R] a list of sequences
+% of at most [K] factories that could, starting from mixins [MLSrc],
+% build exactly the mixins [ML]
+pred paths-from-for-step i:list mixinname, i:list mixinname, i:int,
+    o:list (list factoryname).
+paths-from-for-step MLSrc ML K R :-
+  std.filter {list_factories} (fd\sigma pml\fd = fdp _ _ pml, incl pml ML) FL,
+  paths-from-for-step-using MLSrc ML K [] [] FL _ R.
+
+% [paths-from-for-step-using MLSrc ML K Pre KnownPre FL KnownPre' R]
+% same as [paths-from-for-step MLSrc ML K R] using only factories in [FL]
+% [Pre] is a (sorted) prefix that is looked into the list of known (sorted)
+% prefixes [KnownPre] to avoid generating identical solutions up to permutations
+pred paths-from-for-step-using i:list mixinname, i:list mixinname, i:int,
+    i:list factoryname, i:list (list factoryname), i:list factory_deps_prov,
+    o:list (list factoryname), o:list (list factoryname).
+paths-from-for-step-using _ _ K _ KnownPre _ KnownPre [] :- K i< 0.
+paths-from-for-step-using _ _ _ Pre KnownPre _ KnownPre [] :-
+  std.mem KnownPre Pre, !.
+paths-from-for-step-using _ [] _ Pre KnownPre _ [Pre|KnownPre] [[]] :- !.
+paths-from-for-step-using MLSrc ML K Pre KnownPre FL [Pre|KnownPre'] R :-
+  K' is K - 1,
+  std.filter FL (p\sigma dml\p = fdp _ dml _, incl dml MLSrc) FLdep,
+  std.fold FLdep (pr KnownPre [])
+    (paths-from-for-step-using.aux MLSrc ML FL K' Pre)
+    (pr KnownPre' R).
+paths-from-for-step-using.aux MLSrc ML FL' K' Pre (fdp F _ MLF) (pr KnPre L)
+    (pr KnPre' R) :-
+  std.append MLSrc MLF MLSrc',
+  list-diff ML MLF ML',
+  insert-sorted lt-gref F Pre Pre',
+  std.filter FL' (p\sigma pml\p = fdp _ _ pml, incl pml ML') FML',
+  paths-from-for-step-using MLSrc' ML' K' Pre' KnPre FML' KnPre' R',
+  std.map R' (l\r\r = [F|l]) R'',
+  std.append L R'' R.
+
+pred pp-solutions i:list (list factoryname).
+pp-solutions LLF :-
+  std.sort LLF (size-order lexi-order) SLLF,
+  % format
+  PpSolutions = box (v 4) [
+    str "HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):",
+    {about.bulletize SLLF pp-solution}],
+  % print
+  coq.say {coq.pp->string PpSolutions},  
+  coq.say.
+
+pred pp-solution i:list factoryname, o:coq.pp.
+pp-solution L (box (hov 0) PLS) :-
+  std.map L about.pp-module PL,
+  std.intersperse (glue [str ";", spc]) PL PLS.
+
+}}

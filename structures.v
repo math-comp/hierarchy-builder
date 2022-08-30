@@ -252,14 +252,12 @@ Elpi Accumulate Db hb.db.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate lp:{{
 
-main _ :- coq.version _ _ N _, N < 13, !,
-  coq.say "HB: HB.locate requires Coq version 8.13 or above".
 main [str S] :- !,
   if (decl-location {coq.locate S} Loc)
      (coq.say "HB: synthesized in file" Loc)
      (coq.say "HB:" S "not synthesized by HB").
 
-main _ :- coq.error "Usage: HB.about <name>.".
+main _ :- coq.error "Usage: HB.locate <name>.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.locate.
@@ -295,6 +293,53 @@ main _ :- coq.error "Usage: HB.about <name>.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.about.
+
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.howto (T) Foo.type d] prints possible sequences of factories
+    to equip a type [T] with a structure [Foo.type], taking into account
+    structures already instantiated on [T]. The search depth [d]
+    is the maximum length of the sequences, 3 by default.
+    The first argument [T] is optional, when ommited [Foo.type] is built
+    from scratch.
+    Finally, the first argument can be another structure [Bar.type],
+    in which case [Foo.type] is built starting from [Bar.type].
+*)
+
+#[arguments(raw)] Elpi Command HB.howto.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate File "HB/howto.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main [trm T, str STgt] :- !,
+  with-attributes (with-logging (howto.main-trm T STgt none)).
+main [trm T, str STgt, int Depth] :- !,
+  with-attributes (with-logging (howto.main-trm T STgt (some Depth))).
+main [str T, str STgt] :- !,
+  with-attributes (with-logging (howto.main-str T STgt none)).
+main [str T, str STgt, int Depth] :- !,
+  with-attributes (with-logging (howto.main-str T STgt (some Depth))).
+main [str STgt] :- !,
+  with-attributes (with-logging (howto.main-from [] STgt none)).
+main [str STgt, int Depth] :- !,
+  with-attributes (with-logging (howto.main-from [] STgt (some Depth))).
+
+main _ :-
+  coq.error
+    "Usage: HB.howto [(<type>)|<structure>] <structure> [<search depth>].".
+}}.
+Elpi Typecheck.
+Elpi Export HB.howto.
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
