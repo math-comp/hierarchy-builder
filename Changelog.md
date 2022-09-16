@@ -4,6 +4,7 @@
 
 - **Fix** HB.pack works with structures about functions, and not just
   types 
+- **New** Command HB.howto to find all possible ways to instanciate structures.
 
 ## [1.3.0] - 2022-07-27
 
