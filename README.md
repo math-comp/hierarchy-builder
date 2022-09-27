@@ -82,7 +82,8 @@ Proof. by rewrite example. Qed.
 This [paper](https://hal.inria.fr/hal-02478907) describes the language
 in details, and the corresponding talk [is available on youtube](https://www.youtube.com/watch?v=F6iRaTlQrlo).
 The [wiki](https://github.com/math-comp/hierarchy-builder/wiki) gathers some
-tricks and FAQs.
+tricks and FAQs. If you want to work on the implementation of HB, this
+[recorded hacking session](https://www.youtube.com/watch?v=gmaJjCbzqO0) may be relevant to you.
 
 ### Installation & availability
 
