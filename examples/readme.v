@@ -46,3 +46,5 @@ Goal forall x : T, x + -x = 0.
 Abort.
 
 End Test.
+
+HB.document_file.

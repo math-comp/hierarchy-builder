@@ -1,0 +1,38 @@
+pred doc.main.
+doc.main :- std.do! [
+  findall-classes CL,
+  std.map CL class_structure SL,
+  std.filter SL doc.same-file? StructuresFromThisFile,
+  doc.structures StructuresFromThisFile,
+].  
+
+pred doc.same-file? i:gref.
+doc.same-file? GR :-
+  decl-location GR Loc,
+  get-option "elpi.loc" Loc1,
+  loc.fields Loc  File _ _ _ _,
+  loc.fields Loc1 File _ _ _ _.
+
+pred doc.structures i:list structure.
+doc.structures [].
+doc.structures [S|SL] :- std.do! [
+  gref->modname_short S "." N,
+  about.main-located N (loc-gref S),
+  class-def (class C S _),
+  std.findall (mixin-first-class _ C) ML,
+  std.map ML (x\m\x = mixin-first-class m C) Mixins,
+  doc.mixins Mixins,
+  doc.structures SL,
+].
+
+pred doc.mixins i:list mixinname.
+doc.mixins [].
+doc.mixins [M|ML] :- std.do! [
+  factory-constructor M F,
+  phant-abbrev F _ A,
+  gref->modname F 1 "." N,
+  B is N ^ ".Build",
+  about.main-located B (loc-abbreviation A),
+  doc.mixins ML,
+].
+

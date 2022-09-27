@@ -44,6 +44,7 @@ with-attributes P :-
     att "primitive" bool,
     att "non_forgetful_inheritance" bool,
     att "hnf" bool,
+    att "format" string,
   ] Opts, !,
   Opts => (save-docstring, P).
 
@@ -65,6 +66,9 @@ if-MC-compat P :- get-option "mathcomp.axiom" S, !,
   std.assert! (coq.locate S GR) "The name passed to the mathcomp.axiom attribute does not exist",
   P (some GR).
 if-MC-compat _.
+
+pred is-fmt-coqdoc?.
+is-fmt-coqdoc? :- get-option "format" "coqdoc".
 
 pred with-locality i:prop.
 with-locality P :-

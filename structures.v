@@ -274,6 +274,9 @@ Elpi Export HB.locate.
     - factory constructors, eg Bar.Build
     - canonical projections, eg Foo.sort
     - canonical value, eg Z, prod, ...
+
+    The #[format="coqdoc"] attribute makes the output suitable for integration
+    in the header of a Mathematical Components file.
 *)
 
 #[arguments(raw)] Elpi Command HB.about.
@@ -293,6 +296,33 @@ main _ :- coq.error "Usage: HB.about <name>.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.about.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** This command runs HB.about on all structures and their characterizing
+    mixin constructors.
+*)
+
+#[arguments(raw)] Elpi Command HB.document_file.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate File "HB/doc.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main [] :- !, with-attributes (with-logging doc.main).
+
+main _ :- coq.error "Usage: HB.document_file.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.document_file.
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

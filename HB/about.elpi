@@ -8,7 +8,8 @@ main S :-
   coq.locate-all S All,
   std.filter All (x\sigma gr a\x = loc-gref gr ; x = loc-abbreviation a) L,
   if (L = []) (coq.error "HB: unable to locate" S) true,
-  std.forall L (about.main-located S).
+  if is-fmt-coqdoc? (OPTS = [@ppwidth! 65]) (OPTS = []),
+  OPTS => std.forall L (about.main-located S).
 
 pred main-located i:string, i:located.
 main-located S (loc-gref GR) :- class-def (class Class GR MLwP), !,
@@ -234,7 +235,7 @@ main-factory-constructor S F PhBuild Build :-
   coq.arguments.implicit PhBuild [Implicits],
 
   compute-arg-type DMLwP Fields [] ParamsNames TName FieldsNames ArgsTypes,
-  compute-field-info FieldsNames Implicits FieldsNamesInfo,
+  pp-field-info FieldsNames Implicits FieldsNamesInfo,
   std.map ParamsNames (n\r\r = str n) ParamsPp,
 
   % format
@@ -331,19 +332,19 @@ main-builder _S From To :-
   coq.say "HB: todo HB.about for builder from"
     {gref->modname_short From "."} "to" {gref->modname_short To "."}.
 
-pred compute-field-info.aux i:list id, i:list implicit_kind, o:list coq.pp.
-compute-field-info.aux [] _ [].
-compute-field-info.aux [Name|NS] [explicit|IS] [str Name|PS] :-
-  compute-field-info.aux NS IS PS.
-compute-field-info.aux [Name|NS] [implicit|IS] [glue[str"[",str Name,str"]"]|PS] :-
-  compute-field-info.aux NS IS PS.
-compute-field-info.aux [Name|NS] [maximal|IS] [glue[str"{",str Name,str"}"]|PS] :-
-  compute-field-info.aux NS IS PS.
-compute-field-info.aux [Name|NS] [] [str Name|PS] :-
-  compute-field-info.aux NS [] PS.
-pred compute-field-info i:list id, i:list implicit_kind, o:list coq.pp.
-compute-field-info Names Impls O :-
-  compute-field-info.aux {std.rev Names} {std.rev Impls} Pp,
+pred pp-field-info.aux i:list id, i:list implicit_kind, o:list coq.pp.
+pp-field-info.aux [] _ [].
+pp-field-info.aux [Name|NS] [explicit|IS] [str Name|PS] :-
+  pp-field-info.aux NS IS PS.
+pp-field-info.aux [Name|NS] [implicit|IS] [glue[str"[",str Name,str"]"]|PS] :-
+  pp-field-info.aux NS IS PS.
+pp-field-info.aux [Name|NS] [maximal|IS] [glue[str"{",str Name,str"}"]|PS] :-
+  pp-field-info.aux NS IS PS.
+pp-field-info.aux [Name|NS] [] [str Name|PS] :-
+  pp-field-info.aux NS [] PS.
+pred pp-field-info i:list id, i:list implicit_kind, o:list coq.pp.
+pp-field-info Names Impls O :-
+  pp-field-info.aux {std.rev Names} {std.rev Impls} Pp,
   std.intersperse spc {std.rev Pp} O.
 
 pred pp-const i:constant, o:coq.pp.
@@ -361,6 +362,11 @@ pp-loc-of GR PP :- decl-location GR Loc, !, pp-loc Loc PP.
 pp-loc-of _ coq.pp.empty.
 
 pred pp-loc i:loc, o:coq.pp.
+pp-loc Loc (coq.pp.glue PP) :-
+  get-option "elpi.loc" Loc1,
+  loc.fields Loc  File _ _ Line _,
+  loc.fields Loc1 File _ _ _ _, !,
+  PP = [str "(from this file, line ", str {std.any->string Line}, str")"].
 pp-loc Loc (coq.pp.glue PP) :-
   loc.fields Loc File _ _ Line _,
   QFile is "\"" ^ File ^ "\", line " ^ {std.any->string Line},
