@@ -17,7 +17,8 @@ pred doc.structures i:list structure.
 doc.structures [].
 doc.structures [S|SL] :- std.do! [
   gref->modname_short S "." N,
-  about.main-located N (loc-gref S),
+  about.main-located N (loc-gref S) PP,
+  coq.say {coq.pp->string PP},
   class-def (class C S _),
   std.findall (mixin-first-class _ C) ML,
   std.map ML (x\m\x = mixin-first-class m C) Mixins,
@@ -32,7 +33,8 @@ doc.mixins [M|ML] :- std.do! [
   phant-abbrev F _ A,
   gref->modname F 1 "." N,
   B is N ^ ".Build",
-  about.main-located B (loc-abbreviation A),
+  about.main-located B (loc-abbreviation A) PP,
+  coq.say {coq.pp->string PP},
   doc.mixins ML,
 ].
 
