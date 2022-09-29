@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-## [1.4.0] - 2022-09-28
+## [1.4.0] - 2022-09-29
 
 Compatible with
 - Coq 8.15 with Coq-Elpi 1.14.x
