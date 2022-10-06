@@ -442,7 +442,7 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [A] :- A = indt-decl _, !,
+main [A] :- (A = indt-decl _; A = upoly-indt-decl _ _), !,
   with-attributes (with-logging (factory.declare-mixin A)).
 
 main _ :-
