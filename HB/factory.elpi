@@ -11,11 +11,6 @@ pred declare-mixin i:argument.
 declare-mixin A :-
   with-upoly-argument A (A\ private.declare-asset A private.asset-mixin).
 
-pred with-upoly-argument i:argument, i:(argument -> prop).
-with-upoly-argument UArg P :-
-  coq.unupoly-argument UArg Arg Flags,
-  Flags => P Arg.
-
 kind factory-abbrev type.
 type by-classname gref -> factory-abbrev.
 type by-phantabbrev abbreviation -> factory-abbrev.

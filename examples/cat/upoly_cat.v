@@ -19,11 +19,11 @@ Axiom Prop_irrelevance : forall (P : Prop) (x y : P), x = y.
 Definition U := Type.
 Identity Coercion U_to_type : U >-> Sortclass.
 
-#[verbose] HB.mixin Record HasHom C := { hom : C -> C -> U }.
+HB.mixin Record HasHom C := { hom : C -> C -> U }.
 
 About HasHom.axioms_.
 
-HB.structure Definition Hom : Set := { C of HasHom C }.
+#[verbose] HB.structure Definition Hom : Set := { C of HasHom C }.
 
 Notation homType := Hom.type.
 Bind Scope cat_scope with Hom.type.

@@ -6,6 +6,11 @@
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
+pred with-upoly-argument i:argument, i:(argument -> prop).
+with-upoly-argument UArg P :-
+  coq.unupoly-argument UArg Arg Flags,
+  Flags => P Arg.
+
 % HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
 type attmap attribute-type.
 
