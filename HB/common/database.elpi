@@ -12,7 +12,7 @@ pred from_mixin i:prop, o:mixinname.
 from_mixin (from _ X _) X.
 
 pred from_builder i:prop, o:term.
-from_builder (from _ _ X) (global X).
+from_builder (from _ _ X) R :- coq.env.global X R.
 
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
@@ -59,7 +59,8 @@ instance-to-export_instance-nice (instance-to-export _ M _) M.
 pred abbrev-to-export_name i:prop, o:id.
 abbrev-to-export_name (abbrev-to-export _ N _) N.
 pred abbrev-to-export_body i:prop, o:term.
-abbrev-to-export_body (abbrev-to-export _ _ B) (global B).
+abbrev-to-export_body (abbrev-to-export _ _ B) R :-
+  coq.env.global B R.
 
 pred extract-builder i:prop, o:builder.
 extract-builder (builder-decl B) B.
@@ -114,7 +115,7 @@ factory-provides.one Params T B M (triple M PL T) :- std.do! [
 pred extract-conclusion-params i:term, i:term, o:list term.
 extract-conclusion-params TheType (prod _ S T) R :- !,
   @pi-decl _ S x\ extract-conclusion-params TheType (T x) R.
-extract-conclusion-params TheType (app [global GR|Args]) R :- !,
+extract-conclusion-params TheType T R :- coq.dest-gref-app T GR Args, !,
   factory-alias->gref GR Factory,
   factory-nparams Factory NP,
   std.map Args (copy-pack-holes TheType TheType) NewArgs,
@@ -272,22 +273,23 @@ assert-good-coverage! MLSortedRev CNL :- std.do! [
 
 % [get-structure-coercion S1 S2 F] finds the coecion F from the structure S1 to S2
 pred get-structure-coercion i:structure, i:structure, o:term.
-get-structure-coercion S T (global F) :-
+get-structure-coercion S T R :-
   coq.coercion.db-for (grefclass S) (grefclass T) L,
-  if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T).
+  if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T),
+  coq.env.global F R.
 
 pred get-structure-sort-projection i:structure, o:term.
 get-structure-sort-projection (indt S) Proj :- !,
   coq.env.projections S L,
   if (L = [some P, _]) true (coq.error "No canonical sort projection for" S),
-  Proj = global (const P).
+  coq.env.global (const P) Proj.
 get-structure-sort-projection S _ :- coq.error "get-structure-sort-projection: not a structure" S.
 
 pred get-structure-class-projection i:structure, o:term.
 get-structure-class-projection (indt S) T :- !,
   coq.env.projections S L,
   if (L = [_, some P]) true (coq.error "No canonical class projection for" S),
-  T = global (const P).
+  coq.env.global (const P) T.
 get-structure-class-projection S _ :- coq.error "get-structure-class-projection: not a structure" S.
 
 pred get-constructor i:gref, o:gref.
@@ -351,7 +353,7 @@ structure-nparams Structure NParams :-
 pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
   not (var S), !,
-  safe-dest-app S (global GR) Args, factory-alias->gref GR F, factory-nparams F NP, !,
+  coq.dest-gref-app S GR Args, factory-alias->gref GR F, factory-nparams F NP, !,
   std.split-at NP Args Params [T|_].
 
 % [find-max-classes Mixins Classes] states that Classes is a list of classes
