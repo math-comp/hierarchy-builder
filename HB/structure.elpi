@@ -67,6 +67,7 @@ declare Module BSkel Sort :- std.do! [
   (ClassAlias => class-def CurrentClass => GRDepsClauses => MixinMems =>
     w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
   if-verbose (coq.say {header} "declaring pack_ constant =" Pack),
+  std.assert-ok! (coq.typecheck Pack _) "pack_ illtyped",
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
   GRPack = const ConstPack,
 
