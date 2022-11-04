@@ -7,7 +7,9 @@
 Compatible with
 - Coq 8.15 with Coq-Elpi 1.14.x
 - Coq 8.16 with Coq-Elpi 1.15.x and 1.16.x
-- 
+
+### General
+
 - **Fix** `HB.pack` works with structures about functions, and not just types.
 - **Fix** `HB.about` and `HB.graph` now display shortest names.
 - **New** Command `HB.howto` to find all possible ways to instanciate structures.
