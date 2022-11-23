@@ -31,3 +31,7 @@ HB.instance
     Z.mul_add_distr_r Z.mul_add_distr_l.
 
 HB.howto Z Ring.type.
+
+Fail HB.howto AddMonoid_of_TYPE.
+Fail HB.howto Ring_of_TYPE.
+Fail HB.howto Ring.
