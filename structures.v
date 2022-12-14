@@ -577,7 +577,7 @@ HB.structure Definition StructureName params :=
   - [#[infer(variable)]], where [variable : pT] belongs to [params] and is a structure
     (e.g. from the hierarchy) with a coercion/canonical projection [pT >-> Sortclass].
     It modifies the notation [StructureName.type] so as to accept [variable : Type] instead,
-    and will try to infer it's [pT] by unification (using canonical structure inference),
+    and will try to infer its [pT] by unification (using canonical structure inference),
     This is essential in [Lmodule.type R] where [R] should have type [Ring.type]
     but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer(R)]].
     If the carrier of the structure [S] is not a [Type] but rather a function, one has
