@@ -193,6 +193,11 @@ pred mixin-class o:mixinname, o:classname.
 % Coq's CS database (which is just for structures).
 pred mixin-src o:term, o:mixinname, o:term.
 
+% [has-mixin-instance P M G] states that G is a reference to an instance
+% which can be used to reconstruct an instance 
+% of the form [M P …] with eventually some parameters for P.
+pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
+
 %% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [builder N TheFactory TheMixin S] is used to
@@ -525,6 +530,7 @@ solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
 Elpi Typecheck.
 Elpi Export HB.pack.
 
+
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -604,15 +610,45 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate lp:{{
 
 main [const-decl N (some B) Arity] :- !, std.do! [
+  % compute the universe for the structure (default )
   prod-last {coq.arity->term Arity} Ty,
-  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
-  with-attributes (with-logging (structure.declare N B Univ))
+  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
+  with-attributes (with-logging (structure.declare N B Univ)),
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(* [HB.saturate_instances] saturates all instances possible *)
+
+
+#[arguments(raw)] Elpi Command HB.saturate_instances.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/structure.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/factory.elpi".
+Elpi Accumulate File "HB/export.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [] :- !, with-attributes (with-logging (instance.saturate-instances)).
+main _ :- coq.error "Usage: HB.saturate_instances".
+}}.
+Elpi Typecheck.
+Elpi Export HB.saturate_instances.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -664,6 +700,7 @@ main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
 }}.
 Elpi Typecheck.
 Elpi Export HB.instance.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
