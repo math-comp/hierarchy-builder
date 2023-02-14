@@ -201,6 +201,10 @@ pred mixin-class o:mixinname, o:classname.
 % Coq's CS database (which is just for structures).
 pred mixin-src o:term, o:mixinname, o:term.
 
+
+% states that a certain type has a canonical instance
+pred has-CS-instance o:term.
+
 %% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [builder N TheFactory TheMixin S] is used to
@@ -620,9 +624,17 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [const-decl N (some B) Arity] :- !, std.do! [
+  % compute the universe for the structure (default )
   prod-last {coq.arity->term Arity} Ty,
-  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
-  with-attributes (with-logging (structure.declare N B Univ))
+  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
+  with-attributes (with-logging (structure.declare N B Univ)),
+  %with-attributes (with-logging (instance.declare-const N B ))
+  % coq.CS.db-for (coq-builtin)
+  % database.get-canonical-structures Ty
+  % database.get-canonical-instances Ty
+  % synthesis.under-local-canonical-mixins-of do! 
+  % instance.declare-canonical-instances-from-factory 
+%get-canonical-structures Ty _
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 

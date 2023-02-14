@@ -103,7 +103,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   ]),
 
   % we accumulate clauses now that the section is over
-  acc-clauses current Clauses  
+  acc-clauses current Clauses
+  if (!has-CS-instance TheType)
+  acc-clause current has-CS-instance TheType 
 ].
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
