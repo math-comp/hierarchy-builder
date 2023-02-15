@@ -619,13 +619,7 @@ main [const-decl N (some B) Arity] :- !, std.do! [
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
   with-attributes (with-logging (structure.declare N B Univ)),
-  %with-attributes (with-logging (instance.declare-const N B ))
-  % coq.CS.db-for (coq-builtin)
-  % database.get-canonical-structures Ty
-  % database.get-canonical-instances Ty
-  % synthesis.under-local-canonical-mixins-of do! 
-  % instance.declare-canonical-instances-from-factory 
-%get-canonical-structures Ty _
+
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 
