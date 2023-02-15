@@ -32,6 +32,9 @@ class_structure (class _ S _) S.
 pred class-def_name i:prop, o:classname.
 class-def_name (class-def (class N _ _)) N.
 
+pred  has-db-instance_type i:prop, o:term.
+ has-db-instance_type (has-db-instance TheType) TheType.
+
 pred mixin-class_class i:prop, o:classname.
 mixin-class_class (mixin-class _ C) C.
 
@@ -132,6 +135,13 @@ factories-provide FLwP MLwP :- std.do! [
   list-w-params.flatten-map FLwP factory-provides UnsortedMLwP,
   w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
 ].
+
+pred findall-cs-types o:list term.
+findall-cs-types TypeList :- std.do![
+  std.findall (has-db-instance _) Clauses,
+  std.map Clauses has-db-instance_type TypeList,
+].
+
 
 % Mixins can be topologically sorted according to their dependencies
 pred toposort-mixins i:list (w-args mixinname), o:list (w-args mixinname).
@@ -267,6 +277,7 @@ assert-good-coverage! MLSortedRev CNL :- std.do! [
         "This should never happen, please report a bug.")
      true
 ].
+
 
 %%%%% Coq Database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
