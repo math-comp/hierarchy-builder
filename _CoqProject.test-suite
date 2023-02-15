@@ -3,6 +3,7 @@
 -arg -w -arg -abstract-large-number
 -arg -w -arg -disj-pattern-notation
 -arg -w -arg -notation-overridden
+arg -w -arg +elpi.typecheck
 
 examples/readme.v
 examples/hulk.v

@@ -203,7 +203,7 @@ pred mixin-src o:term, o:mixinname, o:term.
 
 
 % states that a certain type has a canonical instance
-pred has-CS-instance o:term.
+pred has-db-instance o:term.
 
 %% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
