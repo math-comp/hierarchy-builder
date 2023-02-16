@@ -85,6 +85,8 @@ tests/issue287.v
 tests/monoid_enriched_cat.v
 
 tests/store_types_cs.v
+tests/findall_cs_types.v
+
 -R tests HB.tests
 -R examples HB.examples
 

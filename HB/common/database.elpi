@@ -136,10 +136,18 @@ factories-provide FLwP MLwP :- std.do! [
   w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
 ].
 
+
+pred undup-terms i:term, i:list term, o:list term.
+  undup-terms _ [] [].
+  undup-terms T[T1|TN] TN :- T == T1.
+  undup-terms T [T1|TN] [T1|TL] :- undup-terms T TN TL.
+
+% finds all types for which an instance was created
 pred findall-cs-types o:list term.
 findall-cs-types TypeList :- std.do![
   std.findall (has-db-instance _) Clauses,
-  std.map Clauses has-db-instance_type TypeList,
+  std.map Clauses has-db-instance_type TypeListDup,
+  undup-terms _ TypeListDup TypeList,
 ].
 
 
