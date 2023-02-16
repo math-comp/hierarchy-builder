@@ -691,6 +691,39 @@ Elpi Export HB.instance.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+(** [HB.saturate_instances] saturates all instances possible for a given structure *)
+
+
+#[arguments(raw)] Elpi Command HB.saturate_instances.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/common/structure.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+
+main [const-decl StructureName] :- !, std.do! [
+database.findall-cs-types InsTypes,
+%TODO get the types StrucTypes the structure with name StructureName with which it can be instatiated
+% saturate instances with the types in the intersection between InsTypes and StrucTypes 
+].
+
+main _ :- coq.error "Usage: HB.saturate_instances StructureName".
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.saturate_instances.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 #[arguments(raw)] Elpi Command HB.factory.
