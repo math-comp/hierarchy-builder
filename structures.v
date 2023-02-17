@@ -702,7 +702,7 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
-Elpi Accumulate File "HB/common/structure.elpi".
+Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
@@ -710,6 +710,8 @@ Elpi Accumulate lp:{{
 
 main [const-decl StructureName] :- !, std.do! [
 database.findall-cs-types InsTypes,
+findall-classes Classes.
+mixin-src T _ _
 %TODO get the types StrucTypes the structure with name StructureName with which it can be instatiated
 % saturate instances with the types in the intersection between InsTypes and StrucTypes 
 ].
@@ -717,7 +719,7 @@ database.findall-cs-types InsTypes,
 main _ :- coq.error "Usage: HB.saturate_instances StructureName".
 
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck.*)
 Elpi Export HB.saturate_instances.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

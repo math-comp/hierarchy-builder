@@ -142,7 +142,7 @@ pred undup-terms i:term, i:list term, o:list term.
   undup-terms T[T1|TN] TN :- T == T1.
   undup-terms T [T1|TN] [T1|TL] :- undup-terms T TN TL.
 
-% finds all types for which an instance was created
+% finds all unique types for which an instance was created
 pred findall-cs-types o:list term.
 findall-cs-types TypeList :- std.do![
   std.findall (has-db-instance _) Clauses,
