@@ -298,7 +298,7 @@ declare-canonical-instances-from-factory-and-local-builders
 % it uses all known builders to declare canonical instances of structures
 % on T
 pred declare-canonical-instances-from-factory
-  i:factoryname, i:term, i:term, o:list (pair id constant).
+  i:factoryname, i:term, i:term, o: list prop, o:list (pair id constant).
 declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
@@ -307,8 +307,8 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   synthesis.under-mixin-src-from-factory.do! T F [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
-      add-all-mixins T Factory ML tt _ MCSL,
-      instance.declare-all T {findall-classes-for ML} CCSL,
+      add-all-mixins T Factory ML tt Clauses MCSL,
+      Clauses =>instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
   std.append MCSL CCSL CSL
