@@ -78,7 +78,6 @@ Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
      in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics
      and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht,
      1995).
-
 HB: Ring_of_AddAG.Build is a factory constructor
     (from "./examples/demo1/hierarchy_5.v", line 108)
 HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
@@ -103,38 +102,31 @@ Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
      in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics
      and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht,
      1995).
-
 HB: add is an operation of structure AddMonoid
     (from "./examples/demo1/hierarchy_5.v", line 17)
 HB: add comes from mixin AddMonoid_of_TYPE
     (from "./examples/demo1/hierarchy_5.v", line 10)
-
 HB: AddAG.sort is a canonical projection
     (from "./examples/demo1/hierarchy_5.v", line 73)
 HB: AddAG.sort has the following canonical values:
     - @eta 
     - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 196)
     - Z 
-
 HB: AddAG.sort is a coercion from AddAG to Sortclass
     (from "./examples/demo1/hierarchy_5.v", line 73)
-
 HB: Z is canonically equipped with structures:
     - AddMonoid
       AddComoid
       AddAG
-      (from "(stdin)", line 5)
+      (from this file, line 5)
     - BiNearRing
       SemiRing
       Ring
-      (from "(stdin)", line 10)
-
+      (from this file, line 10)
 HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
     Ring to SemiRing (from "./examples/demo1/hierarchy_5.v", line 196)
-
 HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
     Ring to SemiRing (from "./examples/demo1/hierarchy_5.v", line 196)
-
 HB: todo HB.about for builder from Ring_of_AddAG to BiNearRing_of_AddMonoid
 HB: synthesized in file File "(stdin)", line 5, column 0, character 127:
 Interactive Module hierarchy_5 started
@@ -143,9 +135,8 @@ HB: Z is canonically equipped with structures:
     - AddMonoid
       demo1.hierarchy_5.AddComoid
       AddAG
-      (from "(stdin)", line 5)
+      (from this file, line 5)
     - BiNearRing
       SemiRing
       Ring
-      (from "(stdin)", line 10)
-
+      (from this file, line 10)
