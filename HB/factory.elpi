@@ -4,10 +4,12 @@
 namespace factory {
 
 pred declare i:argument.
-declare A :- private.declare-asset A private.asset-factory.
+declare A :-
+  with-upoly-argument A (A\ private.declare-asset A private.asset-factory).
 
 pred declare-mixin i:argument.
-declare-mixin A :- private.declare-asset A private.asset-mixin.
+declare-mixin A :-
+  with-upoly-argument A (A\ private.declare-asset A private.asset-mixin).
 
 kind factory-abbrev type.
 type by-classname gref -> factory-abbrev.
@@ -16,7 +18,8 @@ type by-phantabbrev abbreviation -> factory-abbrev.
 pred declare-abbrev i:id, i:factory-abbrev.
 declare-abbrev Name (by-classname GR) :-
   % looks fishy (the parameters are not taken into account)
-  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
+  coq.env.global GR HD,
+  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[HD,t]) tt _.
 declare-abbrev Name (by-phantabbrev Abbr) :- std.do! [
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
@@ -226,11 +229,12 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "declare record axioms_"),
   Kname = "Axioms_",
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
-  std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
 
-  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
+  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDeclSkel RDeclClosedSkel _,
 
-  % coq.say RDecl RDeclClosed,
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclClosedSkel RDeclClosed) "record declaration illtyped",
+
+  % coq.say RDeclSkel RDeclClosedSkel RDeclClosed,
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
@@ -309,13 +313,15 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
   log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
 
-  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+  std.assert! (coq.dest-gref-app Ty1 PhF _Args) "Argument must be a factory",
   std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
   MixinSrcClauses => synthesis.infer-all-gref-deps TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
-  (pi Args\ copy (app[global F|Args]) (app[global (const C)|Section])) => copy MFKTy MFKTyC,
+  (pi Args\ copy (app[global F|Args]) (app[global (const C)|Section])) =>
+  (pi Args UI UI2\ copy (app[pglobal F UI|Args]) (app[pglobal (const C) UI2|Section])) =>
+    copy MFKTy MFKTyC,
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr MFK MFKTyC) (pr MFKClosed MFKTyCClosed) _,
   log.coq.env.add-const-noimplicits "Axioms_" MFKClosed MFKTyCClosed @transparent! CK,
@@ -388,7 +394,7 @@ abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance
   % compute section variables to be used for discharging
   std.map MixinSrcClauses mixin-src_src Mixins,
   std.append TheParams [TheType|{std.rev Mixins}] Section,
-  std.map Section (x\r\ x = global (const r)) SectionVars,
+  std.map Section (x\r\ coq.env.global (const r) x) SectionVars,
   % We discharge by hand the record declaration so that we can be sure all
   % parameters and mixins are abstracted (even if unused).
   coq.copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,

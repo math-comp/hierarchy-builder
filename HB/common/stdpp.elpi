@@ -245,3 +245,16 @@ coq.fold-map (primitive _ as C) A C A :- !.
 coq.fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A coq.fold-map L1 A1, coq.mk-app-uvar M L1 W.
 % when used in CHR rules
 coq.fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A coq.fold-map L1 A1.
+
+pred upoly o:option upoly-decl, o:option upoly-decl-cumul.
+
+pred coq.unupoly-argument i:argument, o:argument, o:prop.
+coq.unupoly-argument (upoly-indt-decl I (upoly-decl _ _ _ _ as P))       (indt-decl I) (upoly (some P) none).
+coq.unupoly-argument (upoly-indt-decl I (upoly-decl-cumul _ _ _ _ as P)) (indt-decl I) (upoly none (some P)).
+coq.unupoly-argument (upoly-const-decl N B T P) (const-decl N B T) (upoly (some P) none).
+coq.unupoly-argument X X (upoly none none).
+
+pred coq.dest-gref-app i:term, o:gref, o:list term.
+coq.dest-gref-app T GR Args :-
+  coq.safe-dest-app T HD Args,
+  (HD = global GR ; HD = pglobal GR _).

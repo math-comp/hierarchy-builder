@@ -442,7 +442,7 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [A] :- A = indt-decl _, !,
+main [A] :- (A = indt-decl _; A = upoly-indt-decl _ _), !,
   with-attributes (with-logging (factory.declare-mixin A)).
 
 main _ :-
@@ -610,12 +610,15 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
-main [const-decl N (some B) Arity] :- !, std.do! [
+main [A] :- with-upoly-argument A main.aux.
+
+main.aux (const-decl N (some B) Arity) :- std.do! [
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
   with-attributes (with-logging (structure.declare N B Univ))
 ].
-main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
+
+main.aux _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 
 }}.
 Elpi Typecheck.

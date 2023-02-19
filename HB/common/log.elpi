@@ -28,6 +28,14 @@ strategy.set CL S :-
   coq.strategy.set CL S,
   log.private.log-vernac (log.private.coq.vernac.strategy CL S).
 
+pred upoly->flags4const i:prop.
+upoly->flags4const P :- upoly none none, !, P.
+upoly->flags4const P :- @univpoly! => P.
+
+pred upoly->flags4indt i:prop.
+upoly->flags4indt P :- upoly none none, !, P.
+upoly->flags4indt P :- @univpoly-cumul! => P.
+
 pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
 env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   if (not(ground_term Ty ; ground_term Bo))
@@ -35,7 +43,7 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.env.add-const Name1 Bo Ty Opaque C,
+  upoly->flags4const (coq.env.add-const Name1 Bo Ty Opaque C),
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
@@ -49,7 +57,7 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.env.add-const Name1 Bo Ty Opaque C,
+  upoly->flags4const (coq.env.add-const Name1 Bo Ty Opaque C),
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
@@ -61,7 +69,7 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
-  coq.env.add-const Name Bo Ty Opaque C,
+  upoly->flags4const (coq.env.add-const Name Bo Ty Opaque C),
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo),
@@ -87,7 +95,7 @@ env.add-indt Decl I :- std.do! [
   if (not(coq.ground-indt-decl? Decl))
     (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
     true,
-  coq.env.add-indt Decl I,
+  upoly->flags4indt (coq.env.add-indt Decl I),
   (coq.env.record? I P ; P = ff),
   log.private.log-vernac (log.private.coq.vernac.inductive Decl P),
   env.add-location (indt I),

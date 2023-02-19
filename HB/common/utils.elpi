@@ -6,6 +6,11 @@
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
+pred with-upoly-argument i:argument, i:(argument -> prop).
+with-upoly-argument UArg P :-
+  coq.unupoly-argument UArg Arg Flags,
+  Flags => P Arg.
+
 % HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
 type attmap attribute-type.
 
@@ -203,7 +208,7 @@ params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 
 pred fresh-type o:term.
 fresh-type Ty :-
-  Ty = {{Type}},
+  Ty = sort(typ U), coq.univ.new U,
   std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
 
 %%%%%%%%%%%%%%%%%%%%%%
