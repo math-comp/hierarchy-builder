@@ -214,7 +214,7 @@ declare-instance Factory T F Clauses CSL :-
   declare-canonical-instances-from-factory-and-local-builders Factory
     T F TheFactory FGR Clauses CSL.
 declare-instance Factory T F Clauses CSL :-
-  declare-canonical-instances-from-factory Factory T F CSL,
+  declare-canonical-instances-from-factory Factory T F Clauses CSL,
   if (get-option "export" tt)
      (coq.env.current-library File,
       std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
@@ -299,7 +299,7 @@ declare-canonical-instances-from-factory-and-local-builders
 % on T
 pred declare-canonical-instances-from-factory
   i:factoryname, i:term, i:term, o: list prop, o:list (pair id constant).
-declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
+declare-canonical-instances-from-factory Factory T F Clauses CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
