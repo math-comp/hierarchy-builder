@@ -14,6 +14,9 @@ from_mixin (from _ X _) X.
 pred from_builder i:prop, o:term.
 from_builder (from _ _ X) (global X).
 
+pred mixin-src_type i:prop, o:term.
+mixin-src_type (mixin-src T _ _ ) T.
+
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
 
@@ -209,6 +212,10 @@ pred findall-builders o:list builder.
 findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   std.bubblesort LFILunsorted leq-builder LFIL.
+
+pred findall-type-src i:term, o:list term.
+findall-type-src S TL :-
+  std.map {std.findall (mixin-src T_ M_ S)} mixin-src_type TL.
 
 pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
