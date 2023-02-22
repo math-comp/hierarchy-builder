@@ -534,43 +534,6 @@ solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
 }}.
 Elpi Typecheck.
 Elpi Export HB.pack.
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
-(** [HB.saturate_instances] saturates all instances possible for a given structure *)
-
-
-#[arguments(raw)] Elpi Command HB.saturate_instances.
-#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
-#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
-Elpi Accumulate File "HB/common/stdpp.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
-Elpi Accumulate File "HB/common/utils.elpi".
-Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/common/synthesis.elpi".
-Elpi Accumulate File "HB/structure.elpi".
-Elpi Accumulate File "HB/context.elpi".
-Elpi Accumulate File "HB/instance.elpi".
-Elpi Accumulate Db hb.db.
-Elpi Accumulate lp:{{
-
-main [id Struct] :- !, std.do! [
-topo-find Struct S,
-database.findall-cs-types InsTypes,
-findall-mixin-src-type S TL,
-findall-classes Classes,
-std.forall TL (t\ (instance.declare-all t Classes CLS)),
-
-%TODO get the types StrucTypes the structure with name StructureName with which it can be instatiated
-% saturate instances with the types in the intersection between InsTypes and StrucTypes 
-].
-
-main _ :- coq.error "Usage: HB.saturate_instances StructureName".
-
-}}.
-Elpi Typecheck.
-Elpi Export HB.saturate_instances.
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -657,13 +620,42 @@ main [const-decl N (some B) Arity] :- !, std.do! [
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
   with-attributes (with-logging (structure.declare N B Univ)),
-  saturate_instances N,
+  with-attributes (with-logging (instance.saturate-instances)),%TODO this call doesn't seem to work here
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(* [HB.saturate_instances] saturates all instances possible *)
+
+
+#[arguments(raw)] Elpi Command HB.saturate_instances.
+#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
+#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/structure.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
+Elpi Accumulate File "HB/factory.elpi".
+Elpi Accumulate File "HB/export.elpi".
+Elpi Accumulate Db hb.db.
+Elpi Accumulate lp:{{
+main [] :- !, with-attributes (with-logging (instance.saturate-instances)).
+main _ :- coq.error "Usage: HB.saturate_instances".
+}}.
+Elpi Typecheck.
+Elpi Export HB.saturate_instances.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

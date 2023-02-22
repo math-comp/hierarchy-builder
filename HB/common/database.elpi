@@ -213,9 +213,9 @@ findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   std.bubblesort LFILunsorted leq-builder LFIL.
 
-pred findall-type-src i:term, o:list term.
-findall-type-src S TL :-
-  std.map {std.findall (mixin-src T_ M_ S)} mixin-src_type TL.
+pred findall-type-src o:list term.
+findall-type-src TL :-
+  std.map {std.findall (mixin-src T_ M_ S_)} mixin-src_type TL.
 
 pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
