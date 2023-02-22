@@ -223,6 +223,14 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
   declare-const "_" GCF (arity FGCF) CSL
 ].
 
+% create instances for all possible combinations of (simple) types and structure compatible 
+pred saturate-instances.
+saturate-instances :- std.do! [
+  findall-type-src TL,
+  findall-classes Classes,
+  std.forall TL (t\ (declare-all t Classes _)),
+].
+
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
 /* ------------------------------------------------------------------------- */
@@ -243,11 +251,12 @@ declare-instance Factory T F Clauses CSL :-
   declare-canonical-instances-from-factory-and-local-builders Factory
     T F TheFactory FGR Clauses CSL.
 declare-instance Factory T F Clauses CSL :-
-  declare-canonical-instances-from-factory Factory T F Clauses CSL,
+  declare-canonical-instances-from-factory Factory T F Clauses1 CSL,
   if (get-option "export" tt)
      (coq.env.current-library File,
-      std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
-     (Clauses = []).
+      std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses2)
+     (Clauses2 = []),
+     std.append Clauses1 Clauses2 Clauses.
 
 % [add-mixin T F M Cl] adds a constant being the mixin instance for M on type
 % T built from factory F
