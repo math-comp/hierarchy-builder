@@ -258,6 +258,8 @@ Abort.
 
 End SlowFailure.
 
+(* cf https://github.com/coq/coq/issues/17223 *)
+Optimize Heap.
 
 Module FastFailure.
 
