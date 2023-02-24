@@ -139,30 +139,25 @@ factories-provide FLwP MLwP :- std.do! [
   w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
 ].
 
-% pred gref-set-undup i:list gref, i:coq.gref.set, o:coq.gref.set.
-%   gref-set-undup (Gr::LN) S US :-
-%       if (coq.gref.set.mem Gr S) 
-%           (gref-set-undup LN S US) 
-%           (std.do! [gref-set-undup LN S US1, coq.gref.set.add Gr (gref-set-undup LN S US1) US]).
-%   gref-set-undup [] E E1 :- E = E1.
-% pred undup-terms  i:list term, o:list term.
-% undup-terms [T|TL] UTL :-
-% filter TL (x\ coq.gref.list->set) UTL
+pred undup-grefs  i:list gref, o:list gref.
+undup-grefs  L UL :- std.do! [
+  coq.gref.list->set L S, 
+  coq.gref.set.elements S UL,
+].
 
-pred undup-gref  i:list gref, o:list gref.
-undup-gref [] [].
-undup-gref  [Te | Tl] Utl :- 
-  (coq.gref.list->set Tl TS), (coq.gref.set.mem Te TS), !, std.append [Te] Utl Utl.
-  undup-gref  [_ | TL] UTL :-  (undup-gref TL UTL).
+pred undup-terms  i:list term, o:list term.
+undup-terms L UL :- std.do! [
+  std.map L coq.term->gref LG,
+  undup-grefs LG ULG,
+  std.map ULG (coq.env.global ) UL,
+].
+
 % % finds all unique types for which an instance was created
-
 pred findall-cs-types o:list term.
 findall-cs-types TypeList :- std.do![
   std.findall (has-db-instance _) Clauses,
   std.map Clauses has-db-instance_type TypeListDup,
-  std.map TypeListDup coq.term->gref TGref,
-  undup-gref TGref UTgref,
-  std.map UTgref (coq.env.global ) TypeList,
+  undup-terms TypeListDup TypeList,
 ].
 
 
