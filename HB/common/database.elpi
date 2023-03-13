@@ -220,6 +220,8 @@ findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   std.bubblesort LFILunsorted leq-builder LFIL.
 
+pred findall-has-mixin-instance o:list prop.
+
 pred findall-type-src o:list term.
 findall-type-src TL :-
   std.map {std.findall (mixin-src T_ M_ S_)} mixin-src_type TL.
@@ -345,6 +347,33 @@ get-cs-instance (cs-instance _ _ (const Inst)) Inst.
 
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
+
+pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
+
+pred mixin-src->has-mixin-instance o:prop, o:prop.
+
+mixin-src->has-mixin-instance (mixin-src T M I) (has-mixin-instance (cs-gref G) M IHd) :-
+  term->gref T G, term->gref I IHd.
+
+mixin-src->has-mixin-instance (mixin-src (prod _ _ _) M I) (has-mixin-instance cs-prod M IHd):-
+  term->gref I IHd.
+
+mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd):-
+  term->gref I IHd.
+
+
+pred mk-src i:term, i:mixinname, i:term, i:list prop,o:prop.
+
+mk-src (global GR as T) M I TODO (mixin-src T M I :- TODO) :-
+  has-mixin-instance (cs-gref GR) M IHd, term->gref I IHd.
+
+mk-src (app [global GR|_] as T) M I TODO (mixin-src T M I :- TODO) :-
+  has-mixin-instance (cs-gref GR) M IHd, term->gref I IHd.
+
+% mk-src (prod N S F) M I TODO (pi A B \ C A B) :-
+
+%   is-structure S,
+%   pi a b \ mk-src (F a) M _ [has-cs-instance a b|TODO] (C a b).
 
 pred term->cs-pattern i:term, o:cs-pattern.
 term->cs-pattern (prod _ _ _) cs-prod.
