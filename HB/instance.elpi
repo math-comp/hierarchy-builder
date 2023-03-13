@@ -199,8 +199,12 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 pred saturate-instances.
 saturate-instances :- std.do! [
   findall-type-src TL,
+  % findall-has-mixin-instance ClausesHas,
+  % coq.say "clauses : "ClausesHas,
+  % std.map ClausesHas mk-src Clauses,
   findall-classes Classes,
-  std.forall TL (t\ (declare-all t Classes _)),
+  Clauses => std.forall TL (t\ (declare-all t Classes _)),
+  coq.say "clauses : "Clauses,
 ].
 
 /* ------------------------------------------------------------------------- */
@@ -308,7 +312,7 @@ declare-canonical-instances-from-factory-and-local-builders
 % on T
 pred declare-canonical-instances-from-factory
   i:factoryname, i:term, i:term, o: list prop, o:list (pair id constant).
-declare-canonical-instances-from-factory Factory T F Clauses CSL :- std.do! [
+declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
@@ -317,6 +321,9 @@ declare-canonical-instances-from-factory Factory T F Clauses CSL :- std.do! [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML tt Clauses MCSL,
+      std.map-filter Clauses mixin-src->has-mixin-instance ClausesHas,
+
+      %std.map ClausesHas has-mixin-instance->mixin-src Clauses,
       Clauses =>instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
