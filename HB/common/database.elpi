@@ -221,6 +221,8 @@ findall-builders LFIL :-
   std.bubblesort LFILunsorted leq-builder LFIL.
 
 pred findall-has-mixin-instance o:list prop.
+findall-has-mixin-instance CL :-
+   std.findall (has-mixin-instance  _  _ _) CL.
 
 pred findall-type-src o:list term.
 findall-type-src TL :-
@@ -370,10 +372,14 @@ mk-src (global GR as T) M I TODO (mixin-src T M I :- TODO) :-
 mk-src (app [global GR|_] as T) M I TODO (mixin-src T M I :- TODO) :-
   has-mixin-instance (cs-gref GR) M IHd, term->gref I IHd.
 
-% mk-src (prod N S F) M I TODO (pi A B \ C A B) :-
+mk-src (prod _ S F) M I_ TODO (pi A B \ C A B) :-
+  (term->gref S SG), is-structure SG,
+  pi a b pa pb \ 
+  mk-src (F a) M _ [coq.unify-eq a pa ok|TODO] (C a b),
+  mk-src (F b) M _ [coq.unify-eq b pb ok|TODO] (C a b).
 
-%   is-structure S,
-%   pi a b \ mk-src (F a) M _ [has-cs-instance a b|TODO] (C a b).
+pred mk-src-map i:prop, o:prop.
+mk-src-map (has-mixin-instance _ M IHd) C :- mk-src _ M I [] C, term->gref I IHd.
 
 pred term->cs-pattern i:term, o:cs-pattern.
 term->cs-pattern (prod _ _ _) cs-prod.
