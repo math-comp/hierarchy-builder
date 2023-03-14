@@ -620,7 +620,6 @@ main [const-decl N (some B) Arity] :- !, std.do! [
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
   with-attributes (with-logging (structure.declare N B Univ)),
-  with-attributes (with-logging (instance.saturate-instances)),%TODO this call doesn't seem to work for the structure defined here
 ].
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 

@@ -198,15 +198,19 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 % create instances for all possible combinations of (simple) types and structure compatible 
 pred saturate-instances.
 saturate-instances :- std.do! [
-  findall-type-src TL,
+  findall-type-src PL,
   findall-has-mixin-instance ClausesHas,
   coq.say "clauseshas : "ClausesHas,
-  std.map ClausesHas mk-src-map Clauses,
+  std.map-filter ClausesHas mk-src-map Clauses,
   findall-classes Classes,
-  coq.say "clausessrc : "Clauses,
+  std.map-filter PL hack TL,
+  coq.say "clausessrc : " Clauses TL,
   Clauses => std.forall TL (t\ (declare-all t Classes _)),
   
 ].
+
+pred hack i:cs-pattern, o:term.
+hack (cs-gref GR) (global GR).
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */

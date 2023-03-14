@@ -210,7 +210,10 @@ declare Module BSkel Sort :- std.do! [
   NewClauses => factory.declare-abbrev Module (factory.by-classname ClassName),
 
   NewClauses => if-MC-compat (private.mc-compat-structure Module ModulePath MLToExport
-    {w-params.nparams MLwP} ClassProjection GRPack)
+    {w-params.nparams MLwP} ClassProjection GRPack),
+
+  NewClauses => instance.saturate-instances,
+
 ].
 
 /* ------------------------------------------------------------------------- */
