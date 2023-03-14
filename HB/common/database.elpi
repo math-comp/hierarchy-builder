@@ -14,6 +14,9 @@ from_mixin (from _ X _) X.
 pred from_builder i:prop, o:term.
 from_builder (from _ _ X) (global X).
 
+pred has-mixin-instance_cspat i:prop, o:cs-pattern.
+has-mixin-instance_cspat (has-mixin-instance P _ _) P.
+
 pred mixin-src_type i:prop, o:term.
 mixin-src_type (mixin-src T _ _ ) T.
 
@@ -224,9 +227,9 @@ pred findall-has-mixin-instance o:list prop.
 findall-has-mixin-instance CL :-
    std.findall (has-mixin-instance  _  _ _) CL.
 
-pred findall-type-src o:list term.
+pred findall-type-src o:list cs-pattern.
 findall-type-src TL :-
-  std.map {std.findall (mixin-src T_ M_ S_)} mixin-src_type TL.
+  std.map {std.findall (has-mixin-instance T_ M_ S_)} has-mixin-instance_cspat TL.
 
 pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
@@ -363,23 +366,47 @@ mixin-src->has-mixin-instance (mixin-src (prod _ _ _) M I) (has-mixin-instance c
 mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd):-
   term->gref I IHd.
 
+pred find-instance i:term, i:term, o:term.
 
-pred mk-src i:term, i:mixinname, i:term, i:list prop,o:prop.
+pred mk-src
+  i:term, % type of the instance Ty
+  i:mixinname, % name of mixin
+  i:term, % instance body I of type Ty
+  i:list prop, % todo list
+  o:prop.
 
-mk-src (global GR as T) M I TODO (mixin-src T M I :- TODO) :-
-  has-mixin-instance (cs-gref GR) M IHd, term->gref I IHd.
+% mk-src (global _ as T) M I TODO (mixin-src T M I :- TODO). % impossible
 
-mk-src (app [global GR|_] as T) M I TODO (mixin-src T M I :- TODO) :-
-  has-mixin-instance (cs-gref GR) M IHd, term->gref I IHd.
+mk-src (app [_|Args]) M I TODO (mixin-src T M I :- TODO) :-
+  std.last Args T',
+  .
 
-mk-src (prod _ S F) M I_ TODO (pi A B \ C A B) :-
-  (term->gref S SG), is-structure SG,
-  pi a b pa pb \ 
-  mk-src (F a) M _ [coq.unify-eq a pa ok|TODO] (C a b),
-  mk-src (F b) M _ [coq.unify-eq b pb ok|TODO] (C a b).
+% coq.mk-app ---- avoids ----> app[ app[ I, a ], b]
+% invariant: mk-src Ty _ I _ _    --->  I : Ty
+
+% mk-src I : A -> B
+%  create a : A
+%        I a : B
+mk-src (prod N_ (sort _) F) M I TODO (pi A \ C A) :- !,
+  pi a\
+    sigma Ia\
+    coq.mk-app I [a] Ia,  % Ia = app[I,a]
+    mk-src (F a) M Ia TODO (C a).
+
+mk-src (prod N_ S F) M I TODO (pi A pA \ C A pA) :-
+  term->gref S SG, is-structure SG,
+  pi a\
+  sigma Ia\
+  pi pa \
+    coq.mk-app I [a] Ia,
+    mk-src (F a) M Ia [find-instance a S pa|TODO] (C a pa).
 
 pred mk-src-map i:prop, o:prop.
-mk-src-map (has-mixin-instance _ M IHd) C :- mk-src _ M I [] C, term->gref I IHd.
+mk-src-map (has-mixin-instance _ M IHd) C :-
+  T = global IHd,
+  /*coq.env.typeof IHd Ty,*/
+  coq.typecheck T Ty ok,
+  std.spy(mk-src Ty M T []  C).
 
 pred term->cs-pattern i:term, o:cs-pattern.
 term->cs-pattern (prod _ _ _) cs-prod.
