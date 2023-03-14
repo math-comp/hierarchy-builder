@@ -199,12 +199,13 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 pred saturate-instances.
 saturate-instances :- std.do! [
   findall-type-src TL,
-  % findall-has-mixin-instance ClausesHas,
-  % coq.say "clauses : "ClausesHas,
-  % std.map ClausesHas mk-src Clauses,
+  findall-has-mixin-instance ClausesHas,
+  coq.say "clauseshas : "ClausesHas,
+  std.map ClausesHas mk-src-map Clauses,
   findall-classes Classes,
+  coq.say "clausessrc : "Clauses,
   Clauses => std.forall TL (t\ (declare-all t Classes _)),
-  coq.say "clauses : "Clauses,
+  
 ].
 
 /* ------------------------------------------------------------------------- */
