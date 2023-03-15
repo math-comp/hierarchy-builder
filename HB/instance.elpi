@@ -326,6 +326,7 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML tt Clauses MCSL,
+      coq.say "clausesbef : " Clauses,
       std.map-filter Clauses mixin-src->has-mixin-instance ClausesHas,
 
       %std.map ClausesHas has-mixin-instance->mixin-src Clauses,

@@ -4,12 +4,15 @@ HB.mixin Record is_foo P A := { op : P -> A -> A }.
 
 HB.instance Definition nat_foo P := is_foo.Build P nat (fun _ x => x).
 HB.instance Definition list_foo P := is_foo.Build P (list P) (fun _ x => x).
+HB.instance Definition list_foo' P A:= is_foo.Build P (list A) (fun _ x => x).
+
+About list_foo'.
 
 HB.structure Definition foo P := { A of is_foo P A }.
 
 Section try1.
 Variable A : Type.
-.... list A ....
+(* .... list A ....
 
 (fun A =>   {|
     foo.sort := list..;
@@ -18,7 +21,7 @@ Variable A : Type.
   |} ).
 
 
-HB.about foo.
+HB.about foo. *)
 
 (* Elpi Trace Browser. *)
 Check nat_foo.
