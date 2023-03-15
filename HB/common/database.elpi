@@ -15,7 +15,7 @@ pred from_builder i:prop, o:term.
 from_builder (from _ _ X) (global X).
 
 pred has-mixin-instance_cspat i:prop, o:cs-pattern.
-has-mixin-instance_cspat (has-mixin-instance P _ _) P.
+has-mixin-instance_cspat (has-mixin-instance P _ _ _) P.
 
 pred mixin-src_type i:prop, o:term.
 mixin-src_type (mixin-src T _ _ ) T.
@@ -225,11 +225,11 @@ findall-builders LFIL :-
 
 pred findall-has-mixin-instance o:list prop.
 findall-has-mixin-instance CL :-
-   std.findall (has-mixin-instance  _  _ _) CL.
+   std.findall (has-mixin-instance  _ _ _ _) CL.
 
 pred findall-type-src o:list cs-pattern.
 findall-type-src TL :-
-  std.map {std.findall (has-mixin-instance T_ M_ S_)} has-mixin-instance_cspat TL.
+  std.map {std.findall (has-mixin-instance T_ M_ S_ L_)} has-mixin-instance_cspat TL.
 
 pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
@@ -353,18 +353,30 @@ get-cs-instance (cs-instance _ _ (const Inst)) Inst.
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
-pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
 
+pred arg-is-instance i:term, i:term, o:bool.
+arg-is-instance _ _ tt.
+
+pred args-is-instance i:term, o:list bool.
+args-is-instance (app [_|[A|Args]] as T) [B|L] :-
+  arg-is-instance T A B, args-is-instance (app [_|Args]) L.
+args-is-instance (sort _U) [].
+args-is-instance (prod _N _S _F) [].
+
+pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
+
+% change order of cases
+% if I isn't gref ?
 pred mixin-src->has-mixin-instance o:prop, o:prop.
 
-mixin-src->has-mixin-instance (mixin-src T M I) (has-mixin-instance (cs-gref G) M IHd) :-
-  term->gref T G, term->gref I IHd.
+mixin-src->has-mixin-instance (mixin-src T M I) (has-mixin-instance (cs-gref G) M IHd A) :-
+  term->gref T G, term->gref I IHd, args-is-instance I A.
 
-mixin-src->has-mixin-instance (mixin-src (prod _ _ _) M I) (has-mixin-instance cs-prod M IHd):-
-  term->gref I IHd.
+mixin-src->has-mixin-instance (mixin-src (prod _ _ _) M I) (has-mixin-instance cs-prod M IHd A):-
+  term->gref I IHd, args-is-instance I A.
 
-mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd):-
-  term->gref I IHd.
+mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd A):-
+  term->gref I IHd, args-is-instance I A.
 
 pred find-instance i:term, i:term, o:term.
 
@@ -372,14 +384,15 @@ pred mk-src
   i:term, % type of the instance Ty
   i:mixinname, % name of mixin
   i:term, % instance body I of type Ty
+  i:list bool, % list of bool for each param, true if they're instance parameters
   i:list prop, % todo list
   o:prop.
 
 % mk-src (global _ as T) M I TODO (mixin-src T M I :- TODO). % impossible
 
-mk-src (app [_|Args]) M I TODO (mixin-src T M I :- TODO) :-
-  std.last Args T',
-  .
+mk-src (app [_|Args]) M I _L TODO (mixin-src T M I :- TODO) :-
+  std.last Args T.
+  % std.last Args T', 
 
 % coq.mk-app ---- avoids ----> app[ app[ I, a ], b]
 % invariant: mk-src Ty _ I _ _    --->  I : Ty
@@ -387,26 +400,26 @@ mk-src (app [_|Args]) M I TODO (mixin-src T M I :- TODO) :-
 % mk-src I : A -> B
 %  create a : A
 %        I a : B
-mk-src (prod N_ (sort _) F) M I TODO (pi A \ C A) :- !,
+mk-src (prod N_ (sort _) F) M I L TODO (pi A \ C A) :- !,
   pi a\
     sigma Ia\
     coq.mk-app I [a] Ia,  % Ia = app[I,a]
-    mk-src (F a) M Ia TODO (C a).
+    mk-src (F a) M Ia L TODO (C a).
 
-mk-src (prod N_ S F) M I TODO (pi A pA \ C A pA) :-
+mk-src (prod N_ S F) M I L TODO (pi A pA \ C A pA) :-
   term->gref S SG, is-structure SG,
   pi a\
   sigma Ia\
   pi pa \
     coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia [find-instance a S pa|TODO] (C a pa).
+    mk-src (F a) M Ia L [find-instance a S pa|TODO] (C a pa).
 
 pred mk-src-map i:prop, o:prop.
-mk-src-map (has-mixin-instance _ M IHd) C :-
+mk-src-map (has-mixin-instance _ M IHd []) C :-
   T = global IHd,
   /*coq.env.typeof IHd Ty,*/
   coq.typecheck T Ty ok,
-  std.spy(mk-src Ty M T []  C).
+  std.spy(mk-src Ty M T [] [] C).
 
 pred term->cs-pattern i:term, o:cs-pattern.
 term->cs-pattern (prod _ _ _) cs-prod.
