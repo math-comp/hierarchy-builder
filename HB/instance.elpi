@@ -14,8 +14,8 @@ declare-existing T0 F0 :- std.do! [
   std.assert! (coq.safe-dest-app FTy (global FactoryAlias) _)
      "The type of the instance is not a factory",
   factory-alias->gref FactoryAlias Factory,
-  private.declare-instance Factory T F Clauses _,
-  acc-clauses current Clauses
+  private.declare-instance Factory T F _ Clauses _,
+  acc-clauses current Clauses,
 ].
 
 % [declare-const N B Ty] adds a Definition N : Ty := B where Ty is a factory
@@ -33,11 +33,12 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
      % A side effect of opening a section is loosing meta data associated
      % with instances, in particular builder tags are lost
      if-verbose (coq.say  "HB: skipping section opening"),
-     SectionBody = Body
+     SectionBody = Body,
+     SectionParams = []
    ) (
     SectionName is "hb_instance_" ^ {std.any->string {new_int}},
     log.coq.env.begin-section SectionName,
-    private.postulate-arity TyWP [] Body SectionBody SectionTy
+    private.postulate-arity TyWP [] Body SectionBody SectionTy SectionParams
   ),
 
   % identify the factory
@@ -66,7 +67,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   private.check-non-forgetful-inheritance TheType Factory,
 
-  private.declare-instance Factory TheType TheFactory Clauses CSL,
+  private.declare-instance Factory TheType TheFactory SectionParams Clauses CSL,
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
@@ -220,9 +221,9 @@ namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-pred declare-instance i:factoryname, i:term, i:term,
+pred declare-instance i:factoryname, i:term, i:term, i:list constant,
   o:list prop, o:list (pair id constant).
-declare-instance Factory T F Clauses CSL :-
+declare-instance Factory T F _SectionParams Clauses CSL :-
   current-mode (builder-from T TheFactory FGR _), !,
   if (get-option "local" tt)
     (coq.error "HB: declare-instance: cannot make builders local.
@@ -230,8 +231,8 @@ declare-instance Factory T F Clauses CSL :-
   !,
   declare-canonical-instances-from-factory-and-local-builders Factory
     T F TheFactory FGR Clauses CSL.
-declare-instance Factory T F Clauses CSL :-
-  declare-canonical-instances-from-factory Factory T F Clauses1 CSL,
+declare-instance Factory T F SectionParams Clauses CSL :-
+  declare-canonical-instances-from-factory Factory T F SectionParams Clauses1 CSL,
   if (get-option "export" tt)
      (coq.env.current-library File,
       std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses2)
@@ -283,17 +284,20 @@ add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
 % corresponding to parameters in arity A. TS is T applied
 % to all section variables (and hd-beta reduced). Acc should
 % be [] at call site.
-pred postulate-arity i:arity, i:list term, i:term, o:term, o:term.
-postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
+pred postulate-arity i:arity, i:list constant, i:term, o:term, o:term, o:list constant.
+postulate-arity (parameter ID _ S A) Acc T T1 Ty Params :-
   std.assert-ok! (coq.typecheck-ty S _) "arity parameter illtyped",
   if-verbose (coq.say {header} "postulating" ID),
   if (var S) (coq.fresh-type S) true,
   log.coq.env.add-section-variable-noimplicits ID S C,
   Var = global (const C),
-  postulate-arity (A Var) [Var|Acc] T T1 Ty.
-postulate-arity (arity Ty) ArgsRev X T Ty :-
-  hd-beta X {std.rev ArgsRev} X1 Stack1,
+  postulate-arity (A Var) [C|Acc] T T1 Ty Params.
+postulate-arity (arity Ty) ParamsRev X T Ty Params :-
+  std.rev ParamsRev Params,
+  std.map Params (c\o\ o = global (const c)) Args,
+  hd-beta X Args X1 Stack1,
   unwind X1 Stack1 T.
+
 
 % We find the new mixins that F build, we build them and shedule them
 % for becoming builders at section closing time. We also declare
@@ -316,8 +320,8 @@ declare-canonical-instances-from-factory-and-local-builders
 % it uses all known builders to declare canonical instances of structures
 % on T
 pred declare-canonical-instances-from-factory
-  i:factoryname, i:term, i:term, o: list prop, o:list (pair id constant).
-declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
+  i:factoryname, i:term, i:term, i:list constant, o: list prop, o:list (pair id constant).
+declare-canonical-instances-from-factory Factory T F SectionParams ClausesHas CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
@@ -327,10 +331,10 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML tt Clauses MCSL,
       coq.say "clausesbef : " Clauses,
-      std.map-filter Clauses mixin-src->has-mixin-instance ClausesHas,
+      std.map-filter Clauses (mixin-src->has-mixin-instance SectionParams) ClausesHas,
 
       %std.map ClausesHas has-mixin-instance->mixin-src Clauses,
-      Clauses =>instance.declare-all T {findall-classes-for ML} CCSL,
+      ClausesHas =>instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
   std.append MCSL CCSL CSL
