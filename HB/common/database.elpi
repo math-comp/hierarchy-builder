@@ -366,33 +366,41 @@ has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
 % arg-is-instance _ _ _ ff.
 
-pred args-is-instance i:term, i:list constant, o:list bool.
+pred param-in-term i:term, i:constant, o:bool.
+param-in-term  (app [global (const C)|_]) C tt.
+param-in-term (app [_|Args]) C B :- param-in-term (app Args) C B.
+param-in-term (app []) _ ff.
+param-in-term (prod _ _ F) C B :-  pi x\ param-in-term (F x) C B.
+param-in-term T C B :- whd1 T T1, !, param-in-term  T1 C B.
 
-args-is-instance Ty SectionParams L :-
+
+pred sect-params-in-term  i:list constant, i:term, o:list bool.
+
+sect-params-in-term SectionParams Ty L :-
 
   safe-dest-app Ty _ _Args, 
   %factory-alias->gref GR F, factory-nparams F NP,std.split-at NP Args Params Args2,
   % change std.mem! for something that checks if the parameters appears in the term
-  std.map SectionParams (x\ r \ (if (true) (r = tt) (r = ff))) L.
+  std.map SectionParams (x\ o \ (param-in-term Ty x o)) L.
 
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
 
 % change order of cases
 % if I isn't gref ?
-pred mixin-src->has-mixin-instance i:list constant, o:prop, o:prop.
+pred mixin-src->has-mixin-instance i:list constant, i:prop, o:prop.
 
+mixin-src->has-mixin-instance SectionParams (mixin-src (app [global GR|_] as T) M I) (has-mixin-instance (cs-gref GR) M IHd A) :-
+  term->gref I IHd,  coq.typecheck T Ty ok, sect-params-in-term SectionParams Ty A.
+  
+mixin-src->has-mixin-instance SectionParams (mixin-src (prod _ _ _ as T) M I) (has-mixin-instance cs-prod M IHd BL):-
+  term->gref I IHd, coq.typecheck T Ty ok, sect-params-in-term SectionParams Ty BL.
 
-mixin-src->has-mixin-instance SectionParams (mixin-src T M I) (has-mixin-instance (cs-gref G) M IHd A) :-
-  term->gref T G, term->gref I IHd,   coq.typecheck T Ty ok, args-is-instance Ty SectionParams A.
+  % mixin-src->has-mixin-instance SectionParams (mixin-src T M I) (has-mixin-instance  (cs-gref G) M IHd A) :-
+  %   term->gref T G, term->gref I IHd, coq.typecheck T Ty ok, sect-params-in-term SectionParams Ty  A.
 
-mixin-src->has-mixin-instance _SectionParams(mixin-src (prod _ _ _ ) M I) (has-mixin-instance cs-prod M IHd []):-
-  term->gref I IHd.
+% mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M (global I) BL):-
+%   term->gref I IHd, coq.env.typeof IHd Ty, sect-params-in-term SectionParams Ty BL.
 
-mixin-src->has-mixin-instance _SectionParams(mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd []):-
-  term->gref I IHd.
-
-% mixin-src->has-mixin-instance _SectionParams(mixin-src (app [_]as T) M I) (has-mixin-instance (cs-gref G) M IHd A) :-
-%   term->gref T G, term->gref I IHd,   coq.typecheck T Ty ok, args-is-instance Ty A.
 
 pred find-instance i:term, i:term, o:term.
 
@@ -401,12 +409,12 @@ pred mk-src
   i:mixinname, % name of mixin
   i:term, % instance body I of type Ty
   i:list bool, % list of bool for each param, true if they're instance parameters
-  i:list prop, % todo list
+  i:list prop, % Cond list
   o:prop.
 
-% mk-src (global _ as T) M I TODO (mixin-src T M I :- TODO). % impossible
+% mk-src (global _ as T) M I Cond (mixin-src T M I :- Cond). % impossible
 
-mk-src (app [_|Args]) M I _ TODO (mixin-src T M I :- TODO) :-
+mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
   std.last Args T.
   % std.last Args T', 
 
@@ -416,26 +424,26 @@ mk-src (app [_|Args]) M I _ TODO (mixin-src T M I :- TODO) :-
 % mk-src I : A -> B
 %  create a : A
 %        I a : B
-mk-src (prod N_ (sort _) F) M I [tt|Rest] TODO (pi A \ C A) :- !,
+mk-src (prod N_ (sort _) F) M I [tt|Rest] Cond (pi A \ C A) :- !,
   pi a\
     sigma Ia\
     coq.mk-app I [a] Ia,  % Ia = app[I,a]
-    mk-src (F a) M Ia Rest TODO (C a).
+    mk-src (F a) M Ia Rest Cond (C a).
 
-mk-src (prod N_ S F) M I [ff|Rest] TODO (pi A pA \ C A pA) :-
+mk-src (prod N_ S F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
   term->gref S SG, is-structure SG,
   pi a\
   sigma Ia\
   pi pa \
     coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest [find-instance a S pa|TODO] (C a pa).
+    mk-src (F a) M Ia Rest [find-instance a S pa|Cond] (C a pa).
 
 pred mk-src-map i:prop, o:prop.
-mk-src-map (has-mixin-instance _ M IHd L) C :-
+mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
   T = global IHd,
   /*coq.env.typeof IHd Ty,*/
   coq.typecheck T Ty ok,
-  std.spy(mk-src Ty M T L []  C).
+  std.spy!(mk-src Ty M T L []  C)].
 
 pred term->cs-pattern i:term, o:cs-pattern.
 term->cs-pattern (prod _ _ _) cs-prod.
