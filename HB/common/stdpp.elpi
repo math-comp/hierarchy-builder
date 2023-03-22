@@ -123,6 +123,12 @@ pred coq.env.current-library o:string.
 coq.env.current-library L :- loc.fields {get-option "elpi.loc"} L _ _ _ _.
 coq.env.current-library "dummy.v".
 
+pred coq.term-is-gref? i:term, o:gref.
+coq.term-is-gref? (global GR) GR :- !.
+coq.term-is-gref? (pglobal GR _) GR :- !.
+coq.term-is-gref? (app [Hd|_]) GR :- !, coq.term-is-gref? Hd GR.
+coq.term-is-gref? (let _ _ T x\x) GR :- !, coq.term-is-gref? T GR.
+
 pred coq.prod-tgt->gref i:term, o:gref.
 coq.prod-tgt->gref T GR :- whd1 T T1, !, coq.prod-tgt->gref T1 GR.
 coq.prod-tgt->gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ coq.prod-tgt->gref (Tgt x) GR.
