@@ -1,7 +1,7 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+shorten coq.{ term->gref, term-is-gref?, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
 %%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -378,10 +378,12 @@ pred sect-params-in-term  i:list constant, i:term, o:list bool.
 
 sect-params-in-term SectionParams Ty L :-
 
-  safe-dest-app Ty _ _Args, 
-  %factory-alias->gref GR F, factory-nparams F NP,std.split-at NP Args Params Args2,
+  safe-dest-app Ty (global GR) Args, 
+  factory-alias->gref GR F, factory-nparams F NP, std.split-at NP Args Params _Args2,
+  TyP = app [global GR|Params],
   % change std.mem! for something that checks if the parameters appears in the term
-  std.map SectionParams (x\ o \ (param-in-term Ty x o)) L.
+
+  std.map SectionParams (x\ o \ (param-in-term TyP x o)) L.
 
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
 
@@ -389,17 +391,17 @@ pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
 % if I isn't gref ?
 pred mixin-src->has-mixin-instance i:list constant, i:prop, o:prop.
 
-mixin-src->has-mixin-instance SectionParams (mixin-src (app [global GR|_] as T) M I) (has-mixin-instance (cs-gref GR) M IHd A) :-
-  term->gref I IHd,  coq.typecheck T Ty ok, sect-params-in-term SectionParams Ty A.
+mixin-src->has-mixin-instance SectionParams (mixin-src (app [global GR|_] ) M I) (has-mixin-instance (cs-gref GR) M IHd A) :-
+  term->gref I IHd,  coq.typecheck I Ty ok, sect-params-in-term SectionParams Ty A.
   
-mixin-src->has-mixin-instance SectionParams (mixin-src (prod _ _ _ as T) M I) (has-mixin-instance cs-prod M IHd BL):-
-  term->gref I IHd, coq.typecheck T Ty ok, sect-params-in-term SectionParams Ty BL.
+mixin-src->has-mixin-instance SectionParams (mixin-src (prod _ _ _ ) M I) (has-mixin-instance cs-prod M IHd BL):-
+  term->gref I IHd, coq.typecheck I Ty ok, sect-params-in-term SectionParams Ty BL.
 
-  % mixin-src->has-mixin-instance SectionParams (mixin-src T M I) (has-mixin-instance  (cs-gref G) M IHd A) :-
-  %   term->gref T G, term->gref I IHd, coq.typecheck T Ty ok, sect-params-in-term SectionParams Ty  A.
+mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd BL):-
+  term->gref I IHd, coq.typecheck I Ty ok, sect-params-in-term SectionParams Ty BL.
 
-% mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M (global I) BL):-
-%   term->gref I IHd, coq.env.typeof IHd Ty, sect-params-in-term SectionParams Ty BL.
+mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd BL):-
+  term->gref I IHd, coq.typecheck I Ty ok, sect-params-in-term SectionParams Ty BL.
 
 
 pred find-instance i:term, i:term, o:term.
@@ -412,11 +414,9 @@ pred mk-src
   i:list prop, % Cond list
   o:prop.
 
-% mk-src (global _ as T) M I Cond (mixin-src T M I :- Cond). % impossible
 
 mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
   std.last Args T.
-  % std.last Args T', 
 
 % coq.mk-app ---- avoids ----> app[ app[ I, a ], b]
 % invariant: mk-src Ty _ I _ _    --->  I : Ty
@@ -424,19 +424,32 @@ mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
 % mk-src I : A -> B
 %  create a : A
 %        I a : B
-mk-src (prod N_ (sort _) F) M I [tt|Rest] Cond (pi A \ C A) :- !,
+% mk-src (prod N (sort _) F as T) M I [tt|Rest] Cond (C A) :- !,
+
+%   sigma Ia\
+%     coq.mk-app I [A] Ia,  % Ia = app[I,a]
+%     mk-src (F A) M Ia Rest Cond (C A).
+
+mk-src (prod N_ (sort _) F) M I [ff|Rest] Cond (pi A \ C A) :- !,
   pi a\
     sigma Ia\
     coq.mk-app I [a] Ia,  % Ia = app[I,a]
     mk-src (F a) M Ia Rest Cond (C a).
 
 mk-src (prod N_ S F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
-  term->gref S SG, is-structure SG,
+  term-is-gref? S SG, is-structure SG,
   pi a\
   sigma Ia\
   pi pa \
     coq.mk-app I [a] Ia,
     mk-src (F a) M Ia Rest [find-instance a S pa|Cond] (C a pa).
+
+mk-src (prod N_ _ F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
+  pi a\
+  sigma Ia\
+  pi pa \
+    coq.mk-app I [a] Ia,
+    mk-src (F a) M Ia Rest Cond (C a pa).    
 
 pred mk-src-map i:prop, o:prop.
 mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
