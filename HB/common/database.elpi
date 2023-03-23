@@ -367,6 +367,7 @@ param-in-term  (app [global (const C)|_]) C tt.
 param-in-term (app [_|Args]) C B :- param-in-term (app Args) C B.
 param-in-term (app []) _ ff.
 param-in-term (prod _ _ F) C B :-  pi x\ param-in-term (F x) C B.
+param-in-term (sort _) _ ff.
 param-in-term T C B :- whd1 T T1, !, param-in-term  T1 C B.
 
 
@@ -401,6 +402,26 @@ mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-
 
 
 pred find-instance i:term, i:term, o:term.
+find-instance T ST I :- std.do![
+  term->gref ST S, 
+  is-structure S,
+  structure-key SortProj _ S,
+  class-def (class (indt Class) S CMLwP),
+  structure-nparams S NParams,
+  coq.mk-n-holes NParams Holes,
+  std.append Holes [_] HolesST,
+  mk-app (global (const SortProj)) HolesST I,
+  coq.unify-eq T I ok,
+  get-constructor S KS,
+  coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
+  coq.unify-eq ST KSHolesC ok,
+  % if the class instance is concrete, we take the parts
+  get-constructor (indt Class) KC,
+  std.length {list-w-params_list CMLwP} CMixinsN,
+  coq.mk-n-holes CMixinsN MIL,
+  coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
+  coq.unify-eq CT CBody ok
+  ].
 
 pred mk-src
   i:term, % type of the instance Ty
@@ -420,17 +441,18 @@ mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
 % mk-src I : A -> B
 %  create a : A
 %        I a : B
-% mk-src (prod N (sort _) F as T) M I [tt|Rest] Cond (C A) :- !,
-
-%   sigma Ia\
-%     coq.mk-app I [A] Ia,  % Ia = app[I,a]
-%     mk-src (F A) M Ia Rest Cond (C A).
-
 mk-src (prod N_ (sort _) F) M I [ff|Rest] Cond (pi A \ C A) :- !,
   pi a\
     sigma Ia\
     coq.mk-app I [a] Ia,  % Ia = app[I,a]
     mk-src (F a) M Ia Rest Cond (C a).
+
+mk-src (prod N_ _ F) M I [tt|Rest] Cond (pi A pA \ C A pA) :-
+  pi a\
+  sigma Ia\
+  pi pa \
+    coq.mk-app I [a] Ia,
+    mk-src (F a) M Ia Rest Cond (C a pa). 
 
 mk-src (prod N_ S F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
   term-is-gref? S SG, is-structure SG,
