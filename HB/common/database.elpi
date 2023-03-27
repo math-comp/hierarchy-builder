@@ -241,6 +241,10 @@ pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
   std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
 
+pred findall-mixin-src-c i:term, o:list mixinname.
+findall-mixin-src T ML :-
+  std.map {std.findall (mixin-src T M_ V_ :- _)} mixin-src_mixin ML.
+  
 pred findall-local-canonical o:list constant.
 findall-local-canonical CL :-
   std.map {std.findall (local-canonical C_)} local-canonical-gref CL.
@@ -431,6 +435,10 @@ pred mk-src
   i:list prop, % Cond list
   o:prop.
 
+% mk-src (global GR) M I _ Cond (mixin-src T M I :- Cond) :-
+  
+%   coq.env.typeof GR Ty,
+% .
 
 mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
   std.last Args T.
@@ -454,6 +462,7 @@ mk-src (prod N_ _ F) M I [tt|Rest] Cond (pi A pA \ C A pA) :-
     coq.mk-app I [a] Ia,
     mk-src (F a) M Ia Rest Cond (C a pa). 
 
+
 mk-src (prod N_ S F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
   term-is-gref? S SG, is-structure SG,
   pi a\
@@ -467,14 +476,21 @@ mk-src (prod N_ _ F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
   sigma Ia\
   pi pa \
     coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond (C a pa).    
+    mk-src (F a) M Ia Rest Cond (C a pa).  
+
+
+
 
 pred mk-src-map i:prop, o:prop.
-mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
+mk-src-map (has-mixin-instance Pat M IHd L) C :- std.do![
+  cs-pattern->term Pat Ty,
   T = global IHd,
-  /*coq.env.typeof IHd Ty,*/
-  coq.typecheck T Ty ok,
-  std.spy!(mk-src Ty M T L []  C)].
+  %coq.typecheck T Ty ok,
+  std.spy!(mk-src Ty M T L [] C)].
+
+pred cs-pattern->term i:cs-pattern, o:term.
+cs-pattern->term (cs-gref GR) (global GR).
+cs-pattern->term (cs-sort U) (sort U).
 
 pred term->cs-pattern i:term, o:cs-pattern.
 term->cs-pattern (prod _ _ _) cs-prod.
