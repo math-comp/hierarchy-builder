@@ -121,6 +121,19 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 % Each mixin used in order to fulfill a class is returned together with its name.
 pred declare-all i:term, i:list class, o:list (pair id constant).
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
+
+  infer_1 T Class Struct MLwP S Name STy Clauses,
+  
+  save_1 Name S STy CS,
+
+  Clauses => declare-all T Rest L.
+
+declare-all T [_|Rest] L :- declare-all T Rest L.
+declare-all _ [] [].
+
+pred infer_1 i:term, i:classname, i:gref, i:factories, o:term, o:string, o:term, o:list prop.
+infer_1 T  Class Struct MLwP S Name STy Clauses:- std.do![
+
   if (not(has-CS-instance? T Struct))
      true % we build it
      (if-verbose (coq.say {header} "skipping already existing"
@@ -136,12 +149,11 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
         {coq.term->string T}))
      fail,
 
-  !,
-
   Name is {cs-pattern->name {term->cs-pattern T}}
     ^ "__canonical__" ^ {gref->modname Struct 2 "_" },
 
   if-verbose (coq.say {header} "declare canonical structure instance" Name),
+
 
   get-constructor Struct KS,
   coq.safe-dest-app T THD _,
@@ -149,17 +161,17 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
   std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
+].
+
+pred save_1 i:string, i:term, i:term, i:constant.
+save_1 Name S STy CS:- std.do![
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
-
   acc-clause current (local-canonical CS),
-
   if-verbose (coq.say {header} "structure instance" Name "declared"),
+].
 
-  Clauses => declare-all T Rest L.
-declare-all T [_|Rest] L :- declare-all T Rest L.
-declare-all _ [] [].
 
 pred declare-factory-sort-deps i:gref.
 declare-factory-sort-deps  GR :- std.do! [
@@ -232,14 +244,14 @@ saturate-instances :- std.do! [
   coq.say "clauseshas : "ClausesHas,
   std.map-filter ClausesHas mk-src-map Clauses,
   findall-classes Classes,
-  std.map-filter PL hack TL,
+  std.map-filter PL (cs-pattern->term) TLD,
+  undup-terms TLD TL,
   coq.say "clausessrc : " Clauses TL,
   Clauses => std.forall TL (t\ (declare-all t Classes _)),
-  
+
 ].
 
-pred hack i:cs-pattern, o:term.
-hack (cs-gref GR) (global GR).
+
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
@@ -359,6 +371,7 @@ declare-canonical-instances-from-factory Factory T F SectionParams ClausesHas CS
       add-all-mixins T Factory ML Clauses TheMixins,
       std.map-filter Clauses (mixin-src->has-mixin-instance SectionParams) ClausesHas,
       ClausesHas =>instance.declare-all T {findall-classes-for ML} CCSL,
+      coq.say "newclauses " CCSL,
     ]
   ],
   std.map TheMixins make-mixin-canonical TheCanonicalMixins,
