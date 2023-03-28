@@ -437,15 +437,12 @@ pred mk-src
   i:term, % instance body I of type Ty
   i:list bool, % list of bool for each param, true if they're instance parameters
   i:list prop, % Cond list
+  i:term, %the final term
   o:prop.
 
-% mk-src (global GR) M I _ Cond (mixin-src T M I :- Cond) :-
-  
-%   coq.env.typeof GR Ty,
-% .
+ 
 
-mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
-  std.last Args T.
+mk-src (app [_|_Args]) M I _ Cond FT (mixin-src FT M I :- Cond).
 
 % coq.mk-app ---- avoids ----> app[ app[ I, a ], b]
 % invariant: mk-src Ty _ I _ _    --->  I : Ty
@@ -453,44 +450,46 @@ mk-src (app [_|Args]) M I _ Cond (mixin-src T M I :- Cond) :-
 % mk-src I : A -> B
 %  create a : A
 %        I a : B
-mk-src (prod N_ (sort _) F) M I [ff|Rest] Cond (pi A \ C A) :- !,
-  pi a\
-    sigma Ia\
-    coq.mk-app I [a] Ia,  % Ia = app[I,a]
-    mk-src (F a) M Ia Rest Cond (C a).
 
-mk-src (prod N_ _ F) M I [tt|Rest] Cond (pi A pA \ C A pA) :-
+mk-src (prod N_ _ F) M I [tt|Rest] Cond FT (pi A pA \ C A pA) :- 
   pi a\
   sigma Ia\
   pi pa \
     coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond (C a pa). 
+    mk-src (F a) M Ia Rest Cond FT (C a pa). 
 
 
-mk-src (prod N_ S F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
+mk-src (prod N_ S F) M I [ff|Rest] Cond FT (pi A pA \ C A pA) :- 
   term-is-gref? S SG, is-structure SG,
   pi a\
   sigma Ia\
   pi pa \
     coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest [find-instance a S pa|Cond] (C a pa).
+    mk-src (F a) M Ia Rest [find-instance a S pa|Cond] FT (C a pa).
 
-mk-src (prod N_ _ F) M I [ff|Rest] Cond (pi A pA \ C A pA) :-
+mk-src (prod N_ _ F) M I [ff|Rest] Cond FT (pi A pA \ C A) :- 
   pi a\
   sigma Ia\
-  pi pa \
     coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond (C a pa).  
+    mk-src (F a) M Ia Rest Cond FT (C a).  
 
 
+pred enrich-type i:cs-pattern, o:term .
+enrich-type C ET :- 
+  cs-pattern->term C GH,
+  coq.typecheck GH TH ok,
+  coq.count-prods TH N,
+  if (N = 0) (ET is TH) (coq.mk-app TH {coq.mk-n-holes N} ET).
 
 
 pred mk-src-map i:prop, o:prop.
 mk-src-map (has-mixin-instance Pat M IHd L) C :- std.do![
-  cs-pattern->term Pat Ty,
+  enrich-type Pat ET,
   T = global IHd,
-  %coq.typecheck T Ty ok,
-  std.spy!(mk-src Ty M T L [] C)].
+  coq.typecheck T Ty ok,
+  std.spy!(mk-src Ty M T L [] ET C),
+  ].
+  
 
 pred cs-pattern->term i:cs-pattern, o:term.
 cs-pattern->term (cs-gref GR) (global GR).
