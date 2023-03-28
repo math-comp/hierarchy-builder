@@ -85,6 +85,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
 ].
 
+
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
 % for which all the dependencies (mixins) were postulated so far and skips the
@@ -211,14 +212,13 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 % create instances for all possible combinations of (simple) types and structure compatible 
 pred saturate-instances.
 saturate-instances :- std.do! [
-  findall-type-src PL,
   findall-has-mixin-instance ClausesHas,
   coq.say "clauseshas : "ClausesHas,
-  std.map-filter ClausesHas mk-src-map Clauses,
-  findall-classes Classes,
-  std.map-filter PL (cs-pattern->term) TLD,
+  std.map ClausesHas mk-src-map Clauses,
+  std.map-filter Clauses mixin-src-w-cond_type TLD,
   undup-terms TLD TL,
   coq.say "clausessrc : " Clauses TL,
+  findall-classes Classes,
   Clauses => std.forall TL (t\ (declare-all t Classes _)),
 
 ].
