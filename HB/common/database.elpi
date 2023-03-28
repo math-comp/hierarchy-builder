@@ -20,6 +20,10 @@ has-mixin-instance_cspat (has-mixin-instance P _ _ _) P.
 pred mixin-src_type i:prop, o:term.
 mixin-src_type (mixin-src T _ _ ) T.
 
+pred mixin-src-w-cond_type i:prop, o:term.
+mixin-src-w-cond_type (mixin-src T _ _) T.
+mixin-src-w-cond_type (pi _ \ mixin-src T _ _ :- _Cond) T.
+
 pred mixin-src_ty i:prop, o:term.
 mixin-src_ty (mixin-src T _ _ ) Ty :-coq.typecheck T Ty ok.
 
@@ -240,10 +244,6 @@ findall-type-src TL :-
 pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
   std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
-
-pred findall-mixin-src-c i:term, o:list mixinname.
-findall-mixin-src T ML :-
-  std.map {std.findall (mixin-src T M_ V_ :- _)} mixin-src_mixin ML.
   
 pred findall-local-canonical o:list constant.
 findall-local-canonical CL :-
@@ -362,13 +362,6 @@ get-cs-instance (cs-instance _ _ (const Inst)) Inst.
 
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
-
-% pred arg-is-instance i:term, i:term, i:term, o:bool.
-
-% arg-is-instance (app [_] as T) I A tt :- 
-%   extract-conclusion-params T I PL, std.mem! PL A.
-
-% arg-is-instance _ _ _ ff.
 
 pred param-in-term i:term, i:constant, o:bool.
 param-in-term  (app [global (const C)|_]) C tt.
