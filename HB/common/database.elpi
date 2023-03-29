@@ -20,12 +20,9 @@ has-mixin-instance_cspat (has-mixin-instance P _ _ _) P.
 pred mixin-src_type i:prop, o:term.
 mixin-src_type (mixin-src T _ _ ) T.
 
-%TODO rewrite this
 pred mixin-src-w-cond_type i:prop, o:term.
 mixin-src-w-cond_type (mixin-src T _ _ :- _) T.
-mixin-src-w-cond_type (pi _ \  mixin-src T _ _ :- _) T.
-mixin-src-w-cond_type (pi _ \  pi _ \ mixin-src T _ _ :- _) T.
-
+mixin-src-w-cond_type (pi x \ (C x)) T :- pi y \ mixin-src-w-cond_type (C y) T.
 
 pred mixin-src_ty i:prop, o:term.
 mixin-src_ty (mixin-src T _ _ ) Ty :-coq.typecheck T Ty ok.
@@ -402,25 +399,9 @@ mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-
 
 
 pred find-instance i:term, i:term, o:term.
-find-instance T ST I :- std.do![
-  term->gref ST S, 
-  is-structure S,
-  structure-key SortProj _ S,
-  class-def (class (indt Class) S CMLwP),
-  structure-nparams S NParams,
-  coq.mk-n-holes NParams Holes,
-  std.append Holes [_] HolesST,
-  mk-app (global (const SortProj)) HolesST I,
-  coq.unify-eq T I ok,
-  get-constructor S KS,
-  coq.mk-app (global KS) {std.append Holes [T, CT]} KSHolesC,
-  coq.unify-eq ST KSHolesC ok,
-  % if the class instance is concrete, we take the parts
-  get-constructor (indt Class) KC,
-  std.length {list-w-params_list CMLwP} CMixinsN,
-  coq.mk-n-holes CMixinsN MIL,
-  coq.mk-app (global KC) {std.append Holes [T | MIL]} CBody,
-  coq.unify-eq CT CBody ok
+find-instance T St I :- std.do![
+  mk-app St [T] ST,
+  coq.unify-eq ST I ok,
   ].
 
 pred mk-src
@@ -429,12 +410,35 @@ pred mk-src
   i:term, % instance body I of type Ty
   i:list bool, % list of bool for each param, true if they're instance parameters
   i:list prop, % Cond list
-  i:term, %the final term
   o:prop.
 
- 
 
-mk-src (app [_|_Args]) M I _ Cond FT (mixin-src FT M I :- Cond).
+
+pred last-app i:term, o:term.
+
+last-app (app[_|[(app Args)]]) T :- last-app (app Args) T.
+last-app (app[G|_]) G.
+
+% pi c0 \
+%   pi c1 \
+%    mixin-src (app [global (indt «list»), c1]) (indt «m2.axioms_») 
+%     (app [global (const «list_m2»), c0]) :-
+%     [find-instance c1 (global (indt «s2.type»)) c0]] 
+%     find instance should expand into :
+%     coq.unify_eq (app s2.sort c0) c1
+
+mk-src (app [global (const _)|Args]) M I _ Cond C :-
+mk-src (app Args) M I [] Cond C.
+
+
+mk-src (app [global G|_] as T) M I _ _Cond (mixin-src T' M Ia :- C ) :-
+  is-structure G,
+  pi a pa \
+  last-app T L,
+  coq.mk-app I [a] Ia,
+  coq.mk-app (global G) [pa] T',
+  C is (find-instance a L pa).
+  
 
 % coq.mk-app ---- avoids ----> app[ app[ I, a ], b]
 % invariant: mk-src Ty _ I _ _    --->  I : Ty
@@ -443,27 +447,27 @@ mk-src (app [_|_Args]) M I _ Cond FT (mixin-src FT M I :- Cond).
 %  create a : A
 %        I a : B
 
-mk-src (prod N_ _ F) M I [tt|Rest] Cond FT (pi A pA \ C A pA) :- 
-  pi a\
-  sigma Ia\
-  pi pa \
-    coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond FT (C a pa). 
+% mk-src (prod N_ _ F) M I [_tt|Rest] Cond  (pi A pA \ C A pA) :- 
+%   pi a\
+%   sigma Ia\
+%   pi pa \
+%     coq.mk-app I [a] Ia,
+%     mk-src (F a) M Ia Rest Cond  (C a pa). 
 
 
-mk-src (prod N_ S F) M I [ff|Rest] Cond FT (pi A pA \ C A pA) :- 
-  term-is-gref? S SG, is-structure SG,
-  pi a\
-  sigma Ia\
-  pi pa \
-    coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest [find-instance a S pa|Cond] FT (C a pa).
+% mk-src (prod N_ S F) M I [ff|Rest] Cond  (pi A pA \ C A pA) :- 
+%   term-is-gref? S SG, is-structure SG,
+%   pi a\
+%   sigma Ia\
+%   pi pa \
+%     coq.mk-app I [a] Ia,
+%     mk-src (F a) M Ia Rest [find-instance a S pa|Cond]  (C a pa).
 
-mk-src (prod N_ _ F) M I [ff|Rest] Cond FT (pi A pA \ C A) :- 
-  pi a\
-  sigma Ia\
-    coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond FT (C a).  
+% mk-src (prod N_ _ F) M I [ff|Rest] Cond  (pi A pA \ C A) :- 
+%   pi a\
+%   sigma Ia\
+%     coq.mk-app I [a] Ia,
+%     mk-src (F a) M Ia Rest Cond (C a).  
 
 
 pred enrich-type i:cs-pattern, o:term .
@@ -475,13 +479,26 @@ enrich-type C ET :-
 
 
 pred mk-src-map i:prop, o:prop.
-mk-src-map (has-mixin-instance Pat M IHd L) C :- std.do![
-  enrich-type Pat ET,
+mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
   T = global IHd,
   coq.typecheck T Ty ok,
-  std.spy!(mk-src Ty M T L [] ET C),
+  std.spy!(mk-src Ty M T L [] C),
   ].
-  
+
+% pi c0 \
+%   pi c1 \
+%    mixin-src (app [global (indt «list»), c1]) (indt «m2.axioms_») 
+%     (app [global (const «list_m2»), c0]) :-
+%     [find-instance c1 (global (indt «s2.type»)) c0]] 
+%     find instance should expand into :
+%     coq.unify_eq (app s2.sort c0) c1
+
+% list_m2
+%	 : forall X : s2.type, m2.phant_axioms (list (s2.sort X))
+
+% coq.typecheck (app + Y) ....,
+% coq.typecheck Y TY _
+% après ces deux commandes TY est instanciée à nat
 
 pred cs-pattern->term i:cs-pattern, o:term.
 cs-pattern->term (cs-gref GR) (global GR).
