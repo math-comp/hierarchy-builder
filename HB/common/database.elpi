@@ -20,9 +20,12 @@ has-mixin-instance_cspat (has-mixin-instance P _ _ _) P.
 pred mixin-src_type i:prop, o:term.
 mixin-src_type (mixin-src T _ _ ) T.
 
+%TODO rewrite this
 pred mixin-src-w-cond_type i:prop, o:term.
-mixin-src-w-cond_type (mixin-src T _ _) T.
-mixin-src-w-cond_type (pi _ \ mixin-src T _ _ :- _Cond) T.
+mixin-src-w-cond_type (mixin-src T _ _ :- _) T.
+mixin-src-w-cond_type (pi _ \  mixin-src T _ _ :- _) T.
+mixin-src-w-cond_type (pi _ \  pi _ \ mixin-src T _ _ :- _) T.
+
 
 pred mixin-src_ty i:prop, o:term.
 mixin-src_ty (mixin-src T _ _ ) Ty :-coq.typecheck T Ty ok.
@@ -472,7 +475,7 @@ enrich-type C ET :-
   cs-pattern->term C GH,
   coq.typecheck GH TH ok,
   coq.count-prods TH N,
-  if (N = 0) (ET is TH) (coq.mk-app TH {coq.mk-n-holes N} ET).
+  if (N = 0) (ET is GH) (coq.mk-app GH {coq.mk-n-holes N} ET).
 
 
 pred mk-src-map i:prop, o:prop.
