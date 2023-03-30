@@ -400,9 +400,11 @@ mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-
 
 pred find-instance i:term, i:term, o:term.
 find-instance T St I :- std.do![
-  mk-app St [T] ST,
-  coq.unify-eq ST I ok,
+  coq.typecheck St Ty ok,
+  mk-app Ty [I] ST,
+  coq.unify-eq ST T ok,
   ].
+
 
 pred mk-src
   i:term, % type of the instance Ty
@@ -412,13 +414,6 @@ pred mk-src
   i:list prop, % Cond list
   o:prop.
 
-
-
-pred last-app i:term, o:term.
-
-last-app (app[_|[(app Args)]]) T :- last-app (app Args) T.
-last-app (app[G|_]) G.
-
 % pi c0 \
 %   pi c1 \
 %    mixin-src (app [global (indt «list»), c1]) (indt «m2.axioms_») 
@@ -427,48 +422,26 @@ last-app (app[G|_]) G.
 %     find instance should expand into :
 %     coq.unify_eq (app s2.sort c0) c1
 
-mk-src (app [global (const _)|Args]) M I _ Cond C :-
-mk-src (app Args) M I [] Cond C.
 
 
-mk-src (app [global G|_] as T) M I _ _Cond (mixin-src T' M Ia :- C ) :-
-  is-structure G,
-  pi a pa \
-  last-app T L,
-  coq.mk-app I [a] Ia,
-  coq.mk-app (global G) [pa] T',
-  C is (find-instance a L pa).
+mk-src (app [_|Args]) M (app [GI|_]) _ []  (pi A pA \ C A pA) :-
+  std.last Args (app [GR|Args2]),
+  std.last Args2 (app [GR2|_]),
+  coq.typecheck GR2 P ok,
+  prod-structure P S,
+  pi a pa\
+  sigma Ia\
+  coq.mk-app GI [a] Ia,
+  mk-src  (app[GR|[pa]]) M Ia []  [(find-instance pa S a)] (C a pa).
+
   
+mk-src (app [_|_] as T) M I _ Cond (mixin-src T M I :- Cond).
 
-% coq.mk-app ---- avoids ----> app[ app[ I, a ], b]
-% invariant: mk-src Ty _ I _ _    --->  I : Ty
+mk-src (prod N_ _ F) M I [ff|Rest] Cond C :-
 
-% mk-src I : A -> B
-%  create a : A
-%        I a : B
-
-% mk-src (prod N_ _ F) M I [_tt|Rest] Cond  (pi A pA \ C A pA) :- 
-%   pi a\
-%   sigma Ia\
-%   pi pa \
-%     coq.mk-app I [a] Ia,
-%     mk-src (F a) M Ia Rest Cond  (C a pa). 
-
-
-% mk-src (prod N_ S F) M I [ff|Rest] Cond  (pi A pA \ C A pA) :- 
-%   term-is-gref? S SG, is-structure SG,
-%   pi a\
-%   sigma Ia\
-%   pi pa \
-%     coq.mk-app I [a] Ia,
-%     mk-src (F a) M Ia Rest [find-instance a S pa|Cond]  (C a pa).
-
-% mk-src (prod N_ _ F) M I [ff|Rest] Cond  (pi A pA \ C A) :- 
-%   pi a\
-%   sigma Ia\
-%     coq.mk-app I [a] Ia,
-%     mk-src (F a) M Ia Rest Cond (C a).  
-
+  sigma a Ia \
+  coq.mk-app I [a] Ia,
+    mk-src (F _) M Ia Rest Cond C.
 
 pred enrich-type i:cs-pattern, o:term .
 enrich-type C ET :- 
@@ -481,7 +454,7 @@ enrich-type C ET :-
 pred mk-src-map i:prop, o:prop.
 mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
   T = global IHd,
-  coq.typecheck T Ty ok,
+  coq.env.typeof IHd Ty,
   std.spy!(mk-src Ty M T L [] C),
   ].
 
