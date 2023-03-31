@@ -114,6 +114,28 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 ].
 
 
+
+pred declare-all2 i:term, i:list class, o:list (pair id constant).
+declare-all2 T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
+
+  enrich-type T Ty,
+  coq.say "Ty: " Ty,
+  coq.say "Class: " Class,
+  infer_1 Ty Class Struct MLwP S Name STy Clauses,
+  coq.say "Ty S : " Ty S,
+  % infer1 nous donne un term S = (app + Y)
+  % il faut fermer les trous de S
+
+  % on doit générer un term coq : S' = (fun y => app + y) 
+  
+
+  save_1 Name S STy CS,
+
+  Clauses => declare-all2 T Rest L.
+
+declare-all2 T [_|Rest] L :- declare-all2 T Rest L.
+declare-all2 _ [] [].
+
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
 % for which all the dependencies (mixins) were postulated so far and skips the
@@ -123,8 +145,15 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 pred declare-all i:term, i:list class, o:list (pair id constant).
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
+  % enrich_type T 
+
   infer_1 T Class Struct MLwP S Name STy Clauses,
+  % infer1 nous donne un term S = (app + Y)
+  % il faut fermer les trous de S
+
+  % on doit générer un term coq : S' = (fun y => app + y) 
   
+
   save_1 Name S STy CS,
 
   Clauses => declare-all T Rest L.
@@ -161,7 +190,7 @@ infer_1 T  Class Struct MLwP S Name STy Clauses:- std.do![
   private.optimize-class-body THD {std.length Params} KCApp KCAppNames Clauses,
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
-  std.assert-ok! (coq.typecheck S STy) "declare-all: S illtyped",
+  std.assert-ok! (coq.typecheck S STy) "infer1: S illtyped",
 ].
 
 pred save_1 i:string, i:term, i:term, i:constant.
@@ -247,8 +276,8 @@ saturate-instances :- std.do! [
   undup-terms TLD TL,
   coq.say "clausessrc : " Clauses TL,
   findall-classes Classes,
-  Clauses => std.forall TL (t\ (declare-all t Classes _)),
-
+  Clauses => std.forall TL (t\ (declare-all2 t Classes _)),
+  %Clauses => std.forall TL (t\ (infer_1 t Classes _)),
 ].
 
 
