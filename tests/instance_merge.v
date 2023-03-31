@@ -12,10 +12,9 @@ HB.instance Definition nat_m2 : m2 nat := m2.Build nat 2.
 
 HB.structure Definition s3 := { T of m1 T & m2 T }.
 
-HB.about nat. (* should have s3 *)
-
+Check nat:s3.type.
 (* The s3 instance on list should be synthetized automatically, *)
 (* But since it's defined afterwards, it's not taken into account. *)
 (* A simple recall suffices: *)
-HB.instance Definition _ := nat_m2.
-HB.about nat.
+(* HB.instance Definition _ := nat_m2.
+HB.about nat. *)
