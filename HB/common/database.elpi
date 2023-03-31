@@ -386,8 +386,7 @@ sect-params-in-term SectionParams Ty L :-
 
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
 
-% change order of cases
-% if I isn't gref ?
+
 pred mixin-src->has-mixin-instance i:list constant, i:prop, o:prop.
 
 mixin-src->has-mixin-instance SectionParams (mixin-src (global GR) M I) (has-mixin-instance (cs-gref GR) M IHd A) :-
@@ -402,17 +401,14 @@ mixin-src->has-mixin-instance SectionParams (mixin-src (prod _ _ _ ) M I) (has-m
 mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd BL):-
   term->gref I IHd, coq.typecheck I Ty ok, sect-params-in-term SectionParams Ty BL.
 
-mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd BL):-
-  term->gref I IHd, coq.typecheck I Ty ok, sect-params-in-term SectionParams Ty BL.
 
-
-pred find-instance i:term, i:term, o:term.
-find-instance T Ty I :- 
-  %coq.typecheck St Ty ok,
-  mk-app Ty [I] TYI,
-  coq.unify-eq TYI T ok
-  .
-
+pred mk-src-aux i:list term, i:term, i:mixinname, i:term, i:list prop, o:prop.
+mk-src-aux [] T M I Cond (mixin-src T M I :- Cond).
+mk-src-aux [A|Rest] T M I Cond ( pi a \ C a) :-
+  pi a \
+  sigma Ta\
+    coq.mk-app T [a] Ta,
+    mk-src-aux Rest Ta M I [coq.unify-eq A a ok|Cond] (C a).
 
 pred mk-src
   i:term, % type of the instance Ty
@@ -421,44 +417,6 @@ pred mk-src
   i:list bool, % list of bool for each param, true if they're instance parameters
   i:list prop, % Cond list
   o:prop.
-
-% pi c0 \
-%   pi c1 \
-%    mixin-src (app [global (indt «list»), c1]) (indt «m2.axioms_») 
-%     (app [global (const «list_m2»), c0]) :-
-%     [find-instance c1 (global (indt «s2.type»)) c0]] 
-%     find instance should expand into :
-%     coq.unify_eq (app s2.sort c0) c1
-
-
-
-mk-src (global _GR as T) M I [] Cond (mixin-src T M I :- Cond).
-
-
-% mk-src (app [_|Args]) M (app [GI|_]) _ []  (pi A pA \ C A pA) :-
-%   std.last Args (app [GR|Args2]),
-%   std.last Args2 (app [GR2|_]),
-%   coq.typecheck GR2 P ok,
-%   prod-structure P S,
-%   pi a pa\
-%   sigma Ia\
-%   coq.mk-app GI [a] Ia,
-%   mk-src  (app[GR|[pa]]) M Ia []  [(find-instance pa S a)] (C a pa).
-
-%
-% %
-
-  % pi a pa \ mixin-src T M Ia :- [(C a pa )|Cond] 
-pred mk-src-aux i:list term, i:term i:mixinname, i:term, i:list prop, o:prop.
-mk-src-aux [] T M I Cond (mixin-src T M I :- Cond).
-mk-src-aux [A|Rest] T M I Cond ( pi a \ C a) :-
-  pi a \
-  sigma Ta\
-    coq.mk-app T [a] Ta,
-    mk-src-aux Rest Ta M I [coq.unify-eq A a ok|Cond] (C a).
-
-
-% mk-src (app [_|_] as T) M I _ Cond (mixin-src T M I :- Cond).
 
 mk-src (app [_|Args]) M I [] Cond C :-
   std.last Args Last,
@@ -471,13 +429,20 @@ mk-src (prod N_ _ F) M I [ff|Rest] Cond (pi a \ C a) :-
   coq.mk-app I [a] Ia,
     mk-src (F a) M Ia Rest Cond (C a).
 
+% TODO Instance Param ?
+mk-src (prod N_ _ F) M I [tt|Rest] Cond (pi a \ C a) :-
+  pi a\
+  sigma  Ia \
+  coq.mk-app I [a] Ia,
+    mk-src (F a) M Ia Rest Cond (C a).
+
 pred enrich-type i:term, o:term .
 enrich-type T ET :- 
   coq.typecheck T TH ok,
   coq.count-prods TH N,
   if (N = 0) (ET is T) (coq.mk-app T {coq.mk-n-holes N} ET).
 
-
+% a wrapper for mk-src so it can be called by a map on a list of clauses has-mixin-instance
 pred mk-src-map i:prop, o:prop.
 mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
   T = global IHd,
