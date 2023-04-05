@@ -86,6 +86,9 @@ tests/monoid_enriched_cat.v
 
 tests/store_types_cs.v
 tests/findall_cs_types.v
+tests/instance_merge_with_distinct_param.v
+tests/instance_merge.v
+tests/enrich_type.v
 
 -R tests HB.tests
 -R examples HB.examples

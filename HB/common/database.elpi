@@ -350,7 +350,7 @@ get-constructor (indt R) (indc K) :- !,
  if (coq.env.indt R _ _ _ _ [K] _) true (coq.error "Not a record" R).
 get-constructor I _ :- coq.error "get-constructor: not an inductive" I.
 
-%% finding for locally defined structures
+% finding for locally defined structures
 pred get-cs-structure i:cs-instance, o:structure.
 get-cs-structure (cs-instance _ _ (const Inst)) Struct :- std.do! [
   coq.env.typeof (const Inst) InstTy,
@@ -365,24 +365,23 @@ pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
 pred param-in-term i:term, i:constant, o:bool.
-param-in-term  (app [global (const C)|_]) C tt.
+param-in-term  (app [global (const F)]) C tt :- (coq.gref->id (const F) ID), (coq.gref->id (const C) ID).
 param-in-term (app [_|Args]) C B :- param-in-term (app Args) C B.
 param-in-term (app []) _ ff.
 param-in-term (prod _ _ F) C B :-  pi x\ param-in-term (F x) C B.
 param-in-term (sort _) _ ff.
 param-in-term T C B :- whd1 T T1, !, param-in-term  T1 C B.
 
-
+% given a list of section parameters SectionParams and a term T, 
+% returns a list of bool corresponding to whether or not each parameter appears in T.
 pred sect-params-in-term  i:list constant, i:term, o:list bool.
+sect-params-in-term SectionParams T L :-
+  coq.say "term T " T,
 
-sect-params-in-term SectionParams Ty L :-
-
-  safe-dest-app Ty (global GR) Args, 
+  safe-dest-app T (global GR) Args, 
   factory-alias->gref GR F, factory-nparams F NP, std.split-at NP Args Params _Args2,
   TyP = app [global GR|Params],
-  % change std.mem! for something that checks if the parameters appears in the term
-
-  std.map SectionParams (x\ o \ (param-in-term TyP x o)) L.
+  std.map SectionParams (x\ o \ (std.spy!(param-in-term TyP x o))) L.
 
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
 
@@ -410,6 +409,8 @@ mk-src-aux [A|Rest] T M I Cond ( pi a \ C a) :-
     coq.mk-app T [a] Ta,
     mk-src-aux Rest Ta M I [coq.unify-eq A a ok|Cond] (C a).
 
+% transforms the has-mixin-instance clause arguments into a 
+% mixin-src clause with eventuals conditions regarding its parameters
 pred mk-src
   i:term, % type of the instance Ty
   i:mixinname, % name of mixin
@@ -430,40 +431,24 @@ mk-src (prod N_ _ F) M I [ff|Rest] Cond (pi a \ C a) :-
     mk-src (F a) M Ia Rest Cond (C a).
 
 % TODO Instance Param ?
-mk-src (prod N_ _ F) M I [tt|Rest] Cond (pi a \ C a) :-
+mk-src (prod N_ _ F) M I [tt|Rest] Cond C :-
   pi a\
-  sigma  Ia \
-  coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond (C a).
+    mk-src (F a) M I Rest Cond C.
 
+% for a type T, create as many holes as there are foralls and returns that enriched type
 pred enrich-type i:term, o:term .
 enrich-type T ET :- 
   coq.typecheck T TH ok,
   coq.count-prods TH N,
-  if (N = 0) (ET is T) (coq.mk-app T {coq.mk-n-holes N} ET).
+  if (N = 0) (ET = T) (coq.mk-app T {coq.mk-n-holes N} ET).
 
-% a wrapper for mk-src so it can be called by a map on a list of clauses has-mixin-instance
+% wrapper for mk-src so it can be called by a map on a list of clauses has-mixin-instance
 pred mk-src-map i:prop, o:prop.
 mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
   T = global IHd,
   coq.env.typeof IHd Ty,
   std.spy!(mk-src Ty M T L [] C),
   ].
-
-% pi c0 \
-%   pi c1 \
-%    mixin-src (app [global (indt «list»), c1]) (indt «m2.axioms_») 
-%     (app [global (const «list_m2»), c0]) :-
-%     [find-instance c1 (global (indt «s2.type»)) c0]] 
-%     find instance should expand into :
-%     coq.unify_eq (app s2.sort c0) c1
-
-% list_m2
-%	 : forall X : s2.type, m2.phant_axioms (list (s2.sort X))
-
-% coq.typecheck (app + Y) ....,
-% coq.typecheck Y TY _
-% après ces deux commandes TY est instanciée à nat
 
 pred cs-pattern->term i:cs-pattern, o:term.
 cs-pattern->term (cs-gref GR) (global GR).
