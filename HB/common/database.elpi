@@ -372,12 +372,10 @@ param-in-term T C B :- whd1 T T1, !, param-in-term  T1 C B.
 % returns a list of bool corresponding to whether or not each parameter appears in T.
 pred sect-params-in-term  i:list constant, i:term, o:list bool.
 sect-params-in-term SectionParams T L :-
-  coq.say "term T " T,
-
   safe-dest-app T (global GR) Args, 
   factory-alias->gref GR F, factory-nparams F NP, std.split-at NP Args Params _Args2,
   TyP = app [global GR|Params],
-  std.map SectionParams (x\ o \ (std.spy!(param-in-term TyP x o))) L.
+  std.map SectionParams (x\ o \ param-in-term TyP x o) L.
 
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref, o:list bool.
 
