@@ -89,6 +89,8 @@ tests/findall_cs_types.v
 tests/instance_merge_with_distinct_param.v
 tests/instance_merge.v
 tests/enrich_type.v
+tests/sect_params_in_terms.v
+tests/close_hole_term.v
 
 -R tests HB.tests
 -R examples HB.examples
