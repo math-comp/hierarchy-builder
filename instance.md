@@ -24,9 +24,10 @@ We'll also need later to add parameters from user-created section by interrogati
 Hierarchy builder is supposed to find links within the hierarchy of structures and instances (joins betweens elements).
 
 
-For example, if we have an instance I1 for the structure S1 verifying a mixin M1 and similarly I2 S2 and M2, if we were to introduce a structure S3 which needs a type verifying both M1 and M2 for a type T compatible with I1 and I2, an instance for S3 and T should be generated automaically, and not only upon encountering a new instance. 
+Let's say we have an instance I1 for the structure S1 verifying a mixin M1 and similarly I2, S2, and M2. 
+If we were to introduce a structure S3 which needs a type verifying both M1 and M2 for a type T compatible with I1 and I2, an instance for S3 and T should be generated automatically, and not only upon encountering a new instance. 
 
-So order matters greatly as a new structure wouldn't care about all the previously defined instances.
+So order matters greatly as a new structure wouldn't know about all the previously defined instances, until a new instace is created.
 
 
 Saturating instances works on instances with parameters this way : 
@@ -37,11 +38,11 @@ HB.instance Definition I1 : mixin1 nat ... .
 ```
 generates a clause in the database of the form 
 ```coq 
-has-mixin-instance (cs-gref (indt «nat»)) (indt «mixin1.axioms_») (const «I1»)f
+has-mixin-instance (cs-gref (indt «nat»)) (indt «mixin1.axioms_») (const «I1»)
 ```
 
 2. Later when we encounter a new structure S, we want to try to populate it with types already encountered at step 1.
-To do so, we look for each possible key-types that satisfy the mixins for S in the has-mixin-instance database. 
+To do so, we look for each possible key-types which satisfy the mixins for S in the has-mixin-instance database. 
     
     For those, we create new clauses mixin-src on the fly from the clauses has-mixin-instance which contain the "blueprint" to have the right instance with parameters and the conditions on those parameters.
     
