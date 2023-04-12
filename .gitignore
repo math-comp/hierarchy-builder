@@ -58,5 +58,4 @@ _minted-*
 *.vtc
 
 *.dot
-
-.vscode/settings.json
+*.json
