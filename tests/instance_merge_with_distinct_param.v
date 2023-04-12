@@ -14,13 +14,9 @@ HB.instance Definition list_m2 (X : s2.type) : m2 (list X) :=
 
 HB.structure Definition s3 := { T of m1 T & m2 T }.
 
-HB.about list. (* should have s3 *)
+Fail Check list nat:s3.type.
 
-(* The s3 instance on list should be synthetized automatically, *)
-(* this is nontrivial because the parameters are not the same *)
-(* but there is a join in the hierarchy, so it can be defined. *)
-(* Actually just recalling the list_m2 instance above suffices. *)
-HB.instance Definition _ (X : s3.type) := list_m2 X.
-HB.about list.
-
+Fail Check fun t : s1.type => (list t : s3.type).
+Fail Check fun t : s2.type => (list t : s3.type).
+Check fun t : s3.type => (list t : s3.type).
 
