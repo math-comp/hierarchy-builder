@@ -11,18 +11,17 @@ Check list_foo'.
 Check list_foo.
 
 Elpi Query HB.structure lp:{{
-
-
 mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo}} [ff]) MS,
     MS = (pi a b \ 
         mixin-src (app [{{list}}, b]) ({{:gref is_foo.axioms_}}) (app [{{list_foo}}, a]) 
-            :- [coq.unify-eq a b ok]),
+            :- [coq.unify-eq a b ok])
+}}.
 
+Elpi Query HB.structure lp:{{
 mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo'}} [tt, ff]) MS',
 MS' = (pi a b \ 
     mixin-src (app [{{list}}, b]) {{:gref is_foo.axioms_}} (app [{{list_foo'}}, X, a])
         :- [coq.unify-eq  a b ok]).
-
 }}.
 
 HB.structure Definition foo P := { A of is_foo P A }.

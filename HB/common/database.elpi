@@ -433,6 +433,12 @@ mk-src (prod N_ _ F) M I [tt|Rest] Cond C :-
   coq.mk-app I [a] Ia,
     mk-src (F a) M Ia Rest Cond C.
 
+mk-src (prod N_ _ F) M I [] Cond (pi a \ C a) :-
+  pi a\
+  sigma  Ia \
+  coq.mk-app I [a] Ia,
+    mk-src (F a) M Ia [] Cond (C a).
+
 % for a type T, create as many holes as there are foralls and returns that enriched type
 pred enrich-type i:term, o:term .
 enrich-type T ET :- 
