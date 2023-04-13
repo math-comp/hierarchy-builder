@@ -447,7 +447,7 @@ pred mk-src-map i:prop, o:prop.
 mk-src-map (has-mixin-instance _ M IHd L) C :- std.do![
   T = global IHd,
   coq.env.typeof IHd Ty,
-  std.spy!(mk-src Ty M T L [] C),
+  mk-src Ty M T L [] C,
   ].
 
 pred cs-pattern->term i:cs-pattern, o:term.
