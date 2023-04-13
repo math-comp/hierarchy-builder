@@ -27,5 +27,5 @@ mixin-src->has-mixin-instance L (mixin-src {{list X}} M1 {{i1 X}}) Y,
 Y = has-mixin-instance (cs-gref {{:gref list}}) {{:gref m1.phant_axioms}} {{:gref i1}} [ff].
 
 }}.
-
+End Test.
 
