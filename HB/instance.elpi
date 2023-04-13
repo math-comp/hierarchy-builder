@@ -119,7 +119,7 @@ type abs int -> term.
 % bind back abstracted subterms
 pred bind i:int, i:term, o:term.
 bind M T T1 :- M > 0,
-  T1 = {{ fun x => lp:(B x) }},   % we build a Coq "fun .. => "
+  T1 = {{ fun x => lp:(B x) }},   
   N is M - 1,
   pi x\                           % we allocate the fresh symbol for (abs M)
     (copy (abs M) x :- !) =>      % we schedule the replacement (abs M) -> x
@@ -128,22 +128,31 @@ bind 0 T T1 :- copy T T1.         % we perform all the replacements
 
 % TODO remove see constraints at the end 
 % for a term with M holes, returns a term with M variables to fill these holes
+% the clause see is only generated for a term if it hasn't been seen before
+% 
 pred close-hole-term i:term, o:term.
 close-hole-term T1 T3 :- std.do! [
   (pi T N M \ fold-map T N (abs M) M :- var T, not (seen T _), !, M is N + 1, see T M) =>
   (pi T N M \ fold-map T N (abs M) N :- var T, seen T M, !) =>
   fold-map T1 0 T2 M,
   bind M T2 T3,
-
+  % print_constraints,
+  % std.findall (seen _ _) C,
+  % std.forall C (s\ sigma T\ s = see T _, rm-evar T T),
+  % print_constraints,
 ].
 
+
+
 pred seen i:term, o:int.
-seen X Y :- declare_constraint (seen X Y) [X].
+% :name "hook1"
+seen X Y :- declare_constraint (seen X Y) [X].  
 
 pred see i:term, o:int.
 see X Y :- declare_constraint (see X Y) [X].
 
 constraint seen see  {
+  % rule (remove X N ) \ (seen uvar X _  _)
   rule (see (uvar X _) N) \ (seen (uvar X _) M) <=> (M = N). 
   rule                    \ (seen (uvar X _) _) <=> false. 
 }
@@ -157,7 +166,6 @@ declare-all2 T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   % il faut fermer les trous de S
   % on doit générer un term coq : S' = (fun y => app + y) 
   close-hole-term S SC,
-  coq.say "SC : " SC,
   std.assert-ok! (coq.typecheck SC SCTy) "badly closed",
   save_1 Name SC SCTy CS,
 
@@ -175,14 +183,7 @@ declare-all2 _ [] [].
 pred declare-all i:term, i:list class, o:list (pair id constant).
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
-  % enrich_type T 
-
   infer_1 T Class Struct MLwP S Name STy Clauses,
-  % infer1 nous donne un term S = (app + Y)
-  % il faut fermer les trous de S
-
-  % on doit générer un term coq : S' = (fun y => app + y) 
-  
 
   save_1 Name S STy CS,
 
@@ -300,14 +301,13 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 pred saturate-instances.
 saturate-instances :- std.do! [
   findall-has-mixin-instance ClausesHas,
-  coq.say "clauseshas : "ClausesHas,
+  coq.warning "clauseshas : " "debug" ClausesHas,
   std.map ClausesHas mk-src-map Clauses,
   std.map-filter Clauses mixin-src-w-cond_type TLD,
   undup-terms TLD TL,
-  coq.say "clausessrc : " Clauses TL,
+  coq.warning "clausessrc : " "debug" Clauses TL,
   findall-classes Classes,
   Clauses => std.forall TL (t\ (declare-all2 t Classes _)),
-  %Clauses => std.forall TL (t\ (infer_1 t Classes _)),
 ].
 
 
@@ -429,8 +429,7 @@ declare-canonical-instances-from-factory Factory T F SectionParams ClausesHas CS
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML Clauses TheMixins,
       std.map-filter Clauses (mixin-src->has-mixin-instance SectionParams) ClausesHas,
-      ClausesHas =>instance.declare-all T {findall-classes-for ML} CCSL,
-      coq.say "newclauses " CCSL,
+      ClausesHas => instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
   std.map TheMixins make-mixin-canonical TheCanonicalMixins,
