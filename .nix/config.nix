@@ -1,7 +1,7 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.15";
+  default-bundle = "coq-rev_coerce";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
@@ -32,6 +32,10 @@
     };
     "coq-8.15".coqPackages = {
       coq.override.version = "8.15";
+    };
+    "coq-rev_coerce".coqPackages = {
+      coq.override.version = "proux01:rev_coerce";
+      coq-elpi.override.version = "coq-master";
     };
   };
   cachix.coq = {};
