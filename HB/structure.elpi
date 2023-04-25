@@ -368,6 +368,9 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
      lp:PackPH (lp:SortP s) (lp:CoercionP (lp:SortP s) (lp:ClassP s)) }},
 ].
 
+pred std.warn-and-fail i:(diagnostic -> prop), i:string.
+std.warn-and-fail P M :- P D, if (D = error X) (coq.warn M X, fail) true.
+
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
 pred declare-coercion i:term, i:term, i:class, i:class.
@@ -385,8 +388,7 @@ declare-coercion SortProjection ClassProjection
 
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
-
-  std.assert-ok! (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped",
+  std.warn-and-fail (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped",
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 
@@ -398,7 +400,8 @@ declare-coercion SortProjection ClassProjection
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
 
-  std.assert-ok! (coq.elaborate-skeleton SCoeBody STy SCoeBody') "declare-coercion: SCoeBody illtyped",
+  
+  std.warn-and-fail (coq.elaborate-skeleton SCoeBody STy SCoeBody') "declare-coercion: SCoeBody illtyped",
 
   if-verbose (coq.say {header} "declare unification hint" SName),
 
@@ -417,6 +420,7 @@ declare-coercion SortProjection ClassProjection
   mk-compression-clauses StructureF StructureT AllTgtSuperStructures AllCompressionClauses,
   std.forall AllCompressionClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
 ].
+declare-coercion _ _ _ _.
 
 
 pred mk-compression-clauses i:gref, i:gref, i:list gref, o:list prop.
