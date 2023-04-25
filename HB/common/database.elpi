@@ -365,12 +365,10 @@ pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
 pred param-in-term i:term, i:constant, o:bool.
-param-in-term  (app [global (const F)]) C tt :- (coq.gref->id (const F) ID), (coq.gref->id (const C) ID).
-param-in-term (app [_|Args]) C B :- param-in-term (app Args) C B.
-param-in-term (app []) _ ff.
+param-in-term  (global (const F)) C tt :- (coq.gref->id (const F) ID), (coq.gref->id (const C) ID).
+param-in-term (app Args) C B :- if (std.exists Args (x\ param-in-term x C tt)) (B = tt) (B = ff).
 param-in-term (prod _ _ F) C B :-  pi x\ param-in-term (F x) C B.
 param-in-term (sort _) _ ff.
-param-in-term T C B :- whd1 T T1, !, param-in-term  T1 C B.
 
 % given a list of section parameters SectionParams and a term T, 
 % returns a list of bool corresponding to whether or not each parameter appears in T.
@@ -401,11 +399,12 @@ mixin-src->has-mixin-instance SectionParams (mixin-src (sort U) M I) (has-mixin-
 
 pred mk-src-aux i:list term, i:term, i:mixinname, i:term, i:list prop, o:prop.
 mk-src-aux [] T M I Cond (mixin-src T M I :- Cond).
-mk-src-aux [A|Rest] T M I Cond ( pi a \ C a) :-
+mk-src-aux [A|Args] T M I Cond  (pi a \ C a) :-
   pi a \
   sigma Ta\
     coq.mk-app T [a] Ta,
-    mk-src-aux Rest Ta M I [coq.unify-eq A a ok|Cond] (C a).
+    mk-src-aux Args Ta M I [coq.unify-eq A a ok|Cond] (C a).
+
 
 % transforms the has-mixin-instance clause arguments into a
 % mixin-src clause with eventuals conditions regarding its parameters
@@ -428,10 +427,11 @@ mk-src (prod N_ _ F) M I [ff|Rest] Cond (pi a \ C a) :-
   coq.mk-app I [a] Ia,
     mk-src (F a) M Ia Rest Cond (C a).
 
-mk-src (prod N_ _ F) M I [tt|Rest] Cond C :-
-  sigma a Ia \
-  coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Rest Cond C.
+mk-src (prod N_ _ F) M I [tt|Rest] Cond (pi a \ C a) :-
+ pi a \
+sigma  Ia \
+coq.mk-app I [a] Ia,
+  mk-src (F a) M Ia Rest Cond (C a).
 
 mk-src (prod N_ _ F) M I [] Cond (pi a \ C a) :-
   pi a\
