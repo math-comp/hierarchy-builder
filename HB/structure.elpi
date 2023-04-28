@@ -388,7 +388,7 @@ declare-coercion SortProjection ClassProjection
 
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
-  std.warn-and-fail (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped",
+  std.warn-and-fail (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped, couldn't find a coercion between the two structures",
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 

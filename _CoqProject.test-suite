@@ -88,6 +88,7 @@ tests/store_types_cs.v
 tests/findall_cs_type.v
 tests/instance_merge_with_distinct_param.v
 tests/instance_merge.v
+tests/two_hier.v
 
 tests/unit/enrich_type.v
 tests/unit/mixin_src_has_mixin_instance.v

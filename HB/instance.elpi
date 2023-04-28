@@ -117,27 +117,26 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 type abs int -> term.
 
 % bind back abstracted subterms
-pred bind i:int, i:term, o:term.
-bind M T T1 :- M > 0,
+pred bind i:int, i:int, i:term, o:term.
+bind I M T T1 :- M > I,
   T1 = {{ fun x => lp:(B x) }},   
-  N is M - 1,
+  N is I + 1,
   pi x\                           % we allocate the fresh symbol for (abs M)
-    (copy (abs M) x :- !) =>      % we schedule the replacement (abs M) -> x
-    bind N T (B x).
-bind 0 T T1 :- copy T T1.         % we perform all the replacements
+    (copy (abs N) x :- !) =>      % we schedule the replacement (abs M) -> x
+    bind N M T (B x).
+bind M M T T1 :- copy T T1.         % we perform all the replacements
 
 % for a term with M holes, returns a term with M variables to fill these holes
 % the clause see is only generated for a term if it hasn't been seen before
-% 
+% the term might need to be typechecked first or close-hole-term generates extra holes for the
+% type of the parameters
 pred close-hole-term i:term, o:term.
 close-hole-term T1 T3 :- std.do! [
-  (pi T N M \ fold-map T N (abs M) M :- var T, not (seen T _), !, M is N + 1, see T M) =>
+  (pi T Ty N N' M \ fold-map T N (abs M) M :- var T, not (seen T _), !, coq.typecheck T Ty ok, fold-map Ty N _ N', M is N' + 1, see T M) =>
   (pi T N M \ fold-map T N (abs M) N :- var T, seen T M, !) =>
   fold-map T1 0 T2 M,
-  bind M T2 T3,
-
+  bind 0 M T2 T3,
 ].
-
 
 
 pred seen i:term, o:int.
@@ -295,11 +294,11 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 pred saturate-instances.
 saturate-instances :- std.do! [
   findall-has-mixin-instance ClausesHas,
-  coq.warning "clauseshas : " "debug" ClausesHas,
+  % coq.warning "clauseshas : " "debug" ClausesHas,
   std.map ClausesHas mk-src-map Clauses,
   std.map-filter Clauses mixin-src-w-cond_type TLD,
   undup-terms TLD TL,
-  coq.warning "clausessrc : " "debug" Clauses TL,
+   coq.warning "clausessrc : " "debug" Clauses,
   findall-classes Classes,
   Clauses => std.forall TL (t\ (declare-all2 t Classes _)),
 ].
