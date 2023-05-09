@@ -11,7 +11,7 @@ Check list_foo.
 
 Elpi Query HB.structure lp:{{
 
-mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo}} [ff]) MS,
+mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo}}) MS,
     MS = (pi a b \ 
         mixin-src (app [{{list}}, b]) ({{:gref is_foo.axioms_}}) (app [{{list_foo}}, a]) 
             :- [coq.unify-eq a b ok])
@@ -19,7 +19,7 @@ mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} 
 
 Elpi Query HB.structure lp:{{
 
-mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo'}} [tt, ff]) MS',
+mk-src-map (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo'}}) MS',
 MS' = (pi p a b \ 
     mixin-src (app [{{list}}, b]) {{:gref is_foo.axioms_}} (app [{{list_foo'}}, p,a])
         :- [coq.unify-eq  a b ok]).
