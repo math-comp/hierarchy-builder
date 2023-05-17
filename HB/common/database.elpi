@@ -14,9 +14,8 @@ from_mixin (from _ X _) X.
 pred from_builder i:prop, o:term.
 from_builder (from _ _ X) (global X).
 
-pred has-mixin-instance_cspat i:prop, o:cs-pattern.
-has-mixin-instance_cspat (has-mixin-instance P _ _) P.
-
+% for a given clause mixin-src with eventually a condition, 
+% returns the type of the first argument
 pred mixin-src-w-cond_type i:prop, o:term.
 mixin-src-w-cond_type(mixin-src (global G) _ _ :- _) (global G).
 mixin-src-w-cond_type (mixin-src (app [T|_]) _ _ :- _) T.
@@ -147,6 +146,7 @@ undup-grefs  L UL :- std.do! [
   coq.gref.set.elements S UL,
 ].
 
+% remove duplicates from a list of terms, but all the terms have to be global references
 pred undup-terms  i:list term, o:list term.
 undup-terms L UL :- std.do! [
   std.map L coq.term->gref LG,
@@ -342,7 +342,6 @@ get-cs-instance (cs-instance _ _ (const Inst)) Inst.
 pred has-cs-instance i:gref, i:cs-instance.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
-pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
 
 pred mixin-src->has-mixin-instance i:prop, o:prop.
 mixin-src->has-mixin-instance  (mixin-src (global GR) M I) (has-mixin-instance (cs-gref GR) M IHd) :-
@@ -357,8 +356,16 @@ mixin-src->has-mixin-instance (mixin-src (prod _ _ _ ) M I) (has-mixin-instance 
 mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-sort U) M IHd):-
   term->gref I IHd.
 
-
-pred mk-src-aux i:list term, i:term, i:mixinname, i:term, i:list prop, o:prop.
+% this auxiliary function iterates over the list of arguments of an application,
+% and create the necessary unify condition for each arguments 
+% and at the end returns the mixin-src clause with all the conditions
+pred mk-src-aux 
+  i:list term, % list of arguments
+  i:term, % head of the original application
+  i:mixinname, % name of mixin
+  i:term, % instance body
+  i:list prop, % Cond list
+  o:prop.
 mk-src-aux [] T M I Cond (mixin-src T M I :- Cond).
 mk-src-aux [A|Args] T M I Cond  (pi a \ C a) :-
   pi a \

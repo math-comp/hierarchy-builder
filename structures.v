@@ -201,9 +201,8 @@ pred mixin-class o:mixinname, o:classname.
 % Coq's CS database (which is just for structures).
 pred mixin-src o:term, o:mixinname, o:term.
 
-
-% states that a certain type has a canonical instance
-pred has-db-instance o:term.
+%TODO doc
+pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
 
 %% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -102,10 +102,6 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
          (Clauses = []),
   ]),
 
-  % if a clause associated to this type isn't in the database yet we add it
-  
-  if (has-db-instance TheType) true (acc-clause current (has-db-instance TheType)) , 
-  
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses
 
@@ -145,8 +141,8 @@ pred see i:term, o:int.
 see X Y :- declare_constraint (see X Y) [X].
 
 constraint seen see  {
-  rule (see (uvar X _) N) \ (seen (uvar X _) M) <=> (M = N). 
-  rule                    \ (seen (uvar X _) _) <=> false. 
+rule (see X N) \ (seen X M) <=> (M = N).
+rule           \ (seen X _) <=> false. 
 }
 
 pred declare-all2 i:term, i:list class, o:list (pair id constant).
@@ -289,15 +285,13 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
   declare-const "_" GCF (arity FGCF) CSL
 ].
 
-% create instances for all possible combinations of (simple) types and structure compatible 
+% create instances for all possible combinations of types and structure compatible 
 pred saturate-instances.
 saturate-instances :- std.do! [
   findall-has-mixin-instance ClausesHas,
-  % coq.warning "clauseshas : " "debug" ClausesHas,
   std.map ClausesHas mk-src-map Clauses,
   std.map-filter Clauses mixin-src-w-cond_type TLD,
   undup-terms TLD TL,
-   coq.warning "clausessrc : " "debug" Clauses,
   findall-classes Classes,
   Clauses => std.forall TL (t\ (declare-all2 t Classes _)),
 ].

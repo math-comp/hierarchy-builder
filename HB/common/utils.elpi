@@ -393,6 +393,3 @@ prod-last X X :- !.
 pred prod-last-gref i:term, o:gref.
 prod-last-gref (prod N S X) GR :- !, @pi-decl N S x\ prod-last-gref (X x) GR.
 prod-last-gref X GR :- coq.term->gref X GR.
-
-pred prod-structure i:term, o:term.
-prod-structure (prod _ S _) S.
