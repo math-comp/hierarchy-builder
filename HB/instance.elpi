@@ -145,23 +145,6 @@ rule (see X N) \ (seen X M) <=> (M = N).
 rule           \ (seen X _) <=> false. 
 }
 
-pred declare-all2 i:term, i:list class, o:list (pair id constant).
-declare-all2 T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
-
-  enrich-type T Ty,
-  infer_1 Ty Class Struct MLwP S Name _STy Clauses,
-  % infer1 nous donne un term S = (app + Y)
-  % il faut fermer les trous de S
-  % on doit générer un term coq : S' = (fun y => app + y) 
-  close-hole-term S SC,
-  std.assert-ok! (coq.typecheck SC SCTy) "badly closed",
-  save_1 Name SC SCTy CS,
-
-  Clauses => declare-all2 T Rest L.
-
-declare-all2 T [_|Rest] L :- declare-all2 T Rest L.
-declare-all2 _ [] [].
-
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
 % for which all the dependencies (mixins) were postulated so far and skips the
@@ -171,17 +154,33 @@ declare-all2 _ [] [].
 pred declare-all i:term, i:list class, o:list (pair id constant).
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
-  infer_1 T Class Struct MLwP S Name STy Clauses,
+  infer-class T Class Struct MLwP S Name STy Clauses,
 
-  save_1 Name S STy CS,
+  decl-const-in-struct Name S STy CS,
 
   Clauses => declare-all T Rest L.
 
 declare-all T [_|Rest] L :- declare-all T Rest L.
 declare-all _ [] [].
 
-pred infer_1 i:term, i:classname, i:gref, i:factories, o:term, o:string, o:term, o:list prop.
-infer_1 T  Class Struct MLwP S Name STy Clauses:- std.do![
+% for generic types, we need first to instantiate them by giving them holes,
+% so they can be used to instantiate the classes
+pred declare-all-generic-type i:term, i:list class, o:list (pair id constant).
+declare-all-generic-type T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
+
+  enrich-type T Ty,
+  infer-class Ty Class Struct MLwP S Name _STy Clauses,
+  close-hole-term S SC,
+  std.assert-ok! (coq.typecheck SC SCTy) "badly closed",
+  decl-const-in-struct Name SC SCTy CS,
+
+  Clauses => declare-all-generic-type T Rest L.
+
+declare-all-generic-type T [_|Rest] L :- declare-all-generic-type T Rest L.
+declare-all-generic-type _ [] [].
+
+pred infer-class i:term, i:classname, i:gref, i:factories, o:term, o:string, o:term, o:list prop.
+infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
 
   if (not(has-CS-instance? T Struct))
      true % we build it
@@ -212,8 +211,8 @@ infer_1 T  Class Struct MLwP S Name STy Clauses:- std.do![
   std.assert-ok! (coq.typecheck S STy) "infer1: S illtyped",
 ].
 
-pred save_1 i:string, i:term, i:term, i:constant.
-save_1 Name S STy CS:- std.do![
+pred decl-const-in-struct i:string, i:term, i:term, i:constant.
+decl-const-in-struct Name S STy CS:- std.do![
 
   log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
@@ -268,7 +267,7 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
     KFSortMSL,
   KFSortMSL =>
     synthesis.under-mixin-src-from-factory.do! KFSort GCF
-      [declare-all KFSort {findall-classes-for ML} CSL]
+      [declare-all-generic-type KFSort {findall-classes-for ML} CSL]
 ].
 
 pred mk-factory-sort-factory i:gref, o:list (pair id constant).
@@ -293,7 +292,7 @@ saturate-instances :- std.do! [
   std.map-filter Clauses mixin-src-w-cond_type TLD,
   undup-terms TLD TL,
   findall-classes Classes,
-  Clauses => std.forall TL (t\ (declare-all2 t Classes _)),
+  Clauses => std.forall TL (t\ (declare-all-generic-type t Classes _)),
 ].
 
 
@@ -388,7 +387,7 @@ declare-canonical-instances-from-factory-and-local-builders
       add-all-mixins T FGR NewMixins Clauses _TheMixins,
   ]),
   list-w-params_list {factory-provides Factory} ML,
-  Clauses => instance.declare-all T {findall-classes-for ML} CSL,
+  Clauses => declare-all-generic-type T {findall-classes-for ML} CSL,
 ].
 
 pred make-mixin-canonical i:constant, o:option (pair id constant).

@@ -115,7 +115,7 @@ declare-instances-from-postulated-mixin TheType M T C MC NewCL :- std.do! [
 
   MC = mixin-src T M (global (const C)),
   MC => get-option "local" tt =>
-    instance.declare-all TheType {findall-classes-for [M]} NewCSL,
+    instance.declare-all-generic-type TheType {findall-classes-for [M]} NewCSL,
   std.map NewCSL snd NewCL,
 ].
 

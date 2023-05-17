@@ -62,7 +62,7 @@ For each of those clauses, we now store instead a new clause `has-mixin-instance
     To do so, at the end of a structure declaration, we call a function `saturate-instances`. 
     We need parametrised `mixin-src` clauses with conditions on parameters. For this we call `mk-src-map` which takes the `has-mixin-instance` and creates the right `mixin-src` clauses.
 
-    Then for each type at the head of the clauses,  we try to declare new instances with the new clauses at our disposal with the function `declare-all2`.
+    Then for each type at the head of the clauses,  we try to declare new instances with the new clauses at our disposal with the function `declare-all-generic-type`.
         
         This function preprocesses the type with `enrich_type` which takes a term, and for each forall quantifiers in it, applies as many holes as necessary.
 
