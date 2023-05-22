@@ -388,7 +388,8 @@ declare-coercion SortProjection ClassProjection
 
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
-  std.error-and-fail (coq.elaborate-skeleton CoeBody Ty CoeBody') ("The two structures" ^ ModNameF ^"and"^ ModNameT ^ "are in conflict"),
+  ErrorMessage is "The structures " ^ ModNameF ^ " and " ^ ModNameT ^ " are in conflict.",
+  std.error-and-fail (coq.elaborate-skeleton CoeBody Ty CoeBody') ErrorMessage,
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 
@@ -400,8 +401,8 @@ declare-coercion SortProjection ClassProjection
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
 
-  
-  std.error-and-fail (coq.elaborate-skeleton SCoeBody STy SCoeBody') ("The two structures" ^ ModNameF ^"and"^ ModNameT ^ "are in conflict"),
+  ErrorMessage is "The structures " ^ ModNameF ^ " and " ^ ModNameT ^ " are in conflict.",
+  std.error-and-fail (coq.elaborate-skeleton SCoeBody STy SCoeBody') ErrorMessage,
 
   if-verbose (coq.say {header} "declare unification hint" SName),
 
