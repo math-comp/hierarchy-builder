@@ -19,6 +19,7 @@ jobs:
         coq_version:
           - '8.15'
           - '8.16'
+          - '8.17'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
