@@ -201,7 +201,9 @@ pred mixin-class o:mixinname, o:classname.
 % Coq's CS database (which is just for structures).
 pred mixin-src o:term, o:mixinname, o:term.
 
-%TODO doc
+% [has-mixin-instance P M G] states that G is a reference to an instance
+% which can be used to reconstruct an instance 
+% of the form [M P …] with eventually some parameters for P.
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
 
 %% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
