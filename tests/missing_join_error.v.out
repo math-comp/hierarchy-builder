@@ -1,4 +1,4 @@
 The command has indeed failed with message:
 You must declare the hierarchy bottom-up. There are two ways out: 
-- declare structure missing_join_error.A2B1 before structure missing_join_error.B2A1; 
+- declare structure A2B1 before structure B2A1; 
 - declare an additional structure from which both inherit

@@ -232,7 +232,7 @@ assert-building-bottom-up CurrentClass C3n :-
   class-def (class C3n X Y),
   CurrentClass = class CC _ _,
   if (not (sub-class? CurrentClass (class C3n X Y)))
-     (gref->modname CC 2 "." Before, gref->modname C3n 2 "." After,
+     (gref->modname CC 1 "." Before, gref->modname_short C3n "." After,
       Msg1 is "- declare structure " ^ Before ^ " before structure " ^ After ^ ";",
       coq.error "You must declare the hierarchy bottom-up."
        "There are two ways out:"
