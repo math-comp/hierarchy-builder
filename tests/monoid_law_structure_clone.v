@@ -15,4 +15,5 @@ HB.mixin Record isPreMonoid T := {
 HB.structure Definition PreMonoid := { T of isPreMonoid T }.
 
 HB.structure Definition Monoid :=
-  { T of isPreMonoid T & isMonLaw T zero add  }.
+  { T of isPreMonoid T &
+         isMonLaw T (@zero (PreMonoid.clone T _)) (@add (PreMonoid.clone T _)) }.
