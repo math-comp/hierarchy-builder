@@ -232,9 +232,6 @@ pred docstring o:loc, o:string.
 % terms, since this is what you get when you apply coercions)
 :index (4)
 pred compress o:term, o:term.
-:name "compress:begin"
-compress (app L) (app L1) :- !, std.map L compress L1.
-compress X X.
 
 }}.
 

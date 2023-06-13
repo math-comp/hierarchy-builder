@@ -191,10 +191,16 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
   compress-coercion-paths MI MICompressed,
 ].
 
+pred compress-copy o:term, o:term.
+compress-copy X Y :- compress X Y, !.
+compress-copy (app L) (app L1) :- !, std.map L compress-copy L1.
+compress-copy X X.
+
+
 pred compress-coercion-paths i:term, o:term.
 compress-coercion-paths MI MICompressed :-
   if (get-option "compress_coercions" tt)
-     (compress MI MICompressed)
+     (compress-copy MI MICompressed)
      (MI = MICompressed).
 
 pred mixin-for_mixin-builder i:prop, o:term.
