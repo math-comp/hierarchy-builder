@@ -15,7 +15,7 @@
       mathcomp-finmap.override.version = "master";
       mathcomp.analyis.override.version = "hierarchy-builder";
       interval.override.version = "master";
-      reglang.override.version = "hierarchy-builder";
+      reglang.override.version = "master";
       coq-bits.override.version = "hierarchy-builder";
       deriving.job = false;
     };
