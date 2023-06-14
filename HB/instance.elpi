@@ -370,7 +370,7 @@ check-non-forgetful-inheritance T Factory :- std.do! [
       "We strongly advise you encapsulate this instance inside a module,"
       "in order to isolate it from the rest of the code, and to be able"
       "to import it on demand. See the above paper and the file"
-      "https://github.com/math-comp/hierarchy-builder/blob/master/tests/non-forgetful-inheritance.v"
+      "https://github.com/math-comp/hierarchy-builder/blob/master/tests/non_forgetful_inheritance.v"
       "to witness devastating effects."
     ) true
 ].

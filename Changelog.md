@@ -1,5 +1,32 @@
 # Changelog
 
+## UNRELEASED
+
+## [1.4.0] - 2022-09-29
+
+Compatible with
+- Coq 8.15 with Coq-Elpi 1.14.x
+- Coq 8.16 with Coq-Elpi 1.15.x and 1.16.x
+
+### General
+
+- **Fix** `HB.pack` works with structures about functions, and not just types.
+- **Fix** `HB.about` and `HB.graph` now display shortest names.
+- **New** Command `HB.howto` to find all possible ways to instanciate structures.
+- **New** Structures now support keys which type's head is a global reference.
+  (Only keys corresponding to the coercion classes `Sortclass` and `Funclass` were accepted).
+
+## [1.3.0] - 2022-07-27
+
+Compatible with
+- Coq 8.15 with Coq-Elpi 1.14.x
+- Coq 8.16 with Coq-Elpi 1.15.x
+
+### General
+
+- **Fix** Structures can be keyd on sorts (eg `Prop`) and products (eg `T -> U`)
+- **New** Mixin parameters can depend on structure instances inferred using previous mixins (see [this test](tests/interleave_context.v))
+
 ## [1.2.1] - 2022-01-10
 
 Compatible with

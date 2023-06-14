@@ -18,27 +18,11 @@ to-file File :- !, std.do! [
 
 namespace private {
 
-pred compat.concat i:string, i:list string, o:string.
-compat.concat S L O :- coq.version _ _ N _, N > 12, !, std.string.concat S L O.
-compat.concat S L O :- compat.concat.aux L S O.
-compat.concat.aux [] _ "".
-compat.concat.aux [X] _ X :- !.
-compat.concat.aux [X|XS] Sep O :- compat.concat.aux XS Sep O1, O is X ^ Sep ^ O1.
-
-pred gref->modname i:gref, i:int, i:string, o:string.
-gref->modname GR NComp Sep ModName :-
-  coq.gref->path GR Path,
-  std.rev Path Mods,
-  std.length Path Len,
-  if (Len >= NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
-  std.take NComp Mods L,
-  compat.concat Sep {std.rev L} ModName.
-
 pred pp-coercion-dot i:out_stream, i:coercion. 
 pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
-  output OC {gref->modname Tgt 2 "_"},
+  output OC {gref->modname_short Tgt "_"},
   output OC " -> ",
-  output OC {gref->modname Src 2 "_"},
+  output OC {gref->modname_short Src "_"},
   output OC ";\n",
 ].
 pp-coercion-dot _ _.

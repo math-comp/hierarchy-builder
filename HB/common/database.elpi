@@ -223,21 +223,24 @@ distinct-pairs-below CurrentClass AllSuper C1 C2 :-
     not(sub-class? C1 C2),
     not(sub-class? C2 C1),
     if (join C1n C2n C3n)
-       (assert-building-bottom-up CurrentClass C3n, fail) % a join, not a valid pair
+       (assert-building-bottom-up CurrentClass C3n C1n C2n, fail) % a join, not a valid pair
        true, % no join, valid pair
   ].
 
-pred assert-building-bottom-up i:class, i:classname.
-assert-building-bottom-up CurrentClass C3n :-
+pred assert-building-bottom-up i:class, i:classname, i:classname, i:classname.
+assert-building-bottom-up CurrentClass C3n C1n C2n :-
   class-def (class C3n X Y),
   CurrentClass = class CC _ _,
   if (not (sub-class? CurrentClass (class C3n X Y)))
-     (gref->modname CC 2 "." Before, gref->modname C3n 2 "." After,
-      Msg1 is "- declare structure " ^ Before ^ " before structure " ^ After ^ ";",
-      coq.error "You must declare the hierarchy bottom-up."
+     (gref->modname CC 1 "." Before, gref->modname_short C3n "." After,
+      Msg1 is "- declare structure " ^ Before ^ " before structure " ^ After ^ " if " ^ After ^ " inherits from it;",
+      Msg2 is "- declare an additional structure that inherits from both "
+        ^ {gref->modname_short C1n "."} ^ " and " ^ {gref->modname_short C2n "."}
+        ^ " and from which " ^ Before ^ " and/or " ^ After ^ " inherit.",
+      coq.error "You must declare the hierarchy bottom-up or addd a missing join."
        "There are two ways out:"
        Msg1
-       "- declare an additional structure from which both inherit")
+       Msg2)
      true.
 
 pred distinct-pairs_pair i:prop, o:pair class class.
