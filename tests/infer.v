@@ -17,7 +17,7 @@ HB.mixin Record barm (A : Type) (P : foo.type) (B: Type) (T : Type) := {
 HB.structure Definition bar A P B := { T of barm A P B T }.
 
 #[skip="8.1[0-5].*"] HB.check (bar.type_ bool nat bool).
-#[skip="8.16.*", fail] HB.check (bar.type_ bool nat bool).
+#[skip="8.1[67].*", fail] HB.check (bar.type_ bool nat bool).
 Print bar.phant_type.
 Print bar.type.
 Check bar.type bool nat bool.
