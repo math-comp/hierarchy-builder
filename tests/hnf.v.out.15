@@ -1,0 +1,12 @@
+Datatypes_nat__canonical__hnf_S = 
+{| S.sort := nat; S.class := {| S.hnf_M_mixin := HB_unnamed_mixin_12 |} |}
+     : S.type
+HB_unnamed_mixin_12 = 
+{| M.x := f.y nat HB_unnamed_factory_10 + 1 |}
+     : M.axioms_ nat
+Datatypes_bool__canonical__hnf_S = 
+{| S.sort := bool; S.class := {| S.hnf_M_mixin := HB_unnamed_mixin_16 |} |}
+     : S.type
+HB_unnamed_mixin_16 = 
+Builders_6.HB_unnamed_factory_8 bool HB_unnamed_factory_13
+     : M.axioms_ bool
