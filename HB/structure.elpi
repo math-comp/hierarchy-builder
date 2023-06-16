@@ -275,7 +275,8 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
 
   w-params.nparams MwP NP,
   NImplicits is NP + 1,
-  std.map {std.iota NImplicits} (_\r\ r = maximal) Implicits,
+  std.iota NImplicits INI,
+  std.map INI (_\r\ r = maximal) Implicits,
   @global! => log.coq.arguments.set-implicit (const C) [Implicits],
 
   EXO = [exported-op M Poperation C|EXI]
@@ -315,8 +316,9 @@ mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
   std.map TML (from FC) Builders,
   std.map Builders (x\r\mk-app (global x) Params r) BuildersP,
 
+  factory-nparams TC TCNP,
   mk-app (global {get-constructor TC})
-    {coq.mk-n-holes {factory-nparams TC}} KCHoles,
+    {coq.mk-n-holes TCNP} KCHoles,
 
   (pi c\ sigma Mixes\
     std.map BuildersP (builder\r\ r = app[builder, T, c]) Mixes,
@@ -343,8 +345,9 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
   mk-app     ClassProjection Params ClassP,
   mk-app     Coercion        Params CoercionP,
 
+  factory-nparams TC TCNP,
   mk-app (global {get-constructor StructureT})
-    {coq.mk-n-holes {factory-nparams TC}} PackPH,
+    {coq.mk-n-holes TCNP} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
      (* let T := lp:SortP s in*)
@@ -582,7 +585,8 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassProjection GRPack
 
   if (NewMixins = [NewMixin]) (std.do! [
     if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms', 'mixin_of' and 'Mixin'"),
-    MArgs is {factory-nparams NewMixin} + 1,
+    factory-nparams NewMixin NewMixinNP,
+    MArgs is NewMixinNP + 1,
     mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
     @global! => log.coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
     @deprecated! "mathcomp 2.0.0" "use the factory instead" =>
