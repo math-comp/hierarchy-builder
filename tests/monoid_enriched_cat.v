@@ -23,6 +23,9 @@ Fail HB.structure
 
 
 (* Step 0: define a wrapper predicate in coq-elpi *)
+(* 5 lines of documentation + 1 line of elpi code in structure.v
+  `pred wrapper-mixin o:mixinname, o:gref, o:mixinname`
+*)
 (* Step 1: add a wrapper attribute to declare wrappers,
     they should index:
     - the wrapped mixin (`isMon`)
