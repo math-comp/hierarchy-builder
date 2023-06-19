@@ -31,6 +31,9 @@ Fail HB.structure
     - the wrapped mixin (`isMon`)
     - the wrapper mixin (`hom_isMon`)
     - the new subject (`hom`)
+  This attribute will add an entry in the `wrapper-mixin` database.
+  As an addition substep, we should check that the wrapper has
+  exactly one field, which is the wrapped mixin.
   *)
 #[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
