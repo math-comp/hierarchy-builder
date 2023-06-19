@@ -34,4 +34,9 @@ HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@h
 
   (* each instance of isMon should be tried as an instance of hom_isMon *)
 
-    
+HB.instance Definition _ := isQuiver.Build Type (fun A B => A -> B).
+Fail HB.instance Definition homTypeMon (A B : Quiver.type) := isMon.Build (hom A B) (* ... *).
+(* This last command should create a `Monoid_enriched_quiver`, in order to do so it should
+  automatically instanciate the wrapper `hom_isMon`:
+  HB.instance Definition _ := hom_isMon.Build Type homTypeMon.
+   *)
