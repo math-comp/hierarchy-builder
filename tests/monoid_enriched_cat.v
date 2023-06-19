@@ -22,6 +22,14 @@ Fail HB.structure
              (forall A B : Obj, isMon (@hom (Quiver.clone Obj _) A B)) }.
 
 
+(* Step 0: define a wrapper predicate in coq-elpi *)
+(* Step 1: add a wrapper attribute to declare wrappers,
+    they should index:
+    - the wrapped mixin (`isMon`)
+    - the wrapper mixin (`hom_isMon`)
+    - the new subject (`hom`)
+  *)
+#[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { private : forall A B, isMon (@hom T A B) }.
     
