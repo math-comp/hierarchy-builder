@@ -14,7 +14,7 @@ DIFF=\
 	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
 	  | sed -E 's/characters? [0-9-]+://' \
 	  > $(1).out.aux;\
-	wdiff $(call output_for,$(1)) $(1).out.aux;\
+	if ! wdiff $(call output_for,$(1)) $(1).out.aux; then echo FAILED $(1); exit 1; fi; \
 	fi
 
 post-all::
