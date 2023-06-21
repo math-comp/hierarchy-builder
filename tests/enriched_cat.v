@@ -18,12 +18,94 @@ HB.mixin Record isMon (A: Type) : Type := {
 HB.structure
   Definition Monoid : Type := { A of isMon A }.
 
-HB.mixin Record hom_isMon T of Quiver T :=
+HB.mixin Record hom_isMon0 T of Quiver T :=
     { private : forall A B, isMon (@hom T A B) }.
+
+Definition hom_isMon_ty {T} (H: T -> T -> Type) (A B: T) :
+  Type := isMon (H A B). 
+
+HB.mixin Record hom_isMon1 T of Quiver T :=
+    { private : forall A B, hom_isMon_ty (@hom (Quiver.clone T _)) A B }.
+
+(* related to the wrapper attribute? *)
+Definition hom_isM_ty {T} (H: T -> T -> Type) (M: Type -> Type) (A B: T) :
+  Type := M (H A B). 
+
+(* three parameter version *)
+Definition wrapper_spec {T} (H: T -> T -> Type) (M HM: Type -> Type) :
+  Prop := HM T = forall A B, hom_isM_ty H M A B.
+  
+                           
+HB.mixin Record hom_isMon2 T of Quiver T :=
+  { private : forall A B, hom_isM_ty (@hom (Quiver.clone T _))
+                                     (fun X => isMon X)
+                                     A B }.
+
+Fail HB.mixin Record hom_isM T (M: Type -> Type) of Quiver T :=
+  { private : forall (A B: T), @hom_isM_ty T (@hom (Quiver.clone T _))
+                                     M
+                                     A B }.
+
+HB.structure
+  Definition Monoid_enriched_quiver :=
+    { Obj of isQuiver Obj & hom_isMon2 Obj }.
+
+(******************)
+
+HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) :
+  isMon (@hom T A B) :=
+  @private T A B.
+
+HB.instance Definition funQ := isQuiver.Build Type (fun A B => A -> B).
+
+Definition funQ_isMonF (A B: Type) : isMon (A -> B).
+Admitted.
+  
+HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> B) :=
+  funQ_isMonF A B.
+
+HB.instance Definition _ := hom_isMon2.Build Type (fun A B => funQ_isMon A B).
+
+(********************)
+
+(* without HB *)
+Record isQuiverS (Obj: Type) : Type := { homS : Obj -> Obj -> Type }.
+
+(* without HB: trype-checks, trivially... *)
+Structure Monoid_enriched_quiverN := {
+    ObjN: Type;
+    iQ: isQuiverS ObjN;
+    hsM: forall A B, hom_isM_ty (homS ObjN iQ)
+                                (fun X => isMon X) A B }.
+
+(* mixing with HB doesn't work *)
+Fail Record Monoid_enriched_quiverN1 := {
+    ObjN: Type;
+    iQ: isQuiver ObjN;
+    hsM: forall A B, hom_isM_ty (@hom iQ)
+                                (fun X => isMon X) A B }.
+
+
+(*************************************)
+(** GARBAGE FOLLOWS ************************)
+
+
+HB.mixin Record hom_isM T (M: Type -> Type) of Quiver T :=
+  { private : forall (A B: T), @hom_isM_ty T (@hom (Quiver.clone T _))
+                                     M
+                                     A B }.
+
+
 
 HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj & hom_isMon Obj }.
+
+
+Definition hom_isMon_ty2 {T} (F: T -> T -> Type) := hom_isP_ty F
+                                                      (fun X => isMon X). 
+
+
 
 (* unique projection from the axiom of Monoid_enriched_quiver *)
 HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@hom T A B) :=
