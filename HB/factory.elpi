@@ -192,6 +192,7 @@ mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
 pred declare-asset i:argument, i:asset.
 declare-asset Arg AssetKind :- std.do! [
   argument-name Arg Module,
+
   if-verbose (coq.say {header} "start module and section" Module),
   log.coq.env.begin-module Module none,
   log.coq.env.begin-section Module,
@@ -232,6 +233,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   % coq.say RDecl RDeclClosed,
 
+
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
     (log.coq.env.add-indt RDeclClosed R),
@@ -249,6 +251,25 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   w-params.nparams MLwP NParams,
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
+
+  coq.say "TODO: extract useful info:" RDecl,
+  % record-decl in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi#L429
+  % per trovare il vero nome del mixin   database.elpi:factory-alias->gref
+  % per sapere quanti argomenti skippare prima del soggetto del mixin
+  %   factory-nparams
+  %
+  % in generale hai:
+  %  forall ....., app[mixin_alias, p1 ... pn | [  app[subject, ...] , extra]]
+  %  mixin_alias -> mixin via factory-alias->gref
+  %  factory-nparams mixin -> n
+  % 
+
+  if (get-option "wrapper" tt)
+     ((factory-alias->gref (indt R) X),
+      (WrapperClauses = [wrapper-mixin X (indt R) (indt R)]))
+     (WrapperClauses = []),
+
+  coq.say "aggiungiamo " WrapperClauses,
 
   % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
   % FactorySortCoe = coercion GRFSort _ _ _,
@@ -271,7 +292,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
-  std.flatten [Clauses, GRDepsClauses, [
+  std.flatten [Clauses, GRDepsClauses, WrapperClauses, [
     factory-constructor (indt R) GRK,
     factory-nparams (indt R) NParams,
     factory-builder-nparams BuildConst NParams,

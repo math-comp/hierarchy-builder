@@ -34,11 +34,22 @@ Fail HB.structure
   This attribute will add an entry in the `wrapper-mixin` database.
   As an addition substep, we should check that the wrapper has
   exactly one field, which is the wrapped mixin.
-  *)
+ *)
+
+(*  added wrapper attribute in coq-builtin.elpi. 
+    added pred wrapper-mixin in structures.v.
+    added conditional rule for wrapper-mixin in factory.elpi.
+    tentative use of factory-alias->gref, but the parameters 
+    aren't right yet -- see HB.structure.html. 
+*)
 #[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { private : forall A B, isMon (@hom T A B) }.
-    
+
+Elpi Print HB.structure.
+
+stop.
+
 (* Step 2: at structure declaration, export the main and only projection
    of each declared wrapper as an instance of the wrapped structure on
    its subject *)

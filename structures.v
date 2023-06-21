@@ -159,6 +159,13 @@ pred join o:classname, o:classname, o:classname.
 % in order to discover two mixins are the same)
 pred mixin-mem i:term, o:gref.
 
+% [wrapper-mixin Wrapper NewSubject WrappedMixin]
+%  #[wrapper] HB.mixin Record hom_isMon T of Quiver T :=
+%      { private : forall A B, isMon (@hom T A B) }.
+%  -->
+%  wrapper-mixin (indt "hom_isMon") (const "hom") (indt "isMon").
+pred wrapper-mixin o:mixinname, o:gref, o:mixinname.
+
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
