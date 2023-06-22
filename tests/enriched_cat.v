@@ -95,11 +95,13 @@ Structure Monoid_enriched_quiverN := {
     hsM: forall A B, hom_isM_ty (homS ObjN iQ)
                                 (fun X => isMon X) A B }.
 
+About hom.
+
 (* but mixing with HB doesn't work *)
-Fail Record Monoid_enriched_quiverN1 := {
-    ObjN: Type;
-    iQ: isQuiver ObjN;
-    hsM: forall A B, hom_isM_ty (@hom iQ)
+Record Monoid_enriched_quiverN1 := {
+    ObjN1: Type;
+    iQ1: isQuiver ObjN1;
+    hsM1: forall A B, hom_isM_ty (@hom (HB.pack ObjN1 iQ1))
                                 (fun X => isMon X) A B }.
 
 

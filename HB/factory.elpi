@@ -265,8 +265,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   % 
 
   if (get-option "wrapper" tt)
-     ((factory-alias->gref (indt R) X),
-      (WrapperClauses = [wrapper-mixin X (indt R) (indt R)]))
+%     ((factory-alias->gref (indt R) X),
+      (WrapperClauses = [wrapper-mixin (indt R) (indt R) (indt R)])
      (WrapperClauses = []),
 
   coq.say "aggiungiamo " WrapperClauses,
