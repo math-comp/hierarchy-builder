@@ -50,8 +50,14 @@ HB.mixin Record hom_isMon2 T of Quiver T :=
                                      (fun X => isMon X)
                                      A B }.
 
-(* trying parametric definition however doesn't work *)
-Fail HB.mixin Record hom_isM2 T (M: Type -> Type) of Quiver T :=
+(* the parametric definition works, though it is problematic *)
+HB.mixin Record hom_isM2 (M: Type -> Type) T of Quiver T :=
+  { private : forall (A B: T), @hom_isM_ty T (@hom (Quiver.clone T _))
+                                     M
+                                     A B }.
+
+(* just a copy of hom_isM2 *)
+HB.mixin Record hom_isM3 (M: Type -> Type) T of Quiver T :=
   { private : forall (A B: T), @hom_isM_ty T (@hom (Quiver.clone T _))
                                      M
                                      A B }.
@@ -59,6 +65,16 @@ Fail HB.mixin Record hom_isM2 T (M: Type -> Type) of Quiver T :=
 (* structure based on one of the wrappers *)
 HB.structure Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj & hom_isMon2 Obj }.
+
+(* structure based on the parametric wrappers *)
+HB.structure Definition Monoid_enriched_quiver2 :=
+    { Obj of isQuiver Obj & hom_isM2 (fun X => isMon X) Obj }.
+
+(* parametric stucture, cannot use hom_isM2 as it has been already used,
+   but works with a copy (hom_isM3) *)
+HB.structure Definition M_enriched_quiver3 (M: Type -> Type) :=
+    { Obj of isQuiver Obj & hom_isM3 M Obj }.
+
 
 (******************)
 
@@ -97,7 +113,7 @@ Structure Monoid_enriched_quiverN := {
 
 About hom.
 
-(* but mixing with HB doesn't work *)
+(* making it work with HB *)
 Record Monoid_enriched_quiverN1 := {
     ObjN1: Type;
     iQ1: isQuiver ObjN1;

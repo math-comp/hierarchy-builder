@@ -231,8 +231,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
-  % coq.say RDecl RDeclClosed,
-
+%  coq.say "TEST" RDecl RDeclClosed,
+%  coq.say "TEST" RDecl,
+  coq.say "TEST" (indt R),
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
@@ -263,6 +264,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   %  mixin_alias -> mixin via factory-alias->gref
   %  factory-nparams mixin -> n
   % 
+
+  coq.say "TEST 2" (indt R),
 
   if (get-option "wrapper" tt)
 %     ((factory-alias->gref (indt R) X),
