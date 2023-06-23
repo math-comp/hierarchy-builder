@@ -17,6 +17,35 @@ Definition ignore_disabled {T T'} (x : T) (x' : T') := x'.
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
 
+Axiom m : Type -> Type.
+Record r (P : Type) := { private : m P }.
+
+Elpi Command x.
+Elpi Accumulate lp:{{
+
+pred extract i:indt-decl, o:gref.
+extract (parameter ID _ _ R) Out :-
+  pi p\
+    extract (R p) Out.
+extract (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
+  Ty = app [global GR| _].
+
+}}.
+Elpi Typecheck.
+
+
+Elpi Query lp:{{
+
+  coq.locate "r" (indt I),
+  coq.env.indt-decl I D,
+  extract D GR.
+
+}}.
+
+
+
+
+
 Register unify as hb.unify.
 Register id_phant as hb.id.
 Register id_phant_disabled as hb.id_disabled.

@@ -5,6 +5,21 @@ HB.mixin Record isQuiver Obj := { hom : Obj -> Obj -> Type }.
 
 HB.structure Definition Quiver := { Obj of isQuiver Obj }.
 
+(*
+parameter Obj explicit (sort (typ «HB.tests.monoid_enriched_cat.2»)) c0 \
+ record axioms_ (sort (typ «HB.tests.monoid_enriched_cat.5»)) Axioms_ 
+  (field [coercion off, canonical tt] hom 
+    (prod `_` c0 c1 \
+      prod `_` c0 c2 \ sort (typ «HB.tests.monoid_enriched_cat.7»)) c1 \
+    end-record)
+
+record axioms_ (sort (typ «HB.tests.monoid_enriched_cat.5»)) Axioms_ 
+ (field [coercion off, canonical tt] hom 
+   (prod `_` (global (const «Obj»)) c0 \
+     prod `_` (global (const «Obj»)) c1 \
+      sort (typ «HB.tests.monoid_enriched_cat.7»)) c0 \ end-record)
+*)
+
 HB.mixin Record isMon A := {
     zero  : A;
     add   : A -> A -> A;
@@ -45,6 +60,98 @@ Fail HB.structure
 #[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { private : forall A B, isMon (@hom T A B) }.
+
+(* Elpi code to be moved to an Elpi file such as factory.elpi *)
+
+Elpi Command x.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/status.elpi".
+Elpi Accumulate Db hb.db.
+
+(* extracts isMon *)
+Elpi Accumulate lp:{{
+
+pred extract_head_type_name i:term o:gref.
+extract_head_type_name (prod _ _ TF) Out1 :-
+  pi p\ 
+    extract_head_type_name (TF p) Out1.
+extract_head_type_name Ty GR :-
+  Ty = app [global GR| _].   
+
+pred extract_wrapped i:indt-decl, o:gref.
+extract_wrapped (parameter ID _ _ R) Out :-
+   pi p\
+    extract_wrapped (R p) Out.
+extract_wrapped (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    extract_head_type_name Ty GR0.
+
+}}.
+Elpi Typecheck.
+
+(* OK *)
+Elpi Query lp:{{
+
+  std.spy!(coq.locate "hom_isMon.axioms_" XX),
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_wrapped D GR0.
+ 
+}}.
+
+(* should extract hom *)
+Elpi Accumulate lp:{{
+
+pred extract_inner_type_name i:term o:gref.
+extract_inner_type_name (prod _ _ TF) Out1 :-
+  pi p\ 
+    extract_inner_type_name (TF p) Out1.
+extract_inner_type_name Ty Gr :-
+  Ty = (app [global _, app [global GR]]).
+
+pred extract_subject i:indt-decl, o:gref.
+extract_subject (parameter ID _ _ R) Out :-
+   pi p\
+    extract_subject (R p) Out.
+extract_subject (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    extract_inner_type_name Ty GR0.
+
+}}.
+Elpi Typecheck.
+
+(* not working *)
+Elpi Query lp:{{
+
+  std.spy!(coq.locate "hom_isMon.axioms_" XX),
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_subject D GR.
+
+}}.
+
+(*
+Elpi Accumulate lp:{{
+
+pred extract_head_type i:term o:term.
+extract_head_type (prod _ _ TF) Out1 :-
+  pi p\ 
+    extract_head_type (TF p) Out1.
+extract_head_type Ty Ty :-
+  Ty = app [global _| _].      
+ 
+pred extract_wrapped i:indt-decl, o:gref.
+extract_wrapped (parameter ID _ _ R) Out :-
+   pi p\
+    extract_wrapped (R p) Out.
+extract_wrapped (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
+    extract_head_type Ty Ty1,
+    Ty1 = app [global GR| _].   
+
+}}.
+Elpi Typecheck.
+
+*)
 
 Elpi Print HB.structure.
 

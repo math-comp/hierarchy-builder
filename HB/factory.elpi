@@ -233,7 +233,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
 %  coq.say "TEST" RDecl RDeclClosed,
 %  coq.say "TEST" RDecl,
-  coq.say "TEST" (indt R),
+%  coq.say "TEST" (indt R),
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
@@ -253,7 +253,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
 
-  coq.say "TODO: extract useful info:" RDecl,
+  coq.say "TODO: extract useful info:" RDecl "AND THEN:" RDeclClosed,
   % record-decl in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi#L429
   % per trovare il vero nome del mixin   database.elpi:factory-alias->gref
   % per sapere quanti argomenti skippare prima del soggetto del mixin
