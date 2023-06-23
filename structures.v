@@ -244,9 +244,9 @@ pred compress o:term, o:term.
 *)
 
 #[arguments(raw)] Elpi Command HB.locate.
-Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [str S] :- !,
@@ -485,7 +485,6 @@ Elpi Export HB.mixin.
 *)
 
 Elpi Tactic HB.pack_for.
-Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -494,6 +493,7 @@ Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 solve (goal _ _ S _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
@@ -507,7 +507,6 @@ Elpi Typecheck.
 Elpi Export HB.pack_for.
 
 Elpi Tactic HB.pack.
-Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -516,6 +515,7 @@ Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
@@ -968,13 +968,13 @@ Elpi Export HB.declare.
     [#[fail]] attribute. *)
 
 #[arguments(raw)] Elpi Command HB.check.
-Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
 main _ :- coq.error "usage: HB.check (term).".
