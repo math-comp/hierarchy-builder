@@ -278,6 +278,8 @@ Elpi Export HB.locate.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/about.elpi".
@@ -311,6 +313,8 @@ Elpi Export HB.about.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/about.elpi".
@@ -352,6 +356,8 @@ Elpi Export HB.howto.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
@@ -380,6 +386,8 @@ tred file.dot | xdot -
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/graph.elpi".
@@ -428,6 +436,8 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -490,6 +500,8 @@ Elpi Accumulate Db hb.db.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -512,6 +524,8 @@ Elpi Accumulate Db hb.db.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -595,6 +609,8 @@ HB.structure Definition StructureName params :=
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -649,6 +665,8 @@ HB.instance Definition N Params := Factory.Build Params T …
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -680,6 +698,8 @@ Elpi Export HB.instance.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -740,6 +760,8 @@ HB.end.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -764,6 +786,8 @@ Elpi Export HB.builders.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -816,6 +840,8 @@ Export Algebra.Exports.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
@@ -842,6 +868,8 @@ Elpi Export HB.export.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
@@ -888,6 +916,8 @@ Notation foo := foo.body.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/lock.elpi".
@@ -937,6 +967,8 @@ HB.instance Definition _ : Ml ... T := ml.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -973,6 +1005,8 @@ Elpi Accumulate Db hb.db.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate lp:{{

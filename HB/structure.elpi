@@ -401,7 +401,7 @@ declare-coercion SortProjection ClassProjection
   std.map AllTgtSuper class_structure AllTgtSuperStructures,
 
   mk-compression-clauses StructureF StructureT AllTgtSuperStructures AllCompressionClauses,
-  std.forall AllCompressionClauses (c\ log.coq.env.accumulate current "hb.db" (clause _ _ c)),
+  acc-clauses current AllCompressionClauses,
 ].
 
 

@@ -74,8 +74,11 @@ with-locality P :-
 pred acc-clause i:scope, i:prop.
 acc-clause Scope C :- coq.elpi.accumulate Scope "hb.db" (clause _ _ C).
 
+/* Uncomment and remove HB/common/compat_acc_clauses_*.elpi once requiring coq-elpi >= 1.18.0,
+   which implies Coq >= 8.17
 pred acc-clauses i:scope, i:list prop.
-acc-clauses Scope CL :- std.forall CL (acc-clause Scope).
+acc-clauses Scope CL :- coq.elpi.accumulate-clauses Scope "hb.db" {std.map CL (c\r\ r = clause _ _ c)}.
+*/
 
 pred save-docstring.
 save-docstring :-
