@@ -284,7 +284,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   list-w-params_list MLwP MLwoP,
   std.map MLwoP (_\ r\ r = maximal) Implicits,
-  /* std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits, */
   @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
   % @global! => log.coq.coercion.declare FactorySortCoe,
 
