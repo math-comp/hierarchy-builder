@@ -17,10 +17,13 @@ Definition ignore_disabled {T T'} (x : T) (x' : T') := x'.
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
 
+(******* simple example of Elpi command *)
 Axiom m : Type -> Type.
 Record r (P : Type) := { private : m P }.
 
-Elpi Command x.
+(* command name *)
+Elpi Command foo_example_command.
+(* predicate definition *)
 Elpi Accumulate lp:{{
 
 pred extract i:indt-decl, o:gref.
@@ -33,7 +36,7 @@ extract (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
 }}.
 Elpi Typecheck.
 
-
+(* predicate query *)
 Elpi Query lp:{{
 
   coq.locate "r" (indt I),
@@ -41,10 +44,7 @@ Elpi Query lp:{{
   extract D GR.
 
 }}.
-
-
-
-
+(******* end simple example *)
 
 Register unify as hb.unify.
 Register id_phant as hb.id.

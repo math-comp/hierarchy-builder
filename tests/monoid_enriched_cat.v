@@ -108,7 +108,7 @@ extract_inner_type_name (prod _ _ TF) Out1 :-
   pi p\ 
     extract_inner_type_name (TF p) Out1.
 extract_inner_type_name Ty Gr :-
-  Ty = (app [global _, app [global GR]]).
+  Ty = (app [global _, app [global Gr| _]]).
 
 pred extract_subject i:indt-decl, o:gref.
 extract_subject (parameter ID _ _ R) Out :-
@@ -120,7 +120,10 @@ extract_subject (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
 }}.
 Elpi Typecheck.
 
-(* not working *)
+(*for debugging - check tmp/trace... with Elpi Tracer *)
+(* Elpi Trace Browser. *)
+
+(* OK *)
 Elpi Query lp:{{
 
   std.spy!(coq.locate "hom_isMon.axioms_" XX),
@@ -140,18 +143,27 @@ extract_head_type (prod _ _ TF) Out1 :-
 extract_head_type Ty Ty :-
   Ty = app [global _| _].      
  
-pred extract_wrapped i:indt-decl, o:gref.
-extract_wrapped (parameter ID _ _ R) Out :-
+pred extract_wrapped2 i:indt-decl, o:gref.
+extract_wrapped2 (parameter ID _ _ R) Out :-
    pi p\
-    extract_wrapped (R p) Out.
-extract_wrapped (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
+    extract_wrapped2 (R p) Out.
+extract_wrapped2 (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
     extract_head_type Ty Ty1,
     Ty1 = app [global GR| _].   
 
 }}.
 Elpi Typecheck.
 
+Elpi Query lp:{{
+
+  std.spy!(coq.locate "hom_isMon.axioms_" XX),
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_head_type D GR.
+
+}}.
 *)
+
 
 Elpi Print HB.structure.
 
