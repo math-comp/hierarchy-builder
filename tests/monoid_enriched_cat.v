@@ -73,97 +73,106 @@ Elpi Accumulate Db hb.db.
 (* extracts isMon *)
 Elpi Accumulate lp:{{
 
-pred extract_head_type_name i:term o:gref.
-extract_head_type_name (prod _ _ TF) Out1 :-
+pred extract_ret_type_name i:term, o:gref.
+extract_ret_type_name (prod _ _ TF) Out1 :-
   pi p\ 
-    extract_head_type_name (TF p) Out1.
-extract_head_type_name Ty GR :-
-  Ty = app [global GR| _].   
-
-pred extract_wrapped i:indt-decl, o:gref.
-extract_wrapped (parameter ID _ _ R) Out :-
+    extract_ret_type_name (TF p) Out1.
+extract_ret_type_name Ty GR1 :-
+  Ty = app [global GR0| _],
+  factory-alias->gref GR0 GR1.
+   
+pred extract_wrapped1 i:indt-decl, o:gref.
+extract_wrapped1 (parameter ID _ _ R) Out :-
    pi p\
-    extract_wrapped (R p) Out.
-extract_wrapped (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
-    extract_head_type_name Ty GR0.
+    extract_wrapped1 (R p) Out.
+extract_wrapped1 (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    extract_ret_type_name Ty GR0.
 
 }}.
 Elpi Typecheck.
 
-(* OK *)
-Elpi Query lp:{{
-
-  std.spy!(coq.locate "hom_isMon.axioms_" XX),
-  XX = (indt I),
-  coq.env.indt-decl I D,
-  extract_wrapped D GR0.
- 
-}}.
-
-(* should extract hom *)
+(* extracts hom *)
 Elpi Accumulate lp:{{
 
-pred extract_inner_type_name i:term o:gref.
+pred extract_inner_type_name i:term, o:gref.
 extract_inner_type_name (prod _ _ TF) Out1 :-
   pi p\ 
     extract_inner_type_name (TF p) Out1.
 extract_inner_type_name Ty Gr :-
   Ty = (app [global _, app [global Gr| _]]).
 
-pred extract_subject i:indt-decl, o:gref.
-extract_subject (parameter ID _ _ R) Out :-
+pred extract_subject1 i:indt-decl, o:gref.
+extract_subject1 (parameter ID _ _ R) Out :-
    pi p\
-    extract_subject (R p) Out.
-extract_subject (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    extract_subject1 (R p) Out.
+extract_subject1 (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
     extract_inner_type_name Ty GR0.
 
 }}.
 Elpi Typecheck.
 
-(*for debugging - check tmp/trace... with Elpi Tracer *)
-(* Elpi Trace Browser. *)
-
-(* OK *)
-Elpi Query lp:{{
-
-  std.spy!(coq.locate "hom_isMon.axioms_" XX),
-  XX = (indt I),
-  coq.env.indt-decl I D,
-  extract_subject D GR.
-
-}}.
-
-(*
+(* better version, with predicate parameters *)
 Elpi Accumulate lp:{{
 
-pred extract_head_type i:term o:term.
-extract_head_type (prod _ _ TF) Out1 :-
-  pi p\ 
-    extract_head_type (TF p) Out1.
-extract_head_type Ty Ty :-
-  Ty = app [global _| _].      
- 
-pred extract_wrapped2 i:indt-decl, o:gref.
-extract_wrapped2 (parameter ID _ _ R) Out :-
+pred extract_from_record_decl i: (term -> gref -> prop), i:indt-decl, o:gref.
+extract_from_record_decl P (parameter ID _ _ R) Out :-
    pi p\
-    extract_wrapped2 (R p) Out.
-extract_wrapped2 (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
-    extract_head_type Ty Ty1,
-    Ty1 = app [global GR| _].   
+    extract_from_record_decl P (R p) Out.
+extract_from_record_decl P (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    P Ty GR0.
+
+pred extract_from_rtty i: (term -> gref -> prop), i: term, o:gref.
+extract_from_rtty P (prod _ _ TF) Out1 :-
+  pi p\ 
+    extract_from_rtty P (TF p) Out1.
+extract_from_rtty P Ty Gr :- P Ty Gr.
+
+pred xtr_fst_op i:term, o:gref.
+xtr_fst_op Ty Gr1 :-
+  Ty = (app [global Gr0| _]),
+  factory-alias->gref Gr0 Gr1.
+
+pred xtr_snd_op i:term, o:gref.
+xtr_snd_op Ty Gr :-
+  Ty = (app [global _, app [global Gr| _]]).
+
+pred extract_wrapped i:indt-decl, o:gref.
+extract_wrapped In Out :-
+  extract_from_record_decl (extract_from_rtty xtr_fst_op) In Out.
+
+pred extract_subject i:indt-decl, o:gref.
+extract_subject In Out :-
+  extract_from_record_decl (extract_from_rtty xtr_snd_op) In Out.
 
 }}.
 Elpi Typecheck.
 
+(*for debugging - check /tmp/traced.tmp.json with Elpi Tracer *)
+(* Elpi Trace Browser. *) 
+(* Elpi Bound Steps 1000. *)
+
+(* OK *)
 Elpi Query lp:{{
 
-  std.spy!(coq.locate "hom_isMon.axioms_" XX),
+  coq.locate "hom_isMon.axioms_" XX,
   XX = (indt I),
   coq.env.indt-decl I D,
-  extract_head_type D GR.
-
+  extract_wrapped D GR1,
+  extract_subject D GR2.
+ 
 }}.
-*)
 
+
+(* also OK *)
+Elpi Query lp:{{
+
+  coq.locate "hom_isMon.axioms_" XX,
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_wrapped1 D GR11,
+  extract_subject1 D GR12.
+ 
+}}.
 
 Elpi Print HB.structure.
 
