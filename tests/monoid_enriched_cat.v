@@ -5,21 +5,6 @@ HB.mixin Record isQuiver Obj := { hom : Obj -> Obj -> Type }.
 
 HB.structure Definition Quiver := { Obj of isQuiver Obj }.
 
-(*
-parameter Obj explicit (sort (typ «HB.tests.monoid_enriched_cat.2»)) c0 \
- record axioms_ (sort (typ «HB.tests.monoid_enriched_cat.5»)) Axioms_ 
-  (field [coercion off, canonical tt] hom 
-    (prod `_` c0 c1 \
-      prod `_` c0 c2 \ sort (typ «HB.tests.monoid_enriched_cat.7»)) c1 \
-    end-record)
-
-record axioms_ (sort (typ «HB.tests.monoid_enriched_cat.5»)) Axioms_ 
- (field [coercion off, canonical tt] hom 
-   (prod `_` (global (const «Obj»)) c0 \
-     prod `_` (global (const «Obj»)) c1 \
-      sort (typ «HB.tests.monoid_enriched_cat.7»)) c0 \ end-record)
-*)
-
 HB.mixin Record isMon A := {
     zero  : A;
     add   : A -> A -> A;
@@ -31,6 +16,7 @@ HB.mixin Record isMon A := {
 HB.structure
   Definition Monoid := { A of isMon A }.
 
+(* This is expected to fail, as it isn't a mixin *)  
 Fail HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj &
@@ -50,19 +36,55 @@ Fail HB.structure
   As an addition substep, we should check that the wrapper has
   exactly one field, which is the wrapped mixin.
  *)
-
 (*  added wrapper attribute in coq-builtin.elpi. 
     added pred wrapper-mixin in structures.v.
     added conditional rule for wrapper-mixin in factory.elpi.
-    tentative use of factory-alias->gref, but the parameters 
-    aren't right yet -- see HB.structure.html. 
 *)
 #[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { private : forall A B, isMon (@hom T A B) }.
 
-(* Elpi code to be moved to an Elpi file such as factory.elpi *)
+(* Step 2: at structure declaration, export the main and only projection
+   of each declared wrapper as an instance of the wrapped structure on
+   its subject *)
+   HB.structure
+   Definition Monoid_enriched_quiver :=
+     { Obj of isQuiver Obj & hom_isMon Obj }.
+ 
+ HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@hom T A B) :=
+   @private T A B.
+ 
+(* each instance of isMon should be tried as an instance of hom_isMon *)
+(*
+ (* Step 3: for each instance of a wrapped mixin on a subject known 
+   to be wrapped, automatically produce an instance of the wrapper mixin too. *)
+   HB.instance Definition _ := isQuiver.Build Type (fun A B => A -> B).
+   Fail HB.instance Definition homTypeMon (A B : Quiver.type) := isMon.Build (hom A B) (* ... *).
+   (* This last command should create a `Monoid_enriched_quiver`, in order to do so it should
+     automatically instanciate the wrapper `hom_isMon`:
+     HB.instance Definition _ := hom_isMon.Build Type homTypeMon.
+      *)
+*)  
 
+(* quiver instance (simply typed functions between two types) *)
+HB.instance Definition funQ := isQuiver.Build Type (fun A B => A -> B).
+
+(* prove that for every two types the quiver is a monoid *)
+Lemma funQ_isMonF (A B: Type) : isMon (A -> B).
+Admitted.
+
+(* use the lemma to instantiate isMon *)
+HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> B) :=
+  funQ_isMonF A B.
+
+(* use the generic isMon instance to instantiate 'private' *)
+HB.instance Definition funQ_hom_isMon :=
+  hom_isMon.Build Type (fun A B => funQ_isMon A B).
+
+ 
+(**************************************************************)
+(* Elpi code moved to factory.elpi *)
+(*
 Elpi Command x.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
@@ -180,24 +202,5 @@ Elpi Query lp:{{
 Elpi Print HB.structure.
 
 stop.
+*)
 
-(* Step 2: at structure declaration, export the main and only projection
-   of each declared wrapper as an instance of the wrapped structure on
-   its subject *)
-HB.structure
-  Definition Monoid_enriched_quiver :=
-    { Obj of isQuiver Obj & hom_isMon Obj }.
-
-HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@hom T A B) :=
-  @private T A B.
-
-  (* each instance of isMon should be tried as an instance of hom_isMon *)
-
-(* Step 3: for each instance of a wrapped mixin on a subject known 
-  to be wrapped, automatically produce an instance of the wrapper mixin too. *)
-HB.instance Definition _ := isQuiver.Build Type (fun A B => A -> B).
-Fail HB.instance Definition homTypeMon (A B : Quiver.type) := isMon.Build (hom A B) (* ... *).
-(* This last command should create a `Monoid_enriched_quiver`, in order to do so it should
-  automatically instanciate the wrapper `hom_isMon`:
-  HB.instance Definition _ := hom_isMon.Build Type homTypeMon.
-   *)
