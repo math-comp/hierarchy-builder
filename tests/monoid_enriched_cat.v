@@ -144,6 +144,13 @@ pred extract_subject i:indt-decl, o:gref.
 extract_subject In Out :-
   extract_from_record_decl (extract_from_rtty xtr_snd_op) In Out.
 
+pred wrapper_mixin_aux i:gref, o:gref, o:gref.
+wrapper_mixin_aux XX Gr1 Gr2 :-
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_subject D Gr1,
+  extract_wrapped D Gr2.  
+
 }}.
 Elpi Typecheck.
 
@@ -155,13 +162,9 @@ Elpi Typecheck.
 Elpi Query lp:{{
 
   coq.locate "hom_isMon.axioms_" XX,
-  XX = (indt I),
-  coq.env.indt-decl I D,
-  extract_wrapped D GR1,
-  extract_subject D GR2.
+  wrapper_mixin_aux XX Gr1 Gr2.
  
 }}.
-
 
 (* also OK *)
 Elpi Query lp:{{

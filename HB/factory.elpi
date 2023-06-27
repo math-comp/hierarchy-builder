@@ -266,14 +266,14 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   %  factory-nparams mixin -> n
   % 
 
-  coq.say "TEST 2" (indt R),
+  % coq.say "TEST 2" (indt R),
 
   if (get-option "wrapper" tt)
 %     ((factory-alias->gref (indt R) X),
       (WrapperClauses = [wrapper-mixin (indt R) (indt R) (indt R)])
      (WrapperClauses = []),
 
-  coq.say "aggiungiamo " WrapperClauses,
+  % coq.say "aggiungiamo " WrapperClauses,
 
   % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
   % FactorySortCoe = coercion GRFSort _ _ _,
