@@ -36,7 +36,7 @@ Fail HB.structure
   As an addition substep, we should check that the wrapper has
   exactly one field, which is the wrapped mixin.
  *)
-(*  added wrapper attribute in coq-builtin.elpi. 
+(*  added wrapper attribute in utils.elpi. 
     added pred wrapper-mixin in structures.v.
     added conditional rule for wrapper-mixin in factory.elpi.
 *)
