@@ -67,14 +67,42 @@ HB.mixin Record hom_isMon T of Quiver T :=
 *)  
 
 (* quiver instance (simply typed functions between two types) *)
-HB.instance Definition funQ := isQuiver.Build Type (fun A B => A -> B).
+HB.instance Definition funQ := isQuiver.Build Type 
+   (fun A B => A -> option B).
 
 (* prove that for every two types the quiver is a monoid *)
-Lemma funQ_isMonF (A B: Type) : isMon (A -> B).
-Admitted.
+
+Require Import FunctionalExtensionality.
+
+Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
+  match f x with
+  | Some _ => f x
+  | _ => g x end.              
+
+Program Definition funQ_isMonF (A B: Type) : isMon (A -> option B) :=
+  isMon.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _.
+Obligations.
+Obligation 1.
+unfold associative; intros.
+eapply functional_extensionality; intro a.
+unfold funQ_comp.
+destruct (x a) eqn:K1.
+simpl; auto.
+destruct (y a); auto.
+Qed.
+Obligation 2.
+unfold left_id; intros.
+unfold funQ_comp; auto.
+Qed.
+Obligation 3.
+unfold right_id; intros.
+eapply functional_extensionality; intro a.
+unfold funQ_comp.
+destruct (x a); auto.
+Qed.
 
 (* use the lemma to instantiate isMon *)
-HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> B) :=
+HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> option B) :=
   funQ_isMonF A B.
 
 (* use the generic isMon instance to instantiate 'private' *)
