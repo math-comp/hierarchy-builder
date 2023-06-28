@@ -101,6 +101,9 @@ unfold funQ_comp.
 destruct (x a); auto.
 Qed.
 
+Print Canonical Projections.
+Fail Check (nat -> option nat) : Monoid.type.
+
 (* use the lemma to instantiate isMon *)
 HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> option B) :=
   funQ_isMonF A B.
@@ -109,7 +112,16 @@ HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> option B) :=
 HB.instance Definition funQ_hom_isMon :=
   hom_isMon.Build Type (fun A B => funQ_isMon A B).
 
- 
+HB.about private.
+Print Canonical Projections.
+Check (nat -> option nat) : Monoid.type.
+HB.about funQ_isMon.
+Fail HB.about funQ_hom_isMon.
+About funQ_hom_isMon.
+
+Elpi Print HB.structure.
+
+
 (**************************************************************)
 (* Elpi code moved to factory.elpi *)
 (*
