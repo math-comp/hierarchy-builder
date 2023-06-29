@@ -205,6 +205,12 @@ declare Module BSkel Sort :- std.do! [
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
 
+  % factories-provide (line 16) gives the mixins provided from a factory. 
+  % line 23 (list-w-params_list) associates these mixins with their names (ML).
+  % we need to filter the wrappers out of ML. 
+  % then export the projection of each mixin wrapper. 
+  % can use exported-op to this purpose 
+
   %% tentative pseudo-code::
   % std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
   % std.forall WrapperML private.rexport-wrapper-as-instance,
