@@ -222,7 +222,8 @@ declare Module BSkel Sort :- std.do! [
   %   declare-existing-instance C %fixme.
 
   std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
-  std.forall WrapperML private.reexport-wrapper-as-instance,
+  coq.say "????" EX,
+  EX => std.forall WrapperML private.reexport-wrapper-as-instance,
 
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
 
@@ -758,8 +759,14 @@ mk-hb-eta.arity Structure ClassName SortProjection
 ].
 
 pred reexport-wrapper-as-instance i:mixinname.
-reexport-wrapper-as-instance M :-
+reexport-wrapper-as-instance M :- std.spy-do! [
      exported-op M _ C,
-     declare-existing C _. %fixme.
+     coq.say "C=" C,
+     B = (global (const C)),
+     coq.env.typeof (const C) Ty,
+     coq.count-prods Ty N0, 
+     instance.declare-const "xx" B {coq.term->arity Ty N0} _,
+     % declare-existing C _,
+ ]. %fixme.
 
 }}

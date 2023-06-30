@@ -22,7 +22,8 @@ Fail HB.structure
     { Obj of isQuiver Obj &
              (forall A B : Obj, isMon (@hom (Quiver.clone Obj _) A B)) }.
 
-
+About zero.
+Print zero.
 (* Step 0: define a wrapper predicate in coq-elpi *)
 (* 5 lines of documentation + 1 line of elpi code in structure.v
   `pred wrapper-mixin o:mixinname, o:gref, o:mixinname`
@@ -57,10 +58,10 @@ HB.structure
 About hom_isMon.hom_isMon_private.
 About hom_isMon_private.
 
-
+(*
  HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@hom T A B) :=
    @hom_isMon_private T A B.
- 
+ *)
 (* each instance of isMon should be tried as an instance of hom_isMon *)
 (*
  (* Step 3: for each instance of a wrapped mixin on a subject known 
@@ -119,7 +120,7 @@ HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> option B) :=
 HB.instance Definition funQ_hom_isMon :=
   hom_isMon.Build Type (fun A B => funQ_isMon A B).
 
-HB.about private.
+(* HB.about private. *)
 Print Canonical Projections.
 Check (nat -> option nat) : Monoid.type.
 HB.about funQ_isMon.
