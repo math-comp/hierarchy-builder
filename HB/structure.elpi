@@ -222,7 +222,19 @@ declare Module BSkel Sort :- std.do! [
   %   declare-existing-instance C %fixme.
 
   std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
-  coq.say "????" EX,
+  % we need to assert locally the clauses in EX, which is 
+  % [exported-op (indt «hom_isMon.axioms_») «hom_isMon.hom_isMon_private» 
+  % «hom_isMon_private»]
+  % crucially containing hom_isMon_private.
+  % In fact, these clauses get added to the global database by Accumulate,
+  % but this makes them available only at the end of the program run, and 
+  % this is too late.
+  % Then given WrapperML (the list of the wrapper mixins as grefs)
+  % i.e. [indt «hom_isMon.axioms_»]
+  % we can use reexport-wrapper-as-instance to get the projection and build 
+  % the instances. 
+  coq.say "???? WrapperML " WrapperML,  
+  coq.say "???? EX " EX,
   EX => std.forall WrapperML private.reexport-wrapper-as-instance,
 
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
@@ -758,15 +770,20 @@ mk-hb-eta.arity Structure ClassName SortProjection
   Out = parameter {coq.name->id NT} explicit Ty s\ arity (Concl s)
 ].
 
+% M is the gref of the wrapper mixin
+% C gets now instantiated to the projection, i.e. hom_isMon_private
+% we need to count the parameters, that we get from the type
+% we then can construct the instance, using
+% instance.declare-const (notably used in the API, i.e. in structures.v, 
+% HB.instance)
 pred reexport-wrapper-as-instance i:mixinname.
 reexport-wrapper-as-instance M :- std.spy-do! [
      exported-op M _ C,
-     coq.say "C=" C,
+     coq.say "???? C=" C,
      B = (global (const C)),
      coq.env.typeof (const C) Ty,
      coq.count-prods Ty N0, 
-     instance.declare-const "xx" B {coq.term->arity Ty N0} _,
-     % declare-existing C _,
- ]. %fixme.
+     instance.declare-const "xx" B {coq.term->arity Ty N0} _
+ ]. 
 
 }}

@@ -58,6 +58,7 @@ HB.structure
 About hom_isMon.hom_isMon_private.
 About hom_isMon_private.
 
+(* as expected from step 2, now this instance declaration is no more necessary *)
 (*
  HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@hom T A B) :=
    @hom_isMon_private T A B.
