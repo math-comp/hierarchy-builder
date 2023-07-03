@@ -75,6 +75,8 @@ About hom_isMon_private.
       *)
 *)  
 
+(* Essentially, step 2 is the elimination rule for the wrapper, step 3 is the introduction one *)
+
 (* quiver instance (simply typed functions between two types) *)
 HB.instance Definition funQ := isQuiver.Build Type 
    (fun A B => A -> option B).
@@ -88,6 +90,28 @@ Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
   | Some _ => f x
   | _ => g x end.              
 
+  Program Definition funQ_isMonF_alt (A B: Type) : isMon (hom A B) :=
+  isMon.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _.
+  Obligations.
+  Obligation 1.
+  unfold associative; intros.
+  eapply functional_extensionality; intro a.
+  unfold funQ_comp.
+  destruct (x a) eqn:K1.
+  simpl; auto.
+  destruct (y a); auto.
+  Qed.
+  Obligation 2.
+  unfold left_id; intros.
+  unfold funQ_comp; auto.
+  Qed.
+  Obligation 3.
+  unfold right_id; intros.
+  eapply functional_extensionality; intro a.
+  unfold funQ_comp.
+  destruct (x a); auto.
+  Qed.
+  
 Program Definition funQ_isMonF (A B: Type) : isMon (A -> option B) :=
   isMon.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _.
 Obligations.
@@ -114,16 +138,17 @@ Print Canonical Projections.
 Fail Check (nat -> option nat) : Monoid.type.
 
 (* use the lemma to instantiate isMon *)
-HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> option B) :=
+HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
 
-(* use the generic isMon instance to instantiate 'private' *)
+(* instantiate hom_isMon by using the generic isMon instance to define 'private' *)
 HB.instance Definition funQ_hom_isMon :=
   hom_isMon.Build Type (fun A B => funQ_isMon A B).
 
 (* HB.about private. *)
 Print Canonical Projections.
-Check (nat -> option nat) : Monoid.type.
+(* this has to be changed, it should be something like (hom nat nat):
+    Check (nat -> option nat) : Monoid.type. *)
 HB.about funQ_isMon.
 Fail HB.about funQ_hom_isMon.
 About funQ_hom_isMon.

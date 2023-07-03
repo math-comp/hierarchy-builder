@@ -786,4 +786,34 @@ reexport-wrapper-as-instance M :- std.spy-do! [
      instance.declare-const "xx" B {coq.term->arity Ty N0} _
  ]. 
 
+%hom_isMon.hom_isMon_private :
+%forall (T : Type)
+%  (local_mixin_monoid_enriched_cat_isQuiver : isQuiver.axioms_ T),
+%hom_isMon.axioms_ T local_mixin_monoid_enriched_cat_isQuiver ->
+%forall
+%  A
+%   B : {|
+%         Quiver.sort := T;
+%         Quiver.class :=
+%           {|
+%             Quiver.monoid_enriched_cat_isQuiver_mixin :=
+%               local_mixin_monoid_enriched_cat_isQuiver
+%           |}
+%       |}, isMon.phant_axioms (hom A B)
+
+pred derive_wrapper_instance i:mixinname.
+derive_wrapper_instance M :- std.spy-do! [
+% 1) from M, the wrapper gref, 
+% we need to recover the wrapped mixin and the new subject.
+% these could also be extracted e.g. from the type Ty of the wrapper projection.
+     exported-op M _ C,
+     coq.say "???? C=" C,
+     B = (global (const C)),
+     coq.env.typeof (const C) Ty,
+% 2) we need to find a definition D for the projection: something that has the same type.
+% this is indeed the type of a function that produces instances of the wrapped mixin. 
+% 3) then we can define the wrapper instance, using D.
+     instance.declare-const _ _ _ _
+].
+
 }}
