@@ -810,8 +810,16 @@ derive_wrapper_instance M :- std.spy-do! [
      coq.say "???? C=" C,
      B = (global (const C)),
      coq.env.typeof (const C) Ty,
-% 2) we need to find a definition D for the projection: something that has the same type.
-% this is indeed the type of a function that produces instances of the wrapped mixin. 
+% 2) we need to find a definition D for the projection. This can only be a function that 
+% has the same type. 
+% This is indeed the type of a function that constructs instances of the wrapped mixin 
+% on a given subject. 
+% Crucially, the type does not depend syntatically on the particular subject, becase it is
+% generally
+%  forall A B, isMon (hom A B)
+% Nonetheelss, if such a function is available, it is going to be defined
+% on a specific subject that happens to give monoids, for example 
+% A -> option B. 
 % 3) then we can define the wrapper instance, using D.
      instance.declare-const _ _ _ _
 ].

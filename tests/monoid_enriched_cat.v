@@ -137,7 +137,7 @@ Qed.
 Print Canonical Projections.
 Fail Check (nat -> option nat) : Monoid.type.
 
-(* use the lemma to instantiate isMon *)
+(* use the lemma to instantiate isMon. Notice the genericity of the type. *)
 HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
 
