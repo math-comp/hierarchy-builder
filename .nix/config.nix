@@ -1,7 +1,7 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.15";
+  default-bundle = "coq-8.16";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "hierarchy-builder";
@@ -26,6 +26,9 @@
       coq.override.version = "8.15";
     } // mcHBcommon;
 
+    "coq-8.17".coqPackages = {
+      coq.override.version = "8.17";
+    };
     "coq-8.16".coqPackages = {
       coq.override.version = "8.16";
       mathcomp.override.version = "mathcomp-1.15.0";
