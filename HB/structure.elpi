@@ -238,7 +238,10 @@ declare Module BSkel Sort :- std.do! [
   EX => std.forall WrapperML private.reexport-wrapper-as-instance,
 
   coq.say "???? NewClauses " NewClauses,
+
   % tentative: generating wrapper instances from the available definitions.
+  % Wrong approach: we actually need to check each new defined instance to 
+  % see if it triggers a wrapper instance too. We do this in instance.elpi.
   % EX => std.forall WrapperML private.derive_wrapper_instances, 
   % NewClauses => std.forall WrapperML private.derive_wrapper_instances, 
 
@@ -791,7 +794,5 @@ reexport-wrapper-as-instance M :- std.spy-do! [
      coq.term->arity Ty N0 Arity,
      instance.declare-const "xx" B Arity _
  ]. 
-
-
 
 }}

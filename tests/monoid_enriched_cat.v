@@ -150,9 +150,9 @@ HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
 Print Canonical Projections.
 
 Check 3.
-  stop
-
   
+stop
+ 
 (* instantiate hom_isMon by using the generic isMon instance to define 'private' *)
 HB.instance Definition funQ_hom_isMon :=
   hom_isMon.Axioms_ Type _ funQ_isMon.

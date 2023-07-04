@@ -68,6 +68,12 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   private.declare-instance Factory TheType TheFactory Clauses CSL,
 
+% In a WRAPPING-RELEVANT INSTANCE, 
+% Factory is the wrapped mixin, TheType is the new subject, 
+% TheFactory is the wrapped instance for the new subject (in fact, 
+% it is the term for the instance that is being processed). 
+% E.g. in connection with our example in monoid_enriched_cat.v:
+%
 % HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
 %  funQ_isMonF A B.
 %
@@ -75,9 +81,15 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 % TheFactory = funQ_isMon
 % TheType = hom A B
 
-  coq.say "inizio wrapper" Factory TheFactory TheType,
+  coq.say "wrapping instance ???", 
+  coq.say "Factory = " Factory,
+  coq.say "TheFactory = " TheFactory,
+  coq.say "TheType = " TheType,
+
+  % extracts the head subterm (e.g. hom)
   coq.safe-dest-app TheType TheTypeKey _,
 
+  coq.say "TheTypeKey = " TheTypeKey,
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
@@ -88,13 +100,23 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses,
   
+  % As a general idea, we want to add wrapper instances
+  % for the original subjects that are covered by the current instances.
+  % Here we are processing a specific instance. We want to check
+  % whether it corresponds to a wrapper with respect to the new subject
+  % (associated with TheTypeKey and the Factory mixin).
+  % To this purpose, 
+  % 1) we find all the wrappers that agree with the given parameters, 
+  % using the wrapper-mixin predicate.    
+  % 2) we then apply derive_wrapper_instances to each wrapper, together 
+  % with the current instance, to create the derived wrapper instances.    
+  % Notice that derive_wrapper_instances calls declare-const. 
   if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
-    std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
-    coq.say "WRAPPERS:" Wrappers,
-    std.forall Wrappers (private.derive_wrapper_instances TheFactory)
-    ]
-    %derive_wrapper_instances Wrapper,
+     std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
+     coq.say "WRAPPERS:" Wrappers,
+     std.forall Wrappers (private.derive_wrapper_instances TheFactory)
+     ]
     )
     true,
 ].
@@ -411,49 +433,39 @@ check-non-forgetful-inheritance T Factory :- std.do! [
 %               local_mixin_monoid_enriched_cat_isQuiver
 %           |}
 %       |}, isMon.phant_axioms (hom A B)
-
-pred filter_out_unique_defs_of_type i:term o:list term.
-filter_out_unique_defs_of_type Ty OutDcs. 
    
-pred infer_type i:term i:term o:term.
-infer_type Trm ATyp Typ. 
-
+% Not used, but possible useful
 pred extract_string_name i:mixinname i:term o:string.
 extract_string_name W Trm Str.
 
-% build the wrapper instance that uses I as definition of the projection
-pred export-wrapper-instance i:mixinname i:term.
-export-wrapper_instance W I :- std.do! [
-    exported-op W _ C,
-    coq.env.typeof (const C) Ty,
-  % the Ty0 of I should be (Ty T), i.e. the wrapper instance type applied to the
-  % original subject of I   
-    infer_type I Ty Ty0,
-  % maybe we need to generate a string from W and I to name the wrapper instance  
-    extract_string_name W I S,
-  % then we build the wrapped instance from the generic wrapped one  
-  %  coq.count-prods Ty0 N0, 
-  %  instance.declare-const S I {coq.term->arity Ty0 N0} _
-].   
-
-% Based on the existing definitions, we want to add wrapper instances
-% for all the original subjects that are covered.    
-% Instance has morally type Mixin Subject
+% Instance has morally type 'Mixin Subject'
 pred derive_wrapper_instances i:term, i:prop.
 derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- std.do! [
-% 1) W is the wrapper mixin gref. 
-% We need the type of the wrapper projection, which depends on the original subject T
-% i.e. (forall (A B:T), isMon (hom A B))
+    % K is the mixin constructor (Build) for WrapperMixin 
      factory-constructor WrapperMixin K,
      factory-nparams WrapperMixin NParams,
      std.assert! (NParams = 0) "TODO support parameters",
    
+    % We are only interested in the last parameter of the constructor
+    % type, which is the current instance 
+    % (which is a Mixin instance on the new Subject).  
+    % In monoid_enriched_cat.v, we are targeting the code 
+    %
+    % HB.instance Definition funQ_hom_isMon :=
+    %             hom_isMon.Axioms_ _ _ funQ_isMon.
+    % which Coq can compute to stand for 
+    %              hom_isMon.Axioms_ Type funQ funQ_isMon.
+    %
+    % We compute the number of the underscores and we pass 
+    % them as arguments followed by Instance.
      coq.env.typeof K KTy, 
      coq.count-prods KTy KN, 
      KN0 = KN - 1,
      coq.mk-n-holes KN0 Holes,
 
      std.append Holes [Instance] Args,
+
+     % the body of the new wrapper instance
      NewInstance = app[global K| Args],
 
      coq.say "NewInstance=" {coq.term->string NewInstance},
@@ -461,13 +473,12 @@ derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
      coq.typecheck NewInstance Ty Dgn,
      if (Dgn = error S) (coq.say "errore" S)
       (coq.count-prods Ty N0,
+        % we then call declare-const to add the new instance.
+        % the name needs to be fixed.
        instance.declare-const "_" NewInstance {coq.term->arity Ty N0} _
       )
 
-
 /*
-     exported-op W _ C,
-     coq.env.typeof (const C) Ty,
 % 2) The existing instances of W correspond to the functions of type (Ty _)
 % that are already defined for different original subjects; 
 % or in other words, they correspond to wrapped instances, 
@@ -483,7 +494,7 @@ derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
 %     filter_out_unique_defs_of_type Ty AllInstances WrapperProjections,
 % 3) We can define the wrapper instances based on Ty, using the projection definitions.
      std.forall WrapperProjections (export-wrapper-instance W)
-     */
+*/
 ].
 derive_wrapper_instances _ _.
 
