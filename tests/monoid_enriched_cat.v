@@ -137,14 +137,25 @@ Qed.
 Print Canonical Projections.
 Fail Check (nat -> option nat) : Monoid.type.
 
+Check 1.
+
+Print Canonical Projections.
+
+Check 2.
+Set Printing All.
 (* use the lemma to instantiate isMon. Notice the genericity of the type. *)
 HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
 
+Print Canonical Projections.
+
+Check 3.
+  stop
+
+  
 (* instantiate hom_isMon by using the generic isMon instance to define 'private' *)
 HB.instance Definition funQ_hom_isMon :=
-  hom_isMon.Build Type (fun A B => funQ_isMon A B).
-
+  hom_isMon.Axioms_ Type _ funQ_isMon.
 (* HB.about private. *)
 Print Canonical Projections.
 (* this has to be changed, it should be something like (hom nat nat):

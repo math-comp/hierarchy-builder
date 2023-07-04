@@ -68,6 +68,17 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   private.declare-instance Factory TheType TheFactory Clauses CSL,
 
+% HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
+%  funQ_isMonF A B.
+%
+% Factory = isMon
+% TheFactory = funQ_isMon
+% TheType = hom A B
+
+  coq.say "inizio wrapper" Factory TheFactory TheType,
+  coq.safe-dest-app TheType TheTypeKey _,
+
+
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
     if-verbose (coq.say {header} "closing instance section"),
@@ -75,7 +86,17 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   ),
 
   % we accumulate clauses now that the section is over
-  acc-clauses current Clauses
+  acc-clauses current Clauses,
+  
+  if (TheTypeKey = global TheTypeKeyGR)
+    (std.do! [
+    std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
+    coq.say "WRAPPERS:" Wrappers,
+    std.forall Wrappers (private.derive_wrapper_instances TheFactory)
+    ]
+    %derive_wrapper_instances Wrapper,
+    )
+    true,
 ].
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
@@ -374,5 +395,96 @@ check-non-forgetful-inheritance T Factory :- std.do! [
       "to witness devastating effects."
     ) true
 ].
+
+% The type of the wrapper projection is... 
+% hom_isMon.hom_isMon_private :
+% forall (T : Type)
+%  (local_mixin_monoid_enriched_cat_isQuiver : isQuiver.axioms_ T),
+% hom_isMon.axioms_ T local_mixin_monoid_enriched_cat_isQuiver ->
+% forall
+%  A
+%   B : {|
+%         Quiver.sort := T;
+%         Quiver.class :=
+%           {|
+%             Quiver.monoid_enriched_cat_isQuiver_mixin :=
+%               local_mixin_monoid_enriched_cat_isQuiver
+%           |}
+%       |}, isMon.phant_axioms (hom A B)
+
+pred filter_out_unique_defs_of_type i:term o:list term.
+filter_out_unique_defs_of_type Ty OutDcs. 
+   
+pred infer_type i:term i:term o:term.
+infer_type Trm ATyp Typ. 
+
+pred extract_string_name i:mixinname i:term o:string.
+extract_string_name W Trm Str.
+
+% build the wrapper instance that uses I as definition of the projection
+pred export-wrapper-instance i:mixinname i:term.
+export-wrapper_instance W I :- std.do! [
+    exported-op W _ C,
+    coq.env.typeof (const C) Ty,
+  % the Ty0 of I should be (Ty T), i.e. the wrapper instance type applied to the
+  % original subject of I   
+    infer_type I Ty Ty0,
+  % maybe we need to generate a string from W and I to name the wrapper instance  
+    extract_string_name W I S,
+  % then we build the wrapped instance from the generic wrapped one  
+  %  coq.count-prods Ty0 N0, 
+  %  instance.declare-const S I {coq.term->arity Ty0 N0} _
+].   
+
+% Based on the existing definitions, we want to add wrapper instances
+% for all the original subjects that are covered.    
+% Instance has morally type Mixin Subject
+pred derive_wrapper_instances i:term, i:prop.
+derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- std.do! [
+% 1) W is the wrapper mixin gref. 
+% We need the type of the wrapper projection, which depends on the original subject T
+% i.e. (forall (A B:T), isMon (hom A B))
+     factory-constructor WrapperMixin K,
+     factory-nparams WrapperMixin NParams,
+     std.assert! (NParams = 0) "TODO support parameters",
+   
+     coq.env.typeof K KTy, 
+     coq.count-prods KTy KN, 
+     KN0 = KN - 1,
+     coq.mk-n-holes KN0 Holes,
+
+     std.append Holes [Instance] Args,
+     NewInstance = app[global K| Args],
+
+     coq.say "NewInstance=" {coq.term->string NewInstance},
+
+     coq.typecheck NewInstance Ty Dgn,
+     if (Dgn = error S) (coq.say "errore" S)
+      (coq.count-prods Ty N0,
+       instance.declare-const "_" NewInstance {coq.term->arity Ty N0} _
+      )
+
+
+/*
+     exported-op W _ C,
+     coq.env.typeof (const C) Ty,
+% 2) The existing instances of W correspond to the functions of type (Ty _)
+% that are already defined for different original subjects; 
+% or in other words, they correspond to wrapped instances, 
+% given a specific original subject T and two generic objects of that type. 
+% Should we consider only one function for each T?
+% This means that e.g. there is only one way a homset can be instance of the wrapped 
+% (here, a monoid).
+% Notice that it's good to assume all relevant functions have been 
+% defined using generic type syntax (otherwise recovering them would be much harder).
+% This means for a carrier there is only a quiver. 
+% The instances whould be filtered out from the current context, maybe EX?
+     filter_out_unique_defs_of_type Ty WrapperProjections,
+%     filter_out_unique_defs_of_type Ty AllInstances WrapperProjections,
+% 3) We can define the wrapper instances based on Ty, using the projection definitions.
+     std.forall WrapperProjections (export-wrapper-instance W)
+     */
+].
+derive_wrapper_instances _ _.
 
 }}
