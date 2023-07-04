@@ -151,11 +151,10 @@ Print Canonical Projections.
 
 Check 3.
   
-stop
- 
 (* instantiate hom_isMon by using the generic isMon instance to define 'private' *)
-HB.instance Definition funQ_hom_isMon :=
-  hom_isMon.Axioms_ Type _ funQ_isMon.
+ HB.instance Definition funQ_hom_isMon :=
+  hom_isMon.Build Type funQ_isMon.
+  
 (* HB.about private. *)
 Print Canonical Projections.
 (* this has to be changed, it should be something like (hom nat nat):
