@@ -237,8 +237,10 @@ declare Module BSkel Sort :- std.do! [
   coq.say "???? EX " EX,
   EX => std.forall WrapperML private.reexport-wrapper-as-instance,
 
+  coq.say "???? NewClauses " NewClauses,
   % tentative: generating wrapper instances from the available definitions.
-  NewClauses => std.forall WrapperML private.derive_wrapper_instances, 
+  % EX => std.forall WrapperML private.derive_wrapper_instances, 
+  % NewClauses => std.forall WrapperML private.derive_wrapper_instances, 
 
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
 
@@ -811,37 +813,46 @@ filter_out_unique_defs_of_type Ty InDcs OutDcs.
 pred infer_type i:term i:term o:term.
 infer_type Trm ATyp Typ. 
 
-pred extract_string_name i: term o:string.
-extract_string_name Trm Str.
+pred extract_string_name i:mixinname i:term o:string.
+extract_string_name W Trm Str.
 
-pred export-wrapper-instance i: term i:term.
-export-wrapper_instance Ty I :- std.spy-do! [
-    infer_type I Ty Ty1,
-    extract_string_name I S,
-    coq.count-prods Ty0 N0, 
-    instance.declare-const S I {coq.term->arity Ty0 N0} _
+% build the wrapper instance that uses I as definition of the projection
+pred export-wrapper-instance i:mixinname i:term.
+export-wrapper_instance W I :- std.spy-do! [
+    exported-op W _ C,
+    coq.env.typeof (const C) Ty,
+  % the Ty0 of I should be (Ty T), i.e. the wrapper instance type applied to the
+  % original subject of I   
+    infer_type I Ty Ty0,
+  % maybe we need to generate a string from W and I to name the wrapper instance  
+    extract_string_name W I S,
+  % then we build the wrapped instance from the generic wrapped one  
+  %  coq.count-prods Ty0 N0, 
+  %  instance.declare-const S I {coq.term->arity Ty0 N0} _
 ].   
 
 % Based on the existing definitions, we want to add wrapper instances
 % for all the original subjects that are covered.    
 pred derive_wrapper_instances i:mixinname.
-derive_wrapper_instances M :- std.spy-do! [
-% 1) M is the wrapper mixin gref. 
-% The wrapped mixin and the new subject can be extracted from the type Ty  
-% of the wrapper projection dependent on the original subject T
-% i.e. (forall (A B:T), isMon (hom A B)), 
-% which we need anyway.
-     exported-op M _ C,
+derive_wrapper_instances W :- std.spy-do! [
+% 1) W is the wrapper mixin gref. 
+% We need the type of the wrapper projection, which depends on the original subject T
+% i.e. (forall (A B:T), isMon (hom A B))
+     exported-op W _ C,
      coq.env.typeof (const C) Ty,
-% 2) The existing possible instances of M correspond to the functions of type (Ty _)
-% that are already defined for different original subjects in the Coq code.
-% We should consider only one function for each T, in order to be able to ensure 
-% canonicity.
-% Notice the importance of assuming that all relevant functions have been 
+% 2) The existing instances of W correspond to the functions of type (Ty _)
+% that are already defined for different original subjects; 
+% or in other words, they correspond to wrapped instances, 
+% given a specific original subject T and two generic objects of that type. 
+% Should we consider only one function for each T?
+% This means that e.g. there is only one way a homset can be instance of the wrapped 
+% (here, a monoid).
+% Notice that it's good to assume all relevant functions have been 
 % defined using generic type syntax (otherwise recovering them would be much harder).
+% This means for a carrier there is only a quiver. 
      filter_out_unique_defs_of_type Ty FunctionDefinitions WrapperProjections,
 % 3) We can define the wrapper instances based on Ty, using the projection definitions.
-     std.forall WrapperProjections (export-wrapper-instance Ty)
+     std.forall WrapperProjections (export-wrapper-instance W)
 ].
 
 }}
