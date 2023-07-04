@@ -850,7 +850,9 @@ derive_wrapper_instances W :- std.spy-do! [
 % Notice that it's good to assume all relevant functions have been 
 % defined using generic type syntax (otherwise recovering them would be much harder).
 % This means for a carrier there is only a quiver. 
-     filter_out_unique_defs_of_type Ty FunctionDefinitions WrapperProjections,
+% The instances whould be filtered out from the current context, maybe EX?
+     filter_out_unique_defs_of_type Ty WrapperProjections,
+%     filter_out_unique_defs_of_type Ty AllInstances WrapperProjections,
 % 3) We can define the wrapper instances based on Ty, using the projection definitions.
      std.forall WrapperProjections (export-wrapper-instance W)
 ].
