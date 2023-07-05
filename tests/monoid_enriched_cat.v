@@ -148,6 +148,7 @@ HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
 
 Print Canonical Projections.
+Check (fun A B : Type => hom A B : Monoid.type).
 
 Check 3.
   
