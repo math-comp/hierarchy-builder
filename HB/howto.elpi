@@ -100,7 +100,8 @@ pred list_factories o:list factory_deps_prov.
 list_factories FL :-
   std.map-filter {std.findall (factory-constructor _ _)} list_factories.aux FL.
 list_factories.aux (factory-constructor F _) (fdp F DML PML) :-
-  list-w-params_list {gref-deps F} DML,
+  gref-deps F FD,
+  list-w-params_list FD DML,
   list-w-params_list {factory-provides F} PML.
 
 % [paths-from-for-step MLSrc ML K R] returns in [R] a list of sequences
