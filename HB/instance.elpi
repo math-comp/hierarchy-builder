@@ -498,4 +498,72 @@ derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
 ].
 derive_wrapper_instances _ _.
 
+/*
+GENERAL COMMENT 05/07/2023.
+We have already implemented the elimination rule for wrapper
+instances (adding the projection means that given a wrapper instance 
+we can get a base mixin one).
+We are now implementing the introduction rule for wrapper mixins, 
+that is, given a function definition (prospected instance) that has 
+the type of the wrapper projection specialized to the base mixin 
+(base = wrapped), we can derive a wrapper instance.  
+The current proposed solution assumes that the prospected instance 
+has already been lifted to a base mixin instance, and additionally
+introduces the wrapper instance.  
+This is undesirable, as in fact, given the wrapper projection, the
+base mixin instance can be derived from the wrapper instance.
+So we actually want to use the prospected instance to introduce 
+the wrapper instance directly. 
+Moreover, the current solution involves iterating over all the wrappers, 
+given an instance, in order to check whether it is a base mixin instance
+for some wrapper. 
+So it is not good to call 'derive_wrapper_instances' in 'declare-const'.
+
+Instead, we consider 'declare-existing' (line 8) which is used to 
+collect each Coq definition (I guess), therefore also a prospective 
+instance. 
+Our real entry point should be 'declare-instance' (line 243).
+There are two clauses for this predicate (some refactoring needed?) 
+We will focus on the latter (line 253), which calls
+'declare-canonical-instances-from-factory' (defined at line 337). 
+
+At line 339, Factory is the mixin (base mixin?), 
+             T is the type (new subject (@hom T0 A B) ?), 
+             F is the prospective instance (crucially!), 
+             CSL are the clauses so far. 
+Notably: 
+ Line 344, 'synthesis.under-mixin-src-from-factory.do!'.
+ Line 347, 'add-all-mixins'.
+ Line 348, 'declare-all'.
+
+In the implemention of 'under-mixin-src-from-factory.do!' 
+(line 99, synthesis.elpi), 
+- the first two arguments of 'mixin-src', i.e 'TheType' and 'm',
+    should be related by 'wrapper-mixin' 
+    (with 'hom' extracted from 'TheType' ??)
+    (with 'm' as base mixin ??) 
+- 'std.map' ranges over 'ML' (the mixins) and produces clauses 
+   collected in MLClauses   
+- the third argument is the continuation (executed after locally 
+  adding MLClauses to the context). 
+  Here 'add-all-mixins' is called (line 347, instance.elpi).  
+
+'add-all-mixins' (defined line 291) calls 
+'add-mixin' (defined line 262). 
+In 'add-mixin' we should check when 'MissingMixin' is a wrapped one.  
+Change then will affect 'C'. 
+Also check 'assert!-infer-mixin' (synthesis.elpi, line 81) which 
+calls 'mixin-for' (synthesis.elpi, line 176).
+'mixin-for' actually produces a mixin instance for a mixin and a type,
+given a database. 
+
+Main targets for change:
+- 'under-mixin-src-from-factory.do!' : change of subject
+- 'add-mixin': check 'MissingMixin', change 'C'. 
+- discussion about overloading of 'mixin-src': used in different predicates, 
+  not really understood (??)
+- possible refactoring of 'declare-instance'
+
+*/
+
 }}
