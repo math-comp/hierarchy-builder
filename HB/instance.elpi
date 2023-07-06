@@ -344,10 +344,12 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   synthesis.under-mixin-src-from-factory.do! T F [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
-      add-all-mixins T Factory ML tt _ MCSL,
-      instance.declare-all T {findall-classes-for ML} CCSL,
+      add-all-mixins T Factory ML tt Clauses MCSL, % this should output all the candidate subjects too, as a new output argument.
     ]
   ],
+  AllSubjects = [T], % change this
+  Clauses => std.forall AllSubjects
+    (s\ instance.declare-all s {findall-classes-for ML} CCSL),
   std.append MCSL CCSL CSL
 ].
 
