@@ -344,12 +344,25 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   synthesis.under-mixin-src-from-factory.do! T F [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
-      add-all-mixins T Factory ML tt Clauses MCSL, % this should output all the candidate subjects too, as a new output argument.
+
+%%
+      % Old code: 
+      % notice the underscore in add-all-mixins, output clauses are not used
+      % add-all-mixins T Factory ML tt _ MCSL,
+      % instance.declare-all T {findall-classes-for ML} CCSL, ] ],
+
+      % New code: 
+      % this should output all the candidate subjects too, as a new output argument.
+      add-all-mixins T Factory ML tt Clauses MCSL, 
     ]
   ],
-  AllSubjects = [T], % change this
+  AllSubjects = [T], % change this using the additional output in add-all-mixins
+  % declare-all now is mapped on all the subjects, while Clauses is added to the context.
   Clauses => std.forall AllSubjects
     (s\ instance.declare-all s {findall-classes-for ML} CCSL),
+
+%%
+
   std.append MCSL CCSL CSL
 ].
 
@@ -521,10 +534,8 @@ given an instance, in order to check whether it is a base mixin instance
 for some wrapper. 
 So it is not good to call 'derive_wrapper_instances' in 'declare-const'.
 
-Instead, we consider 'declare-existing' (line 8) which is used to 
-collect each Coq definition (I guess), therefore also a prospective 
-instance. 
-Our real entry point should be 'declare-instance' (line 243).
+Our real entry point should be 'declare-instance' (line 243) 
+(ignore 'declare-existing', deprecated).
 There are two clauses for this predicate (some refactoring needed?) 
 We will focus on the latter (line 253), which calls
 'declare-canonical-instances-from-factory' (defined at line 337). 
@@ -560,11 +571,12 @@ calls 'mixin-for' (synthesis.elpi, line 176).
 given a database. 
 
 Main targets for change:
-- 'under-mixin-src-from-factory.do!' : change of subject
-- 'add-mixin': check 'MissingMixin', change 'C'. 
-- discussion about overloading of 'mixin-src': used in different predicates, 
+- add-all-mixins: see the proposed change 
+- ? 'add-mixin': check 'MissingMixin', change 'C'. 
+- ? discussion about overloading of 'mixin-src': used in different predicates, 
   not really understood (??)
-- possible refactoring of 'declare-instance'
+- ? possible refactoring of 'declare-instance'
+- ? 'under-mixin-src-from-factory.do!' : actually no need to change the subject
 
 */
 
