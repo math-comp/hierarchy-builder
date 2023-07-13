@@ -23,6 +23,12 @@ declare-existing T0 F0 :- std.do! [
 % that can be built using factory instance B
 pred declare-const i:id, i:term, i:arity, o:list (pair id constant).
 declare-const Name BodySkel TyWPSkel CSL :- std.do! [
+
+  coq.say "DC!!!!!!!!!!!!! NOW RUNNING (entry point) declare-const Name BodySkel TyWPSkel CSL",
+  coq.say "DC!!!!!!!!!!!!! Name = " Name,
+  coq.say "DC!!!!!!!!!!!!! BodySkel = " BodySkel,
+  coq.say "DC!!!!!!!!!!!!! TyWPSkel = " TyWPSkel,
+
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
@@ -81,15 +87,17 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 % TheFactory = funQ_isMon
 % TheType = hom A B
 
-  coq.say "wrapping instance ???", 
-  coq.say "Factory = " Factory,
-  coq.say "TheFactory = " TheFactory,
-  coq.say "TheType = " TheType,
+  coq.say "DC!!!!!! Aft DI: wrapping instance", 
+  coq.say "DC!!!!!! Aft DI: Factory = " Factory,
+  coq.say "DC!!!!!! Aft DI: TheType = " TheType,
+  coq.say "DC!!!!! Aft DI: TheFactory = " TheFactory,
+  coq.say "DC!!!!!! Aft DI: Clauses = " Clauses,
+  coq.say "DC!!!!! Aft DI: CSL = " CSL,
 
   % extracts the head subterm (e.g. hom)
   coq.safe-dest-app TheType TheTypeKey _,
 
-  coq.say "TheTypeKey = " TheTypeKey,
+  coq.say "DC!!!!!! Aft DI: TheTypeKey = " TheTypeKey,
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
@@ -108,17 +116,19 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   % To this purpose, 
   % 1) we find all the wrappers that agree with the given parameters, 
   % using the wrapper-mixin predicate.    
-  % 2) we then apply derive_wrapper_instances to each wrapper, together 
+  % 2) we then apply derive-wrapper-instances to each wrapper, together 
   % with the current instance, to create the derived wrapper instances.    
-  % Notice that derive_wrapper_instances calls declare-const. 
+  % Notice that derive-wrapper-instances calls declare-const. 
   if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
      std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
-     coq.say "WRAPPERS:" Wrappers,
-     std.forall Wrappers (private.derive_wrapper_instances TheFactory)
+     coq.say "DC!!!!!! WRAPPERS (used in old implementation, need changes):" Wrappers,
+     std.forall Wrappers (private.derive-wrapper-instances TheFactory)
      ]
     )
     true,
+
+  coq.say "DC!!!!!!!!!!!!! (final output) CSL = " CSL,
 ].
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
@@ -243,6 +253,12 @@ shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }
 pred declare-instance i:factoryname, i:term, i:term,
   o:list prop, o:list (pair id constant).
 declare-instance Factory T F Clauses CSL :-
+
+  coq.say "DI??????!!!!!!!!!! NOW RUNNING (1) private.declare-instance Factory T F Clauses CSL",
+  coq.say "DI?????? Factory " Factory,
+  coq.say "DI?????? T " T,
+  coq.say "DI?????? F " F,
+
   current-mode (builder-from T TheFactory FGR _), !,
   if (get-option "local" tt)
     (coq.error "HB: declare-instance: cannot make builders local.
@@ -251,6 +267,12 @@ declare-instance Factory T F Clauses CSL :-
   declare-canonical-instances-from-factory-and-local-builders Factory
     T F TheFactory FGR Clauses CSL.
 declare-instance Factory T F Clauses CSL :-
+
+  coq.say "DI??????!!!!!!!!!! NOW RUNNING (2) private.declare-instance Factory T F Clauses CSL",
+  coq.say "DI?????? Factory " Factory,
+  coq.say "DI?????? T " T,
+  coq.say "DI?????? F " F,
+
   declare-canonical-instances-from-factory Factory T F CSL,
   if (get-option "export" tt)
      (coq.env.current-library File,
@@ -262,6 +284,9 @@ declare-instance Factory T F Clauses CSL :-
 pred add-mixin i:term, i:factoryname, i:bool, i:mixinname,
   o:list prop, o:list (pair id constant).
 add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do! [
+
+  coq.say "AM!!!!!!!!! NOW RUNNING add-mixin", 
+
   new_int N, % timestamp
 
   synthesis.assert!-infer-mixin T MissingMixin Bo,
@@ -291,11 +316,23 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
 pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
   o:list prop, o:list (pair id constant).
 add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
+
+  coq.say "AAM!!!!!!!!!!!!!!! NOW RUNNING add-all-mixins", 
+
+  coq.say "AAM!!!!!!!!!! Bfr T = " T,
+  coq.say "AAM!!!!!!!!!! Bfr Factory (FGR) = " FGR,
+  coq.say "AAM!!!!!!!!!! Bfr ML = " ML,
+  coq.say "AAM!!!!!!!!!! Bfr MakeCanon" MakeCanon,
+
   std.map ML (m\ o\ sigma ClL CSL\
     add-mixin T FGR MakeCanon m ClL CSL, o = pr ClL CSL) ClLxCSL_L,
   std.unzip ClLxCSL_L ClLL CSLL,
   std.flatten ClLL Clauses,
-  std.flatten CSLL CSL
+  std.flatten CSLL CSL,
+
+  coq.say "AAM!!!!!!!!!! Aft Clauses = " Clauses,
+  coq.say "AAM!!!!!!!!!! Aft CSL = " CSL,
+
 ].
 
 % [postulate-arity A Acc T TS] postulates section variables
@@ -337,6 +374,9 @@ declare-canonical-instances-from-factory-and-local-builders
 pred declare-canonical-instances-from-factory
   i:factoryname, i:term, i:term, o:list (pair id constant).
 declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
+
+  coq.say "DCIFF!!!!!!!!!!! NOW RUNNING declare-canonical-instances-from-factory",
+
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
@@ -346,11 +386,20 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
       list-w-params_list {factory-provides Factory} ML,
 
 %%
+      % coq.say "#!!!!!!!!!! Bfr F = " F,
+    
       % Old code: 
       % notice the underscore in add-all-mixins, output clauses are not used
-      % add-all-mixins T Factory ML tt _ MCSL,
-      % instance.declare-all T {findall-classes-for ML} CCSL, ] ],
+      add-all-mixins T Factory ML tt _ MCSL,
+      instance.declare-all T {findall-classes-for ML} CCSL, 
+      
+      coq.say "DCIFF!!!!!!!!!! Aft MCSL = " MCSL, 
+      coq.say "DCIFF!!!!!!!!!! Aft CCSL = " CCSL, 
+      coq.say "DCIFF!!!!!!!!!! Aft (NOT USED!) CSL = " CSL, 
 
+      ] ],
+
+/*
       % New code: 
       % this should output all the candidate subjects too, as a new output argument.
       add-all-mixins T Factory ML tt Clauses MCSL, 
@@ -362,6 +411,7 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
     (s\ instance.declare-all s {findall-classes-for ML} CCSL),
 
 %%
+*/
 
   std.append MCSL CCSL CSL
 ].
@@ -454,8 +504,12 @@ pred extract_string_name i:mixinname i:term o:string.
 extract_string_name W Trm Str.
 
 % Instance has morally type 'Mixin Subject'
-pred derive_wrapper_instances i:term, i:prop.
-derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- std.do! [
+pred derive-wrapper-instances i:term, i:prop.
+derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- std.do! [
+
+    coq.say "OLD!!!!!!!!! NOW RUNNING (old implementation, BAD) derive-wrapper-instances Instance _", 
+    coq.say "OLD!!!!!!! Instance " Instance, 
+
     % K is the mixin constructor (Build) for WrapperMixin 
      factory-constructor WrapperMixin K,
      factory-nparams WrapperMixin NParams,
@@ -483,7 +537,7 @@ derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
      % the body of the new wrapper instance
      NewInstance = app[global K| Args],
 
-     coq.say "NewInstance=" {coq.term->string NewInstance},
+     coq.say "!!!!!!!! NewInstance=" {coq.term->string NewInstance},
 
      coq.typecheck NewInstance Ty Dgn,
      if (Dgn = error S) (coq.say "errore" S)
@@ -511,7 +565,7 @@ derive_wrapper_instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
      std.forall WrapperProjections (export-wrapper-instance W)
 */
 ].
-derive_wrapper_instances _ _.
+derive-wrapper-instances _ _.
 
 /*
 GENERAL COMMENT 05/07/2023.
@@ -529,25 +583,40 @@ This is undesirable, as in fact, given the wrapper projection, the
 base mixin instance can be derived from the wrapper instance.
 So we actually want to use the prospected instance to introduce 
 the wrapper instance directly. 
-Moreover, the current solution involves iterating over all the wrappers, 
+Moreoever, our solution only works when the base mixin is atomic (note this 
+is why we need to get down to add-all-mixins). 
+Finally, the current solution involves iterating over all the wrappers, 
 given an instance, in order to check whether it is a base mixin instance
 for some wrapper. 
-So it is not good to call 'derive_wrapper_instances' in 'declare-const'.
+So it is not good to call 'derive-wrapper-instances' in 'declare-const'.
 
-Our real entry point should be 'declare-instance' (line 243) 
-(ignore 'declare-existing', deprecated).
+Top-level (called in structures.v): 'instance.declare-const', 'structure.declare'.
+
+Our real entry point should be 'instance.private.declare-instance' (after line 243) 
+Notice that 'declare-instance' is only called in 'instance.declare-const'
+(ignore 'instance.declare-existing', deprecated).
+
+'instance.declare-const' is called in 'instance.mk-factory-sort-factory'
+(called in instance.declare-factory-sort-deps and 
+           instance.declare-factory-sort-factory),
+in 'instance.private.derive-wrapper-instance' (our predicate, 
+    called in instance.declare-const), 
+in 'structure.declare',
+in 'structure.private.reexport-wrapper-as-instance' (our predicate, 
+    called in structure.declare).
+
 There are two clauses for this predicate (some refactoring needed?) 
-We will focus on the latter (line 253), which calls
-'declare-canonical-instances-from-factory' (defined at line 337). 
+We will focus on the latter (after line 253), which calls
+'declare-canonical-instances-from-factory' (defined after line 337). 
 
-At line 339, Factory is the mixin (base mixin?), 
+At line 3**, Factory is the mixin (base mixin?), 
              T is the type (new subject (@hom T0 A B) ?), 
              F is the prospective instance (crucially!), 
              CSL are the clauses so far. 
 Notably: 
- Line 344, 'synthesis.under-mixin-src-from-factory.do!'.
- Line 347, 'add-all-mixins'.
- Line 348, 'declare-all'.
+ Line 3**, 'synthesis.under-mixin-src-from-factory.do!'.
+ Line 3**, 'add-all-mixins'.
+ Line 3**, 'declare-all'.
 
 In the implemention of 'under-mixin-src-from-factory.do!' 
 (line 99, synthesis.elpi), 
@@ -561,8 +630,8 @@ In the implemention of 'under-mixin-src-from-factory.do!'
   adding MLClauses to the context). 
   Here 'add-all-mixins' is called (line 347, instance.elpi).  
 
-'add-all-mixins' (defined line 291) calls 
-'add-mixin' (defined line 262). 
+'add-all-mixins' (defined after line 291) calls 
+'add-mixin' (defined after line 262). 
 In 'add-mixin' we should check when 'MissingMixin' is a wrapped one.  
 Change then will affect 'C'. 
 Also check 'assert!-infer-mixin' (synthesis.elpi, line 81) which 

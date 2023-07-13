@@ -78,6 +78,8 @@ About hom_isMon_private.
 (* Essentially, step 2 is the elimination rule for the wrapper, step 3 is the introduction one *)
 
 (* quiver instance (simply typed functions between two types) *)
+(* Elpi Trace Browser. *)
+
 HB.instance Definition funQ := isQuiver.Build Type 
    (fun A B => A -> option B).
 

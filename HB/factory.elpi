@@ -15,9 +15,13 @@ type by-phantabbrev abbreviation -> factory-abbrev.
 
 pred declare-abbrev i:id, i:factory-abbrev.
 declare-abbrev Name (by-classname GR) :-
+
+  coq.say "DA!!!!!!&&& NOW RUNNING declare-abbrev",
+
   % looks fishy (the parameters are not taken into account)
   @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
 declare-abbrev Name (by-phantabbrev Abbr) :- std.do! [
+  coq.say "DA!!!!!!&&& NOW RUNNING declare-abbrev",
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
 ].
@@ -267,6 +271,17 @@ pred declare-mixin-or-factory i:list prop, i:list constant, i:list term, i:term,
 declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Sort1 Fields GRFSwP Module D :- std.do! [
 
+  coq.say "DMOF!!!!!!!!!!!!!!!!!!!! NOW RUNNING declare-mixin-or-factory",
+  coq.say "DMOF!!!!!!!! MixinSrcClauses" MixinSrcCaluses,
+  coq.say "DMOF!!!!!!!! SectionCanonicalInstance" SectionCanonicalInstance,
+  coq.say "DMOF!!!!!!!! TheParams" TheParams,
+  coq.say "DMOF!!!!!!!! TheType" TheType,
+  coq.say "DMOF!!!!!!!! Sort1" Sort1,
+  coq.say "DMOF!!!!!!!! Fields" Fields,
+  coq.say "DMOF!!!!!!!! GRFSwP" GRFSwP,
+  coq.say "DMOF!!!!!!!! Module" Module,
+  coq.say "DMOF!!!!!!!! D" D,
+
   if-verbose (coq.say {header} "declare record axioms_"),
   Kname = "Axioms_",
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
@@ -296,7 +311,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
 
-  coq.say "TODO: extract useful info:" RDecl,
+  % coq.say "TODO: extract useful info:" RDecl,
   % coq.say "TODO: extract useful info:" RDecl "AND THEN:" RDeclClosed,
   % record-decl in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi#L429
   % per trovare il vero nome del mixin   database.elpi:factory-alias->gref
@@ -316,7 +331,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
       (WrapperClauses = [wrapper-mixin (indt R) NSbj WMxn]))
      (WrapperClauses = []),
 
-  % coq.say "aggiungiamo " WrapperClauses,
+  coq.say "DMOF!!!!!!!! adding WrapperClauses " WrapperClauses,
 
   % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
   % FactorySortCoe = coercion GRFSort _ _ _,
