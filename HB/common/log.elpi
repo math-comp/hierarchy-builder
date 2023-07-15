@@ -35,7 +35,6 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.typecheck Bo Ty _,
   coq.env.add-const Name1 Bo Ty Opaque C,
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
@@ -50,7 +49,6 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.typecheck Bo Ty _,
   coq.env.add-const Name1 Bo Ty Opaque C,
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
@@ -63,7 +61,6 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
-  coq.typecheck Bo Ty _,
   coq.env.add-const Name Bo Ty Opaque C,
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
