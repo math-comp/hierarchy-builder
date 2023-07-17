@@ -22,8 +22,9 @@ Fail HB.structure
     { Obj of isQuiver Obj &
              (forall A B : Obj, isMon (@hom (Quiver.clone Obj _) A B)) }.
 
-About zero.
-Print zero.
+(* About zero.
+   Print zero.
+*)   
 (* Step 0: define a wrapper predicate in coq-elpi *)
 (* 5 lines of documentation + 1 line of elpi code in structure.v
   `pred wrapper-mixin o:mixinname, o:gref, o:mixinname`
@@ -45,9 +46,11 @@ Print zero.
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
 
+(*    
 About hom_isMon_private.
 About hom_isMon.hom_isMon_private.
-    
+*)
+
 (* Step 2: at structure declaration, export the main and only projection
    of each declared wrapper as an instance of the wrapped structure on
    its subject *)
@@ -55,8 +58,10 @@ HB.structure
    Definition Monoid_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj }.
 
+(*     
 About hom_isMon.hom_isMon_private.
 About hom_isMon_private.
+*)
 
 (* as expected from step 2, now this instance declaration is no more necessary *)
 (*
@@ -83,6 +88,8 @@ About hom_isMon_private.
 HB.instance Definition funQ := isQuiver.Build Type 
    (fun A B => A -> option B).
 
+(* Print Canonical Projections. *)
+
 (* prove that for every two types the quiver is a monoid *)
 
 Require Import FunctionalExtensionality.
@@ -92,6 +99,7 @@ Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
   | Some _ => f x
   | _ => g x end.              
 
+ (* 
   Program Definition funQ_isMonF_alt (A B: Type) : isMon (hom A B) :=
   isMon.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _.
   Obligations.
@@ -113,10 +121,11 @@ Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
   unfold funQ_comp.
   destruct (x a); auto.
   Qed.
-  
+*)
+
 Program Definition funQ_isMonF (A B: Type) : isMon (A -> option B) :=
   isMon.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _.
-Obligations.
+(* Obligations. *)
 Obligation 1.
 unfold associative; intros.
 eapply functional_extensionality; intro a.
@@ -136,7 +145,11 @@ unfold funQ_comp.
 destruct (x a); auto.
 Qed.
 
+(*
 Print Canonical Projections.
+*)
+
+(*
 Fail Check (nat -> option nat) : Monoid.type.
 
 Check 1.
@@ -145,26 +158,34 @@ Print Canonical Projections.
 
 Check 2.
 Set Printing All.
+*)
+
+(*
 (* use the lemma to instantiate isMon. Notice the genericity of the type. *)
 HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
+*)
 
-Print Canonical Projections.
-Check (fun A B : Type => hom A B : Monoid.type).
-
-Check 3.
+(* Print Canonical Projections. *)
+(* Check (fun A B : Type => hom A B : Monoid.type). *)
   
 (* instantiate hom_isMon by using the generic isMon instance to define 'private' *)
  HB.instance Definition funQ_hom_isMon :=
-  hom_isMon.Build Type funQ_isMon.
-  
+  hom_isMon.Build Type funQ_isMonF.
+
+(* Print Canonical Projections. *)
+
+(* Check (fun A B : Type => hom A B : Monoid.type). *)
+
 (* HB.about private. *)
-Print Canonical Projections.
+(* Print Canonical Projections. *)
 (* this has to be changed, it should be something like (hom nat nat):
     Check (nat -> option nat) : Monoid.type. *)
-HB.about funQ_isMon.
+(*
+HB.about funQ_isMonF.
 Fail HB.about funQ_hom_isMon.
 About funQ_hom_isMon.
+*)
 
 Elpi Print HB.structure.
 

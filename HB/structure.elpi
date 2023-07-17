@@ -9,7 +9,7 @@ pred declare i:string, i:term, i:sort.
 pred declare i:string, i:term, i:universe.
 declare Module BSkel Sort :- std.do! [
 
-  coq.say "D!!!!!!!!!!!!!!!! NOW RUNNING declare",
+  coq.say "D!!!!!!!!!!!!!!!!! NOW RUNNING declare",
 
   disable-id-phant BSkel BSkelNoId,
   std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
@@ -798,7 +798,12 @@ reexport-wrapper-as-instance M :- std.do! [
      coq.env.typeof (const C) Ty,
      coq.count-prods Ty N0,
      coq.term->arity Ty N0 Arity,
-     instance.declare-const "xx" B Arity _
+     coq.term->pp B PP0,
+     coq.pp->string PP0 Str0,
+%    need to get a valid idenfier out of a term, no @     
+%     std.string.concat "xx" [Str0, "ELIM"] Str2, 
+     std.string.concat "xx" ["NAME", "ELIM"] Str2, 
+     instance.declare-const Str2 B Arity _
  ]. 
 
 }}

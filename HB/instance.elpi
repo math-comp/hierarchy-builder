@@ -385,18 +385,26 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
 
+  coq.say "DCIFF!!!!!!! Factory = " Factory,
+  coq.say "DCIFF!!!!!!! T = " T,
+  coq.say "DCIFF!!!!!!! F = " F,
+  coq.say "DCIFF!!!!!!! ML (mixin names) = " ML,
+  coq.say "DFIFF!!!!!!! run add-all-mixins T Factory ML tt _ MCSL",
+
 %%
       % coq.say "#!!!!!!!!!! Bfr F = " F,
     
       % Old code: 
       % notice the underscore in add-all-mixins, output clauses are not used
-      add-all-mixins T Factory ML tt _ MCSL,
+      % pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
+      %     o:list prop, o:list (pair id constant).
+      add-all-mixins T Factory ML tt CSL00 MCSL,
       instance.declare-all T {findall-classes-for ML} CCSL, 
       
-      coq.say "DCIFF!!!!!!!!!! Aft MCSL = " MCSL, 
-      coq.say "DCIFF!!!!!!!!!! Aft CCSL = " CCSL, 
-      coq.say "DCIFF!!!!!!!!!! Aft (NOT USED!) CSL = " CSL, 
-
+      coq.say "DCIFF!!!!!!!!!! Aft MCSL (instance names) = " MCSL, 
+      coq.say "DCIFF!!!!!!!!!! Aft CCSL = " CCSL,
+      coq.say "DCIFF!!!!!!!!!! Aft (NOT USED!) CSL00 = " CSL00,
+    
       ] ],
 
 /*
@@ -413,7 +421,9 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
 %%
 */
 
-  std.append MCSL CCSL CSL
+  std.append MCSL CCSL CSL,
+  coq.say "DCIFF!!!!!!!!!! Aft CSL = " CSL, 
+
 ].
 
 % If you don't mention the factory in a builder, then Coq won't make
@@ -503,11 +513,16 @@ check-non-forgetful-inheritance T Factory :- std.do! [
 pred extract_string_name i:mixinname i:term o:string.
 extract_string_name W Trm Str.
 
-% Instance has morally type 'Mixin Subject'
+% Instance has morally type 'Mixin Subject'.
+% Has to change, no instance as input but a definition (like BodySkel in declare_instance, 
+% still a term, and its type TySkel). 
+% Morever, in general this may apply to more than a mixin (if the base mixin is not a trivially 
+% atomic one).
+% Important to ensure there is a consistent naming scheme.
 pred derive-wrapper-instances i:term, i:prop.
 derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- std.do! [
 
-    coq.say "OLD!!!!!!!!! NOW RUNNING (old implementation, BAD) derive-wrapper-instances Instance _", 
+    coq.say "OLD!!!!!!!!! NOW RUNNING derive-wrapper-instances Instance _", 
     coq.say "OLD!!!!!!! Instance " Instance, 
 
     % K is the mixin constructor (Build) for WrapperMixin 
@@ -537,10 +552,10 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
      % the body of the new wrapper instance
      NewInstance = app[global K| Args],
 
-     coq.say "!!!!!!!! NewInstance=" {coq.term->string NewInstance},
+     coq.say "OLD!!!!!!!! NewInstance=" {coq.term->string NewInstance},
 
      coq.typecheck NewInstance Ty Dgn,
-     if (Dgn = error S) (coq.say "errore" S)
+     if (Dgn = error S) (coq.say "error in NewInstance" S)
       (coq.count-prods Ty N0,
         % we then call declare-const to add the new instance.
         % the name needs to be fixed.
@@ -609,9 +624,10 @@ There are two clauses for this predicate (some refactoring needed?)
 We will focus on the latter (after line 253), which calls
 'declare-canonical-instances-from-factory' (defined after line 337). 
 
-At line 3**, Factory is the mixin (base mixin?), 
-             T is the type (new subject (@hom T0 A B) ?), 
-             F is the prospective instance (crucially!), 
+At line 3**, Factory is the mixin (base mixin), 
+             T is actually the subject (a type, e.g. the new subject (@hom T0 A B)), 
+             F is the prospective instance (e.g. funQ, funQ_isMon),
+             ML are the mixins (the axioms that are needed for the subject...) ???, 
              CSL are the clauses so far. 
 Notably: 
  Line 3**, 'synthesis.under-mixin-src-from-factory.do!'.
