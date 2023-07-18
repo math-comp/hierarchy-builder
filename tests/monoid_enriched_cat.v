@@ -46,10 +46,9 @@ Fail HB.structure
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
 
-(*    
-About hom_isMon_private.
-About hom_isMon.hom_isMon_private.
-*)
+(* Print Canonical Projections. *)   
+(* About hom_isMon.hom_isMon_private. *)
+(* About hom_isMon_private. *)
 
 (* Step 2: at structure declaration, export the main and only projection
    of each declared wrapper as an instance of the wrapped structure on
@@ -57,11 +56,9 @@ About hom_isMon.hom_isMon_private.
 HB.structure
    Definition Monoid_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj }.
-
-(*     
-About hom_isMon.hom_isMon_private.
-About hom_isMon_private.
-*)
+     
+(* About hom_isMon.hom_isMon_private. *)
+(* About hom_isMon_private. *)
 
 (* as expected from step 2, now this instance declaration is no more necessary *)
 (*
@@ -160,9 +157,9 @@ Check 2.
 Set Printing All.
 *)
 
-(*
+
 (* use the lemma to instantiate isMon. Notice the genericity of the type. *)
-HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
+(* HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
 *)
 

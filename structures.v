@@ -697,9 +697,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
-  coq.say "************************* CALL const-decl",
-  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)),
-  coq.say "************************* END CALL const-decl".
+  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)).
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).

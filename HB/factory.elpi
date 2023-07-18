@@ -323,7 +323,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   %  mixin_alias -> mixin via factory-alias->gref
   %  factory-nparams mixin -> n
   % 
-
   % coq.say "TEST 2" (indt R),
 
   if (get-option "wrapper" tt)
