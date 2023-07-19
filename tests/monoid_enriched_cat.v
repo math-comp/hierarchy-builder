@@ -60,11 +60,11 @@ HB.structure
 (* About hom_isMon.hom_isMon_private. *)
 (* About hom_isMon_private. *)
 
-(* as expected from step 2, now this instance declaration is no more necessary *)
+(* as expected from step 2, now this instance declaration is no more necessay *)
 (*
  HB.instance Definition _ (T : Monoid_enriched_quiver.type) (A B : T) : isMon (@hom T A B) :=
    @hom_isMon_private T A B.
- *)
+*)
 (* each instance of isMon should be tried as an instance of hom_isMon *)
 (*
  (* Step 3: for each instance of a wrapped mixin on a subject known 
@@ -157,11 +157,12 @@ Check 2.
 Set Printing All.
 *)
 
-
-(* use the lemma to instantiate isMon. Notice the genericity of the type. *)
-(* HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
+(* use the lemma to instantiate isMon. Notice the genericity of the type. 
+   In principle this instance should be derivable from the wrapper instance. 
+   But since we haven't introduced the wrapper instance yet, we use this
+   HB command to actually introduce it. *)
+HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
-*)
 
 (* Print Canonical Projections. *)
 (* Check (fun A B : Type => hom A B : Monoid.type). *)
