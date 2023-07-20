@@ -25,13 +25,16 @@ pred declare-const i:id, i:term, i:arity, o:list (pair id constant).
 declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   coq.say "DC************************* NOW RUNNING (entry point) declare-const Name BodySkel TyWPSkel CSL",
-  coq.say "DC!!!!!!!!!!!!! Name = " Name,
-  coq.say "DC!!!!!!!!!!!!! BodySkel = " BodySkel,
-  coq.say "DC!!!!!!!!!!!!! TyWPSkel = " TyWPSkel,
+  coq.say "DC!!!!!!!!!!!!! In Name = " Name,
+  coq.say "DC!!!!!!!!!!!!! In BodySkel = " BodySkel,
+  coq.say "DC!!!!!!!!!!!!! In TyWPSkel = " TyWPSkel,
 
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
+
+  coq.say "DC!!!!!!!!!!!!! Ex Body = " Body,
+  coq.say "DC!!!!!!!!!!!!! Ex Ty = " Ty,
 
   % handle parameters via a section -- begin
   if (TyWP = arity SectionTy) (
@@ -45,6 +48,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
     log.coq.env.begin-section SectionName,
     private.postulate-arity TyWP [] Body SectionBody SectionTy
   ),
+
+  coq.say "DC!!!!!!!!!!!!! Ex SectionBody = " SectionBody,
+  coq.say "DC!!!!!!!!!!!!! Ex SectionTy = " SectionTy,
 
   % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
@@ -63,6 +69,8 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
     UnfoldClauses => copy SectionTy SectionTyUnfolded,
   ]) (SectionTy = SectionTyUnfolded),
 
+  coq.say "DC!!!!!!!!!!!!! Ex UnfoldClauses = " UnfoldClauses,
+
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
   TheFactory = (global (const C)),
@@ -72,6 +80,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   private.check-non-forgetful-inheritance TheType Factory,
 
+  % Clauses and CSL are outputs. QUESTION: what is the context here?
   private.declare-instance Factory TheType TheFactory Clauses CSL,
 
   % handle parameters via a section -- end
@@ -81,7 +90,10 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   ),
 
   % we accumulate clauses now that the section is over
-  acc-clauses current Clauses
+  % QUESTION - what is this really accumulating? appears to be always empty
+  acc-clauses current Clauses,
+
+  coq.say "DC!!!!!!!!!!!!! Out Clauses = " Clauses,
 ].  
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
@@ -94,6 +106,10 @@ pred declare-all i:term, i:list class, o:list (pair id constant).
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
  
   coq.say "NOW RUNNING!!!!!!!!!!!!!! declare-all",
+  coq.say "DALL!!!!!!!!!! In T = " T,
+  coq.say "DALL!!!!!!!!!! In Class = " Class,
+  coq.say "DALL!!!!!!!!!! In Struct = " Struct,
+  coq.say "DALL!!!!!!!!!! In MLwP = " MLwP,  
 
   if (not(has-CS-instance? T Struct))
      true % we build it
@@ -105,12 +121,16 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   params->holes MLwP Params,
   get-constructor Class KC,
 
+  coq.say "DALL!!!!!!!!!!!!!! Exec1 ",
+
   if (synthesis.infer-all-args-let Params T KC KCApp ok)
      (if-verbose (coq.say {header} "we can build a" {nice-gref->string Struct} "on"
         {coq.term->string T}))
      fail,
 
   !,
+
+  coq.say "DALL!!!!!!!!!!!!!! Exec2 ",
 
   Name is {cs-pattern->name {term->cs-pattern T}}
     ^ "__canonical__" ^ {gref->modname Struct 2 "_" },
@@ -130,6 +150,10 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
   acc-clause current (local-canonical CS),
 
   if-verbose (coq.say {header} "structure instance" Name "declared"),
+
+  coq.say "DALL!!!!!!!!!! Out Name = " Name,
+  coq.say "DALL!!!!!!!!!! Out CS = " CS,
+  coq.say "DALL!!!!!!!!!! Env Clauses = " Clauses,
 
   Clauses => declare-all T Rest L.
 
@@ -256,16 +280,18 @@ declare-instance Factory T F Clauses CSL :-
     T F TheFactory FGR Clauses CSL.
 declare-instance Factory T F Clauses CSL :-
 
-  coq.say "DI!!!!!!!!!!!!!!! NOW RUNNING (C2) private.declare-instance Factory T F Clauses CSL",
-  coq.say "DI!!!!!!!!! Factory = " Factory,
-  coq.say "DI!!!!!!!!! T = " T,
-  coq.say "DI!!!!!!!!! F = " F,
+  coq.say "DI!!!!!!!!!!!!!!!! NOW RUNNING (C2) private.declare-instance Factory T F Clauses CSL",
+  coq.say "DI!!!!!!!!! In Factory = " Factory,
+  coq.say "DI!!!!!!!!! In T = " T,
+  coq.say "DI!!!!!!!!! In F = " F,
 
   declare-canonical-instances-from-factory Factory T F CSL,
   if (get-option "export" tt)
      (coq.env.current-library File,
       std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
-     (Clauses = []).
+     (Clauses = []),
+     
+  coq.say "DI!!!!!!!!! In Clauses = " Clauses.
 
 % [add-mixin T F _ M Cl] adds a constant being the mixin instance for M on type
 % T built from factory F
@@ -275,7 +301,7 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
 
   coq.say "AM!!!!!!!!!!!!!!!!!!!! NOW RUNNING add-mixin", 
   coq.say "AM!!!!!!!!!! In T (for the subject) = " T,
-  coq.say "AM!!!!!!!!!! In MissingMixin (might be a base one) = " MissingMixin,
+  coq.say "AM!!!!!!!!!! In MissingMixin (the mixin, might be a base one) = " MissingMixin,
 
   new_int N, % timestamp
 
@@ -288,6 +314,10 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
   factory-alias->gref MixinNameAlias MixinName,
 
   std.assert! (MissingMixin = MixinName) "HB: anomaly: we built the wrong mixin",
+
+  coq.say "AM!!!!!!!!!! Ex Bo = " Bo,
+  coq.say "AM!!!!!!!!!! Ex Ty = " Ty,
+  coq.say "AM!!!!!!!!!! Ex MixinName = " MixinName,
 
   % If the mixin instance is already a constant there is no need to
   % alias it.
@@ -303,8 +333,59 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
      ]) (CSL = []),
 
   coq.say "AM!!!!!!!!!! Out C (instance name) = " C,
+  coq.say "AM!!!!!!!!!! Out MixinSrcCl = " MixinSrcCl,
+  coq.say "AM!!!!!!!!!! Out BuilderDeclCl = " BuilderDeclCl,
+  coq.say "AM!!!!!!!!!! Out CSL = " CSL,
 
 ].
+
+% [add-mixin T F _ M Cl] adds a constant being the mixin instance for M on type
+% T built from factory F
+pred add-mixinW i:term, i:factoryname, i:bool, i:mixinname,
+  o:list prop, o:list (pair id constant).
+add-mixinW T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do! [
+
+  coq.say "AM!!!!!!!!!!!!!!!!!!!! NOW RUNNING add-mixin", 
+  coq.say "AM!!!!!!!!!! In T (for the subject) = " T,
+  coq.say "AM!!!!!!!!!! In MissingMixin (the mixin, might be a base one) = " MissingMixin,
+
+  new_int N, % timestamp
+
+  synthesis.assert!-infer-mixin T MissingMixin Bo,
+  MixinSrcCl = mixin-src T MixinName (global (const C)),
+  BuilderDeclCl = builder-decl (builder N FGR MixinName (const C)),
+
+  std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
+  safe-dest-app Ty (global MixinNameAlias) _,
+  factory-alias->gref MixinNameAlias MixinName,
+
+  std.assert! (MissingMixin = MixinName) "HB: anomaly: we built the wrong mixin",
+
+  coq.say "AM!!!!!!!!!! Ex Bo = " Bo,
+  coq.say "AM!!!!!!!!!! Ex Ty = " Ty,
+  coq.say "AM!!!!!!!!!! Ex MixinName = " MixinName,
+
+  % If the mixin instance is already a constant there is no need to
+  % alias it.
+  if (Bo = global (const C)) true
+    (Name is {gref->modname FGR 2 "_"} ^"__to__" ^ {gref->modname MixinName 2 "_"},
+     if-verbose (coq.say {header} "declare mixin instance" Name),
+     log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
+  if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
+     (std.do! [
+         if-verbose (coq.say {header} "declare canonical mixin instance" C),
+         with-locality (log.coq.CS.declare-instance C),
+         CSL = [pr "_" C], 
+     ]) (CSL = []),
+
+  coq.say "AM!!!!!!!!!! Out C (instance name) = " C,
+  coq.say "AM!!!!!!!!!! Out MixinSrcCl = " MixinSrcCl,
+  coq.say "AM!!!!!!!!!! Out BuilderDeclCl = " BuilderDeclCl,
+  coq.say "AM!!!!!!!!!! Out CSL = " CSL,
+
+].
+
+
 
 pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
   o:list prop, o:list (pair id constant), o:list term.
@@ -409,6 +490,32 @@ declare-canonical-instances-from-factory-and-local-builders
   std.append MCSL CCSL CSL
 ].
 
+%%%%%%%%%%%%%%
+
+% cumulates output over forall
+pred cumul-forall i:list A, i:(A -> B -> prop), o:list B.
+cumul-forall [] _ [].
+cumul-forall [X|L] P [Y|M] :- P X Y, cumul-forall L P M.
+
+% flattens cumulated list output 
+pred flat-cumul-forall i:list A, i:(A -> list B -> prop), o:list B.
+flat-cumul-forall X P Y :- cumul-forall X P W, flatten W Y.
+
+% merges list1 and list2 so that list1 doesn't introduce k-duplicates
+pred hmerge i:list (pair B C), i:list (pair B C), o:list (pair B C).
+hmerge [] A A.
+hmerge [(pr K _)|LA] LX LY :- coq.lookup! LX K _, hmerge LA LX LY.
+hmerge [(pr K V)|LA] LX [(pr K V)|LY] :- hmerge LA LX LY.
+%hmerge [(pr K1 V1)|LA] LX LY1 :- if (coq.lookup! LX K1 _) (LY1 = LY0) (LY1 = [(pr K1 V1)|LY0),
+%                                 hmerge LA LX LY0.  
+
+% cumulates without k-duplicates 
+pred hcumul-forall i:list A, i:(A -> list (pair B C) -> prop), o:list (pair B C).
+hcumul-forall [] _ [].
+hcumul-forall [X|L] P M2 :- P X M1, hmerge M1 M0 M2, hcumul-forall L P M0.
+
+%%%%%%%%%%%%%%%%%
+
 % [declare-canonical-instances-from-factory T F] given a factory F
 % it uses all known builders to declare canonical instances of structures
 % on T
@@ -429,19 +536,20 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   synthesis.under-mixin-src-from-factory.do! T F [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
-      coq.say "DCIFF!!!!!!! In ML (mixin names) = " ML,
+      coq.say "DCIFF!!!!!!! Ex ML (mixin names) = " ML,
 
-      % currently, AllSubjects = [T]
+      % Clauses, MCSL and AllSubjects are outputs. currently, AllSubjects = [T]
       add-all-mixins T Factory ML tt Clauses MCSL AllSubjects,
+      coq.say "DCIFF!!!!!!!!!! Ex AllSubjects = " AllSubjects,  
       % old (Clauses not used)
-      instance.declare-all T {findall-classes-for ML} CCSL,  
-      % std.forall AllSubjects (s \ instance.declare-all s {findall-classes-for ML} CCSL),     
+      % instance.declare-all T {findall-classes-for ML} CCSL,  
+      % hcumul-forall AllSubjects (s \ instance.declare-all s {findall-classes-for ML}) CCSL,     
     ] 
   ],
 
   % Clauses => instance.declare-all T {findall-classes-for ML} CCSL,
   % new (should use Clauses and AllSubjects)
-  % Clauses => std.forall AllSubjects (s \ instance.declare-all s {findall-classes-for ML} CCSL),     
+  Clauses => hcumul-forall AllSubjects (s \ instance.declare-all s {findall-classes-for ML}) CCSL,     
 
 /*
 %% New code: 
@@ -455,10 +563,13 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
     (s \ instance.declare-all s {findall-classes-for ML} CCSL),
 %%
 */
-  std.append MCSL CCSL CSL,
-  coq.say "DCIFF!!!!!!!!!! Out CSL = " CSL, 
-].
+  coq.say "DCIFF!!!!!!!!!! Ex Clauses = " Clauses,  
+  coq.say "DCIFF!!!!!!!!!! Ex CCSL = " CCSL, 
 
+  std.append MCSL CCSL CSL,
+ coq.say "DCIFF!!!!!!!!!! Out CSL = " CSL, 
+].
+ 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
 pred hack-section-discharging i:term, o:term.
