@@ -34,6 +34,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
 
   coq.say "DC!!!!!!!!!!!!! Ex Body = " Body,
+  coq.say "DC!!!!!!!!!!!!! Ex TyWP = " TyWP,
   coq.say "DC!!!!!!!!!!!!! Ex Ty = " Ty,
 
   % handle parameters via a section -- begin
@@ -71,9 +72,12 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   coq.say "DC!!!!!!!!!!!!! Ex UnfoldClauses = " UnfoldClauses,
 
+  % Here the body of the definition (OptimizedBody) is associated with a name (C)
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
   TheFactory = (global (const C)),
+
+  coq.say "DC!!!!!!!!!!!! Ex OptimizedBody (linking point with TheFactory) = " OptimizedBody,  
 
   % call HB.instance TheType TheFactory
   std.drop NParams Args [TheType|_],
@@ -338,54 +342,6 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
   coq.say "AM!!!!!!!!!! Out CSL = " CSL,
 
 ].
-
-% [add-mixin T F _ M Cl] adds a constant being the mixin instance for M on type
-% T built from factory F
-pred add-mixinW i:term, i:factoryname, i:bool, i:mixinname,
-  o:list prop, o:list (pair id constant).
-add-mixinW T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do! [
-
-  coq.say "AM!!!!!!!!!!!!!!!!!!!! NOW RUNNING add-mixin", 
-  coq.say "AM!!!!!!!!!! In T (for the subject) = " T,
-  coq.say "AM!!!!!!!!!! In MissingMixin (the mixin, might be a base one) = " MissingMixin,
-
-  new_int N, % timestamp
-
-  synthesis.assert!-infer-mixin T MissingMixin Bo,
-  MixinSrcCl = mixin-src T MixinName (global (const C)),
-  BuilderDeclCl = builder-decl (builder N FGR MixinName (const C)),
-
-  std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
-  safe-dest-app Ty (global MixinNameAlias) _,
-  factory-alias->gref MixinNameAlias MixinName,
-
-  std.assert! (MissingMixin = MixinName) "HB: anomaly: we built the wrong mixin",
-
-  coq.say "AM!!!!!!!!!! Ex Bo = " Bo,
-  coq.say "AM!!!!!!!!!! Ex Ty = " Ty,
-  coq.say "AM!!!!!!!!!! Ex MixinName = " MixinName,
-
-  % If the mixin instance is already a constant there is no need to
-  % alias it.
-  if (Bo = global (const C)) true
-    (Name is {gref->modname FGR 2 "_"} ^"__to__" ^ {gref->modname MixinName 2 "_"},
-     if-verbose (coq.say {header} "declare mixin instance" Name),
-     log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
-  if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
-     (std.do! [
-         if-verbose (coq.say {header} "declare canonical mixin instance" C),
-         with-locality (log.coq.CS.declare-instance C),
-         CSL = [pr "_" C], 
-     ]) (CSL = []),
-
-  coq.say "AM!!!!!!!!!! Out C (instance name) = " C,
-  coq.say "AM!!!!!!!!!! Out MixinSrcCl = " MixinSrcCl,
-  coq.say "AM!!!!!!!!!! Out BuilderDeclCl = " BuilderDeclCl,
-  coq.say "AM!!!!!!!!!! Out CSL = " CSL,
-
-].
-
-
 
 pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
   o:list prop, o:list (pair id constant), o:list term.
@@ -732,6 +688,22 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
 */
 ].
 derive-wrapper-instances _ _.
+
+pred redirect-instances i:factoryname, i:term, i:term
+   o:list prop, o:list (pair id constant).
+redirect-instances Factory TheType Body Clauses CSL :- std.do! [
+  coq.safe-dest-app TheType TheTypeKey _,
+    
+  if (TheTypeKey = global TheTypeKeyGR)
+    (std.do! [
+     std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
+     coq.say "WRAPPERS: " Wrappers,
+     std.forall Wrappers (private.derive-wrapper-instances Body)
+     ]
+    )
+    true,
+].
+
 
 /*
 GENERAL COMMENT 05/07/2023.
