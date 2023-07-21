@@ -109,8 +109,8 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   ),
 
   
-  
-  
+  %%%%%%%%%%%%%%% temporary test code 
+  %%% (type-check failure if called from inside the section)
   coq.safe-dest-app TheType TheTypeKey _,
   if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
@@ -124,6 +124,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
      ]
     )
     true,
+  %%%%%%%%%%%%%%%%%%%%%%%% 
 
 
   % we accumulate clauses now that the section is over
