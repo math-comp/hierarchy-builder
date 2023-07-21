@@ -100,7 +100,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   % Clauses and CSL are outputs. QUESTION: what is the context here?
   % private.declare-instance Factory TheType TheFactory Clauses CSL,
-  private.redirect-instances Factory TheType TheFactory Body Clauses CSL,
+  private.redirect-instances RealName Factory TheType TheFactory Body Clauses CSL,
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
@@ -108,7 +108,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
     log.coq.env.end-section-name SectionName
   ),
 
-  
+  /*
   %%%%%%%%%%%%%%% temporary test code 
   %%% (type-check failure if called from inside the section)
   coq.safe-dest-app TheType TheTypeKey _,
@@ -118,14 +118,14 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
      coq.say "REDIN!!!!!!! WRAPPERS = " Wrappers,
      if (Wrappers = [W|_])
         % there is a wrapper (we actually don't want more than one)
-        (private.dry-run TheFactory W _ _)
+        (private.dry-run Body W _ _)
         % there happens to be no wrapper, just treat it as a normal instance  
         true
      ]
     )
     true,
   %%%%%%%%%%%%%%%%%%%%%%%% 
-
+  */
 
   % we accumulate clauses now that the section is over
   % QUESTION - what is this really accumulating? appears to be always empty
@@ -733,28 +733,32 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin)
 derive-wrapper-instances _ _ [] [].
 
 % split between direct call to declare-instance and indirect one through derive-wrapper-instances
-pred redirect-instances i:factoryname, i:term, i:term, i:term,
+pred redirect-instances i:id, i:factoryname, i:term, i:term, i:term,
    o:list prop, o:list (pair id constant).
-redirect-instances Factory TheType TheFactory Body Clauses CSL :- std.do! [
+redirect-instances RealName Factory TheType TheFactory Body Clauses CSL :- std.do! [
   coq.safe-dest-app TheType TheTypeKey _,
 
   coq.say "NOW RUNNING****************************** REDIN " 
   coq.say "REDIN!!!!!!! TheTypeKey = " TheTypeKey, 
 
-  if (TheTypeKey = global TheTypeKeyGR)
+  if (RealName = "hom_isMon__ELIM")
+      (private.declare-instance Factory TheType TheFactory Clauses CSL)
+   (if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
      std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
      coq.say "REDIN!!!!!!! WRAPPERS = " Wrappers,
      if (Wrappers = [W|_])
         % there is a wrapper (we actually don't want more than one)
-        (%private.derive-wrapper-instances TheFactory W Clauses CSL
-          private.declare-instance Factory TheType TheFactory Clauses CSL)
+        (private.derive-wrapper-instances Body W Clauses CSL
+          % private.declare-instance Factory TheType TheFactory Clauses CSL
+        )  
         % there happens to be no wrapper, just treat it as a normal instance  
         (private.declare-instance Factory TheType TheFactory Clauses CSL)
      ]
     )
     % there can be no wrapper, just treat it as a normal instance  
     (private.declare-instance Factory TheType TheFactory Clauses CSL)
+   ) 
 ].
 
 % test predicate 
@@ -793,10 +797,10 @@ dry-run Instance (wrapper-mixin WrapperMixin Subject Mixin) [] [] :- std.do! [
     coq.say "DWI!!!!!!!!! Ty = " Ty, 
     coq.say "DWI!!!!!!!!! Dgn = " Dgn, 
  
-     %if (Dgn = error S) (coq.say "error in NewInstance" S)
-      %(% coq.count-prods Ty N0, 
-         % instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
-      %),      
+    if (Dgn = error S) (coq.say "error in NewInstance" S)
+      (coq.count-prods Ty N0 
+        % instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
+      ),      
 ].
 dry-run _ _ [] [].
 
