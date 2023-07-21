@@ -50,6 +50,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
     private.postulate-arity TyWP [] Body SectionBody SectionTy
   ),
 
+  coq.say "DC!!!!!!!!!!!!! Ex SectionName = " SectionName,
   coq.say "DC!!!!!!!!!!!!! Ex SectionBody = " SectionBody,
   coq.say "DC!!!!!!!!!!!!! Ex SectionTy = " SectionTy,
 
@@ -58,10 +59,17 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   factory-alias->gref FactoryAlias Factory,
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
 
+  coq.say "DC!!!!!!!!!!!!! Ex Factory = " Factory,
+  coq.say "DC!!!!!!!!!!!!! Ex FactoryAlias = " FactoryAlias,
+  coq.say "DC!!!!!!!!!!!!! Ex Args = " Args,
+  coq.say "DC!!!!!!!!!!!!! Ex NParams = " NParams,
+
   % declare the constant for the factory instance
   private.hack-section-discharging SectionBody SectionBodyHack,
   private.optimize-body SectionBodyHack OptimizedBody,
   if (Name = "_") (RealName is "HB_unnamed_factory_" ^ {std.any->string {new_int} }) (RealName = Name),
+
+  coq.say "DC!!!!!!!!!!!!! Ex RealName = " RealName,
 
   % unfold local instances in the type of C
   if (current-mode (builder-from _ _ _ _)) (std.do![
@@ -70,7 +78,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
     UnfoldClauses => copy SectionTy SectionTyUnfolded,
   ]) (SectionTy = SectionTyUnfolded),
 
-  coq.say "DC!!!!!!!!!!!!! Ex UnfoldClauses = " UnfoldClauses,
+  coq.say "DC!!!!!!!!!!!! Ex LocalCSL = " LocalCSL,
+  coq.say "DC!!!!!!!!!!!! Ex UnfoldClauses = " UnfoldClauses,
+  coq.say "DC!!!!!!!!!!!! Ex SectionTyUnfolded = " SectionTyUnfolded,
 
   % Here the body of the definition (OptimizedBody) is associated with a name (C)
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
@@ -78,20 +88,43 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   TheFactory = (global (const C)),
 
   coq.say "DC!!!!!!!!!!!! Ex OptimizedBody (linking point with TheFactory) = " OptimizedBody,  
-
+  coq.say "DC!!!!!!!!!!!! Ex C = " C,
+ 
   % call HB.instance TheType TheFactory
   std.drop NParams Args [TheType|_],
 
   private.check-non-forgetful-inheritance TheType Factory,
 
+  coq.say "DC!!!!!!!!!!!!! Ex TheType = " TheType,
+  coq.say "DC!!!!!!!!!!!!! Ex TheFactory = " TheFactory,
+
   % Clauses and CSL are outputs. QUESTION: what is the context here?
-  private.declare-instance Factory TheType TheFactory Clauses CSL,
+  % private.declare-instance Factory TheType TheFactory Clauses CSL,
+  private.redirect-instances Factory TheType TheFactory Body Clauses CSL,
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
     if-verbose (coq.say {header} "closing instance section"),
     log.coq.env.end-section-name SectionName
   ),
+
+  
+  
+  
+  coq.safe-dest-app TheType TheTypeKey _,
+  if (TheTypeKey = global TheTypeKeyGR)
+    (std.do! [
+     std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
+     coq.say "REDIN!!!!!!! WRAPPERS = " Wrappers,
+     if (Wrappers = [W|_])
+        % there is a wrapper (we actually don't want more than one)
+        (private.dry-run TheFactory W _ _)
+        % there happens to be no wrapper, just treat it as a normal instance  
+        true
+     ]
+    )
+    true,
+
 
   % we accumulate clauses now that the section is over
   % QUESTION - what is this really accumulating? appears to be always empty
@@ -610,6 +643,13 @@ check-non-forgetful-inheritance T Factory :- std.do! [
 %           |}
 %       |}, isMon.phant_axioms (hom A B)
    
+pred mk_wrapper_instance_name i:mixinname i:term o:string.
+mk_wrapper_instance_name W Ins Str :-
+  coq.gref->modname W Str0,
+  coq.term->string Ins Str1,
+  % coq.term->string (global W) Str0,
+  std.string.concat "__" [Str1, Str0] Str.
+
 % Not used, but possible useful
 pred mk_wrapper_instance_name i:mixinname i:term o:string.
 mk_wrapper_instance_name W Ins Str :-
@@ -624,8 +664,9 @@ mk_wrapper_instance_name W Ins Str :-
 % Morever, in general this may apply to more than a mixin (if the base mixin is not a trivially 
 % atomic one).
 % Important to ensure there is a consistent naming scheme.
-pred derive-wrapper-instances i:term, i:prop.
-derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- std.do! [
+pred derive-wrapper-instances i:term, i:prop, o:list prop, o:list (pair id constant).
+derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) 
+       Clauses CSL :- std.do! [
 
     coq.say "DWI!!!!!!!!! NOW RUNNING derive-wrapper-instances Instance _", 
     coq.say "DWI!!!!!!! Instance = " Instance, 
@@ -666,7 +707,8 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
         % the name needs to be fixed.
        % name generation doesn't work because of dot occurrences  
        % mk_wrapper_instance_name Wrapper_Mixin Instance Nm,  
-       instance.declare-const "funq_instance_name" NewInstance {coq.term->arity Ty N0} _
+       % instance.declare-const "funq_instance_name" NewInstance {coq.term->arity Ty N0} _
+         instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
       )
 
 /*
@@ -687,22 +729,75 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) :- 
      std.forall WrapperProjections (export-wrapper-instance W)
 */
 ].
-derive-wrapper-instances _ _.
+derive-wrapper-instances _ _ [] [].
 
-pred redirect-instances i:factoryname, i:term, i:term
+% split between direct call to declare-instance and indirect one through derive-wrapper-instances
+pred redirect-instances i:factoryname, i:term, i:term, i:term,
    o:list prop, o:list (pair id constant).
-redirect-instances Factory TheType Body Clauses CSL :- std.do! [
+redirect-instances Factory TheType TheFactory Body Clauses CSL :- std.do! [
   coq.safe-dest-app TheType TheTypeKey _,
-    
+
+  coq.say "NOW RUNNING****************************** REDIN " 
+  coq.say "REDIN!!!!!!! TheTypeKey = " TheTypeKey, 
+
   if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
      std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
-     coq.say "WRAPPERS: " Wrappers,
-     std.forall Wrappers (private.derive-wrapper-instances Body)
+     coq.say "REDIN!!!!!!! WRAPPERS = " Wrappers,
+     if (Wrappers = [W|_])
+        % there is a wrapper (we actually don't want more than one)
+        (%private.derive-wrapper-instances TheFactory W Clauses CSL
+          private.declare-instance Factory TheType TheFactory Clauses CSL)
+        % there happens to be no wrapper, just treat it as a normal instance  
+        (private.declare-instance Factory TheType TheFactory Clauses CSL)
      ]
     )
-    true,
+    % there can be no wrapper, just treat it as a normal instance  
+    (private.declare-instance Factory TheType TheFactory Clauses CSL)
 ].
+
+% test predicate 
+pred dry-run i:term, i:prop, o:list prop, o:list (pair id constant).
+dry-run Instance (wrapper-mixin WrapperMixin Subject Mixin) [] [] :- std.do! [
+
+    coq.say "DWI!!!!!!!!! NOW RUNNING derive-wrapper-instances Instance _", 
+    coq.say "DWI!!!!!!! Instance = " Instance, 
+
+    % K is the mixin constructor (Build) for WrapperMixin 
+    factory-constructor WrapperMixin K,
+    factory-nparams WrapperMixin NParams,
+    std.assert! (NParams = 0) "TODO support parameters",
+   
+    coq.say "DWI!!!!!!! K = " K, 
+    coq.say "DWI!!!!!!! NParams = " NParams, 
+
+    coq.env.typeof K KTy, 
+    coq.count-prods KTy KN, 
+    KN0 = KN - 1,
+    coq.mk-n-holes KN0 Holes,
+
+    std.append Holes [Instance] Args,
+
+    coq.say "DWI!!!!!!! KTy = " KTy, 
+    coq.say "DWI!!!!!!! KN = " KN, 
+    coq.say "DWI!!!!!!! Args = " Args,
+
+    % the body of the new wrapper instance
+    NewInstance = app[global K| Args],
+
+    coq.say "DWI!!!!!!!!! NewInstance = " {coq.term->string NewInstance},
+
+    coq.typecheck NewInstance Ty Dgn,
+
+    coq.say "DWI!!!!!!!!! Ty = " Ty, 
+    coq.say "DWI!!!!!!!!! Dgn = " Dgn, 
+ 
+     %if (Dgn = error S) (coq.say "error in NewInstance" S)
+      %(% coq.count-prods Ty N0, 
+         % instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
+      %),      
+].
+dry-run _ _ [] [].
 
 
 /*
