@@ -56,6 +56,45 @@ HB.mixin Record hom_isMon T of Quiver T :=
 HB.structure
    Definition Monoid_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj }.
+
+(*
+     HB.factory Record isMon2 A :=
+     {
+       zero  : A;
+       add   : A -> A -> A;
+       addrA : associative add;
+       add0r : left_id zero add;
+       addr0 : right_id zero add;
+       foo : A;
+     }.
+     HB.builders Context X (f : isMon2 X).
+     
+     HB.instance Definition _ : isMon X := isMon.Build X zero add addrA add0r addr0.
+          
+     
+     HB.end.
+     *)
+(*
+HB.factory Record isMon2 A of Quiver A :=
+{
+  zero  : A;
+  add   : A -> A -> A;
+  addrA : associative add;
+  add0r : left_id zero add;
+  addr0 : right_id zero add;
+  foo : forall X Y, isMon (@hom A X Y);
+}.
+HB.builders Context X (f : isMon2 X).
+
+HB.instance Definition _ : isMon X := isMon.Build X zero add addrA add0r addr0.
+
+HB.instance Definition _ : hom_isMon X :=
+  hom_isMon.Build X foo.
+
+HB.end.
+*)
+
+
      
 (* About hom_isMon.hom_isMon_private. *)
 (* About hom_isMon_private. *)
@@ -120,8 +159,8 @@ Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
   Qed.
 *)
 
-Program Definition funQ_isMonF (A B: Type) : isMon (A -> option B) :=
-  isMon.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _.
+Program Definition funQ_isMonF (A B: Type) : isMon2 (A -> option B) :=
+  isMon2.Build (A -> option B) (fun (_:A) => None) funQ_comp _ _ _ (fun (_:A) => None).
 (* Obligations. *)
 Obligation 1.
 unfold associative; intros.
@@ -165,7 +204,7 @@ Set Printing All.
 Check Type : Quiver.type.
 Fail Check Type : Monoid_enriched_quiver.type.
 
-HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
+HB.instance Definition funQ_isMon (A B: Type) : isMon2 (hom A B) :=
   funQ_isMonF A B.
 
 Check Type : Monoid_enriched_quiver.type.

@@ -36,7 +36,8 @@ with the former... (broadly corresponding to 2?) *)
 HB.mixin Record hom_isMon1 T of Quiver T :=
     { private : forall A B, hom_isMon_ty (@hom (Quiver.clone T _)) A B }.
 
-(* abbreviation with parameters for homset and monoid *)
+(* GENERIC WRAPPER.
+   abbreviation with parameters for homset and monoid *)
 Definition hom_isM_ty {T} (H: T -> T -> Type) (M: Type -> Type) (A B: T) :
   Type := M (H A B). 
 
@@ -120,4 +121,27 @@ Record Monoid_enriched_quiverN1 := {
     hsM1: forall A B, hom_isM_ty (@hom (HB.pack ObjN1 iQ1))
                                 (fun X => isMon X) A B }.
 
+(*************************************************************)
 
+(* shows that if a mixin can be decomposed into atomic ones, then its
+wrapper can be decompoed into atomic wrappers *)
+Lemma hom_isM_ty_split (M1 M2 M3: Type -> Type) :
+  ((forall X: Type, (M1 X * M2 X) -> M3 X) *
+   (forall X: Type, M3 X -> (M1 X * M2 X)))
+  -> 
+  forall (T:Type) (H: T -> T -> Type),
+    ((forall x1 x2, M1 (H x1 x2)) * (forall x1 x2, M2 (H x1 x2)) ->
+     (forall x1 x2, M3 (H x1 x2))) *
+      ((forall x1 x2, M3 (H x1 x2)) ->
+      (forall x1 x2, M1 (H x1 x2)) * (forall x1 x2, M2 (H x1 x2))). 
+  intros X T H; destruct X as [X1 X2]; split; intro X.
+  intros x1 x2.
+  eapply X1; eauto.
+  destruct X as [X3 X4].
+  split; eauto.
+  
+  split; intros x1 x2; specialize (X2 (H x1 x2));
+    specialize (X x1 x2); intuition.
+Qed.
+
+  

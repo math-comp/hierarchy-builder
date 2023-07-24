@@ -519,6 +519,7 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   coq.say "DCIFF!!!!!!! In Factory = " Factory,
   coq.say "DCIFF!!!!!!! In T = " T,
   coq.say "DCIFF!!!!!!! In F = " F,
+  coq.safe-dest-app T Key _,
 
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
@@ -529,6 +530,15 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
       list-w-params_list {factory-provides Factory} ML,
       coq.say "DCIFF!!!!!!! Ex ML (mixin names) = " ML,
       %std.findall (mixin-src (sort _) _ _) YYY,
+  
+     /*
+     % POSSIBLE CHANGE?
+
+     (std.forall ML (m\ sigma Wrappers\ sigma KeyGR\
+       Key = global KeyGR,
+       std.findall (wrapper-mixin _ KeyGR m) Wrappers,
+       coq.say "DOVREMMO FARE" Wrappers) ; true),
+    */  
 
       % Clauses, MCSL and AllSubjects are outputs. currently, AllSubjects = [T]
       add-all-mixins T Factory ML tt ClausesFromF MCSL AllSubjects,
@@ -711,9 +721,9 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin)
      coq.say "DWI!!!!!!!!! NewInstance =" {coq.term->string NewInstance},
 
      coq.typecheck NewInstance Ty Dgn,
-     coq.say "REDIN!!!!!!!!!!!!!! Ty = " Ty, 
+     coq.say "DWI!!!!!!!!!! Ty = " Ty, 
 
-     if (Dgn = error S) (coq.say "REDIN!!!!!!!!!!! error in NewInstance" S)
+     if (Dgn = error S) (coq.say "DWI!!!!!!!!! error in NewInstance" S)
       (coq.count-prods Ty N0,
         % we then call declare-const to add the new instance.
         % the name needs to be fixed.
@@ -722,12 +732,12 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin)
         % instance.declare-const "funq_instance_name" NewInstance {coq.term->arity Ty N0} _
        coq.safe-dest-app Ty _Factory FArgs,
        std.nth NParams FArgs WrapperSubject, 
-       coq.say "REDIN!!!!!!!!!!!!!! OK", 
-       coq.say "REDIN!!!!!!!!!!!!!! WrapperMixin = " WrapperMixin, 
-       coq.say "REDIN!!!!!!!!!!!!!! NewInstance = " NewInstance, 
-       coq.say "REDIN!!!!!!!!!!!!!! WrapperSubject = " WrapperSubject, 
+       
+       coq.say "DWI!!!!!!!!!!! OK", 
+       coq.say "DWI!!!!!!!!!!! WrapperMixin = " WrapperMixin, 
+       coq.say "DWI!!!!!!!!!!! NewInstance = " NewInstance, 
+       coq.say "DWI!!!!!!!!!!! WrapperSubject = " WrapperSubject, 
         
- 
        private.declare-instance WrapperMixin WrapperSubject NewInstance Clauses CSL
       )
 
@@ -773,7 +783,7 @@ redirect-instances RealName Factory TheType TheFactory Body TyWP SectionName Cla
   coq.say "NOW RUNNING****************************** REDIN " 
   coq.say "REDIN!!!!!!! TheTypeKey = " TheTypeKey, 
 
-  if (RealName = "hom_isMon__ELIM")
+  if (RealName = "hom_isMon__ELIM")  % meant to rule out generated instances 
       (private.dec-inst-and-close Factory TheType TheFactory TyWP SectionName Clauses CSL)
    (if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
