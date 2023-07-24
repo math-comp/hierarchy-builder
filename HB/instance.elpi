@@ -100,14 +100,15 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   % Clauses and CSL are outputs. QUESTION: what is the context here?
   % private.declare-instance Factory TheType TheFactory Clauses CSL,
-  private.redirect-instances RealName Factory TheType TheFactory Body Clauses CSL,
+  private.redirect-instances RealName Factory TheType TheFactory Body TyWP SectionName Clauses CSL,
 
+  /*
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
     if-verbose (coq.say {header} "closing instance section"),
     log.coq.env.end-section-name SectionName
   ),
-
+  */
   /*
   %%%%%%%%%%%%%%% temporary test code 
   %%% (type-check failure if called from inside the section)
@@ -669,7 +670,7 @@ pred derive-wrapper-instances i:term, i:prop, o:list prop, o:list (pair id const
 derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) 
        Clauses CSL :- std.do! [
 
-    coq.say "DWI!!!!!!!!! NOW RUNNING derive-wrapper-instances Instance _", 
+    coq.say "DWI!!!!!!!!!! NOW RUNNING derive-wrapper-instances Instance _", 
     coq.say "DWI!!!!!!! Instance = " Instance, 
 
     % K is the mixin constructor (Build) for WrapperMixin 
@@ -702,14 +703,20 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin)
      coq.say "DWI!!!!!!!!! NewInstance =" {coq.term->string NewInstance},
 
      coq.typecheck NewInstance Ty Dgn,
-     if (Dgn = error S) (coq.say "error in NewInstance" S)
+     coq.say "REDIN!!!!!!!!!!!!!! Ty = " Ty, 
+
+     if (Dgn = error S) (coq.say "REDIN!!!!!!!!!!! error in NewInstance" S)
       (coq.count-prods Ty N0,
         % we then call declare-const to add the new instance.
         % the name needs to be fixed.
-       % name generation doesn't work because of dot occurrences  
-       % mk_wrapper_instance_name Wrapper_Mixin Instance Nm,  
-       % instance.declare-const "funq_instance_name" NewInstance {coq.term->arity Ty N0} _
-         instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
+        % name generation doesn't work because of dot occurrences  
+        % mk_wrapper_instance_name Wrapper_Mixin Instance Nm,  
+        % instance.declare-const "funq_instance_name" NewInstance {coq.term->arity Ty N0} _
+       coq.say "REDIN!!!!!!!!!!!!!! OK", 
+       coq.say "REDIN!!!!!!!!!!!!!! WrapperMixin = " WrapperMixin, 
+       coq.say "REDIN!!!!!!!!!!!!!! NewInstance = " NewInstance, 
+
+       instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
       )
 
 /*
@@ -732,28 +739,46 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin)
 ].
 derive-wrapper-instances _ _ [] [].
 
+pred private.dec-inst-and-close i:factoryname, i:term, i:term, i:arity, i:id,
+  o:list prop, o:list (pair id constant). 
+private.dec-inst-and-close Factory TheType TheFactory TyWP SectionName Clauses CSL :- std.do! [
+
+  private.declare-instance Factory TheType TheFactory Clauses CSL,
+  % handle parameters via a section -- end
+  if (TyWP = arity _) true (
+    if-verbose (coq.say {header} "closing instance section"),
+    log.coq.env.end-section-name SectionName
+  )
+].
+
 % split between direct call to declare-instance and indirect one through derive-wrapper-instances
-pred redirect-instances i:id, i:factoryname, i:term, i:term, i:term,
+pred redirect-instances i:id, i:factoryname, i:term, i:term, i:term, i:arity, i:id,
    o:list prop, o:list (pair id constant).
-redirect-instances RealName Factory TheType TheFactory Body Clauses CSL :- std.do! [
+redirect-instances RealName Factory TheType TheFactory Body TyWP SectionName Clauses CSL :- 
+ std.do! [
   coq.safe-dest-app TheType TheTypeKey _,
 
   coq.say "NOW RUNNING****************************** REDIN " 
   coq.say "REDIN!!!!!!! TheTypeKey = " TheTypeKey, 
 
   if (RealName = "hom_isMon__ELIM")
-      (private.declare-instance Factory TheType TheFactory Clauses CSL)
+      (private.dec-inst-and-close Factory TheType TheFactory TyWP SectionName Clauses CSL)
    (if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [
      std.findall (wrapper-mixin _ TheTypeKeyGR Factory) Wrappers,
      coq.say "REDIN!!!!!!! WRAPPERS = " Wrappers,
      if (Wrappers = [W|_])
         % there is a wrapper (we actually don't want more than one)
-        (private.derive-wrapper-instances Body W Clauses CSL
+        ( if (TyWP = arity _) true (
+             if-verbose (coq.say {header} "closing instance section"),
+             log.coq.env.end-section-name SectionName ),
+          % we accumulate clauses now that the section is over
+          acc-clauses current Clauses0,
+          Clauses0 => private.derive-wrapper-instances Body W Clauses CSL
           % private.declare-instance Factory TheType TheFactory Clauses CSL
         )  
         % there happens to be no wrapper, just treat it as a normal instance  
-        (private.declare-instance Factory TheType TheFactory Clauses CSL)
+        (private.dec-inst-and-close Factory TheType TheFactory TyWP SectionName Clauses CSL)
      ]
     )
     % there can be no wrapper, just treat it as a normal instance  
@@ -799,7 +824,7 @@ dry-run Instance (wrapper-mixin WrapperMixin Subject Mixin) [] [] :- std.do! [
  
     if (Dgn = error S) (coq.say "error in NewInstance" S)
       (coq.count-prods Ty N0 
-        % instance.declare-instance WrapperMixin _ NewInstance Clauses CSL
+        % instance.declare-instance WrapperMixin Ty NewInstance Clauses CSL
       ),      
 ].
 dry-run _ _ [] [].
