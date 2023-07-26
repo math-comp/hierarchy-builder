@@ -36,30 +36,42 @@ with the former... (broadly corresponding to 2?) *)
 HB.mixin Record hom_isMon1 T of Quiver T :=
     { private : forall A B, hom_isMon_ty (@hom (Quiver.clone T _)) A B }.
 
-(* GENERIC WRAPPER.
+(* GENERIC WRAPPER instantiated.
    abbreviation with parameters for homset and monoid *)
-Definition hom_isM_ty (M: Type -> Type) {T} (H: T -> T -> Type) (A B: T) :
+Definition HT_isM (M: Type -> Type) {T} (H: T -> T -> Type) (A B: T) :
   Type := M (H A B). 
+  
+Lemma wrap_up (M: Type -> Type) {T} (H: T -> T -> Type) (A B: T)
+  (x: M (H A B)) : HT_isM M H A B.
+auto.
+Qed.
 
-(* three parameter relation *)
-Definition wrapper_spec {T} (H: T -> T -> Type) (M HM: Type -> Type) :
-  Prop := HM T = forall A B, hom_isM_ty M H A B.
+Lemma unwrap (M: Type -> Type) {T} (H: T -> T -> Type) (A B: T)
+  (x: HT_isM M H A B) : M (H A B).
+auto.
+Qed.
+
+Lemma wrap_eq (M: Type -> Type) {T} (H: T -> T -> Type) (A B: T) :
+  M (H A B) = HT_isM M H A B.            
+  auto.
+Qed.
+
+(* GENERIC WRAPPER *)
+Definition wrapper (M: Type -> Type) {T} (H: T -> T -> Type) :
+  Type := forall A B, HT_isM M H A B.
   
 (* one more wrapper definition (no real change) *)                           
 HB.mixin Record hom_isMon2 T of Quiver T :=
-  { private : forall A B, hom_isM_ty (fun X => isMon X)
-                                     (@hom (Quiver.clone T _))
-                                     A B }.
+  { private : wrapper (fun X => isMon X)
+                      (@hom (Quiver.clone T _)) }.
 
 (* the parametric definition works, though it is problematic *)
 HB.mixin Record hom_isM2 (M: Type -> Type) T of Quiver T :=
-  { private : forall (A B: T), @hom_isM_ty M T (@hom (Quiver.clone T _))
-                                     A B }.
+  { private : wrapper M (@hom (Quiver.clone T _)) }.
 
-(* just a copy of hom_isM2 *)
+(* just a copy of hom_isM2 *)                           
 HB.mixin Record hom_isM3 (M: Type -> Type) T of Quiver T :=
-  { private : forall (A B: T), @hom_isM_ty M T (@hom (Quiver.clone T _))
-                                     A B }.
+  { private : wrapper M (@hom (Quiver.clone T _)) }.
 
 (* structure based on one of the wrappers *)
 HB.structure Definition Monoid_enriched_quiver :=
@@ -96,6 +108,13 @@ HB.instance Definition funQ_isMon (A B: Type) : isMon (A -> B) :=
 HB.instance Definition funQ_hom_isMon :=
   hom_isMon2.Build Type (fun A B => funQ_isMon A B).
 
+(* making it work with HB *)
+Record Monoid_enriched_quiverN1 := {
+    ObjN1: Type;
+    iQ1: isQuiver ObjN1;
+    hsM1: forall A B, HT_isM (fun X => isMon X) (@hom (HB.pack ObjN1 iQ1))
+                             A B }.
+
 (* HB.instance Definition _ := Monoid_enriched_quiver.Build ... *)
 
 (********************)
@@ -107,17 +126,9 @@ Record isQuiverS (Obj: Type) : Type := { homS : Obj -> Obj -> Type }.
 Structure Monoid_enriched_quiverN := {
     ObjN: Type;
     iQ: isQuiverS ObjN;
-    hsM: forall A B, hom_isM_ty (fun X => isMon X) (homS ObjN iQ)
-                                A B }.
+    hsM: forall A B, HT_isM (fun X => isMon X) (homS ObjN iQ)
+                             A B }.
 
-About hom.
-
-(* making it work with HB *)
-Record Monoid_enriched_quiverN1 := {
-    ObjN1: Type;
-    iQ1: isQuiver ObjN1;
-    hsM1: forall A B, hom_isM_ty (fun X => isMon X) (@hom (HB.pack ObjN1 iQ1))
-                                A B }.
 
 (*************************************************************)
 
