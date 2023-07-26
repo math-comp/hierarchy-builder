@@ -38,29 +38,27 @@ HB.mixin Record hom_isMon1 T of Quiver T :=
 
 (* GENERIC WRAPPER.
    abbreviation with parameters for homset and monoid *)
-Definition hom_isM_ty {T} (H: T -> T -> Type) (M: Type -> Type) (A B: T) :
+Definition hom_isM_ty (M: Type -> Type) {T} (H: T -> T -> Type) (A B: T) :
   Type := M (H A B). 
 
 (* three parameter relation *)
 Definition wrapper_spec {T} (H: T -> T -> Type) (M HM: Type -> Type) :
-  Prop := HM T = forall A B, hom_isM_ty H M A B.
+  Prop := HM T = forall A B, hom_isM_ty M H A B.
   
 (* one more wrapper definition (no real change) *)                           
 HB.mixin Record hom_isMon2 T of Quiver T :=
-  { private : forall A B, hom_isM_ty (@hom (Quiver.clone T _))
-                                     (fun X => isMon X)
+  { private : forall A B, hom_isM_ty (fun X => isMon X)
+                                     (@hom (Quiver.clone T _))
                                      A B }.
 
 (* the parametric definition works, though it is problematic *)
 HB.mixin Record hom_isM2 (M: Type -> Type) T of Quiver T :=
-  { private : forall (A B: T), @hom_isM_ty T (@hom (Quiver.clone T _))
-                                     M
+  { private : forall (A B: T), @hom_isM_ty M T (@hom (Quiver.clone T _))
                                      A B }.
 
 (* just a copy of hom_isM2 *)
 HB.mixin Record hom_isM3 (M: Type -> Type) T of Quiver T :=
-  { private : forall (A B: T), @hom_isM_ty T (@hom (Quiver.clone T _))
-                                     M
+  { private : forall (A B: T), @hom_isM_ty M T (@hom (Quiver.clone T _))
                                      A B }.
 
 (* structure based on one of the wrappers *)
@@ -109,8 +107,8 @@ Record isQuiverS (Obj: Type) : Type := { homS : Obj -> Obj -> Type }.
 Structure Monoid_enriched_quiverN := {
     ObjN: Type;
     iQ: isQuiverS ObjN;
-    hsM: forall A B, hom_isM_ty (homS ObjN iQ)
-                                (fun X => isMon X) A B }.
+    hsM: forall A B, hom_isM_ty (fun X => isMon X) (homS ObjN iQ)
+                                A B }.
 
 About hom.
 
@@ -118,8 +116,8 @@ About hom.
 Record Monoid_enriched_quiverN1 := {
     ObjN1: Type;
     iQ1: isQuiver ObjN1;
-    hsM1: forall A B, hom_isM_ty (@hom (HB.pack ObjN1 iQ1))
-                                (fun X => isMon X) A B }.
+    hsM1: forall A B, hom_isM_ty (fun X => isMon X) (@hom (HB.pack ObjN1 iQ1))
+                                A B }.
 
 (*************************************************************)
 
