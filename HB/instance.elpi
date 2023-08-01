@@ -274,11 +274,11 @@ declare-instance Factory T F Clauses CSL :-
      (Clauses2 = []),
      std.append Clauses1 Clauses2 Clauses.
 
-% [add-mixin T F _ M Cl] adds a constant being the mixin instance for M on type
+% [add-mixin T F M Cl] adds a constant being the mixin instance for M on type
 % T built from factory F
-pred add-mixin i:term, i:factoryname, i:bool, i:mixinname,
-  o:list prop, o:list (pair id constant).
-add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do! [
+pred add-mixin i:term, i:factoryname, i:mixinname,
+  o:prop, o:prop, o:constant.
+add-mixin T FGR MissingMixin MixinSrcCl BuilderDeclCl C :- std.do! [
   new_int N, % timestamp
 
   synthesis.assert!-infer-mixin T MissingMixin Bo,
@@ -297,23 +297,15 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
     (Name is {gref->modname FGR 2 "_"} ^"__to__" ^ {gref->modname MixinName 2 "_"},
      if-verbose (coq.say {header} "declare mixin instance" Name),
      log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
-  if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
-     (std.do! [
-         if-verbose (coq.say {header} "declare canonical mixin instance" C),
-         with-locality (log.coq.CS.declare-instance C),
-         CSL = [pr "_" C]
-     ]) (CSL = []),
 ].
 
-pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
-  o:list prop, o:list (pair id constant).
-add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
-  std.map ML (m\ o\ sigma ClL CSL\
-    add-mixin T FGR MakeCanon m ClL CSL, o = pr ClL CSL) ClLxCSL_L,
-  std.unzip ClLxCSL_L ClLL CSLL,
-  std.flatten ClLL Clauses,
-  std.flatten CSLL CSL
-].
+pred add-all-mixins i:term, i:factoryname, i:list mixinname,
+  o:list prop, o:list constant.
+add-all-mixins _T _FGR [] [] [].
+add-all-mixins T FGR [M|ML] [MixinSrcCL,BuilderDeclCL | CL] [C|CC] :- std.do! [
+  add-mixin T FGR M MixinSrcCL BuilderDeclCL C,
+  add-all-mixins T FGR ML CL CC,
+].  
 
 % [postulate-arity A Acc T TS] postulates section variables
 % corresponding to parameters in arity A. TS is T applied
@@ -342,12 +334,18 @@ pred declare-canonical-instances-from-factory-and-local-builders
 declare-canonical-instances-from-factory-and-local-builders
     Factory T F _TheFactory FGR Clauses CSL :- std.do! [
   synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\ std.do! [
-      add-all-mixins T FGR NewMixins ff Clauses MCSL,
+      add-all-mixins T FGR NewMixins Clauses _TheMixins,
   ]),
   list-w-params_list {factory-provides Factory} ML,
-  Clauses => declare-all T {findall-classes-for ML} CCSL,
-  std.append MCSL CCSL CSL
+  Clauses => instance.declare-all T {findall-classes-for ML} CSL,
 ].
+
+pred make-mixin-canonical i:constant, o:option (pair id constant).
+make-mixin-canonical C (some (pr "_" C)) :- whd (global (const C)) [] (global (indc _)) _, !, std.do! [
+  if-verbose (coq.say {header} "declare canonical mixin instance" C),
+  with-locality (log.coq.CS.declare-instance C),
+].
+make-mixin-canonical _ none.
 
 % [declare-canonical-instances-from-factory T F] given a factory F
 % it uses all known builders to declare canonical instances of structures
@@ -362,11 +360,13 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
   synthesis.under-mixin-src-from-factory.do! T F [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
-      add-all-mixins T Factory ML tt Clauses MCSL,
+      add-all-mixins T Factory ML Clauses TheMixins,
       std.map-filter Clauses (mixin-src->has-mixin-instance ) ClausesHas,
-      ClausesHas => declare-all T {findall-classes-for ML} CCSL, % declare-all-on-type-constructor doesn't work here
+      ClausesHas => instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
+  std.map TheMixins make-mixin-canonical TheCanonicalMixins,
+  std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
   std.append MCSL CCSL CSL
 ].
 
