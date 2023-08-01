@@ -249,6 +249,7 @@ Elpi Accumulate Db hb.db.
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate lp:{{
 
+:name "start"
 main [str S] :- !,
   if (decl-location {coq.locate S} Loc)
      (coq.say "HB: synthesized in file" Loc)
@@ -284,6 +285,7 @@ Elpi Accumulate File "HB/about.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [str S] :- !, with-attributes (with-logging (about.main S)).
 
 main _ :- coq.error "Usage: HB.about <name>.".
@@ -318,6 +320,7 @@ Elpi Accumulate File "HB/howto.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [trm T, str STgt] :- !,
   with-attributes (with-logging (howto.main-trm T STgt none)).
 main [trm T, str STgt, int Depth] :- !,
@@ -357,6 +360,7 @@ Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [] :- !, status.print-hierarchy.
 
 main _ :- coq.error "Usage: HB.status.".
@@ -386,6 +390,7 @@ Elpi Accumulate File "HB/graph.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [str File] :- with-attributes (with-logging (graph.to-file File)).
 main _ :- coq.error "Usage: HB.graph <filename>.".
 
@@ -439,6 +444,7 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [A] :- A = indt-decl _, !,
   with-attributes (with-logging (factory.declare-mixin A)).
 
@@ -496,6 +502,7 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
 
+:name "start"
 solve (goal _ _ S _ [trm Ty | Args] as G) GLS :- with-attributes (with-logging (std.do! [
   pack.main Ty Args InstanceSkel,
   std.assert-ok! (coq.elaborate-skeleton InstanceSkel S Instance) "HB.pack_for: the instance does not solve the goal",
@@ -518,6 +525,7 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/pack.elpi".
 Elpi Accumulate lp:{{
 
+:name "start"
 solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
   pack.main Ty Args InstanceSkel,
   std.assert-ok! (coq.elaborate-skeleton InstanceSkel Ty Instance) "HB.pack: the instance does not solve the goal",
@@ -607,6 +615,7 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [const-decl N (some B) Arity] :- !, std.do! [
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
@@ -657,6 +666,7 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
   with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _)).
 main [T0, F0] :- !,
@@ -690,6 +700,8 @@ Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
+:name "start"
 main [A] :- (A = indt-decl _ ; A = const-decl _ _ _), !,
   with-attributes (with-logging (factory.declare A)).
 
@@ -751,9 +763,12 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
+:name "start"
 main [ctx-decl C] :- !, with-attributes (with-logging (builders.begin C)).
 
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.builders.
@@ -773,8 +788,11 @@ Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
+:name "start"
 main [] :- !, with-attributes (with-logging builders.end).
 main _ :- coq.error "Usage: HB.end.".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.end.
@@ -821,8 +839,11 @@ Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
+:name "start"
 main [str M] :- !, with-attributes (with-logging (export.any M)).
 main _ :- coq.error "Usage: HB.export M.".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.export.
@@ -847,9 +868,12 @@ Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
+:name "start"
 main [] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS none)).
 main [str M] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS (some M))).
 main _ :- coq.error "Usage: HB.reexport.".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.reexport.
@@ -893,9 +917,12 @@ Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/lock.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
+
+:name "start"
 main [const-decl Name (some BoSkel) TySkel] :- !,
   with-attributes (with-logging (lock.lock-def Name TySkel BoSkel)).
 main _ :- coq.error "Usage: HB.lock Definition name : ty := t.".
+
 }}.
 Elpi Typecheck.
 Elpi Export HB.lock.
@@ -948,6 +975,7 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
+:name "start"
 main [Ctx] :- Ctx = ctx-decl _, !,
   with-attributes (with-logging (
     factory.argument->w-mixins Ctx (pr FLwP _),
@@ -976,6 +1004,8 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate lp:{{
+
+:name "start"
 main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
 main _ :- coq.error "usage: HB.check (term).".
 
