@@ -66,13 +66,50 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   private.check-non-forgetful-inheritance TheType Factory,
 
-  private.declare-instance Factory TheType TheFactory Clauses CSL,
+  if (current-mode (builder-from TheType TheFactoryForBuilderSection FGR _))
+    % instance in a builder section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    (std.do![
+      if (get-option "local" tt)
+        (coq.error "HB: declare-instance: cannot make builders local. If you want temporary instances, make an alias, e.g. with let T' := T") true,
 
-  % handle parameters via a section -- end
-  if (TyWP = arity _) true (
-    if-verbose (coq.say {header} "closing instance section"),
-    log.coq.env.end-section-name SectionName
-  ),
+      private.declare-canonical-instances-from-factory-and-local-builders
+        Factory TheType TheFactory TheFactoryForBuilderSection FGR Clauses CSL,
+
+      private.close-section-if-has-params TyWP SectionName,
+    ])
+    % regular instance
+    (std.do![
+
+      % derive all mixins the factory provides
+      private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
+
+      if true
+        % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        (std.do![
+          private.declare-structure-instance-from-mixins TheType ML TheMixins CCSL,
+
+          % ?? should we do this also in the wrapper case, if so it lands below ??
+          % 4 cyril: what are canonical-mixins? Why we want to export them? 
+          std.map TheMixins private.make-mixin-canonical TheCanonicalMixins,
+          std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
+          std.append MCSL CCSL CSL,
+          if (get-option "export" tt)
+            (coq.env.current-library File,
+             std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
+            (Clauses = []),
+ 
+          private.close-section-if-has-params TyWP SectionName,
+        ])
+        % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        (std.do![
+          private.close-section-if-has-params TyWP SectionName,
+          private.wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins,
+          private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL,
+          Clauses = []
+        ]),
+
+        % ?? lands here ??
+    ]),
 
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses
@@ -307,6 +344,49 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
   std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
   std.append MCSL CCSL CSL
 ].
+
+% [declare-mixins-from-factory T F] given a factory F
+% it uses all known builders to declare canonical instances of structures
+% on T
+pred declare-mixins-from-factory
+  i:factoryname, i:term, i:term, o:list mixinname, o:list constant.
+declare-mixins-from-factory Factory T F ML TheMixins :- std.do! [
+  % The order of the following two "under...do!"  is crucial,
+  % priority must be given to canonical mixins
+  % as they are the ones which guarantee forgetful inheritance
+  % hence we add these clauses last.
+  synthesis.under-mixin-src-from-factory.do! T F [
+    synthesis.under-local-canonical-mixins-of.do! T [
+      list-w-params_list {factory-provides Factory} ML,
+      add-all-mixins T Factory ML _ TheMixins,
+    ]
+  ],
+].
+
+pred wrap-mixins i:term, i:list mixinname, i:list constant, o:term, o:list mixinname, o:list constant.
+wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins :-
+  coq.say TheType ML TheMixins TheNewType WML TheWrappedMixins.
+
+% [declare-structure-instance-from-mixins T ML MLI] given mixins ML and
+% their implementation MLI declares all structure instances for T
+pred declare-structure-instance-from-mixins i:term, i:list mixinname, i:list constant, o:list (pair id constant).
+declare-structure-instance-from-mixins T ML TheMixins CL :- std.do! [
+  % The order of the following two "under...do!"  is crucial,
+  % priority must be given to canonical mixins
+  % as they are the ones which guarantee forgetful inheritance
+  % hence we add these clauses last.
+  synthesis.under-these-mixin-src.do! T ML TheMixins [
+    synthesis.under-local-canonical-mixins-of.do! T [
+      instance.declare-all T {findall-classes-for ML} CL,
+    ]
+  ],
+].
+
+pred close-section-if-has-params i:arity, i:id.
+close-section-if-has-params (arity _) _ :- !.
+close-section-if-has-params _ SectionName :-
+  if-verbose (coq.say {header} "closing instance section"),
+  log.coq.env.end-section-name SectionName.
 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
