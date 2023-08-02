@@ -103,6 +103,16 @@ under-mixin-src-from-factory.do! TheType TheFactory LP :- std.do! [
   MLClauses => std.do! LP
 ].
 
+
+% Given TheType makes the provided list of mixins and instances
+% available for inference.
+pred under-these-mixin-src.do! i:term, i:list mixinname, i:list constant, i:list prop.
+under-these-mixin-src.do! TheType ML TheMixins LP :- std.do! [
+  std.map2 ML TheMixins (m\mi\c\ c = mixin-src TheType m (global (const mi))) MLClauses,
+  MLClauses => std.do! LP
+].
+
+
 % Given TheType and a factory instance (on it), builds all the *new* mixins
 % provided by the factory available for and passes them to the given
 % continuation
