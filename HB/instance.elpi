@@ -83,7 +83,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
       % derive all mixins the factory provides
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
 
-      if true
+      if (not(private.is-structure-op TheType))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         (std.do![
           private.declare-structure-instance-from-mixins TheType ML TheMixins CCSL,
@@ -449,6 +449,10 @@ close-section-if-has-params (arity _) _ :- !.
 close-section-if-has-params _ SectionName :-
   if-verbose (coq.say {header} "closing instance section"),
   log.coq.env.end-section-name SectionName.
+
+pred is-structure-op i:term.
+is-structure-op (global (const C)) :- exported-op _ _ C.
+is-structure-op (app[global (const C)|_]) :- exported-op _ _ C.
 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
