@@ -105,6 +105,8 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
           private.close-section-if-has-params TyWP SectionName,
           private.wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins,
           private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL,
+
+          % 4 cyril
           Clauses = []
         ]),
 
