@@ -182,6 +182,11 @@ declare Module BSkel Sort :- std.do! [
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
 
+  % we need to filter the wrappers out of ML 
+  std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
+  % we need to assert locally the clauses in EX
+  EX => std.forall WrapperML private.reexport-wrapper-as-instance,
+
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
 
   NewClauses => factory.declare-abbrev Module (factory.by-classname ClassName),
@@ -659,5 +664,28 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
   L = w-params.nil ID Ty Rest,
   @pi-decl N Ty t\
     product->triples (B t) (Rest t) C.
+
+% M is the gref of the wrapper mixin.
+% C gets now instantiated to the projection, i.e. hom_isMon_private.
+% we need to count the parameters, we can get that from the type.
+% we then can construct the instance, using
+% instance.declare-const (notably used in the API, i.e. in structures.v, 
+% HB.instance)
+pred reexport-wrapper-as-instance i:mixinname.
+reexport-wrapper-as-instance M :- std.do! [     
+
+    % need the body of the wrapper projection type  
+     exported-op M _ C,
+     B = (global (const C)),
+     coq.env.typeof (const C) Ty,
+     coq.count-prods Ty N0,
+     coq.term->arity Ty N0 Arity,
+
+    % need a recognisable valid idenfier for the derived instance   
+     Str0 is "op_isMx" ^ "__" ^ {std.any->string {new_int}},
+     std.string.concat "__" [Str0, "ELIM"] Str, 
+    
+     instance.declare-const Str B Arity _
+ ]. 
 
 }}
