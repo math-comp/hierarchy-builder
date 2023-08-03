@@ -3,6 +3,7 @@
 
 namespace instance {
 
+% DEPRECATED 
 % [declare-existing T F] equips T with all the canonical structures that can be
 % built using factory instance F
 pred declare-existing i:argument, i:argument.
@@ -93,12 +94,6 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
           std.map TheMixins private.make-mixin-canonical TheCanonicalMixins,
           std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
           std.append MCSL CCSL CSL,
-
-          % TODO: share to both branches, put below
-          if (get-option "export" tt)
-            (coq.env.current-library File,
-             std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
-            (Clauses = []),
  
           private.close-section-if-has-params TyWP SectionName,
         ])
@@ -106,19 +101,26 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
         (std.do![
           private.close-section-if-has-params TyWP SectionName,
           coq.say "HERE" TheType,
-          std.spy(private.wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins),
-          std.spy(private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL),
-
-          % 4 cyril
-          Clauses = []
+          coq.safe-dest-app TheType TheTypeKey _,
+          if (TheTypeKey = global TheTypeKeyGR)
+            (std.spy(private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins),
+             std.spy(private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL))
+          (coq.say "problem in wrap-mixins"),   
         ]),
 
-        % ?? lands here ??
+        % DONE (?): shared to both branches, moved it below
+        if (get-option "export" tt)
+           (coq.env.current-library File,
+              std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
+           (Clauses = []),
+        % 4 cyril  
+        % Clauses = [], 
     ]),
 
   % we accumulate clauses now that the section is over
-  acc-clauses current Clauses
+  acc-clauses current Clauses  
 ].
+
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
@@ -239,6 +241,7 @@ namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
+% DEPRECATED
 pred declare-instance i:factoryname, i:term, i:term,
   o:list prop, o:list (pair id constant).
 declare-instance Factory T F Clauses CSL :-
@@ -445,21 +448,22 @@ wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType WM TheWrappedMixin :-
                std.findall (wrapper-mixin _ TheTypeKeyGR M) Wrappers,   
                if (Wrappers = [W|_])
                   (W = wrapper-mixin WM TheTypeKeyGR M,
-                   private.derive-wrapper-instances (global (const TheMixin)) W TheNewType TheWrappedMixin)
+                   TM = global (const TheMixin),
+                   private.derive-wrapper-instances TM W TheNewType TheWrappedMixin)
                   (coq.say "problem in wrap-a-mixin"),
      ].        
 
-pred wrap-mixins i:term, i:list mixinname, i:list constant,
+pred wrap-mixins i:gref, i:list mixinname, i:list constant,
                  o:term, o:list mixinname, o:list constant.
-wrap-mixins TheType [M | ML] [ TheMixin | TheMixins ] TheNewType [ WM | WML ] 
+wrap-mixins TheTypeKeyGR [M | ML] [ TheMixin | TheMixins ] TheNewType [ WM | WML ] 
             [ TheWrappedMixin | TheWrappedMixins ] :-
-  coq.say TheType ML TheMixins TheNewType WML TheWrappedMixins,
-  coq.safe-dest-app TheType TheTypeKey _,
-  if (TheTypeKey = global TheTypeKeyGR)
-     (wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType1 WM TheWrapperMixin,
-      std.assert! (TheNewType = TheNewType1) "wrapping to different subjects",
-      wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins)
-     (coq.say "problem in wrap-mixins").
+  coq.say TheTypeKeyGR M ML TheMixin TheMixins TheNewType WM WML TheWrappedMixin TheWrappedMixins,
+%  coq.safe-dest-app TheType TheTypeKey _,
+%  if (TheTypeKey = global TheTypeKeyGR)
+  wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType1 WM TheWrapperMixin,
+  std.assert! (TheNewType = TheNewType1) "wrapping to different subjects",
+  wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins.
+%     (coq.say "problem in wrap-mixins").
 wrap-mixins _ [] [] _ [] [].
 
 
