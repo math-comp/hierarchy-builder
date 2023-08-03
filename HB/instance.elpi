@@ -88,11 +88,13 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
         (std.do![
           private.declare-structure-instance-from-mixins TheType ML TheMixins CCSL,
 
-          % ?? should we do this also in the wrapper case, if so it lands below ??
-          % 4 cyril: what are canonical-mixins? Why we want to export them? 
+          % TODO: share between the two cases and put just after declare-mixins-from-factory
+          % since it talks about the unwrapped mixins
           std.map TheMixins private.make-mixin-canonical TheCanonicalMixins,
           std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
           std.append MCSL CCSL CSL,
+
+          % TODO: share to both branches, put below
           if (get-option "export" tt)
             (coq.env.current-library File,
              std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
