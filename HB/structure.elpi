@@ -653,7 +653,7 @@ reexport-wrapper-as-instance M :- std.do! [
      coq.term->arity Ty N0 Arity,
 
     % need a recognisable valid idenfier for the derived instance   
-     Str0 is "op_isMx" ^ "__" ^ {std.any->string {new_int}},
+     Str0 is "Op_isMx" ^ "__" ^ {std.any->string {new_int}},
      std.string.concat "__" [Str0, "ELIM"] Str, 
     
      instance.declare-const Str B Arity _
