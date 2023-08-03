@@ -24,7 +24,7 @@ declare-existing T0 F0 :- std.do! [
 pred declare-const i:id, i:term, i:arity, o:list (pair id constant).
 declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
-  coq.say "DC************************* NOW RUNNING (entry point) declare-const Name BodySkel TyWPSkel CSL",
+  coq.say "DC************************ NOW RUNNING (entry point) declare-const Name BodySkel TyWPSkel CSL",
   coq.say "DC!!!!!!!!!!!!! In Name = " Name,
   coq.say "DC!!!!!!!!!!!!! In BodySkel = " BodySkel,
   coq.say "DC!!!!!!!!!!!!! In TyWPSkel = " TyWPSkel,
@@ -542,7 +542,7 @@ declare-canonical-instances-from-factory Factory T F CSL :- std.do! [
 
       % Clauses, MCSL and AllSubjects are outputs. currently, AllSubjects = [T]
       add-all-mixins T Factory ML tt ClausesFromF MCSL AllSubjects,
-      coq.say "DCIFF!!!!!!!!!! Ex AllSubjects = " AllSubjects,  
+      coq.say "DCIFF!!!!!!!!!!! Ex AllSubjects = " AllSubjects,  
       % old (Clauses not used)
       % instance.declare-all T {findall-classes-for ML} CCSL,  
       hcumul-forall AllSubjects (s \
