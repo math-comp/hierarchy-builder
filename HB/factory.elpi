@@ -219,6 +219,49 @@ declare-asset Arg AssetKind :- std.do! [
   )
 ].
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% auxiliary code for wrapper-mixin
+
+pred extract_from_record_decl i: (term -> gref -> prop), i:indt-decl, o:gref.
+extract_from_record_decl P (parameter ID _ _ R) Out :-
+   pi p\
+    extract_from_record_decl P (R p) Out.
+extract_from_record_decl P (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    P Ty GR0.
+
+pred extract_from_rtty i: (term -> gref -> prop), i: term, o:gref.
+extract_from_rtty P (prod _ _ TF) Out1 :-
+  pi p\ 
+    extract_from_rtty P (TF p) Out1.
+extract_from_rtty P Ty Gr :- P Ty Gr.
+
+pred xtr_fst_op i:term, o:gref.
+xtr_fst_op Ty Gr1 :-
+  Ty = (app [global Gr0| _]),
+  factory-alias->gref Gr0 Gr1.
+
+pred xtr_snd_op i:term, o:gref.
+xtr_snd_op Ty Gr :-
+  Ty = (app [global _, app [global Gr| _]]).
+
+pred extract_wrapped i:indt-decl, o:gref.
+extract_wrapped In Out :-
+  extract_from_record_decl (extract_from_rtty xtr_fst_op) In Out.
+
+pred extract_subject i:indt-decl, o:gref.
+extract_subject In Out :-
+  extract_from_record_decl (extract_from_rtty xtr_snd_op) In Out.
+
+pred wrapper_mixin_aux i:gref, o:gref, o:gref.
+wrapper_mixin_aux XX Gr1 Gr2 :-
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_subject D Gr1,
+  extract_wrapped D Gr2.  
+
+%%% end auxiliary code for wrapper-mixin
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 pred declare-mixin-or-factory i:list prop, i:list constant, i:list term, i:term,
   i:term, i:record-decl, i:list-w-params factoryname, i:id, i:asset.
 declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
@@ -256,6 +299,12 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   % TODO: should this be in the Exports module?
 
+  % if the wrapper option is on, build the wrapper clause 
+  if (get-option "wrapper" tt)
+     ((wrapper_mixin_aux (indt R) NSbj WMxn),
+      (WrapperClauses = [wrapper-mixin (indt R) NSbj WMxn]))
+     (WrapperClauses = []),
+
   if-verbose (coq.say {header} "declare notation Build"),
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
@@ -272,7 +321,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
-  std.flatten [Clauses, GRDepsClauses, [
+  std.flatten [Clauses, GRDepsClauses, WrapperClauses, [
     factory-constructor (indt R) GRK,
     factory-nparams (indt R) NParams,
     factory-builder-nparams BuildConst NParams,

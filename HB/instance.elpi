@@ -105,8 +105,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         (std.do![
           private.close-section-if-has-params TyWP SectionName,
-          private.wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins,
-          private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL,
+          coq.say "HERE" TheType,
+          std.spy(private.wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins),
+          std.spy(private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL),
 
           % 4 cyril
           Clauses = []
@@ -367,10 +368,6 @@ declare-mixins-from-factory Factory T F ML TheMixins :- std.do! [
   ],
 ].
 
-pred wrap-mixins i:term, i:list mixinname, i:list constant, o:term, o:list mixinname, o:list constant.
-wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins :-
-  coq.say TheType ML TheMixins TheNewType WML TheWrappedMixins.
-
 % [declare-structure-instance-from-mixins T ML MLI] given mixins ML and
 % their implementation MLI declares all structure instances for T
 pred declare-structure-instance-from-mixins i:term, i:list mixinname, i:list constant, o:list (pair id constant).
@@ -395,6 +392,76 @@ close-section-if-has-params _ SectionName :-
 pred is-structure-op i:term.
 is-structure-op (global (const C)) :- exported-op _ _ C.
 is-structure-op (app[global (const C)|_]) :- exported-op _ _ C.
+
+
+pred derive-wrapper-instances i:term, i:prop, o:term, o:constant.
+derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) 
+       WrapperSubject C :- std.do! [
+
+    % K is the mixin constructor (Build) for WrapperMixin 
+     factory-constructor WrapperMixin K,
+     factory-nparams WrapperMixin NParams,
+     std.assert! (NParams = 0) "TODO support parameters",
+   
+    % We are only interested in the last parameter of the constructor
+    % type, which is the current instance 
+    % (which is a Mixin instance on the new Subject).  
+    % In monoid_enriched_cat.v, we are targeting the code 
+    %
+    % HB.instance Definition funQ_hom_isMon :=
+    %             hom_isMon.Axioms_ _ _ funQ_isMon.
+    % which Coq can compute to stand for 
+    %              hom_isMon.Axioms_ Type funQ funQ_isMon.
+    %
+    % We compute the number of the underscores and we pass 
+    % them as arguments followed by Instance.
+     coq.env.typeof K KTy, 
+     coq.count-prods KTy KN, 
+     KN0 = KN - 1,
+     coq.mk-n-holes KN0 Holes,
+
+     std.append Holes [Instance] Args,
+
+     % the body of the new wrapper instance
+     NewInstance = app[global K| Args],
+
+     std.assert-ok! (coq.typecheck NewInstance Ty) "declare-instances: mixin illtyped",
+
+     if (Dgn = error S) 
+        (coq.say "DWI! error in NewInstance" NewInstance "xxxx" S)
+        (coq.count-prods Ty N0,
+         coq.safe-dest-app Ty _Factory FArgs,
+         std.nth NParams FArgs WrapperSubject        
+        ),
+
+    Name is "wrapped__" ^ {std.any->string {new_int}},
+
+    log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C
+  ].
+
+pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
+wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType WM TheWrappedMixin :-
+     std.do! [
+               std.findall (wrapper-mixin _ TheTypeKeyGR M) Wrappers,   
+               if (Wrappers = [W|_])
+                  (W = wrapper-mixin WM TheTypeKeyGR M,
+                   private.derive-wrapper-instances (global (const TheMixin)) W TheNewType TheWrappedMixin)
+                  (coq.say "problem in wrap-a-mixin"),
+     ].        
+
+pred wrap-mixins i:term, i:list mixinname, i:list constant,
+                 o:term, o:list mixinname, o:list constant.
+wrap-mixins TheType [M | ML] [ TheMixin | TheMixins ] TheNewType [ WM | WML ] 
+            [ TheWrappedMixin | TheWrappedMixins ] :-
+  coq.say TheType ML TheMixins TheNewType WML TheWrappedMixins,
+  coq.safe-dest-app TheType TheTypeKey _,
+  if (TheTypeKey = global TheTypeKeyGR)
+     (wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType1 WM TheWrapperMixin,
+      std.assert! (TheNewType = TheNewType1) "wrapping to different subjects",
+      wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins)
+     (coq.say "problem in wrap-mixins").
+wrap-mixins _ [] [] _ [] [].
+
 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
