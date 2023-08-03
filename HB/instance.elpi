@@ -86,27 +86,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
       if (not(private.is-structure-op TheType))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        (std.do![
-          private.declare-structure-instance-from-mixins TheType ML TheMixins CCSL,
-
-          % TODO: share between the two cases and put just after declare-mixins-from-factory
-          % since it talks about the unwrapped mixins
-          std.map TheMixins private.make-mixin-canonical TheCanonicalMixins,
-          std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
-          std.append MCSL CCSL CSL,
- 
-          private.close-section-if-has-params TyWP SectionName,
-        ])
+         (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        (std.do![
-          private.close-section-if-has-params TyWP SectionName,
-          coq.say "HERE" TheType,
-          coq.safe-dest-app TheType TheTypeKey _,
-          if (TheTypeKey = global TheTypeKeyGR)
-            (std.spy(private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins),
-             std.spy(private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL))
-          (coq.say "problem in wrap-mixins"),   
-        ]),
+        (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL),
 
         % DONE (?): shared to both branches, moved it below
         if (get-option "export" tt)
@@ -120,7 +102,6 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses  
 ].
-
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
@@ -392,10 +373,35 @@ close-section-if-has-params _ SectionName :-
   if-verbose (coq.say {header} "closing instance section"),
   log.coq.env.end-section-name SectionName.
 
+pred declare-regular-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
+  o:list (pair id constant). 
+declare-regular-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
+  private.declare-structure-instance-from-mixins TheType ML TheMixins CCSL,
+
+  % TODO: share between the two cases and put just after declare-mixins-from-factory
+  % since it talks about the unwrapped mixins
+  std.map TheMixins private.make-mixin-canonical TheCanonicalMixins,
+  std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
+  std.append MCSL CCSL CSL,
+ 
+  private.close-section-if-has-params TyWP SectionName,
+].
+
+pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
+  o:list (pair id constant). 
+declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
+  private.close-section-if-has-params TyWP SectionName,
+  coq.say "HERE" TheType,
+  coq.safe-dest-app TheType TheTypeKey _,
+  if (TheTypeKey = global TheTypeKeyGR)
+     (std.spy(private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins),
+      std.spy(private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL))
+     (coq.say "problem in wrap-mixins")   
+].
+
 pred is-structure-op i:term.
 is-structure-op (global (const C)) :- exported-op _ _ C.
 is-structure-op (app[global (const C)|_]) :- exported-op _ _ C.
-
 
 pred derive-wrapper-instances i:term, i:prop, o:term, o:constant.
 derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) 
