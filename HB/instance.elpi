@@ -783,7 +783,7 @@ redirect-instances RealName Factory TheType TheFactory Body TyWP SectionName Cla
   coq.say "NOW RUNNING****************************** REDIN " 
   coq.say "REDIN!!!!!!! TheTypeKey = " TheTypeKey, 
 
-  if (RealName = "hom_isMon__ELIM")  % meant to rule out generated instances 
+  if (rex.match ".*__ELIM" RealName)  % meant to rule out generated instances 
       (private.dec-inst-and-close Factory TheType TheFactory TyWP SectionName Clauses CSL)
    (if (TheTypeKey = global TheTypeKeyGR)
     (std.do! [

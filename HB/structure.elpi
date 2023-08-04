@@ -798,11 +798,12 @@ reexport-wrapper-as-instance M :- std.do! [
      coq.env.typeof (const C) Ty,
      coq.count-prods Ty N0,
      coq.term->arity Ty N0 Arity,
-     coq.term->string (global M) Str1,
+%     coq.term->string (global M) Str1,
 %    need to get a valid idenfier out of a term, no @ or .    
 %     std.string.concat "__" [Str1, "ELIM"] Str2, 
-     std.string.concat "__" ["hom_isMon", "ELIM"] Str2, 
-     instance.declare-const Str2 B Arity _
+     Str0 is "Op_isMx" ^ "__" ^ {std.any->string {new_int}},
+     std.string.concat "__" [Str0, "ELIM"] Str, 
+     instance.declare-const Str B Arity _
  ]. 
 
 }}
