@@ -78,15 +78,16 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
       private.close-section-if-has-params TyWP SectionName,
     ])
-    % regular instance
+    % instance in regular section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     (std.do![
 
       % derive all mixins the factory provides
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
 
-      % if (RealName = "wrapper__ELIM")  % meant to rule out generated instances 
-      if (rex.match ".*__ELIM" RealName)  % meant to rule out generated instances    
-         (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
+      if (rex.match ".*__ELIM" RealName)  
+         % derived instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+         (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL) 
+         % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          (if (not(private.is-structure-op TheType))
             % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
              (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
@@ -94,13 +95,11 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
              (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL)
          ),
 
-      % DONE (?): shared to both branches, moved it below
+      % shared to all branches
       if (get-option "export" tt)
          (coq.env.current-library File,
               std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
          (Clauses = []),
-        % 4 cyril  
-        % Clauses = [], 
   ]),
 
   % we accumulate clauses now that the section is over
