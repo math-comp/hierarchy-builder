@@ -33,7 +33,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
      % Do not open a section when it is not necessary (no parameters)
      % A side effect of opening a section is loosing meta data associated
      % with instances, in particular builder tags are lost
-     if-verbose (coq.say  "HB: skipping section opening"),
+     if-verbose (coq.say  "HB!: skipping section opening"),
      SectionBody = Body
    ) (
     std.assert! (coq.next-synterp-action (begin-section SectionName)) "synterp code did not open section",
@@ -84,8 +84,8 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
       % derive all mixins the factory provides
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
 
-      if (RealName = "wrapper__ELIM")  % meant to rule out generated instances 
-      % if (rex.match "*__ELIM" RealName)  % meant to rule out generated instances    
+      % if (RealName = "wrapper__ELIM")  % meant to rule out generated instances 
+      if (rex.match ".*__ELIM" RealName)  % meant to rule out generated instances    
          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
          (if (not(private.is-structure-op TheType))
             % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -457,7 +457,7 @@ pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:
   o:list (pair id constant). 
 declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
   private.close-section-if-has-params TyWP SectionName,
-  coq.say "HERE" TheType,
+  coq.say "HERE!" TheType,
   coq.safe-dest-app TheType TheTypeKey _,
   if (TheTypeKey = global TheTypeKeyGR)
      (std.spy(private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins),
@@ -470,7 +470,7 @@ is-structure-op (global (const C)) :- exported-op _ _ C.
 is-structure-op (app[global (const C)|_]) :- exported-op _ _ C.
 
 pred derive-wrapper-instances i:term, i:prop, o:term, o:constant.
-derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin) 
+derive-wrapper-instances Instance (wrapper-mixin WrapperMixin _Subject _Mixin) 
        WrapperSubject C :- std.do! [
 
     % K is the mixin constructor (Build) for WrapperMixin 
@@ -500,7 +500,7 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin Subject Mixin)
      % the body of the new wrapper instance
      NewInstance = app[global K| Args],
 
-     std.assert-ok! (coq.typecheck NewInstance Ty) "declare-instances: mixin illtyped",
+     coq.typecheck NewInstance Ty Dgn,
 
      if (Dgn = error S) 
         (coq.say "DWI! error in NewInstance" NewInstance "xxxx" S)
@@ -532,9 +532,9 @@ wrap-mixins TheTypeKeyGR [M | ML] [ TheMixin | TheMixins ] TheNewType [ WM | WML
   coq.say TheTypeKeyGR M ML TheMixin TheMixins TheNewType WM WML TheWrappedMixin TheWrappedMixins,
 %  coq.safe-dest-app TheType TheTypeKey _,
 %  if (TheTypeKey = global TheTypeKeyGR)
-  wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType1 WM TheWrapperMixin,
+  wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType1 WM TheWrappedMixin,
   std.assert! (TheNewType = TheNewType1) "wrapping to different subjects",
-  wrap-mixins TheType ML TheMixins TheNewType WML TheWrappedMixins.
+  wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins.
 %     (coq.say "problem in wrap-mixins").
 wrap-mixins _ [] [] _ [] [].
 
@@ -589,7 +589,7 @@ check-non-forgetful-inheritance T Factory :- std.do! [
   if (coq.safe-dest-app T (global (const HdSym)) _, structure-key HdSym _ Super) (
     coq.warning "HB" "HB.non-forgetful-inheritance"
       "non forgetful inheritance detected.\n"
-      "You have two solutions:"
+      "You have two solutions: "
       "1. (Best practice) Reorganize your hierarchy to make"
       {nice-gref->string Factory}
       "depend on"
