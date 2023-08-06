@@ -166,36 +166,13 @@ declare Module BSkel Sort :- std.do! [
 
   @global! => log.coq.notation.add-abbreviation "on" 1
     {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt
-    OnAbbrev,
-
-  log.coq.env.begin-module "EtaAndMixinExports" none,
-
-  if (get-option "primitive" tt) true (
-    if-verbose (coq.say {header} "eta expanded instances"),
-    NewClauses => std.do! [
-      w-params.fold MLwP mk-fun
-        (private.mk-hb-eta.on Structure SortProjection OnAbbrev) EtaInstanceBody,
-      w-params.fold MLwP (mk-parameter explicit)
-        (private.mk-hb-eta.arity Structure ClassName SortProjection)
-        EtaInstanceArity,
-      instance.declare-const "_" EtaInstanceBody EtaInstanceArity _
-    ]
-    ),
-
-  % std.flatten {std.map NewMixins mixin->factories} NewFactories,
-  % NewClauses => std.forall NewFactories instance.declare-factory-sort-factory,
-
-  log.coq.env.end-module-name "EtaAndMixinExports" EtaExports,
+    _OnAbbrev,
 
   log.coq.env.end-module-name Module ModulePath,
 
   if-verbose (coq.say {header} "end modules; export" Exports),
 
   export.module {calc (Module ^ ".Exports")} Exports,
-
-  if-verbose (coq.say {header} "export" EtaExports),
-
-  export.module {calc (Module ^ ".EtaAndMixinExports")} EtaExports,
 
   if-verbose (coq.say {header} "exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
@@ -782,35 +759,6 @@ lift-to-the-subject.aux [factory-on-structure-op Expr F OP|Rest] T [WF|Rest1] :-
   lift-to-the-subject.aux Rest T Rest1.
 lift-to-the-subject.aux [factory-on-structure-op Expr _ _|_] _ _ :-
   coq.error "NYI: automatic wrapping for" {coq.term->string Expr}.
-
-
-pred mk-hb-eta.on i:structure, i:term, i:abbreviation,
-  i:list term, i:name, i:term, i:A, o:term.
-mk-hb-eta.on Structure SortProjection OnAbbrev
-    Params NT _T _ (fun NT Ty Body) :- !, std.do! [
-  coq.mk-app (global Structure) Params Ty,
-  @pi-decl NT Ty s\ sigma Tm\ std.do! [
-    coq.mk-app {{lib:@hb.eta}}
-      [_, {coq.mk-app SortProjection {std.append Params [s]}}]
-      Tm,
-    std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
-    coq.notation.abbreviation OnAbbrev [Tm] (Body s)
-  ]
-].
-
-pred mk-hb-eta.arity i:structure, i:classname, i:term, i:list term,
-  i:name, i:term, i:A, o:arity.
-mk-hb-eta.arity Structure ClassName SortProjection
-    Params NT _T _ Out :- !, std.do! [
-  coq.mk-app (global Structure) Params Ty,
-  (@pi-decl NT Ty s\ sigma Tm\ std.do! [
-    coq.mk-app {{lib:@hb.eta}}
-      [_, {coq.mk-app SortProjection {std.append Params [s]}}] Tm,
-    std.assert-ok! (coq.typecheck Tm _) "HB: eta illtyped",
-    coq.mk-app (global ClassName) {std.append Params [Tm]} (Concl s)
-  ]),
-  Out = parameter {coq.name->id NT} explicit Ty s\ arity (Concl s)
-].
 
 % M is the gref of the wrapper mixin.
 % C gets now instantiated to the projection, i.e. hom_isMon_private.

@@ -10,9 +10,9 @@ HB.end.
 
 #[hnf] HB.instance Definition _ := f.Build nat (3 + 2).
 Print Datatypes_nat__canonical__hnf_S.
-Print HB_unnamed_mixin_11.
+Print HB_unnamed_mixin_8.
 
 HB.instance Definition _ := f.Build bool (3 + 2).
 Print Datatypes_bool__canonical__hnf_S.
-Print hnf_f__to__hnf_M__14.
+Print HB_unnamed_mixin_12.
 
