@@ -112,7 +112,6 @@ HB: add comes from mixin AddMonoid_of_TYPE
 HB: AddAG.sort is a canonical projection
     (from "./examples/demo1/hierarchy_5.v", line 73)
 HB: AddAG.sort has the following canonical values:
-    - @eta 
     - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 196)
     - Z 
 
@@ -135,7 +134,6 @@ HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
 HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
     Ring to SemiRing (from "./examples/demo1/hierarchy_5.v", line 196)
 
-HB: todo HB.about for builder from Ring_of_AddAG to BiNearRing_of_AddMonoid
 HB: synthesized in file File "(stdin)", line 5, column 0, character 127:
 Interactive Module hierarchy_5 started
 Interactive Module AddComoid started
