@@ -239,6 +239,11 @@ pred docstring o:loc, o:string.
 
 #[arguments(raw)] Elpi Command HB.locate.
 Elpi Accumulate Db hb.db.
+(* Since it can become rather large, accumulating the DB is often by far the
+   most expensive accumulation. It is then worth sharing its cache between
+   the commands. To this end, we accumulate the DB first in each command to
+   ensure the same dependencies and maximize cache hits. For instance, this
+   can save a few (2 or 3) percents of total compilation time on MathComp. *)
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate lp:{{
@@ -268,6 +273,7 @@ Elpi Export HB.locate.
 *)
 
 #[arguments(raw)] Elpi Command HB.about.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -277,7 +283,6 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/about.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [str S] :- !, with-attributes (with-logging (about.main S)).
@@ -303,6 +308,7 @@ Elpi Export HB.about.
 *)
 
 #[arguments(raw)] Elpi Command HB.howto.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -313,7 +319,6 @@ Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/about.elpi".
 Elpi Accumulate File "HB/howto.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [trm T, str STgt] :- !,
@@ -346,6 +351,7 @@ Elpi Export HB.howto.
 *)
 
 #[arguments(raw)] Elpi Command HB.status.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -354,7 +360,6 @@ Elpi Accumulate File "HB/common/database.elpi".
 #[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/status.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [] :- !, status.print-hierarchy.
@@ -376,6 +381,7 @@ tred file.dot | xdot -
 *)
 
 #[arguments(raw)] Elpi Command HB.graph.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -385,7 +391,6 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/graph.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [str File] :- with-attributes (with-logging (graph.to-file File)).
@@ -426,6 +431,7 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 *)
 
 #[arguments(raw)] Elpi Command HB.mixin.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -440,7 +446,6 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [A] :- A = indt-decl _, !,
@@ -599,6 +604,7 @@ HB.structure Definition StructureName params :=
 *)
 
 #[arguments(raw)] Elpi Command HB.structure.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -614,7 +620,6 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/structure.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [const-decl N (some B) Arity] :- !, std.do! [
@@ -655,6 +660,7 @@ HB.instance Definition N Params := Factory.Build Params T …
 *)
 
 #[arguments(raw)] Elpi Command HB.instance.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -666,7 +672,6 @@ Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
@@ -688,6 +693,7 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 #[arguments(raw)] Elpi Command HB.factory.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -702,7 +708,6 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [A] :- (A = indt-decl _ ; A = const-decl _ _ _), !,
   with-attributes (with-logging (factory.declare A)).
@@ -750,6 +755,7 @@ HB.end.
 *)
 
 #[arguments(raw)] Elpi Command HB.builders.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -765,7 +771,6 @@ Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/builders.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [ctx-decl C] :- !, with-attributes (with-logging (builders.begin C)).
 
@@ -776,6 +781,7 @@ Elpi Export HB.builders.
 
 
 #[arguments(raw)] Elpi Command HB.end.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -789,7 +795,6 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/builders.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (with-logging builders.end).
 main _ :- coq.error "Usage: HB.end.".
@@ -830,6 +835,7 @@ Export Algebra.Exports.
 *)
 
 #[arguments(raw)] Elpi Command HB.export.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -839,7 +845,6 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [str M] :- !, with-attributes (with-logging (export.any M)).
 main _ :- coq.error "Usage: HB.export M.".
@@ -858,6 +863,7 @@ Elpi Export HB.export.
    (a module which is not closed yet) *)
 
 #[arguments(raw)] Elpi Command HB.reexport.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -867,7 +873,6 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS none)).
 main [str M] :- !, with-attributes (with-logging (export.reexport-all-modules-and-CS (some M))).
@@ -906,6 +911,7 @@ Notation foo := foo.body.
 *)
 
 #[arguments(raw)] Elpi Command HB.lock.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -915,7 +921,6 @@ Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/lock.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 main [const-decl Name (some BoSkel) TySkel] :- !,
   with-attributes (with-logging (lock.lock-def Name TySkel BoSkel)).
@@ -957,6 +962,7 @@ HB.instance Definition _ : Ml ... T := ml.
 *)
 
 #[arguments(raw)] Elpi Command HB.declare.
+Elpi Accumulate Db hb.db.
 #[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
 #[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
 Elpi Accumulate File "HB/common/stdpp.elpi".
@@ -971,7 +977,6 @@ Elpi Accumulate File "HB/export.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/factory.elpi".
-Elpi Accumulate Db hb.db.
 Elpi Accumulate lp:{{
 
 main [Ctx] :- Ctx = ctx-decl _, !,
