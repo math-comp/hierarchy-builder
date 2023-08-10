@@ -155,10 +155,10 @@ toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
 
 % Classes can be topologically sorted according to the subclass relation
 pred toposort-classes.mk-class-edge i:prop, o:pair classname classname.
-toposort-classes.mk-class-edge (sub-class C1 C2) (pr C2 C1).
+toposort-classes.mk-class-edge (sub-class C1 C2 _ _) (pr C2 C1).
 pred toposort-classes i:list classname, o:list classname.
 toposort-classes In Out :- std.do! [
-  std.findall (sub-class C1_ C2_) SubClasses,
+  std.findall (sub-class C1_ C2_ _ _) SubClasses,
   std.map SubClasses toposort-classes.mk-class-edge ES,
   std.toposort ES In Out,
 ].

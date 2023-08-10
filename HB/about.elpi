@@ -192,8 +192,10 @@ main-structure S Class Structure MLwP :-
     std.findall (exported-op m P O) OPS,
     std.map OPS (c\out\ sigma p\ c = exported-op m p out) r) OPLL,
   std.flatten OPLL Operations,
-  std.map {std.findall (sub-class Class C_)} (x\r\ x = sub-class Class r) SubClasses,
-  std.map {std.findall (sub-class C_ Class)} (x\r\ x = sub-class r Class) SuperClasses,
+  std.map {std.findall (sub-class Class CS_ CoeS_ NS_)}
+    (x\r\ x = sub-class Class r _ _) SubClasses,
+  std.map {std.findall (sub-class Cs_ Class Coes_ Ns_)}
+    (x\r\ x = sub-class r Class _ _) SuperClasses,
   % format
   PpOrigin = box (hov 4) [
     str "HB: ", str S, str " is a structure", spc,

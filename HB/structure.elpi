@@ -360,8 +360,6 @@ pred declare-coercion i:term, i:term, i:class, i:class.
 declare-coercion SortProjection ClassProjection
     (class FC StructureF FMLwP) (class TC StructureT TMLwP) :- std.do! [
 
-  acc-clause current (sub-class FC TC),
-
   gref->modname StructureF 2 "_" ModNameF,
   gref->modname StructureT 2 "_" ModNameT,
   CName is ModNameF ^ "_class__to__" ^ ModNameT ^ "_class",
@@ -393,40 +391,9 @@ declare-coercion SortProjection ClassProjection
 
   log.coq.CS.declare-instance SC,
 
-  if-verbose (coq.say {header} "declare coercion path compression rules"),
-
-  findall-classes All,
-  CurrentTgtClass = (class TC StructureT TMLwP),
-  std.filter All (sub-class? CurrentTgtClass) AllTgtSuper,
-  std.map AllTgtSuper class_structure AllTgtSuperStructures,
-
-  mk-compression-clauses StructureF StructureT AllTgtSuperStructures AllCompressionClauses,
-  acc-clauses current AllCompressionClauses,
+  w-params.nparams FMLwP NparamsSC,
+  acc-clause current (sub-class FC TC SC NparamsSC)
 ].
-
-
-pred mk-compression-clauses i:gref, i:gref, i:list gref, o:list prop.
-mk-compression-clauses _ _ [] [].
-mk-compression-clauses StructureF StructureT [StructureE|Rest] Res :- std.do! [
-  std.assert! (coq.coercion.db-for (grefclass StructureF) (grefclass StructureT) [pr C1 Nparams1]) "wrong number of coercions",
-  std.assert! (coq.coercion.db-for (grefclass StructureT) (grefclass StructureE) [pr C2 Nparams2]) "wrong number of coercions",
-  std.assert! (coq.coercion.db-for (grefclass StructureF) (grefclass StructureE) [pr C3 Nparams3]) "wrong number of coercions",
-  coq.mk-app (global C1) {coq.mk-n-holes Nparams1} F,
-  coq.mk-app (global C2) {coq.mk-n-holes Nparams2} G,
-  coq.mk-app (global C3) {coq.mk-n-holes Nparams3} H,
-  RuleSkel = {{ fun x => lp:G (lp:F x) = lp:H x}},
-  std.assert-ok! (coq.elaborate-skeleton RuleSkel _ Rule) "coercion composition fails",
-  (((pi X L\ coq.fold-map X L X [X|L] :- var X, not(std.exists L (same_var X))) => coq.fold-map Rule [] Rule Holes,
-  mk-compression-clause Holes Rule Clause,
-  mk-compression-clauses StructureF StructureT Rest Clauses,
-  Res = [Clause|Clauses]) ; (Res = [])),
-].
-
-pred mk-compression-clause i:list term, i:term, o:prop.
-mk-compression-clause [] (fun _ _ x\ app[_,_,LHS x,RHS x]) (pi x\ C x) :-
-  pi x\ copy (LHS x) (L x), copy (RHS x) (R x), C x = (pi tmp\ compress (L x) (R x)).
-mk-compression-clause [UV|Rest] T (pi v\ R v) :-
-  pi v\ (pi U\ copy U v :- same_var U UV, !) => mk-compression-clause Rest T (R v).
 
 pred join-body i:int, i:int, i:structure, i:term, i:term, i:term, i:term, i:term,
   i:list term, i:name, i:term, i:(term -> A), o:term.

@@ -142,9 +142,10 @@ pred is-structure o:gref.
 % the [F.Build T] abbreviation the term behind it has N arguments before T
 pred factory-builder-nparams o:constant, o:int.
 
-% [sub-class C1 C2] C1 is a sub-class of C2, see also sub-class? which computes
-% it on the fly
-pred sub-class o:classname, o:classname.
+% [sub-class C1 C2 Coercion12 NparamsCoercion] C1 is a sub-class of C2,
+% see also sub-class? which computes it on the fly
+:index (2 2 1)
+pred sub-class o:classname, o:classname, o:constant, o:int.
 
 % [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
@@ -225,13 +226,6 @@ pred decl-location o:gref, o:loc.
 
 % [docstring Loc Doc] links a location in the source text and some doc
 pred docstring o:loc, o:string.
-
-%% database for #[compress_coercions] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% coercions chains compression rules (we only care about non applicative
-% terms, since this is what you get when you apply coercions)
-:index (4)
-pred compress o:term, o:term.
 
 }}.
 
