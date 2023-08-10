@@ -96,7 +96,7 @@ HB.mixin Record isCMonB A := {
 
 (***** Operator mixins *)
 
-(** single dependent pair parameter *)
+(**** single dependent pair parameter *)
 
 HB.mixin Record isOpMon1 (S: sigT (fun A => A -> A -> A)) := {
     zero  : projT1 S;
@@ -116,16 +116,35 @@ HB.structure Definition OpIAlgebra1 := { C of isOpIAlg1 C }.
 HB.mixin Record isOpIMon1 A of OpMonoid1 A & OpIAlgebra1 A. 
 
 
-(** two parameters (subject is Add) *)
+(**** two parameters (subject is Add) *)
 
 (**)
-HB.mixin Record isOpMon2 A (Add: A -> A -> A) (Zero: A) := {
-    addrA : associative Add;
+HB.mixin Record isOpAAlg2 A (Add: A -> A -> A) := {
+    addA : associative Add;
+  }.
+
+HB.mixin Record isOpAAlgebra2 A := { add: A -> A -> A;
+                                     is_op_aalg : isOpAAlg2 A add }.
+
+HB.structure Definition OpAAlgebra2 := { A of isOpAAlgebra2 A }.
+
+(**)
+HB.mixin Record isOpZAlg2 A (Add: A -> A -> A) (Zero: A) := {
     add0r : left_id Zero Add;
     addr0 : right_id Zero Add;
   }.
 
-(* HB.structure Definition OpMon2 A := { Add of isOpMon2 A Add }. *)
+HB.mixin Record isOpZAlgebra2 A := { add: A -> A -> A;
+                                     zero: A;
+                                     is_op_zalg : isOpZAlg2 A add zero }.
+
+HB.structure Definition OpZAlgebra2 := { A of isOpZAlgebra2 A }.
+
+(**)
+HB.mixin Record isOpMon2 A (Add: A -> A -> A) (Zero: A) := {
+    is_op_zalg : isOpZAlg2 A Add Zero ;
+    is_op_aalg : isOpAAlg2 A Add ;
+  }.  
 
 HB.mixin Record isOpMonoid2 A := { add: A -> A -> A;
                                    zero: A;
@@ -184,7 +203,7 @@ HB.mixin Record isOpCIAlg2 A (Add: A -> A -> A) := {
   }.  
 
 HB.mixin Record isOpCIAlgebra2 A := { add: A -> A -> A;
-                                  is_op_icalg : isOpCIAlg2 A add }.
+                                  is_op_cialg : isOpCIAlg2 A add }.
 
 HB.structure Definition OpCIAlgebra2 := { A of isOpCIAlgebra2 A }.
 
@@ -198,6 +217,18 @@ HB.mixin Record isOpICAlgebra2 A := { add: A -> A -> A;
                                      is_op_calg : isOpICAlg2 A add }.
 
 HB.structure Definition OpICAlgebra2 := { A of isOpICAlgebra2 A }.
+
+(**)
+HB.mixin Record isOpACIAlg2 A (Add: A -> A -> A) := {
+    is_op_ialg : isOpIAlg2 A Add ;
+    is_op_calg : isOpCAlg2 A Add ;
+    is_op_aalg : isOpAAlg2 A Add ;
+  }.  
+
+HB.mixin Record isOpACIAlgebra2 A := { add: A -> A -> A;
+                                  is_op_acialg : isOpACIAlg2 A add }.
+
+HB.structure Definition OpACIAlgebra2 := { A of isOpACIAlgebra2 A }.
 
 (**)
 HB.mixin Record isOpCIMon2 A (Add: A -> A -> A) (Zero: A) := {
@@ -229,6 +260,14 @@ HB.structure Definition OpICMonoid2 := { A of isOpICMonoid2 A }.
 (** Wrapper mixins *)
 
 #[wrapper]
+HB.mixin Record hom_isAAlg T of Quiver T :=
+    { hom_isAAlg_private : forall A B, isOpAAlgebra2 (@hom T A B) }.
+
+#[wrapper]
+HB.mixin Record hom_isZAlg T of Quiver T :=
+    { hom_isZAlg_private : forall A B, isOpZAlgebra2 (@hom T A B) }.
+
+#[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isOpMonoid2 (@hom T A B) }.
 
@@ -255,6 +294,10 @@ HB.mixin Record hom_isCIAlg T of Quiver T :=
 #[wrapper]
 HB.mixin Record hom_isICAlg T of Quiver T :=
     { hom_isICAlg_private : forall A B, isOpICAlgebra2 (@hom T A B) }.
+
+#[wrapper]
+HB.mixin Record hom_isACIAlg T of Quiver T :=
+    { hom_isACIAlg_private : forall A B, isOpACIAlgebra2 (@hom T A B) }.
 
 #[wrapper]
 HB.mixin Record hom_isCIMon T of Quiver T :=
@@ -290,8 +333,13 @@ HB.structure
      { Obj of isQuiver Obj & hom_isIAlg Obj & hom_isCAlg Obj}.
 
 HB.structure
+   Definition ACIAlgebra_enriched_quiver :=
+     { Obj of isQuiver Obj & hom_isIAlg Obj & hom_isCAlg Obj & hom_isAAlg Obj}.
+
+HB.structure
    Definition CIMonoid_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj & hom_isIAlg Obj & hom_isCAlg Obj}.
+
 
 (********* INSTANCES *****************************)
 
@@ -310,24 +358,27 @@ Definition funQ_comp {A B: Type} (f g: hom A B) : hom A B :=
 
 Program Definition funQ_isMon (A B: Type) :
   isOpMon2 (hom A B) funQ_comp (fun (_:A) => None) :=
-  isOpMon2.Build _ _ (fun (_:A) => None) _ _ _.
+  isOpMon2.Build _ _ (fun (_:A) => None) _ _.
 Obligation 1.
-unfold associative; intros.
-eapply functional_extensionality; intro a.
-unfold funQ_comp.
-destruct (x a) eqn:K1.
-simpl; auto.
-destruct (y a); auto.
+econstructor.
+{- unfold left_id; intros.
+   unfold funQ_comp; auto.
+}
+{- unfold right_id; intros.
+   eapply functional_extensionality; intro a.
+   unfold funQ_comp.
+   destruct (x a); auto.
+}
 Qed.
 Obligation 2.
-unfold left_id; intros.
-unfold funQ_comp; auto.
-Qed.
-Obligation 3.
-unfold right_id; intros.
-eapply functional_extensionality; intro a.
-unfold funQ_comp.
-destruct (x a); auto.
+econstructor.
+{- unfold associative; intros.
+   eapply functional_extensionality; intro a.
+   unfold funQ_comp.
+   destruct (x a) eqn:K1.
+   simpl; auto.
+   destruct (y a); auto.
+}   
 Qed.
 
 Program Definition funQ_isIAlg (A B: Type) :
@@ -399,7 +450,7 @@ Program Definition cmfunQ_zero {A B: sigT (fun A => (A -> A -> A) * A)} :
 Proof.
   unfold hom; intros.
   unfold isQuiver.hom.
-  unfold Quiver.cmonoid_enriched_cat_isQuiver_mixin.
+  unfold Quiver.cmonoid_enriched_cat4_isQuiver_mixin.
   unfold Quiver.class.
   simpl; intros.
   destruct B as [X [f x1]]; simpl.
@@ -412,17 +463,7 @@ Program Definition cmfunQ_isCMon (A B: sigT (fun A => (A -> A -> A) * A)) :
 Obligation 1.
 unfold cmfunQ_comp; simpl.
 econstructor.
-{- unfold associative; intros.
-   eapply functional_extensionality; intro CMa.
-   eapply functional_extensionality; intro CMb.
-   eapply functional_extensionality; intro v.
-   remember CMb as CMb1.
-   destruct CMb.
-   destruct is_op_mon0.
-   unfold associative in addrA1.
-   simpl in addrA1.
-   eapply addrA1.
-}
+econstructor.
 {- unfold left_id; intros.
    eapply functional_extensionality; intro CMa.
    eapply functional_extensionality; intro CMb.
@@ -430,6 +471,7 @@ econstructor.
    remember CMb as CMb1.
    destruct CMb.
    destruct is_op_mon0.
+   destruct is_op_zalg0.
    unfold left_id in add0r1.
    simpl in add0r1.
    unfold cmfunQ_zero.
@@ -442,10 +484,24 @@ econstructor.
    remember CMb as CMb1.
    destruct CMb.
    destruct is_op_mon0.
+   destruct is_op_zalg0.
    unfold right_id in addr1.
    simpl in addr1.
    unfold cmfunQ_zero.
    eapply addr1.
+}
+econstructor.
+{- unfold associative; intros.
+   eapply functional_extensionality; intro CMa.
+   eapply functional_extensionality; intro CMb.
+   eapply functional_extensionality; intro v.
+   remember CMb as CMb1.
+   destruct CMb.
+   destruct is_op_mon0.
+   destruct is_op_aalg0.
+   unfold associative in addA.
+   simpl in addA.
+   eapply addA.
 }
 Qed.
 Obligation 2.
@@ -462,7 +518,7 @@ Obligation 2.
    eapply addC.
 Qed.   
 
-HB.instance Definition cmfunQ_isMonoid
+HB.instance Definition cmfunQ_isCMonoid
   (A B: sigT (fun A => (A -> A -> A) * A)) :
   isOpCMonoid2 (hom A B) :=
   isOpCMonoid2.Build (hom A B) cmfunQ_comp cmfunQ_zero (cmfunQ_isCMon A B).
@@ -470,19 +526,18 @@ HB.instance Definition cmfunQ_isMonoid
 Elpi Print HB.structure.
 
 
-
 (** SAMPLE INSTANCE 3 *)
 
 HB.instance Definition cimfunQ := 
   isQuiver.Build (sigT (fun A => A -> A -> A))
-    (fun X Y => isOpCIAlg2 (projT1 X) (projT2 X) ->
-                isOpCIAlg2 (projT1 Y) (projT2 Y) ->
+    (fun X Y => isOpACIAlg2 (projT1 X) (projT2 X) ->
+                isOpACIAlg2 (projT1 Y) (projT2 Y) ->
                 (projT1 X) -> option (projT1 Y)).
 
 Definition cimfunQ_comp {A B: sigT (fun A => A -> A -> A)} 
   (f g: hom A B) : hom A B :=
-  fun (ca: isOpCIAlg2 (projT1 A) (projT2 A))
-      (cb: isOpCIAlg2 (projT1 B) (projT2 B)) a => 
+  fun (ca: isOpACIAlg2 (projT1 A) (projT2 A))
+      (cb: isOpACIAlg2 (projT1 B) (projT2 B)) a => 
     match (f ca cb a, g ca cb a) with
     | (Some b1, Some b2) => Some (projT2 B b1 b2)
     | (Some b, None) => Some b
@@ -492,23 +547,88 @@ Definition cimfunQ_comp {A B: sigT (fun A => A -> A -> A)}
 Definition cimfunQ_zero {A B: sigT (fun A => A -> A -> A)} : hom A B := 
   fun _ _ _ => None.
 
-(*
-Program Definition funQ_isCIMon (A B: sigT (fun A => A -> A -> A)) :
+Program Definition cimfunQ_isCIMon (A B: sigT (fun A => A -> A -> A)) :
   isOpCIMon2 (hom A B) cimfunQ_comp cimfunQ_zero :=
   isOpCIMon2.Build _ _ cimfunQ_zero _ _.
 Obligation 1.
 econstructor.
 econstructor.
-unfold associative; intros.
+econstructor.
+{- unfold left_id; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   destruct (x ca cb v); auto.
+}
+{- unfold right_id; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   destruct (x ca cb v); auto.
+}
+econstructor.
+{- unfold associative; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   remember cb as cb1.
+   destruct cb.
+   destruct is_op_aalg0.
+   simpl in addA.
+   unfold associative in addA.
+   destruct (x ca cb1 v); simpl; eauto.
+   {+ destruct (y ca cb1 v); simpl; eauto.
+      destruct (z ca cb1 v); simpl; eauto.
+      rewrite addA; auto.
+      destruct (z ca cb1 v); simpl; eauto.
+   }
+   {+ destruct (y ca cb1 v); simpl; eauto.
+      destruct (z ca cb1 v); simpl; eauto.
+      destruct (z ca cb1 v); simpl; eauto.
+    }  
+}
+econstructor.
+{- unfold idempotent; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   remember cb as cb1.
+   destruct cb.
+   destruct is_op_ialg0.
+   unfold idempotent in addI0.
+   simpl in addI0.
+   destruct (x ca cb1 v) eqn:K1.
+   rewrite addI0; auto.
+   auto.
+}
+Qed.
+Obligation 2.
+econstructor.
+unfold commutative; intros.
+unfold cimfunQ_comp; simpl.
 eapply functional_extensionality; intro ca.
 eapply functional_extensionality; intro cb.
 eapply functional_extensionality; intro v.
-unfold cimfunQ_comp.
-destruct (x ca cb v) eqn:K1.
-simpl; auto.
-destruct (y ca cb v); auto.
-destruct (z ca cb v); auto.
-destruct cb. 
+remember cb as cb1.
+destruct cb.
+destruct is_op_calg0.
+unfold commutative in addC.
+simpl in addC.
+destruct (x ca cb1 v); simpl; eauto.
+destruct (y ca cb1 v); simpl; eauto.
+rewrite addC; auto.
 Qed.
-*)
+
+HB.instance Definition cimfunQ_isCIMonoid
+  (A B: sigT (fun A => A -> A -> A)) :
+  isOpCIMonoid2 (hom A B) :=
+  isOpCIMonoid2.Build (hom A B) cimfunQ_comp cimfunQ_zero
+    (cimfunQ_isCIMon A B).
+
+Elpi Print HB.structure.
+
 
