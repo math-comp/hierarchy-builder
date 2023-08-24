@@ -417,113 +417,6 @@ HB.instance Definition funQ_isIMonoid (A B: Type) :
 Elpi Print HB.structure.
 
 
-
-(** SAMPLE INSTANCE 3 *)
-
-HB.instance Definition cimfunQ := 
-  isQuiver.Build (sigT (fun A => A -> A -> A))
-    (fun X Y => isOpACIAlg2 (projT1 X) (projT2 X) ->
-                isOpACIAlg2 (projT1 Y) (projT2 Y) ->
-                (projT1 X) -> option (projT1 Y)).
-
-Definition cimfunQ_comp {A B: sigT (fun A => A -> A -> A)} 
-  (f g: hom A B) : hom A B :=
-  fun (ca: isOpACIAlg2 (projT1 A) (projT2 A))
-      (cb: isOpACIAlg2 (projT1 B) (projT2 B)) a => 
-    match (f ca cb a, g ca cb a) with
-    | (Some b1, Some b2) => Some (projT2 B b1 b2)
-    | (Some b, None) => Some b
-    | (None, Some b) => Some b                        
-    | _ => None end.              
-
-Definition cimfunQ_zero {A B: sigT (fun A => A -> A -> A)} : hom A B := 
-  fun _ _ _ => None.
-
-Program Definition cimfunQ_isCIMon (A B: sigT (fun A => A -> A -> A)) :
-  isOpCIMon2 (hom A B) cimfunQ_comp cimfunQ_zero :=
-  isOpCIMon2.Build _ _ cimfunQ_zero _ _.
-Obligation 1.
-econstructor.
-econstructor.
-econstructor.
-{- unfold left_id; intros.
-   unfold cimfunQ_comp; simpl.
-   eapply functional_extensionality; intro ca.
-   eapply functional_extensionality; intro cb.
-   eapply functional_extensionality; intro v.
-   destruct (x ca cb v); auto.
-}
-{- unfold right_id; intros.
-   unfold cimfunQ_comp; simpl.
-   eapply functional_extensionality; intro ca.
-   eapply functional_extensionality; intro cb.
-   eapply functional_extensionality; intro v.
-   destruct (x ca cb v); auto.
-}
-econstructor.
-{- unfold associative; intros.
-   unfold cimfunQ_comp; simpl.
-   eapply functional_extensionality; intro ca.
-   eapply functional_extensionality; intro cb.
-   eapply functional_extensionality; intro v.
-   remember cb as cb1.
-   destruct cb.
-   destruct is_op_aalg0.
-   simpl in addA.
-   unfold associative in addA.
-   destruct (x ca cb1 v); simpl; eauto.
-   {+ destruct (y ca cb1 v); simpl; eauto.
-      destruct (z ca cb1 v); simpl; eauto.
-      rewrite addA; auto.
-      destruct (z ca cb1 v); simpl; eauto.
-   }
-   {+ destruct (y ca cb1 v); simpl; eauto.
-      destruct (z ca cb1 v); simpl; eauto.
-      destruct (z ca cb1 v); simpl; eauto.
-    }  
-}
-econstructor.
-{- unfold idempotent; intros.
-   unfold cimfunQ_comp; simpl.
-   eapply functional_extensionality; intro ca.
-   eapply functional_extensionality; intro cb.
-   eapply functional_extensionality; intro v.
-   remember cb as cb1.
-   destruct cb.
-   destruct is_op_ialg0.
-   unfold idempotent in addI0.
-   simpl in addI0.
-   destruct (x ca cb1 v) eqn:K1.
-   rewrite addI0; auto.
-   auto.
-}
-Qed.
-Obligation 2.
-econstructor.
-unfold commutative; intros.
-unfold cimfunQ_comp; simpl.
-eapply functional_extensionality; intro ca.
-eapply functional_extensionality; intro cb.
-eapply functional_extensionality; intro v.
-remember cb as cb1.
-destruct cb.
-destruct is_op_calg0.
-unfold commutative in addC.
-simpl in addC.
-destruct (x ca cb1 v); simpl; eauto.
-destruct (y ca cb1 v); simpl; eauto.
-rewrite addC; auto.
-Qed.
-
-HB.instance Definition cimfunQ_isCIMonoid
-  (A B: sigT (fun A => A -> A -> A)) :
-  isOpCIMonoid2 (hom A B) :=
-  isOpCIMonoid2.Build (hom A B) cimfunQ_comp cimfunQ_zero
-    (cimfunQ_isCIMon A B).
-
-Elpi Print HB.structure.
-
-
 (** SAMPLE INSTANCE 2 *)
 
 Lemma zero_unique {B} (X: B -> B -> B) (zz0 zz1:B) :
@@ -539,6 +432,7 @@ Qed.
 
 Open Scope type.
 
+#[verbose]
 HB.instance Definition cmfunQ := 
   isQuiver.Build (sigT (fun A => (A -> A -> A) * A))
     (fun X Y => isOpCMon2 (projT1 X) (fst (projT2 X)) (snd (projT2 X)) ->
@@ -629,6 +523,114 @@ HB.instance Definition cmfunQ_isCMonoid
   (A B: sigT (fun A => (A -> A -> A) * A)) :
   isOpCMonoid2 (hom A B) :=
   isOpCMonoid2.Build (hom A B) cmfunQ_comp cmfunQ_zero (cmfunQ_isCMon A B).
+
+Elpi Print HB.structure.
+
+
+(** SAMPLE INSTANCE 3 *)
+
+Definition sigTa1 := sigT (fun A => A -> A -> A).
+
+HB.instance Definition cimfunQ := 
+  isQuiver.Build (sigTa1)
+    (fun X Y => isOpACIAlg2 (projT1 X) (projT2 X) ->
+                isOpACIAlg2 (projT1 Y) (projT2 Y) ->
+                (projT1 X) -> option (projT1 Y)).
+
+Definition cimfunQ_comp {A B: sigTa1} 
+  (f g: hom A B) : hom A B :=
+  fun (ca: isOpACIAlg2 (projT1 A) (projT2 A))
+      (cb: isOpACIAlg2 (projT1 B) (projT2 B)) a => 
+    match (f ca cb a, g ca cb a) with
+    | (Some b1, Some b2) => Some (projT2 B b1 b2)
+    | (Some b, None) => Some b
+    | (None, Some b) => Some b                        
+    | _ => None end.              
+
+Definition cimfunQ_zero {A B: sigTa1} : hom A B := 
+  fun _ _ _ => None.
+
+Program Definition cimfunQ_isCIMon (A B: sigTa1) :
+  isOpCIMon2 (hom A B) cimfunQ_comp cimfunQ_zero :=
+  isOpCIMon2.Build _ _ cimfunQ_zero _ _.
+Obligation 1.
+econstructor.
+econstructor.
+econstructor.
+{- unfold left_id; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   destruct (x ca cb v); auto.
+}
+{- unfold right_id; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   destruct (x ca cb v); auto.
+}
+econstructor.
+{- unfold associative; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   remember cb as cb1.
+   destruct cb.
+   destruct is_op_aalg0.
+   simpl in addA.
+   unfold associative in addA.
+   destruct (x ca cb1 v); simpl; eauto.
+   {+ destruct (y ca cb1 v); simpl; eauto.
+      destruct (z ca cb1 v); simpl; eauto.
+      rewrite addA; auto.
+      destruct (z ca cb1 v); simpl; eauto.
+   }
+   {+ destruct (y ca cb1 v); simpl; eauto.
+      destruct (z ca cb1 v); simpl; eauto.
+      destruct (z ca cb1 v); simpl; eauto.
+    }  
+}
+econstructor.
+{- unfold idempotent; intros.
+   unfold cimfunQ_comp; simpl.
+   eapply functional_extensionality; intro ca.
+   eapply functional_extensionality; intro cb.
+   eapply functional_extensionality; intro v.
+   remember cb as cb1.
+   destruct cb.
+   destruct is_op_ialg0.
+   unfold idempotent in addI0.
+   simpl in addI0.
+   destruct (x ca cb1 v) eqn:K1.
+   rewrite addI0; auto.
+   auto.
+}
+Qed.
+Obligation 2.
+econstructor.
+unfold commutative; intros.
+unfold cimfunQ_comp; simpl.
+eapply functional_extensionality; intro ca.
+eapply functional_extensionality; intro cb.
+eapply functional_extensionality; intro v.
+remember cb as cb1.
+destruct cb.
+destruct is_op_calg0.
+unfold commutative in addC.
+simpl in addC.
+destruct (x ca cb1 v); simpl; eauto.
+destruct (y ca cb1 v); simpl; eauto.
+rewrite addC; auto.
+Qed.
+
+HB.instance Definition cimfunQ_isCIMonoid
+  (A B: sigTa1) :
+  isOpCIMonoid2 (hom A B) :=
+  isOpCIMonoid2.Build (hom A B) cimfunQ_comp cimfunQ_zero
+    (cimfunQ_isCIMon A B).
 
 Elpi Print HB.structure.
 
