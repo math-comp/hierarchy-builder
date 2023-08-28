@@ -7,8 +7,11 @@ HB.mixin Record isQuiver Obj := { hom : Obj -> Obj -> Type }.
 
 HB.structure Definition Quiver := { Obj of isQuiver Obj }.
 
-(** Ohter base mixins *)
 
+(*************************************** OTHER MIXINS *************)
+(******************************* Exploring different alternatives *)
+
+(************* 1) Monolithic definition; not used *)
 HB.mixin Record isMon A := {
     zero  : A;
     add   : A -> A -> A;
@@ -17,63 +20,8 @@ HB.mixin Record isMon A := {
     addr0 : right_id zero add;
   }.
 
-HB.mixin Record isIAlg A := {
-    iadd : A -> A -> A; 
-    iaddI : idempotent iadd; 
-  }.
-
-HB.mixin Record isCAlg A := {
-    cadd : A -> A -> A; 
-    caddrC : commutative cadd; 
-  }.
-
-(** Base structures *)
-
-HB.structure Definition Monoid := { A of isMon A }.
-
-HB.structure Definition CAlgebra := { A of isCAlg A }.
-
-HB.structure Definition IAlgebra := { A of isIAlg A }.
-
-(** Complex mixins *)
-
-(*******************************************************************)
-(********** Combining mixins ***************************************)
-
-(***** Vanilla Coq (no HB) *)
-
-Record isMon0 A := {
-    zero0  : A;
-    add0   : A -> A -> A;
-    addrA0 : associative add0;
-    add0r0 : left_id zero0 add0;
-    addr00 : right_id zero0 add0;
-  }.
-
-Record isIAlg0 A := {
-    iadd0 : A -> A -> A; 
-    iaddI0 : idempotent iadd0; 
-  }.
-
-Record isIMon0 A := { is_mon0 : isMon0 A;
-                      is_ialg0 : isIAlg0 A;
-                      mon_ialg_ch0 : add0 _ is_mon0 = iadd0 _ is_ialg0 ;
-  }.
-
-
-(***** The analogous of vanilla does not work in HB *)
-
-Fail HB.mixin Record isIMonM A := { is_mon : isMon A;
-                               is_ialg : isIAlg A; 
-                               mon_ialg_ch : add _ is_mon = iadd _ is_ialg ;
-  }.
-
-Fail HB.mixin Record isIMonS A := { is_mon : Monoid A;
-                               is_ialg : IAlgebra A; 
-                               mon_ialg_ch : add _ is_mon = iadd _ is_ialg ;
-  }.
-
-(***** Basic approach (can be cumbersome) *)
+(***** using the monolithic approach to extend monoids with
+       idempotence and commutativity can be cumbersome *)
 
 HB.mixin Record isIMonB A := {
     zero  : A;
@@ -94,9 +42,57 @@ HB.mixin Record isCMonB A := {
 }.
 
 
-(***** Operator mixins *)
+(**************** 2) Small mixins (problem with sharing); not used *)
 
-(**** single dependent pair parameter *)
+HB.mixin Record isIAlg A := {
+    iadd : A -> A -> A; 
+    iaddI : idempotent iadd; 
+  }.
+
+HB.mixin Record isCAlg A := {
+    cadd : A -> A -> A; 
+    caddrC : commutative cadd; 
+  }.
+
+
+(***************** 3) Sharing my equalities: vanilla Coq (no HB) *)
+
+Record isMon0 A := {
+    zero0  : A;
+    add0   : A -> A -> A;
+    addrA0 : associative add0;
+    add0r0 : left_id zero0 add0;
+    addr00 : right_id zero0 add0;
+  }.
+
+Record isIAlg0 A := {
+    iadd0 : A -> A -> A; 
+    iaddI0 : idempotent iadd0; 
+  }.
+
+(* this would require additional support *)
+Record isIMon0 A := { is_mon0 : isMon0 A;
+                      is_ialg0 : isIAlg0 A;
+                      mon_ialg_ch0 : add0 _ is_mon0 = iadd0 _ is_ialg0 ;
+  }.
+
+(*** The analogous of vanilla does not work in HB *)
+
+Fail HB.mixin Record isIMonM A := { is_mon : isMon A;
+                               is_ialg : isIAlg A; 
+                               mon_ialg_ch : add _ is_mon = iadd _ is_ialg ;
+  }.
+
+Fail HB.mixin Record isIMonS A := { is_mon : Monoid A;
+                               is_ialg : IAlgebra A; 
+                               mon_ialg_ch : add _ is_mon = iadd _ is_ialg ;
+  }.
+
+
+(************************* 4) Operator-sharing small mixins *)
+
+(*********** 4.1) mixins with single dependent pair parameter, using
+      sigma types; complicates things; not used *)
 
 HB.mixin Record isOpMon1 (S: sigT (fun A => A -> A -> A)) := {
     zero  : projT1 S;
@@ -105,20 +101,19 @@ HB.mixin Record isOpMon1 (S: sigT (fun A => A -> A -> A)) := {
     addr0 : right_id zero (projT2 S);
   }.
 
-HB.structure Definition OpMonoid1 := { C of isOpMon1 C }.
-
 HB.mixin Record isOpIAlg1 (S: sigT (fun A => A -> A -> A)) := {
     addI : idempotent (projT2 S);
   }.
 
-HB.structure Definition OpIAlgebra1 := { C of isOpIAlg1 C }.
 
-HB.mixin Record isOpIMon1 A of OpMonoid1 A & OpIAlgebra1 A. 
+(*********** 4.2) USED: mixins with multiple parameters instead of a
+      single dependent pair; possibly less general, but works well
+      with the running example (notice that the subject here could be
+      an operator, i.e. Add) *)
 
+(**** Base Mixins *)
 
-(**** two parameters (subject is Add) *)
-
-(**)
+(* associative algebra *)
 HB.mixin Record isOpAAlg2 A (Add: A -> A -> A) := {
     addA : associative Add;
   }.
@@ -126,9 +121,7 @@ HB.mixin Record isOpAAlg2 A (Add: A -> A -> A) := {
 HB.mixin Record isOpAAlgebra2 A := { add: A -> A -> A;
                                      is_op_aalg : isOpAAlg2 A add }.
 
-HB.structure Definition OpAAlgebra2 := { A of isOpAAlgebra2 A }.
-
-(**)
+(* algebra with zero *)
 HB.mixin Record isOpZAlg2 A (Add: A -> A -> A) (Zero: A) := {
     add0r : left_id Zero Add;
     addr0 : right_id Zero Add;
@@ -138,9 +131,25 @@ HB.mixin Record isOpZAlgebra2 A := { add: A -> A -> A;
                                      zero: A;
                                      is_op_zalg : isOpZAlg2 A add zero }.
 
-HB.structure Definition OpZAlgebra2 := { A of isOpZAlgebra2 A }.
+(* idempotent algebra *)
+HB.mixin Record isOpIAlg2 A (Add: A -> A -> A) := {
+    addI : idempotent Add;
+  }.
 
-(**)
+HB.mixin Record isOpIAlgebra2 A := { add: A -> A -> A;
+                                     is_op_ialg : isOpIAlg2 A add }.
+
+(* commutative algebra *)
+HB.mixin Record isOpCAlg2 A (Add: A -> A -> A) := {
+    addC : commutative Add;
+  }.
+
+HB.mixin Record isOpCAlgebra2 A := { add: A -> A -> A;
+                                     is_op_calg : isOpCAlg2 A add }.
+
+(**** Complex Mixins *)
+
+(* monoid *)
 HB.mixin Record isOpMon2 A (Add: A -> A -> A) (Zero: A) := {
     is_op_zalg : isOpZAlg2 A Add Zero ;
     is_op_aalg : isOpAAlg2 A Add ;
@@ -150,29 +159,7 @@ HB.mixin Record isOpMonoid2 A := { add: A -> A -> A;
                                    zero: A;
                                    is_op_mon : isOpMon2 A add zero }.
 
-HB.structure Definition OpMonoid2 := { A of isOpMonoid2 A }.
-
-(**)
-HB.mixin Record isOpIAlg2 A (Add: A -> A -> A) := {
-    addI : idempotent Add;
-  }.
-
-HB.mixin Record isOpIAlgebra2 A := { add: A -> A -> A;
-                                     is_op_ialg : isOpIAlg2 A add }.
-
-HB.structure Definition OpIAlgebra2 := { A of isOpIAlgebra2 A }.
-
-(**)
-HB.mixin Record isOpCAlg2 A (Add: A -> A -> A) := {
-    addC : commutative Add;
-  }.
-
-HB.mixin Record isOpCAlgebra2 A := { add: A -> A -> A;
-                                     is_op_calg : isOpCAlg2 A add }.
-
-HB.structure Definition OpCAlgebra2 := { A of isOpCAlgebra2 A }.
-
-(**)
+(* idempotent monoid *)
 HB.mixin Record isOpIMon2 A (Add: A -> A -> A) (Zero: A) := {
     is_op_mon : isOpMon2 A Add Zero ;
     is_op_ialg : isOpIAlg2 A Add ;
@@ -182,9 +169,7 @@ HB.mixin Record isOpIMonoid2 A := { add: A -> A -> A;
                                     zero: A;
                                     is_op_imon : isOpIMon2 A add zero }.
 
-HB.structure Definition OpIMonoid2 := { A of isOpIMonoid2 A }.
-
-(**)
+(* commutative monoid *)
 HB.mixin Record isOpCMon2 A (Add: A -> A -> A) (Zero: A) := {
     is_op_mon : isOpMon2 A Add Zero ;
     is_op_calg : isOpCAlg2 A Add ;
@@ -194,9 +179,7 @@ HB.mixin Record isOpCMonoid2 A := { add: A -> A -> A;
                                     zero: A;
                                     is_op_imon : isOpCMon2 A add zero }.
 
-HB.structure Definition OpCMonoid2 := { A of isOpCMonoid2 A }.
-
-(**)
+(* commutative idempotent algebra *)
 HB.mixin Record isOpCIAlg2 A (Add: A -> A -> A) := {
     is_op_ialg : isOpIAlg2 A Add ;
     is_op_calg : isOpCAlg2 A Add ;
@@ -205,9 +188,7 @@ HB.mixin Record isOpCIAlg2 A (Add: A -> A -> A) := {
 HB.mixin Record isOpCIAlgebra2 A := { add: A -> A -> A;
                                   is_op_cialg : isOpCIAlg2 A add }.
 
-HB.structure Definition OpCIAlgebra2 := { A of isOpCIAlgebra2 A }.
-
-(**)
+(* idempotent commutative algebra *)
 HB.mixin Record isOpICAlg2 A (Add: A -> A -> A) := {
     is_op_calg : isOpCAlg2 A Add ;
     is_op_ialg : isOpIAlg2 A Add ;
@@ -216,9 +197,7 @@ HB.mixin Record isOpICAlg2 A (Add: A -> A -> A) := {
 HB.mixin Record isOpICAlgebra2 A := { add: A -> A -> A;
                                      is_op_calg : isOpICAlg2 A add }.
 
-HB.structure Definition OpICAlgebra2 := { A of isOpICAlgebra2 A }.
-
-(**)
+(* associative commutative idempotent algebra *)
 HB.mixin Record isOpACIAlg2 A (Add: A -> A -> A) := {
     is_op_ialg : isOpIAlg2 A Add ;
     is_op_calg : isOpCAlg2 A Add ;
@@ -228,9 +207,7 @@ HB.mixin Record isOpACIAlg2 A (Add: A -> A -> A) := {
 HB.mixin Record isOpACIAlgebra2 A := { add: A -> A -> A;
                                   is_op_acialg : isOpACIAlg2 A add }.
 
-HB.structure Definition OpACIAlgebra2 := { A of isOpACIAlgebra2 A }.
-
-(**)
+(* commutative idempotent monoid *)
 HB.mixin Record isOpCIMon2 A (Add: A -> A -> A) (Zero: A) := {
     is_op_mon : isOpIMon2 A Add Zero ;
     is_op_calg : isOpCAlg2 A Add ;
@@ -240,9 +217,7 @@ HB.mixin Record isOpCIMonoid2 A := { add: A -> A -> A;
                                      zero: A;
                                      is_op_cimon : isOpCIMon2 A add zero }.
 
-HB.structure Definition OpCIMonoid2 := { A of isOpCIMonoid2 A }.
-
-(**)
+(* idempotent commutative monoid *)
 HB.mixin Record isOpICMon2 A (Add: A -> A -> A) (Zero: A) := {
     is_op_mon : isOpCMon2 A Add Zero ;
     is_op_calg : isOpIAlg2 A Add ;
@@ -252,12 +227,64 @@ HB.mixin Record isOpICMonoid2 A := { add: A -> A -> A;
                                      zero: A;
                                      is_op_cimon : isOpICMon2 A add zero }.
 
-HB.structure Definition OpICMonoid2 := { A of isOpICMonoid2 A }.
 
+(************************************** STRUCTURES ***********************)
+
+(********************* NOT USED *)
+
+(** Base structures *)
+
+HB.structure Definition Monoid := { A of isMon A }.
+
+HB.structure Definition CAlgebra := { A of isCAlg A }.
+
+HB.structure Definition IAlgebra := { A of isIAlg A }.
+
+(** Complex structures *)
+
+HB.structure Definition OpMonoid1 := { C of isOpMon1 C }.
+
+HB.structure Definition OpIAlgebra1 := { C of isOpIAlg1 C }.
+
+HB.mixin Record isOpIMon1 A of OpMonoid1 A & OpIAlgebra1 A. 
 
 (*******************************************************************)
 
-(** Wrapper mixins *)
+(********************** USED: based on operator-sharing,
+                             simple-parameters mixins *)
+
+(** Base structures *)
+
+HB.structure Definition OpAAlgebra2 := { A of isOpAAlgebra2 A }.
+
+HB.structure Definition OpZAlgebra2 := { A of isOpZAlgebra2 A }.
+
+HB.structure Definition OpIAlgebra2 := { A of isOpIAlgebra2 A }.
+
+HB.structure Definition OpCAlgebra2 := { A of isOpCAlgebra2 A }.
+
+(** Complex structures *)
+
+HB.structure Definition OpMonoid2 := { A of isOpMonoid2 A }.
+
+HB.structure Definition OpIMonoid2 := { A of isOpIMonoid2 A }.
+
+HB.structure Definition OpCMonoid2 := { A of isOpCMonoid2 A }.
+
+HB.structure Definition OpCIAlgebra2 := { A of isOpCIAlgebra2 A }.
+
+HB.structure Definition OpICAlgebra2 := { A of isOpICAlgebra2 A }.
+
+HB.structure Definition OpACIAlgebra2 := { A of isOpACIAlgebra2 A }.
+
+HB.structure Definition OpCIMonoid2 := { A of isOpCIMonoid2 A }.
+
+HB.structure Definition OpICMonoid2 := { A of isOpICMonoid2 A }.
+
+
+(******************************************** WRAPPERS *******)
+
+(** Base wrappers *)
 
 #[wrapper]
 HB.mixin Record hom_isAAlg T of Quiver T :=
@@ -268,16 +295,19 @@ HB.mixin Record hom_isZAlg T of Quiver T :=
     { hom_isZAlg_private : forall A B, isOpZAlgebra2 (@hom T A B) }.
 
 #[wrapper]
-HB.mixin Record hom_isMon T of Quiver T :=
-    { hom_isMon_private : forall A B, isOpMonoid2 (@hom T A B) }.
-
-#[wrapper]
 HB.mixin Record hom_isIAlg T of Quiver T :=
     { hom_isIAlg_private : forall A B, isOpIAlgebra2 (@hom T A B) }.
 
 #[wrapper]
 HB.mixin Record hom_isCAlg T of Quiver T :=
     { hom_isCAlg_private : forall A B, isOpCAlgebra2 (@hom T A B) }.
+
+
+(** Complex wrappers *)
+
+#[wrapper]
+HB.mixin Record hom_isMon T of Quiver T :=
+    { hom_isMon_private : forall A B, isOpMonoid2 (@hom T A B) }.
 
 #[wrapper]
 HB.mixin Record hom_isIMon T of Quiver T :=
@@ -308,11 +338,11 @@ HB.mixin Record hom_isICMon T of Quiver T :=
     { hom_isICMon_private : forall A B, isOpICMonoid2 (@hom T A B) }.
 
 
-(** Base enriched structures *)
+(**************************************** ENRICHED STRUCTURES *******)
 
-HB.structure
-   Definition Monoid_enriched_quiver :=
-     { Obj of isQuiver Obj & hom_isMon Obj }.
+(*** USED *)
+
+(** Base enriched structures *)
      
 HB.structure
    Definition IAlgebra_enriched_quiver :=
@@ -322,7 +352,20 @@ HB.structure
    Definition CAlgebra_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isCAlg Obj }.
 
+HB.structure
+   Definition ZAlgebra_enriched_quiver :=
+     { Obj of isQuiver Obj & hom_isZAlg Obj }.
+     
+HB.structure
+   Definition AAlgebra_enriched_quiver :=
+     { Obj of isQuiver Obj & hom_isAAlg Obj }.
+
+
 (** Complex enriched structures *)
+
+HB.structure
+   Definition Monoid_enriched_quiver :=
+     { Obj of isQuiver Obj & hom_isMon Obj }.
 
 HB.structure
    Definition IMonoid_enriched_quiver :=
@@ -341,11 +384,29 @@ HB.structure
      { Obj of isQuiver Obj & hom_isMon Obj & hom_isIAlg Obj & hom_isCAlg Obj}.
 
 
-(********* INSTANCES *****************************)
+(*************************** LEMMA *****************************)
+
+Lemma zero_unique {B} (X: B -> B -> B) (zz0 zz1:B) :
+  left_id zz0 X -> right_id zz0 X -> left_id zz1 X -> right_id zz1 X ->
+  zz0 = zz1.
+  unfold left_id, right_id.
+  intros.
+  specialize (H0 zz1).
+  specialize (H1 zz0).
+  rewrite H1 in H0.
+  auto.
+Qed.
+
+(*************************** INSTANCES *****************************)
 
 Require Import FunctionalExtensionality.
 
-(** SAMPLE INSTANCE 1 *)
+(** INSTANCE 1
+
+Object: Type,
+Morphism: A -> option B 
+Structure: Monoid (from isOpMon2)
+*)
 
 HB.instance Definition funQ := isQuiver.Build Type 
    (fun A B => A -> option B).
@@ -417,18 +478,12 @@ HB.instance Definition funQ_isIMonoid (A B: Type) :
 Elpi Print HB.structure.
 
 
-(** SAMPLE INSTANCE 2 *)
+(** INSTANCE 2 
 
-Lemma zero_unique {B} (X: B -> B -> B) (zz0 zz1:B) :
-  left_id zz0 X -> right_id zz0 X -> left_id zz1 X -> right_id zz1 X ->
-  zz0 = zz1.
-  unfold left_id, right_id.
-  intros.
-  specialize (H0 zz1).
-  specialize (H1 zz0).
-  rewrite H1 in H0.
-  auto.
-Qed.
+Object: commutative monoid (by sigma type and isOpCMon2) 
+Morphism: (projT1 X) -> (projT1 Y)
+Structure: commutative monoid (by isOpCMon2)
+*)
 
 Open Scope type.
 
@@ -527,8 +582,15 @@ HB.instance Definition cmfunQ_isCMonoid
 Elpi Print HB.structure.
 
 
-(** SAMPLE INSTANCE 3 *)
+(** INSTANCE 3 
 
+Object: associative commutative idempotent algebra
+      (by sigma type and isOpACIAlg2)
+Morphism: (projT1 X) -> option (projT1 Y)
+Structure: commutative idempotent monoid (by isOpCImon2)
+*)
+
+(* hack *)
 Definition sigTa1 := sigT (fun A => A -> A -> A).
 
 HB.instance Definition cimfunQ := 
