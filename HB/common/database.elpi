@@ -233,9 +233,10 @@ assert-building-bottom-up CurrentClass C3n C1n C2n :-
   CurrentClass = class CC _ _,
   if (not (sub-class? CurrentClass (class C3n X Y)))
      (gref->modname CC 1 "." Before, gref->modname_short C3n "." After,
+      gref->modname_short C1n "." C1nS, gref->modname_short C2n "." C2nS,
       Msg1 is "- declare structure " ^ Before ^ " before structure " ^ After ^ " if " ^ After ^ " inherits from it;",
       Msg2 is "- declare an additional structure that inherits from both "
-        ^ {gref->modname_short C1n "."} ^ " and " ^ {gref->modname_short C2n "."}
+        ^ C1nS ^ " and " ^ C2nS
         ^ " and from which " ^ Before ^ " and/or " ^ After ^ " inherit.",
       coq.error "You must declare the hierarchy bottom-up or addd a missing join."
        "There are two ways out:"

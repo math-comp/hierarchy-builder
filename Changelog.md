@@ -2,6 +2,21 @@
 
 ## UNRELEASED
 
+## [1.5.0] - 2023-08-04
+
+Compatible with
+- Coq 8.15 with Coq-Elpi 1.14.x
+- Coq 8.16 with Coq-Elpi 1.15.x and 1.16.x
+- Coq 8.17 with Coq-Elpi 1.17.x and 1.18.x
+- Coq 8.18 with Coq-Elpi 1.19.x
+This version is required if Elpi is >= 1.17.0
+
+### General
+
+- **Fix** spilling before predicate declaration
+- **Fix** unnecessary use of grafting slowing down compilation on MathComp 2.0
+- **New** better "missing join" error message
+
 ## [1.4.0] - 2022-09-29
 
 Compatible with
