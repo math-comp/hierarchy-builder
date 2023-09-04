@@ -4,7 +4,7 @@
   default-bundle = "coq-8.16";
   bundles = let
     mcHBcommon = {
-      mathcomp.override.version = "hierarchy-builder";
+      mathcomp.override.version = "master";
       mathcomp.job = true;
       mathcomp-single.job = true;
       hierarchy-builder-shim.job = true;
@@ -20,15 +20,21 @@
       deriving.job = false;
     };
   in {
-    "coq-8.17".coqPackages = {
+    "coq-master".coqPackages = mcHBcommon // {
+      coq.override.version = "master";
+      coq-elpi.override.version = "coq-master";
+      interval.job = false;
+    };
+
+    "coq-8.17".coqPackages = mcHBcommon // {
       coq.override.version = "8.17";
-    } // mcHBcommon;
+    };
 
-    "coq-8.16".coqPackages = {
+    "coq-8.16".coqPackages = mcHBcommon // {
       coq.override.version = "8.16";
-    } // mcHBcommon;
+    };
 
-    "coq-8.15".coqPackages = {
+    "coq-8.15".coqPackages = mcHBcommon // {
       coq.override.version = "8.15";
       mathcomp.job = false;
       mathcomp-infotheo.job = false;
