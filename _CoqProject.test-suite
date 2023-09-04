@@ -80,6 +80,10 @@ tests/hnf.v
 tests/fun_instance.v
 tests/issue284.v
 tests/issue287.v
+tests/monoid_law_structure.v
+tests/monoid_law_structure_clone.v
+tests/enriched_cat.v
+tests/monoid_enriched_cat.v
 
 -R tests HB.tests
 -R examples HB.examples

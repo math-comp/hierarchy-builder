@@ -24,6 +24,9 @@
       coq.override.version = "8.17";
     } // mcHBcommon;
 
+    "coq-8.17".coqPackages = {
+      coq.override.version = "8.17";
+    };
     "coq-8.16".coqPackages = {
       coq.override.version = "8.16";
     } // mcHBcommon;

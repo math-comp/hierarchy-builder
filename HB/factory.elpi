@@ -15,9 +15,13 @@ type by-phantabbrev abbreviation -> factory-abbrev.
 
 pred declare-abbrev i:id, i:factory-abbrev.
 declare-abbrev Name (by-classname GR) :-
+
+  coq.say "DA!!!!!!&&& NOW RUNNING declare-abbrev",
+
   % looks fishy (the parameters are not taken into account)
   @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
 declare-abbrev Name (by-phantabbrev Abbr) :- std.do! [
+  coq.say "DA!!!!!!&&& NOW RUNNING declare-abbrev",
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
 ].
@@ -193,6 +197,7 @@ mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
 pred declare-asset i:argument, i:asset.
 declare-asset Arg AssetKind :- std.do! [
   argument-name Arg Module,
+
   if-verbose (coq.say {header} "start module and section" Module),
   log.coq.env.begin-module Module none,
   log.coq.env.begin-section Module,
@@ -219,10 +224,64 @@ declare-asset Arg AssetKind :- std.do! [
   )
 ].
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% auxiliary code for wrapper-mixin
+
+pred extract_from_record_decl i: (term -> gref -> prop), i:indt-decl, o:gref.
+extract_from_record_decl P (parameter ID _ _ R) Out :-
+   pi p\
+    extract_from_record_decl P (R p) Out.
+extract_from_record_decl P (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+    P Ty GR0.
+
+pred extract_from_rtty i: (term -> gref -> prop), i: term, o:gref.
+extract_from_rtty P (prod _ _ TF) Out1 :-
+  pi p\ 
+    extract_from_rtty P (TF p) Out1.
+extract_from_rtty P Ty Gr :- P Ty Gr.
+
+pred xtr_fst_op i:term, o:gref.
+xtr_fst_op Ty Gr1 :-
+  Ty = (app [global Gr0| _]),
+  factory-alias->gref Gr0 Gr1.
+
+pred xtr_snd_op i:term, o:gref.
+xtr_snd_op Ty Gr :-
+  Ty = (app [global _, app [global Gr| _]]).
+
+pred extract_wrapped i:indt-decl, o:gref.
+extract_wrapped In Out :-
+  extract_from_record_decl (extract_from_rtty xtr_fst_op) In Out.
+
+pred extract_subject i:indt-decl, o:gref.
+extract_subject In Out :-
+  extract_from_record_decl (extract_from_rtty xtr_snd_op) In Out.
+
+pred wrapper_mixin_aux i:gref, o:gref, o:gref.
+wrapper_mixin_aux XX Gr1 Gr2 :-
+  XX = (indt I),
+  coq.env.indt-decl I D,
+  extract_subject D Gr1,
+  extract_wrapped D Gr2.  
+
+%%% end auxiliary code for wrapper-mixin
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 pred declare-mixin-or-factory i:list prop, i:list constant, i:list term, i:term,
   i:term, i:record-decl, i:list-w-params factoryname, i:id, i:asset.
 declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Sort1 Fields GRFSwP Module D :- std.do! [
+
+  coq.say "DMOF!!!!!!!!!!!!!!!!!!!! NOW RUNNING declare-mixin-or-factory",
+  coq.say "DMOF!!!!!!!! MixinSrcClauses" MixinSrcCaluses,
+  coq.say "DMOF!!!!!!!! SectionCanonicalInstance" SectionCanonicalInstance,
+  coq.say "DMOF!!!!!!!! TheParams" TheParams,
+  coq.say "DMOF!!!!!!!! TheType" TheType,
+  coq.say "DMOF!!!!!!!! Sort1" Sort1,
+  coq.say "DMOF!!!!!!!! Fields" Fields,
+  coq.say "DMOF!!!!!!!! GRFSwP" GRFSwP,
+  coq.say "DMOF!!!!!!!! Module" Module,
+  coq.say "DMOF!!!!!!!! D" D,
 
   if-verbose (coq.say {header} "declare record axioms_"),
   Kname = "Axioms_",
@@ -231,7 +290,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
-  % coq.say RDecl RDeclClosed,
+%  coq.say "TEST" RDecl RDeclClosed,
+%  coq.say "TEST" RDecl,
+%  coq.say "TEST" (indt R),
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
@@ -250,6 +311,27 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   w-params.nparams MLwP NParams,
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref-deps (indt R) MLwP, gref-deps (indc K) MLwP|GRDepsClausesProjs],
+
+  % coq.say "TODO: extract useful info:" RDecl,
+  % coq.say "TODO: extract useful info:" RDecl "AND THEN:" RDeclClosed,
+  % record-decl in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi#L429
+  % per trovare il vero nome del mixin   database.elpi:factory-alias->gref
+  % per sapere quanti argomenti skippare prima del soggetto del mixin
+  %   factory-nparams
+  %
+  % in generale hai:
+  %  forall ....., app[mixin_alias, p1 ... pn | [  app[subject, ...] , extra]]
+  %  mixin_alias -> mixin via factory-alias->gref
+  %  factory-nparams mixin -> n
+  % 
+  % coq.say "TEST 2" (indt R),
+
+  if (get-option "wrapper" tt)
+     ((wrapper_mixin_aux (indt R) NSbj WMxn),
+      (WrapperClauses = [wrapper-mixin (indt R) NSbj WMxn]))
+     (WrapperClauses = []),
+
+  coq.say "DMOF!!!!!!!! adding WrapperClauses " WrapperClauses,
 
   % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
   % FactorySortCoe = coercion GRFSort _ _ _,
@@ -272,7 +354,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
-  std.flatten [Clauses, GRDepsClauses, [
+  std.flatten [Clauses, GRDepsClauses, WrapperClauses, [
     factory-constructor (indt R) GRK,
     factory-nparams (indt R) NParams,
     factory-builder-nparams BuildConst NParams,

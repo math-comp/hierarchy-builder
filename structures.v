@@ -17,6 +17,35 @@ Definition ignore_disabled {T T'} (x : T) (x' : T') := x'.
 (* ********************* structures ****************************** *)
 From elpi Require Import elpi.
 
+(******* simple example of Elpi command *)
+Axiom m : Type -> Type.
+Record r (P : Type) := { private : m P }.
+
+(* command name *)
+Elpi Command foo_example_command.
+(* predicate definition *)
+Elpi Accumulate lp:{{
+
+pred extract i:indt-decl, o:gref.
+extract (parameter ID _ _ R) Out :-
+  pi p\
+    extract (R p) Out.
+extract (record ID _ KID (field _ _ Ty (x\end-record))) GR :-
+  Ty = app [global GR| _].
+
+}}.
+Elpi Typecheck.
+
+(* predicate query *)
+Elpi Query lp:{{
+
+  coq.locate "r" (indt I),
+  coq.env.indt-decl I D,
+  extract D GR.
+
+}}.
+(******* end simple example *)
+
 Register unify as hb.unify.
 Register id_phant as hb.id.
 Register id_phant_disabled as hb.id_disabled.
@@ -158,6 +187,13 @@ pred join o:classname, o:classname, o:classname.
 % and build terms with simpler conversion problems (less unfolding
 % in order to discover two mixins are the same)
 pred mixin-mem i:term, o:gref.
+
+% [wrapper-mixin Wrapper NewSubject WrappedMixin]
+%  #[wrapper] HB.mixin Record hom_isMon T of Quiver T :=
+%      { private : forall A B, isMon (@hom T A B) }.
+%  -->
+%  wrapper-mixin (indt "hom_isMon") (const "hom") (indt "isMon").
+pred wrapper-mixin o:mixinname, o:gref, o:mixinname.
 
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,

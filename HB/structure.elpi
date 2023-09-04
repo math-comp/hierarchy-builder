@@ -8,6 +8,9 @@ namespace structure {
 pred declare i:string, i:term, i:sort.
 pred declare i:string, i:term, i:universe.
 declare Module BSkel Sort :- std.do! [
+
+  coq.say "D!!!!!!!!!!!!!! NOW RUNNING declare",
+
   disable-id-phant BSkel BSkelNoId,
   std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
   re-enable-id-phant BNoId B,
@@ -204,6 +207,43 @@ declare Module BSkel Sort :- std.do! [
   acc-clauses current {std.append EX MixinFirstClass},
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
+
+  % factories-provide (line 16) gives the mixins provided from a factory. 
+  % line 23 (list-w-params_list) associates these mixins with their names (ML).
+  % we need to filter the wrappers out of ML. 
+  % then export the projection of each mixin wrapper. 
+  % can use exported-op to this purpose 
+
+  %% tentative pseudo-code::
+  % std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
+  % std.forall WrapperML private.rexport-wrapper-as-instance,
+
+  %% write private code below:
+  % pred rexport-wrapper-as-instance i:mixinname.
+  % reexport-wrapper-as-instance M :-
+  %   exported-op M _ C,
+  %   declare-existing-instance C %fixme.
+
+  std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
+  % we need to assert locally the clauses in EX, which is 
+  % [exported-op (indt «hom_isMon.axioms_») «hom_isMon.hom_isMon_private» 
+  % «hom_isMon_private»]
+  % crucially containing hom_isMon_private.
+  % In fact, these clauses get added to the global database by Accumulate,
+  % but this makes them available only at the end of the program run, and 
+  % this is too late.
+  % Then given WrapperML (the list of the wrapper mixins as grefs)
+  % i.e. [indt «hom_isMon.axioms_»]
+  % we can use reexport-wrapper-as-instance to get the projection and build 
+  % the instances. 
+  coq.say "D!!!!!!!!!!!! WrapperML " WrapperML,  
+  coq.say "D!!!!!!!!!!!! EX (local context): " EX,
+
+  EX => std.forall WrapperML private.reexport-wrapper-as-instance,
+
+  % tentative: generating wrapper instances from the available definitions.
+  % Wrong approach: we actually need to check each new defined instance to 
+  % see if it triggers a wrapper instance too. We do this in instance.elpi.
 
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
 
@@ -741,5 +781,33 @@ mk-hb-eta.arity Structure ClassName SortProjection
   ]),
   Out = parameter {coq.name->id NT} explicit Ty s\ arity (Concl s)
 ].
+
+% M is the gref of the wrapper mixin.
+% C gets now instantiated to the projection, i.e. hom_isMon_private.
+% we need to count the parameters, we can get that from the type.
+% we then can construct the instance, using
+% instance.declare-const (notably used in the API, i.e. in structures.v, 
+% HB.instance)
+pred reexport-wrapper-as-instance i:mixinname.
+% reexport-wrapper-as-instance M :- std.spy-do! [
+reexport-wrapper-as-instance M :- std.do! [     
+     coq.say "RWAI!!!!!!!!!!! NOW RUNNING private.reexport-wrapper-as-instance",
+
+     exported-op M _ C,
+     
+     coq.say "RWAI!!!!!!! M = " M,
+     coq.say "RWAI!!!!!!! C = " C,
+
+     B = (global (const C)),
+     coq.env.typeof (const C) Ty,
+     coq.count-prods Ty N0,
+     coq.term->arity Ty N0 Arity,
+%     coq.term->string (global M) Str1,
+%    need to get a valid idenfier out of a term, no @ or .    
+%     std.string.concat "__" [Str1, "ELIM"] Str2, 
+     Str0 is "Op_isMx" ^ "__" ^ {std.any->string {new_int}},
+     std.string.concat "__" [Str0, "ELIM"] Str, 
+     instance.declare-const Str B Arity _
+ ]. 
 
 }}
