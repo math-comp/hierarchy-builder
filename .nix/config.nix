@@ -26,6 +26,11 @@
       interval.job = false;
     };
 
+    "coq-8.18".coqPackages = mcHBcommon // {
+      coq.override.version = "8.18";
+      interval.job = false;
+    };
+
     "coq-8.17".coqPackages = mcHBcommon // {
       coq.override.version = "8.17";
     };
@@ -37,6 +42,8 @@
     "coq-8.15".coqPackages = mcHBcommon // {
       coq.override.version = "8.15";
       mathcomp.job = false;
+      mathcomp-classical.job = false;
+      mathcomp-analysis.job = false;
       mathcomp-infotheo.job = false;
     };
   };
