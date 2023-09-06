@@ -191,8 +191,21 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
   compress-coercion-paths MI MICompressed,
 ].
 
+pred drop i:int, i:list A, o:list A.
+drop 0 L L :- !.
+drop N [_|XS] L :- !, N1 is N - 1, drop N1 XS L.
+
 pred compress-copy o:term, o:term.
-compress-copy X Y :- compress X Y, !.
+compress-copy (app [global (const C) | L]) R :-
+  sub-class C2 C3 C NparamsC,
+  drop NparamsC L [app [global (const C') | L']],
+  sub-class C1 C2 C' NparamsC',
+  drop NparamsC' L' L'',
+  sub-class C1 C3 C'' NparamsC'',
+  std.append {coq.mk-n-holes NparamsC''} L'' HL'',
+  CHL'' = app [global (const C'') | HL''],
+  coq.typecheck CHL'' _ ok, !,
+  compress-copy CHL'' R.
 compress-copy (app L) (app L1) :- !, std.map L compress-copy L1.
 compress-copy X X.
 

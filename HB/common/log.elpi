@@ -181,14 +181,6 @@ log.coq.CS.declare-instance C  :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.canonical Name Local),
 ].
 
-% Since "accumulate" is a keyword we can't use it as a predicate name
-% in the namespace, so we just define it here with the full name
-pred log.coq.env.accumulate i:scope, i:string, i:clause.
-log.coq.env.accumulate S DB CL :- std.do! [
-  coq.elpi.accumulate S DB CL,
-  if-verbose (log.private.log-vernac (log.private.coq.vernac.comment CL)),
-].
-
 pred log.coq.check i:term, o:term, o:term, o:diagnostic.
 log.coq.check Skel Ty T D :- std.do! [
   coq.elaborate-skeleton Skel Ty T D,

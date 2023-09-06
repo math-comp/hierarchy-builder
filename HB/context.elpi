@@ -39,7 +39,7 @@ declare.mixins TheType TheParamsSection MLwPRaw MLwP MSL CL :-  std.do! [
   std.map TheParamsSection triple_2 TheParams,
   apply-w-params MLwPRaw TheParams TheType MLwAllArgsRaw,
   std.fold MLwAllArgsRaw (triple [] [] []) (private.postulate-mixin TheType) (triple CL MSL MLwPRev),
-  std.forall CL (cs\ acc-clause current (local-canonical cs)),
+  acc-clauses current {std.map CL (cs\r\ r = local-canonical cs)},
   std.rev MLwPRev MLwPSection,
   build-list-w-params TheParamsSection TheType MLwPSection MLwP,
   acc-clauses current MSL,
