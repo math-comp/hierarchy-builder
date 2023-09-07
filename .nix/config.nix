@@ -38,14 +38,6 @@
     "coq-8.16".coqPackages = mcHBcommon // {
       coq.override.version = "8.16";
     };
-
-    "coq-8.15".coqPackages = mcHBcommon // {
-      coq.override.version = "8.15";
-      mathcomp.job = false;
-      mathcomp-classical.job = false;
-      mathcomp-analysis.job = false;
-      mathcomp-infotheo.job = false;
-    };
   };
   cachix.coq = {};
   cachix.coq-community = {};
