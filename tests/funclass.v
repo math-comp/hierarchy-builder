@@ -50,7 +50,6 @@ HB.instance Definition x5 :=
 Check Monoid.on mult.
 
 HB.mixin Record silly (T1 : Type) (F : Monoid.type T1) (T : Type) := { xx : T }.
-#[infer(F = "_ -> _")]
 HB.structure Definition wp T (F : Monoid.type T) := { A of silly T F A }.
 
 #[skip="8.11"]

@@ -4,6 +4,8 @@
 
 - **Removed** the `#[primitive_class]` attribute, making it the default.
 - **New** `HB.saturate` to saturate instances w.r.t. the current hierarchy
+- **Removed** the `#[infer]` attribute made obsolete by reverse coercions
+  since Coq 8.16
 
 ## [1.6.0] - 2023-09-20
 

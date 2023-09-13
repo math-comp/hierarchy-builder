@@ -581,14 +581,6 @@ HB.structure Definition StructureName params :=
   Supported attributes:
   - [#[mathcomp]] attempts to generate a backward compatibility layer with mathcomp:
     trying to infer the right [StructureName.pack],
-  - [#[infer(variable)]], where [variable : pT] belongs to [params] and is a structure
-    (e.g. from the hierarchy) with a coercion/canonical projection [pT >-> Sortclass].
-    It modifies the notation [StructureName.type] so as to accept [variable : Type] instead,
-    and will try to infer its [pT] by unification (using canonical structure inference),
-    This is essential in [Lmodule.type R] where [R] should have type [Ring.type]
-    but any [Type] which is canonically a [Ring.type] is accepted thanks to [#[infer(R)]].
-    If the carrier of the structure [S] is not a [Type] but rather a function, one has
-    to write [#[infer(S = "_ -> _")]].
   - [#[arg_sort]] defines an alias [StructureName.arg_sort] for [StructureName.sort],
     and declares it as the main coercion. [StructureName.sort] is still declared as a coercion
     but the only reason is to make sure Coq does not print it.
