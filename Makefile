@@ -84,7 +84,6 @@ only: sub-only this-only
 test-suite: sub-test-suite this-test-suite
 
 clean: sub-clean this-clean
-	rm -f coq.hb
 
 distclean: sub-distclean this-distclean
 
@@ -93,7 +92,7 @@ distclean: sub-distclean this-distclean
 
 this-config:: __always__
 
-this-build:: this-config coq.hb Makefile.coq
+this-build:: this-config Makefile.coq
 	+$(COQMAKE)
 
 this-only:: this-config Makefile.coq
@@ -116,7 +115,6 @@ this-clean:: __always__
 install: __always__ Makefile.coq
 	$(COQMAKE) install
 	install -d $(HB_INSTALLDIR)
-	install -m 0755 coq.hb $(HB_INSTALLDIR)
 
 # counting lines of Coq code -----------------------------------------
 .PHONY: count
@@ -142,9 +140,6 @@ endif
 # Make of individual .vo ---------------------------------------------
 structures.vo : %.vo: __always__ Makefile.coq
 	+$(COQMAKE) $@
-	
-coq.hb: hb.ml
-	ocamlc unix.cma str.cma -g hb.ml -o coq.hb
 
 $(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v)): __always__ config build Makefile.test-suite.coq
 	+$(COQMAKE_TESTSUITE) $@
