@@ -1,6 +1,18 @@
 # Changelog
 
-## UNRELEASED
+## [1.6.0] - 2023-09-20
+
+Compatible with
+- Coq 8.16 with Coq-Elpi 1.15.x and 1.16.x
+- Coq 8.17 with Coq-Elpi 1.17.x and 1.18.x
+- Coq 8.18 with Coq-Elpi 1.19.x
+This version is required if Elpi is >= 1.17.0
+
+### General
+
+- **Speedup** speedup in coercion compression
+- **Speedup** accumulate clauses in batches (on Coq-Elpi >= 8.18.0)
+- **Change** remove generation of eta expanded instances (was unused)
 
 ## [1.5.0] - 2023-08-04
 
