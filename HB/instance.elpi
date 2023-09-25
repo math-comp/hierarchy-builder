@@ -393,22 +393,19 @@ declare-regular-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
 pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
   o:list (pair id constant). 
 declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
-  private.close-section-if-has-params TyWP SectionName,
-  coq.say "HERE!" TheType,
   coq.safe-dest-app TheType TheTypeKey _,
-  if (TheTypeKey = global TheTypeKeyGR)
-     (std.spy(private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins),
-      std.spy(private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL))
-     (coq.say "problem in wrap-mixins")   
+  std.assert! (TheTypeKey = global TheTypeKeyGR) "The subject to be wrapped has no key",
+  private.close-section-if-has-params TyWP SectionName,
+  private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins,
+  private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL,
 ].
 
 pred is-structure-op i:term.
 is-structure-op (global (const C)) :- exported-op _ _ C.
 is-structure-op (app[global (const C)|_]) :- exported-op _ _ C.
 
-pred derive-wrapper-instances i:term, i:prop, o:term, o:constant.
-derive-wrapper-instances Instance (wrapper-mixin WrapperMixin _Subject _Mixin) 
-       WrapperSubject C :- std.do! [
+pred derive-wrapper-instances i:term, i:mixinname, o:term, o:constant.
+derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
 
     % K is the mixin constructor (Build) for WrapperMixin 
      factory-constructor WrapperMixin K,
@@ -429,7 +426,7 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin _Subject _Mixin)
     % them as arguments followed by Instance.
      coq.env.typeof K KTy, 
      coq.count-prods KTy KN, 
-     KN0 = KN - 1,
+     KN0 is KN - 1,
      coq.mk-n-holes KN0 Holes,
 
      std.append Holes [Instance] Args,
@@ -439,10 +436,12 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin _Subject _Mixin)
 
      coq.typecheck NewInstance Ty Dgn,
 
+     coq.say "NewInstance" {coq.term->string NewInstance},
+     coq.say "NewInstanceTy" {coq.term->string Ty},
+
      if (Dgn = error S) 
         (coq.say "DWI! error in NewInstance" NewInstance "xxxx" S)
-        (coq.count-prods Ty N0,
-         coq.safe-dest-app Ty _Factory FArgs,
+        (coq.safe-dest-app Ty _Factory FArgs,
          std.nth NParams FArgs WrapperSubject        
         ),
 
@@ -452,27 +451,22 @@ derive-wrapper-instances Instance (wrapper-mixin WrapperMixin _Subject _Mixin)
   ].
 
 pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
-wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType WM TheWrappedMixin :-
-     std.do! [
-               std.findall (wrapper-mixin _ TheTypeKeyGR M) Wrappers,   
-               if (Wrappers = [W|_])
-                  (W = wrapper-mixin WM TheTypeKeyGR M,
-                   TM = global (const TheMixin),
-                   private.derive-wrapper-instances TM W TheNewType TheWrappedMixin)
-                  (coq.say "problem in wrap-a-mixin"),
-     ].        
+wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType WM TheWrappedMixin :- std.do! [
+  std.findall (wrapper-mixin _ TheTypeKeyGR M) Wrappers,
+  std.assert! (not(Wrappers = [])) "wrap-a-mixin: no wrapper found",
+  if (Wrappers = [wrapper-mixin WM TheTypeKeyGR M])
+     (TM = global (const TheMixin),
+      private.derive-wrapper-instances TM WM TheNewType TheWrappedMixin)
+     (coq.error "wrap-a-mixin: more than one way to wrap" TheTypeKeyGR "for" M),
+].        
 
 pred wrap-mixins i:gref, i:list mixinname, i:list constant,
                  o:term, o:list mixinname, o:list constant.
-wrap-mixins TheTypeKeyGR [M | ML] [ TheMixin | TheMixins ] TheNewType [ WM | WML ] 
-            [ TheWrappedMixin | TheWrappedMixins ] :-
-  coq.say TheTypeKeyGR M ML TheMixin TheMixins TheNewType WM WML TheWrappedMixin TheWrappedMixins,
-%  coq.safe-dest-app TheType TheTypeKey _,
-%  if (TheTypeKey = global TheTypeKeyGR)
-  wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType1 WM TheWrappedMixin,
-  std.assert! (TheNewType = TheNewType1) "wrapping to different subjects",
+wrap-mixins TheTypeKeyGR [ M  | ML  ] [ TheMixinInstance | TheMixins ]
+            TheNewType   [ WM | WML ] [ TheWrappedMixin  | TheWrappedMixins ] :-
+  wrap-a-mixin TheTypeKeyGR M TheMixinInstance TheNewType1 WM TheWrappedMixin,
+  std.assert! (TheNewType = TheNewType1) "wrapping leads to different subjects",
   wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins.
-%     (coq.say "problem in wrap-mixins").
 wrap-mixins _ [] [] _ [] [].
 
 
