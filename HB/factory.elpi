@@ -223,15 +223,15 @@ declare-asset Arg AssetKind :- std.do! [
 %%% auxiliary code for wrapper-mixin
 
 pred extract_from_record_decl i: (term -> gref -> prop), i:indt-decl, o:gref.
-extract_from_record_decl P (parameter ID _ _ R) Out :-
-   pi p\
+extract_from_record_decl P (parameter ID _ Ty R) Out :-
+  @pi-parameter ID Ty p\
     extract_from_record_decl P (R p) Out.
-extract_from_record_decl P (record ID _ KID (field _ _ Ty (x\end-record))) GR0 :-
+extract_from_record_decl P (record _ _ _ (field _ _ Ty (x\end-record))) GR0 :-
     P Ty GR0.
 
 pred extract_from_rtty i: (term -> gref -> prop), i: term, o:gref.
-extract_from_rtty P (prod _ _ TF) Out1 :-
-  pi p\ 
+extract_from_rtty P (prod N Ty TF) Out1 :-
+  @pi-decl N Ty p\ 
     extract_from_rtty P (TF p) Out1.
 extract_from_rtty P Ty Gr :- P Ty Gr.
 
@@ -242,7 +242,8 @@ xtr_fst_op Ty Gr1 :-
 
 pred xtr_snd_op i:term, o:gref.
 xtr_snd_op Ty Gr :-
-  Ty = (app [global _, app [global Gr| _]]).
+  Ty = (app [global _| Args]),
+  std.last Args (app [global Gr| _]).
 
 pred extract_wrapped i:indt-decl, o:gref.
 extract_wrapped In Out :-
