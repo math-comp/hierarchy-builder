@@ -163,7 +163,36 @@ Fail Check Type : Monoid_enriched_quiver.type.
 
 Check Type : Monoid_enriched_quiver.type.
 
+Section A0.
+#[verbose, log]
+HB.declare Context T of  Monoid_enriched_quiver T.
 
+Goal forall A B : T, isMon (hom A B).
+assumption.
+Qed.
+
+End A0.
+
+(* BUG 
+
+HB.mixin Record isNE T := { def: T }.
+HB.structure Definition NE := { T of isNE T }.
+
+HB.factory Record dummy T of Monoid_enriched_quiver T := { x : T }.
+
+HB.builders Context T (f : dummy T).
+
+Goal forall A B : T, isMon (hom A B).
+assumption.
+Qed.
+
+HB.instance Definition _ := isNE.Build T x.
+
+HB.end.
+About wrapped__20.
+#[verbose] HB.instance
+Definition x := dummy.Build Type nat.
+*)
 
 (* Check (fun A B : Type => hom A B : Monoid.type). *)
   
