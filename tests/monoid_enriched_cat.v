@@ -146,16 +146,9 @@ Qed.
 Print Canonical Projections.
 *)
 
-(*
+
 Fail Check (nat -> option nat) : Monoid.type.
 
-Check 1.
-
-Print Canonical Projections.
-
-Check 2.
-Set Printing All.
-*)
 
 (* use the lemma to instantiate isMon. Notice the genericity of the type. 
    In principle this instance should be derivable from the wrapper instance. 
@@ -165,7 +158,7 @@ Set Printing All.
 Check Type : Quiver.type.
 Fail Check Type : Monoid_enriched_quiver.type.
 
-HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
+#[verbose] HB.instance Definition funQ_isMon (A B: Type) : isMon (hom A B) :=
   funQ_isMonF A B.
 
 Check Type : Monoid_enriched_quiver.type.
