@@ -57,6 +57,38 @@ namespace private {
 % to the corresponding mixin using mixin-for
 pred postulate-mixin i:term, i:w-args mixinname, i:triple (list constant) (list prop) (list (w-args mixinname)),
                      o:triple (list constant) (list prop) (list (w-args mixinname)).
+postulate-mixin TheType (triple M Ps T) (triple CL MSL MLwP) (triple OutCL [MC|MSL] [NewMwP|MLwP]) :- wrapper-mixin M _ _, !, MSL => std.do! [
+  NameVar is "local_mixin_private_" ^ {gref->modname M 2 "_"},
+  NameMixin is "local_mixin_" ^ {gref->modname M 2 "_"},
+
+  if-verbose (coq.say "HB: postulate and wrap" NameVar "on" {coq.term->string T}),
+  
+  synthesis.infer-all-gref-deps Ps T M TySkel,
+  % was synthesis.infer-all-mixin-args Ps T M TySkel,
+  % if-verbose (coq.say "HB: postulate-mixin checking" TySkel),
+  % std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",
+  std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty)
+    "postulate-mixin: Ty illtyped",
+
+  Ty = app[global M|Args],
+  factory-constructor M K,
+  coq.mk-app (global K) Args KArgs,
+  std.assert-ok! (coq.typecheck KArgs {{ lp:VarTy -> _ }}) "brrr",
+
+  log.coq.env.add-section-variable-noimplicits NameVar VarTy V,
+
+  coq.mk-app KArgs [global (const V)] TheMixin,
+
+  log.coq.env.add-const-noimplicits NameMixin TheMixin Ty @transparent! C,
+
+  factory? Ty NewMwP,
+
+  declare-instances-from-postulated-mixin TheType M T C MC NewCL,
+
+  std.append CL NewCL OutCL,
+
+].
+
 postulate-mixin TheType (triple M Ps T) (triple CL MSL MLwP) (triple OutCL [MC|MSL] [NewMwP|MLwP]) :- MSL => std.do! [
   Name is "local_mixin_" ^ {gref->modname M 2 "_"},
 
@@ -69,12 +101,22 @@ postulate-mixin TheType (triple M Ps T) (triple CL MSL MLwP) (triple OutCL [MC|M
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty)
     "postulate-mixin: Ty illtyped",
   log.coq.env.add-section-variable-noimplicits Name Ty C,
+
   factory? Ty NewMwP,
+
+  declare-instances-from-postulated-mixin TheType M T C MC NewCL,
+
+  std.append CL NewCL OutCL,
+
+  ].
+
+pred declare-instances-from-postulated-mixin i:term, i:mixinname, i:term, i:constant, o:prop, o:(list constant).
+declare-instances-from-postulated-mixin TheType M T C MC NewCL :- std.do! [
 
   MC = mixin-src T M (global (const C)),
   MC => get-option "local" tt =>
     instance.declare-all TheType {findall-classes-for [M]} NewCSL,
   std.map NewCSL snd NewCL,
-  std.append CL NewCL OutCL
-  ].
+].
+
 }}
