@@ -472,8 +472,7 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
     % K is the mixin constructor (Build) for WrapperMixin 
      factory-constructor WrapperMixin K,
      factory-nparams WrapperMixin NParams,
-     std.assert! (NParams = 0) "TODO support parameters",
-   
+       
     % We are only interested in the last parameter of the constructor
     % type, which is the current instance 
     % (which is a Mixin instance on the new Subject).  
@@ -496,20 +495,14 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
      % the body of the new wrapper instance
      NewInstance = app[global K| Args],
 
-     coq.typecheck NewInstance Ty Dgn,
+     std.assert-ok! (coq.typecheck NewInstance Ty) "cannot wrap",
 
-     coq.say "NewInstance" {coq.term->string NewInstance},
-     coq.say "NewInstanceTy" {coq.term->string Ty},
-
-     if (Dgn = error S) 
-        (coq.say "DWI! error in NewInstance" NewInstance "xxxx" S)
-        (coq.safe-dest-app Ty _Factory FArgs,
-         std.nth NParams FArgs WrapperSubject        
-        ),
+     coq.safe-dest-app Ty _Factory FArgs,
+     std.nth NParams FArgs WrapperSubject,
 
     Name is "wrapped__" ^ {std.any->string {new_int}},
 
-    log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C
+    std.spy(log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C),
   ].
 
 pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
