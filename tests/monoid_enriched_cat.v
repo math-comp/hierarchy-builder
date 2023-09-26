@@ -1,6 +1,11 @@
 From HB Require Import structures.
 From Coq Require Import ssreflect ssrfun.
 
+
+Require Import FunctionalExtensionality.
+
+Module NoParams.
+
 HB.mixin Record isQuiver Obj := { hom : Obj -> Obj -> Type }.
 
 HB.structure Definition Quiver := { Obj of isQuiver Obj }.
@@ -89,7 +94,6 @@ HB.instance Definition funQ := isQuiver.Build Type
 
 (* prove that for every two types the quiver is a monoid *)
 
-Require Import FunctionalExtensionality.
 
 Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
   match f x with
@@ -173,6 +177,118 @@ Qed.
 
 End A0.
 
+End NoParams.
+
+
+(******************* PARAMETERS ***********************)
+
+Module WithParams.
+
+
+
+HB.mixin Record isQuiver P Obj := { hom : Obj -> Obj -> Type; embed : P -> Obj; }.
+
+HB.structure Definition Quiver P := { Obj of isQuiver P Obj }.
+
+HB.mixin Record isMon S A := {
+    zero  : A;
+    add   : A -> A -> A;
+    scale : S -> A -> A;
+    addrA : associative add;
+    add0r : left_id zero add;
+    addr0 : right_id zero add;
+  }.
+
+HB.structure
+  Definition Monoid S := { A of isMon S A }.
+
+(* This is expected to fail, as it isn't a mixin *)  
+Fail HB.structure
+  Definition Monoid_enriched_quiver P S :=
+    { Obj of isQuiver P Obj &
+             (forall A B : Obj, isMon S (@hom (Quiver.clone Obj _) A B)) }.
+
+#[wrapper]
+HB.mixin Record hom_isMon P S T of Quiver P T :=
+    { hom_isMon_private : forall A B, isMon S (@hom P T A B) }.
+
+#[verbose] HB.structure
+   Definition Monoid_enriched_quiver P S :=
+     { Obj of isQuiver P Obj & hom_isMon P S Obj }.
+     
+HB.instance Definition funQ := isQuiver.Build nat Type 
+   (fun A B => A -> option B) (fun x => match x with O => nat | S _ => bool end).
+
+Definition funQ_comp {A B} (f g: A -> option B) (x: A) : option B :=
+  match f x with
+  | Some _ => f x
+  | _ => g x end.              
+
+Program Definition funQ_isMonF S (A B: Type) : isMon S (A -> option B) :=
+  isMon.Build S (A -> option B) (fun (_:A) => None) funQ_comp (fun _ x => x) _ _ _.
+(* Obligations. *)
+Obligation 1.
+unfold associative; intros.
+eapply functional_extensionality; intro a.
+unfold funQ_comp.
+destruct (x a) eqn:K1.
+simpl; auto.
+destruct (y a); auto.
+Qed.
+Obligation 2.
+unfold left_id; intros.
+unfold funQ_comp; auto.
+Qed.
+Obligation 3.
+unfold right_id; intros.
+eapply functional_extensionality; intro a.
+unfold funQ_comp.
+destruct (x a); auto.
+Qed.
+
+Fail Check (nat -> option nat) : Monoid.type _.
+
+
+(* use the lemma to instantiate isMon. Notice the genericity of the type. 
+   In principle this instance should be derivable from the wrapper instance. 
+   But since we haven't introduced the wrapper instance yet, we use this
+   HB command to actually introduce it. *)
+
+Check Type : Quiver.type _.
+Fail Check Type : Monoid_enriched_quiver.type _ _.
+
+(* What should we do *)
+Fail #[verbose] HB.instance Definition funQ_isMon S (A B: Type) : isMon S (hom A B) :=
+  funQ_isMonF S A B.
+
+#[verbose] HB.instance Definition funQ_isMon (A B: Type) : isMon bool (hom A B) :=
+  funQ_isMonF bool A B.
+
+Check Type : Monoid_enriched_quiver.type _ _.
+
+
+End WithParams.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (* BUG 
 
 HB.mixin Record isNE T := { def: T }.
@@ -189,6 +305,10 @@ Qed.
 HB.instance Definition _ := isNE.Build T x.
 
 HB.end.
+
+This builder is not a legit one!!!!!
+About Builders_25.local_mixin_monoid_enriched_cat_hom_isMon.
+
 About wrapped__20.
 #[verbose] HB.instance
 Definition x := dummy.Build Type nat.
