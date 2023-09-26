@@ -11,8 +11,11 @@ declare Module BSkel Sort :- std.do! [
   disable-id-phant BSkel BSkelNoId,
   std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
   re-enable-id-phant BNoId B,
-  private.sigT->list-w-params B GRFSwP ClosureCheck,
+  private.sigT->list-w-params B GRFSwP_or_ThingtoBeWrapped ClosureCheck,
   
+  % do some work to go back to 
+  GRFSwP_or_ThingtoBeWrapped = GRFSwP,
+
   factories-provide GRFSwP PMLwP,
 
   list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
@@ -644,6 +647,18 @@ if-coverage-not-good-error.one MS M :- mixin-first-class M C, !,
        "which contains at most" {std.map {coq.gref.set.elements {coq.gref.set.inter CMS MS}} nice-gref->string}).
 if-coverage-not-good-error.one _ _. % new class is the first covering M
 
+% 1. write a predicate to recognize factory applied to op, maybe under a forall prefix
+%    factory-on-some-structure-op?
+% 2. change the type of    product->triples and    sigT->list-w-params to
+%    return a list-w-params of either a factoryname or a thing-to-be-wrapper
+%    (eg mixin to be wrapped, operation)
+% 3. the caller of sigT->list-w-params has to pre-process the list
+%    and generate wrapper mixins for each thing-to-be-wrapper and replace
+%    in the list the thing-to-be-wrapper with the wrapper mixin
+%    - one needs to find to which structure the operation belongs and
+%      use that structure to synthesize the type of the wrapper, eg
+%      hom belongs to Quiver, hence hom_isMon takes a "T of Quiver T"
+
 pred product->triples i:term, o:list (w-args factoryname), o:bool.
 product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
   product->triples B GRB ClosureCheck,
@@ -652,6 +667,7 @@ product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
 product->triples {{ True }} [] tt :- !.
 product->triples {{ False }} [] ff :- !.
 product->triples A [GR] tt :- std.assert! (factory? A GR) "A structure can only mention known factories".
+% product->triples A [GR] tt :- factory-on-some-structure-op? A GR.
 
 pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
 sigT->list-w-params (fun N T B) L C :-
