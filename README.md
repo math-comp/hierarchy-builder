@@ -162,7 +162,8 @@ The documentation of all commands can be found in the comments of
 find them. All commands can be prefixed with the attribute `#[verbose]`
 to get an idea of what they are doing.
 
-See also the `#[log]` attribute in the "Plan B" section below.
+For debugging purposes, passing the attribute `#[log]` or `#[log(raw)]`
+to a HB command prints Coq commands which are equivalent to its effect.
 
 </p></details>
 
@@ -179,75 +180,5 @@ See also the `#[log]` attribute in the "Plan B" section below.
   (groups that are topological spaces such that the addition and opposite are
   continuous) induce a uniformity, which makes them uniform spaces. We solve
   this seamingly mutual dependency using HB.
-
-</p></details>
-
-### Plan B
-
-Scared of making your project depend on HB? This section is for you.
-
-HB is based on a thick layer of software which we plan to maintain, but we
-also understand it can look scary. Hence this insurance plan. By passing
-the attribute `#[log]` each command prints Coq commands which are equivalent to
-its effect. By replacing each HB command by its equivalent Coq commands, you
-can eliminate the dependency on HB from your project.
-
-This is a "plan B", by looking at the output of`#[log]` you will realize that
-HB commands are much nicer (and shorter) than the equivalent Coq code. The
-point of a "plan B" is to avoid nightmares, not to be nicer than plan A ;-)
-
-How can you be sure plan B works? We provide tools to check that in your CI, see
-the details below.
-
-<details><summary>(click to expand)</summary><p>
-
-
-Hierarchy Builder commands can log their equivalent vernacular commands
-to "patch" file (extension `.hb`). In order to do so, one has to
-compile the project with the `COQ_ELPI_ATTRIBUTES` variable set. Eg
-
-```shell
-COQ_ELPI_ATTRIBUTES='hb(log(raw))' make
-```
-
-The `coq.hb` command line utility, provided by the `coq-hierarchy-builder` package,
-is able to apply the generated patches: it comments out HB commands and
-inserts their equivalent Coq commands.
-
-```shell
-coq.hb patch file1.v file2.v ...
-```
-
-The converse operation can be performed using the following command:
-
-```shell
-coq.hb reset file1.v file2.v ...
-```
-
-We recommend to setup a CI job testing plan B. If you are using
-`docker-coq-action` the following snippet is a good start:
-
-```yaml
-  plan-B:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: coq-community/docker-coq-action@v1
-      with:
-        opam_file: './your-project.opam'        # depends on coq-hierarchy-builder
-        script: |
-          # build the project so that it generates patch files
-          COQ_ELPI_ATTRIBUTES="hb(log(raw))" make -j2
-          # apply the patches
-          coq.hb patch `find . -name \*.v`
-          # check something happened
-          if git diff --quiet; then echo "No patch!"; exit 1; fi
-          # replace HB by a package with trivial dependencies, just to make
-          # the From HB Require... line work
-          opam remove coq-hierarchy-builder
-          opam install coq-hierarchy-builder-shim
-          # build the project without HB
-          make -j2
-```
 
 </p></details>
