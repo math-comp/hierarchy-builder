@@ -164,7 +164,7 @@ to get an idea of what they are doing.
 
 For debugging and teaching purposes, passing the attributes
 `#[log]` or `#[log(raw)]` to a HB command prints Coq commands which are
-equivalent to its effect. Hence, copy-pasting the displayed commands into
+*almost* equivalent to its effect. Hence, copy-pasting the displayed commands into
 your source file is not expected to work, and we strongly recommend
 against it.
 
