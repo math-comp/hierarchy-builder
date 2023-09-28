@@ -162,8 +162,11 @@ The documentation of all commands can be found in the comments of
 find them. All commands can be prefixed with the attribute `#[verbose]`
 to get an idea of what they are doing.
 
-For debugging purposes, passing the attribute `#[log]` or `#[log(raw)]`
-to a HB command prints Coq commands which are equivalent to its effect.
+For debugging and teaching purposes, passing the attributes
+`#[log]` or `#[log(raw)]` to a HB command prints Coq commands which are
+equivalent to its effect. Hence, copy-pasting the displayed commands into
+your source file is not expected to work, and we strongly recommend
+against it.
 
 </p></details>
 
