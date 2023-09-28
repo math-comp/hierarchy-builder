@@ -40,7 +40,6 @@ with-attributes P :-
     att "local" bool,
     att "fail" bool,
     att "doc" string,
-    att "primitive_class" bool,
     att "primitive" bool,
     att "non_forgetful_inheritance" bool,
     att "hnf" bool,

@@ -466,9 +466,7 @@ declare-class+structure MLwP Sort
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
-  if (get-option "primitive_class" tt)
-    (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd)
-    (log.coq.env.add-indt ClassDeclaration ClassInd),
+  (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd),
 
   coq.env.projections ClassInd Projs,
   % TODO: put this code in a named clause
