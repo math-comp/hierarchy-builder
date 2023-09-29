@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Removed** the `#[primitive_class]` attribute, making it the default.
+
 ## [1.6.0] - 2023-09-20
 
 Compatible with

@@ -12,7 +12,7 @@ Elpi Query lp:{{
   std.assert! (coq.env.record? Ind tt) "not primitive"
 }}.
 
-#[primitive, primitive_class]
+#[primitive]
 HB.structure Definition A := {T of hasA T}.
 
 Elpi Query lp:{{
@@ -33,7 +33,7 @@ HB.mixin Record HasMul T := {
   mulA: associative mul;
 }.
 
-#[primitive, primitive_class]
+#[primitive]
 HB.structure Definition Mul := { T of HasMul T }.
 
 #[primitive]
@@ -41,6 +41,6 @@ HB.mixin Record HasSq T of Mul T := {
   sq : T -> T;
   pmul : forall x y, sq (mul x y) = mul (sq x) (sq y);
 }.
-#[primitive, primitive_class]
+#[primitive]
 HB.structure Definition Sq := { T of HasSq T & Mul T }.
 Check erefl : Sq.sort _ = Mul.sort _.

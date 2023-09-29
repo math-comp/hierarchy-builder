@@ -583,7 +583,6 @@ HB.structure Definition StructureName params :=
   - [#[short(type="shortName")]] produces the abbreviation [shortName] for [Structure.type]
   - [#[short(pack="shortName")]] produces the abbreviation [shortName] for [HB.pack_for Structure.type]
   - [#[primitive]] experimental attribute to make the structure a primitive record,
-  - [#[primitive_class]] experimental attribute to make the class a primitive record,
   - [#[verbose]] for a verbose output.
 *)
 
