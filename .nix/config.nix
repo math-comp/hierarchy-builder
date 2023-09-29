@@ -1,14 +1,12 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.16";
+  default-bundle = "coq-8.18";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "master";
       mathcomp.job = true;
       mathcomp-single.job = true;
-      hierarchy-builder-shim.job = true;
-      mathcomp-single-planB-src.job = true;
       graph-theory.job = false;
       fourcolor.override.version = "master";
       odd-order.override.version = "master";
