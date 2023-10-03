@@ -32,12 +32,12 @@ HB.structure Definition ICAlg := { T of isICAlg T }.
 
 HB.mixin Record isICMon T := {
     maunit  : T;
-    maop    : T -> T -> T;
-    maassoc : associative maop;
-    malid   : left_id maunit maop;
-    marid   : right_id maunit maop;
-    macomm  : commutative maop; 
-    maidem  : idempotent maop; 
+    aop    : T -> T -> T;
+    maassoc : associative aop;
+    malid   : left_id maunit aop;
+    marid   : right_id maunit aop;
+    macomm  : commutative aop; 
+    maidem  : idempotent aop; 
   }.
 #[verbose]
 HB.structure Definition ICMon := { T of isICMon T & Mon T & ICAlg T }. 
