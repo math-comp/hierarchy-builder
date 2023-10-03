@@ -12,32 +12,30 @@ HB.structure Definition Quiver := { Obj of isQuiver Obj }.
 Require Import Coq.Program.Equality.
 Require Import FunctionalExtensionality.
 
-HB.mixin Record isMon T := {
-    munit  : T;
+HB.mixin Record isMagma T := {
     mop    : T -> T -> T;
-    massoc : associative mop;
+}.
+HB.structure Definition Magma := { T of isMagma T }.
+
+HB.mixin Record isMon T of isMagma T := {
+    munit  : T;
+    massoc : associative (mop : T -> T -> T);
     mlid   : left_id munit mop;
     mrid   : right_id munit mop;
   }.
 #[verbose]
 HB.structure Definition Mon := { T of isMon T }.
 
-HB.mixin Record isICAlg T := {
-    aop   : T -> T -> T; 
-    acomm : commutative aop; 
-    aidem : idempotent aop; 
+HB.mixin Record isICAlg T of isMagma T := {
+    acomm : commutative (mop : T -> T -> T); 
+    aidem : idempotent (mop : T -> T -> T); 
   }.
 #[verbose]
 HB.structure Definition ICAlg := { T of isICAlg T }.
 
-HB.mixin Record isICMon T of ICAlg T := {
-    maunit  : T;
-    maop    : T -> T -> T;
-    maassoc : associative maop;
-    malid   : left_id maunit maop;
-    marid   : right_id maunit maop;
-    macomm  : commutative maop; 
-    maidem  : idempotent maop; 
+HB.mixin Record isICMon T of isMagma T := {
+    ica: isICAlg T ;
+    mon: isMon T;
   }.
 #[verbose]
 HB.structure Definition ICMon := { T of isICMon T }. 
@@ -60,14 +58,13 @@ HB.structure
      { Obj of isQuiver Obj & hom_isICAlg Obj }.
 *)
 
-Fail #[wrapper]
+#[wrapper]
 HB.mixin Record hom_isICMon T of Quiver T :=
-    { hom_isICMon_private : forall A B, isICMon (@hom T A B) }.
-Fail #[verbose]
+    { hom_isICMon_private : forall A B, ICMon (@hom T A B) }.
+#[verbose]
 HB.structure
    Definition ICMon_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isICMon Obj }.
-
 
 HB.factory Record isMICAlg T of Mon T := {
     amop   : T -> T -> T;
@@ -91,11 +88,20 @@ HB.builders Context T (f : isMICAlg T).
   Definition dum_idem :=
     @eq_rect (T -> T -> T) amop (@idempotent T) amidem mop amop_mop_eq.
 
-  HB.instance Definition b_A : isICAlg T :=
-          isICAlg.Build T mop dum_comm dum_idem.
+  HB.instance Definition b_Mg : isMagma T :=
+          isMagma.Build T mop.
     
+  HB.instance Definition b_IC : isICAlg T :=
+          isICAlg.Build T dum_comm dum_idem.
+
+  Lemma M : isMon T.
+    destruct f; auto.
+  Qed.  
+  
   HB.instance Definition b_M : isICMon T :=
-    isICMon.Build T munit mop massoc mlid mrid dum_comm dum_idem.
+    isICMon.Build T b_IC M.
    
 HB.end.
+
+(*******************************************************************)
 
