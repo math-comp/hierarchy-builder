@@ -182,7 +182,7 @@ HB.instance Definition icmfunQ :=
     (fun A B => (ICMon.sort A) -> (ICMon.sort B)).             
 
 Definition icmfunQ_comp {A B: ICMon.type} (f g: hom A B) : hom A B :=
-  fun x => mop (f x) (g x).
+  fun x => @mop B (f x) (g x).
 
 Definition icmfunQ_zero {A B: ICMon.type} : hom A B.
   destruct B.
