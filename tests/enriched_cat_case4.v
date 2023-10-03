@@ -12,76 +12,60 @@ HB.structure Definition Quiver := { Obj of isQuiver Obj }.
 Require Import Coq.Program.Equality.
 Require Import FunctionalExtensionality.
 
-HB.mixin Record isMon T := {
-    munit  : T;
-    mop    : T -> T -> T;
+HB.mixin Record isM T (munit: T) (mop: T -> T -> T) := {
     massoc : associative mop;
     mlid   : left_id munit mop;
     mrid   : right_id munit mop;
   }.
-#[verbose]
-HB.structure Definition Mon := { T of isMon T }.
 
-HB.mixin Record isICAlg T := {
-    aop   : T -> T -> T; 
-    acomm : commutative aop; 
-    aidem : idempotent aop; 
+HB.mixin Record isMon T := {
+    munit : T;
+    mop   : T -> T -> T;
+    mism   : isM T munit mop; 
   }.
 #[verbose]
-HB.structure Definition ICAlg := { T of isICAlg T }.
+HB.structure Definition Mon := { T of isMon T }. 
+
+HB.mixin Record isIC T (aop: T -> T -> T) := {
+    comm : commutative aop; 
+    idem : idempotent aop; 
+  }.
+
+HB.mixin Record isICAlg T := {
+    aop : T -> T -> T;
+    ica : isIC T aop ; 
+  }.
+#[verbose]
+HB.structure Definition ICAlg := { T of isICAlg T }. 
 
 HB.mixin Record isICMon T := {
     maunit  : T;
     maop    : T -> T -> T;
-    maassoc : associative maop;
-    malid   : left_id maunit maop;
-    marid   : right_id maunit maop;
-    macomm  : commutative maop; 
-    maidem  : idempotent maop; 
+    mica    : isIC T maop;   
+    mon     : isM T maunit maop;
   }.
-#[verbose]
 HB.structure Definition ICMon := { T of isICMon T & Mon T & ICAlg T }. 
-
-(*
-Lemma isICMon2isMon T : isICMon T -> isMon T.
-  intro X.
-  destruct X.
-  econstructor; eauto.
-Qed.
-
-Lemma isICMon2isICAlg T : isICMon T -> isICAlg T.
-  intro X.
-  destruct X.
-  econstructor; eauto.
-Qed.
- *)
-
-(*
-#[wrapper]
-HB.mixin Record hom_isICAlg T of Quiver T :=
-    { hom_isICAlg_private : forall A B, isICAlg (@hom T A B) }.
 
 #[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
-
-HB.structure
-   Definition Mon_enriched_quiver :=
+#[verbose]
+HB.structure Definition Mon_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj }.
 
-HB.structure
-   Definition ICAlg_enriched_quiver :=
+#[wrapper]
+HB.mixin Record hom_isICAlg T of Quiver T :=
+    { hom_isICAlg_private : forall A B, isICAlg (@hom T A B) }.
+#[verbose]
+HB.structure Definition ICAlg_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isICAlg Obj }.
-*)
 
 #[wrapper]
 HB.mixin Record hom_isICMon T of Quiver T :=
-  { hom_isICMon_private : forall A B, isICMon (@hom T A B) }.
+    { hom_isICMon_private : forall A B, isICMon (@hom T A B) }.
 #[verbose]
-HB.structure
-   Definition ICMon_enriched_quiver :=
+HB.structure Definition ICMon_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isICMon Obj }.
-
 
 HB.factory Record isMICAlg T of Mon T := {
     amop   : T -> T -> T;
@@ -105,11 +89,23 @@ HB.builders Context T (f : isMICAlg T).
   Definition dum_idem :=
     @eq_rect (T -> T -> T) amop (@idempotent T) amidem mop amop_mop_eq.
 
-  HB.instance Definition b_A : isICAlg T :=
-          isICAlg.Build T mop dum_comm dum_idem.
-    
-  HB.instance Definition b_M : isICMon T :=
-    isICMon.Build T munit mop massoc mlid mrid dum_comm dum_idem.
-   
+  Definition b_A : isIC T mop :=
+          isIC.Build T mop dum_comm dum_idem.
+
+  HB.instance Definition bb_A : isICAlg T :=
+          isICAlg.Build T mop b_A.
+  
+  Lemma mop_aop_eq (x y: T) : mop x y = aop x y.
+    destruct f; auto.
+  Qed.  
+
+  Lemma b_M : isM T munit mop.
+    destruct f.
+    exact mism.
+  Qed.  
+  
+  HB.instance Definition bb_M : isICMon T :=
+    isICMon.Build T munit mop b_A b_M.
+
 HB.end.
 
