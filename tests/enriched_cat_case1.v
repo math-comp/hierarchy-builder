@@ -165,7 +165,7 @@ Obligation 3.
    destruct (x a); auto.
 Qed.
 
-Fail HB.instance Definition funQ_Monoid (A B: Type) :
+HB.instance Definition funQ_Monoid (A B: Type) :
   isMon (hom A B) := funQ_isMon A B.
 
  
