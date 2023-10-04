@@ -51,11 +51,10 @@ Fail HB.structure
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
 
-
 Succeed HB.structure
   Definition Monoid_enriched_quiver :=
-    { Obj of isQuiver Obj &
-              (forall A B : Obj, isMon (hom A B)) }.
+    { Obj of isQuiver Obj & 
+              (forall A B : Obj, isMon (@hom _ A B)) }.
 
 Succeed HB.structure
   Definition Monoid_enriched_quiver :=
@@ -63,10 +62,11 @@ Succeed HB.structure
               (forall A B : Obj, isMon (hom A B)) }.
 
                           (* which one is best? *)
-Succeed HB.structure
+Fail HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj &
             (forall A B : Obj, isMon (@hom (Quiver.clone Obj _) A B)) }.
+
 HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj &

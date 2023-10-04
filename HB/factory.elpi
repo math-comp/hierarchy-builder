@@ -276,6 +276,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
 
+  % scheck-no-mixin-or-factory-occurs RDecl,
+
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
   % coq.say RDecl RDeclClosed,
