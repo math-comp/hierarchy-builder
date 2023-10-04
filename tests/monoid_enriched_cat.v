@@ -51,17 +51,35 @@ Fail HB.structure
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
 
+
+Fail HB.structure
+  Definition Monoid_enriched_quiver :=
+    { Obj of isQuiver Obj &
+              (forall A B : Obj, isMon (hom A B)) }.
+
+(* which one is best? *)
+Succeed HB.structure
+  Definition Monoid_enriched_quiver :=
+    { Obj of isQuiver Obj &
+            (forall A B : Obj, isMon (@hom (Quiver.clone Obj _) A B)) }.
+HB.structure
+  Definition Monoid_enriched_quiver :=
+    { Obj of isQuiver Obj &
+              (forall A B (* : Quiver.sort _ *), isMon (hom A B)) }.
+  
+
 (* Print Canonical Projections. *)   
 (* About hom_isMon.hom_isMon_private. *)
 (* About hom_isMon_private. *)
 
 (* Step 2: at structure declaration, export the main and only projection
    of each declared wrapper as an instance of the wrapped structure on
-   its subject *)
+   its subject 
 #[verbose] HB.structure
    Definition Monoid_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj }.
-     
+     *)
+
 (* About hom_isMon.hom_isMon_private. *)
 (* About hom_isMon_private. *)
 
