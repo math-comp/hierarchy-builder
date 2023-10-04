@@ -130,6 +130,8 @@ Structure: Monoid (from isMon)
 HB.instance Definition funQ := isQuiver.Build Type 
    (fun A B => A -> option B).
 
+Check Type : Quiver.type.
+
 Definition funQ_comp {A B: Type} (f g: hom A B) : hom A B :=
   fun x => 
   match f x with
@@ -168,7 +170,8 @@ Qed.
 HB.instance Definition funQ_Monoid (A B: Type) :
   isMon (hom A B) := funQ_isMon A B.
 
- 
+Check Type : Mon_enriched_quiver.type.             
+
 (** INSTANCE 2 **********************************************
 
 Object: ICMon.type
@@ -266,12 +269,13 @@ Obligation 2.
 eapply icmfunQ_isMon.
 Qed.
 
-Fail HB.instance Definition icmfunQ_isMonoid (A B: ICMon.type) :
+HB.instance Definition icmfunQ_isMonoid (A B: ICMon.type) :
   isMon (hom A B) := icmfunQ_isMon A B.
 
-Fail HB.instance Definition icmfunQ_isICAlgebra (A B: ICMon.type) :
+HB.instance Definition icmfunQ_isICAlgebra (A B: ICMon.type) :
   isICAlg (hom A B) := icmfunQ_isICAlg A B.
 
-Fail HB.instance Definition icmfunQ_isICMonoid (A B: ICMon.type) :
+HB.instance Definition icmfunQ_isICMonoid (A B: ICMon.type) :
   isICMon (hom A B) := icmfunQ_isICMon A B.
 
+Check ICMon.type : ICAlg_enriched_quiver.type.
