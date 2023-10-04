@@ -9,8 +9,11 @@ pred declare i:string, i:term, i:sort.
 pred declare i:string, i:term, i:universe.
 declare Module BSkel Sort :- std.do! [
   disable-id-phant BSkel BSkelNoId,
-  std.assert-ok! (coq.elaborate-skeleton BSkelNoId _ BNoId) "illtyped structure definition",
+  failsafe-structure-inference BSkelNoId BSkelNoIdX,
+  coq.say BSkelNoIdX,
+  std.assert-ok! (coq.elaborate-skeleton BSkelNoIdX _ BNoId) "illtyped structure definition",
   re-enable-id-phant BNoId B,
+  
   private.sigT->list-w-params B GRFSwP_or_ThingtoBeWrapped ClosureCheck,
   
   % do some work to go back to factories on a single subject

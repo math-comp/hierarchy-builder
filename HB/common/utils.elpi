@@ -315,6 +315,25 @@ re-enable-id-phant T T1 :-
   (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
   copy T T1.
 
+pred failsafe-structure-inference i:term, o:term.
+failsafe-structure-inference T T1 :-
+  (pi OP Args Args1\
+    copy (app [global (const OP)|Args]) (app [global (const OP)| Args1]) :-
+      exported-op _ _ OP, !, eta-structure-record OP Args Args1) =>
+  copy T T1.
+
+pred eta-structure-record i:constant, i:list term, o:list term.
+eta-structure-record OP L L1 :-
+  exported-op M _ OP, mixin-first-class M Class, factory-nparams Class NP,
+  std.split-at NP L Params [S|Rest],
+  var S,
+  class-def (class Class Structure _),
+  get-constructor Structure K,
+  std.map Params copy Params1,
+  std.map Rest copy Rest1,
+  coq.mk-app {coq.env.global K} {std.append Params1 [_,_]} EtaS,
+  std.append Params1 [EtaS|Rest1] L1.
+
 pred prod-last i:term, o:term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.
 prod-last X X :- !.
