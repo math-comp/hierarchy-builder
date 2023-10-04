@@ -38,33 +38,34 @@ HB.mixin Record isIAlg T of isMagma T := {
 #[verbose]
 HB.structure Definition IAlg := { T of isIAlg T }.
 
-HB.mixin Record isICAlg T of isMagma T := {
-    isca : isCAlg T; 
-    isia : isIAlg T; 
-  }.
+(* HB.mixin Record isICAlg T of isMagma T & IAlg T & CAlg T := {
+ }. *)
 #[verbose]
-HB.structure Definition ICAlg := { T of isICAlg T }.
+HB.structure Definition ICAlg := { T of CAlg T & IAlg T }.
 
-HB.mixin Record isCMon T of isMagma T := {
+(* HB.mixin Record isCMon T of isMagma T := {
     cca: isCAlg T ;
     cmon: isMon T;
-  }.
+  }. *)
 #[verbose]
-HB.structure Definition CMon := { T of isCMon T }. 
+HB.structure Definition CMon := { T of Mon T & CAlg T }. 
 
+(*
 HB.mixin Record isIMon T of isMagma T := {
     iia: isIAlg T ;
     imon: isMon T;
-  }.
+  }. *)
 #[verbose]
-HB.structure Definition IMon := { T of isIMon T }. 
+HB.structure Definition IMon := { T of Mon T & IAlg T }. 
 
+(*
 HB.mixin Record isICMon T of isMagma T := {
     ica: isICAlg T ;
     mon: isMon T;
   }.
+*)
 #[verbose]
-HB.structure Definition ICMon := { T of isICMon T }. 
+HB.structure Definition ICMon := { T of IMon T & CMon T }. 
 
 
 (*****  wrapping ****************************************************)
@@ -104,6 +105,7 @@ HB.structure
    Definition IAlg_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isIAlg Obj }.
 
+(*
 #[wrapper]
 HB.mixin Record hom_isICAlg T of Magma_enriched_quiver T :=
     { hom_isICAlg_private : forall A B, isICAlg (@hom T A B) }.
@@ -122,11 +124,37 @@ HB.structure
 #[wrapper]
 HB.mixin Record hom_isIMon T of Magma_enriched_quiver T :=
     { hom_isIMon_private : forall A B, isIMon (@hom T A B) }.
+*)
 #[verbose]
 HB.structure
    Definition IMon_enriched_quiver :=
-     { Obj of isQuiver Obj & hom_isIMon Obj }.
+     { Obj of Mon_enriched_quiver Obj & IAlg_enriched_quiver Obj }.
 
+(* workaround *)
+Definition Ifoo (T : IMon_enriched_quiver.type) (A B : T) : IMon.type.
+Proof.
+refine (HB.pack (hom A B)).
+Defined.
+Canonical Ifoo.
+
+(****)
+
+#[verbose]
+HB.structure
+   Definition CMon_enriched_quiver :=
+     { Obj of Mon_enriched_quiver Obj & CAlg_enriched_quiver Obj }.
+
+(* workaround *)
+Definition Cfoo (T : CMon_enriched_quiver.type) (A B : T) : CMon.type.
+Proof.
+refine (HB.pack (hom A B)).
+Defined.
+Canonical Cfoo.
+
+
+(*     { Obj of isQuiver Obj & hom_isMon Obj & hom_isIAlg Obj }. *)
+
+(*
 #[wrapper]
 HB.mixin Record hom_isICMon T of Magma_enriched_quiver T :=
     { hom_isICMon_private : forall A B, isICMon (@hom T A B) }.
@@ -134,6 +162,7 @@ HB.mixin Record hom_isICMon T of Magma_enriched_quiver T :=
 HB.structure
    Definition ICMon_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isICMon Obj }.
+*)
 
 (*** factory ********************************************************)
 
@@ -164,17 +193,21 @@ HB.builders Context T (_ : isMICAlg T).
 
   HB.instance Definition b_I : isIAlg T :=
           isIAlg.Build T dum_idem.
-  
+
+  (*
   HB.instance Definition b_IC : isICAlg T :=
           isICAlg.Build T b_C b_I.
-
+  *)
+(*
   Lemma M : isMon T.
-    destruct f; auto.
+    auto.
   Qed.  
-  
+*)
+  (*
   HB.instance Definition b_M : isICMon T :=
     isICMon.Build T b_IC M.
-   
+   *)   
+
 HB.end.
 
 (*******************************************************************)
@@ -236,6 +269,7 @@ unfold funQ_comp; simpl.
 destruct (x a); auto.
 Qed.
 
+(*
 Program Definition funQ_isIMon (A B: Type) :
   isIMon (hom A B) := isIMon.Build (hom A B) _ _.
 Obligation 1.
@@ -244,15 +278,31 @@ Qed.
 Obligation 2.
 eapply funQ_isMon.
 Qed.
+*)
 
+#[verbose]
 HB.instance Definition funQ_IAlgebra (A B: Type) :
   isIAlg (hom A B) := funQ_isIAlg A B.
 
-HB.instance Definition funQ_IMonoid (A B: Type) :
-  isIMon (hom A B) := funQ_isIMon A B.
+#[verbose]
+HB.instance Definition funQ_Monoid (A B: Type) :
+  isMon (hom A B) := funQ_isMon A B.
 
-Check Type : IMon_enriched_quiver.type.             
+Check hom (nat:Type) nat : IMon.type.
 
+(***)
+
+HB.graph "foo.dot".
+
+Definition hom' (A B: Type) := hom A B.
+
+HB.instance Definition _ (A B: Type) := Mon.on (hom' A B).
+HB.instance Definition _ (A B: Type) := IAlg.on (hom' A B).
+
+Check hom' (nat:Type) nat : IMon.type.
+
+HB.instance Definition _ (A B: Type) := Mon.on (hom' A B).
+          
 
 (** INSTANCE 2 **********************************************
 
@@ -273,8 +323,7 @@ Definition cmfunQ_zero {A B: CMon.type} : hom A B.
   destruct B.
   unfold hom; simpl; intro.
   destruct class.
-  destruct enriched_cat_case1_isCMon_mixin.
-  destruct cmon0.
+  destruct enriched_cat_case5_isMon_mixin.
   exact munit0.
 Defined.  
 
@@ -291,9 +340,8 @@ unfold cmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
 destruct B.
 destruct class.
-destruct enriched_cat_case1_isCMon_mixin.
+destruct enriched_cat_case5_isMon_mixin.
 simpl in *.
-destruct cmon0.
 eapply massoc0; auto.
 Qed.
 Obligation 2.
@@ -302,8 +350,7 @@ unfold cmfunQ_comp, cmfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
 destruct B.
 destruct class.
-destruct enriched_cat_case1_isCMon_mixin.
-destruct cmon0.
+destruct enriched_cat_case5_isMon_mixin.
 auto.
 Qed.
 Obligation 3.
@@ -312,8 +359,7 @@ unfold cmfunQ_comp, cmfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
 destruct B.
 destruct class.
-destruct enriched_cat_case1_isCMon_mixin.
-destruct cmon0.
+destruct enriched_cat_case5_isMon_mixin.
 auto.
 Qed.
 
@@ -325,19 +371,9 @@ unfold cmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
 destruct B.
 destruct class.
-destruct enriched_cat_case1_isCMon_mixin.
+destruct enriched_cat_case5_isCAlg_mixin.
 simpl in *.
-destruct cca0.
 eapply acomm0; auto.
-Qed.
-
-Program Definition cmfunQ_isCMon (A B: CMon.type) :
-  isCMon (hom A B) := isCMon.Build (hom A B) _ _.
-Obligation 1.
-eapply cmfunQ_isCAlg.
-Qed.
-Obligation 2.
-eapply cmfunQ_isMon.
 Qed.
 
 HB.instance Definition cmfunQ_isMonoid (A B: CMon.type) :
@@ -346,10 +382,12 @@ HB.instance Definition cmfunQ_isMonoid (A B: CMon.type) :
 HB.instance Definition cmfunQ_isICAlgebra (A B: CMon.type) :
   isCAlg (hom A B) := cmfunQ_isCAlg A B.
 
+(*
 HB.instance Definition icmfunQ_isCMonoid (A B: CMon.type) :
   isCMon (hom A B) := cmfunQ_isCMon A B.
 
 Check CMon.type : CAlg_enriched_quiver.type.
+*)
 
 (*********************************************************)
 
