@@ -413,7 +413,8 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
     synthesis.under-local-canonical-mixins-of.do! T [
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML Clauses TheMixins,
-      std.map-filter Clauses mixin-src->has-mixin-instance ClausesHas,
+      coq.error "DEAD CODE",
+      std.spy(std.map-filter Clauses mixin-src->has-mixin-instance ClausesHas),
       ClausesHas => instance.declare-all T {findall-classes-for ML} CCSL,
     ]
   ],
