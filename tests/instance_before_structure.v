@@ -27,7 +27,7 @@ HB.about nat. (* s2 has been instanciated but not s3 *)
 
 
 (* here it works *)
-HB.saturate_instances.
+HB.saturate.
 HB.about nat. (* all there *)
 
 Check @default1 nat.

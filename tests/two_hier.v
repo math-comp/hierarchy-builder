@@ -32,7 +32,8 @@ file C importing A with the definition of s3
 in a file D that imports B and C if we call saturate_instance, we create the instance for s3.
 this example shows the need for a separate command
 *)
-
+Fail Check nat : s3.type.
+HB.saturate.
 Check nat : s3.type.
 (* since nat satisfies s3.type, so does list nat *)
 Check list nat : s3.type.
@@ -65,6 +66,8 @@ HB.instance Definition list_m2' (P : s2.type) (X : s2'.type P) : m2' P (list X) 
 
 
 HB.structure Definition s3' (P : s3.type) := { T of m1' P T & m2' P T }.
+Fail Check nat : s3'.type _.
+HB.saturate.
 Check nat : s3'.type _.
 (* since nat satisfies s3'.type, so does list nat *)
 Check list nat : s3'.type _.

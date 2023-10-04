@@ -530,7 +530,6 @@ solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
 Elpi Typecheck.
 Elpi Export HB.pack.
 
-
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -625,30 +624,36 @@ Elpi Export HB.structure.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(* [HB.saturate_instances] saturates all instances possible *)
+(* [HB.saturate] saturates all instances w.r.t. the current hierarchy.
 
+   When two (unrelated) files are imported it might be that the instances
+   declared in one file are sufficient to instantiate structures declared
+   in the other file.
 
-#[arguments(raw)] Elpi Command HB.saturate_instances.
-#[skip="8.15.*"] Elpi Accumulate File "HB/common/compat_all.elpi".
-#[only="8.15.*"] Elpi Accumulate File "HB/common/compat_815.elpi".
+   This command reconsiders all types with a canonical structure instance
+   and see if the they are also equipped with new ones.
+*)
+
+#[arguments(raw)] Elpi Command HB.saturate.
+Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
-Elpi Accumulate File "HB/structure.elpi".
-Elpi Accumulate File "HB/context.elpi".
-Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/common/phant-abbreviation.elpi".
-Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate File "HB/export.elpi".
-Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
 main [] :- !, with-attributes (with-logging (instance.saturate-instances)).
-main _ :- coq.error "Usage: HB.saturate_instances".
+main _ :- coq.error "Usage: HB.saturate".
 }}.
 Elpi Typecheck.
-Elpi Export HB.saturate_instances.
+Elpi Export HB.saturate.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -700,7 +705,6 @@ main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
 }}.
 Elpi Typecheck.
 Elpi Export HB.instance.
-
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

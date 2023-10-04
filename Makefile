@@ -141,5 +141,5 @@ endif
 structures.vo : %.vo: __always__ Makefile.coq
 	+$(COQMAKE) $@
 
-$(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v)): __always__ config build Makefile.test-suite.coq
+$(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v tests/unit/*.v)): __always__ config build Makefile.test-suite.coq
 	+$(COQMAKE_TESTSUITE) $@

@@ -189,8 +189,8 @@ declare Module BSkel Sort :- std.do! [
   NewClauses => if-MC-compat (private.mc-compat-structure Module ModulePath MLToExport
     {w-params.nparams MLwP} ClassProjection GRPack),
 
-  NewClauses => instance.saturate-instances,
-
+% Automatic saturation disabled since it is expensive
+%  NewClauses => instance.saturate-instances,
 ].
 
 /* ------------------------------------------------------------------------- */
@@ -334,9 +334,6 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
      lp:PackPH (lp:SortP s) (lp:CoercionP (lp:SortP s) (lp:ClassP s)) }},
 ].
 
-pred std.error-and-fail i:(diagnostic -> prop), i:string.
-std.error-and-fail P M :- P D, if (D = error X) (coq.error M X, fail) true.
-
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
 pred declare-coercion i:term, i:term, i:class, i:class.
@@ -353,7 +350,7 @@ declare-coercion SortProjection ClassProjection
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
   ErrorMessage is "The structures " ^ ModNameF ^ " and " ^ ModNameT ^ " are incompatible: the coercion between them cannot be synthesized",
-  std.error-and-fail (coq.elaborate-skeleton CoeBody Ty CoeBody') ErrorMessage,
+  std.assert-ok! (coq.elaborate-skeleton CoeBody Ty CoeBody') ErrorMessage,
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 
@@ -366,7 +363,7 @@ declare-coercion SortProjection ClassProjection
     SCoeBody,
 
  ErrorMessage is "The structures " ^ ModNameF ^ " and " ^ ModNameT ^ " are incompatible: the coercion between them cannot be synthesized",
-  std.error-and-fail (coq.elaborate-skeleton SCoeBody STy SCoeBody') ErrorMessage,
+  std.assert-ok! (coq.elaborate-skeleton SCoeBody STy SCoeBody') ErrorMessage,
 
   if-verbose (coq.say {header} "declare unification hint" SName),
 

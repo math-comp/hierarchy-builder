@@ -53,6 +53,8 @@ examples/Coq2020_material/CoqWS_abstract.v
 examples/Coq2020_material/CoqWS_expansion/withHB.v
 examples/Coq2020_material/CoqWS_expansion/withoutHB.v
 
+# examples/cat/cat.v
+
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
 tests/instance_params_no_type.v
@@ -82,9 +84,10 @@ tests/hnf.v
 tests/fun_instance.v
 tests/issue284.v
 tests/issue287.v
+tests/two_hier.v
+tests/instance_merge_with_param.v
 tests/instance_merge_with_distinct_param.v
 tests/instance_merge.v
-tests/two_hier.v
 
 tests/unit/enrich_type.v
 tests/unit/mixin_src_has_mixin_instance.v

@@ -10,8 +10,6 @@ About list_foo'.
 
 HB.structure Definition foo P := { A of is_foo P A }.
 
-Section try1.
-Variable A : Type.
 (* .... list A ....
 
 (fun A =>   {|

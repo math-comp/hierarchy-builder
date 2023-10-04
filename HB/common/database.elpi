@@ -1,7 +1,7 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-shorten coq.{ term->gref, term-is-gref?, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
+shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
 %%%%%%%%% HB database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -13,13 +13,6 @@ from_mixin (from _ X _) X.
 
 pred from_builder i:prop, o:term.
 from_builder (from _ _ X) (global X).
-
-% for a given clause mixin-src with eventually a condition, 
-% returns the type of the first argument
-pred mixin-src-w-cond_type i:prop, o:term.
-mixin-src-w-cond_type(mixin-src (global G) _ _ :- _) (global G).
-mixin-src-w-cond_type (mixin-src (app [T|_]) _ _ :- _) T.
-mixin-src-w-cond_type (pi x \ (C x)) T :- pi y \ mixin-src-w-cond_type (C y) T.
 
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
@@ -146,16 +139,31 @@ undup-grefs  L UL :- std.do! [
   coq.gref.set.elements S UL,
 ].
 
-% remove duplicates from a list of terms, but all the terms have to be global references
-pred undup-terms  i:list term, o:list term.
-undup-terms L UL :- std.do! [
-  std.map L coq.term->gref LG,
-  undup-grefs LG ULG,
-  std.map ULG (coq.env.global ) UL,
+pred undup-sorts i:list sort, o:list sort.
+undup-sorts L R :- std.do! [
+  
+  if (std.mem L prop) (R1 = [prop]) (R1 = []),
+  if (std.mem L sprop) (R2 = [sprop]) (R2 = []),
+  if (std.mem L (typ _)) (R3 = [typ _]) (R3 = []),
+  
+  std.flatten [R1, R2, R3] R,
 ].
 
+% also prunes cs-default
+pred undup-cs-patterns  i:list cs-pattern, o:list cs-pattern.
+undup-cs-patterns L R :- std.do! [
+  std.map-filter L (x\r\ x = cs-gref r) LGR,
+  undup-grefs LGR ULGR,
+  std.map ULGR (x\r\ r = cs-gref x) R1,
 
+  std.map-filter L (x\r\ x = cs-sort r) LS,
+  undup-sorts LS ULS,
+  std.map ULS (x\r\ r = cs-sort x) R2,
 
+  if (std.mem L cs-prod) (R3 = [cs-prod]) (R3 = []),
+
+  std.flatten [R1, R2, R3] R,
+].
 
 % Mixins can be topologically sorted according to their dependencies
 pred toposort-mixins i:list (w-args mixinname), o:list (w-args mixinname).
@@ -220,10 +228,13 @@ pred findall-has-mixin-instance o:list prop.
 findall-has-mixin-instance CL :-
    std.findall (has-mixin-instance  _ _ _) CL.
 
+pred has-mixin-instance_key i:prop, o:cs-pattern.
+has-mixin-instance_key (has-mixin-instance P _ _) P.
+
 pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
   std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
-  
+
 pred findall-local-canonical o:list constant.
 findall-local-canonical CL :-
   std.map {std.findall (local-canonical C_)} local-canonical-gref CL.
@@ -300,7 +311,6 @@ assert-good-coverage! MLSortedRev CNL :- std.do! [
      true
 ].
 
-
 %%%%% Coq Database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [get-structure-coercion S1 S2 F] finds the coecion F from the structure S1 to S2
@@ -359,72 +369,47 @@ mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-s
 % this auxiliary function iterates over the list of arguments of an application,
 % and create the necessary unify condition for each arguments 
 % and at the end returns the mixin-src clause with all the conditions
-pred mk-src-aux 
+pred mixin-instance-type->mixin-src.aux 
   i:list term, % list of arguments
   i:term, % head of the original application
   i:mixinname, % name of mixin
   i:term, % instance body
   i:list prop, % Cond list
   o:prop.
-mk-src-aux [] T M I Cond (mixin-src T M I :- Cond).
-mk-src-aux [A|Args] T M I Cond  (pi a \ C a) :-
+mixin-instance-type->mixin-src.aux [] T M I Cond (mixin-src T M I :- Cond).
+mixin-instance-type->mixin-src.aux [A|Args] T M I Cond  (pi a \ C a) :-
   pi a \
   sigma Ta\
     coq.mk-app T [a] Ta,
-    mk-src-aux Args Ta M I [coq.unify-eq A a ok|Cond] (C a).
+    mixin-instance-type->mixin-src.aux Args Ta M I [coq.unify-eq A a ok|Cond] (C a).
 
 
-% transforms the has-mixin-instance clause arguments into a
-% mixin-src clause with eventuals conditions regarding its parameters
-pred mk-src
+% transforms the type of a mixin instance into a
+% mixin-src clause with eventual conditions regarding its parameters
+pred mixin-instance-type->mixin-src
   i:term, % type of the instance Ty
   i:mixinname, % name of mixin
   i:term, % instance body I of type Ty
   i:list prop, % Cond list
   o:prop.
 
-mk-src (app [_|Args]) M I Cond C :-
-  std.last Args Last,
-  safe-dest-app Last Hd ArgsLast,
-  mk-src-aux ArgsLast Hd M I Cond C.
+mixin-instance-type->mixin-src (app _ as F) M I Cond C :-
+  factory? F (triple _ _ Subject),
+  safe-dest-app Subject Hd Args,
+  mixin-instance-type->mixin-src.aux Args Hd M I Cond C.
 
-mk-src (prod N_ _ F) M I Cond (pi a \ C a) :-
+mixin-instance-type->mixin-src (prod N_ _ F) M I Cond (pi a \ C a) :-
   pi a\
   sigma  Ia \
   coq.mk-app I [a] Ia,
-    mk-src (F a) M Ia Cond (C a).
+    mixin-instance-type->mixin-src (F a) M Ia Cond (C a).
 
-
-% for a type T, create as many holes as there are foralls and returns that enriched type
-pred enrich-type i:term, o:term .
-enrich-type T ET :- 
-  coq.typecheck T TH ok,
-  coq.count-prods TH N,
-  if (N = 0) (ET = T) (coq.mk-app T {coq.mk-n-holes N} ET).
-
-% wrapper for mk-src so it can be called by a map on a list of clauses has-mixin-instance
-pred mk-src-map i:prop, o:prop.
-mk-src-map (has-mixin-instance _ M IHd) C :- std.do![
+pred has-mixin-instance->mixin-src i:prop, o:prop.
+has-mixin-instance->mixin-src (has-mixin-instance _ M IHd) C :- std.do![
   T = global IHd,
   coq.env.typeof IHd Ty,
-  mk-src Ty M T [] C,
-  ].
-
-pred cs-pattern->term i:cs-pattern, o:term.
-cs-pattern->term (cs-gref GR) (global GR).
-cs-pattern->term (cs-sort U) (sort U).
-
-pred term->cs-pattern i:term, o:cs-pattern.
-term->cs-pattern (prod _ _ _) cs-prod.
-term->cs-pattern (sort U) (cs-sort U).
-term->cs-pattern T (cs-gref GR) :- term->gref T GR.
-term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
-
-pred cs-pattern->name i:cs-pattern, o:string.
-cs-pattern->name cs-prod "prod".
-cs-pattern->name (cs-sort _) "sort".
-cs-pattern->name cs-default "default".
-cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
+  mixin-instance-type->mixin-src Ty M T [] C,
+].
 
 pred get-canonical-structures i:term, o:list structure.
 get-canonical-structures TyTrm StructL :- std.do! [

@@ -33,6 +33,8 @@ in a file D that imports B and C if we call saturate_instance, we create the ins
 this example shows the need for a separate command
 *)
 
+Fail Check nat : s3.type.
+HB.saturate.
 Check nat : s3.type.
 (* since nat satisfies s3.type, so does list nat *)
 Check list nat : s3.type.

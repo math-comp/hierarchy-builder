@@ -251,3 +251,86 @@ coq.fold-map (primitive _ as C) A C A :- !.
 coq.fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A coq.fold-map L1 A1, coq.mk-app-uvar M L1 W.
 % when used in CHR rules
 coq.fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A coq.fold-map L1 A1.
+
+pred cs-pattern->term i:cs-pattern, o:term.
+cs-pattern->term (cs-gref GR) T :- coq.env.global GR T.
+cs-pattern->term (cs-sort prop) (sort prop).
+cs-pattern->term (cs-sort sprop) (sort sprop).
+cs-pattern->term (cs-sort _) T :- coq.elaborate-skeleton {{ Type }} _ T ok.
+cs-pattern->term cs-prod T :- coq.elaborate-skeleton (prod `x` Ty_ x\ Bo_ x) _ T ok.
+
+pred term->cs-pattern i:term, o:cs-pattern.
+term->cs-pattern (prod _ _ _) cs-prod.
+term->cs-pattern (sort U) (cs-sort U).
+term->cs-pattern T (cs-gref GR) :- coq.term->gref T GR.
+term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
+
+pred cs-pattern->name i:cs-pattern, o:string.
+cs-pattern->name cs-prod "prod".
+cs-pattern->name (cs-sort _) "sort".
+cs-pattern->name cs-default "default".
+cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
+
+% ---------------------------------------------------------------------
+% kit for closing a term by abstracting evars with lambdas
+% we use constraints to attach to holes a number
+% and replace them by a special node, to later be bound
+% via a lambda
+
+namespace abstract-holes {
+
+% we add a new constructor to terms to represent terms to be abstracted
+type abs int -> term.
+
+% bind back abstracted subterms
+pred bind i:int, i:int, i:term, o:term.
+bind I M T T1 :- M > I, !,
+  T1 = {{ fun x => lp:(B x) }},   
+  N is I + 1,
+  pi x\                           % we allocate the fresh symbol for (abs M)
+    (copy (abs N) x :- !) =>      % we schedule the replacement (abs M) -> x
+    bind N M T (B x).
+bind M M T T1 :- copy T T1.         % we perform all the replacements
+
+% for a term with M holes, returns a term with M variables to fill these holes
+% the clause see is only generated for a term if it hasn't been seen before
+% the term might need to be typechecked first or main generates extra holes for the
+% type of the parameters
+pred main i:term, o:term.
+main T1 T3 :- std.do! [
+  % we put (abs N) in place of each occurrence of the same hole
+  (pi T Ty N N' M \ fold-map T N (abs M) M :- var T, not (seen? T _), !, coq.typecheck T Ty ok, fold-map Ty N _ N', M is N' + 1, seen! T M) =>
+  (pi T N M \ fold-map T N (abs M) N :- var T, seen? T M, !) =>
+    fold-map T1 0 T2 M,
+  % we abstract M holes (M abs nodes)
+  bind 0 M T2 T3,
+  % cleanup constraint store
+  purge-seen!,
+].
+
+% all constraints are also on _ so that they share
+% a variable with the constraint to purge the store
+
+% we query if the hole was seen before, and if so
+% we fetch its number
+pred seen? i:term, o:int.
+seen? X Y :- declare_constraint (seen? X Y) [X,_].  
+
+% we declare it is now seen and label it with a number
+pred seen! i:term, i:int.
+seen! X Y :- declare_constraint (seen! X Y) [X,_].
+
+% to empty the store
+pred purge-seen!.
+purge-seen! :- declare_constraint purge-seen! [_].
+
+constraint seen? seen! purge-seen!  {
+  % a succesful query, give the label back via M
+  rule (seen! X N) \ (seen? X M) <=> (M = N).
+  % an unsuccesful query
+  rule             \ (seen? X _) <=> false.
+
+  rule purge-seen! \ (seen! _ _).
+  rule \ purge-seen!.
+}
+}

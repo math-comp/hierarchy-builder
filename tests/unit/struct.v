@@ -16,7 +16,7 @@ has-mixin-instance (cs-gref (const «eta»)) (indt «is_foo.axioms_») (const «
 struct_foo1__to__struct_is_foo is an instance created by the system upon structure declaration to allow 
 coercions from foo1 to other structures with the mixin is_foo.
 *)
-Print struct_foo1__to__struct_is_foo.
+Print struct_foo1__to__struct_foo.
 
 (* its type is
 forall A : foo1.type, is_foo.axioms_ (option nat) (eta A))
