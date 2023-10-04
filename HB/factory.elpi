@@ -242,8 +242,10 @@ xtr_fst_op Ty Gr1 :-
 
 pred xtr_snd_op i:term, o:gref.
 xtr_snd_op Ty Gr :-
-  Ty = (app [global _| Args]),
-  std.last Args (app [global Gr| _]).
+  Ty = (app [global Gr0| Args]),
+  factory-alias->gref Gr0 Gr1,
+  factory-nparams Gr1 N,
+  std.nth N Args (app [global Gr| _]).
 
 pred extract_wrapped i:indt-decl, o:gref.
 extract_wrapped In Out :-
