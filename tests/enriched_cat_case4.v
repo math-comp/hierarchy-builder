@@ -224,56 +224,55 @@ unfold maop; simpl.
 eapply mrid0.
 Qed.
 
-HB.instance Definition icmfunQ_isMonoid (A B: ICMon.type) :
-  isMon (hom A B) :=
-  isMon.Build (hom A B) icmfunQ_zero icmfunQ_comp (icmfunQ_isM A B).
-
-
-
-Program Definition icmfunQ_isICAlg (A B: ICMon.type) :
+Program Definition icmfunQ_isIC (A B: ICMon.type) :
   isIC (hom A B) icmfunQ_comp := isIC.Build (hom A B) icmfunQ_comp _ _.
 Obligation 1.
 unfold commutative; simpl; intros.
 unfold icmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case4_isICAlg_mixin.
-unfold mop; simpl.
-destruct enriched_cat_case4_isMon_mixin.
+unfold maop.
+unfold isICMon.maop; simpl.
+destruct B eqn:B1.
+destruct class eqn:class1.
+destruct enriched_cat_case4_isICMon_mixin eqn:D1.
 simpl.
-simpl in x.
-simpl in *.
-destruct ica0.
-eapply comm; auto.
+destruct mica0.
+eapply comm.
 Qed.
 Obligation 2.
 unfold idempotent, mop; simpl; intros.
 unfold icmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isICMon_mixin.
-simpl in *.
-destruct ica0.
-eapply aidem0; auto.
+unfold maop.
+unfold isICMon.maop; simpl.
+destruct B eqn:B1.
+destruct class eqn:class1.
+destruct enriched_cat_case4_isICMon_mixin eqn:D1.
+simpl.
+destruct mica0.
+eapply idem.
 Qed.
 
 Program Definition icmfunQ_isICMon (A B: ICMon.type) :
-  isICMon (hom A B) := isICMon.Build (hom A B) _ _.
+  isICMon (hom A B) := isICMon.Build (hom A B)  icmfunQ_zero icmfunQ_comp _ _.
 Obligation 1.
-eapply icmfunQ_isICAlg.
+eapply icmfunQ_isIC.
 Qed.
 Obligation 2.
-eapply icmfunQ_isMon.
+eapply icmfunQ_isM.
 Qed.
 
-Fail HB.instance Definition icmfunQ_isMonoid (A B: ICMon.type) :
-  isMon (hom A B) := icmfunQ_isMon A B.
+HB.instance Definition icmfunQ_isMonoid (A B: ICMon.type) :
+  isMon (hom A B) :=
+  isMon.Build (hom A B) icmfunQ_zero icmfunQ_comp (icmfunQ_isM A B).
 
-Fail HB.instance Definition icmfunQ_isICAlgebra (A B: ICMon.type) :
-  isICAlg (hom A B) := icmfunQ_isICAlg A B.
+HB.instance Definition icmfunQ_isICAlgebra (A B: ICMon.type) :
+  isICAlg (hom A B) :=
+  isICAlg.Build (hom A B) icmfunQ_comp (icmfunQ_isIC A B).
 
-Fail HB.instance Definition icmfunQ_isICMonoid (A B: ICMon.type) :
+HB.instance Definition icmfunQ_isICMonoid (A B: ICMon.type) :
   isICMon (hom A B) := icmfunQ_isICMon A B.
+
+
+
 
