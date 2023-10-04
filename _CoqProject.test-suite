@@ -83,7 +83,7 @@ tests/fun_instance.v
 tests/issue284.v
 tests/issue287.v
 tests/monoid_enriched_cat.v
-
+tests/enriched_cat_case6.v
 tests/instance_merge_with_distinct_param.v
 tests/instance_merge.v
 tests/two_hier.v
