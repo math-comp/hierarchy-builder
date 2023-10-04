@@ -321,13 +321,7 @@ HB.instance Definition cmfunQ :=
 Definition cmfunQ_comp {A B: CMon.type} (f g: hom A B) : hom A B :=
   fun x => @mop B (f x) (g x).
 
-Definition cmfunQ_zero {A B: CMon.type} : hom A B.
-  destruct B.
-  unfold hom; simpl; intro.
-  destruct class.
-  destruct enriched_cat_case5_isMon_mixin.
-  exact munit0.
-Defined.  
+Definition cmfunQ_zero {A B: CMon.type} : hom A B := fun a : A => munit.
 
 (* does not work without declaring the Magma wrapper *)
 HB.instance Definition cmfunQ_isMagma (A B: CMon.type) :
@@ -340,29 +334,19 @@ Obligation 1.
 unfold associative, mop; simpl; intros.
 unfold cmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case5_isMon_mixin.
-simpl in *.
-eapply massoc0; auto.
+refine  (massoc _ _ _).
 Qed.
 Obligation 2.
 unfold left_id, mop; simpl; intros.
 unfold cmfunQ_comp, cmfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case5_isMon_mixin.
-auto.
+refine (mlid _).
 Qed.
 Obligation 3.
 unfold right_id, mop; simpl; intros.
 unfold cmfunQ_comp, cmfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case5_isMon_mixin.
-auto.
+refine (mrid _).
 Qed.
 
 Program Definition cmfunQ_isCAlg (A B: CMon.type) :
@@ -371,11 +355,7 @@ Obligation 1.
 unfold commutative, mop; simpl; intros.
 unfold cmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case5_isCAlg_mixin.
-simpl in *.
-eapply acomm0; auto.
+refine (acomm _ _).
 Qed.
 
 HB.instance Definition cmfunQ_isMonoid (A B: CMon.type) :
@@ -407,14 +387,7 @@ HB.instance Definition imfunQ :=
 Definition imfunQ_comp {A B: IMon.type} (f g: hom A B) : hom A B :=
   fun x => @mop B (f x) (g x).
 
-Definition imfunQ_zero {A B: IMon.type} : hom A B.
-  destruct B.
-  unfold hom; simpl; intro.
-  destruct class.
-  destruct enriched_cat_case1_isIMon_mixin.
-  destruct imon0.
-  exact munit0.
-Defined.  
+Definition imfunQ_zero {A B: IMon.type} : hom A B := fun a : A => munit.
 
 (* does not work without declaring the Magma wrapper *)
 HB.instance Definition imfunQ_isMagma (A B: IMon.type) :
@@ -427,32 +400,19 @@ Obligation 1.
 unfold associative, mop; simpl; intros.
 unfold imfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isIMon_mixin.
-simpl in *.
-destruct imon0.
-eapply massoc0; auto.
+refine (massoc _ _ _).
 Qed.
 Obligation 2.
 unfold left_id, mop; simpl; intros.
 unfold imfunQ_comp, imfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isIMon_mixin.
-destruct imon0.
-auto.
+refine (mlid _).
 Qed.
 Obligation 3.
 unfold right_id, mop; simpl; intros.
 unfold imfunQ_comp, imfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isIMon_mixin.
-destruct imon0.
-auto.
+refine (mrid _).
 Qed.
 
 Program Definition imfunQ_isIAlg (A B: IMon.type) :
@@ -461,20 +421,7 @@ Obligation 1.
 unfold idempotent, mop; simpl; intros.
 unfold imfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isIMon_mixin.
-simpl in *.
-destruct iia0; auto.
-Qed.
-
-Program Definition imfunQ_isIMon (A B: IMon.type) :
-  isIMon (hom A B) := isIMon.Build (hom A B) _ _.
-Obligation 1.
-eapply imfunQ_isIAlg.
-Qed.
-Obligation 2.
-eapply imfunQ_isMon.
+refine (aidem _).
 Qed.
 
 HB.instance Definition imfunQ_isMonoid (A B: IMon.type) :
@@ -482,9 +429,6 @@ HB.instance Definition imfunQ_isMonoid (A B: IMon.type) :
 
 HB.instance Definition imfunQ_isIAlgebra (A B: IMon.type) :
   isIAlg (hom A B) := imfunQ_isIAlg A B.
-
-HB.instance Definition imfunQ_isIMonoid (A B: IMon.type) :
-  isIMon (hom A B) := imfunQ_isIMon A B.
 
 Check IMon.type : IAlg_enriched_quiver.type.
 
@@ -503,14 +447,7 @@ HB.instance Definition icmfunQ :=
 Definition icmfunQ_comp {A B: ICMon.type} (f g: hom A B) : hom A B :=
   fun x => @mop B (f x) (g x).
 
-Definition icmfunQ_zero {A B: ICMon.type} : hom A B.
-  destruct B.
-  unfold hom; simpl; intro.
-  destruct class.
-  destruct enriched_cat_case1_isICMon_mixin.
-  destruct mon0.
-  exact munit0.
-Defined.  
+Definition icmfunQ_zero {A B: ICMon.type} : hom A B := fun a : A => munit.
 
 (* does not work without declaring the Magma wrapper *)
 HB.instance Definition icmfunQ_isMagma (A B: ICMon.type) :
@@ -523,32 +460,19 @@ Obligation 1.
 unfold associative, mop; simpl; intros.
 unfold icmfunQ_comp; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isICMon_mixin.
-simpl in *.
-destruct mon0.
-eapply massoc0; auto.
+refine (massoc _ _ _).
 Qed.
 Obligation 2.
 unfold left_id, mop; simpl; intros.
 unfold icmfunQ_comp, icmfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isICMon_mixin.
-destruct mon0.
-auto.
+refine (mlid _).
 Qed.
 Obligation 3.
 unfold right_id, mop; simpl; intros.
 unfold icmfunQ_comp, icmfunQ_zero; simpl; intros.
 eapply functional_extensionality; intro x0.
-destruct B.
-destruct class.
-destruct enriched_cat_case1_isICMon_mixin.
-destruct mon0.
-auto.
+refine (mrid _).
 Qed.
 
 
