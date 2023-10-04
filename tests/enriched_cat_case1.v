@@ -58,21 +58,21 @@ HB.mixin Record hom_isMon T of Quiver T :=
 (* need to add explicitly Magma_enriched_quiver, otherwise switch 
    from mixin to structure *)
 #[wrapper]
-HB.mixin Record hom_isMon T of Quiver T & Magma_enriched_quiver T :=
+HB.mixin Record hom_isMon T of Magma_enriched_quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
 HB.structure
    Definition Mon_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isMon Obj }.
 
 #[wrapper]
-HB.mixin Record hom_isICAlg T of Quiver T & Magma_enriched_quiver T :=
+HB.mixin Record hom_isICAlg T of Magma_enriched_quiver T :=
     { hom_isICAlg_private : forall A B, isICAlg (@hom T A B) }.
 HB.structure
    Definition ICAlg_enriched_quiver :=
      { Obj of isQuiver Obj & hom_isICAlg Obj }.
 
 #[wrapper]
-HB.mixin Record hom_isICMon T of Quiver T & Magma_enriched_quiver T :=
+HB.mixin Record hom_isICMon T of Magma_enriched_quiver T :=
     { hom_isICMon_private : forall A B, isICMon (@hom T A B) }.
 #[verbose]
 HB.structure
@@ -103,9 +103,11 @@ HB.builders Context T (f : isMICAlg T).
   Definition dum_idem :=
     @eq_rect (T -> T -> T) amop (@idempotent T) amidem mop amop_mop_eq.
 
-  HB.instance Definition b_Mg : isMagma T :=
-          isMagma.Build T mop.
-    
+  (* Expected failure:
+  HB.instance Definition b_IC : isICAlg T :=
+    isICAlg.Build T amcomm amidem.
+  *)
+
   HB.instance Definition b_IC : isICAlg T :=
           isICAlg.Build T dum_comm dum_idem.
 
@@ -126,7 +128,6 @@ Object: Type,
 Morphism: A -> option B 
 Structure: Monoid (from isMon)
 *)
-
 HB.instance Definition funQ := isQuiver.Build Type 
    (fun A B => A -> option B).
 
