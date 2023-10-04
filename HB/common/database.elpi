@@ -383,10 +383,10 @@ pred mk-src
   i:list prop, % Cond list
   o:prop.
 
-mk-src (app [_|Args]) M I Cond C :-
-  std.last Args Last,
-  safe-dest-app Last Hd ArgsLast,
-  mk-src-aux ArgsLast Hd M I Cond C.
+mk-src (app _ as F) M I Cond C :-
+  factory? F (triple _ _ Subject),
+  safe-dest-app Subject Hd Args,
+  mk-src-aux Args Hd M I Cond C.
 
 mk-src (prod N_ _ F) M I Cond (pi a \ C a) :-
   pi a\
