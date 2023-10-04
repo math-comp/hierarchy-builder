@@ -43,6 +43,7 @@ HB.structure Definition ICMon := { T of isICMon T }.
 
 (*****  wrapping ****************************************************)
 
+
 #[wrapper]
 HB.mixin Record hom_isMagma T of Quiver T :=
     { hom_isMagma_private : forall A B, isMagma (@hom T A B) }.
@@ -54,6 +55,10 @@ HB.structure
 #[wrapper]
 HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, Mon (@hom T A B) }.
+#[verbose]
+HB.structure
+   Definition Mon_enriched_quiver :=
+     { Obj of isQuiver Obj & hom_isMon Obj }.
 *)
 (* need to add explicitly Magma_enriched_quiver, otherwise switch 
    from mixin to structure *)
@@ -168,10 +173,15 @@ Obligation 3.
    destruct (x a); auto.
 Qed.
 
+Fail Check Type : Mon_enriched_quiver.type.             
+Fail Check hom (nat:Type) nat: Mon.type.
+
 HB.instance Definition funQ_Monoid (A B: Type) :
   isMon (hom A B) := funQ_isMon A B.
 
 Check Type : Mon_enriched_quiver.type.             
+Check hom (nat:Type) nat: Mon.type.
+
 
 (** INSTANCE 2 **********************************************
 
