@@ -13,8 +13,8 @@ declare Module BSkel Sort :- std.do! [
   re-enable-id-phant BNoId B,
   private.sigT->list-w-params B GRFSwP_or_ThingtoBeWrapped ClosureCheck,
   
-  % do some work to go back to 
-  GRFSwP_or_ThingtoBeWrapped = GRFSwP,
+  % do some work to go back to factories on a single subject
+  private.lift-to-the-subject GRFSwP_or_ThingtoBeWrapped GRFSwP,
 
   factories-provide GRFSwP PMLwP,
 
@@ -713,17 +713,35 @@ if-coverage-not-good-error.one _ _. % new class is the first covering M
 %      use that structure to synthesize the type of the wrapper, eg
 %      hom belongs to Quiver, hence hom_isMon takes a "T of Quiver T"
 
-pred product->triples i:term, o:list (w-args factoryname), o:bool.
-product->triples  {{ lib:hb.prod lp:A lp:B  }} L ClosureCheck :- !,
-  product->triples B GRB ClosureCheck,
-  product->triples A GRA _,
-  std.append GRA GRB L.
-product->triples {{ True }} [] tt :- !.
-product->triples {{ False }} [] ff :- !.
-product->triples A [GR] tt :- std.assert! (factory? A GR) "A structure can only mention known factories".
-% product->triples A [GR] tt :- factory-on-some-structure-op? A GR.
+% checks if the term is forall A B C, Factory ... (Op A B C) ...
+pred factory-on-some-structure-op? i:term, i:list term, o:gref, o:constant.
+factory-on-some-structure-op? (prod N Ty Bo) VS F OP :-
+  @pi-decl N Ty x\
+     factory-on-some-structure-op? (Bo x) [x|VS] F OP.
+factory-on-some-structure-op? T VS F OP :-
+  factory? T (triple F _ Subject),
+  coq.safe-dest-app Subject (global (const OP)) Args,
+  exported-op _ _ OP,
+  std.appendR _ {std.rev VS} Args.
 
-pred sigT->list-w-params i:term, o:list-w-params factoryname, o:bool.
+kind factory-on-subject type.
+type factory-on-the-type w-args factoryname -> factory-on-subject.
+type factory-on-structure-op term -> factoryname -> constant -> factory-on-subject.
+
+pred product->triples i:term, i:term, o:list factory-on-subject, o:bool.
+product->triples  {{ lib:hb.prod lp:A lp:B  }} T L ClosureCheck :- !,
+  product->triples B T GRB ClosureCheck,
+  product->triples A T GRA _,
+  std.append GRA GRB L.
+product->triples {{ True }} _ [] tt :- !.
+product->triples {{ False }} _ [] ff :- !.
+product->triples A T [factory-on-the-type F] tt :- factory? A F, F = triple _ _ T, !.
+product->triples A _ [factory-on-structure-op A F OP] tt :- factory-on-some-structure-op? A [] F OP, !.
+product->triples A T _ _ :-
+  coq.error "HB: expecting a factory on" {coq.term->string T}
+    "or a factory on a structure operation. Got:" {coq.term->string A}.
+
+pred sigT->list-w-params i:term, o:w-params (list factory-on-subject), o:bool.
 sigT->list-w-params (fun N T B) L C :-
   coq.name->id N ID, % TODO: we should read the ID from the definition type which is an arity containing ids
   L = w-params.cons ID T Rest,
@@ -733,7 +751,28 @@ sigT->list-w-params {{ lib:@hb.sigT _ lp:{{ fun N Ty B }} }} L C :-
   coq.name->id N ID, % TODO: we should read the ID from the definition type which is an arity containing ids
   L = w-params.nil ID Ty Rest,
   @pi-decl N Ty t\
-    product->triples (B t) (Rest t) C.
+    product->triples (B t) t (Rest t) C.
+
+pred lift-to-the-subject i:w-params (list factory-on-subject), o:list-w-params factoryname.
+lift-to-the-subject (w-params.cons ID T Rest) (w-params.cons ID T Rest1) :-
+  @pi-parameter ID T x\
+    lift-to-the-subject (Rest x) (Rest1 x).
+lift-to-the-subject (w-params.nil ID T Rest) (w-params.nil ID T Rest1) :-
+  @pi-parameter ID T x\
+    lift-to-the-subject.aux (Rest x) x (Rest1 x).
+lift-to-the-subject.aux [] _ [].
+lift-to-the-subject.aux [factory-on-the-type F|Rest] T [F|Rest1] :-
+  lift-to-the-subject.aux Rest T Rest1.
+lift-to-the-subject.aux [factory-on-structure-op Expr F OP|Rest] T [WF|Rest1] :-
+  wrapper-mixin Wrapper (const OP) F, !,
+  factory-nparams Wrapper NParams,
+  coq.mk-app {coq.env.global Wrapper} {std.append {coq.mk-n-holes NParams} [T]} W,
+  factory? W WF,
+  coq.say Expr "->" WF,
+  lift-to-the-subject.aux Rest T Rest1.
+lift-to-the-subject.aux [factory-on-structure-op Expr _ _|_] _ _ :-
+  coq.error "NYI: automatic wrapping for" {coq.term->string Expr}.
+
 
 pred mk-hb-eta.on i:structure, i:term, i:abbreviation,
   i:list term, i:name, i:term, i:A, o:term.
