@@ -52,12 +52,17 @@ HB.mixin Record hom_isMon T of Quiver T :=
     { hom_isMon_private : forall A B, isMon (@hom T A B) }.
 
 
-Fail HB.structure
+Succeed HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj &
               (forall A B : Obj, isMon (hom A B)) }.
 
-(* which one is best? *)
+Succeed HB.structure
+  Definition Monoid_enriched_quiver :=
+    { Obj of (*isQuiver Obj & once we wrap we pull this in as a dep! *)
+              (forall A B : Obj, isMon (hom A B)) }.
+
+                          (* which one is best? *)
 Succeed HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj &
