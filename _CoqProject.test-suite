@@ -53,7 +53,7 @@ examples/Coq2020_material/CoqWS_abstract.v
 examples/Coq2020_material/CoqWS_expansion/withHB.v
 examples/Coq2020_material/CoqWS_expansion/withoutHB.v
 
-# examples/cat/cat.v
+examples/cat/cat.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
