@@ -10,7 +10,6 @@ pred declare i:string, i:term, i:universe.
 declare Module BSkel Sort :- std.do! [
   disable-id-phant BSkel BSkelNoId,
   failsafe-structure-inference BSkelNoId BSkelNoIdX,
-  coq.say BSkelNoIdX,
   std.assert-ok! (coq.elaborate-skeleton BSkelNoIdX _ BNoId) "illtyped structure definition",
   re-enable-id-phant BNoId B,
   
