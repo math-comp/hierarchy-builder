@@ -62,7 +62,7 @@ Succeed HB.structure
               (forall A B : Obj, isMon (hom A B)) }.
 
                           (* which one is best? *)
-Fail HB.structure
+Succeed HB.structure
   Definition Monoid_enriched_quiver :=
     { Obj of isQuiver Obj &
             (forall A B : Obj, isMon (@hom (Quiver.clone Obj _) A B)) }.

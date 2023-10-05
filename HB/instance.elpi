@@ -464,7 +464,7 @@ declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
 
 pred is-structure-op-w-wrapper i:term.
 is-structure-op-w-wrapper (global (const C)) :- exported-op _ _ C, wrapper-mixin _ (const C) _.
-is-structure-op-w-wrapper (app[global (const C)|_]) :- std.spy(exported-op _ _ C), wrapper-mixin _ (const C) _.
+is-structure-op-w-wrapper (app[global (const C)|_]) :- exported-op _ _ C, wrapper-mixin _ (const C) _.
 
 pred derive-wrapper-instances i:term, i:mixinname, o:term, o:constant.
 derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
@@ -502,7 +502,7 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
 
     Name is "wrapped__" ^ {std.any->string {new_int}},
 
-    std.spy(log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C),
+    log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C,
   ].
 
 pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
