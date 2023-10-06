@@ -317,13 +317,19 @@ re-enable-id-phant T T1 :-
 
 pred failsafe-structure-inference i:term, o:term.
 failsafe-structure-inference T T1 :-
-  (pi OP Args Args1 M Class NP S\
-    copy (app [global (const OP)|Args]) (app [global (const OP)| Args1]) :-
-      exported-op M _ OP, mixin-first-class M Class, factory-nparams Class NP,
-      std.nth NP Args S,
-      var S,
+  (pi T T2 F_Params F_Params1 Args Args1 Subject Subject1 NP ArgsOp ArgsOp1 OP S\
+    copy T T2 :-
+      factory?-split T _ F_Params Subject Args,
+      std.map F_Params copy F_Params1,
+      std.map Args copy Args1,
+      is-structure-op-w-wrapper Subject NP Class,
+      coq.safe-dest-app Subject OP ArgsOp,
+      std.nth NP ArgsOp S,
+      (var S ; name S),
       !,
-      eta-structure-record NP Class Args Args1) =>
+      eta-structure-record NP Class ArgsOp ArgsOp1,
+      coq.mk-app OP ArgsOp1 Subject1,
+      coq.mk-app (app F_Params1) [Subject1|Args1] T2) =>
   copy T T1.
 
 pred eta-structure-record i:int, i:classname, i:list term, o:list term.
