@@ -471,8 +471,8 @@ find-max-classes [M|Mixins] [C|Classes] :-
   ].
 find-max-classes [M|_] _ :- coq.error "HB: cannot find a class containing mixin" M.
 
-pred is-structure-op-w-wrapper i:term, o:int, o:classname.
-is-structure-op-w-wrapper (global (const C)) N  Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
-is-structure-op-w-wrapper (app[global (const C)|_]) N Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
-is-structure-op-w-wrapper (global GR) N Class :- tag GR Class N, wrapper-mixin _ GR _.
-is-structure-op-w-wrapper (app[global GR|_]) N Class :- tag GR Class N, wrapper-mixin _ GR _.
+pred is-subject-lifter i:term, o:int, o:classname.
+is-subject-lifter (global (const C)) N  Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
+is-subject-lifter (app[global (const C)|_]) N Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
+is-subject-lifter (global GR) N Class :- tag GR Class N, wrapper-mixin _ GR _.
+is-subject-lifter (app[global GR|_]) N Class :- tag GR Class N, wrapper-mixin _ GR _.

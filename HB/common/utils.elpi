@@ -376,7 +376,7 @@ failsafe-structure-inference T T1 :-
       factory?-split T _ F_Params Subject Args,
       std.map F_Params copy F_Params1,
       std.map Args copy Args1,
-      is-structure-op-w-wrapper Subject NP Class,
+      is-subject-lifter Subject NP Class,
       coq.safe-dest-app Subject OP ArgsOp,
       std.nth NP ArgsOp S,
       (var S ; name S), % TODO: should be the subject of the structure, not a random name

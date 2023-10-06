@@ -85,7 +85,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
 
       % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      if (get-option "wrapper" ff ; not(is-structure-op-w-wrapper TheType _ _))
+      if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
