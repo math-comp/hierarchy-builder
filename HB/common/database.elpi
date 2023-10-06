@@ -188,6 +188,8 @@ toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
 pred topo-find-all i:B, o:A.
 topo-find-all B A :- std.do! [
   std.findall (topo-find B C_) L,
+  % if there were dusplicates, we ensure we keep the most instantiated, eg
+  % (triple m [X,Y] t) v.s. (triple m [a,b] t)
   std.assert! (std.forall L (x\ x = topo-find B A)) "topofind bad",
 ].
 
