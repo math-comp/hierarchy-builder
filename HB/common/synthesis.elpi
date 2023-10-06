@@ -74,6 +74,13 @@ infer-all-args-let Ps T GR X Diag :- std.do! [
   private.instantiate-all-args-let FT T X Diag,
 ].
 
+pred try-infer-all-args-let i:list term, i:term, i:gref, o:term.
+try-infer-all-args-let Ps T GR X :- std.do! [
+  coq.env.typeof GR Ty,
+  coq.mk-eta (-1) Ty (global GR) EtaF,
+  coq.subst-fun {std.append Ps [T]} EtaF FT,
+  private.try-instantiate-all-args-let FT T X,
+].
 
 % [assert!-infer-mixin TheType M Out] infers one mixin M on TheType and
 % aborts with an error message if the mixin cannot be inferred
@@ -270,6 +277,15 @@ instantiate-all-args-let (fun N Tm F) T (let N Tm X R) Diag :- !, std.do! [
              " for " ^ {coq.term->string T}),
 ].
 instantiate-all-args-let F _ F ok.
+
+pred try-instantiate-all-args-let i:term, i:term, o:term.
+try-instantiate-all-args-let (fun N Tm F) T (let N Tm X R) :- !, std.do! [
+  coq.safe-dest-app Tm (global TmGR) _,
+  factory-alias->gref TmGR M,
+  (mixin-for T M X ; true),
+  (@pi-def N Tm X m\ try-instantiate-all-args-let (F m) T (R m)),
+].
+try-instantiate-all-args-let F _ F.
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins

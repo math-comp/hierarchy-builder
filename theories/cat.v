@@ -1056,16 +1056,15 @@ split=> [] sq.
 
     pose red := @from _ (pb_terminal sq_ispb) blue_red_black_square.
 
-    
+    admit.
 
 
 
   have p2 : prepullback_isTerminal.axioms_ Q C B  (Cospan (h \; f) g) (Span w (z \; v)) p1.
     constructor. econstructor=> /=.
+    admit.
 
-  pose xx : Pullback.type (Cospan (h \; f) g) :=
-    HB.pack (Span w (z \; v)) p2 p1.
-  apply: Pullback.class xx.
+    by HB.from p1 p2.
 
 Admitted.
 
@@ -1079,7 +1078,8 @@ Variables (Q : precat) (A B : Q) (c : cospan A B).
 Variable (p : pullback c).
 Check pb_terminal p : terminal _.
 
-
+End test.
+End test.
 
 
 

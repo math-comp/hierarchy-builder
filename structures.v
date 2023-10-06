@@ -544,6 +544,29 @@ solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
 Elpi Typecheck.
 Elpi Export HB.pack.
 
+Elpi Tactic HB.from.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main-use-factories Ty Args Instance,
+  refine Instance G GLS,
+])).
+
+}}.
+Elpi Typecheck.
+
+Tactic Notation "HB.from" open_constr_list(L) :=
+  elpi HB.from ltac_term_list:(L).
+
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
