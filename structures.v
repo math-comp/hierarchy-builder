@@ -167,6 +167,11 @@ pred mixin-mem i:term, o:gref.
 %  wrapper-mixin (indt "hom_isMon") (const "hom") (indt "isMon").
 pred wrapper-mixin o:mixinname, o:gref, o:mixinname.
 
+% designated identity function for wrapping (sometimes you don't have a
+% structure op for it).
+% [tag GR Class NParams]
+pred tag o:gref, o:classname, o:int.
+
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
@@ -1043,6 +1048,68 @@ check-or-not Skel :-
 Elpi Typecheck.
 Elpi Export HB.check.
 
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.tag] declares a tag for mixin subjects
+
+[[
+HB.tag Definition N Params x := x
+]]
+
+*)
+
+#[arguments(raw)] Elpi Command HB.tag.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate lp:{{
+
+main [const-decl Name (some BodySkel) AritySkel] :- !, std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton AritySkel _ Arity) "HB: type illtyped",
+  coq.arity->nparams Arity N,
+  coq.arity->term Arity Ty,
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "HB: body illtyped",
+  with-attributes (with-logging (std.do! [
+    log.coq.env.add-const-noimplicits Name Body Ty @transparent! C,
+    coq.arity->implicits Arity CImpls,
+    if (coq.any-implicit? CImpls)
+     (@global! => coq.arguments.set-implicit (const C) [CImpls])
+     true,
+  ])),
+  M is N - 1,
+  class-of-nth-arg M Ty Class,
+  acc-clause current (tag (const C) Class M),
+].
+main [str G, str"|", int M] :- !,
+  coq.locate G GR,
+  coq.env.typeof GR Ty,
+  class-of-nth-arg M Ty Class,
+  acc-clause current (tag GR Class M).
+
+main _ :- coq.error "Usage: HB.tag Definition <Name> := <Builder> T ...\nUsage: HB.tag <gref> | <nparams>".
+
+pred class-of-nth-arg i:int, i:term, o:classname.
+class-of-nth-arg 0 (prod _ (global S) _\_) Class :- class-def (class Class S _).
+class-of-nth-arg 0 (prod _ (app [global S|_]) _\_) Class :- class-def (class Class S _).
+class-of-nth-arg N (prod Name Ty Bo) Class :- N > 0, !, M is N - 1,
+  @pi-decl Name Ty x\ class-of-nth-arg M (Bo x) Class.
+class-of-nth-arg 0 T _ :- !,
+  coq.error "HB: the last parameter of a tag must be of a structure type:" {coq.term->string T}.
+class-of-nth-arg _ T _ :- !,
+  coq.error "HB: not enough argsuments:" {coq.term->string T}.
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.tag.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

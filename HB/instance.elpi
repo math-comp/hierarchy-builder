@@ -88,7 +88,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
          % derived instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL) 
          % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         (if (get-option "wrapper" ff ; not(private.is-structure-op-w-wrapper TheType))
+         (if (get-option "wrapper" ff ; not(is-structure-op-w-wrapper TheType _ _))
             % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
              (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
             % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -461,10 +461,6 @@ declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
   private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins,
   private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL,
 ].
-
-pred is-structure-op-w-wrapper i:term.
-is-structure-op-w-wrapper (global (const C)) :- exported-op _ _ C, wrapper-mixin _ (const C) _.
-is-structure-op-w-wrapper (app[global (const C)|_]) :- exported-op _ _ C, wrapper-mixin _ (const C) _.
 
 pred derive-wrapper-instances i:term, i:mixinname, o:term, o:constant.
 derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [

@@ -12,7 +12,6 @@ declare Module BSkel Sort :- std.do! [
   failsafe-structure-inference BSkelNoId BSkelNoIdX,
   std.assert-ok! (coq.elaborate-skeleton BSkelNoIdX _ BNoId) "illtyped structure definition",
   re-enable-id-phant BNoId B,
-  
   private.sigT->list-w-params B GRFSwP_or_ThingtoBeWrapped ClosureCheck,
   
   % do some work to go back to factories on a single subject
@@ -220,7 +219,6 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   gref-deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
-
   (pi L L1 L2 Params Rest PoArgs\
     copy (app [global (const Po)| L]) (app [global (const C) | L2]) :-
       std.split-at NParams L Params [_|Rest],
@@ -662,19 +660,25 @@ if-coverage-not-good-error.one _ _. % new class is the first covering M
 %      hom belongs to Quiver, hence hom_isMon takes a "T of Quiver T"
 
 % checks if the term is forall A B C, Factory ... (Op A B C) ...
-pred factory-on-some-structure-op? i:term, i:list term, o:gref, o:constant.
+pred factory-on-some-structure-op? i:term, i:list term, o:gref, o:gref.
 factory-on-some-structure-op? (prod N Ty Bo) VS F OP :-
   @pi-decl N Ty x\
      factory-on-some-structure-op? (Bo x) [x|VS] F OP.
-factory-on-some-structure-op? T VS F OP :-
+factory-on-some-structure-op? T VS F (const OP) :-
   factory? T (triple F _ Subject),
   coq.safe-dest-app Subject (global (const OP)) Args,
   exported-op _ _ OP,
   std.appendR _ {std.rev VS} Args.
+factory-on-some-structure-op? T VS F GR :- std.do! [
+  factory? T (triple F _ Subject),
+  coq.safe-dest-app Subject (global GR) Args,
+  tag GR _ _,
+  std.appendR _ {std.rev VS} Args,
+].
 
 kind factory-on-subject type.
 type factory-on-the-type w-args factoryname -> factory-on-subject.
-type factory-on-structure-op term -> factoryname -> constant -> factory-on-subject.
+type factory-on-structure-op term -> factoryname -> gref -> factory-on-subject.
 
 pred product->triples i:term, i:term, o:list factory-on-subject, o:bool.
 product->triples  {{ lib:hb.prod lp:A lp:B  }} T L ClosureCheck :- !,
@@ -712,7 +716,7 @@ lift-to-the-subject.aux [] _ [].
 lift-to-the-subject.aux [factory-on-the-type F|Rest] T [F|Rest1] :-
   lift-to-the-subject.aux Rest T Rest1.
 lift-to-the-subject.aux [factory-on-structure-op Expr F OP|Rest] T [WF|Rest1] :-
-  wrapper-mixin Wrapper (const OP) F, !,
+  wrapper-mixin Wrapper OP F, !,
   factory-nparams Wrapper NParams,
   coq.mk-app {coq.env.global Wrapper} {std.append {coq.mk-n-holes NParams} [T]} W,
   factory? W WF,
