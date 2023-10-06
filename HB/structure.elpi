@@ -717,7 +717,7 @@ reexport-wrapper-as-instance M :- std.do! [
      Str0 is "Op_isMx" ^ "__" ^ {std.any->string {new_int}},
      std.string.concat "__" [Str0, "ELIM"] Str, 
 
-     instance.declare-const Str B Arity _
+     get-option "wrapper" ff => instance.declare-const Str B Arity _
  ]. 
 
 }}

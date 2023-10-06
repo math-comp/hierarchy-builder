@@ -84,16 +84,13 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
       % derive all mixins the factory provides
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
 
-      if (rex.match ".*__ELIM" RealName)  
-         % derived instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
-         (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL) 
-         % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         (if (get-option "wrapper" ff ; not(is-structure-op-w-wrapper TheType _ _))
-            % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-             (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
-            % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-             (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL)
-         ),
+      % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      if (get-option "wrapper" ff ; not(is-structure-op-w-wrapper TheType _ _))
+        % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
+        % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL)
+      ,
 
       % shared to all branches
       if (get-option "export" tt)
