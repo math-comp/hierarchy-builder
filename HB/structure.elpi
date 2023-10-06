@@ -686,12 +686,11 @@ lift-to-the-subject (w-params.nil ID T Rest) (w-params.nil ID T Rest1) :-
 lift-to-the-subject.aux [] _ [].
 lift-to-the-subject.aux [factory-on-the-type F|Rest] T [F|Rest1] :-
   lift-to-the-subject.aux Rest T Rest1.
-lift-to-the-subject.aux [factory-on-structure-op Expr F OP|Rest] T [WF|Rest1] :-
+lift-to-the-subject.aux [factory-on-structure-op _ F OP|Rest] T [WF|Rest1] :-
   wrapper-mixin Wrapper OP F, !,
   factory-nparams Wrapper NParams,
   coq.mk-app {coq.env.global Wrapper} {std.append {coq.mk-n-holes NParams} [T]} W,
   factory? W WF,
-  coq.say Expr "->" WF,
   lift-to-the-subject.aux Rest T Rest1.
 lift-to-the-subject.aux [factory-on-structure-op Expr _ _|_] _ _ :-
   coq.error "NYI: automatic wrapping for" {coq.term->string Expr}.
