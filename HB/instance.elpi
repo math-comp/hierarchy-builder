@@ -88,7 +88,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
          % derived instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL) 
          % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         (if (not(private.is-structure-op-w-wrapper TheType))
+         (if (get-option "wrapper" ff ; not(private.is-structure-op-w-wrapper TheType))
             % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
              (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
             % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
