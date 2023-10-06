@@ -467,6 +467,7 @@ eapply functional_extensionality; intro x0.
 refine (mrid _).
 Qed.
 
+stop
 
 Program Definition icmfunQ_isICAlg (A B: ICMon.type) :
   isICAlg (hom A B) := isICAlg.Build (hom A B) _ _.
