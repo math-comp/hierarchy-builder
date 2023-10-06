@@ -317,9 +317,10 @@ HB.instance Definition _ {C D : cat} (c : C) :=
 
 (* opposite category *)
 Definition catop (C : U) : U := C.
-Notation "C ^op" := (catop C) (at level 10, format "C ^op") : cat_scope.
+Notation "C ^op" := (catop C)
+   (at level 2, format "C ^op") : cat_scope.
 HB.instance Definition _ (C : quiver) :=
-  IsQuiver.Build (C^op) (fun a b => hom b a).
+  IsQuiver.Build C^op (fun a b => hom b a).
 HB.instance Definition _ (C : precat) :=
   Quiver_IsPreCat.Build (C^op) (fun=> idmap) (fun _ _ _ f g => g \; f).
 HB.instance Definition _ (C : cat) := PreCat_IsCat.Build (C^op)
@@ -737,23 +738,23 @@ Notation "F `/ b" := (F `/` cst unit b)
   (at level 40, b at level 40, format "F `/ b") : cat_scope.
 Notation "a / b" := (cst unit a `/ b) : cat_scope.
 
-(* (* Not working yet *) *)
-(* HB.mixin Record IsInitial {C : quiver} (i : C) := { *)
-(*   to : forall c, i ~> c; *)
-(*   to_unique : forall c (f : i ~> c), f = to c *)
-(* }. *)
-(* #[short(type="initial")] *)
-(* HB.structure Definition Initial {C : quiver} := {i of IsInitial C i}. *)
+Definition obj (C : quiver) : Type := C.
+HB.mixin Record IsInitial {C : quiver} (i : obj C) := {
+  to : forall c, i ~> c;
+  to_unique : forall c (f : i ~> c), f = to c
+}.
+#[short(type="initial")]
+HB.structure Definition Initial {C : quiver} := {i of IsInitial C i}.
 
-(* HB.mixin Record IsTerminal {C : quiver} (t : C) := { *)
-(*   from : forall c, c ~> t; *)
-(*   from_unique : forall c (f : c ~> t), f = from c *)
-(* }. *)
-(* #[short(type="terminal")] *)
-(* HB.structure Definition Terminal {C : quiver} := {t of IsTerminal C t}. *)
-(* #[short(type="universal")] *)
-(* HB.structure Definition Universal {C : quiver} := *)
-(*   {u of Initial C u & Terminal C u}. *)
+HB.mixin Record IsTerminal {C : quiver} (t : obj C) := {
+  from : forall c, c ~> t;
+  from_unique : forall c (f : c ~> t), f = from c
+}.
+#[short(type="terminal")]
+HB.structure Definition Terminal {C : quiver} := {t of IsTerminal C t}.
+#[short(type="universal")]
+HB.structure Definition Universal {C : quiver} :=
+  {u of Initial C u & Terminal C u}.
 
 (* Definition hom' {C : precat} (a b : C) := a ~> b. *)
 (* (* Bug *) *)
@@ -801,6 +802,7 @@ HB.structure Definition RightAdjoint (D C : precat) :=
 Arguments L_ {_ _}.
 Arguments phi {D C s} {c d}.
 Arguments psy {D C s} {c d}.
+
 
 HB.mixin Record PreCat_IsMonoidal C of PreCat C := {
   onec : C;
@@ -880,5 +882,156 @@ Unset Universe Checking.
 HB.structure Definition Monoidal : Set :=
   { C of PreMonoidal_IsMonoidal C & PreMonoidal C }.
 Set Universe Checking.
+
+
+Record cospan (Q : quiver) (A B : Q) := Cospan {
+  top : Q;
+  left2top : A ~> top;
+  right2top : B ~> top
+}.
+
+Section cospans.
+Variables (Q : precat) (A B : Q).
+Record cospan_map (c c' : cospan A B) := CospanMap {
+  top_map : top c ~> top c';
+  left2top_map : left2top c \; top_map = left2top c';
+  right2top_map : right2top c \; top_map = right2top c';
+}.
+HB.instance Definition _ := IsQuiver.Build (cospan A B) cospan_map.
+
+Lemma cospan_mapP (c c' : cospan A B) (f g : c ~> c') :
+  top_map f = top_map g <-> f = g.
+Admitted.
+End cospans.
+
+Section cospans_in_cat.
+Variables (Q : cat) (A B : Q).
+Definition cospan_idmap (c : cospan A B) :=
+  @CospanMap Q A B c c idmap (compo1 _) (compo1 _).
+Program Definition cospan_comp (c1 c2 c3 : cospan A B)
+    (f12 : c1 ~> c2) (f23 : c2 ~> c3) :=
+  @CospanMap Q A B c1 c3 (top_map f12 \; top_map f23) _ _.
+Next Obligation. by rewrite compoA !left2top_map. Qed.
+Next Obligation. by rewrite compoA !right2top_map. Qed.
+HB.instance Definition _ := IsPreCat.Build (cospan A B) cospan_idmap cospan_comp.
+
+Lemma cospan_are_cats : PreCat_IsCat (cospan A B).
+Proof.
+constructor=> [a b f|a b f|a b c d f g h].
+- by apply/cospan_mapP => /=; rewrite comp1o.
+- by apply/cospan_mapP => /=; rewrite compo1.
+- by apply/cospan_mapP => /=; rewrite compoA.
+Qed.
+HB.instance Definition _ := cospan_are_cats.
+End cospans_in_cat.
+
+Section spans_and_co.
+Variables (Q : quiver) (A B : Q).
+Definition span := @cospan Q^op A B.
+Definition bot  (s : span) : Q := top s.
+Definition bot2left  (s : span) : bot s ~>_Q A := left2top s.
+Definition bot2right (s : span) : bot s ~>_Q B := right2top s.
+Definition Span (C : Q) (f : C ~> A) (g : C ~> B) : span :=
+   @Cospan Q^op A B C f g.
+End spans_and_co.
+
+HB.instance Definition _ (Q : precat) (A B : Q) :=
+  Quiver.copy (span A B) (@cospan Q^op A B)^op.
+HB.instance Definition _ (Q : cat) (A B : Q) :=
+  Cat.copy (span A B) (@cospan Q^op A B)^op.
+
+Section bot_map.
+Variables (C : cat) (A B : C) (s s' : span A B) (f : s ~> s').
+Definition bot_map : bot s ~> bot s' := top_map f.
+Lemma bot2left_map : bot_map \; bot2left s' = bot2left s.
+Proof. exact: left2top_map f. Qed.
+Lemma bot2right_map : bot_map \; bot2right s' = bot2right s.
+Proof. exact: right2top_map f. Qed.
+End bot_map.
+
+HB.mixin Record isPrePullback (Q : precat) (A B : Q)
+     (c : cospan A B) (s : span A B) := {
+   is_square : bot2left s \; left2top c = bot2right s \; right2top c;
+}.
+#[short(type=prepullback)]
+HB.structure Definition PrePullback Q A B (c : cospan A B) :=
+  {s of isPrePullback Q A B c s}.
+Arguments prepullback {Q A B} c.
+
+Section prepullback.
+Variables (Q : precat) (A B : Q) (c : cospan A B).
+HB.instance Definition _ :=
+  IsQuiver.Build (prepullback c)
+    (fun a b => (a : span A B) ~>_(span A B) (b : span A B)).
+Lemma eq_prepullbackP (p q : prepullback c) :
+  p = q :> span _ _ <-> p = q.
+Admitted.
+End prepullback.
+Section prepullback.
+Variables (Q : cat) (A B : Q) (csp : cospan A B).
+(* TODO: why can't we do that? *)
+(* HB.instance Definition _ := Cat.on (prepullback csp). *)
+HB.instance Definition _ :=
+  Quiver_IsPreCat.Build (prepullback csp)
+    (fun a => \idmap_(a : span A B))
+      (* TODO: study how to make this coercion trigger
+               even when the target is not reduced to span *)
+    (fun a b c f g => f \; g).
+Lemma prepullback_is_cat : PreCat_IsCat (prepullback csp).
+Proof. (* should be copied from the cat on span *)
+constructor=> [a b f|a b f|a b c d f g h];
+ [exact: comp1o|exact: compo1|exact: compoA].
+Qed.
+End prepullback.
+
+Definition pb_terminal (Q : precat)
+  (A B : Q) (c : cospan A B) (s : prepullback c) :
+    obj (prepullback c) := s.
+#[wrapper]
+HB.mixin Record prepullback_isTerminal (Q : precat)
+    (A B : Q) (c : cospan A B) 
+    (s : span A B) of isPrePullback Q A B c s := {
+  prepullback_terminal :
+    IsTerminal (prepullback c) (pb_terminal s)
+}.
+#[short(type="pullback")]
+HB.structure Definition Pullback (Q : precat)
+    (A B : Q) (c : cospan A B) :=
+  {s of isPrePullback Q A B c s 
+      & prepullback_isTerminal Q A B c s }.
+
+Notation pbsquare u v f g :=
+  (Pullback _ (Cospan f g) (Span u v)).
+
+Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
+
+Section th_of_pb.
+Variables (Q : cat) (A B C D E F : Q).
+Variables (f : A ~> D) (g : B ~> D) (h : C ~> A).
+Variables (u : E ~> A) (v : E ~> B) (w : F ~> C) (z : F ~> E).
+Variable (uvfg : pbsquare u v f g).
+
+Set Printing Width 50.
+Theorem pbsquarec_compP :
+  pbsquare w z h u <=> pbsquare w (z \; v) (h \; f) g.
+Proof.
+split=> [] sq.
+  have p : pullback (Cospan h u) := HB.pack (Span w z) sq.
+  
+Admitted.
+
+End th_of_pb.
+
+
+Module test.
+
+Section test.
+Variables (Q : precat) (A B : Q) (c : cospan A B).
+Variable (p : pullback c).
+Check pb_terminal p : terminal _.
+
+
+
+
 
 

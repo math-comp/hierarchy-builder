@@ -1,5 +1,7 @@
 Require Import ssreflect ssrfun.
+Unset Universe Checking.
 From HB Require Import structures cat.
+Set Universe Checking.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
