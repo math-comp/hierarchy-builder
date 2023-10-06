@@ -467,9 +467,7 @@ eapply functional_extensionality; intro x0.
 refine (mrid _).
 Qed.
 
-stop
-
-Program Definition icmfunQ_isICAlg (A B: ICMon.type) :
+(* Program Definition icmfunQ_isICAlg (A B: ICMon.type) :
   isICAlg (hom A B) := isICAlg.Build (hom A B) _ _.
 Obligation 1.
 econstructor.
@@ -496,24 +494,17 @@ simpl in *.
 destruct ica0.
 destruct isia0.
 eapply aidem0; auto.
-Qed.
+Qed. *)
 
-Program Definition icmfunQ_isICMon (A B: ICMon.type) :
+(* Program Definition icmfunQ_isICMon (A B: ICMon.type) :
   isICMon (hom A B) := isICMon.Build (hom A B) _ _.
 Obligation 1.
 eapply icmfunQ_isICAlg.
 Qed.
 Obligation 2.
 eapply icmfunQ_isMon.
-Qed.
+Qed. *)
 
 HB.instance Definition icmfunQ_isMonoid (A B: ICMon.type) :
   isMon (hom A B) := icmfunQ_isMon A B.
 
-HB.instance Definition icmfunQ_isICAlgebra (A B: ICMon.type) :
-  isICAlg (hom A B) := icmfunQ_isICAlg A B.
-
-HB.instance Definition icmfunQ_isICMonoid (A B: ICMon.type) :
-  isICMon (hom A B) := icmfunQ_isICMon A B.
-
-Check ICMon.type : ICAlg_enriched_quiver.type.
