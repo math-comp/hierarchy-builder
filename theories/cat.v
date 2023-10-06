@@ -984,9 +984,10 @@ constructor=> [a b f|a b f|a b c d f g h];
 Qed.
 End prepullback.
 
-Definition pb_terminal (Q : precat)
+HB.tag Definition pb_terminal (Q : precat)
   (A B : Q) (c : cospan A B) (s : prepullback c) :
     obj (prepullback c) := s.
+
 #[wrapper]
 HB.mixin Record prepullback_isTerminal (Q : precat)
     (A B : Q) (c : cospan A B) 
@@ -994,11 +995,11 @@ HB.mixin Record prepullback_isTerminal (Q : precat)
   prepullback_terminal :
     IsTerminal (prepullback c) (pb_terminal s)
 }.
-#[short(type="pullback")]
+#[short(type="pullback"), verbose]
 HB.structure Definition Pullback (Q : precat)
     (A B : Q) (c : cospan A B) :=
   {s of isPrePullback Q A B c s 
-      & prepullback_isTerminal Q A B c s }.
+      & IsTerminal (prepullback c) (pb_terminal s) }.
 
 Notation pbsquare u v f g :=
   (Pullback _ (Cospan f g) (Span u v)).
