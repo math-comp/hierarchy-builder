@@ -1079,7 +1079,7 @@ main [const-decl Name (some BodySkel) AritySkel] :- !, std.do! [
   coq.arity->term Arity Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "HB: body illtyped",
   with-attributes (with-logging (std.do! [
-    log.coq.env.add-const-noimplicits Name Body Ty @transparent! C,
+    log.coq.env.add-const Name Body Ty @transparent! C,
     coq.arity->implicits Arity CImpls,
     if (coq.any-implicit? CImpls)
      (@global! => coq.arguments.set-implicit (const C) [CImpls])
