@@ -1205,7 +1205,7 @@ Elpi Export HB.check.
 (** [HB.tag] declares a tag for mixin subjects
 
 [[
-HB.tag Definition N Params x := x
+HB.tag Definition N Params (x : S.type) : Type := x
 ]]
 
 *)
@@ -1245,7 +1245,7 @@ main [str G, str"|", int M] :- !,
   class-of-nth-arg M Ty Class,
   acc-clause current (tag GR Class M).
 
-main _ :- coq.error "Usage: HB.tag Definition <Name> := <Builder> T ...\nUsage: HB.tag <gref> | <nparams>".
+main _ :- coq.error "Usage: HB.tag Definition <Name> ... <subject> := T ...\nUsage: HB.tag <gref> | <nparams>".
 
 pred class-of-nth-arg i:int, i:term, o:classname.
 class-of-nth-arg 0 (prod _ (global S) _\_) Class :- class-def (class Class S _).

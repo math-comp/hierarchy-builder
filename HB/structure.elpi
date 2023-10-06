@@ -649,7 +649,7 @@ factory-on-some-structure-op? T VS F GR :- std.do! [
 
 kind factory-on-subject type.
 type factory-on-the-type w-args factoryname -> factory-on-subject.
-type factory-on-structure-op term -> factoryname -> gref -> factory-on-subject.
+type factory-on-subject-lifter term -> factoryname -> gref -> factory-on-subject.
 
 pred product->triples i:term, i:term, o:list factory-on-subject, o:bool.
 product->triples  {{ lib:hb.prod lp:A lp:B  }} T L ClosureCheck :- !,
@@ -659,10 +659,10 @@ product->triples  {{ lib:hb.prod lp:A lp:B  }} T L ClosureCheck :- !,
 product->triples {{ True }} _ [] tt :- !.
 product->triples {{ False }} _ [] ff :- !.
 product->triples A T [factory-on-the-type F] tt :- factory? A F, F = triple _ _ T, !.
-product->triples A _ [factory-on-structure-op A F OP] tt :- factory-on-some-structure-op? A [] F OP, !.
+product->triples A _ [factory-on-subject-lifter A F OP] tt :- factory-on-some-structure-op? A [] F OP, !.
 product->triples A T _ _ :-
   coq.error "HB: expecting a factory on" {coq.term->string T}
-    "or a factory on a structure operation. Got:" {coq.term->string A}.
+    "or a factory on a structure operation or tag. Got:" {coq.term->string A}.
 
 pred sigT->list-w-params i:term, o:w-params (list factory-on-subject), o:bool.
 sigT->list-w-params (fun N T B) L C :-
@@ -686,13 +686,13 @@ lift-to-the-subject (w-params.nil ID T Rest) (w-params.nil ID T Rest1) :-
 lift-to-the-subject.aux [] _ [].
 lift-to-the-subject.aux [factory-on-the-type F|Rest] T [F|Rest1] :-
   lift-to-the-subject.aux Rest T Rest1.
-lift-to-the-subject.aux [factory-on-structure-op _ F OP|Rest] T [WF|Rest1] :-
+lift-to-the-subject.aux [factory-on-subject-lifter _ F OP|Rest] T [WF|Rest1] :-
   wrapper-mixin Wrapper OP F, !,
   factory-nparams Wrapper NParams,
   coq.mk-app {coq.env.global Wrapper} {std.append {coq.mk-n-holes NParams} [T]} W,
   factory? W WF,
   lift-to-the-subject.aux Rest T Rest1.
-lift-to-the-subject.aux [factory-on-structure-op Expr _ _|_] _ _ :-
+lift-to-the-subject.aux [factory-on-subject-lifter Expr _ _|_] _ _ :-
   coq.error "NYI: automatic wrapping for" {coq.term->string Expr}.
 
 
