@@ -381,19 +381,19 @@ failsafe-structure-inference T T1 :-
       std.nth NP ArgsOp S,
       (var S ; name S), % TODO: should be the subject of the structure, not a random name
       !,
-      eta-structure-record NP Class ArgsOp ArgsOp1,
+      eta-structure-record S NP Class ArgsOp ArgsOp1,
       coq.mk-app OP ArgsOp1 Subject1,
       coq.mk-app (app F_Params1) [Subject1|Args1] T2) =>
   copy T T1.
 
-pred eta-structure-record i:int, i:classname, i:list term, o:list term.
-eta-structure-record NP Class L L1 :-
+pred eta-structure-record i:term, i:int, i:classname, i:list term, o:list term.
+eta-structure-record S NP Class L L1 :-
   std.split-at NP L Params [_|Rest],
   class-def (class Class Structure _),
   get-constructor Structure K,
   std.map Params copy Params1,
   std.map Rest copy Rest1,
-  coq.mk-app {coq.env.global K} {std.append Params1 [_,_]} EtaS,
+  coq.mk-app {coq.env.global K} {std.append Params1 [S,_]} EtaS,
   std.append Params1 [EtaS|Rest1] L1.
 
 pred prod-last i:term, o:term.
