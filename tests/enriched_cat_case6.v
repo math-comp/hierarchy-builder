@@ -130,12 +130,9 @@ HB.structure
    Definition IMon_enriched_quiver :=
      { Obj of Mon_enriched_quiver Obj & IAlg_enriched_quiver Obj }.
 
-(* workaround *)
-Definition Ifoo (T : IMon_enriched_quiver.type) (A B : T) : IMon.type.
-Proof.
-refine (HB.pack (hom A B)).
-Defined.
-Canonical Ifoo.
+#[wrapper=false]
+HB.instance Definition _ (T : IMon_enriched_quiver.type) A B : isMon (@hom T A B) :=
+  Mon.on (@hom T A B).
 
 (****)
 
@@ -144,13 +141,10 @@ HB.structure
    Definition CMon_enriched_quiver :=
      { Obj of Mon_enriched_quiver Obj & CAlg_enriched_quiver Obj }.
 
-(* workaround *)
-Definition Cfoo (T : CMon_enriched_quiver.type) (A B : T) : CMon.type.
-Proof.
-refine (HB.pack (hom A B)).
-Defined.
-Canonical Cfoo.
 
+#[wrapper=false]
+HB.instance Definition _ (T : CMon_enriched_quiver.type) A B :=
+  Mon.on (@hom T A B).
 
 (*     { Obj of isQuiver Obj & hom_isMon Obj & hom_isIAlg Obj }. *)
 
