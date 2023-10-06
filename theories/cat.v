@@ -1016,8 +1016,56 @@ Theorem pbsquarec_compP :
   pbsquare w z h u <=> pbsquare w (z \; v) (h \; f) g.
 Proof.
 split=> [] sq.
-  have p : pullback (Cospan h u) := HB.pack (Span w z) sq.
-  
+
+  have @sq_ispb : pullback (Cospan h u) := HB.pack (Span w z) sq.
+  have @uvfg_ispb : pullback (Cospan f g) := HB.pack (Span u v) uvfg.
+  have /=E2 := @is_square _ _ _ _ sq_ispb.
+  have /=E1 := @is_square _ _ _ _ uvfg_ispb.
+
+  have p1 : @isPrePullback Q C B (Cospan (h \; f) g) (Span w (z \; v)).
+    by constructor; rewrite /= compoA E2 -compoA E1 compoA.
+  pose big_black_square : prepullback (Cospan (h \; f) g) :=
+    HB.pack (Span w (z \; v)) p1.
+
+  have @from : forall
+    (big_red_square : prepullback {| top := D; left2top := h \; f; right2top := g |}),
+    big_red_square ~> pb_terminal big_black_square.
+
+    move=> big_red_square; unfold pb_terminal.
+
+    have /= := @is_square _ _ _ _ big_red_square.
+
+    pose F' := bot big_red_square.
+    set w' : F' ~> C := bot2left big_red_square.
+    set z' : F' ~> B := bot2right big_red_square.
+    move=> E3.
+    
+    have xxx : isPrePullback Q A B (Cospan f g) (Span (w' \; h) z').
+      by constructor=> /=; rewrite -compoA E3.
+    pose red_black_square : prepullback (Cospan f g) :=
+      HB.pack (Span (w' \; h) z') xxx.
+    have  := @from_unique _ (pb_terminal uvfg_ispb) red_black_square.
+    set blue := @from _ (pb_terminal uvfg_ispb) red_black_square.
+    move=> blue_unique.
+
+    have p3 : @isPrePullback Q C E (Cospan h u) (Span w' (bot_map blue)).
+      by constructor; rewrite /= (bot2left_map blue). (* buggy unifier without blue *)
+    pose blue_red_black_square : prepullback (Cospan h u) :=
+      HB.pack (Span w' (bot_map blue)) p3.
+
+    pose red := @from _ (pb_terminal sq_ispb) blue_red_black_square.
+
+    
+
+
+
+  have p2 : prepullback_isTerminal.axioms_ Q C B  (Cospan (h \; f) g) (Span w (z \; v)) p1.
+    constructor. econstructor=> /=.
+
+  pose xx : Pullback.type (Cospan (h \; f) g) :=
+    HB.pack (Span w (z \; v)) p2 p1.
+  apply: Pullback.class xx.
+
 Admitted.
 
 End th_of_pb.
