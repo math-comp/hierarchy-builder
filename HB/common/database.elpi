@@ -179,10 +179,16 @@ toposort-proj Proj ES In Out :- !, toposort-proj.acc Proj ES [] In Out.
 pred topo-find i:B, o:A.
 pred toposort-proj.acc i:(A -> B -> prop), i:list (pair B B), i:list B, i:list A, o:list A.
 toposort-proj.acc _ ES Acc [] Out :- !,
-  std.map {std.toposort ES Acc} topo-find Out.
+  std.map {std.toposort ES Acc} topo-find-all Out.
 toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
   Proj A B,
   topo-find B A => toposort-proj.acc Proj ES [B|Acc] In Out
+].
+
+pred topo-find-all i:B, o:A.
+topo-find-all B A :- std.do! [
+  std.findall (topo-find B C_) L,
+  std.assert! (std.forall L (x\ x = topo-find B A)) "topofind bad",
 ].
 
 % Classes can be topologically sorted according to the subclass relation
