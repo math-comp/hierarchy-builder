@@ -379,7 +379,7 @@ failsafe-structure-inference T T1 :-
       is-structure-op-w-wrapper Subject NP Class,
       coq.safe-dest-app Subject OP ArgsOp,
       std.nth NP ArgsOp S,
-      (var S ; name S),
+      (var S ; name S), % TODO: should be the subject of the structure, not a random name
       !,
       eta-structure-record NP Class ArgsOp ArgsOp1,
       coq.mk-app OP ArgsOp1 Subject1,
