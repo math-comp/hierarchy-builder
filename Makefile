@@ -138,7 +138,7 @@ sub-%: __always__
 endif
 
 # Make of individual .vo ---------------------------------------------
-structures.vo : %.vo: __always__ Makefile.coq
+$(addsuffix o,structures.v $(wildcard theories/*.v)): %.vo: __always__ Makefile.coq
 	+$(COQMAKE) $@
 
 $(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v tests/unit/*.v)): __always__ config build Makefile.test-suite.coq
