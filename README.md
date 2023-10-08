@@ -134,6 +134,8 @@ opam install coq-hierarchy-builder
   - `HB.builders` and `HB.end` declare a set of builders,
   - `HB.instance` declares a structure instance,
   - `HB.declare` declares a context with parameters, key and mixins.
+  - `HB.saturate` reconsiders all mixin instances to see if some newly declared
+    structure can be inhabited
 
 - HB core tactic-in-term:
   - `HB.pack` to synthesize a structure instance in the middle of a term.

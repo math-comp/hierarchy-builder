@@ -187,7 +187,10 @@ declare Module BSkel Sort :- std.do! [
   NewClauses => factory.declare-abbrev Module (factory.by-classname ClassName),
 
   NewClauses => if-MC-compat (private.mc-compat-structure Module ModulePath MLToExport
-    {w-params.nparams MLwP} ClassProjection GRPack)
+    {w-params.nparams MLwP} ClassProjection GRPack),
+
+% Automatic saturation disabled since it is expensive
+%  NewClauses => instance.saturate-instances,
 ].
 
 /* ------------------------------------------------------------------------- */
@@ -346,8 +349,8 @@ declare-coercion SortProjection ClassProjection
 
   w-params.then FMLwP mk-fun mk-fun
     (mk-coe-class-body FC TC TMLwP) CoeBody,
-
-  std.assert-ok! (coq.elaborate-skeleton CoeBody Ty CoeBody') "declare-coercion: CoeBody illtyped",
+  ErrorMessage is "The structures " ^ ModNameF ^ " and " ^ ModNameT ^ " are incompatible: the coercion between them cannot be synthesized",
+  std.assert-ok! (coq.elaborate-skeleton CoeBody Ty CoeBody') ErrorMessage,
 
   if-verbose (coq.say {header} "declare coercion hint" CName),
 
@@ -359,7 +362,8 @@ declare-coercion SortProjection ClassProjection
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
 
-  std.assert-ok! (coq.elaborate-skeleton SCoeBody STy SCoeBody') "declare-coercion: SCoeBody illtyped",
+ ErrorMessage is "The structures " ^ ModNameF ^ " and " ^ ModNameT ^ " are incompatible: the coercion between them cannot be synthesized",
+  std.assert-ok! (coq.elaborate-skeleton SCoeBody STy SCoeBody') ErrorMessage,
 
   if-verbose (coq.say {header} "declare unification hint" SName),
 

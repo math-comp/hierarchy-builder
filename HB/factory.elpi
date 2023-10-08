@@ -53,7 +53,7 @@ argument->w-mixins (ctx-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
 pred argument-name i:argument, o:string.
 argument-name (const-decl Id _ _) Id :- !.
 argument-name (indt-decl (parameter _ _ _ R)) Id :- !,
-  argument-name (indt-decl (R (sort prop))) Id.
+argument-name (indt-decl (R (sort prop))) Id.
 argument-name (indt-decl (record Id _ _ _)) Id :- !.
 argument-name (indt-decl (inductive Id _ _ _)) Id :- !.
 argument-name (ctx-decl _) "_" :- !.
@@ -231,7 +231,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
-  % coq.say RDecl RDeclClosed,
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)

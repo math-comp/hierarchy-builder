@@ -375,3 +375,10 @@ prod-last X X :- !.
 pred prod-last-gref i:term, o:gref.
 prod-last-gref (prod N S X) GR :- !, @pi-decl N S x\ prod-last-gref (X x) GR.
 prod-last-gref X GR :- coq.term->gref X GR.
+
+% saturate a type constructor with holes
+pred saturate-type-constructor i:term, o:term .
+saturate-type-constructor T ET :- 
+  coq.typecheck T TH ok,
+  coq.count-prods TH N,
+  coq.mk-app T {coq.mk-n-holes N} ET.

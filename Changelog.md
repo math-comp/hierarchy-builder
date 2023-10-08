@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **Removed** the `#[primitive_class]` attribute, making it the default.
+- **New** `HB.saturate` to saturate instances w.r.t. the current hierarchy
 
 ## [1.6.0] - 2023-09-20
 
