@@ -87,16 +87,18 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
       % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName CSL)  
+          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL)  
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL)
+          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL)
       ,
 
       % shared to all branches
       if (get-option "export" tt)
          (coq.env.current-library File,
-              std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses)
-         (Clauses = []),
+              std.map CSL (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) ClausesExp)
+         (ClausesExp = []),
+         
+      std.append ClausesHas ClausesExp Clauses,
   ]),
 
   % we accumulate clauses now that the section is over
@@ -416,13 +418,13 @@ declare-mixins-from-factory Factory T F ML TheMixins :- std.do! [
 
 % [declare-structure-instance-from-mixins T ML MLI] given mixins ML and
 % their implementation MLI declares all structure instances for T
-pred declare-structure-instance-from-mixins i:term, i:list mixinname, i:list constant, o:list (pair id constant).
-declare-structure-instance-from-mixins T ML TheMixins CL :- std.do! [
+pred declare-structure-instance-from-mixins i:term, i:list mixinname, i:list constant, o:list prop, o:list (pair id constant).
+declare-structure-instance-from-mixins T ML TheMixins ClausesHas CL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
   % hence we add these clauses last.
-  synthesis.under-these-mixin-src.do! T ML TheMixins [
+  synthesis.under-these-mixin-src.do! T ML TheMixins ClausesHas [
     synthesis.under-local-canonical-mixins-of.do! T [
       instance.declare-all T {findall-classes-for ML} CL,
     ]
@@ -436,9 +438,9 @@ close-section-if-has-params _ SectionName :-
   log.coq.env.end-section-name SectionName.
 
 pred declare-regular-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
-  o:list (pair id constant). 
-declare-regular-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
-  private.declare-structure-instance-from-mixins TheType ML TheMixins CCSL,
+  o:list prop, o:list (pair id constant). 
+declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.do![
+  private.declare-structure-instance-from-mixins TheType ML TheMixins ClausesHas CCSL,
 
   % TODO: share between the two cases and put just after declare-mixins-from-factory
   % since it talks about the unwrapped mixins
@@ -450,13 +452,13 @@ declare-regular-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
 ].
 
 pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
-  o:list (pair id constant). 
-declare-wrapper-inst TheType ML TheMixins TyWP SectionName CSL :- std.do![
+  o:list prop, o:list (pair id constant). 
+declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.do![
   coq.safe-dest-app TheType TheTypeKey _,
   std.assert! (TheTypeKey = global TheTypeKeyGR) "The subject to be wrapped has no key",
   private.close-section-if-has-params TyWP SectionName,
   private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins,
-  private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins CSL,
+  private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins ClausesHas CSL,
 ].
 
 pred derive-wrapper-instances i:term, i:mixinname, o:term, o:constant.

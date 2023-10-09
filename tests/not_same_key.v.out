@@ -1,2 +1,3 @@
 The command has indeed failed with message:
-HB: all mixins must have the same key
+HB: expecting a factory on T 
+or a factory on a structure operation or tag. Got: B.phant_axioms T T1
