@@ -16,11 +16,17 @@
       reglang.override.version = "master";
       coq-bits.override.version = "hierarchy-builder";
       deriving.job = false;
+      mathcomp-bigenough.override.version = "master";
+      multinomials.override.version = "master";
+      mathcomp-real-closed.override.version = "master";
+      coqeal.override.version = "master";
     };
   in {
     "coq-master".coqPackages = mcHBcommon // {
       coq.override.version = "master";
       coq-elpi.override.version = "coq-master";
+      bignums.override.version = "master";
+      paramcoq.override.version = "master";
       interval.job = false;
     };
 
