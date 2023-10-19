@@ -1013,45 +1013,107 @@ Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
 (******************************************************************)
 
+(*
+(* NOT USED *)
 Definition hom_object' {T} (h: T -> T -> U) : Type :=
   sigT (fun x:T => (sigT (fun y:T => h x y))).
 
-(* used to reify homsets *)
+(* NOT USED: used to reify homsets *)
 Record homset_object T (h: T -> T -> U) := hobj {
     source : T;
     target : T;
     this_hom : U := h source target }.
+*)
 
 (* squiv is a quiver on a subset of T determined by S *)
+(*
 Record SubQuiver T (S: T -> Prop) := { 
     quiv_ax : Quiver (sig S);
     quiv : quiver := Quiver.Pack (Quiver.Class quiv_ax) }.
+*)
+
+(* squiv is a quiver on a subset of T determined by S *)
+(*
+HB.mixin Record IsSubQuiver T (S: T -> Prop) := { 
+    quiv_ax : Quiver (sig S) }.
+HB.structure Definition SubQuiver ...
+*)
 
 (* the homsets of the subquiver are mapped to objects. 
    Obj(C) = sigT base_obj ;
    C(a, b) = homset_inj A B ; *)
+(*
 HB.mixin Record IsEQuiver T of Quiver T := { 
     base_obj : T -> Prop ;
     squiv : SubQuiver base_obj ;
 (*  homset_inj : forall (A B: sig base_obj), (@hom (quiv squiv) A B) -> T ; *)
     homset_inj : sig base_obj -> sig base_obj -> T   
   }.
+*)
+
+(* both the base objects and the the homsets in the base quiver are
+   mapped to ecat objects.  
+   Obj(C) = base_carrier ; C(a, b) = hom_object a b ; *)
+HB.mixin Record IsEQuiver T of Quiver T := {
+    base_carrier : U ;
+    base_object : base_carrier -> T ;
+    base_quiver : Quiver base_carrier ;
+    hom_object : base_carrier -> base_carrier -> T   
+  }.
 Unset Universe Checking.
 HB.structure Definition EQuiver : Set := { C of IsEQuiver C }.
 Set Universe Checking.
 
 HB.mixin Record IsPreECat T of PreMonoidal T & EQuiver T := {    
-    id_element : forall  (A: sig (fun x: T => base_obj x)),
-      @hom T onec (homset_inj A A) ;
-    comp_morphism : forall (A B C: sig (fun x: T => base_obj x)),
-      @hom T (homset_inj A B * homset_inj B C) (homset_inj A C) 
+    id_element : forall (a: base_carrier),
+      @hom T onec (hom_object a a) ;
+    comp_morphism : forall (a b c: base_carrier),
+      @hom T (@hom_object T b c * @hom_object T a b)
+             (@hom_object T a c) 
 }.    
 Unset Universe Checking. 
 HB.structure Definition PreECat : Set := { C of IsPreECat C }.
 Set Universe Checking.
 
+Notation "a ~^ b" := (hom_object a b)
+   (at level 99, b at level 200, format "a ~^ b") : cat_scope.
+Notation "a ~^_ T b" := (@hom_object T a b)
+  (at level 99, T at level 0, only parsing) : cat_scope.
+Notation "~^I a" := (id_element a)
+   (at level 99, format "~^I a") : cat_scope.
+Notation "~^I_ T a" := (@id_element T a)
+  (at level 99, T at level 0, only parsing) : cat_scope.
+Notation "~^C a b c" := (comp_morphism a b c)
+                          (at level 99,
+                            format "~^C a b c") : cat_scope.
+Notation "~^C_ T a b c" := (@comp_morphism T a b c)
+  (at level 99, T at level 0, only parsing) : cat_scope.
 
+HB.mixin Record IsECat T of PreECat T := {    
+   ecat_comp_assoc : forall a b c d: base_carrier,
+        forall alpha: ((((c ~^_T d) * (b ~^_T c)) * (a ~^_T b)) ~>_T
+                      ((c ~^_T d) * ((b ~^_T c) * (a ~^_T b)))),
+        ((@comp_morphism T b c d) <*> (@idmap T (a ~^_T b))) \;
+        (@comp_morphism T a b d)
+        =
+        alpha \;
+        ((@idmap T (c ~^_T d)) <*> (@comp_morphism T a b c)) \;
+        (@comp_morphism T a c d) ;                    
 
+   ecat_comp_left_unital : forall a b: base_carrier,
+         forall l: onec * (a ~^_T b) ~>_T (a ~^_T b), 
+           l = ((@id_element T b) <*> (@idmap T (a ~^_T b))) \;
+               (@comp_morphism T a b b) ;                                            
+   ecat_comp_right_unital : forall a b: base_carrier,
+         forall r: (a ~^_T b) * onec ~>_T (a ~^_T b), 
+           r = ((@idmap T (a ~^_T b)) <*> (@id_element T a)) \;
+               (@comp_morphism T a a b)                                         
+}.
+Unset Universe Checking. 
+HB.structure Definition ECat : Set := { C of IsECat C }.
+Set Universe Checking.
+
+      
 (*****************************************************************)
 (*** dustbin *)
 
