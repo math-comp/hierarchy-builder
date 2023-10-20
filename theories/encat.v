@@ -1013,47 +1013,16 @@ Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
 (******************************************************************)
 
-(*
-(* NOT USED *)
-Definition hom_object' {T} (h: T -> T -> U) : Type :=
-  sigT (fun x:T => (sigT (fun y:T => h x y))).
-
-(* NOT USED: used to reify homsets *)
-Record homset_object T (h: T -> T -> U) := hobj {
-    source : T;
-    target : T;
-    this_hom : U := h source target }.
-*)
-
-(* squiv is a quiver on a subset of T determined by S *)
-(*
-Record SubQuiver T (S: T -> Prop) := { 
-    quiv_ax : Quiver (sig S);
-    quiv : quiver := Quiver.Pack (Quiver.Class quiv_ax) }.
-*)
-
-(* squiv is a quiver on a subset of T determined by S *)
-(*
-HB.mixin Record IsSubQuiver T (S: T -> Prop) := { 
-    quiv_ax : Quiver (sig S) }.
-HB.structure Definition SubQuiver ...
-*)
-
-(* the homsets of the subquiver are mapped to objects. 
-   Obj(C) = sigT base_obj ;
-   C(a, b) = homset_inj A B ; *)
-(*
-HB.mixin Record IsEQuiver T of Quiver T := { 
-    base_obj : T -> Prop ;
-    squiv : SubQuiver base_obj ;
-(*  homset_inj : forall (A B: sig base_obj), (@hom (quiv squiv) A B) -> T ; *)
-    homset_inj : sig base_obj -> sig base_obj -> T   
-  }.
-*)
+(*** ENRICHED CATEGORIES *)
 
 (* both the base objects and the the homsets in the base quiver are
    mapped to ecat objects.  
-   Obj(C) = base_carrier ; C(a, b) = hom_object a b ; *)
+   Obj(C) = base_carrier ; C(a, b) = hom_object a b ; 
+   1) Not clear how declaring a wrapper for base_quiver could help, 
+      as there is no real lifting (base_carrier is unrelated to T). 
+   2) Should base_object be injective? 
+   3) Should (the uncurrying of) hom_object be injective? 
+   4) Should base_quiver be a category too? *)
 HB.mixin Record IsEQuiver T of Quiver T := {
     base_carrier : U ;
     base_object : base_carrier -> T ;
@@ -1064,7 +1033,8 @@ Unset Universe Checking.
 HB.structure Definition EQuiver : Set := { C of IsEQuiver C }.
 Set Universe Checking.
 
-HB.mixin Record IsPreECat T of PreMonoidal T & EQuiver T := {    
+(* Monoidal precategory with the enrichment operators (no axioms) *)
+HB.mixin Record IsEnPreCat T of PreMonoidal T & EQuiver T := {    
     id_element : forall (a: base_carrier),
       @hom T onec (hom_object a a) ;
     comp_morphism : forall (a b c: base_carrier),
@@ -1072,7 +1042,7 @@ HB.mixin Record IsPreECat T of PreMonoidal T & EQuiver T := {
              (@hom_object T a c) 
 }.    
 Unset Universe Checking. 
-HB.structure Definition PreECat : Set := { C of IsPreECat C }.
+HB.structure Definition EnPreCat : Set := { C of IsEnPreCat C }.
 Set Universe Checking.
 
 Notation "a ~^ b" := (hom_object a b)
@@ -1089,7 +1059,9 @@ Notation "~^C a b c" := (comp_morphism a b c)
 Notation "~^C_ T a b c" := (@comp_morphism T a b c)
   (at level 99, T at level 0, only parsing) : cat_scope.
 
-HB.mixin Record IsECat T of PreECat T := {    
+(* Enriched category 
+  (PreMonoidal_IsMonoidal and PreCat_IsCat would suffice) *) 
+HB.mixin Record IsEnCat T of EnPreCat T & Cat T & Monoidal T := {    
    ecat_comp_assoc : forall a b c d: base_carrier,
         forall alpha: ((((c ~^_T d) * (b ~^_T c)) * (a ~^_T b)) ~>_T
                       ((c ~^_T d) * ((b ~^_T c) * (a ~^_T b)))),
@@ -1109,270 +1081,65 @@ HB.mixin Record IsECat T of PreECat T := {
            r = ((@idmap T (a ~^_T b)) <*> (@id_element T a)) \;
                (@comp_morphism T a a b)                                         
 }.
-Unset Universe Checking. 
-HB.structure Definition ECat : Set := { C of IsECat C }.
-Set Universe Checking.
-
-      
-(*****************************************************************)
-(*** dustbin *)
-
-About PreMonoidal.
-
 Unset Universe Checking.
-(* HB.structure Definition MonoidalCat' := { C of PreCat_IsCat C & PreCat_IsMonoidal C }. *)
-HB.structure Definition MonoidalCat := { C of Cat C & Monoidal C }.
+#[verbose]
+HB.structure Definition EnCat : Set := { C of IsEnCat C }.
 Set Universe Checking.
 
 
-HB.mixin Record PreECat' T of PreMonoidal T & Quiver T & EQuiver T := {
-    comp_morphism : forall (A B C: sig base_obj),
-       @hom T (homset_inj A B) (homset_inj A C) ;   
-}.    
+(*** DOUBLE CATEGORIES *)
 
-HB.mixin Record PreECat0 T of PreMonoidal T & Quiver T & EQuiver T := {
-
-  (*  ccc : forall (A B C: T),
-       prod (A, B) = prod (A, C) ; *)
-
-    onedef (A B: sig (fun x: T => base_obj x)) : homset_inj A B = homset_inj A B ;
-    
-    ddd : forall (A B C: sig (fun x: T => base_obj x)),
-       prod (homset_inj A B, homset_inj B C) = prod (homset_inj A C, homset_inj A C) ;
-    
-    comp_morphism : forall (A B C: sig (fun x: T => base_obj x)),
-       @hom T (homset_inj A B * homset_inj B C) (homset_inj A C) ;   
-}.    
-
-
-
-Lemma hhh (F: quiver) : forall a b, @hom F a b = @hom F a b.
-  intros.
-  destruct F.
-  simpl in *.
-  auto.
-Qed.  
-  
-Lemma fff (F: premonoidal) :
-  @prod F = @prod F /\
-    forall a b, @prod F (a, b) = prod (a, b).
-  unfold prod.
-  unfold PreCat_IsMonoidal.prod.
-  unfold PreMonoidal.class. simpl.
-  split. 
-  destruct F.
-  destruct class.
-  simpl.
-  destruct ecat2_PreCat_IsMonoidal_mixin.
-  unfold hom in prod0.
-  unfold IsQuiver.hom in prod0.
-  unfold Quiver.class in prod0.
-  unfold Quiver.ecat2_IsQuiver_mixin in prod0.
-  simpl in prod0.
-
-Check Functor.type.
-  
-  destruct prod0.
-  simpl in *.
-  auto.
-  auto.
-Qed.  
-
-Lemma ggg (F: premonoidal) : forall a b, @prod F (a, b) = @prod F (a, b).
-  intros.
-  unfold prod.
-  unfold PreCat_IsMonoidal.prod.
-  unfold PreMonoidal.class. simpl.
-  destruct F.
-  destruct class.
-  simpl.
-  destruct ecat2_PreCat_IsMonoidal_mixin.
-  simpl in prod0.
-  destruct prod0 eqn:bbb.
-  destruct class.
-  destruct ecat2_IsPreFunctor_mixin.
-  destruct ecat2_PreFunctor_IsFunctor_mixin.
-  simpl.
-  auto.
-Qed.  
-
-  
-HB.mixin Record PreFCat T of PreMonoidal T & Quiver T & IsEQuiver T := {
-    A : T ;
-    B : T ;
-    f : @hom T A B ;
-    X : U ;
-    g : prod (A, B)%type ;
-    }.
-    comp_morphism (A B C: T) : U ;
-    eee : forall (A B C: T), comp_morphism A B C = prod (A, B) C ;   
-}.    
-
-
-HB.mixin Record PreECat T of PreMonoidal T & Quiver T & IsEQuiver T := {
-    comp_morphism : forall (A B C: sig base_obj),
-       @hom T (homset_inj A B * homset_inj B C) (homset_inj A C) ;   
-}.    
-
-
-Record SubQuiver T (S: T -> U) := { 
-    squiv_ax : Quiver (sigT S) ;
-    squiv : quiver := Quiver.Pack (Quiver.Class squiv_ax) ; 
-    squiv_homset (A B: sigT S) :
-         homset_object (@hom squiv) := hobj (@hom squiv) A B }.
-
-
-
-Record SubQuiver' T (S: T -> U) := { 
-    squiv_ax' : Quiver (sigT S);
-    squiv' : quiver := Quiver.Pack (Quiver.Class squiv_ax') ; 
-    squiv_hom' : U := sigT (fun x => sigT (fun y => @hom squiv' x y)) }.
-
-HB.mixin Record IsEQuiver T of Quiver T := { 
-    base_obj : T -> U ;
-    bq : SubQuiver base_obj ;
-    hom_inj : this_hom (squiv_hom bq) -> T
-  }.
-Unset Universe Checking.
-HB.structure Definition EQuiver : Set := { C of IsEQuiver C }.
-Set Universe Checking.
-
-
-
-HB.mixin Record IsEQuiver T of Quiver T := { 
-    base_obj : T -> U ;
-    bq : SubQuiver base_obj ;
-    hom_inj : this_hom (squiv_hom bq) -> T
-  }.
-Unset Universe Checking.
-HB.structure Definition EQuiver : Set := { C of IsEQuiver C }.
-Set Universe Checking.
-
-HB.mixin Record IsEQuiver T of Quiver T := { 
-    equiv : EQuiver T ;
-    hom_object : U := sigT (fun x => sigT (fun y => @hom base_quiver x y)) ;
-}.    
-    
-
-    bq : quiver := Quiver.Pack (Quiver.Class base_quiver) }. ;
-    hom_object : U := sigT (fun x => sigT (fun y => @hom bq x y)) ;
-    hom_inj : hom_object -> T }.
-
-
-
-(* HB.mixin Record isHQuiver' T of Quiver T :=
-  { jobj': sigT (fun x:T => (sigT (fun y:T => @hom T x y))) }. *)
-HB.mixin Record IsHQuiver T of Quiver T :=
-  { hhom : homset_object T -> homset_object T -> U ;
-    hom2hhom : forall (A B C: T),
-      @hhom (@homset_object.Build T A B (@hom T A B) eq_refl)
-            (@homset_object.Build T B C (@hom T B C) eq_refl)  }. 
+(* A quiver from which horizontal morphisms arise (just a copy of quiver) *)
+HB.mixin Record IsHQuiver C := { hhom : C -> C -> U }.
 Unset Universe Checking.
 #[short(type="hquiver")]
 HB.structure Definition HQuiver : Set := { C of IsHQuiver C }.
 Set Universe Checking.
 
+(* domain-specific sigma-type to represent the 2-objects *)
+Record HomObj T (h: T -> T -> U) : Type := HO {
+    source : T;
+    target : T;
+    this_hom : U := h source target }.
+
+(* A quiver from which 2-morphisms arise as arrows between 2-objects
+   (i.e. horizontal morphisms) *)
+#[wrapper]
+HB.mixin Record IsH2Quiver T of HQuiver T := {
+    h2quiver : Quiver (@HomObj T (@hhom T)) }.
 Unset Universe Checking.
-(* HB.structure Definition MonoidalCat' := { C of PreCat_IsCat C & PreCat_IsMonoidal C }. *)
-HB.structure Definition MonoidalCat := { C of Cat C & Monoidal C }.
+#[short(type="h2quiver")]
+HB.structure Definition H2Quiver : Set := { C of IsH2Quiver C }.
 Set Universe Checking.
 
-Record ECat' T (tns: T -> T -> T) := { 
-    base_obj : T -> U ;
-    base_quiver : Quiver (sigT base_obj) ;
-    bq : quiver := Quiver.Pack (Quiver.Class base_quiver) ;
-    hom_object : U := sigT (fun x => sigT (fun y => @hom bq x y)) ;
-    hom_inj : hom_object -> T }.
-
-                                       
-    comp_morphism : forall A B C hom_object hom_object 
-                       
-    hom_object : forall {A B: sigT base_obj}, @hom bq A B -> T ;
-    comp_morhism : forall (A B C: sigT base_obj),
-      hom_object A B -> hom_object B C -> hom_object A C
-  }.
-
-
-
-Record ECat' T := { 
-    base_obj : T -> U ;
-    base_quiver : Quiver (sigT base_obj) ;
-    bq : quiver := Quiver.Pack (Quiver.Class base_quiver) ;
-    hom_object : forall {A B: sigT base_obj}, @hom bq A B -> T ;
-    comp_morhism : forall (A B C: sigT base_obj),
-      hom_object A B -> hom_object B C -> hom_object A C
-  }.
-
-
-HB.mixin Record ECat T of MonoidalCat T := { 
-    ecat : ECat' T }.
-
-    base_obj : T -> U ;
-    base_quiver : Quiver (sigT base_obj) ;
-    bbb := Quiver.Class base_quiver }.
-    
-    bbb : quiver := Quiver.Pack (sigT base_obj) (Quiver.Class base_quiver) }.
-    base_cat : Cat (sigT base_obj) ;
-    hom_object : forall (A B: sigT base_obj),
-      @hom (Quiver.Pack _ (Quiver.Class base_quiver)) A B -> T ;    
-}.    
-  
-
-
-
-
-    jobj: @hom_objs T (fun x y: T => @hom T x y) }.
-HB.structure Definition HQuiver := { Obj of isHQuiver Obj }.
-
-HB.mixin Record HQuiver_isPreCat T of IsQuiver T := {
-    my_prop : Quiver (hom_objs (fun x y: T => @hom T x y));
-    my_prop2 : PreCat (hom_objs (fun x y: T => @hom T x y));
-    my_prop3 : Monoidal (hom_objs (fun x y: T => @hom T x y)); 
-}.    
-
-HB.mixin Record IsQuiver2 C := { hom2 : C -> C -> U }.
+(* The category based on the H2Quiver. 
+The wrapper attribute does not work though 
+#[wrapper] *)
+HB.mixin Record IsH2Cat T of H2Quiver T := {
+    h2cat : Cat (@HomObj T (@hhom T)) }.
 Unset Universe Checking.
-HB.structure Definition Quiver2 : Set := { C of IsQuiver2 C }.
+#[short(type="h2cat")]
+HB.structure Definition H2Cat : Set := { C of IsH2Cat C }.
+Set Universe Checking.
 
-(* precategories are quivers + id and comp *)
-HB.mixin Record Quiver_IsPreCat2 C of Quiver C := {
-  qqq : Quiver (option C) ;  
-  idmap : forall (a : C), a ~> a;
-  comp : forall (a b c : C), (a ~> b) -> (b ~> c) -> (a ~> c);
-}.
-
-
-HB.mixin Record HQuiver_isPreCat T of IsQuiver T := {
-   my_prop : Quiver (T -> T)
-}.    
-
-
-HB.mixin Record HQuiver_isPreCat T of IsQuiver T := {
-   my_prop : @IsQuiver2 (hom_objs (fun x y: T => @hom T x y))
-}.    
-
-
-HB.mixin Record HQuiver_isPreCat T of IsQuiver T := {
-   my_prop : @IsQuiver (sigT (fun x:T => (sigT (fun y:T => @hom T x y)))) 
-}.    
-
-
-
-HB.mixin Record HQuiver_isPreCat T of IsQuiver T := {
-   my_prop : @IsQuiver2 (sigT (fun x:T => (sigT (fun y:T => @hom T x y)))) 
-}.    
-
-
-HB.mixin Definition isPreEnriched T := {
-    cat: isCategory T;
-    
-  }.
+(* Double category (D0, D1).
+   base obejcts (D0): C ;
+   vertical morphisms (D0): @hom C ;
+   horizontal morhisms (and 2-objects, D1): @vhom C ;
+   2-morphisms (D1): @hom (@HomObj C (@vhom C) *)
+Unset Universe Checking.
+#[short(type="dcat")]
+HB.structure Definition DCat : Set := { C of Cat C & H2Cat C }.
+Set Universe Checking.
 
 
 (*******************************************************************)
 
+(*** Related to BICATEGORIES (just an experiment, 
+     not the right formalization) *)
+
 (* We want to factor constants and operators out of the axioms.
-   Suggestion: introducing some notion of module to bind them
+   Suggestion: introduce some notion of module to bind them
    together. *)
 
 (* monoid axioms *)
@@ -1382,13 +1149,13 @@ HB.mixin Record isMonoid T (mu: T) (mc: T -> T -> T): Type := {
     mrid   : right_id mu mc ;
 }.
 
-(* to be used as homset identity *)
+(* to be used as homset identity in bicategories *)
 HB.mixin Record isHId T := {
     hid    : T;
 }.
 HB.structure Definition HId := { T of isHId T }.
 
-(* to be used as homset composition *)
+(* to be used as homset composition in bicategories *)
 HB.mixin Record isHComp T := {
     hcomp    : T -> T -> T;
 }.
@@ -1406,28 +1173,23 @@ HB.mixin Record Quiver_HasComp T of Quiver T :=
 HB.structure Definition HasComp :=
      { Obj of Quiver Obj & Quiver_HasComp Obj }.
 
-(* a category, without axioms *)
-HB.structure Definition Precat :=
+(* a bicategory, without axioms *)
+HB.structure Definition BiCatQuiver :=
      {T of Quiver_HasId T & Quiver_HasComp T}.
 
-(* homset monoid 
-  drverbbe essere un wrapper *)
-#[wrapper]
-HB.mixin Record isHMonoid T of HId T & HComp T :=
+#[wrapper] 
+HB.mixin Record isHMonoid T of HId T & HComp T := 
   { isHMonoid_private: isMonoid T (hid: T) (@hcomp T) }. 
 #[verbose]
 HB.structure Definition HMonoid := { T of isHMonoid T }.
 
-#[wrapper]
+#[wrapper] 
 (* does not work (generic Elpi error): 
    HB.mixin Record isHCat T of precat_quiver T := *)
-HB.mixin Record isCategory T of Precat T :=
-    { isCategory_private : forall A B, isHMonoid (@hom T A B) }.
-HB.structure Definition Category :=
-     { Obj of Precat Obj & forall A B:Obj, isHMonoid (@hom Obj A B)}.
-
-HB.structure Definition Category :=
-     { Obj of isCategory Obj }.
+HB.mixin Record isPreBiCategory T of IsPreCat T :=
+    { isPreBiCategory_private : forall A B: T, HMonoid (@hom T A B) }.
+HB.structure Definition PreBiCategory :=
+     { Obj of isPreBiCategory Obj }.
 
 (* to be used as object monoid unit *)
 HB.mixin Record isMUnit T := {
@@ -1447,7 +1209,7 @@ HB.structure Definition Premonoid :=
 
 (* the precategory has monoidal operators *)
 HB.structure Definition Precat_IsPremonoidal :=
-     {T of Precat T & Premonoid T}.
+     {T of PreCat T & Premonoid T}.
 
 (* object monoid *)
 HB.mixin Record isOMonoid T of isMUnit T & isMComp T :=
@@ -1456,38 +1218,9 @@ HB.mixin Record isOMonoid T of isMUnit T & isMComp T :=
 HB.structure Definition OMonoid := { T of isOMonoid T }.
 
 (* some sort of monoidal category *)
-HB.structure Definition MonCategory :=
-     { Obj of isCategory Obj & isOMonoid Obj }.
+HB.structure Definition PreMonBiCategory :=
+     { Obj of PreBiCategory Obj & OMonoid Obj }.
 
-
-
-(********************************************************)
-
-(* monoid axioms *)
-HB.mixin Record isMonoid T of isMUnit T & isMComp T := {
-    massoc : associative (mcomp: T -> T -> T);
-    mlid   : left_id (munit: T) (mcomp: T -> T -> T) ;
-    mrid   : right_id  (munit: T) (mcomp: T -> T -> T) ;
-  }.
-#[verbose]
-HB.structure Definition Monoid := { T of isMonoid T }.
-
-
-#[wrapper]
-(* does not work (generic Elpi error): 
-   HB.mixin Record isHCat T of precat_quiver T := *)
-HB.mixin Record isCategory T of Precat T :=
-    { isCategory_private : forall A B, isMonoid (@hom T A B) }.
-HB.structure Definition Category :=
-     { Obj of isCategory Obj }.
-
-
-
-HB.factory Record IsFastCat C of Quiver C := 
-
-HB.mixin Record PreCat_IsEnriched C of PreMonoidal C := {
-    
-}.
 
 (*******************************************************************)
 
