@@ -1015,75 +1015,96 @@ Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
 (*** ENRICHED CATEGORIES *)
 
-(* both the base objects and the the homsets in the base quiver are
-   mapped to ecat objects.  
-   Obj(C) = base_carrier ; C(a, b) = hom_object a b ; 
-   1) Not clear how declaring a wrapper for base_quiver could help, 
-      as there is no real lifting (base_carrier is unrelated to T). 
-   2) Should base_object be injective? 
-   3) Should (the uncurrying of) hom_object be injective? 
-   4) Should base_quiver be a category too? *)
-HB.mixin Record IsEQuiver T of Quiver T := {
-    base_carrier : U ;
-    base_object : base_carrier -> T ;
-    base_quiver : Quiver base_carrier ;
-    hom_object : base_carrier -> base_carrier -> T   
+Definition injective {A B} (f : A->B) :=
+  forall x y, f x = f y -> x = y.
+
+(* Enrichment in a monoidal category, from
+   https://ncatlab.org/nlab/show/enriched+category
+
+   T is the monoidal category (V on the webpage);
+
+   B is the base category that gets enriched (C on the webpage);
+
+   Notice that the enrichement properties do not depend in any way on
+   B being a category (or even a quiver), whereas they rely heavily on
+   T being monoidal. This reflects the ncatlab definition. However, I
+   think it should be understood that B is a category, before being an
+   enriched one. It still makes it slightly unintuitive the fact that
+   they speak of B as the T-enriched category, whereas we have B as a
+   parameter of the enriched category based on T. But given our
+   definition of monoidal category, I haven't found a better way of
+   putting it.
+
+   I am still unsure whether the objects of B should be injected into
+   those of T, too. I don't find the ncatlab definition very
+   enlighting on this, but afer looking at double categories I am
+   incined to think this is not wanted.  *)
+HB.mixin Record IsEQuiver (B: Cat.type) T of Quiver T := {
+    hom_object : B -> B -> T ;
+    hom_object_inj: injective (fun x => hom_object (fst x) (snd x)) ;
   }.
 Unset Universe Checking.
-HB.structure Definition EQuiver : Set := { C of IsEQuiver C }.
+HB.structure Definition EQuiver (B: Cat.type) : Set :=
+  { C of IsEQuiver B C }.
 Set Universe Checking.
 
 (* Monoidal precategory with the enrichment operators (no axioms) *)
-HB.mixin Record IsEnPreCat T of PreMonoidal T & EQuiver T := {    
-    id_element : forall (a: base_carrier),
+HB.mixin Record IsEnPreCat (B: Cat.type) T
+              of PreMonoidal T & EQuiver B T := {  
+    id_element : forall (a: B),
       @hom T onec (hom_object a a) ;
-    comp_morphism : forall (a b c: base_carrier),
-      @hom T (@hom_object T b c * @hom_object T a b)
-             (@hom_object T a c) 
+    comp_morphism : forall (a b c: B),
+      @hom T (@hom_object B T b c * @hom_object B T a b)
+             (@hom_object B T a c) 
 }.    
 Unset Universe Checking. 
-HB.structure Definition EnPreCat : Set := { C of IsEnPreCat C }.
+HB.structure Definition EnPreCat (B: Cat.type) : Set :=
+  { C of IsEnPreCat B C }.
 Set Universe Checking.
 
 Notation "a ~^ b" := (hom_object a b)
    (at level 99, b at level 200, format "a ~^ b") : cat_scope.
-Notation "a ~^_ T b" := (@hom_object T a b)
-  (at level 99, T at level 0, only parsing) : cat_scope.
+Notation "a ~^_ ( B , T ) b" := (@hom_object B T a b)
+  (at level 99, B at level 0, T at level 0, only parsing) : cat_scope.
 Notation "~^I a" := (id_element a)
    (at level 99, format "~^I a") : cat_scope.
-Notation "~^I_ T a" := (@id_element T a)
-  (at level 99, T at level 0, only parsing) : cat_scope.
+Notation "~^I_ ( B , T ) a" := (@id_element B T a)
+  (at level 99, B at level 0, T at level 0, only parsing) : cat_scope.
+(* not working *)
 Notation "~^C a b c" := (comp_morphism a b c)
                           (at level 99,
                             format "~^C a b c") : cat_scope.
-Notation "~^C_ T a b c" := (@comp_morphism T a b c)
-  (at level 99, T at level 0, only parsing) : cat_scope.
+Notation "~^C_ ( B , T ) a b c" := (@comp_morphism B T a b c)
+  (at level 99, B at level 0, T at level 0, only parsing) : cat_scope.
+
 
 (* Enriched category 
   (PreMonoidal_IsMonoidal and PreCat_IsCat would suffice) *) 
-HB.mixin Record IsEnCat T of EnPreCat T & Cat T & Monoidal T := {    
-   ecat_comp_assoc : forall a b c d: base_carrier,
-        forall alpha: ((((c ~^_T d) * (b ~^_T c)) * (a ~^_T b)) ~>_T
-                      ((c ~^_T d) * ((b ~^_T c) * (a ~^_T b)))),
-        ((@comp_morphism T b c d) <*> (@idmap T (a ~^_T b))) \;
-        (@comp_morphism T a b d)
+HB.mixin Record IsEnCat (B: Cat.type) T
+              of EnPreCat B T & Cat T & Monoidal T := {    
+   ecat_comp_assoc : forall a b c d: B,
+    forall alpha:
+      (((c ~^_(B,T) d) * (b ~^_(B,T) c)) * (a ~^_(B,T) b)) ~>_T
+      ((c ~^_(B,T) d) * ((b ~^_(B,T) c) * (a ~^_(B,T) b))),
+        ((@comp_morphism B T b c d) <*> (@idmap T (a ~^_(B,T) b))) \;
+        (@comp_morphism B T a b d)
         =
         alpha \;
-        ((@idmap T (c ~^_T d)) <*> (@comp_morphism T a b c)) \;
-        (@comp_morphism T a c d) ;                    
+        ((@idmap T (c ~^_(B,T) d)) <*> (@comp_morphism B T a b c)) \;
+        (@comp_morphism B T a c d) ;  
 
-   ecat_comp_left_unital : forall a b: base_carrier,
-         forall l: onec * (a ~^_T b) ~>_T (a ~^_T b), 
-           l = ((@id_element T b) <*> (@idmap T (a ~^_T b))) \;
-               (@comp_morphism T a b b) ;                                            
-   ecat_comp_right_unital : forall a b: base_carrier,
-         forall r: (a ~^_T b) * onec ~>_T (a ~^_T b), 
-           r = ((@idmap T (a ~^_T b)) <*> (@id_element T a)) \;
-               (@comp_morphism T a a b)                                         
+   ecat_comp_left_unital : forall a b: B,
+    forall l: onec * (a ~^_(B,T) b) ~>_T (a ~^_(B,T) b), 
+      l = ((@id_element B T b) <*> (@idmap T (a ~^_(B,T) b))) \;
+          (@comp_morphism B T a b b) ;                                           
+   ecat_comp_right_unital : forall a b: B,
+    forall r: (a ~^_(B,T) b) * onec ~>_T (a ~^_(B,T) b), 
+      r = ((@idmap T (a ~^_(B,T) b)) <*> (@id_element B T a)) \;
+          (@comp_morphism B T a a b)                                         
 }.
 Unset Universe Checking.
 #[verbose]
-HB.structure Definition EnCat : Set := { C of IsEnCat C }.
+HB.structure Definition EnCat (B: Cat.type) : Set := { C of IsEnCat B C }.
 Set Universe Checking.
 
 
@@ -1122,11 +1143,21 @@ Unset Universe Checking.
 HB.structure Definition H2Cat : Set := { C of IsH2Cat C }.
 Set Universe Checking.
 
-(* Double category (D0, D1).
-   base obejcts (D0): C ;
-   vertical morphisms (D0): @hom C ;
-   horizontal morhisms (and 2-objects, D1): @vhom C ;
-   2-morphisms (D1): @hom (@HomObj C (@vhom C) *)
+(* Double categories, from
+   https://ncatlab.org/nlab/show/double+category
+
+   The definition we follow here however is a comparatively informal
+   one, which also mentions internal categories (not formalized yet).
+
+   Double category (D0, D1).  
+
+   base obejcts (D0): C ; 
+
+   vertical morphisms (D0): @hom C ; 
+
+   horizontal morhisms (and 2-objects, D1): @hhom C ; 
+
+   2-morphisms (D1): @hom (@HomObj C (@vhom C)) *)
 Unset Universe Checking.
 #[short(type="dcat")]
 HB.structure Definition DCat : Set := { C of Cat C & H2Cat C }.
