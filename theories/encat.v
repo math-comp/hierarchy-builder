@@ -1100,6 +1100,7 @@ Record Total2 T (h: T -> T -> U) : Type := HO {
     target : T;
     this_hom : h source target }.
 
+(* needed to identify HHomSet as lifter *)
 HB.tag Definition HHomSet (C: hquiver) := Total2 (@hhom C).
 
 (* A quiver from which 2-morphisms arise as arrows between 2-objects
@@ -1116,13 +1117,12 @@ Unset Universe Checking.
 #[wrapper]
 HB.mixin Record IsH2PreCat T of HQuiver T & H2Quiver T := {
     h2precat : Quiver_IsPreCat (@HHomSet T) }.
-#[short(type="h2quiver")]
+#[short(type="h2precat")]
 HB.structure Definition H2PreCat : Set := { C of IsH2PreCat C }.
 Set Universe Checking.
 
+(* The category based on the H2Quiver (D1). *)
 Unset Universe Checking.
-(* The category based on the H2Quiver. 
-The wrapper attribute does not work though *)
 #[wrapper] 
 HB.mixin Record IsH2Cat T of H2PreCat T := {
     h2cat : PreCat_IsCat (@HHomSet T) }.
@@ -1142,9 +1142,9 @@ Set Universe Checking.
 
    vertical morphisms (D0): @hom C ; 
 
-   horizontal morhisms (and 2-objects, D1): @hhom C ; 
+   horizontal morhisms (and 2-objects, D1): @HHomSet C ; 
 
-   2-morphisms (D1): @hom (@HomObj C (@vhom C)) *)
+   2-morphisms (D1): @hom (@HHomSet C) *)
 Unset Universe Checking.
 #[short(type="dcat")]
 HB.structure Definition DCat : Set := { C of Cat C & H2Cat C }.
