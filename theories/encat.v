@@ -1085,7 +1085,105 @@ HB.structure Definition EnCat (V: Monoidal.type) : Set := { C of IsEnCat V C }.
 Set Universe Checking.
 
 
-(*** DOUBLE CATEGORIES *)
+
+(*** DOUBLE CATEGORIES (NEW) *)
+
+(* A quiver from which horizontal morphisms arise. D1 is the type of
+   D1 objects (horizontal morphisms in C), with source and target
+   functors.  *)
+HB.mixin Record HasD1 C := {
+    D1 : U ;
+    s10 : D1 -> C ;
+    t10 : D1 -> C }.
+Unset Universe Checking.
+#[short(type="hquiver")]
+HB.structure Definition D1type : Set := { C of HasD1 C }.
+Set Universe Checking.
+
+(* A quiver from which 2-morphisms arise as arrows between 2-objects
+   (i.e. horizontal morphisms) *)
+#[wrapper]
+HB.mixin Record IsH2Quiver T of HasD1 T := {
+    h2quiver : IsQuiver (@D1 T) }.
+Unset Universe Checking.
+#[short(type="h2quiver")]
+HB.structure Definition H2Quiver : Set := { C of IsH2Quiver C }.
+Set Universe Checking.
+
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsH2PreCat T of H2Quiver T := {
+    h2precat : Quiver_IsPreCat (@D1 T) }.
+#[short(type="h2quiver")]
+HB.structure Definition H2PreCat : Set := { C of IsH2PreCat C }.
+Set Universe Checking.
+
+(* The category based on the H2Quiver (D1). *)
+Unset Universe Checking.
+#[wrapper] 
+HB.mixin Record IsH2Cat T of H2PreCat T := {
+    h2cat : PreCat_IsCat (@D1 T) }.
+#[short(type="h2cat")]
+#[verbose] 
+HB.structure Definition H2Cat : Set := { C of IsH2Cat C }.
+Set Universe Checking.
+
+(* Pre-double category (no functors yet): this corresponds to the old
+definition *)
+Unset Universe Checking.
+HB.structure Definition PreDCat : Set := { D of Cat D & H2Cat D }.
+Set Universe Checking.
+
+(* source prefunctor. 
+   D1 here is the quiver of the 2-morphisms, thanks to IsH2Quiver. 
+   T is the quiver of 1-morphisms. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHSPreFunctor T of Cat T & H2Cat T := {
+    h2s_prefunctor : IsPreFunctor D1 T s10 }.
+HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
+Set Universe Checking.
+
+(* target prefunctor. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHTPreFunctor T of Cat T & H2Cat T := {
+    h2t_prefunctor : IsPreFunctor D1 T t10 }.
+HB.structure Definition HTPreFunctor : Set := {C of IsHTPreFunctor C}.
+Set Universe Checking.
+
+(* source functor. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record HSPreFunctor_IsFunctor T of Cat T & HSPreFunctor T := {
+    h2s_prefunctor : PreFunctor_IsFunctor D1 T s10 }.
+HB.structure Definition HSFunctor : Set := {C of HSPreFunctor_IsFunctor C}.
+Set Universe Checking.
+
+(* target functor. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record HTPreFunctor_IsFunctor T of Cat T & HTPreFunctor T := {
+    h2t_prefunctor : PreFunctor_IsFunctor D1 T t10 }.
+HB.structure Definition HTFunctor : Set := {C of HTPreFunctor_IsFunctor C}.
+
+(* double category *)
+HB.structure Definition DCat : Set :=
+  {D of HSPreFunctor_IsFunctor D & HTPreFunctor_IsFunctor D }.
+Set Universe Checking.
+
+(* 2-morphisms *)
+Definition hhom (D: DCat.type) := @hom (@D1 D).
+
+Definition transpose (D: DCat.type) : U := D.
+
+Fail Lemma hom_transpose (D: DCat.type) : @hom (transpose D) = @hhom D.
+
+Fail Lemma hhom_transpose (D: DCat.type) : @hhom (transpose D) = @hom D.
+
+
+
+(*** DOUBLE CATEGORIES (OLD) *)
 
 (* A quiver from which horizontal morphisms arise (just a copy of quiver) *)
 HB.mixin Record IsHQuiver C := { hhom : C -> C -> U }.
