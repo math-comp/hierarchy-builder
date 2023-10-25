@@ -1119,6 +1119,7 @@ Unset Universe Checking.
 HB.structure Definition H2Quiver : Set := { C of IsH2Quiver C }.
 Set Universe Checking.
 
+(* adding the map to define the unit functor D0 -> D1 *)
 HB.mixin Record IsH2FQuiver T of H2Quiver T := {
     h2unit_map: forall x:T, @hhom T x x ;
   }.
@@ -1127,17 +1128,7 @@ Unset Universe Checking.
 HB.structure Definition H2FQuiver : Set := { C of IsH2FQuiver C }.
 Set Universe Checking.
 
-(*
-HB.mixin Record IsH2GQuiver C of H2Quiver C := {
-    h2unit_map := fun (x: C) => @HO C hhom x x
-        (h2unit_map x) 
-  }.
-Unset Universe Checking.
-#[short(type="h2fquiver")]
-HB.structure Definition H2FQuiver : Set := { C of IsH2FQuiver C }.
-Set Universe Checking.
-*)
-
+(* Precat based on the H2Quiver (D1). *)
 Unset Universe Checking.
 #[wrapper]
 HB.mixin Record IsH2PreCat T of H2FQuiver T := {
@@ -1176,7 +1167,7 @@ Definition UnitF C (X: H2FQuiver C) := fun (x: C) =>
 *)
 
 (* source prefunctor. 
-   D1 here is the quiver of the 2-morphisms, thanks to IsH2Quiver. 
+   HHomSet T is the quiver of the 2-morphisms, thanks to H2Quiver. 
    T is the quiver of 1-morphisms. *)
 Unset Universe Checking.
 #[wrapper]
@@ -1209,6 +1200,7 @@ HB.mixin Record HTPreFunctor_IsFunctor T of Cat T & HTPreFunctor T := {
 HB.structure Definition HTFunctor : Set := {C of HTPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
+(* unit prefunctor. PROBLEMS *)
 Unset Universe Checking.
 (* fails with wrapping 
    #[wrapper] *)
@@ -1218,6 +1210,7 @@ HB.mixin Record IsHUPreFunctor T of Cat T & H2Cat T := {
 HB.structure Definition HUPreFunctor : Set := {C of IsHUPreFunctor C}.
 Set Universe Checking.
 
+(* unit functor. FAILS *)
 Unset Universe Checking.
 (* major problems  
    #[wrapper] *)
@@ -1226,7 +1219,7 @@ Fail HB.mixin Record HUPreFunctor_IsFunctor T of Cat T & HUPreFunctor T := {
 Fail HB.structure Definition HUFunctor : Set := {C of HUPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
-(* double category *)
+(* double category (unit functor to be added) *)
 Unset Universe Checking.
 HB.structure Definition DCat : Set :=
   {D of HSPreFunctor_IsFunctor D & HTPreFunctor_IsFunctor D }.
