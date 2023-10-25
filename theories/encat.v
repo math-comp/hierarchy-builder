@@ -1015,19 +1015,24 @@ Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
 (*** ENRICHED CATEGORIES *)
 
+Declare Scope encat_scope.
+Delimit Scope encat_scope with encat.
+Local Open Scope encat_scope.
+
 (* Enrichment in a monoidal category, following 
    https://ncatlab.org/nlab/show/enriched+category
 *)
-HB.mixin Record IsEnQuiver (V: Monoidal.type) C of Quiver C := {
+HB.mixin Record IsEnQuiver (V: Type) C := {
     hom_object : C -> C -> V 
   }.
 Unset Universe Checking.
-HB.structure Definition EnQuiver (V: Monoidal.type) : Set :=
+HB.structure Definition EnQuiver (V: Type) : Set :=
   { C of IsEnQuiver V C }.
 Set Universe Checking.
 
 (* Monoidal precategory with the enrichment operators (no axioms) *)
-HB.mixin Record IsEnPreCat (V: Monoidal.type) C of EnQuiver V C := {  
+HB.mixin Record IsEnPreCat (V: PreMonoidal.type) C of
+  EnQuiver (PreMonoidal.sort V) C := {  
     id_element : forall (a: C),
       @hom V onec (hom_object a a) ;
     comp_morphism : forall (a b c: C),
@@ -1035,12 +1040,12 @@ HB.mixin Record IsEnPreCat (V: Monoidal.type) C of EnQuiver V C := {
              (@hom_object V C a c) 
 }.    
 Unset Universe Checking. 
-HB.structure Definition EnPreCat (V: Monoidal.type) : Set :=
+HB.structure Definition EnPreCat (V: PreMonoidal.type) : Set :=
   { C of IsEnPreCat V C }.
 Set Universe Checking.
 
 Notation "a ~^ b" := (hom_object a b)
-   (at level 99, b at level 200, format "a ~^ b") : cat_scope.
+   (at level 99, b at level 200, format "a ~^ b") : encat_scope.
 Notation "a ~^_ ( V , C ) b" := (@hom_object V C a b)
   (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
 Notation "~^IE a" := (id_element a)
@@ -1086,7 +1091,173 @@ Set Universe Checking.
 
 
 
-(*** DOUBLE CATEGORIES (NEW) *)
+(*** DOUBLE CATEGORIES (REVISED) *)
+
+(* A quiver from which horizontal morphisms arise (just a copy of quiver) *)
+HB.mixin Record IsHQuiver C := { hhom : C -> C -> U }.
+Unset Universe Checking.
+#[short(type="hquiver")]
+HB.structure Definition HQuiver : Set := { C of IsHQuiver C }.
+Set Universe Checking.
+
+(* domain-specific sigma-type to represent the 2-objects *)
+Record Total2 T (h: T -> T -> U) : Type := HO {
+    source : T;
+    target : T;
+    this_hom : h source target }.
+
+(* needed to identify HHomSet as lifter *)
+HB.tag Definition HHomSet (C: hquiver) := Total2 (@hhom C).
+
+(* A quiver from which 2-morphisms arise as arrows between 2-objects
+   (i.e. horizontal morphisms) *)
+#[wrapper]
+HB.mixin Record IsH2Quiver T of HQuiver T := {
+    h2quiver : IsQuiver (@HHomSet T) }.
+Unset Universe Checking.
+#[short(type="h2quiver")]
+HB.structure Definition H2Quiver : Set := { C of IsH2Quiver C }.
+Set Universe Checking.
+
+HB.mixin Record IsH2FQuiver T of H2Quiver T := {
+    h2unit_map: forall x:T, @hhom T x x ;
+  }.
+Unset Universe Checking.
+#[short(type="h2fquiver")]
+HB.structure Definition H2FQuiver : Set := { C of IsH2FQuiver C }.
+Set Universe Checking.
+
+(*
+HB.mixin Record IsH2GQuiver C of H2Quiver C := {
+    h2unit_map := fun (x: C) => @HO C hhom x x
+        (h2unit_map x) 
+  }.
+Unset Universe Checking.
+#[short(type="h2fquiver")]
+HB.structure Definition H2FQuiver : Set := { C of IsH2FQuiver C }.
+Set Universe Checking.
+*)
+
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsH2PreCat T of H2FQuiver T := {
+    h2precat : Quiver_IsPreCat (@HHomSet T) }.
+#[short(type="h2precat")]
+HB.structure Definition H2PreCat : Set := { C of IsH2PreCat C }.
+Set Universe Checking.
+
+(* The category based on the H2Quiver (D1). *)
+Unset Universe Checking.
+#[wrapper] 
+HB.mixin Record IsH2Cat T of H2PreCat T := {
+    h2cat : PreCat_IsCat (@HHomSet T) }.
+#[short(type="h2cat")]
+HB.structure Definition H2Cat : Set := { C of IsH2Cat C }.
+Set Universe Checking.
+
+(* Pre-double category (no functors yet): this corresponds to the old
+definition *)
+Unset Universe Checking.
+#[short(type="predcat")]
+HB.structure Definition PreDCat : Set := { D of Cat D & H2Cat D }.
+Set Universe Checking.
+
+(* source functor: D1 -> D0 *)
+HB.tag Definition Source C := fun (X: HHomSet C) => @source C (@hhom C) X.
+(* target functor: D1 -> D0 *)
+HB.tag Definition Target C := fun (X: HHomSet C) => @target C (@hhom C) X.
+(* unit functor: D0 -> D1 *)
+HB.tag Definition UnitF (C: h2fquiver) := fun (x:C) =>
+  @HO _ _ x x (@h2unit_map C x). 
+(*
+Definition UnitF C (X: H2FQuiver C) := fun (x: C) =>
+  @HO C (@hhom (@H2FQuiver.Pack C X)) x x
+        (@h2unit_map (@H2FQuiver.Pack C X) x). 
+*)
+
+(* source prefunctor. 
+   D1 here is the quiver of the 2-morphisms, thanks to IsH2Quiver. 
+   T is the quiver of 1-morphisms. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHSPreFunctor T of Cat T & H2Cat T := {
+    h2s_prefunctor : IsPreFunctor (HHomSet T) T (@Source T) }.
+HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
+Set Universe Checking.
+
+(* target prefunctor. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHTPreFunctor T of Cat T & H2Cat T := {
+    h2t_prefunctor : IsPreFunctor (HHomSet T) T (@Target T) }.
+HB.structure Definition HTPreFunctor : Set := {C of IsHTPreFunctor C}.
+Set Universe Checking.
+
+(* source functor. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record HSPreFunctor_IsFunctor T of Cat T & HSPreFunctor T := {
+    h2s_functor : PreFunctor_IsFunctor (HHomSet T) T (@Source T) }.
+HB.structure Definition HSFunctor : Set := {C of HSPreFunctor_IsFunctor C}.
+Set Universe Checking.
+
+(* target functor. *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record HTPreFunctor_IsFunctor T of Cat T & HTPreFunctor T := {
+    h2t_functor : PreFunctor_IsFunctor (HHomSet T) T (@Target T) }.
+HB.structure Definition HTFunctor : Set := {C of HTPreFunctor_IsFunctor C}.
+Set Universe Checking.
+
+Unset Universe Checking.
+(* fails with wrapping 
+   #[wrapper] *)
+HB.mixin Record IsHUPreFunctor T of Cat T & H2Cat T := {
+    h2u_prefunctor : IsPreFunctor T (HHomSet T) (@UnitF T) }.
+(* Unset Universe Checking.  *)
+HB.structure Definition HUPreFunctor : Set := {C of IsHUPreFunctor C}.
+Set Universe Checking.
+
+Unset Universe Checking.
+(* major problems  
+   #[wrapper] *)
+Fail HB.mixin Record HUPreFunctor_IsFunctor T of Cat T & HUPreFunctor T := {
+    h2u_functor : PreFunctor_IsFunctor T (HHomSet T) (@UnitF T) }.
+Fail HB.structure Definition HUFunctor : Set := {C of HUPreFunctor_IsFunctor C}.
+Set Universe Checking.
+
+(* double category *)
+Unset Universe Checking.
+HB.structure Definition DCat : Set :=
+  {D of HSPreFunctor_IsFunctor D & HTPreFunctor_IsFunctor D }.
+Set Universe Checking.
+
+(* 2-morphisms *)
+Definition h2hom (D: DCat.type) := @hom (@HHomSet D).
+
+(* dummy def
+Definition transpose (D: DCat.type) : U := D. *)
+
+Fail Lemma hom_transpose (D: DCat.type) : @hom (transpose D) = @h2hom D.
+
+Fail Lemma hhom_transpose (D: DCat.type) : @h2hom (transpose D) = @hom D.
+
+Definition transpose_isquiver C (X: IsQuiver C) : IsHQuiver C.
+  destruct X.
+  econstructor.
+  exact hom0.
+Defined.
+  
+Definition transpose_ishquiver C (X: IsHQuiver C) : IsQuiver C.
+  destruct X.
+  econstructor.
+  exact hhom0.
+Defined.
+
+
+
+
+(*** DOUBLE CATEGORIES (PREVIOUS) *)
 
 (* A quiver from which horizontal morphisms arise. D1 is the type of
    D1 objects (horizontal morphisms in C), with source and target
@@ -1114,7 +1285,7 @@ Unset Universe Checking.
 #[wrapper]
 HB.mixin Record IsH2PreCat T of H2Quiver T := {
     h2precat : Quiver_IsPreCat (@D1 T) }.
-#[short(type="h2quiver")]
+#[short(type="h2precat")]
 HB.structure Definition H2PreCat : Set := { C of IsH2PreCat C }.
 Set Universe Checking.
 
@@ -1166,8 +1337,10 @@ Unset Universe Checking.
 HB.mixin Record HTPreFunctor_IsFunctor T of Cat T & HTPreFunctor T := {
     h2t_prefunctor : PreFunctor_IsFunctor D1 T t10 }.
 HB.structure Definition HTFunctor : Set := {C of HTPreFunctor_IsFunctor C}.
+Set Universe Checking.
 
 (* double category *)
+Unset Universe Checking.
 HB.structure Definition DCat : Set :=
   {D of HSPreFunctor_IsFunctor D & HTPreFunctor_IsFunctor D }.
 Set Universe Checking.
