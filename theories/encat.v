@@ -1228,12 +1228,16 @@ Set Universe Checking.
 (* 2-morphisms *)
 Definition h2hom (D: DCat.type) := @hom (@HHomSet D).
 
-(* dummy def
-Definition transpose (D: DCat.type) : U := D. *)
-
-Fail Lemma hom_transpose (D: DCat.type) : @hom (transpose D) = @h2hom D.
-
-Fail Lemma hhom_transpose (D: DCat.type) : @h2hom (transpose D) = @hom D.
+(* still don't understand
+   transposition whould swap vertical and horizontal morphisms, 
+   i.e. hom and hhom  *)
+Definition transpose1 (D: DCat.type) : U := D. 
+(* however, given transpose1 this should hold *)
+Lemma hom_transpose (D: DCat.type) : @hom (transpose1 D) = @hhom D.
+Admitted.
+(* and this too *)  
+Lemma hhom_transpose (D: DCat.type) : @hhom (transpose1 D) = @hom D.
+Admitted. 
 
 Definition transpose_isquiver C (X: IsQuiver C) : IsHQuiver C.
   destruct X.
@@ -1247,6 +1251,13 @@ Definition transpose_ishquiver C (X: IsHQuiver C) : IsQuiver C.
   exact hhom0.
 Defined.
 
+(* tranposition as a relation *)
+Definition isTranspose C
+  (FQ: PreDCat C -> Quiver C)
+  (FHQ: PreDCat C -> HQuiver C)
+  (D1 D2: PreDCat C) : Type :=
+  @hom (Quiver.Pack (FQ D2)) = @hhom (HQuiver.Pack (FHQ D1)) /\
+  @hhom (HQuiver.Pack (FHQ D2)) = @hom (Quiver.Pack (FQ D1)).
 
 
 
