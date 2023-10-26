@@ -1239,6 +1239,14 @@ Admitted.
 Lemma hhom_transpose (D: DCat.type) : @hhom (transpose1 D) = @hom D.
 Admitted. 
 
+(* tranposition as a relation *)
+Definition isTranspose C
+  (FQ: PreDCat C -> Quiver C)
+  (FHQ: PreDCat C -> HQuiver C)
+  (D1 D2: PreDCat C) : Type :=
+  @hom (Quiver.Pack (FQ D2)) = @hhom (HQuiver.Pack (FHQ D1)) /\
+  @hhom (HQuiver.Pack (FHQ D2)) = @hom (Quiver.Pack (FQ D1)).
+
 Definition transpose_isquiver C (X: IsQuiver C) : IsHQuiver C.
   destruct X.
   econstructor.
@@ -1251,13 +1259,25 @@ Definition transpose_ishquiver C (X: IsHQuiver C) : IsQuiver C.
   exact hhom0.
 Defined.
 
-(* tranposition as a relation *)
-Definition isTranspose C
+Definition transpose_quiver C (X: Quiver C) : HQuiver C.
+  destruct X.
+  econstructor.
+  eapply transpose_isquiver; eauto.
+Defined.
+  
+Definition transpose_hquiver C (X: HQuiver C) : Quiver C.
+  destruct X.
+  econstructor.
+  eapply transpose_ishquiver; eauto.
+Defined.
+
+(* tranposition as a relation, using the transpose functions *)
+Definition isTransposeF C
   (FQ: PreDCat C -> Quiver C)
   (FHQ: PreDCat C -> HQuiver C)
   (D1 D2: PreDCat C) : Type :=
-  @hom (Quiver.Pack (FQ D2)) = @hhom (HQuiver.Pack (FHQ D1)) /\
-  @hhom (HQuiver.Pack (FHQ D2)) = @hom (Quiver.Pack (FQ D1)).
+  Quiver.Pack (FQ D2) = Quiver.Pack (@transpose_hquiver C (FHQ D1)) /\
+  HQuiver.Pack (FHQ D2) = HQuiver.Pack (@transpose_quiver C (FQ D1)).
 
 
 
