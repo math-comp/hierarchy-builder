@@ -1158,7 +1158,7 @@ HB.tag Definition Source C := fun (X: HHomSet C) => @source C (@hhom C) X.
 (* target functor: D1 -> D0 *)
 HB.tag Definition Target C := fun (X: HHomSet C) => @target C (@hhom C) X.
 (* unit functor: D0 -> D1 *)
-HB.tag Definition UnitF (C: h2fquiver) := fun (x:C) =>
+HB.tag Definition UnitF (C: h2fquiver) := fun (x:H2FQuiver.sort C) =>
   @HO _ _ x x (@h2unit_map C x). 
 (*
 Definition UnitF C (X: H2FQuiver C) := fun (x: C) =>
@@ -1207,8 +1207,11 @@ Unset Universe Checking.
 HB.mixin Record IsHUPreFunctor T of Cat T & H2Cat T := {
     h2u_prefunctor : IsPreFunctor T (HHomSet T) (@UnitF T) }.
 (* Unset Universe Checking.  *)
-HB.structure Definition HUPreFunctor : Set := {C of IsHUPreFunctor C}.
+HB.structure Definition HUPreFunctor : Set :=
+  {C of IsHUPreFunctor C}.
 Set Universe Checking.
+(* {T of Cat T & H2Cat T & H2FQuiver T & 
+    IsPreFunctor _ (HHomSet _) (@UnitF T)}. *)
 
 (* unit functor. FAILS *)
 Unset Universe Checking.
