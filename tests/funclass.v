@@ -16,7 +16,7 @@ About id.
 
 Require Import Arith ssreflect.
 
-HB.instance Definition x1 := has_assoc.Build nat plus plus_assoc.
+HB.instance Definition x1 := has_assoc.Build nat plus Nat.add_assoc.
 
 Lemma plus_O_r x : x + 0 = x. Proof. by rewrite -plus_n_O. Qed.
 HB.instance Definition x2 := has_neutral.Build nat plus 0 plus_O_n plus_O_r.
