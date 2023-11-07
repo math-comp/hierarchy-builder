@@ -1123,7 +1123,7 @@ HB.tag Definition HTarget C := fun (X: HHomSet C) => @target C (@hhom C) X.
 (* D1 quiver requirement. *)
 #[wrapper]
 HB.mixin Record IsD1Quiver T of HQuiver T := {
-    d1quiver : IsQuiver (@HHomSet T) }.
+    d1_quiver : IsQuiver (@HHomSet T) }.
 Unset Universe Checking.
 #[short(type="d1quiver")]
 HB.structure Definition D1Quiver : Set := { C of IsD1Quiver C }.
@@ -1174,14 +1174,17 @@ Set Universe Checking.
    the object-level (between horizontal morphisms) is matched by
    adjacency at the morphism-level (between 2-cells).  *)
 HB.mixin Record IsC2Quiver T of DQuiver T & HCompCat T := {
+    h2unit : forall a: T, @hhom T a a ;
+    h2comp : forall (a b c: T),
+      @hhom T a b -> @hhom T b c -> @hhom T a c;
+
     c2unit : T -> HHomSet T ;
     c2comp : HComp T -> HHomSet T ; 
 
-    c2unit_eq1 : forall a: T, a = source (c2unit a) ;
-    c2unit_eq2 : forall a: T, a = target (c2unit a) ;
-
-    c2comp_eq1 : forall d, source (c2comp d) = c_one d ;
-    c2comp_eq2 : forall d, target (c2comp d) = c_three d ;
+    c2unit_eq : forall a: T, c2unit a = @HO T (@hhom T) a a (h2unit a) ; 
+    c2comp_eq1 : forall (a b c: T) (h1: @hhom T a b) (h2: @hhom T b c),
+      c2comp (@GC T (@hhom T) a b c h1 h2) =
+        @HO T (@hhom T) a c (h2comp a b c h1 h2)   
 }.                                  
 Unset Universe Checking.
 #[short(type="c2quiver")]
@@ -1303,8 +1306,64 @@ Definition HC2Comp (T: HCFunctor.type) (a b: HComp T)
   (m: @hom (HComp T) a b) :
   c2hom (CompF a) (CompF b) := @Fhom _ _ (@CompF T) a b m.
 
-(* Double cateory complete with properties of horizontal 2-cell
+(* Double category complete with properties of horizontal 2-cell
    identity and composition *)
+Unset Universe Checking.
+HB.mixin Record IsDCat T of HCFunctor T := {
+    left_unital : forall (a0 a1 b0 b1: T)
+                         (r: @hhom T a0 a1) (s: @hhom T b0 b1),
+      let rr := @HO T (@hhom T) a0 a1 r in
+      let ss := @HO T (@hhom T) b0 b1 s in      
+      let aa := @h2unit T a0 in
+      let bb := @h2unit T b0 in
+      @hom (HHomSet T) rr ss =
+      @hom (HHomSet T) (c2comp (@GC T _ a0 a0 a1 aa r))
+                       (c2comp (@GC T _ b0 b0 b1 bb s)) ; 
+
+    right_unital : forall (a0 a1 b0 b1: T)
+                         (r: @hhom T a0 a1) (s: @hhom T b0 b1),
+      let rr := @HO T (@hhom T) a0 a1 r in
+      let ss := @HO T (@hhom T) b0 b1 s in      
+      let aa := @h2unit T a1 in
+      let bb := @h2unit T b1 in
+      @hom (HHomSet T) rr ss =
+      @hom (HHomSet T) (c2comp (@GC T _ a0 a1 a1 r aa))
+                       (c2comp (@GC T _ b0 b1 b1 s bb)) ; 
+
+    associator : forall (a0 a1 a2 a3: T)
+                        (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
+                        (h3: @hhom T a2 a3) (x: HHomSet T),
+      let h23 := h2comp a1 a2 a3 h2 h3 in
+      let h12 := h2comp a0 a1 a2 h1 h2 in     
+      let hh1 := h2comp a0 a1 a3 h1 h23 in 
+      let hh2 := h2comp a0 a2 a3 h12 h3 in 
+      @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh1) x =
+        @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) x
+}. 
+#[short(type="dcat")]
+HB.structure Definition DCat : Set := { C of IsDCat C }.
+Set Universe Checking.
+
+
+
+(*********************************************************************)
+(**** GARBAGE ****************************************************)
+
+(* Double category *)
+Unset Universe Checking.
+HB.mixin Record IsDCat T of HCFunctor T := { 
+     left_unital : forall (a b: T) (r: @hhom T a b),
+      let rr := @HO T (@hhom T) a b r in 
+      let aa := @h2unit T a in 
+     @hom (HHomSet T) (c2comp (@GC T _ a a b aa r)) rr ; 
+
+    right_unital : forall (a b: T) (r: @hhom T a b),
+      let rr := @HO T (@hhom T) a b r in 
+      let bb := @h2unit T b in 
+     @hom (HHomSet T) (c2comp (@GC T _ a b b r bb)) rr ;
+}.
+
+(* Double category *)
 Unset Universe Checking.
 HB.mixin Record IsDCat T of HCFunctor T := { 
     left_unital : forall (a b c d: T) (r: @hhom T a c) (s: @hhom T b d), 
@@ -1333,10 +1392,6 @@ HB.mixin Record IsDCat T of HCFunctor T := {
 HB.structure Definition DCat : Set := { C of IsDCat C }.
 Set Universe Checking.
 
-
-
-(*********************************************************************)
-(**** GARBAGE ****************************************************)
 
 (* a sequence of two adjacent morphisms (pullback object), 
    which we can use to represent composition *)
