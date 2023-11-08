@@ -1093,27 +1093,29 @@ Set Universe Checking.
 
 (*** DOUBLE CATEGORIES (REVISED) *)
 
-HB.tag Definition transpose (C : quiver) : U := C. (* BUG *)
+(* transpose for horizontal morphism quiver.
+   HB.tag needed to identify transpose as lifter *)
+HB.tag Definition transpose (C : quiver) : U := C. 
 #[wrapper] HB.mixin Record IsTQuiver C of IsQuiver C := {
-    priv : IsQuiver (transpose C)
+    is_tquiver : IsQuiver (transpose C)
 }.
+(* vertical and horizontal quivers, defining cells *)
 Unset Universe Checking.
-#[short(type="hquiver")]
-HB.structure Definition HQuiver : Set := { C of IsQuiver C & IsTQuiver C }.
+#[short(type="cquiver")] 
+HB.structure Definition CQuiver : Set := { C of IsQuiver C & IsTQuiver C }.
 Set Universe Checking.
 
-HB.tag Definition hhom (c : HQuiver.type) : c -> c -> U := @hom (transpose c).
+HB.tag Definition hhom (c : CQuiver.type) : c -> c -> U := @hom (transpose c).
 
-(* domain-specific sigma-type to represent the set of morphims 
+(* record to represent the set of morphims 
    (needed for 2-objects, i.e. horizontal morphisms) *)
 Record Total2 T (h: T -> T -> U) : Type := HO {
     source : T;
     target : T;
     this_morph : h source target }.
 
-(* the set of horizontal morphisms. 
-   HB.tag needed to identify HHomSet as lifter *)
-HB.tag Definition HHomSet (C: hquiver) := Total2 (@hhom C).
+(* the set of horizontal morphisms. *)
+HB.tag Definition HHomSet (C: cquiver) := Total2 (@hhom C).
 
 (* source functor (for horizontal morphisms): D1 -> D0.
    defined as object-level function, by functoriality lifted to a
@@ -1124,9 +1126,9 @@ HB.tag Definition HTarget C := fun (X: HHomSet C) => @target C (@hhom C) X.
 
 (* D1 quiver requirement. *)
 #[wrapper] 
-HB.mixin Record IsDQuiver T of HQuiver T := { d1_quiver : Quiver (HHomSet T) }.
+HB.mixin Record IsDQuiver T of CQuiver T := { is_dquiver : Quiver (HHomSet T) }.
 Unset Universe Checking.
-#[short(type="d1quiver")]
+#[short(type="dquiver")]
 HB.structure Definition DQuiver : Set := { C of IsDQuiver C }.
 Set Universe Checking.
 
@@ -1140,48 +1142,46 @@ Record GenComp T (h: T -> T -> U) := GC {
 }.
 
 (* composable pairs of horizontal morphisms as a set *)
-HB.tag Definition HComp (C: hquiver) := GenComp (@hhom C).
+HB.tag Definition HCompSet (C: cquiver) := GenComp (@hhom C).
 
-(* c2unit - horizontal unit functor.
+(* hunit - horizontal unit functor.
 
-   c2comp - horizontal composition functor.
+   hcomp - horizontal composition functor.
 
    Both specified as object-level functions, to be lifted by
    functoriality to morphism-level ones.
 
-   At the object level, c2unit gives a horizontal identity morphism
+   At the object level, hunit gives a horizontal identity morphism
    for each D0 object. At the morphism level, it gives horizontal
    2-cell identity for each vertical morphism.
   
-   In the case of HComp, relying on functoriality requires some care
+   In the case of hcomp, relying on functoriality requires some care
    in defining the pullback category, making sure that adjacency at
    the object-level (between horizontal morphisms) is matched by
    adjacency at the morphism-level (between 2-cells).  *)
-HB.mixin Record IsC2Quiver T of DQuiver T := {
-    h2unit : forall a: T, @hhom T a a ;
-    h2comp : forall (a b c: T),
-      @hhom T a b -> @hhom T b c -> @hhom T a c;
+HB.mixin Record IsHDQuiver T of DQuiver T := {
+    hunit : forall a: T, @hhom T a a ;
+    hcomp : forall (a b c: T), @hhom T a b -> @hhom T b c -> @hhom T a c;
 }.                                  
 Unset Universe Checking.
-#[short(type="c2quiver")]
-HB.structure Definition C2Quiver : Set := { C of IsC2Quiver C }.
+#[short(type="hdquiver")]
+HB.structure Definition HDQuiver : Set := { C of IsHDQuiver C }.
 Set Universe Checking.
 
-Definition c2unit (T: c2quiver) (a: T) : HHomSet T := @HO T (@hhom T) a a (h2unit a).
+Definition hhunit (T: hdquiver) (a: T) : HHomSet T :=
+  @HO T (@hhom T) a a (hunit a).
   
-Definition c2comp (T: c2quiver) (x: HComp T) : HHomSet T := 
+Definition hhcomp (T: hdquiver) (x: HCompSet T) : HHomSet T := 
   match x with 
-  @GC _ _ a b c h1 h2 => @HO T (@hhom T) a c (h2comp a b c h1 h2) end.
+  @GC _ _ a b c h1 h2 => @HO T (@hhom T) a c (hcomp a b c h1 h2) end.
 
-(* Precategory based on the DQuiver (i.e. precategory D1) - only,
-   instead of making it inherit from D1Quiver, we make it inherit from
-   DQuiver. DOES NOT WORK WITH C2Quiver. Gives: 
+(* Precategory based on the DQuiver (i.e. precategory D1). Gives: 
    vertical 2-cell identity morphism.  
    vertical 2-cell composition. *)
 Unset Universe Checking.
 #[wrapper]
 HB.mixin Record IsC2PreCat T of DQuiver T := {
-    c2precat : Quiver_IsPreCat (@HHomSet T) }.
+    is_c2precat : Quiver_IsPreCat (@HHomSet T) }.
 #[short(type="c2precat")]
 HB.structure Definition C2PreCat : Set := { C of IsC2PreCat C }.
 Set Universe Checking.
@@ -1190,74 +1190,74 @@ Set Universe Checking.
 Unset Universe Checking.
 #[wrapper] 
 HB.mixin Record IsC2Cat T of C2PreCat T := {
-    c2cat : PreCat_IsCat (@HHomSet T) }.
-#[short(type="h2cat")]
+    is_c2cat : PreCat_IsCat (@HHomSet T) }.
+#[short(type="c2cat")]
 HB.structure Definition C2Cat : Set := { C of IsC2Cat C }.
 Set Universe Checking.
 
-(* unit functor: D0 -> D1 *)
-HB.tag Definition UnitF (C: c2quiver) :=
-  fun (x: C2Quiver.sort C) => @c2unit C x. 
-(* composition functor: D1 * D1 -> D1 *)
-HB.tag Definition CompF (C: c2quiver) :=
-  fun (x: HComp C) => @c2comp C x. 
+(* horizontal unit functor: D0 -> D1 *)
+HB.tag Definition HUnit (C: hdquiver) :=
+  fun (x: HDQuiver.sort C) => @hhunit C x. 
+(* horizontal composition functor: D1 * D1 -> D1 *)
+HB.tag Definition HComp (C: hdquiver) :=
+  fun (x: HCompSet C) => @hhcomp C x. 
 
 (* source prefunctor. 
-   HHomSet T is the quiver of the 2-morphisms, thanks to H2Quiver. 
+   HHomSet T is the quiver of the 2-morphisms, thanks to DQuiver. 
    T is the quiver of 1-morphisms. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsHSPreFunctor T of Cat T & C2Cat T := {
-    h2s_prefunctor : IsPreFunctor (HHomSet T) T (@HSource T) }.
-HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
+HB.mixin Record IsSPreFunctor T of Cat T & C2Cat T := {
+    is_sprefunctor : IsPreFunctor (HHomSet T) T (@HSource T) }.
+HB.structure Definition SPreFunctor : Set := {C of IsSPreFunctor C}.
 Set Universe Checking.
 
 (* target prefunctor. *)
 Unset Universe Checking.
 #[wrapper]
-  HB.mixin Record IsHTPreFunctor T of HSPreFunctor T := {
-    h2t_prefunctor : IsPreFunctor (HHomSet T) T (@HTarget T) }.
-HB.structure Definition HTPreFunctor : Set := {C of IsHTPreFunctor C}.
+  HB.mixin Record IsTPreFunctor T of SPreFunctor T := {
+    is_tprefunctor : IsPreFunctor (HHomSet T) T (@HTarget T) }.
+HB.structure Definition TPreFunctor : Set := {C of IsTPreFunctor C}.
 Set Universe Checking.
 
 (* source functor. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record HSPreFunctor_IsFunctor T of HTPreFunctor T := {
-    h2s_functor : PreFunctor_IsFunctor (HHomSet T) T (@HSource T) }.
-HB.structure Definition HSFunctor : Set := {C of HSPreFunctor_IsFunctor C}.
+HB.mixin Record SPreFunctor_IsFunctor T of TPreFunctor T := {
+    is_sfunctor : PreFunctor_IsFunctor (HHomSet T) T (@HSource T) }.
+HB.structure Definition SFunctor : Set := {C of SPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
 (* target functor. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record HTPreFunctor_IsFunctor T of HSFunctor T := {
-    h2t_functor : PreFunctor_IsFunctor (HHomSet T) T (@HTarget T) }.
-HB.structure Definition HTFunctor : Set := {C of HTPreFunctor_IsFunctor C}.
+HB.mixin Record TPreFunctor_IsFunctor T of SFunctor T := {
+    is_tfunctor : PreFunctor_IsFunctor (HHomSet T) T (@HTarget T) }.
+HB.structure Definition TFunctor : Set := {C of TPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
 (* unit prefunctor. *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record IsHUPreFunctor T of C2Quiver T & HTFunctor T := 
-  { h2u_prefunctor : IsPreFunctor T (HHomSet T) (@UnitF T) }.
-HB.structure Definition HUPreFunctor : Set := {C of IsHUPreFunctor C}.
+HB.mixin Record IsUPreFunctor T of HDQuiver T & TFunctor T := 
+  { is_uprefunctor : IsPreFunctor T (HHomSet T) (@HUnit T) }.
+HB.structure Definition UPreFunctor : Set := {C of IsUPreFunctor C}.
 Set Universe Checking.
 
 (* unit functor. *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record HUPreFunctor_IsFunctor T of HUPreFunctor T := {
-    h2u_functor : PreFunctor_IsFunctor T (HHomSet T) (@UnitF T) }.
-HB.structure Definition HUFunctor : Set := {C of HUPreFunctor_IsFunctor C}.
+HB.mixin Record UPreFunctor_IsFunctor T of UPreFunctor T := {
+    is_ufunctor : PreFunctor_IsFunctor T (HHomSet T) (@HUnit T) }.
+HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
-(* pullback category condition (i.e. (HComp T) is a category).
+(* pullback category condition (i.e. (HCompSet T) is a category).
    requires T to be a category, and (HHomSet T) to be a quiver *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsHCompCat T of HUFunctor T := {
-    hcompcat : Cat (HComp T) }.
+HB.mixin Record IsHCompCat T of UFunctor T := {
+    is_hcompcat : Cat (HCompSet T) }.
 #[short(type="hcompcat")]
 HB.structure Definition HCompCat : Set := { C of IsHCompCat C }.
 Set Universe Checking.
@@ -1265,70 +1265,70 @@ Set Universe Checking.
 (* composition prefunctor *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record IsHCPreFunctor T of HCompCat T :=
-  { h2c_prefunctor : IsPreFunctor (HComp T) (HHomSet T) (@CompF T) }.
-HB.structure Definition HCPreFunctor : Set := {C of IsHCPreFunctor C}.
+HB.mixin Record IsCPreFunctor T of HCompCat T :=
+  { is_cprefunctor : IsPreFunctor (HCompSet T) (HHomSet T) (@HComp T) }.
+HB.structure Definition CPreFunctor : Set := {C of IsCPreFunctor C}.
 Set Universe Checking.
 
 (* composition functor *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record HCPreFunctor_IsFunctor T of HCPreFunctor T := {
-    h2c_functor : PreFunctor_IsFunctor (HComp T) (HHomSet T) (@CompF T) }.
-HB.structure Definition HCFunctor : Set := {C of HCPreFunctor_IsFunctor C}.
+HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
+    is_cfunctor : PreFunctor_IsFunctor (HCompSet T) (HHomSet T) (@HComp T) }.
+HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
-(* 2-morphisms *)
-Definition c2hom (D: C2Quiver.type) := @hom (@HHomSet D).
+(* 2-cell (D1) morphisms *)
+Definition c2hom (D: HDQuiver.type) := @hom (@HHomSet D).
 
 (* The set of D1 morphisms *)
-HB.tag Definition C2HomSet (C: C2Quiver.type) := Total2 (@c2hom C).
+HB.tag Definition C2HomSet (C: HDQuiver.type) := Total2 (@c2hom C).
 
 (* horizontal 2-cell unit (maps vertical morphisms to horizontally
    unitary 2-cells) *)
-Definition HC2Unit (T: HUFunctor.type) (a b: T) (m: @hom T a b) :
-  c2hom (UnitF a) (UnitF b) := @Fhom _ _ (@UnitF T) a b m. 
+Definition HC2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
+  c2hom (HUnit a) (HUnit b) := @Fhom _ _ (@HUnit T) a b m. 
 
 (* horizontal 2-cell composition: maps two adjecent pairs of
    horizontal morphisms (a and b) and a pullback-category morphism
    between them (m, which basically gives two adjecent cells) to a
-   2-cell morphism between the horizontal composition (CompF) of each
+   2-cell morphism between the horizontal composition (HComp) of each
    pair *)
-Definition HC2Comp (T: HCFunctor.type) (a b: HComp T)
-  (m: @hom (HComp T) a b) :
-  c2hom (CompF a) (CompF b) := @Fhom _ _ (@CompF T) a b m.
+Definition HC2Comp (T: CFunctor.type) (a b: HCompSet T)
+  (m: @hom (HCompSet T) a b) :
+  c2hom (HComp a) (HComp b) := @Fhom _ _ (@HComp T) a b m.
 
 (* Double category complete with properties of horizontal 2-cell
    identity and composition *)
 Unset Universe Checking.
-HB.mixin Record IsDCat T of HCFunctor T := {
+HB.mixin Record IsDCat T of CFunctor T := {
     left_unital : forall (a0 a1 b0 b1: T)
                          (r: @hhom T a0 a1) (s: @hhom T b0 b1),
       let rr := @HO T (@hhom T) a0 a1 r in
       let ss := @HO T (@hhom T) b0 b1 s in      
-      let aa := @h2unit T a0 in
-      let bb := @h2unit T b0 in
+      let aa := @hunit T a0 in
+      let bb := @hunit T b0 in
       @hom (HHomSet T) rr ss =
-      @hom (HHomSet T) (c2comp (@GC T _ a0 a0 a1 aa r))
-                       (c2comp (@GC T _ b0 b0 b1 bb s)) ; 
+      @hom (HHomSet T) (hhcomp (@GC T _ a0 a0 a1 aa r))
+                       (hhcomp (@GC T _ b0 b0 b1 bb s)) ; 
 
     right_unital : forall (a0 a1 b0 b1: T)
                          (r: @hhom T a0 a1) (s: @hhom T b0 b1),
       let rr := @HO T (@hhom T) a0 a1 r in
       let ss := @HO T (@hhom T) b0 b1 s in      
-      let aa := @h2unit T a1 in
-      let bb := @h2unit T b1 in
+      let aa := @hunit T a1 in
+      let bb := @hunit T b1 in
       @hom (HHomSet T) rr ss =
-      @hom (HHomSet T) (c2comp (@GC T _ a0 a1 a1 r aa))
-                       (c2comp (@GC T _ b0 b1 b1 s bb)) ; 
+      @hom (HHomSet T) (hhcomp (@GC T _ a0 a1 a1 r aa))
+                       (hhcomp (@GC T _ b0 b1 b1 s bb)) ; 
 
     associator : forall (a0 a1 a2 a3: T)
                         (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
                         (h3: @hhom T a2 a3) (x: HHomSet T),
-      let h23 := h2comp a1 a2 a3 h2 h3 in
-      let h12 := h2comp a0 a1 a2 h1 h2 in     
-      let hh1 := h2comp a0 a1 a3 h1 h23 in 
-      let hh2 := h2comp a0 a2 a3 h12 h3 in 
+      let h23 := hcomp a1 a2 a3 h2 h3 in
+      let h12 := hcomp a0 a1 a2 h1 h2 in     
+      let hh1 := hcomp a0 a1 a3 h1 h23 in 
+      let hh2 := hcomp a0 a2 a3 h12 h3 in 
       @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh1) x =
         @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) x
 }. 
