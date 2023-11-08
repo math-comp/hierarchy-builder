@@ -1161,19 +1161,17 @@ HB.mixin Record IsC2Quiver T of DQuiver T := {
     h2unit : forall a: T, @hhom T a a ;
     h2comp : forall (a b c: T),
       @hhom T a b -> @hhom T b c -> @hhom T a c;
-
-    c2unit : T -> HHomSet T ;
-    c2comp : HComp T -> HHomSet T ; 
-
-    c2unit_eq : forall a: T, c2unit a = @HO T (@hhom T) a a (h2unit a) ; 
-    c2comp_eq1 : forall (a b c: T) (h1: @hhom T a b) (h2: @hhom T b c),
-      c2comp (@GC T (@hhom T) a b c h1 h2) =
-        @HO T (@hhom T) a c (h2comp a b c h1 h2)   
 }.                                  
 Unset Universe Checking.
 #[short(type="c2quiver")]
 HB.structure Definition C2Quiver : Set := { C of IsC2Quiver C }.
 Set Universe Checking.
+
+Definition c2unit (T: c2quiver) (a: T) : HHomSet T := @HO T (@hhom T) a a (h2unit a).
+  
+Definition c2comp (T: c2quiver) (x: HComp T) : HHomSet T := 
+  match x with 
+  @GC _ _ a b c h1 h2 => @HO T (@hhom T) a c (h2comp a b c h1 h2) end.
 
 (* Precategory based on the DQuiver (i.e. precategory D1) - only,
    instead of making it inherit from D1Quiver, we make it inherit from
@@ -1342,6 +1340,108 @@ Set Universe Checking.
 
 (*********************************************************************)
 (**** GARBAGE ****************************************************)
+
+(* A quiver from which horizontal morphisms arise (just a copy of quiver) *)
+HB.mixin Record IsHQuiver C := {
+    hhom : C -> C -> U
+  }.
+Unset Universe Checking.
+#[short(type="hquiver")]
+HB.structure Definition HQuiver : Set := { C of IsHQuiver C }.
+Set Universe Checking.
+
+(* domain-specific sigma-type to represent the set of morphims 
+   (needed for 2-objects, i.e. horizontal morphisms) *)
+Record Total2 T (h: T -> T -> U) : Type := HO {
+    source : T;
+    target : T;
+    this_morph : h source target }.
+
+(* the set of horizontal morphisms. 
+   HB.tag needed to identify HHomSet as lifter *)
+HB.tag Definition HHomSet (C: hquiver) := Total2 (@hhom C).
+
+(* source functor (for horizontal morphisms): D1 -> D0.
+   defined as object-level function, by functoriality lifted to a
+   (2-cell, vertical) morphism-level one *)
+HB.tag Definition HSource C := fun (X: HHomSet C) => @source C (@hhom C) X.
+(* target functor (for horizontal morphisms): D1 -> D0. *)
+HB.tag Definition HTarget C := fun (X: HHomSet C) => @target C (@hhom C) X.
+
+(* D1 quiver requirement. *)
+#[wrapper]
+HB.mixin Record IsD1Quiver T of HQuiver T := {
+    d1_quiver : IsQuiver (@HHomSet T) }.
+Unset Universe Checking.
+#[short(type="d1quiver")]
+HB.structure Definition D1Quiver : Set := { C of IsD1Quiver C }.
+Set Universe Checking.
+
+(* all the quivers required by a double category *)
+Unset Universe Checking.
+#[short(type="dquiver")]
+HB.structure Definition DQuiver : Set :=
+  { C of Quiver C & HQuiver C & IsD1Quiver C }.
+Set Universe Checking.
+
+(* used to define composable pairs of morphisms as a set *)
+Record GenComp T (h: T -> T -> U) := GC {
+   c_one : T;
+   c_two : T ;
+   c_three : T;
+   c_first : h c_one c_two ;
+   c_second : h c_two c_three                                                
+}.
+
+(* composable pairs of horizontal morphisms as a set *)
+HB.tag Definition HComp (C: hquiver) := GenComp (@hhom C).
+
+(*
+(* pullback category condition (i.e. (HComp T) is a category).
+   requires T to be a category, and (HHomSet T) to be a quiver *)
+#[wrapper]
+HB.mixin Record IsHCompCat T of Cat T & DQuiver T := {
+    hcompcat : Cat (HComp T) }.
+Unset Universe Checking.
+#[short(type="hcompcat")]
+HB.structure Definition HCompCat : Set := { C of IsHCompCat C }.
+Set Universe Checking.
+*)
+
+(* c2unit - horizontal unit functor.
+
+   c2comp - horizontal composition functor.
+
+   Both specified as object-level functions, to be lifted by
+   functoriality to morphism-level ones.
+
+   At the object level, c2unit gives a horizontal identity morphism
+   for each D0 object. At the morphism level, it gives horizontal
+   2-cell identity for each vertical morphism.
+  
+   In the case of HComp, relying on functoriality requires some care
+   in defining the pullback category, making sure that adjacency at
+   the object-level (between horizontal morphisms) is matched by
+   adjacency at the morphism-level (between 2-cells).  *)
+HB.mixin Record IsC2Quiver T of DQuiver T (* & HCompCat T *) := {
+    h2unit : forall a: T, @hhom T a a ;
+    h2comp : forall (a b c: T),
+      @hhom T a b -> @hhom T b c -> @hhom T a c;
+
+    c2unit : T -> HHomSet T ;
+    c2comp : HComp T -> HHomSet T ; 
+
+    c2unit_eq : forall a: T, c2unit a = @HO T (@hhom T) a a (h2unit a) ; 
+    c2comp_eq1 : forall (a b c: T) (h1: @hhom T a b) (h2: @hhom T b c),
+      c2comp (@GC T (@hhom T) a b c h1 h2) =
+        @HO T (@hhom T) a c (h2comp a b c h1 h2)   
+}.                                  
+Unset Universe Checking.
+#[short(type="c2quiver")]
+HB.structure Definition C2Quiver : Set := { C of IsC2Quiver C }.
+Set Universe Checking.
+
+(************************************************************************************)
 
 (* Double category *)
 Unset Universe Checking.
