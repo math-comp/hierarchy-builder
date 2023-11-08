@@ -1093,14 +1093,16 @@ Set Universe Checking.
 
 (*** DOUBLE CATEGORIES (REVISED) *)
 
-(* A quiver from which horizontal morphisms arise (just a copy of quiver) *)
-HB.mixin Record IsHQuiver C := {
-    hhom : C -> C -> U
-  }.
+HB.tag Definition transpose (C : quiver) : U := C. (* BUG *)
+#[wrapper] HB.mixin Record IsTQuiver C of IsQuiver C := {
+    priv : IsQuiver (transpose C)
+}.
 Unset Universe Checking.
 #[short(type="hquiver")]
-HB.structure Definition HQuiver : Set := { C of IsHQuiver C }.
+HB.structure Definition HQuiver : Set := { C of IsQuiver C & IsTQuiver C }.
 Set Universe Checking.
+
+HB.tag Definition hhom (c : HQuiver.type) : c -> c -> U := @hom (transpose c).
 
 (* domain-specific sigma-type to represent the set of morphims 
    (needed for 2-objects, i.e. horizontal morphisms) *)
@@ -1121,19 +1123,11 @@ HB.tag Definition HSource C := fun (X: HHomSet C) => @source C (@hhom C) X.
 HB.tag Definition HTarget C := fun (X: HHomSet C) => @target C (@hhom C) X.
 
 (* D1 quiver requirement. *)
-#[wrapper]
-HB.mixin Record IsD1Quiver T of HQuiver T := {
-    d1_quiver : IsQuiver (@HHomSet T) }.
+#[wrapper] 
+HB.mixin Record IsDQuiver T of HQuiver T := { d1_quiver : Quiver (HHomSet T) }.
 Unset Universe Checking.
 #[short(type="d1quiver")]
-HB.structure Definition D1Quiver : Set := { C of IsD1Quiver C }.
-Set Universe Checking.
-
-(* all the quivers required by a double category *)
-Unset Universe Checking.
-#[short(type="dquiver")]
-HB.structure Definition DQuiver : Set :=
-  { C of Quiver C & HQuiver C & IsD1Quiver C }.
+HB.structure Definition DQuiver : Set := { C of IsDQuiver C }.
 Set Universe Checking.
 
 (* used to define composable pairs of morphisms as a set *)
@@ -1147,16 +1141,6 @@ Record GenComp T (h: T -> T -> U) := GC {
 
 (* composable pairs of horizontal morphisms as a set *)
 HB.tag Definition HComp (C: hquiver) := GenComp (@hhom C).
-
-(* pullback category condition (i.e. (HComp T) is a category).
-   requires T to be a category, and (HHomSet T) to be a quiver *)
-#[wrapper]
-HB.mixin Record IsHCompCat T of Cat T & DQuiver T := {
-    hcompcat : Cat (HComp T) }.
-Unset Universe Checking.
-#[short(type="hcompcat")]
-HB.structure Definition HCompCat : Set := { C of IsHCompCat C }.
-Set Universe Checking.
 
 (* c2unit - horizontal unit functor.
 
@@ -1173,7 +1157,7 @@ Set Universe Checking.
    in defining the pullback category, making sure that adjacency at
    the object-level (between horizontal morphisms) is matched by
    adjacency at the morphism-level (between 2-cells).  *)
-HB.mixin Record IsC2Quiver T of DQuiver T & HCompCat T := {
+HB.mixin Record IsC2Quiver T of DQuiver T := {
     h2unit : forall a: T, @hhom T a a ;
     h2comp : forall (a b c: T),
       @hhom T a b -> @hhom T b c -> @hhom T a c;
@@ -1225,7 +1209,7 @@ HB.tag Definition CompF (C: c2quiver) :=
    T is the quiver of 1-morphisms. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsHSPreFunctor T of Cat T & C2Cat T & HCompCat T := {
+HB.mixin Record IsHSPreFunctor T of Cat T & C2Cat T := {
     h2s_prefunctor : IsPreFunctor (HHomSet T) T (@HSource T) }.
 HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
 Set Universe Checking.
@@ -1270,10 +1254,20 @@ HB.mixin Record HUPreFunctor_IsFunctor T of HUPreFunctor T := {
 HB.structure Definition HUFunctor : Set := {C of HUPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
+(* pullback category condition (i.e. (HComp T) is a category).
+   requires T to be a category, and (HHomSet T) to be a quiver *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHCompCat T of HUFunctor T := {
+    hcompcat : Cat (HComp T) }.
+#[short(type="hcompcat")]
+HB.structure Definition HCompCat : Set := { C of IsHCompCat C }.
+Set Universe Checking.
+
 (* composition prefunctor *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record IsHCPreFunctor T of HUFunctor T :=
+HB.mixin Record IsHCPreFunctor T of HCompCat T :=
   { h2c_prefunctor : IsPreFunctor (HComp T) (HHomSet T) (@CompF T) }.
 HB.structure Definition HCPreFunctor : Set := {C of IsHCPreFunctor C}.
 Set Universe Checking.
