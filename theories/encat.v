@@ -1298,10 +1298,56 @@ Definition HC2Comp (T: CFunctor.type) (a b: HCompSet T)
   (m: @hom (HCompSet T) a b) :
   c2hom (HComp a) (HComp b) := @Fhom _ _ (@HComp T) a b m.
 
-(* Double category complete with properties of horizontal 2-cell
-   identity and composition *)
+Definition HC2Source (T: CFunctor.type) (a b: @HHomSet T)
+  (m: @c2hom T a b) :
+  @hom T (HSource a) (HSource b) := @Fhom _ _ (@HSource T) a b m. 
+
+Definition HC2Target (T: CFunctor.type) (a b: @HHomSet T)
+  (m: @c2hom T a b) :
+  @hom T (HTarget a) (HTarget b) := @Fhom _ _ (@HTarget T) a b m. 
+
+Definition l_hcomp (T: CFunctor.type) (a0 a1 a2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2) : HHomSet T :=
+  @HO T _ a0 a2 (hcomp a0 a1 a2 h0 h1).
+
+(* Double category with strong horizontal unit (Russ' paper).
+   hunit defines proper identity on horizontal morphisms *)
+HB.mixin Record IsDCat_SU T of CFunctor T := {
+    left_unital : forall (a0 a1: T) (h : hhom a0 a1),
+      @hcomp T a0 a0 a1 (hunit a0) h = h ;
+
+    right_unital : forall (a0 a1: T) (h : hhom a0 a1),
+      @hcomp T a0 a1 a1 h (hunit a1) = h ;
+}.
 Unset Universe Checking.
-HB.mixin Record IsDCat T of CFunctor T := {
+#[short(type="dcat_su")]
+HB.structure Definition DCat_SU : Set := { C of IsDCat_SU C }.
+Set Universe Checking.
+
+(* Double category with weak horizontal unit (display paper) *)
+HB.mixin Record IsDCat_WU T of CFunctor T := {
+    left_unital : forall (a0 a1: T) (h : hhom a0 a1),
+    let hh := HO h  
+    in let uh := HO (hcomp a0 a0 a1 (hunit a0) h)
+       in exists uhc : c2hom uh hh, 
+           HC2Source uhc = @idmap T a0 /\
+           HC2Target uhc = @idmap T a1 ; 
+
+    right_unital : forall (a0 a1: T) (h : hhom a0 a1),
+    let hh := HO h  
+    in let uh := HO (hcomp a0 a1 a1 h (hunit a1))
+       in exists uhc : c2hom uh hh, 
+           HC2Source uhc = @idmap T a0 /\
+           HC2Target uhc = @idmap T a1 
+}.
+Unset Universe Checking.
+#[short(type="dcat_wu")]
+HB.structure Definition DCat_WU : Set := { C of IsDCat_WU C }.
+Set Universe Checking.
+
+(* Double category with universal characterization of half-strong
+   horizontal unit *)
+HB.mixin Record IsDCat_HU T of CFunctor T := {
     left_unital : forall (a0 a1 b0 b1: T)
                          (r: @hhom T a0 a1) (s: @hhom T b0 b1),
       let rr := @HO T (@hhom T) a0 a1 r in
@@ -1321,7 +1367,41 @@ HB.mixin Record IsDCat T of CFunctor T := {
       @hom (HHomSet T) rr ss =
       @hom (HHomSet T) (hhcomp (@GC T _ a0 a1 a1 r aa))
                        (hhcomp (@GC T _ b0 b1 b1 s bb)) ; 
+}. 
+Unset Universe Checking.
+#[short(type="dcat_hu")]
+HB.structure Definition DCat_HU : Set := { C of IsDCat_HU C }.
+Set Universe Checking.
 
+(* Double category with weak horizontal associativity (display paper) *)
+HB.mixin Record IsDCat_WA T of CFunctor T := {
+    associator : forall (a0 a1 a2 a3: T)
+                        (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
+                        (h3: @hhom T a2 a3) (x: HHomSet T),
+      let h12 := hcomp a0 a1 a2 h1 h2 in     
+      let h23 := hcomp a1 a2 a3 h2 h3 in 
+      let hh1 := HO (hcomp a0 a1 a3 h1 h23) in 
+      let hh2 := HO (hcomp a0 a2 a3 h12 h3) in 
+      exists asc: 
+        c2hom hh1 hh2, HC2Source asc = @idmap T a0 /\
+                       HC2Target asc = @idmap T a3 
+}.
+Unset Universe Checking.
+#[short(type="dcat_wa")]
+HB.structure Definition DCat_WA : Set := { C of IsDCat_WA C }.
+Set Universe Checking.
+(* 
+   a0 -- h0 --> a1 -- h1 --> a2
+   |     |      |     |      |
+   v0    hh0    v1    hh1    v2
+   |     |      |     |      |
+   V     V      V     V      V
+   b0 -- k0 --> b1 -- k1 --> b2
+*)
+
+(* Double category with universal characterization of weak
+   horizontal associativity *)
+HB.mixin Record IsDCat_UA T of CFunctor T := {
     associator : forall (a0 a1 a2 a3: T)
                         (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
                         (h3: @hhom T a2 a3) (x: HHomSet T),
@@ -1332,10 +1412,42 @@ HB.mixin Record IsDCat T of CFunctor T := {
       @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh1) x =
         @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) x
 }. 
-#[short(type="dcat")]
-HB.structure Definition DCat : Set := { C of IsDCat C }.
+Unset Universe Checking.
+#[short(type="dcat_ua")]
+HB.structure Definition DCat_UA : Set := { C of IsDCat_UA C }.
 Set Universe Checking.
 
+Unset Universe Checking.
+#[short(type="dcat_dp")]
+HB.structure Definition DCat_DP : Set := { C of DCat_WU C & DCat_WA C }.
+Set Universe Checking.
+
+Unset Universe Checking.
+#[short(type="dcat_rp")]
+HB.structure Definition DCat_RP : Set := { C of DCat_SU C & DCat_UA C }.
+Set Universe Checking.
+
+Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: c2hom (HO h0) (HO k0))
+  (hh1: c2hom (HO h1) (HO k1)) :
+    c2hom (l_hcomp h0 h1) (l_hcomp k0 k1) :=
+  @Fhom _ _ (@HComp T) (GC h0 h1) (GC k0 k1) _.
+Obligation 1.
+Admitted.
+
+(* not working yet *)
+HB.mixin Record IsDCat_U2 T of CFunctor T := {
+    left_unital : forall (a0 a1 b0 b1: T) (m: @hom T a0 b0)
+                         (h : hhom a0 a1) (k : hhom b0 b1)
+                         (hh: c2hom (HO h) (HO k)),
+    forall (xx: c2hom (HUnit a0) (HUnit b0)),
+         xx = HC2Unit m -> 
+         HC2Source hh = m -> 
+         @HC2Comp_flat T a0 a0 a1 b0 b0 b1 (hunit a0) h (hunit b0) k xx hh =
+         @HC2Comp_flat T a0 a0 a1 b0 b0 b1 (hunit a0) h (hunit b0) k xx hh
+}.
 
 
 (*********************************************************************)
