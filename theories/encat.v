@@ -1134,15 +1134,20 @@ Set Universe Checking.
 
 (* used to define composable pairs of morphisms as a set *)
 Record GenComp T (h: T -> T -> U) := GC {
-   c_one : T;
-   c_two : T ;
-   c_three : T;
-   c_first : h c_one c_two ;
-   c_second : h c_two c_three                                                
+   h_one : T;
+   h_two : T ;
+   h_three : T;
+   h_first : h h_one h_two ;
+   h_second : h h_two h_three                                                
 }.
 
 (* composable pairs of horizontal morphisms as a set *)
 HB.tag Definition HCompSet (C: cquiver) := GenComp (@hhom C).
+
+Definition H2First (C: cquiver) (X: @HCompSet C) : HHomSet C :=
+    @HO C _ (h_one X) (h_two X) (h_first X).
+Definition H2Second (C: cquiver) (X: @HCompSet C) : HHomSet C :=
+    @HO C _ (h_two X) (h_three X) (h_second X).
 
 (* hunit - horizontal unit functor.
 
@@ -1170,7 +1175,9 @@ Set Universe Checking.
 
 Definition hhunit (T: hdquiver) (a: T) : HHomSet T :=
   @HO T (@hhom T) a a (hunit a).
-  
+
+(* horizontal composition of two horizontal morphisms from a 
+   cell product *)
 Definition hhcomp (T: hdquiver) (x: HCompSet T) : HHomSet T := 
   match x with 
   @GC _ _ a b c h1 h2 => @HO T (@hhom T) a c (hcomp a b c h1 h2) end.
@@ -1253,7 +1260,11 @@ HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
 (* 2-cell (D1) morphisms *)
-Definition c2hom (D: HDQuiver.type) := @hom (@HHomSet D).
+Definition c2hom (D: HDQuiver.type) : HHomSet D -> HHomSet D -> U :=
+  @hom (HHomSet D).
+
+Definition C2Hom (D: HDQuiver.type) (a b c d: D) (h0: hhom a b)
+  (h1: hhom c d) : U := c2hom (HO h0) (HO h1).
 
 (* The set of D1 morphisms *)
 HB.tag Definition C2HomSet (C: HDQuiver.type) := Total2 (@c2hom C).
@@ -1263,89 +1274,120 @@ HB.tag Definition C2HomSet (C: HDQuiver.type) := Total2 (@c2hom C).
 Definition HC2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
   c2hom (HUnit a) (HUnit b) := @Fhom _ _ (@HUnit T) a b m. 
 
+(* 2-cell source *)
+Definition HC2Source (T: UFunctor.type) (a b: @HHomSet T)
+  (m: @c2hom T a b) :
+  @hom T (HSource a) (HSource b) := @Fhom _ _ (@HSource T) a b m. 
+
+(* 2-cell target *)
+Definition HC2Target (T: UFunctor.type) (a b: @HHomSet T)
+  (m: @c2hom T a b) :
+  @hom T (HTarget a) (HTarget b) := @Fhom _ _ (@HTarget T) a b m. 
+
+(* horizontal composition of two (naked) horizontal morphisms *)
+Definition l_hcomp (T: UFunctor.type) (a0 a1 a2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2) : HHomSet T :=
+  @HO T _ a0 a2 (hcomp a0 a1 a2 h0 h1).
+
+
 (** HCompSet T is the pseudo-pullback category used to deal with
     products of D1 (where the adjacency condition is expressed
     w.r.t. D0 *)
 
-(** HComp quiver *)
-Definition HComp_hom (T: UFunctor.type) :=
-    (fun (A B: HCompSet T) => match (A, B) with
-                | (@GC _ _ a0 a1 a2 h0 h1, @GC _ _ b0 b1 b2 k0 k1) =>
-                    let h0' := HO h0
-                    in let k0' := HO k0
-                    in let h1' := HO h1
-                    in let k1' := HO k1
-                    in sigT (fun (hh0: @hom (HHomSet T) h0' k0') => 
-                       (sigT (fun (hh1: @hom (HHomSet T) h1' k1') => 
-                            @Fhom _ _ (@HTarget T) h0' k0' hh0 =
-                            @Fhom _ _ (@HSource T) h1' k1' hh1)))  
-                end).
+Notation "'sigma' x .. y , p" := (sigT (fun x => .. (sigT (fun y => p)) ..))
+  (at level 200, x binder, right associativity,
+   format "'[' 'sigma' '/ ' x .. y , '/ ' p ']'")
+  : type_scope.
 
-(*
-(** HComp quiver *)
-Definition HComp_hom (T: UFunctor.type) :=
-    (fun (A B: HCompSet T) => match (A, B) with
-                | (@GC _ _ a1 b1 c1 h1 k1, @GC _ _ a2 b2 c2 h2 k2) =>
-                    let h1' := HO h1
-                    in let k1' := HO k1
-                    in let h2' := HO h2
-                    in let k2' := HO k2
-                    in sigT (fun (hh: @hom (HHomSet T) h1' h2') => 
-                       (sigT (fun (kk: @hom (HHomSet T) k1' k2') => 
-                            @Fhom _ _ (@HTarget T) h1' h2' hh =
-                            @Fhom _ _ (@HSource T) k1' k2' kk)))  
-                end).
-*)
+(** HCompSet quiver *)
+Definition HComp_hom (T: UFunctor.type) (x y: HCompSet T) :=
+   sigma (hh0: C2Hom (h_first x) (h_first y))  
+         (hh1: C2Hom (h_second x) (h_second y)), 
+         HC2Target hh0 = HC2Source hh1.
 
 HB.instance Definition HCompQuiver (T: UFunctor.type) :
   IsQuiver (HCompSet T) :=
   IsQuiver.Build (HCompSet T) (fun A B => @HComp_hom T A B).
 
-(*
-Definition HComp_id (T: UFunctor.type) (A: HCompSet T) (* : A ~> A *) :=
-  match A with
-  | @GC _ _ a0 a1 a2 h0 h1 => 
-                    let h0' := HO h0
-                    in let h1' := HO h1
-                       in let uu0 := @idmap (HHomSet T) h0'
-                       in let uu1 := @idmap (HHomSet T) h1'
-                          in @exist (@hom (HHomSet T) h0' h0')
-                               (fun _ => 0 = 0) uu0 eq_refl end.
-                                   (@exist _ (fun _ => 0 = 0) uu1 eq_refl) end.                   
-Definition HComp_id (T: UFunctor.type) (A: HCompSet T) (* : A ~> A *) :=
-  match A with
-  | @GC _ _ a0 a1 a2 h0 h1 => 
-                    let h0' := HO h0
-                    in let h1' := HO h1
-                       in let uu := @idmap (HHomSet T) h0'
-                          in let ff := @exist _ (fun _ => 0 = 0) uu
-                                         eq_refl
-                             in True    end.                   
-                                     
-                    in @existT (@hom (HHomSet T) h0' h0') _
-                            (@idmap (HHomSet T) h0') True end.
-                            (@existT (@hom (HHomSet T) h1' h1') _
-                               (@idmap (HHomSet T) h1') True) end. 
-      
-Definition HComp_id (T: UFunctor.type) (A: HCompSet T) : A ~> A :=
-  match A with
-  | @GC _ _ a0 a1 a2 h0 h1 => 
-                    let h0' := HO h0
-                    in let h1' := HO h1
-      in existT _ _ (HC2Unit a0 a1 h0) (existT _ _ (HC2Unit a1 a2 h1) ) 
-*)      
+(* HCompSet identity, defined in proof mode *)
+Program Definition HComp_id_P (T: UFunctor.type) (A: HCompSet T) : A ~> A.
+unfold hom; simpl.
+unfold HComp_hom, C2Hom; simpl.
+destruct A; simpl.
+set h0' := HO h_first0.
+set h1' := HO h_second0.
+repeat econstructor.
+instantiate (1:= @idmap (HHomSet T) h1').
+instantiate (1:= @idmap (HHomSet T) h0').
+assert (HC2Target (@idmap (HHomSet T) h0') = @idmap _ h_two0) as T0.
+{ unfold HC2Target, HTarget.
+  rewrite F1; auto.
+}
+assert (HC2Source (@idmap (HHomSet T) h1') = @idmap _ h_two0) as S1.
+{ unfold HC2Source, HSource.
+  rewrite F1; auto.
+}
+rewrite T0.
+rewrite S1.
+reflexivity.
+Defined.
 
-Program Definition HCompPreCatF (T: UFunctor.type) :
+(* HCompSet identity, only partially in proof mode *)
+Program Definition HComp_id (T: UFunctor.type) (A: HCompSet T) : A ~> A  :=
+  let h0 := h_first A
+  in let h1 := h_second A
+  in let uu0 := @idmap (HHomSet T) (HO h0)
+  in let uu1 := @idmap (HHomSet T) (HO h1)
+  in @existT (C2Hom h0 h0)
+    (fun hh0: (C2Hom h0 h0) =>
+       sigma (hh1 : C2Hom h1 h1), HC2Target hh0 = HC2Source hh1) uu0
+    (@existT (C2Hom h1 h1)
+       (fun hh1: (C2Hom h1 h1) => HC2Target uu0 = HC2Source hh1) uu1 _).
+Obligation 1.
+unfold HC2Target, HTarget.
+unfold HC2Source, HSource. 
+repeat rewrite F1; auto.
+Defined.
+
+(* HCompSet composition, defined in proof mode *)
+Program Definition HComp_comp (T: UFunctor.type) (A B C: HCompSet T) 
+  (chA: A ~> B) (chB: B ~> C) : A ~> C.
+destruct chA as [hhA0 pA].
+destruct chB as [hhB0 pB].
+destruct pA as [hhA1 ppA].
+destruct pB as [hhB1 ppB].
+set hh0 := comp hhA0 hhB0.
+set hh1 := comp hhA1 hhB1.
+econstructor 1 with (x:=hh0).
+econstructor 1 with (x:=hh1).
+set vv := comp (HC2Target hhA0) (HC2Target hhB0).
+assert (comp (HC2Source hhA1) (HC2Source hhB1) = vv) as vv_E.
+{ rewrite <- ppA.
+  rewrite <- ppB.
+  subst vv; auto.
+}
+assert (HC2Target hh0 = vv) as vv_ET.
+{ subst vv.
+  unfold HC2Target, HTarget.
+  rewrite Fcomp; auto.
+}  
+assert (HC2Source hh1 = vv) as vv_ES.
+{ rewrite <- vv_E.
+  unfold HC2Source, HSource.
+  rewrite Fcomp; auto.
+}
+rewrite vv_ET.
+rewrite vv_ES.
+reflexivity.
+Defined.
+
+(* HCompSet gives a precategory *)
+HB.instance Definition HCompPreCat (T: UFunctor.type) :
   Quiver_IsPreCat (HCompSet T) := 
   Quiver_IsPreCat.Build (HCompSet T)
-    (fun x: HCompSet T => _) (fun a b c: HCompSet T => _).
-Obligation 1.
-Admitted.
-Obligation 2.
-Admitted.
+                        (@HComp_id T) (@HComp_comp T).
 
-HB.instance Definition HCompPreCat (T: UFunctor.type) := HCompPreCatF T.
-
+(* TODO: to be replaced by a proof *)
 Global Parameter GCompAx : forall (T: UFunctor.type),
     PreCat_IsCat (HCompSet T).
 
@@ -1376,17 +1418,6 @@ Definition HC2Comp (T: CFunctor.type) (a b: HCompSet T)
   (m: @hom (HCompSet T) a b) :
   c2hom (HComp a) (HComp b) := @Fhom _ _ (@HComp T) a b m.
 
-Definition HC2Source (T: CFunctor.type) (a b: @HHomSet T)
-  (m: @c2hom T a b) :
-  @hom T (HSource a) (HSource b) := @Fhom _ _ (@HSource T) a b m. 
-
-Definition HC2Target (T: CFunctor.type) (a b: @HHomSet T)
-  (m: @c2hom T a b) :
-  @hom T (HTarget a) (HTarget b) := @Fhom _ _ (@HTarget T) a b m. 
-
-Definition l_hcomp (T: CFunctor.type) (a0 a1 a2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2) : HHomSet T :=
-  @HO T _ a0 a2 (hcomp a0 a1 a2 h0 h1).
 
 (* Double category with strong horizontal unit (Russ' paper).
    hunit defines proper identity on horizontal morphisms *)
@@ -1513,12 +1544,15 @@ Set Universe Checking.
 Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
-  (hh0: c2hom (HO h0) (HO k0))
-  (hh1: c2hom (HO h1) (HO k1)) :
-    c2hom (l_hcomp h0 h1) (l_hcomp k0 k1) :=
+  (hh0: C2Hom h0 k0)
+  (hh1: C2Hom h1 k1)
+  (k: HC2Target hh0 = HC2Source hh1)
+  :   (* C2Hom (hcomp _ _ _ h0 h1) (hcomp _ _ _ k0 k1) *)
+  c2hom (l_hcomp h0 h1) (l_hcomp k0 k1) :=
   @Fhom _ _ (@HComp T) (GC h0 h1) (GC k0 k1) _.
 Obligation 1.
-Admitted.
+refine (@existT (C2Hom h0 k0) _ hh0 (@existT (C2Hom h1 k1) _ hh1 k)).
+Defined.
 
 (* not working yet *)
 HB.mixin Record IsDCat_U2 T of CFunctor T := {
