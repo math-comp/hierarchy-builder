@@ -7,6 +7,12 @@
    a class that is known to have no instance (for the given type)
  - **Speedup** `toposort` on `gref` uses OCaml's maps and sets rather than lists
 
+- **Change** For a structure `S` on a subject of type `T`, declares `S.sort` as
+	an Elpi coercion from `S.type` to `T` and `S.pack` as an Elpi coercion from
+	`T` to `S.type` whenever `T` is not a global type (e.g. a variable). Note
+	that `S.pack` can cast a `t : T` to `S.type` only if an instance of the
+	class `S` on `t` is found by type class inference
+
 ## [1.7.0] - 2024-01-10
 
 Compatible with
