@@ -1155,10 +1155,11 @@ HB.tag Definition HHomSet (C: cquiver) := Total2 (@hhom C).
 
 (* D1 quiver requirement (includes D0 quiver and its transpose). *)
 #[wrapper] 
-HB.mixin Record IsDQuiver T of CQuiver T := { is_dquiver : Quiver (HHomSet T) }.
+HB.mixin Record IsDQuiver T of CQuiver T :=
+  { is_dquiver : Quiver (HHomSet T) }.
 Unset Universe Checking.
 #[short(type="dquiver")]
-HB.structure Definition DQuiver : Set := { C of IsDQuiver C }.
+HB.structure Definition DQuiver : Set := { C of Quiver (HHomSet C) }.
 Set Universe Checking.
 
 
@@ -1171,7 +1172,7 @@ Unset Universe Checking.
 HB.mixin Record IsHPreCat T of CQuiver T := {
     is_hprecat : Quiver_IsPreCat (transpose T) }.
 #[short(type="hprecat")]
-HB.structure Definition HPreCat : Set := { C of IsHPreCat C }.
+HB.structure Definition HPreCat : Set := { C of Quiver_IsPreCat (transpose C) }.
 Set Universe Checking.
 
 (* The category based on the HQuiver (i.e. horizontal category on D0
@@ -1354,6 +1355,7 @@ HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
 Unset Universe Checking.
+HB.about Functor.
 HB.structure Definition STUFunctor : Set :=
   {C of SFunctor C & TFunctor C & UFunctor C}.
 Set Universe Checking.
@@ -1390,7 +1392,7 @@ Definition l_hcomp (T: NDCat.type) (a0 a1 a2: T)
 Notation "'sigma' x .. y , p" :=
   (sigT (fun x => .. (sigT (fun y => p)) ..))
   (at level 200, x binder, right associativity,
-   format "'[' 'sigma' '/ ' x .. y , '/ ' p ']'")
+   format "'[' 'sigma'  '/ '  x .. y ,  '/ '  p ']'")
   : type_scope.
 
 (** HCompSet quiver *)
@@ -1435,8 +1437,8 @@ Definition HComp_comp_auxA (T : STUFunctor.type)
   (hhB0 : C2Hom (h_first B) (h_first C))
   (hhB1 : C2Hom (h_second B) (h_second C))
   (ppB : HC2Target hhB0 = HC2Source hhB1) :  
-  comp (HC2Target hhA0) (HC2Target hhB0) =
-  comp (HC2Source hhA1) (HC2Source hhB1).
+  (HC2Target hhA0) \; (HC2Target hhB0) =
+  (HC2Source hhA1) \; (HC2Source hhB1).
   rewrite ppA.
   rewrite ppB.
   reflexivity.
@@ -1502,14 +1504,26 @@ HB.instance Definition HCompPreCat (T: STUFunctor.type) :
   Quiver_IsPreCat.Build (HCompSet T)
                         (@HComp_id T) (@HComp_comp T).
 
+(*
+  have HcompP :
+        (a b : HCompSet T)
+        (f g : a ~> b),
+      proj1T f = proj1t f ->
+        
+   ->
+     f = g.
+
+  exists a b p,
+    fst f = a
+  f = (a,b,p)
+*)  
 
 (** Product category *)
 
 Lemma HComp_LeftUnit_lemma (T : STUFunctor.type) :
   forall (a b : HCompSet T) (f : a ~> b), idmap \; f = f.
-  intros.
-  destruct f.
-  destruct s.
+
+  move => a b [x [x0 e]] /=.
   simpl in *. 
   unfold idmap; simpl.
   unfold HComp_id; simpl.
@@ -1547,71 +1561,34 @@ Lemma HComp_LeftUnit_lemma (T : STUFunctor.type) :
        (fun hh1 : C2Hom h_second0 h_second1 => HC2Target x = HC2Source hh1)
        x0
        e)) as C.
+  { revert B.
+    revert A.
+    revert A0.
+    generalize (idmap \; x) as v.
+    generalize (idmap \; x0) as v0.
+    intros v0 v A0.
+    rewrite A0.
+    intro A.
+    rewrite A.
+    intro B.
 
-  revert B.
-  revert A.
-  revert A0.
-  generalize (idmap \; x) as v.
-  generalize (idmap \; x0) as v0.
-  intros v0 v A0.
-  rewrite A0.
-  intro A.
-  rewrite A.
-  intro B.
+    assert (B = e) as BE.
+    { eapply Prop_irrelevance. }
 
-  assert (B = e) as BE.
-  { eapply Prop_irrelevance. }
-
-  rewrite BE.
-  reflexivity.
+    rewrite BE.
+    reflexivity.
+}
 
   inversion aaa; subst.
-
-  assert ((Morphisms.trans_sym_co_inv_impl_morphism
-          (RelationClasses.Equivalence_PER RelationClasses.eq_equivalence)
-          (HC2Source (idmap \; x0)) (HC2Source idmap \; HC2Source x0)
-          (HComp_comp_auxS
-             (HComp_id_eq
-                {|
-                  h_one := h_one0;
-                  h_two := h_two0;
-                  h_three := h_three0;
-                  h_first := h_first0;
-                  h_second := h_second0
-                |}) e)
-          (Morphisms.trans_co_eq_inv_impl_morphism
-             RelationClasses.eq_Transitive (HC2Target (idmap \; x))
-             (HC2Target idmap \; HC2Target x)
-             (HComp_comp_auxT
-                (HComp_id_eq
-                   {|
-                     h_one := h_one0;
-                     h_two := h_two0;
-                     h_three := h_three0;
-                     h_first := h_first0;
-                     h_second := h_second0
-                   |}) e) (HC2Source idmap \; HC2Source x0)
-             (HC2Source idmap \; HC2Source x0)
-             (Morphisms.eq_proper_proxy (HC2Source idmap \; HC2Source x0))
-             (HComp_comp_auxA
-                (HComp_id_eq
-                   {|
-                     h_one := h_one0;
-                     h_two := h_two0;
-                     h_three := h_three0;
-                     h_first := h_first0;
-                     h_second := h_second0
-                   |}) e))) = B) as BM.
-  { eapply Prop_irrelevance. }
-  rewrite BM.
+  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
+    (Prop_irrelevance _ B).
   eapply C.
 Qed.  
 
 Lemma HComp_RightUnit_lemma (T : STUFunctor.type) :
   forall (a b : HCompSet T) (f : a ~> b), f \; idmap = f.
-  intros.
-  destruct f.
-  destruct s.
+  
+  move => a b [x [x0 e]] /=.
   simpl in *. 
   unfold idmap; simpl.
   unfold HComp_id; simpl.
@@ -1652,63 +1629,27 @@ Lemma HComp_RightUnit_lemma (T : STUFunctor.type) :
           HC2Target x = HC2Source hh1)
        x0
        e)) as C.
+  { revert B.
+    revert A.
+    revert A0.
+    generalize (x \; idmap) as v.
+    generalize (x0 \; idmap) as v0.
+    intros v0 v A0.
+    rewrite A0.
+    intro A.
+    rewrite A.
+    intro B.
 
-  revert B.
-  revert A.
-  revert A0.
-  generalize (x \; idmap) as v.
-  generalize (x0 \; idmap) as v0.
-  intros v0 v A0.
-  rewrite A0.
-  intro A.
-  rewrite A.
-  intro B.
+    assert (B = e) as BE.
+    { eapply Prop_irrelevance. }
 
-  assert (B = e) as BE.
-  { eapply Prop_irrelevance. }
-
-  rewrite BE.
-  reflexivity.
+    rewrite BE.
+    reflexivity.
+  }  
 
   inversion aaa; subst.
-
-  assert ((Morphisms.trans_sym_co_inv_impl_morphism
-          (RelationClasses.Equivalence_PER RelationClasses.eq_equivalence)
-          (HC2Source (x0 \; idmap)) (HC2Source x0 \; HC2Source idmap)
-          (HComp_comp_auxS e
-             (HComp_id_eq
-                {|
-                  h_one := h_one1;
-                  h_two := h_two1;
-                  h_three := h_three1;
-                  h_first := h_first1;
-                  h_second := h_second1
-                |}))
-          (Morphisms.trans_co_eq_inv_impl_morphism
-             RelationClasses.eq_Transitive (HC2Target (x \; idmap))
-             (HC2Target x \; HC2Target idmap)
-             (HComp_comp_auxT e
-                (HComp_id_eq
-                   {|
-                     h_one := h_one1;
-                     h_two := h_two1;
-                     h_three := h_three1;
-                     h_first := h_first1;
-                     h_second := h_second1
-                   |})) (HC2Source x0 \; HC2Source idmap)
-             (HC2Source x0 \; HC2Source idmap)
-             (Morphisms.eq_proper_proxy (HC2Source x0 \; HC2Source idmap))
-             (HComp_comp_auxA e
-                (HComp_id_eq
-                   {|
-                     h_one := h_one1;
-                     h_two := h_two1;
-                     h_three := h_three1;
-                     h_first := h_first1;
-                     h_second := h_second1
-                   |})))) = B) as BM. 
-  { eapply Prop_irrelevance. }
-  rewrite BM.
+  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
+    (Prop_irrelevance _ B).
   eapply C.
 Qed.  
 
@@ -1848,118 +1789,11 @@ Lemma HComp_Assoc_lemma (T : STUFunctor.type) :
     reflexivity.
   }
 
-  assert (Morphisms.trans_sym_co_inv_impl_morphism
-          (RelationClasses.Equivalence_PER RelationClasses.eq_equivalence)
-          (HC2Source (y0 \; y1 \; y2))
-          (HC2Source y0 \; HC2Source (y1 \; y2))
-          (HComp_comp_auxS e0
-             (Morphisms.trans_sym_co_inv_impl_morphism
-                (RelationClasses.Equivalence_PER
-                   RelationClasses.eq_equivalence) 
-                (HC2Source (y1 \; y2)) (HC2Source y1 \; HC2Source y2)
-                (HComp_comp_auxS e1 e2)
-                (Morphisms.trans_co_eq_inv_impl_morphism
-                   RelationClasses.eq_Transitive (HC2Target (x1 \; x2))
-                   (HC2Target x1 \; HC2Target x2) 
-                   (HComp_comp_auxT e1 e2) (HC2Source y1 \; HC2Source y2)
-                   (HC2Source y1 \; HC2Source y2)
-                   (Morphisms.eq_proper_proxy (HC2Source y1 \; HC2Source y2))
-                   (HComp_comp_auxA e1 e2))))
-          (Morphisms.trans_co_eq_inv_impl_morphism
-             RelationClasses.eq_Transitive (HC2Target (x0 \; x1 \; x2))
-             (HC2Target x0 \; HC2Target (x1 \; x2))
-             (HComp_comp_auxT e0
-                (Morphisms.trans_sym_co_inv_impl_morphism
-                   (RelationClasses.Equivalence_PER
-                      RelationClasses.eq_equivalence) 
-                   (HC2Source (y1 \; y2)) (HC2Source y1 \; HC2Source y2)
-                   (HComp_comp_auxS e1 e2)
-                   (Morphisms.trans_co_eq_inv_impl_morphism
-                      RelationClasses.eq_Transitive 
-                      (HC2Target (x1 \; x2)) (HC2Target x1 \; HC2Target x2)
-                      (HComp_comp_auxT e1 e2) (HC2Source y1 \; HC2Source y2)
-                      (HC2Source y1 \; HC2Source y2)
-                      (Morphisms.eq_proper_proxy
-                         (HC2Source y1 \; HC2Source y2))
-                      (HComp_comp_auxA e1 e2))))
-             (HC2Source y0 \; HC2Source (y1 \; y2))
-             (HC2Source y0 \; HC2Source (y1 \; y2))
-             (Morphisms.eq_proper_proxy
-                (HC2Source y0 \; HC2Source (y1 \; y2)))
-             (HComp_comp_auxA e0
-                (Morphisms.trans_sym_co_inv_impl_morphism
-                   (RelationClasses.Equivalence_PER
-                      RelationClasses.eq_equivalence) 
-                   (HC2Source (y1 \; y2)) (HC2Source y1 \; HC2Source y2)
-                   (HComp_comp_auxS e1 e2)
-                   (Morphisms.trans_co_eq_inv_impl_morphism
-                      RelationClasses.eq_Transitive 
-                      (HC2Target (x1 \; x2)) (HC2Target x1 \; HC2Target x2)
-                      (HComp_comp_auxT e1 e2) (HC2Source y1 \; HC2Source y2)
-                      (HC2Source y1 \; HC2Source y2)
-                      (Morphisms.eq_proper_proxy
-                         (HC2Source y1 \; HC2Source y2))
-                      (HComp_comp_auxA e1 e2))))) = KR) as HR.
-  { eapply Prop_irrelevance. }
+  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
+    (Prop_irrelevance _ KR).
 
-  rewrite HR.
-  
-  assert (Morphisms.trans_sym_co_inv_impl_morphism
-          (RelationClasses.Equivalence_PER RelationClasses.eq_equivalence)
-          (HC2Source ((y0 \; y1) \; y2))
-          (HC2Source (y0 \; y1) \; HC2Source y2)
-          (HComp_comp_auxS
-             (Morphisms.trans_sym_co_inv_impl_morphism
-                (RelationClasses.Equivalence_PER
-                   RelationClasses.eq_equivalence) 
-                (HC2Source (y0 \; y1)) (HC2Source y0 \; HC2Source y1)
-                (HComp_comp_auxS e0 e1)
-                (Morphisms.trans_co_eq_inv_impl_morphism
-                   RelationClasses.eq_Transitive (HC2Target (x0 \; x1))
-                   (HC2Target x0 \; HC2Target x1) 
-                   (HComp_comp_auxT e0 e1) (HC2Source y0 \; HC2Source y1)
-                   (HC2Source y0 \; HC2Source y1)
-                   (Morphisms.eq_proper_proxy (HC2Source y0 \; HC2Source y1))
-                   (HComp_comp_auxA e0 e1))) e2)
-          (Morphisms.trans_co_eq_inv_impl_morphism
-             RelationClasses.eq_Transitive (HC2Target ((x0 \; x1) \; x2))
-             (HC2Target (x0 \; x1) \; HC2Target x2)
-             (HComp_comp_auxT
-                (Morphisms.trans_sym_co_inv_impl_morphism
-                   (RelationClasses.Equivalence_PER
-                      RelationClasses.eq_equivalence) 
-                   (HC2Source (y0 \; y1)) (HC2Source y0 \; HC2Source y1)
-                   (HComp_comp_auxS e0 e1)
-                   (Morphisms.trans_co_eq_inv_impl_morphism
-                      RelationClasses.eq_Transitive 
-                      (HC2Target (x0 \; x1)) (HC2Target x0 \; HC2Target x1)
-                      (HComp_comp_auxT e0 e1) (HC2Source y0 \; HC2Source y1)
-                      (HC2Source y0 \; HC2Source y1)
-                      (Morphisms.eq_proper_proxy
-                         (HC2Source y0 \; HC2Source y1))
-                      (HComp_comp_auxA e0 e1))) e2)
-             (HC2Source (y0 \; y1) \; HC2Source y2)
-             (HC2Source (y0 \; y1) \; HC2Source y2)
-             (Morphisms.eq_proper_proxy
-                (HC2Source (y0 \; y1) \; HC2Source y2))
-             (HComp_comp_auxA
-                (Morphisms.trans_sym_co_inv_impl_morphism
-                   (RelationClasses.Equivalence_PER
-                      RelationClasses.eq_equivalence) 
-                   (HC2Source (y0 \; y1)) (HC2Source y0 \; HC2Source y1)
-                   (HComp_comp_auxS e0 e1)
-                   (Morphisms.trans_co_eq_inv_impl_morphism
-                      RelationClasses.eq_Transitive 
-                      (HC2Target (x0 \; x1)) (HC2Target x0 \; HC2Target x1)
-                      (HComp_comp_auxT e0 e1) (HC2Source y0 \; HC2Source y1)
-                      (HC2Source y0 \; HC2Source y1)
-                      (Morphisms.eq_proper_proxy
-                         (HC2Source y0 \; HC2Source y1))
-                      (HComp_comp_auxA e0 e1))) e2)) = KL) as HL.
-  { eapply Prop_irrelevance. }
-
-  rewrite HL.
-
+  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
+    (Prop_irrelevance _ KL).
   eapply KA.
 Qed.
 
