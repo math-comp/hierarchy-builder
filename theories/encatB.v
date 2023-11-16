@@ -1132,13 +1132,14 @@ Set Universe Checking.
 (* transpose for horizontal morphism quiver.
    HB.tag needed to identify transpose as lifter *)
 HB.tag Definition transpose (C : quiver) : U := C. 
-#[wrapper] HB.mixin Record IsHQuiver C of IsQuiver C := {
+#[wrapper] HB.mixin Record _IsHQuiver C of IsQuiver C := {
     is_hquiver : IsQuiver (transpose C)
 }.
 (* vertical and horizontal quivers, defining cells *)
 Unset Universe Checking.
 #[short(type="cquiver")] 
-HB.structure Definition CQuiver : Set := { C of IsQuiver C & IsHQuiver C }.
+HB.structure Definition CQuiver : Set :=
+  { C of IsQuiver C & IsQuiver (transpose C) }.
 Set Universe Checking.
 
 HB.tag Definition hhom (c : CQuiver.type) : c -> c -> U := @hom (transpose c).
@@ -1155,7 +1156,7 @@ HB.tag Definition HHomSet (C: cquiver) := Total2 (@hhom C).
 
 (* D1 quiver requirement (includes D0 quiver and its transpose). *)
 #[wrapper] 
-HB.mixin Record IsDQuiver T of CQuiver T :=
+HB.mixin Record _IsDQuiver T of CQuiver T :=
   { is_dquiver : Quiver (HHomSet T) }.
 Unset Universe Checking.
 #[short(type="dquiver")]
@@ -1169,20 +1170,22 @@ Set Universe Checking.
    objects) *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsHPreCat T of CQuiver T := {
+HB.mixin Record _IsHPreCat T of CQuiver T := {
     is_hprecat : Quiver_IsPreCat (transpose T) }.
 #[short(type="hprecat")]
-HB.structure Definition HPreCat : Set := { C of Quiver_IsPreCat (transpose C) }.
+HB.structure Definition HPreCat : Set :=
+  { C of Quiver_IsPreCat (transpose C) }.
 Set Universe Checking.
 
 (* The category based on the HQuiver (i.e. horizontal category on D0
    objects) *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record IsHCat T of HPreCat T := {
+HB.mixin Record _IsHCat T of HPreCat T := {
     is_hcat : PreCat_IsCat (transpose T) }.
 #[short(type="hcat")]
-HB.structure Definition HCat : Set := { C of IsHCat C }.
+HB.structure Definition HCat : Set :=
+  { C of PreCat_IsCat (transpose C) }.
 Set Universe Checking.
 
 
@@ -1193,19 +1196,21 @@ Set Universe Checking.
    vertical 2-cell composition. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsC2PreCat T of DQuiver T := {
+HB.mixin Record _IsC2PreCat T of DQuiver T := {
     is_c2precat : Quiver_IsPreCat (@HHomSet T) }.
 #[short(type="c2precat")]
-HB.structure Definition C2PreCat : Set := { C of IsC2PreCat C }.
+HB.structure Definition C2PreCat : Set :=
+  { C of Quiver_IsPreCat (@HHomSet C) }.
 Set Universe Checking.
 
 (* The category based on the DQuiver (i.e. category D1). *)
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record IsC2Cat T of C2PreCat T := {
+HB.mixin Record _IsC2Cat T of C2PreCat T := {
     is_c2cat : PreCat_IsCat (@HHomSet T) }.
 #[short(type="c2cat")]
-HB.structure Definition C2Cat : Set := { C of IsC2Cat C }.
+HB.structure Definition C2Cat : Set :=
+  { C of PreCat_IsCat (@HHomSet C) }.
 Set Universe Checking.
 
 
@@ -1215,7 +1220,7 @@ Set Universe Checking.
    category without horizontal operators and functors *)
 Unset Universe Checking.
 #[short(type="vdcat")]
-  HB.structure Definition VDCat : Set :=
+HB.structure Definition VDCat : Set :=
   { C of Cat C & C2Cat C }.
 Set Universe Checking.
 
@@ -1275,8 +1280,7 @@ Definition H2Second (C: cquiver) (X: @HCompSet C) : HHomSet C :=
 (* horizontal composition functor: D1 * D1 -> D1 *)
 Definition hhcomp (T: hprecat) (x: HCompSet T) : HHomSet T := 
   match x with 
-    @GC _ _ a b c h1 h2 => @HO T (@hhom T) a c
-                             (@comp (transpose T) a b c h1 h2) end.
+    @GC _ _ a b c h1 h2 => @HO T (@hhom T) a c (h1 \; h2) end.
 HB.tag Definition HComp (C: hprecat) :=
   fun (x: HCompSet C) => @hhcomp C x. 
 
@@ -1366,17 +1370,17 @@ Set Universe Checking.
 (* 2-cell source *)
 Definition HC2Source (T: SFunctor.type) (a b: @HHomSet T)
   (m: @c2hom T a b) :
-  @hom T (HSource a) (HSource b) := @Fhom _ _ (@HSource T) a b m. 
+  (HSource a) ~> (HSource b) := (@HSource T) <$> m. 
 
 (* 2-cell target *)
 Definition HC2Target (T: TFunctor.type) (a b: @HHomSet T)
   (m: @c2hom T a b) :
-  @hom T (HTarget a) (HTarget b) := @Fhom _ _ (@HTarget T) a b m. 
+  (HTarget a) ~> (HTarget b) := (@HTarget T) <$> m. 
 
 (* horizontal 2-cell unit (maps vertical morphisms to horizontally
    unitary 2-cells) *)
 Definition HC2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
-  c2hom (HUnit a) (HUnit b) := @Fhom _ _ (@HUnit T) a b m. 
+  (HUnit a) ~> (HUnit b) := (@HUnit T) <$> m. 
 
 
 (** Horizontal product category (D1 *d0 D1) *)
@@ -1387,12 +1391,12 @@ Definition HC2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
 (* horizontal composition of two (naked) horizontal morphisms *)
 Definition l_hcomp (T: NDCat.type) (a0 a1 a2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2) : HHomSet T :=
-  @HO T _ a0 a2 (@comp (transpose T) a0 a1 a2 h0 h1).
+  @HO T _ a0 a2 (h0 \; h1).
 
 Notation "'sigma' x .. y , p" :=
   (sigT (fun x => .. (sigT (fun y => p)) ..))
   (at level 200, x binder, right associativity,
-   format "'[' 'sigma'  '/ '  x .. y ,  '/ '  p ']'")
+   format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
   : type_scope.
 
 (** HCompSet quiver *)
@@ -1452,7 +1456,7 @@ Definition HComp_comp_auxS (T : STUFunctor.type)
   (hhB0 : C2Hom (h_first B) (h_first C))
   (hhB1 : C2Hom (h_second B) (h_second C))
   (ppB : HC2Target hhB0 = HC2Source hhB1) :
-  HC2Source (comp hhA1 hhB1) = comp (HC2Source hhA1) (HC2Source hhB1). 
+  HC2Source (hhA1 \; hhB1) = (HC2Source hhA1) \; (HC2Source hhB1). 
   unfold HC2Source, HSource.
   repeat rewrite Fcomp.
   reflexivity.
@@ -1466,7 +1470,7 @@ Definition HComp_comp_auxT (T : STUFunctor.type)
   (hhB0 : C2Hom (h_first B) (h_first C))
   (hhB1 : C2Hom (h_second B) (h_second C))
   (ppB : HC2Target hhB0 = HC2Source hhB1) :
-  HC2Target (comp hhA0 hhB0) = comp (HC2Target hhA0) (HC2Target hhB0).
+  HC2Target (hhA0 \; hhB0) = (HC2Target hhA0) \; (HC2Target hhB0).
   unfold HC2Target, HTarget.
   repeat rewrite Fcomp.
   reflexivity.
@@ -1489,12 +1493,11 @@ Definition HComp_comp_auxI (T : STUFunctor.type)
 Defined.  
   
 (* HCompSet composition, defined in proof mode *)
-Definition HComp_comp (T: STUFunctor.type) (A B C: HCompSet T) 
-  (chA: A ~> B) (chB: B ~> C) : A ~> C.
-  destruct chA as [hhA0 pA].
-  destruct chB as [hhB0 pB].
-  destruct pA as [hhA1 ppA].
-  destruct pB as [hhB1 ppB].
+Definition HComp_comp (T: STUFunctor.type) (A B C: HCompSet T) : 
+  (A ~> B) -> (B ~> C) -> A ~> C.
+  intros chA chB.
+  destruct chA as [hhA0 [hhA1 ppA]].
+  destruct chB as [hhB0 [hhB1 ppB]].
   eapply HComp_comp_auxI; eauto.
 Defined.
 
