@@ -752,41 +752,34 @@ HB.mixin Record IsTerminal {C : quiver} (t : obj C) := {
 }.
 #[short(type="terminal")]
 HB.structure Definition Terminal {C : quiver} := {t of IsTerminal C t}.
-#[short(type="universal")]
-HB.structure Definition Universal {C : quiver} :=
-  {u of Initial C u & Terminal C u}.
 
-(* Definition hom' {C : precat} (a b : C) := a ~> b. *)
-(* (* Bug *) *)
-(* Identity Coercion hom'_hom : hom' >-> hom. *)
+HB.mixin Record IsMono {C : precat} (b c : C) (f : hom b c) := {
+  monoP : forall (a : C) (g1 g2 : a ~> b), g1 \; f = g2 \; f -> g1 = g2
+}.
+#[short(type="mono")]
+HB.structure Definition Mono {C : precat} (a b : C) := {m of IsMono C a b m}.
+Notation "a >~> b" := (mono a b)
+   (at level 99, b at level 200, format "a  >~>  b") : cat_scope.
+Notation "C >~>_ T D" := (@mono T C D)
+  (at level 99, T at level 0, only parsing) : cat_scope.
 
-(* HB.mixin Record IsMono {C : precat} (b c : C) (f : hom b c) := { *)
-(*   monoP : forall (a : C) (g1 g2 : a ~> b), g1 \; f = g2 \; f -> g1 = g2 *)
-(* }. *)
-(* #[short(type="mono")] *)
-(* HB.structure Definition Mono {C : precat} (a b : C) := {m of IsMono C a b m}. *)
-(* Notation "a >~> b" := (mono a b) *)
-(*    (at level 99, b at level 200, format "a  >~>  b") : cat_scope. *)
-(* Notation "C >~>_ T D" := (@mono T C D) *)
-(*   (at level 99, T at level 0, only parsing) : cat_scope. *)
+HB.mixin Record IsEpi {C : precat} (a b : C) (f : hom a b) := {
+  epiP :  forall (c : C) (g1 g2 : b ~> c), g1 \o f = g2 \o f -> g1 = g2
+}.
+#[short(type="epi")]
+HB.structure Definition Epi {C : precat} (a b : C) := {e of IsEpi C a b e}.
+Notation "a ~>> b" := (epi a b)
+   (at level 99, b at level 200, format "a  ~>>  b") : cat_scope.
+Notation "C ~>>_ T D" := (@epi T C D)
+  (at level 99, T at level 0, only parsing) : cat_scope.
 
-(* HB.mixin Record IsEpi {C : precat} (a b : C) (f : hom a b) := { *)
-(*   epiP :  forall (c : C) (g1 g2 : b ~> c), g1 \o f = g2 \o f -> g1 = g2 *)
-(* }. *)
-(* #[short(type="epi")] *)
-(* HB.structure Definition Epi {C : precat} (a b : C) := {e of IsEpi C a b e}. *)
-(* Notation "a ~>> b" := (epi a b) *)
-(*    (at level 99, b at level 200, format "a  ~>>  b") : cat_scope. *)
-(* Notation "C ~>>_ T D" := (@epi T C D) *)
-(*   (at level 99, T at level 0, only parsing) : cat_scope. *)
-
-(* #[short(type="iso")] *)
-(* HB.structure Definition Iso {C : precat} (a b : C) := *)
-(*    {i of @Mono C a b i & @Epi C a b i}. *)
-(* Notation "a <~> b" := (epi a b) *)
-(*    (at level 99, b at level 200, format "a  <~>  b") : cat_scope. *)
-(* Notation "C <~>_ T D" := (@epi T C D) *)
-(*   (at level 99, T at level 0, only parsing) : cat_scope. *)
+#[short(type="iso")]
+HB.structure Definition Iso {C : precat} (a b : C) :=
+   {i of @Mono C a b i & @Epi C a b i}.
+Notation "a <~> b" := (epi a b)
+   (at level 99, b at level 200, format "a  <~>  b") : cat_scope.
+Notation "C <~>_ T D" := (@epi T C D)
+  (at level 99, T at level 0, only parsing) : cat_scope.
 
 HB.mixin Record IsRightAdjoint (D C : precat) (R : D -> C)
     of @PreFunctor D C R := {
@@ -794,7 +787,8 @@ HB.mixin Record IsRightAdjoint (D C : precat) (R : D -> C)
   phi : forall c d, (L_ c ~> d) -> (c ~> R d);
   psy : forall c d, (c ~> R d) -> (L_ c ~> d);
   phi_psy c d : (phi c d \o psy c d)%FUN = @id (c ~> R d);
-  psy_phi c d : (psy c d \o phi c d)%FUN = @id (L_ c ~> d)
+  psy_phi c d : (psy c d \o phi c d)%FUN = @id (L_ c ~> d);
+  (* naturality is missing *)
 }.
 #[short(type="right_adjoint")]
 HB.structure Definition RightAdjoint (D C : precat) :=
@@ -802,7 +796,6 @@ HB.structure Definition RightAdjoint (D C : precat) :=
 Arguments L_ {_ _}.
 Arguments phi {D C s} {c d}.
 Arguments psy {D C s} {c d}.
-
 
 HB.mixin Record PreCat_IsMonoidal C of PreCat C := {
   onec : C;
@@ -819,7 +812,8 @@ Notation "f <*> g" := (prod^$ ((f, g) : (_, _) ~> (_, _)))
   (only parsing) : cat_scope.
 Notation "1" := onec : cat_scope.
 
-Definition hom_cast {C : quiver} {a a' : C} (eqa : a = a') {b b' : C} (eqb : b = b') :
+Definition hom_cast {C : quiver} {a a' : C} (eqa : a = a')
+                                 {b b' : C} (eqb : b = b') :
   (a ~> b) -> (a' ~> b').
 Proof. now elim: _ / eqa; elim: _ / eqb. Defined.
 
@@ -883,7 +877,6 @@ HB.structure Definition Monoidal : Set :=
   { C of PreMonoidal_IsMonoidal C & PreMonoidal C }.
 Set Universe Checking.
 
-
 Record cospan (Q : quiver) (A B : Q) := Cospan {
   top : Q;
   left2top : A ~> top;
@@ -913,7 +906,8 @@ Program Definition cospan_comp (c1 c2 c3 : cospan A B)
   @CospanMap Q A B c1 c3 (top_map f12 \; top_map f23) _ _.
 Next Obligation. by rewrite compoA !left2top_map. Qed.
 Next Obligation. by rewrite compoA !right2top_map. Qed.
-HB.instance Definition _ := IsPreCat.Build (cospan A B) cospan_idmap cospan_comp.
+HB.instance Definition _ := IsPreCat.Build (cospan A B)
+  cospan_idmap cospan_comp.
 
 Lemma cospan_are_cats : PreCat_IsCat (cospan A B).
 Proof.
@@ -1012,7 +1006,6 @@ Variables (f : A ~> D) (g : B ~> D) (h : C ~> A).
 Variables (u : E ~> A) (v : E ~> B) (w : F ~> C) (z : F ~> E).
 Variable (uvfg : pbsquare u v f g).
 
-Set Printing Width 50.
 Theorem pbsquarec_compP :
   pbsquare w z h u <=> pbsquare w (z \; v) (h \; f) g.
 Proof.
