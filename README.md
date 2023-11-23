@@ -89,16 +89,14 @@ tricks and FAQs. If you want to work on the implementation of HB, this
 
 <details><summary>(click to expand)</summary><p>
 
-HB works on Coq 8.11, 8.12, 8.13 and 8.14
-
-- You can install it via OPAM
+- You can install HB via OPAM
 
 ```shell
 opam repo add coq-released https://coq.inria.fr/opam/released
 opam install coq-hierarchy-builder
 ```
 
-- You can use it in nix with the attribute `coqPackages_8_13.hierarchy-builder` e.g.
+- You can use it in nix with the attribute `coqPackages_8_XX.hierarchy-builder` e.g.
   via `nix-shell -p coq_8_13 -p coqPackages_8_13.hierarchy-builder`
  
 </p></details>
