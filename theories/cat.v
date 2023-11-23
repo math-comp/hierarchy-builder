@@ -877,6 +877,52 @@ HB.structure Definition Monoidal : Set :=
   { C of PreMonoidal_IsMonoidal C & PreMonoidal C }.
 Set Universe Checking.
 
+Record span (Q : quiver) (A B : Q) := Span {
+  bot : Q;
+  bot2left : bot ~> A;
+  bot2right : bot ~> B
+}.
+
+Section spans.
+Variables (Q : precat) (A B : Q).
+Record span_map (c c' : span A B) := SpanMap {
+  bot_map : bot c ~> bot c';
+  bot2left_map : bot_map \; bot2left c' = bot2left c;
+  bot2right_map : bot_map \; bot2right c' = bot2right c;
+}.
+HB.instance Definition _ := IsQuiver.Build (span A B) span_map.
+
+Lemma span_mapP (c c' : span A B) (f g : c ~> c') :
+  bot_map f = bot_map g <-> f = g.
+Proof.
+split=> [|->]//; case: f g => [/= f ? ?] [/= g + +] efg.
+by elim: efg => // ? ?; congr SpanMap; apply: Prop_irrelevance.
+Qed.
+
+End spans.
+
+Section spans_in_cat.
+Variables (Q : cat) (A B : Q).
+Definition span_idmap (c : span A B) :=
+  @SpanMap Q A B c c idmap (comp1o _) (comp1o _).
+Program Definition span_comp (c1 c2 c3 : span A B)
+    (f12 : c1 ~> c2) (f23 : c2 ~> c3) :=
+  @SpanMap Q A B c1 c3 (bot_map f12 \; bot_map f23) _ _.
+Next Obligation. by rewrite -compoA !bot2left_map. Qed.
+Next Obligation. by rewrite -compoA !bot2right_map. Qed.
+HB.instance Definition _ := IsPreCat.Build (span A B)
+  span_idmap span_comp.
+
+Lemma span_are_cats : PreCat_IsCat (span A B).
+Proof.
+constructor=> [a b f|a b f|a b c d f g h].
+- by apply/span_mapP => /=; rewrite comp1o.
+- by apply/span_mapP => /=; rewrite compo1.
+- by apply/span_mapP => /=; rewrite compoA.
+Qed.
+HB.instance Definition _ := span_are_cats.
+End spans_in_cat.
+
 Record cospan (Q : quiver) (A B : Q) := Cospan {
   top : Q;
   left2top : A ~> top;
@@ -894,7 +940,11 @@ HB.instance Definition _ := IsQuiver.Build (cospan A B) cospan_map.
 
 Lemma cospan_mapP (c c' : cospan A B) (f g : c ~> c') :
   top_map f = top_map g <-> f = g.
-Admitted.
+Proof.
+split=> [|->]//; case: f g => [/= f ? ?] [/= g + +] efg.
+by elim: efg => // ? ?; congr CospanMap; apply: Prop_irrelevance.
+Qed.
+
 End cospans.
 
 Section cospans_in_cat.
@@ -919,30 +969,6 @@ Qed.
 HB.instance Definition _ := cospan_are_cats.
 End cospans_in_cat.
 
-Section spans_and_co.
-Variables (Q : quiver) (A B : Q).
-Definition span := @cospan Q^op A B.
-Definition bot  (s : span) : Q := top s.
-Definition bot2left  (s : span) : bot s ~>_Q A := left2top s.
-Definition bot2right (s : span) : bot s ~>_Q B := right2top s.
-Definition Span (C : Q) (f : C ~> A) (g : C ~> B) : span :=
-   @Cospan Q^op A B C f g.
-End spans_and_co.
-
-HB.instance Definition _ (Q : precat) (A B : Q) :=
-  Quiver.copy (span A B) (@cospan Q^op A B)^op.
-HB.instance Definition _ (Q : cat) (A B : Q) :=
-  Cat.copy (span A B) (@cospan Q^op A B)^op.
-
-Section bot_map.
-Variables (C : cat) (A B : C) (s s' : span A B) (f : s ~> s').
-Definition bot_map : bot s ~> bot s' := top_map f.
-Lemma bot2left_map : bot_map \; bot2left s' = bot2left s.
-Proof. exact: left2top_map f. Qed.
-Lemma bot2right_map : bot_map \; bot2right s' = bot2right s.
-Proof. exact: right2top_map f. Qed.
-End bot_map.
-
 HB.mixin Record isPrePullback (Q : precat) (A B : Q)
      (c : cospan A B) (s : span A B) := {
    is_square : bot2left s \; left2top c = bot2right s \; right2top c;
@@ -959,6 +985,7 @@ HB.instance Definition _ :=
     (fun a b => (a : span A B) ~>_(span A B) (b : span A B)).
 Lemma eq_prepullbackP (p q : prepullback c) :
   p = q :> span _ _ <-> p = q.
+Proof.
 Admitted.
 End prepullback.
 Section prepullback.
@@ -984,7 +1011,7 @@ HB.tag Definition pb_terminal (Q : precat)
 
 #[wrapper]
 HB.mixin Record prepullback_isTerminal (Q : precat)
-    (A B : Q) (c : cospan A B) 
+    (A B : Q) (c : cospan A B)
     (s : span A B) of isPrePullback Q A B c s := {
   prepullback_terminal :
     IsTerminal (prepullback c) (pb_terminal s)
@@ -992,11 +1019,98 @@ HB.mixin Record prepullback_isTerminal (Q : precat)
 #[short(type="pullback"), verbose]
 HB.structure Definition Pullback (Q : precat)
     (A B : Q) (c : cospan A B) :=
-  {s of isPrePullback Q A B c s 
+  {s of isPrePullback Q A B c s
       & IsTerminal (prepullback c) (pb_terminal s) }.
 
+Inductive walking_cospan := Top | Left | Right.
+Definition walking_cospan_hom (x y : walking_cospan) := match x, y with
+  | Top, Top  | Left, Left | Right, Right |
+    Left, Top | Right, Top => Datatypes.unit
+  | _, _ => False
+  end.
+
+HB.instance Definition _ :=
+  IsQuiver.Build walking_cospan walking_cospan_hom.
+
+Definition walking_cospan_id (x : walking_cospan) : x ~> x.
+Proof. by case: x; constructor. Defined.
+
+Definition walking_cospan_comp (x y z : walking_cospan) :
+  (x ~> y) -> (y ~> z) -> (x ~> z).
+Proof. by case: x y z => [] [] []. Defined.
+
+HB.instance Definition _ := Quiver_IsPreCat.Build walking_cospan
+  walking_cospan_id walking_cospan_comp.
+
+Lemma walking_cospan_cat : PreCat_IsCat walking_cospan.
+Proof. by constructor=> [[] []|[] []|[] [] [] []]// []. Qed.
+HB.instance Definition _ := walking_cospan_cat.
+
+Section Pullback_Natural.
+Context (C : cat) (A B : C) (csp : cospan A B).
+
+Definition cspF (x : walking_cospan) : C :=
+  match x with Left => A | Right => B | Top => top csp end.
+
+Definition cspFhom : forall (x y : walking_cospan),
+    (x ~> y) -> cspF x ~> cspF y.
+Proof.
+move=> [] []//.
+- move=> _; exact: idmap.
+- move=> _; exact: left2top csp.
+- move=> _; exact: idmap.
+- move=> _; exact: right2top csp.
+- move=> _; exact: idmap.
+Defined.
+
+HB.instance Definition _ := IsPreFunctor.Build _ _ cspF cspFhom.
+Lemma cspF_functor : PreFunctor_IsFunctor _ _ cspF.
+Proof.
+by constructor=> [[]|[] [] []]//= [] []//=;
+   rewrite ?(compo1, comp1o)//.
+Qed.
+HB.instance Definition _ := cspF_functor.
+
+Section prepullback2natural.
+Variable (p : prepullback csp).
+
+Definition wcsp w : cst walking_cospan (bot p) w ~> cspF w.
+Proof.
+case: w; rewrite /cst /=.
+- exact: (bot2left _ \; left2top _).
+- exact: bot2left.
+- exact: bot2right.
+Defined.
+
+Lemma wcsp_natural : IsNatural _ _ _ _ wcsp.
+Proof.
+constructor=> - [] [] //= [] /=; rewrite ?(comp1o, compo1)//=.
+exact: is_square.
+Qed.
+
+End prepullback2natural.
+
+Section natural2prepullback.
+Variables (c : C) (n : cst walking_cospan c ~~> cspF).
+
+Definition s := {| bot := c; bot2left := n Left; bot2right := n Right |}.
+
+Lemma s_prepullback : isPrePullback _ _ _ csp s.
+Proof.
+constructor => /=.
+have p := natural n (tt : Right ~> Top).
+have /esym q := natural n (tt : Left ~> Top).
+exact: etrans q p.
+Qed.
+
+End natural2prepullback.
+
+End Pullback_Natural.
+Notation square u v f g :=
+  (isPrePullback _ _ _ (Cospan f g) (Span u v)).
 Notation pbsquare u v f g :=
   (Pullback _ (Cospan f g) (Span u v)).
+Notation pb s := (prepullback_isTerminal _ _ _ _ s).
 
 Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
