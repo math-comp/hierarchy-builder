@@ -1116,71 +1116,82 @@ Program Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
     ((iprodl X Y) \; src) 
     ((iprodr X Y) \; tgt).
 
-
-
-(*
-(* X and Y are morphisms in the morphism object associated with C0 *)
-Definition iprod {C: pbcat} {C0 : C} (X Y : @iHom C C0) : C :=
-  bot (pb _ _ (Cospan  (tgt : X ~> C0) (src : Y ~> C0))).
-Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
-            (at level 99, C0 at level 0, only parsing) : cat_scope.
-*)
-(*
-HB.instance Definition iprod_iHom :=
-   isInternalHom.Build C0 (X *_C0 Y) (src (bot2left _)) (tgt (bot2right _)).
-*)
-
-(*
-Definition iprodl {C} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> X :=
-  bot2left.
-Definition iprodr {C} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> Y :=
-  bot2right.
-*)
-
 (* we also define the trivial internal hom type *)
 HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :=
    isInternalHom.Build C C0 C0 idmap idmap.
 
 (* we need internal hom morphisms:
 the ones that preserve sources and targets *)
-HB.mixin Record IsInternalHomHom {C} (C0 : C)
-     (C1 C1' : @iHom U C) (f : C1 ~> C1') := {
+HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
+     (C1 C1' : @iHom C C0) (f : C1 ~> C1') := {
   hom_src : f \; src = src;
   hom_tgt : f \; tgt = tgt;
 }.
 #[short(type="iHomHom")]
-HB.structure Definition InternalHomHom {C}
-  (C0 : C) (C1 C1' : @iHom U C) :=
-  { f of @IsInternalHomHom C C0 C1 C1' f }. 
+HB.structure Definition InternalHomHom {C: pbcat}
+  (C0 : C) (C1 C1' : @iHom C C0) :=
+  { f of @IsInternalHomHom C C0 C1 C1' f }.
 
 (* internal homs form a category,
    the morphisms are the one that preserve source and target *)
-HB.instance Definition _ {C} (C0 : C) :=
-  Cat.Build (@iHom C C0) (@iHomHom C C0) _ _ _ _ _.
+HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
+  IsQuiver (@iHom C C0) :=
+  IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
 
-Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
-  (C1 *_C0 C2) *_C0 C3 ~> C1 *_C0 (C2 *_C0 C3) := ...
-   (* define it with the universal arrow of the pullback *)
+Program Definition iHom_precat {C: pbcat} (C0 : C) :
+  Quiver_IsPreCat (@iHom C C0) :=
+  Quiver_IsPreCat.Build (@iHom C C0) _ _.
+Obligation 1.
+Admitted.
+Obligation 2.
+Admitted.
 
-Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
-  (f : C1 ~> C3) (g : C2 ~> C4) : C1 *_C0 C2 ~> C3 *_C0 C4 := ...
+HB.instance Definition iHom_precat' {C: pbcat} (C0 : C) := iHom_precat C0.
 
-Notation "< f , g >" := (ipair f g).
+Program Definition iHom_cat {C: pbcat} (C0 : C) :
+  PreCat_IsCat (@iHom C C0) :=
+  PreCat_IsCat.Build (@iHom C C0) _ _ _.
+Obligation 1.
+Admitted.
+Obligation 2.
+Admitted.
+Obligation 3.
+Admitted. 
+
+HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
+
 
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
-HB.mixin Record IsPreInternalQuiver {C} (C0 : C) := PreInteralQuiver { C1 : C }.
-#[short(type="internalQuiver")]
+HB.mixin Record IsPreInternalQuiver {C} (C0 : C) :=
+  { isC1 : C }.
+(* PROBLEM: probably a bug *)
+Fail #[short(type="preInternalQuiver")]
+HB.structure Definition PreInternalQuiver {C} := {
+  C0 of IsPreInternalQuiver C C0 }.
+
+Fail #[short(type="internalQuiver")]
 HB.structure Definition InternalQuiver {C} := {
-  C0 of IsPreInternalQuiver C0 & InternalHom C0 (@C1 C0)
+  C0 of IsPreInternalQuiver C C0 & InternalHom C C0 (@C1 C C0)
 }.
+
+(* PROBLEM: nested product does not typecheck *)
+Fail Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
+  (C1 *_C0 C2) *_C0 C3 ~> C1 *_C0 (C2 *_C0 C3). (* := ... *)
+   (* define it with the universal arrow of the pullback *)
+
+Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
+  (f : C1 ~> C3) (g : C2 ~> C4) : C1 *_C0 C2 ~> C3 *_C0 C4. 
+Admitted.
+Notation "< f , g >" := (ipair f g).
+
 
 (* An internal precategory is an internal category with two operators that
    must be src and tgt preserving, i.e. iHom morphisms *)
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : C) of InternalQuiver C0 := {
   iid : C0 ~>_(iHom C0) C1;
-  icomp : C1 *_C0 C1 ~>_(iHom C0) C1;
-}
+  icomp : C1 *_C0 C1 ~>_(iHom C0) C1
+}.
 #[short(type="internalprecat")]
 HB.structure Definition InternalPrecat (C : pbcat) :=
   { q of @IsPreInternalPreCat C q }.
