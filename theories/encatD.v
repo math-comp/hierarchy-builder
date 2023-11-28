@@ -1014,29 +1014,13 @@ Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 (********************************************************************)
 (********************************************************************)
 
-(* Defining a category with pullbacks
-Ideally span is in fact expanded and the final mixin has
+(*** CATEGORIES WITH PULLBACKS *)
+
+(* category with all prepullbacks *)
+(* Ideally span is in fact expanded and the final mixin has
 a pb : forall A B, cospan A B -> C 
 but it is not clear how to do that yet
 *)
-(* Definition has_all_pbcks (C: Quiver.type) : Type :=
-  forall (A B: C), cospan A B -> span A B.
-HB.mixin Record HasPBop C of Cat C := {
-  pb : has_all_pbcks C
-  }.
-
-Definition pb_is_pullback (C: PBop.type) : Type :=
-  forall (a b: C) (c: cospan a b), Pullback C c (@pb C a b c).
-HB.mixin Record IsPBCat C of PBop C : Type :=
-  {
-  is_pb : pb_is_pullback C 
-  }.
-#[short(type="pbcat")]
-HB.structure Definition PBCat :=
-  {C of IsPBCat C}.
-*)
-
-(* category with all prepullbacks *)
 HB.mixin Record HasPBop C of Cat C := {
   pb : forall (A B: C), cospan A B -> span A B
   }.
@@ -1053,182 +1037,64 @@ HB.mixin Record HasPBCat C of PBop C : Type := {
 HB.structure Definition PBCat :=
   {C of HasPBCat C}.
 
-(* Defining internal hom objects.
-   C0 and C1 are objects of C. 
-   C0 is the object of objects, 
-   C1 is the object of morphims (and the subject).  
-   this will allow to define a generic _ *_C0 _ notation
-   by recognizing the structure of hom objects on the LHS and RHS *)
-HB.mixin Record isInternalHom {C: quiver} (C0 C1 : C) := {
-   src : C1 ~> C0; tgt : C1 ~> C0
-}.
-#[short(type="iHom")]
-HB.structure Definition InternalHom {C: quiver} (C0 : C) :=
-  { C1 of isInternalHom C C0 C1 }.
 
-(*
-Definition tgt' := @tgt.
-Arguments tgt' {_ _} _.
+(********************************************************************)
 
-(* X and Y are morphisms in the morphism object associated with C0 *)
-Definition iprod {C: pbcat} {C0 : C} (X Y : @iHom C C0) : C :=
-  bot (pb _ _ (Cospan  (tgt : InternalHom.sort X ~> C0) (src : Y ~> C0))).
-Notation "X *_ C0 Y" := (@iprod _ C0 X Y) (at level 99).
-*)
-(* BEWARE: this cospan is a type-level one: it basically just says
-that for ANY morphism, source and target are objects (NOT necesarily
-the SAME object). X and Y are two instances of the morphism object
-(iHom C0), which (unlike in most presentations) depends on the object
-of objects C0. This is just like saying that X and Y are two versions
-of C1 (I find this duplication, which does not appear in the
-literature, rather confusing). X and Y are NOT two distinct morphisms
-in the ambient category. The cospan does NOT imply that ambient
-morphisms typed by X and Y are composable (i.e. adjacent). Also, the
-pullback is not a morphism, it is just an object of C (also rather
-confusing).
+(*** INTERNAL CATEGORIES *)
 
-original Cyril's code:
+HB.mixin Record IsIObject C of Cat C := {
+    Obj : C ;
+    Morph : C 
+}.             
+HB.structure Definition IObject :=
+  { C of IsIObject C }.
 
-Definition iprod {C} {C0 : C} (X Y : iHom C0) := bottom (pb (Cospan
-   (src X) (tgt Y))).  Notation "X *_ C0 Y" := (@iprod _ C0 X Y).
- 
-HB.instance Definition iprod_iHom := isInternalHom.Build C0 (X *_C0 Y)
-   (src (bot2left _)) (tgt (bot2right _)).  *)
-Definition iprod_pb {C: pbcat} {C0 : C} (X Y : iHom C0) : span X Y :=
-  pb _ _ (Cospan (tgt : X ~> C0) (src : Y ~> C0)).
+HB.mixin Record HasProd C of IObject C := {
+    prd : C -> C -> C ;
+    prj1 : forall c1 c2, prd c1 c2 ~> c1 ;
+    prj2 : forall c1 c2, prd c1 c2 ~> c2 ;
+    mprd : forall c1 c2 c3 c4,
+      (c1 ~> c3) -> (c2 ~> c4) -> prd c1 c2 ~> prd c3 c4 ;
+    mjn : forall c1 c2 c3,
+      (c1 ~> c2) -> (c1 ~> c3) -> c1 ~> prd c2 c3
+}.             
+HB.structure Definition Prod :=
+  { C of HasProd C }.
 
-Definition iprod {C: pbcat} {C0 : C} (X Y : iHom C0) : C :=
-  bot (@iprod_pb C C0 X Y).
-Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
-            (at level 99, C0 at level 0, only parsing) : cat_scope.
+HB.mixin Record IsIQuiver C of Prod C := {
+    iid : Obj ~>_C Morph ; 
+    isrc : Morph ~>_C Obj ; 
+    itrg : Morph ~>_C Obj ;
+    icmp : @prd C Morph Morph ~> Morph
+}.             
+HB.structure Definition IQuiver :=
+  { C of IsIQuiver C }.
 
-Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> X :=
-  bot2left (iprod_pb X Y).
-Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> Y :=
-  bot2right (iprod_pb X Y).
-
-(* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
-is also an instance of (iHom C0). Notice, however, that X and Y do not
-represent composable morphisms *)
-Program Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
-  @isInternalHom C C0 (X *_C0 Y) :=
-  @isInternalHom.Build C C0 (X *_C0 Y) 
-    ((iprodl X Y) \; src) 
-    ((iprodr X Y) \; tgt).
-
-(* we also define the trivial internal hom type *)
-HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :=
-   isInternalHom.Build C C0 C0 idmap idmap.
-
-(* we need internal hom morphisms:
-the ones that preserve sources and targets *)
-HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
-     (C1 C1' : @iHom C C0) (f : C1 ~> C1') := {
-  hom_src : f \; src = src;
-  hom_tgt : f \; tgt = tgt;
-}.
-#[short(type="iHomHom")]
-HB.structure Definition InternalHomHom {C: pbcat}
-  (C0 : C) (C1 C1' : @iHom C C0) :=
-  { f of @IsInternalHomHom C C0 C1 C1' f }.
-
-(* internal homs form a category,
-   the morphisms are the one that preserve source and target *)
-HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
-  IsQuiver (@iHom C C0) :=
-  IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
-
-Program Definition iHom_precat {C: pbcat} (C0 : C) :
-  Quiver_IsPreCat (@iHom C C0) :=
-  Quiver_IsPreCat.Build (@iHom C C0) _ _.
-Obligation 1.
-Admitted.
-Obligation 2.
-Admitted.
-
-HB.instance Definition iHom_precat' {C: pbcat} (C0 : C) := iHom_precat C0.
-
-Program Definition iHom_cat {C: pbcat} (C0 : C) :
-  PreCat_IsCat (@iHom C C0) :=
-  PreCat_IsCat.Build (@iHom C C0) _ _ _.
-Obligation 1.
-Admitted.
-Obligation 2.
-Admitted.
-Obligation 3.
-Admitted. 
-
-HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
+HB.mixin Record IsICat C of IQuiver C := {
+    iid_s : iid \; isrc = @idmap C Obj ;
+    iid_t : iid \; itrg = @idmap C Obj ;
+    icmp_s : @icmp C \; isrc = prj1 Morph Morph \; isrc ;
+    icmp_t : @icmp C \; itrg = prj2 Morph Morph \; itrg ;
+    unit_l : mprd Obj Morph Morph Morph iid (@idmap C Morph) \; icmp =
+               prj2 Obj Morph ;
+    unit_r : mprd Morph Obj Morph Morph (@idmap C Morph) iid \; icmp =
+               prj1 Morph Obj ; 
+    assoc : mprd (prd Morph Morph) Morph Morph Morph icmp (@idmap C Morph)
+              \; icmp =              
+        (mjn (prd (prd Morph Morph) Morph) Morph (prd Morph Morph)
+          (prj1 (prd Morph Morph) Morph \; prj1 Morph Morph)
+          (mjn (prd (prd Morph Morph) Morph) Morph Morph
+             (prj1 (prd Morph Morph) Morph \; prj2 Morph Morph)
+             (prj2 (prd Morph Morph) Morph))) \;
+             (mprd Morph (prd Morph Morph) Morph Morph (@idmap C Morph) icmp)              \; icmp                                  
+}.             
+HB.structure Definition ICat :=
+  { C of IsICat C }.
 
 
-(* Now we define an internal quiver as an object C0,
-   which has a C1 : iHom C0 attached to it *)
-HB.mixin Record IsPreInternalQuiver {C} (C0 : C) :=
-  { isC1 : C }.
-(* PROBLEM: probably a bug *)
-Fail #[short(type="preInternalQuiver")]
-HB.structure Definition PreInternalQuiver {C} := {
-  C0 of IsPreInternalQuiver C C0 }.
+(********************************************************************)
 
-Fail #[short(type="internalQuiver")]
-HB.structure Definition InternalQuiver {C} := {
-  C0 of IsPreInternalQuiver C C0 & InternalHom C C0 (@C1 C C0)
-}.
-
-(* PROBLEM: nested product does not typecheck *)
-Fail Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
-  (C1 *_C0 C2) *_C0 C3 ~> C1 *_C0 (C2 *_C0 C3). (* := ... *)
-   (* define it with the universal arrow of the pullback *)
-
-Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
-  (f : C1 ~> C3) (g : C2 ~> C4) : C1 *_C0 C2 ~> C3 *_C0 C4. 
-Admitted.
-Notation "< f , g >" := (ipair f g).
-
-
-(* An internal precategory is an internal category with two operators that
-   must be src and tgt preserving, i.e. iHom morphisms *)
-HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : C) of InternalQuiver C0 := {
-  iid : C0 ~>_(iHom C0) C1;
-  icomp : C1 *_C0 C1 ~>_(iHom C0) C1
-}.
-#[short(type="internalprecat")]
-HB.structure Definition InternalPrecat (C : pbcat) :=
-  { q of @IsPreInternalPreCat C q }.
-
-(* An internal category moreover must satisfy additional properies on iid and icomp *)
-HB.mixin Record IsInternalCat (C : pbcat) (C0 : C) of InternalPreCat C0 := {
-  icompA : <icomp, idmap> \; icomp = iprodA \; <idmap, icomp> \; icomp;
-  icomp1l : <idmap, iid> \; icomp = iprodl;
-  icomp1r : <iid, idmap> \; icomp = iprodr;
-HB.structure Definition InternalCat (C : pbcat) := {C0 of @IsInternalCat C C0}.
-
-(* A double category is an internal category in cat 
-   - The objects are the objects of C0
-   - The vertical maps are the maps of C0
-   - The horizontal maps are the objects of C1
-   - The 2-cells are the maps of C1
-   
-  About identities:
-  - The identity vertical map on (x : C) is \idmap_x
-  - The identity horizontal map on (x : C) is iid x
-  - the identity 2-cell on (x : C) is iid (\idmap_x) = \idmap_(iid x)
-   
-  About compositions:
-   - The vertical composition of maps is the composition of C0
-   - The vertical compositions of 2-cells is the composition of C1
-     (and it agrees with the former because src and tgt are functors
-      and because iid is a iHom-map)
-   - The horizontal composition of maps is the object part of icomp
-   - The horizontal composition of 2-cells is the map part of icomp
-*)
-HB.structure' Definition DoubleCat := @InternalCat cat. 
-
-
-
-
-
-(*** ENRICHED CATEGORIES *)
+(*** GENERALISED ENRICHED CATEGORIES *)
 
 Declare Scope encat_scope.
 Delimit Scope encat_scope with encat.
@@ -1462,8 +1328,6 @@ Set Universe Checking.
 
 (** Auxiliary notions for Source, Target and 
     Horizontal Unit functors *)
-
-
 
 (* homsets of 2-cell (D1) morphisms *)
 Definition d1hom (D: DQuiver.type) : D1obj D -> D1obj D -> U :=
@@ -2161,6 +2025,176 @@ Check pb_terminal p : terminal _.
 End test.
 End test.
 
+
+
+(************************************************************************)
+
+(**** INTERNAL CATEGORIES - ALTERNATIVE DEFINITION *)
+(* still problematic *)
+
+(* Defining internal hom objects.
+   C0 and C1 are objects of C. 
+   C0 is the object of objects, 
+   C1 is the object of morphims (and the subject).  
+   this will allow to define a generic _ *_C0 _ notation
+   by recognizing the structure of hom objects on the LHS and RHS *)
+HB.mixin Record isInternalHom {C: quiver} (C0 C1 : C) := {
+   src : C1 ~> C0; tgt : C1 ~> C0
+}.
+#[short(type="iHom")]
+HB.structure Definition InternalHom {C: quiver} (C0 : C) :=
+  { C1 of isInternalHom C C0 C1 }.
+
+(*
+Definition tgt' := @tgt.
+Arguments tgt' {_ _} _.
+*)
+(* The cospan is a type-level one: it says that for ANY morphism,
+source and target are objects (NOT necesarily the SAME object). X and
+Y are two instances of the morphism object (iHom C0), which here
+depends on the object of objects C0. Basically, X and Y are two
+versions of C1. X and Y are NOT two distinct morphisms in the ambient
+category. The cospan does NOT imply that ambient morphisms typed by X
+and Y are composable (i.e. adjacent). 'iprod' is not a morphism, it is
+just an object of C.
+
+Original code:
+
+Definition iprod {C} {C0 : C} (X Y : iHom C0) := bottom (pb (Cospan
+   (src X) (tgt Y))).  Notation "X *_ C0 Y" := (@iprod _ C0 X Y).
+ 
+HB.instance Definition iprod_iHom := isInternalHom.Build C0 (X *_C0 Y)
+   (src (bot2left _)) (tgt (bot2right _)).  *)
+Definition iprod_pb {C: pbcat} {C0 : C} (X Y : iHom C0) : span X Y :=
+  pb _ _ (Cospan (tgt : X ~> C0) (src : Y ~> C0)).
+
+Definition iprod {C: pbcat} {C0 : C} (X Y : iHom C0) : C :=
+  bot (@iprod_pb C C0 X Y).
+Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
+            (at level 99, C0 at level 0, only parsing) : cat_scope.
+
+Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> X :=
+  bot2left (iprod_pb X Y).
+Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> Y :=
+  bot2right (iprod_pb X Y).
+
+(* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
+is also an instance of (iHom C0). Notice, however, that X and Y do not
+represent composable morphisms *)
+Program Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
+  @isInternalHom C C0 (X *_C0 Y) :=
+  @isInternalHom.Build C C0 (X *_C0 Y) 
+    ((iprodl X Y) \; src) 
+    ((iprodr X Y) \; tgt).
+
+(* we also define the trivial internal hom type *)
+HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :=
+   isInternalHom.Build C C0 C0 idmap idmap.
+
+(* we need internal hom morphisms:
+the ones that preserve sources and targets *)
+HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
+     (C1 C1' : @iHom C C0) (f : C1 ~> C1') := {
+  hom_src : f \; src = src;
+  hom_tgt : f \; tgt = tgt;
+}.
+#[short(type="iHomHom")]
+HB.structure Definition InternalHomHom {C: pbcat}
+  (C0 : C) (C1 C1' : @iHom C C0) :=
+  { f of @IsInternalHomHom C C0 C1 C1' f }.
+
+(* internal homs form a category,
+   the morphisms are the one that preserve source and target *)
+HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
+  IsQuiver (@iHom C C0) :=
+  IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
+
+Program Definition iHom_precat {C: pbcat} (C0 : C) :
+  Quiver_IsPreCat (@iHom C C0) :=
+  Quiver_IsPreCat.Build (@iHom C C0) _ _.
+Obligation 1.
+Admitted.
+Obligation 2.
+Admitted.
+
+HB.instance Definition iHom_precat' {C: pbcat} (C0 : C) := iHom_precat C0.
+
+Program Definition iHom_cat {C: pbcat} (C0 : C) :
+  PreCat_IsCat (@iHom C C0) :=
+  PreCat_IsCat.Build (@iHom C C0) _ _ _.
+Obligation 1.
+Admitted.
+Obligation 2.
+Admitted.
+Obligation 3.
+Admitted. 
+
+HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
+
+
+(* Now we define an internal quiver as an object C0,
+   which has a C1 : iHom C0 attached to it *)
+HB.mixin Record IsPreInternalQuiver {C} (C0 : C) :=
+  { isC1 : C }.
+(* PROBLEM: probably a bug *)
+Fail #[short(type="preInternalQuiver")]
+HB.structure Definition PreInternalQuiver {C} := {
+  C0 of IsPreInternalQuiver C C0 }.
+
+Fail #[short(type="internalQuiver")]
+HB.structure Definition InternalQuiver {C} := {
+  C0 of IsPreInternalQuiver C C0 & InternalHom C C0 (@C1 C C0)
+}.
+
+(* PROBLEM: nested product does not typecheck *)
+Fail Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
+  (C1 *_C0 C2) *_C0 C3 ~> C1 *_C0 (C2 *_C0 C3). (* := ... *)
+   (* define it with the universal arrow of the pullback *)
+
+Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
+  (f : C1 ~> C3) (g : C2 ~> C4) : C1 *_C0 C2 ~> C3 *_C0 C4. 
+Admitted.
+Notation "< f , g >" := (ipair f g).
+
+
+(* An internal precategory is an internal category with two operators that
+   must be src and tgt preserving, i.e. iHom morphisms *)
+HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : C) of
+  InternalQuiver C0 := {
+    iid : C0 ~>_(iHom C0) C1;
+    icomp : C1 *_C0 C1 ~>_(iHom C0) C1
+}.
+#[short(type="internalprecat")]
+HB.structure Definition InternalPrecat (C : pbcat) :=
+  { q of @IsPreInternalPreCat C q }.
+
+(* An internal category moreover must satisfy additional properies on iid and icomp *)
+HB.mixin Record IsInternalCat (C : pbcat) (C0 : C) of InternalPreCat C0 := {
+  icompA : <icomp, idmap> \; icomp = iprodA \; <idmap, icomp> \; icomp;
+  icomp1l : <idmap, iid> \; icomp = iprodl;
+  icomp1r : <iid, idmap> \; icomp = iprodr;
+HB.structure Definition InternalCat (C : pbcat) := {C0 of @IsInternalCat C C0}.
+
+(* A double category is an internal category in cat 
+   - The objects are the objects of C0
+   - The vertical maps are the maps of C0
+   - The horizontal maps are the objects of C1
+   - The 2-cells are the maps of C1
+   
+  About identities:
+  - The identity vertical map on (x : C) is \idmap_x
+  - The identity horizontal map on (x : C) is iid x
+  - the identity 2-cell on (x : C) is iid (\idmap_x) = \idmap_(iid x)
+   
+  About compositions:
+   - The vertical composition of maps is the composition of C0
+   - The vertical compositions of 2-cells is the composition of C1
+     (and it agrees with the former because src and tgt are functors
+      and because iid is a iHom-map)
+   - The horizontal composition of maps is the object part of icomp
+   - The horizontal composition of 2-cells is the map part of icomp
+*)
+HB.structure' Definition DoubleCat := @InternalCat cat. 
 
 
 
