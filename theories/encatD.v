@@ -2197,17 +2197,18 @@ HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
 
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
-HB.mixin Record IsPreInternalQuiver {C} (C0 : C) :=
-  { isC1 : C }.
-(* PROBLEM: probably a bug *)
-Fail #[short(type="preInternalQuiver")]
-HB.structure Definition PreInternalQuiver {C} := {
-  C0 of IsPreInternalQuiver C C0 }.
+HB.mixin Record IsPreInternalQuiver C of Quiver C :=
+  { C0 : C;
+    C1 : C }.
+HB.structure Definition PreInternalQuiver := {
+  C of IsPreInternalQuiver C }.
 
-Fail #[short(type="internalQuiver")]
-HB.structure Definition InternalQuiver {C} := {
-  C0 of IsPreInternalQuiver C C0 & InternalHom C C0 (@C1 C C0)
-}.
+#[wrapper] HB.mixin Record IsInternalQuiver C of
+  Quiver C & PreInternalQuiver C := {
+  priv: Quiver (@InternalHom C (@C0 C) (@C1 C))
+ }.
+HB.structure Definition InternalQuiver := {
+  C of IsInternalQuiver C }.
 
 (* PROBLEM: nested product does not typecheck *)
 Fail Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
@@ -2222,10 +2223,10 @@ Notation "< f , g >" := (ipair f g).
 
 (* An internal precategory is an internal category with two operators that
    must be src and tgt preserving, i.e. iHom morphisms *)
-HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : C) of
-  InternalQuiver C0 := {
-    iid : C0 ~>_(iHom C0) C1;
-    icomp : C1 *_C0 C1 ~>_(iHom C0) C1
+HB.mixin Record IsInternalPreCat C of PBCat C &
+  InternalQuiver C := { 
+    iid : (@C0 C) ~>_(@iHom C (@C0 C)) (@C1 C); 
+    icomp : C1 *_C0 C1 ~>_(@iHom C C0) C1
 }.
 #[short(type="internalprecat")]
 HB.structure Definition InternalPrecat (C : pbcat) :=
