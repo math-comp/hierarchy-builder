@@ -1041,15 +1041,20 @@ HB.structure Definition PBCat :=
 (********************************************************************)
 
 (*** INTERNAL CATEGORIES *)
+(* based on the NLab definition at 
+   https://ncatlab.org/nlab/show/internal+category
+*) 
 
-HB.mixin Record IsIObject C of Cat C := {
+(* category extended with internal objects *)
+HB.mixin Record HasIObjects C of Cat C := {
     Obj : C ;
-    Morph : C 
+    Mor : C 
 }.             
-HB.structure Definition IObject :=
-  { C of IsIObject C }.
+HB.structure Definition IObjects :=
+  { C of HasIObjects C }.
 
-HB.mixin Record HasProd C of IObject C := {
+(* operators (meant to abstract over pullbacks and pushouts*)
+HB.mixin Record HasPOps C of IObjects C := {
     prd : C -> C -> C ;
     prj1 : forall c1 c2, prd c1 c2 ~> c1 ;
     prj2 : forall c1 c2, prd c1 c2 ~> c2 ;
@@ -1058,39 +1063,97 @@ HB.mixin Record HasProd C of IObject C := {
     mjn : forall c1 c2 c3,
       (c1 ~> c2) -> (c1 ~> c3) -> c1 ~> prd c2 c3
 }.             
-HB.structure Definition Prod :=
-  { C of HasProd C }.
+HB.structure Definition POps :=
+  { C of HasPOps C }.
 
-HB.mixin Record IsIQuiver C of Prod C := {
-    iid : Obj ~>_C Morph ; 
-    isrc : Morph ~>_C Obj ; 
-    itrg : Morph ~>_C Obj ;
-    icmp : @prd C Morph Morph ~> Morph
+(* category extended with internal morphisms *)
+HB.mixin Record IsIQuiver C of POps C := {
+    iid : Obj ~>_C Mor ; 
+    isrc : Mor ~>_C Obj ; 
+    itrg : Mor ~>_C Obj ;
+    icmp : @prd C Mor Mor ~> Mor
 }.             
 HB.structure Definition IQuiver :=
   { C of IsIQuiver C }.
 
-HB.mixin Record IsICat C of IQuiver C := {
-    iid_s : iid \; isrc = @idmap C Obj ;
-    iid_t : iid \; itrg = @idmap C Obj ;
-    icmp_s : @icmp C \; isrc = prj1 Morph Morph \; isrc ;
-    icmp_t : @icmp C \; itrg = prj2 Morph Morph \; itrg ;
-    unit_l : mprd Obj Morph Morph Morph iid (@idmap C Morph) \; icmp =
-               prj2 Obj Morph ;
-    unit_r : mprd Morph Obj Morph Morph (@idmap C Morph) iid \; icmp =
-               prj1 Morph Obj ; 
-    assoc : mprd (prd Morph Morph) Morph Morph Morph icmp (@idmap C Morph)
-              \; icmp =              
-        (mjn (prd (prd Morph Morph) Morph) Morph (prd Morph Morph)
-          (prj1 (prd Morph Morph) Morph \; prj1 Morph Morph)
-          (mjn (prd (prd Morph Morph) Morph) Morph Morph
-             (prj1 (prd Morph Morph) Morph \; prj2 Morph Morph)
-             (prj2 (prd Morph Morph) Morph))) \;
-             (mprd Morph (prd Morph Morph) Morph Morph (@idmap C Morph) icmp)              \; icmp                                  
+Notation idO C := (@idmap C Obj).
+Notation idM C := (@idmap C Mor).
+Notation prdMM := (prd Mor Mor).
+Notation prdPM := (prd (prd Mor Mor) Mor).
+Notation prjMM1 := (prj1 Mor Mor).
+Notation prjMM2 := (prj2 Mor Mor).
+Notation prjOM1 := (prj1 Obj Mor).
+Notation prjOM2 := (prj2 Obj Mor).
+Notation prjMO1 := (prj1 Mor Obj).
+Notation prjMO2 := (prj2 Mor Obj).
+Notation prjPM1 := (prj1 (prd Mor Mor) Mor).
+Notation prjPM2 := (prj2 (prd Mor Mor) Mor).
+Notation prjPM1_ C := (@prj1 C (prd Mor Mor) Mor).
+Notation prjPM2_ C := (@prj2 C (prd Mor Mor) Mor).
+Notation prjMP1 := (prj1 Mor (prd Mor Mor)).
+Notation prjMP2 := (prj2 Mor (prd Mor Mor)).
+Notation mprdOMMM := (mprd Obj Mor Mor Mor).
+Notation mprdMOMM := (mprd Mor Obj Mor Mor).
+Notation mprdPMMM := (mprd (prd Mor Mor) Mor Mor Mor).
+Notation mprdMPMM := (mprd Mor (prd Mor Mor) Mor Mor).
+
+(* internal quiver extended with the required pullback properties *)
+HB.mixin Record IsIPreCat C of IQuiver C := {
+    pbkMM : prjMM2 \; @isrc C = prjMM1 \; itrg ;
+    pbkPMcmp : prjPM2 \; @isrc C = prjPM1 \; icmp \; itrg ;
+    pbkMPcmp : prjMP2 \; @icmp C \; isrc = prjMP1 \; itrg ;
+    pbkPM : prjPM2 \; @isrc C = prjPM1 \; prjMM2 \; itrg ; 
+    pbkMP : prjMP2 \; prjMM1 \; @isrc C = prjMP1 \; itrg ;
+    pbkPM2MM1 : prjPM1_ C \; prjMM2 =
+                mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2 \; prjMM1 ;
+    pbkPM2MM2 : prjPM2_ C =
+              mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2 \; prjMM2 ;
+    pbkPM2MP1 : prjPM1_ C \; prjMM1 =
+        mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
+          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP1 ;
+    pbkPM2MP2 : mjn prdPM Mor Mor (prjPM1_ C \; prjMM2) prjPM2 =
+        mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
+          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP2 ;    
+}.             
+HB.structure Definition IPreCat :=
+  { C of IsIPreCat C }.
+
+(* definition of internal category *)
+HB.mixin Record IsICat C of IPreCat C := {
+    iid_s : iid \; isrc = idO C ;
+    iid_t : iid \; itrg = idO C ;
+    icmp_s : @icmp C \; isrc = prjMM1 \; isrc ;
+    icmp_t : @icmp C \; itrg = prjMM2 \; itrg ;
+    unit_l : mprdOMMM iid (idM C) \; icmp = prjOM2 ;
+    unit_r : mprdMOMM (idM C) iid \; icmp = prjMO1 ; 
+    assoc : mprdPMMM icmp (idM C) \; icmp =              
+        mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
+          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \;
+          mprdMPMM (idM C) icmp \; icmp                                  
 }.             
 HB.structure Definition ICat :=
   { C of IsICat C }.
-
+(*
+HB.mixin Record IsICat C of IQuiver C := {
+    iid_s : iid \; isrc = @idmap C Obj ;
+    iid_t : iid \; itrg = @idmap C Obj ;
+    icmp_s : @icmp C \; isrc = prj1 Mor Mor \; isrc ;
+    icmp_t : @icmp C \; itrg = prj2 Mor Mor \; itrg ;
+    unit_l : mprd Obj Mor Mor Mor iid (@idmap C Mor) \; icmp =
+               prj2 Obj Mor ;
+    unit_r : mprd Mor Obj Mor Mor (@idmap C Mor) iid \; icmp =
+               prj1 Mor Obj ; 
+    assoc : mprd (prd Mor Mor) Mor Mor Mor icmp (@idmap C Mor)
+              \; icmp =              
+        (mjn (prd (prd Mor Mor) Mor) Mor (prd Mor Mor)
+          (prj1 (prd Mor Mor) Mor \; prj1 Mor Mor)
+          (mjn (prd (prd Mor Mor) Mor) Mor Mor
+             (prj1 (prd Mor Mor) Mor \; prj2 Mor Mor)
+             (prj2 (prd Mor Mor) Mor))) \;
+          (mprd Mor (prd Mor Mor) Mor Mor (@idmap C Mor) icmp)
+          \; icmp                                  
+}.
+*)             
 
 (********************************************************************)
 
