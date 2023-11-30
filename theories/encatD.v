@@ -36,7 +36,7 @@ Arguments hom {C} : rename.
 Notation homs T := (@hom T _ _).
 Notation "a ~> b" := (hom a b)
    (at level 99, b at level 200, format "a  ~>  b") : cat_scope.
-Notation "a ~>_ C b" := (@hom C a b)
+Notation "a ~>_ C b" := (@hom C (a : C) (b : C))
   (at level 99, C at level 0, only parsing) : cat_scope.
 
 (* precategories are quivers + id and comp *)
@@ -738,7 +738,7 @@ Notation "F `/ b" := (F `/` cst unit b)
   (at level 40, b at level 40, format "F `/ b") : cat_scope.
 Notation "a / b" := (cst unit a `/ b) : cat_scope.
 
-Definition obj (C : quiver) : Type := C.
+Definition obj (C : U) : U := C.
 HB.mixin Record IsInitial {C : quiver} (i : obj C) := {
   to : forall c, i ~> c;
   to_unique : forall c (f : i ~> c), f = to c
@@ -806,7 +806,7 @@ Arguments psy {D C s} {c d}.
 
 HB.mixin Record PreCat_IsMonoidal C of PreCat C := {
   onec : C;
-  (* prod1 : @hom precat (C * C)%type C ; *) 
+  (* prod1 : @hom precat (C * C)%type C ; *)
   prod : (C * C)%type ~>_precat C;
 }.
 #[short(type="premonoidal")]
@@ -995,7 +995,7 @@ HB.tag Definition pb_terminal (Q : precat)
 
 #[wrapper]
 HB.mixin Record prepullback_isTerminal (Q : precat)
-    (A B : Q) (c : cospan A B) 
+    (A B : Q) (c : cospan A B)
     (s : span A B) of isPrePullback Q A B c s := {
   prepullback_terminal :
     IsTerminal (prepullback c) (pb_terminal s)
@@ -1003,7 +1003,7 @@ HB.mixin Record prepullback_isTerminal (Q : precat)
 #[short(type="pullback"), verbose]
 HB.structure Definition Pullback (Q : precat)
     (A B : Q) (c : cospan A B) :=
-  {s of isPrePullback Q A B c s 
+  {s of isPrePullback Q A B c s
       & IsTerminal (prepullback c) (pb_terminal s) }.
 
 Notation pbsquare u v f g :=
@@ -1018,7 +1018,7 @@ Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
 (* category with all prepullbacks *)
 (* Ideally span is in fact expanded and the final mixin has
-a pb : forall A B, cospan A B -> C 
+a pb : forall A B, cospan A B -> C
 but it is not clear how to do that yet
 *)
 HB.mixin Record HasPBop C of Cat C := {
@@ -1029,9 +1029,19 @@ HB.structure Definition PBop :=
   {C of HasPBop C & PreCat C }.
 
 (* category with all pullbacks *)
-#[wrapper] 
-HB.mixin Record HasPBCat C of PBop C : Type := {
-  is_pb : forall (a b: C) (c: cospan a b), Pullback C c (@pb C a b c) 
+(* Wrong: we don't wrap classes, only mixins *)
+#[wrapper]
+HB.mixin Record HasPreBCat C of PBop C : Type := {
+  is_pb : forall (a b : C) (c : cospan a b), isPrePullback C a b c (@pb C a b c)
+  }.
+#[short(type="pbcat")]
+HB.structure Definition PreBCat :=
+  {C of HasPreBCat C}.
+
+#[wrapper]
+HB.mixin Record HasPBCat C of PBop C & HasPreBCat C : Type := {
+  is_pb : forall (a b : C) (c : cospan a b),
+     prepullback_isTerminal C a b c (@pb C a b c)
   }.
 #[short(type="pbcat")]
 HB.structure Definition PBCat :=
@@ -1048,8 +1058,8 @@ HB.structure Definition PBCat :=
 (* category extended with internal objects *)
 HB.mixin Record HasIObjects C of Cat C := {
     Obj : C ;
-    Mor : C 
-}.             
+    Mor : C
+}.
 HB.structure Definition IObjects :=
   { C of HasIObjects C }.
 
@@ -1062,17 +1072,17 @@ HB.mixin Record HasPOps C of IObjects C := {
       (c1 ~> c3) -> (c2 ~> c4) -> prd c1 c2 ~> prd c3 c4 ;
     mjn : forall c1 c2 c3,
       (c1 ~> c2) -> (c1 ~> c3) -> c1 ~> prd c2 c3
-}.             
+}.
 HB.structure Definition POps :=
   { C of HasPOps C }.
 
 (* category extended with internal morphisms *)
 HB.mixin Record IsIQuiver C of POps C := {
-    iid : Obj ~>_C Mor ; 
-    isrc : Mor ~>_C Obj ; 
+    iid : Obj ~>_C Mor ;
+    isrc : Mor ~>_C Obj ;
     itrg : Mor ~>_C Obj ;
     icmp : @prd C Mor Mor ~> Mor
-}.             
+}.
 HB.structure Definition IQuiver :=
   { C of IsIQuiver C }.
 
@@ -1102,7 +1112,7 @@ HB.mixin Record IsIPreCat C of IQuiver C := {
     pbkMM : prjMM2 \; @isrc C = prjMM1 \; itrg ;
     pbkPMcmp : prjPM2 \; @isrc C = prjPM1 \; icmp \; itrg ;
     pbkMPcmp : prjMP2 \; @icmp C \; isrc = prjMP1 \; itrg ;
-    pbkPM : prjPM2 \; @isrc C = prjPM1 \; prjMM2 \; itrg ; 
+    pbkPM : prjPM2 \; @isrc C = prjPM1 \; prjMM2 \; itrg ;
     pbkMP : prjMP2 \; prjMM1 \; @isrc C = prjMP1 \; itrg ;
     pbkPM2MM1 : prjPM1_ C \; prjMM2 =
                 mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2 \; prjMM1 ;
@@ -1113,8 +1123,8 @@ HB.mixin Record IsIPreCat C of IQuiver C := {
           (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP1 ;
     pbkPM2MP2 : mjn prdPM Mor Mor (prjPM1_ C \; prjMM2) prjPM2 =
         mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
-          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP2 ;    
-}.             
+          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP2 ;
+}.
 HB.structure Definition IPreCat :=
   { C of IsIPreCat C }.
 
@@ -1125,12 +1135,12 @@ HB.mixin Record IsICat C of IPreCat C := {
     icmp_s : @icmp C \; isrc = prjMM1 \; isrc ;
     icmp_t : @icmp C \; itrg = prjMM2 \; itrg ;
     unit_l : mprdOMMM iid (idM C) \; icmp = prjOM2 ;
-    unit_r : mprdMOMM (idM C) iid \; icmp = prjMO1 ; 
-    assoc : mprdPMMM icmp (idM C) \; icmp =              
+    unit_r : mprdMOMM (idM C) iid \; icmp = prjMO1 ;
+    assoc : mprdPMMM icmp (idM C) \; icmp =
         mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
           (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \;
-          mprdMPMM (idM C) icmp \; icmp                                  
-}.             
+          mprdMPMM (idM C) icmp \; icmp
+}.
 HB.structure Definition ICat :=
   { C of IsICat C }.
 (*
@@ -1142,16 +1152,16 @@ HB.mixin Record IsICat C of IQuiver C := {
     unit_l : mprd Obj Mor Mor Mor iid (@idmap C Mor) \; icmp =
                prj2 Obj Mor ;
     unit_r : mprd Mor Obj Mor Mor (@idmap C Mor) iid \; icmp =
-               prj1 Mor Obj ; 
+               prj1 Mor Obj ;
     assoc : mprd (prd Mor Mor) Mor Mor Mor icmp (@idmap C Mor)
-              \; icmp =              
+              \; icmp =
         (mjn (prd (prd Mor Mor) Mor) Mor (prd Mor Mor)
           (prj1 (prd Mor Mor) Mor \; prj1 Mor Mor)
           (mjn (prd (prd Mor Mor) Mor) Mor Mor
              (prj1 (prd Mor Mor) Mor \; prj2 Mor Mor)
              (prj2 (prd Mor Mor) Mor))) \;
           (mprd Mor (prd Mor Mor) Mor Mor (@idmap C Mor) icmp)
-          \; icmp                                  
+          \; icmp
 }.
 *)             
 
@@ -1163,11 +1173,11 @@ Declare Scope encat_scope.
 Delimit Scope encat_scope with encat.
 Local Open Scope encat_scope.
 
-(* Enrichment in a monoidal category, following 
+(* Enrichment in a monoidal category, following
    https://ncatlab.org/nlab/show/enriched+category
 *)
 HB.mixin Record IsEnQuiver (V: Type) C := {
-    hom_object : C -> C -> V 
+    hom_object : C -> C -> V
   }.
 Unset Universe Checking.
 HB.structure Definition EnQuiver (V: Type) : Set :=
@@ -1176,14 +1186,14 @@ Set Universe Checking.
 
 (* Monoidal precategory with the enrichment operators (no axioms) *)
 HB.mixin Record IsEnPreCat (V: PreMonoidal.type) C of
-  EnQuiver (PreMonoidal.sort V) C := {  
+  EnQuiver (PreMonoidal.sort V) C := {
     id_element : forall (a: C),
       @hom V onec (hom_object a a) ;
     comp_morphism : forall (a b c: C),
       @hom V (@hom_object V C b c * @hom_object V C a b)
-             (@hom_object V C a c) 
-}.    
-Unset Universe Checking. 
+             (@hom_object V C a c)
+}.
+Unset Universe Checking.
 HB.structure Definition EnPreCat (V: PreMonoidal.type) : Set :=
   { C of IsEnPreCat V C }.
 Set Universe Checking.
@@ -1203,11 +1213,11 @@ Notation "~^CM a b c" := (comp_morphism a b c)
 Notation "~^CM_ ( V , C ) a b c" := (@comp_morphism V C a b c)
   (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
 
-(* V-enriched category: 
+(* V-enriched category:
    V is the monoidal category;
    C is the base category that gets enriched
 *)
-HB.mixin Record IsEnCat (V: Monoidal.type) C of EnPreCat V C := {    
+HB.mixin Record IsEnCat (V: Monoidal.type) C of EnPreCat V C := {
    ecat_comp_assoc : forall a b c d: C,
     forall alpha:
       (((c ~^_(V,C) d) * (b ~^_(V,C) c)) * (a ~^_(V,C) b)) ~>_V
@@ -1217,16 +1227,16 @@ HB.mixin Record IsEnCat (V: Monoidal.type) C of EnPreCat V C := {
         =
         alpha \;
         ((@idmap V (c ~^_(V,C) d)) <*> (@comp_morphism V C a b c)) \;
-        (@comp_morphism V C a c d) ; 
+        (@comp_morphism V C a c d) ;
 
    ecat_comp_left_unital : forall a b: C,
-    forall l: onec * (a ~^_(V,C) b) ~>_V (a ~^_(V,C) b), 
+    forall l: onec * (a ~^_(V,C) b) ~>_V (a ~^_(V,C) b),
       l = ((@id_element V C b) <*> (@idmap V (a ~^_(V,C) b))) \;
-          (@comp_morphism V C a b b) ;                                           
+          (@comp_morphism V C a b b) ;
    ecat_comp_right_unital : forall a b: C,
-    forall r: (a ~^_(V,C) b) * onec ~>_V (a ~^_(V,C) b), 
+    forall r: (a ~^_(V,C) b) * onec ~>_V (a ~^_(V,C) b),
       r = ((@idmap V (a ~^_(V,C) b)) <*> (@id_element V C a)) \;
-          (@comp_morphism V C a a b)                                         
+          (@comp_morphism V C a a b)
 }.
 Unset Universe Checking.
 #[verbose]
@@ -1286,13 +1296,13 @@ Set Universe Checking.
 
 (* transpose for horizontal morphism quiver.
    HB.tag needed to identify transpose as lifter *)
-HB.tag Definition transpose (C : quiver) : U := C. 
+HB.tag Definition transpose (C : quiver) : U := C.
 #[wrapper] HB.mixin Record _IsHQuiver C of IsQuiver C := {
     is_hquiver : IsQuiver (transpose C)
 }.
 (* vertical and horizontal quivers, defining cells *)
 Unset Universe Checking.
-#[short(type="vhquiver")] 
+#[short(type="vhquiver")]
 HB.structure Definition VHQuiver : Set :=
   { C of IsQuiver C & IsQuiver (transpose C) }.
 Set Universe Checking.
@@ -1312,7 +1322,7 @@ Record Total2 T (h: T -> T -> U) : Type := TT2 {
 HB.tag Definition D1obj (C: vhquiver) := Total2 (@hhom C).
 
 (* D1 quiver requirement (includes D0 quiver and its transpose). *)
-#[wrapper] 
+#[wrapper]
 HB.mixin Record _IsDQuiver T of VHQuiver T :=
   { is_dquiver : Quiver (D1obj T) }.
 Unset Universe Checking.
@@ -1337,7 +1347,7 @@ Set Universe Checking.
 (* The category based on the HQuiver (i.e. horizontal category on D0
    objects) *)
 Unset Universe Checking.
-#[wrapper] 
+#[wrapper]
 HB.mixin Record _IsHCat T of HPreCat T := {
     is_hcat : PreCat_IsCat (transpose T) }.
 #[short(type="hcat")]
@@ -1362,7 +1372,7 @@ Set Universe Checking.
 
 (* The category based on the DQuiver (i.e. category D1). *)
 Unset Universe Checking.
-#[wrapper] 
+#[wrapper]
 HB.mixin Record _IsD1Cat T of D1PreCat T := {
     is_d1cat : PreCat_IsCat (@D1obj T) }.
 #[short(type="d1cat")]
@@ -1411,7 +1421,7 @@ HB.tag Definition HTarget C := fun (X: D1obj C) => @target C (@hhom C) X.
 Definition hhunit (T: hprecat) (a: T) : D1obj T :=
   @TT2 T (@hhom T) a a (@idmap (transpose T) a).
 HB.tag Definition H1Unit (C: hprecat) :=
-  fun (x: HPreCat.sort C) => @hhunit C x. 
+  fun (x: HPreCat.sort C) => @hhunit C x.
 
 
 (** Auxiliary notions for 2-cell Horizontal Composition functor *)
@@ -1435,11 +1445,11 @@ Definition H2Second (C: vhquiver) (X: @DPobj C) : D1obj C :=
 
 
 (* horizontal composition functor: D1 * D1 -> D1 *)
-Definition hhcomp (T: hprecat) (x: DPobj T) : D1obj T := 
-  match x with 
+Definition hhcomp (T: hprecat) (x: DPobj T) : D1obj T :=
+  match x with
     @GC _ _ a b c h1 h2 => @TT2 T (@hhom T) a c (h1 \; h2) end.
 HB.tag Definition H1Comp (C: hprecat) :=
-  fun (x: DPobj C) => @hhcomp C x. 
+  fun (x: DPobj C) => @hhcomp C x.
 
 (* hhunit - horizontal unit functor.
 
@@ -1501,15 +1511,15 @@ Set Universe Checking.
 
 (* unit prefunctor. *)
 Unset Universe Checking.
-#[wrapper] 
-HB.mixin Record IsUPreFunctor T of SDCat T := 
+#[wrapper]
+HB.mixin Record IsUPreFunctor T of SDCat T :=
   { is_uprefunctor : IsPreFunctor T (D1obj T) (@H1Unit T) }.
 HB.structure Definition UPreFunctor : Set := {C of IsUPreFunctor C}.
 Set Universe Checking.
 
 (* unit functor. *)
 Unset Universe Checking.
-#[wrapper] 
+#[wrapper]
 HB.mixin Record UPreFunctor_IsFunctor T of UPreFunctor T := {
     is_ufunctor : PreFunctor_IsFunctor T (D1obj T) (@H1Unit T) }.
 HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
@@ -1527,17 +1537,17 @@ Set Universe Checking.
 (* 2-cell source *)
 Definition H1Source (T: SFunctor.type) (a b: @D1obj T)
   (m: @d1hom T a b) :
-  (HSource a) ~> (HSource b) := (@HSource T) <$> m. 
+  (HSource a) ~> (HSource b) := (@HSource T) <$> m.
 
 (* 2-cell target *)
 Definition H1Target (T: TFunctor.type) (a b: @D1obj T)
   (m: @d1hom T a b) :
-  (HTarget a) ~> (HTarget b) := (@HTarget T) <$> m. 
+  (HTarget a) ~> (HTarget b) := (@HTarget T) <$> m.
 
 (* horizontal 2-cell unit (maps vertical morphisms to horizontally
    unitary 2-cells) *)
 Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
-  (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m. 
+  (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
 
 
 (** Horizontal product category (D1 *d0 D1) *)
@@ -1558,8 +1568,8 @@ Notation "'sigma' x .. y , p" :=
 
 (** DPobj quiver *)
 Definition DP_hom (T: STUFunctor.type) (x y: DPobj T) :=
-   sigma (hh0: D1hom (h_first x) (h_first y))  
-         (hh1: D1hom (h_second x) (h_second y)), 
+   sigma (hh0: D1hom (h_first x) (h_first y))
+         (hh1: D1hom (h_second x) (h_second y)),
     H1Target hh0 = H1Source hh1.
 
 HB.instance Definition DPQuiver (T: STUFunctor.type) :
@@ -1597,7 +1607,7 @@ Definition DP_comp_auxA (T : STUFunctor.type)
   (ppA : H1Target hhA0 = H1Source hhA1)
   (hhB0 : D1hom (h_first B) (h_first C))
   (hhB1 : D1hom (h_second B) (h_second C))
-  (ppB : H1Target hhB0 = H1Source hhB1) :  
+  (ppB : H1Target hhB0 = H1Source hhB1) :
   (H1Target hhA0) \; (H1Target hhB0) =
   (H1Source hhA1) \; (H1Source hhB1).
   rewrite ppA.
@@ -1613,7 +1623,7 @@ Definition DP_comp_auxS (T : STUFunctor.type)
   (hhB0 : D1hom (h_first B) (h_first C))
   (hhB1 : D1hom (h_second B) (h_second C))
   (ppB : H1Target hhB0 = H1Source hhB1) :
-  H1Source (hhA1 \; hhB1) = (H1Source hhA1) \; (H1Source hhB1). 
+  H1Source (hhA1 \; hhB1) = (H1Source hhA1) \; (H1Source hhB1).
   unfold H1Source, HSource.
   repeat rewrite Fcomp.
   reflexivity.
@@ -1647,10 +1657,10 @@ Definition DP_comp_auxI (T : STUFunctor.type)
   setoid_rewrite DP_comp_auxS; eauto.
   setoid_rewrite DP_comp_auxT; eauto.
   eapply DP_comp_auxA; eauto.
-Defined.  
-  
+Defined.
+
 (* DPobj composition, defined in proof mode *)
-Definition DP_comp (T: STUFunctor.type) (A B C: DPobj T) : 
+Definition DP_comp (T: STUFunctor.type) (A B C: DPobj T) :
   (A ~> B) -> (B ~> C) -> A ~> C.
   intros chA chB.
   destruct chA as [hhA0 [hhA1 ppA]].
@@ -1660,7 +1670,7 @@ Defined.
 
 (* DPobj is a precategory *)
 HB.instance Definition DPPreCat (T: STUFunctor.type) :
-  Quiver_IsPreCat (DPobj T) := 
+  Quiver_IsPreCat (DPobj T) :=
   Quiver_IsPreCat.Build (DPobj T) (@DP_id T) (@DP_comp T).
 
 (*
@@ -1683,12 +1693,12 @@ Lemma DP_LeftUnit_lemma (T : STUFunctor.type) :
   forall (a b : DPobj T) (f : a ~> b), idmap \; f = f.
 
   move => a b [x [x0 e]] /=.
-  simpl in *. 
+  simpl in *.
   unfold idmap; simpl.
   unfold DP_id; simpl.
   unfold comp; simpl.
   unfold DP_comp_auxI; simpl.
-   
+
   assert (idmap \; x = x) as A.
   { rewrite comp1o; auto. }
 
@@ -1702,7 +1712,7 @@ Lemma DP_LeftUnit_lemma (T : STUFunctor.type) :
   destruct a eqn: aaa.
   destruct b eqn: bbb.
   simpl.
- 
+
   assert (existT
     (fun hh0 : D1hom h_first0 h_first1 =>
        sigma hh1 : D1hom h_second0 h_second1,H1Target hh0 = H1Source hh1)
@@ -1742,18 +1752,18 @@ Lemma DP_LeftUnit_lemma (T : STUFunctor.type) :
   rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
     (Prop_irrelevance _ B).
   eapply C.
-Qed.  
+Qed.
 
 Lemma DP_RightUnit_lemma (T : STUFunctor.type) :
   forall (a b : DPobj T) (f : a ~> b), f \; idmap = f.
-  
+
   move => a b [x [x0 e]] /=.
-  simpl in *. 
+  simpl in *.
   unfold idmap; simpl.
   unfold DP_id; simpl.
   unfold comp; simpl.
   unfold DP_comp_auxI; simpl.
-   
+
   assert (x \; idmap = x) as A.
   { rewrite compo1; auto. }
 
@@ -1767,7 +1777,7 @@ Lemma DP_RightUnit_lemma (T : STUFunctor.type) :
   destruct a eqn: aaa.
   destruct b eqn: bbb.
   simpl.
- 
+
   assert (existT
     (fun hh0 : D1hom h_first0 h_first1 =>
        sigma hh1 : D1hom h_second0 h_second1,
@@ -1804,13 +1814,13 @@ Lemma DP_RightUnit_lemma (T : STUFunctor.type) :
 
     rewrite BE.
     reflexivity.
-  }  
+  }
 
   inversion aaa; subst.
   rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
     (Prop_irrelevance _ B).
   eapply C.
-Qed.  
+Qed.
 
 Lemma DP_Assoc_lemma (T : STUFunctor.type) :
   forall (a b c d : DPobj T) (f : a ~> b) (g : b ~> c) (h : c ~> d),
@@ -1843,14 +1853,14 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
   { subst y0_12 y01_2.
     rewrite compoA; eauto. }
 
-  set (x01_t := comp (H1Target x0) (H1Target x1)).  
-  set (x01_2_t := comp x01_t (H1Target x2)).  
-  set (x12_t := comp (H1Target x1) (H1Target x2)).  
-  set (x0_12_t := comp (H1Target x0) x12_t).  
-  set (y01_s := comp (H1Source y0) (H1Source y1)).  
-  set (y01_2_s := comp y01_s (H1Source y2)).  
-  set (y12_s := comp (H1Source y1) (H1Source y2)).  
-  set (y0_12_s := comp (H1Source y0) y12_s).  
+  set (x01_t := comp (H1Target x0) (H1Target x1)).
+  set (x01_2_t := comp x01_t (H1Target x2)).
+  set (x12_t := comp (H1Target x1) (H1Target x2)).
+  set (x0_12_t := comp (H1Target x0) x12_t).
+  set (y01_s := comp (H1Source y0) (H1Source y1)).
+  set (y01_2_s := comp y01_s (H1Source y2)).
+  set (y12_s := comp (H1Source y1) (H1Source y2)).
+  set (y0_12_s := comp (H1Source y0) y12_s).
 
   assert (x01_t = y01_s) as E01.
   { subst x01_t y01_s.
@@ -1877,7 +1887,7 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
   { subst y0_12_s y01_2_s.
     subst y12_s y01_s.
     rewrite compoA; auto. }
-  
+
   unfold comp.
   simpl.
   unfold DP_comp.
@@ -1898,7 +1908,7 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
     unfold H1Source.
     repeat rewrite Fcomp; simpl.
     auto.
-  }  
+  }
 
   assert (H1Target ((x0 \; x1) \; x2) =
             H1Source ((y0 \; y1) \; y2)) as KL.
@@ -1911,8 +1921,8 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
     unfold H1Source.
     repeat rewrite Fcomp; simpl.
     auto.
-  }  
-  
+  }
+
   assert (existT
     (fun hh0 : D1hom (h_first a) (h_first d) =>
      sigma hh1 : D1hom (h_second a) (h_second d),
@@ -1920,9 +1930,9 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
     (x0 \; x1 \; x2)
     (existT
        (fun hh1 : D1hom (h_second a) (h_second d) =>
-            H1Target (x0 \; x1 \; x2) = H1Source hh1) 
+            H1Target (x0 \; x1 \; x2) = H1Source hh1)
        (y0 \; y1 \; y2)
-       KR) 
+       KR)
           =
   existT
     (fun hh0 : D1hom (h_first a) (h_first d) =>
@@ -1931,7 +1941,7 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
     ((x0 \; x1) \; x2)
     (existT
        (fun hh1 : D1hom (h_second a) (h_second d) =>
-           H1Target ((x0 \; x1) \; x2) = H1Source hh1) 
+           H1Target ((x0 \; x1) \; x2) = H1Source hh1)
        ((y0 \; y1) \; y2)
        KL)) as KA.
   { revert KL.
@@ -1941,7 +1951,7 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
     rewrite <- X0.
     rewrite <- Y0.
     intros KR KL.
-  
+
     assert (KR = KL) as I1.
     { eapply Prop_irrelevance. }
     rewrite I1.
@@ -1972,7 +1982,7 @@ HB.instance Definition DPCat (T: STUFunctor.type) := DPCatP T.
 
 (* composition prefunctor *)
 Unset Universe Checking.
-#[wrapper] 
+#[wrapper]
 HB.mixin Record IsCPreFunctor T of STUFunctor T :=
   { is_cprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
 HB.structure Definition CPreFunctor : Set := {C of IsCPreFunctor C}.
@@ -1980,7 +1990,7 @@ Set Universe Checking.
 
 (* composition functor - gives the definition of Strict Double Category *)
 Unset Universe Checking.
-#[wrapper] 
+#[wrapper]
 HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
     is_cfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
 #[short(type="sdoublecat")]
@@ -2047,7 +2057,7 @@ split=> [] sq.
     set w' : F' ~> C := bot2left big_red_square.
     set z' : F' ~> B := bot2right big_red_square.
     move=> E3.
-    
+
     have xxx : isPrePullback Q A B (Cospan f g) (Span (w' \; h) z').
       by constructor=> /=; rewrite -compoA E3.
     pose red_black_square : prepullback (Cospan f g) :=
@@ -2096,17 +2106,24 @@ End test.
 (* still problematic *)
 
 (* Defining internal hom objects.
-   C0 and C1 are objects of C. 
-   C0 is the object of objects, 
-   C1 is the object of morphims (and the subject).  
+   C0 and C1 are objects of C.
+   C0 is the object of objects,
+   C1 is the object of morphims (and the subject).
    this will allow to define a generic _ *_C0 _ notation
    by recognizing the structure of hom objects on the LHS and RHS *)
-HB.mixin Record isInternalHom {C: quiver} (C0 C1 : C) := {
+HB.mixin Record isInternalHom {C: quiver} (C0 : C) (C1 : obj C) := {
    src : C1 ~> C0; tgt : C1 ~> C0
 }.
 #[short(type="iHom")]
 HB.structure Definition InternalHom {C: quiver} (C0 : C) :=
   { C1 of isInternalHom C C0 C1 }.
+
+Notation "X ':>' C" := (X : obj C) (at level 60, C at next level).
+
+(* HB.instance Definition _ (T : quiver) := Quiver.on (obj T). *)
+(* HB.instance Definition _ (T : precat) := PreCat.on (obj T). *)
+(* HB.instance Definition _ (T : cat) := Cat.on (obj T). *)
+(* HB.instance Definition _ (T : pbcat) := PBCat.on (obj T). *)
 
 (*
 Definition tgt' := @tgt.
@@ -2125,39 +2142,49 @@ Original code:
 
 Definition iprod {C} {C0 : C} (X Y : iHom C0) := bottom (pb (Cospan
    (src X) (tgt Y))).  Notation "X *_ C0 Y" := (@iprod _ C0 X Y).
- 
+
 HB.instance Definition iprod_iHom := isInternalHom.Build C0 (X *_C0 Y)
    (src (bot2left _)) (tgt (bot2right _)).  *)
-Definition iprod_pb {C: pbcat} {C0 : C} (X Y : iHom C0) : span X Y :=
-  pb _ _ (Cospan (tgt : X ~> C0) (src : Y ~> C0)).
 
-Definition iprod {C: pbcat} {C0 : C} (X Y : iHom C0) : C :=
+Definition iprod_pb {C: pbcat} {C0 : C} (X Y : iHom C0) :
+    span (X :> C) (Y :> C) :=
+  pb _ _ (Cospan (tgt : (X :> C) ~> C0) (src : (Y :> C) ~> C0)).
+
+Definition iprod {C: pbcat} {C0 : obj C} (X Y : iHom C0) : obj C :=
   bot (@iprod_pb C C0 X Y).
-Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
+Notation "X *_ C0 Y" := (@iprod _ C0 (X : iHom C0) (Y : iHom C0))
             (at level 99, C0 at level 0, only parsing) : cat_scope.
+Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
+            (at level 99, C0 at level 0) : cat_scope.
 
-Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> X :=
+Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> (X :> C) :=
   bot2left (iprod_pb X Y).
-Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> Y :=
+Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> (Y :> C) :=
   bot2right (iprod_pb X Y).
 
 (* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
 is also an instance of (iHom C0). Notice, however, that X and Y do not
 represent composable morphisms *)
-Program Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
+Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
   @isInternalHom C C0 (X *_C0 Y) :=
-  @isInternalHom.Build C C0 (X *_C0 Y) 
-    ((iprodl X Y) \; src) 
+  @isInternalHom.Build C C0 (X *_C0 Y)
+    ((iprodl X Y) \; src)
     ((iprodr X Y) \; tgt).
+
+HB.instance Definition _ {C: pbcat} {C0: C} (X Y: @iHom C C0) := iprod_iHom X Y.
+
+Definition pbC0 (C : pbcat) (C0 : C) (X Y : iHom C0) : iHom C0 :=
+   (X *_C0 Y) : iHom C0.
 
 (* we also define the trivial internal hom type *)
 HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :=
    isInternalHom.Build C C0 C0 idmap idmap.
 
+
 (* we need internal hom morphisms:
 the ones that preserve sources and targets *)
 HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
-     (C1 C1' : @iHom C C0) (f : C1 ~> C1') := {
+     (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
   hom_src : f \; src = src;
   hom_tgt : f \; tgt = tgt;
 }.
@@ -2190,66 +2217,92 @@ Admitted.
 Obligation 2.
 Admitted.
 Obligation 3.
-Admitted. 
+Admitted.
 
-HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
+HB.instance Definition _ {C: pbcat} (C0 : C) := iHom_cat C0.
+
+Definition iprodlC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
+  pbC0 X Y ~>_(iHom C0) X.
+Admitted.
+Definition iprodrC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
+  pbC0 X Y ~>_(iHom C0) Y.
+Admitted.
 
 
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
-HB.mixin Record IsPreInternalQuiver C of Quiver C :=
-  { C0 : C;
-    C1 : C }.
-HB.structure Definition PreInternalQuiver := {
-  C of IsPreInternalQuiver C }.
+HB.mixin Record IsPreInternalQuiver (C : quiver) (C0 : obj C) :=
+  { C1 : obj C }.
+HB.structure Definition PreInternalQuiver C :=
+  { C0 of @IsPreInternalQuiver C C0 }.
 
-#[wrapper] HB.mixin Record IsInternalQuiver C of
-  Quiver C & PreInternalQuiver C := {
-  priv: Quiver (@InternalHom C (@C0 C) (@C1 C))
+Arguments C1 {C s}.
+
+#[wrapper] HB.mixin Record IsInternalQuiver (C : quiver) (C0 : obj C) of
+    @PreInternalQuiver C C0 := {
+  priv: @InternalHom C C0 (@C1 _ C0)
  }.
-HB.structure Definition InternalQuiver := {
-  C of IsInternalQuiver C }.
+#[short(type="iquiver")]
+HB.structure Definition InternalQuiver (C : quiver) :=
+   { C0 of IsInternalQuiver C C0 }.
+
+Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
+Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
+Coercion iquiver_cat (C : precat) (C0 : iquiver C) : C := C0 :> C.
+
 
 (* PROBLEM: nested product does not typecheck *)
-Fail Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
-  (C1 *_C0 C2) *_C0 C3 ~> C1 *_C0 (C2 *_C0 C3). (* := ... *)
+Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
+  ((C1 *_C0 C2 : iHom C0) *_C0 C3) ~>_(iHom C0)
+   (C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0). (* := ... *)
    (* define it with the universal arrow of the pullback *)
+Admitted.
 
 Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
-  (f : C1 ~> C3) (g : C2 ~> C4) : C1 *_C0 C2 ~> C3 *_C0 C4. 
+  (f : C1 ~> C3) (g : C2 ~> C4) : (C1 *_C0 C2) ~>_(iHom C0) (C3 *_C0 C4).
 Admitted.
-Notation "< f , g >" := (ipair f g).
+Notation "<( f , g )>" := (ipair f g).
 
 
 (* An internal precategory is an internal category with two operators that
    must be src and tgt preserving, i.e. iHom morphisms *)
-HB.mixin Record IsInternalPreCat C of PBCat C &
-  InternalQuiver C := { 
-    iid : (@C0 C) ~>_(@iHom C (@C0 C)) (@C1 C); 
-    icomp : C1 *_C0 C1 ~>_(@iHom C C0) C1
+HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
+  of @InternalQuiver C C0 := {
+    iid : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
+    icomp : let C1 := @C1 C C0 : iHom C0 in
+            let C2 := pbC0 C1 C1 : iHom C0 in
+      (C2 ~>_(iHom C0) C1)
 }.
-#[short(type="internalprecat")]
-HB.structure Definition InternalPrecat (C : pbcat) :=
-  { q of @IsPreInternalPreCat C q }.
+#[short(type="iprecat")]
+HB.structure Definition InternalPreCat (C : pbcat) :=
+  { C0 of @IsInternalPreCat C C0 }.
+
+(* Check (iquiver Type <~> quiver). *)
+(* Check (iprecat Type <~> precat). *)
 
 (* An internal category moreover must satisfy additional properies on iid and icomp *)
-HB.mixin Record IsInternalCat (C : pbcat) (C0 : C) of InternalPreCat C0 := {
-  icompA : <icomp, idmap> \; icomp = iprodA \; <idmap, icomp> \; icomp;
-  icomp1l : <idmap, iid> \; icomp = iprodl;
-  icomp1r : <iid, idmap> \; icomp = iprodr;
+#[key="C0"]
+HB.mixin Record IsInternalCat (C : pbcat) (C0 : obj C) of InternalPreCat C C0 := {
+  (* icompA : <(icomp, idmap)> \; icomp = (iprodA _ _ _) \; <(idmap, icomp)> \; icomp; *)
+  (* icomp1l : <(idmap, iid)> \; icomp = iprodlC0 C1 C1; *)
+  (* icomp1r : <(iid, idmap)> \; icomp = iprodrC0 C1 C1; *)
+}.
+#[short(type="icat")]
 HB.structure Definition InternalCat (C : pbcat) := {C0 of @IsInternalCat C C0}.
+(* Check (icat Type <~> cat). *)
 
-(* A double category is an internal category in cat 
+
+(* A double category is an internal category in cat
    - The objects are the objects of C0
    - The vertical maps are the maps of C0
    - The horizontal maps are the objects of C1
    - The 2-cells are the maps of C1
-   
+
   About identities:
   - The identity vertical map on (x : C) is \idmap_x
   - The identity horizontal map on (x : C) is iid x
   - the identity 2-cell on (x : C) is iid (\idmap_x) = \idmap_(iid x)
-   
+
   About compositions:
    - The vertical composition of maps is the composition of C0
    - The vertical compositions of 2-cells is the composition of C1
@@ -2258,7 +2311,18 @@ HB.structure Definition InternalCat (C : pbcat) := {C0 of @IsInternalCat C C0}.
    - The horizontal composition of maps is the object part of icomp
    - The horizontal composition of 2-cells is the map part of icomp
 *)
-HB.structure' Definition DoubleCat := @InternalCat cat. 
+(* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
+Axiom cat_pbop : HasPBop cat.
+HB.instance Definition _ := cat_pbop.
 
+Axiom cat_preb :
+   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pb cat a b c).
+HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_preb a b c.
+Axiom cat_pb :
+   forall (a b: cat) (c: cospan a b),
+  prepullback_isTerminal cat a b c (@pb cat a b c).
+HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
 
+Definition doublecat := icat cat.
 
+(* Check (doublecat <~> ???) *)
