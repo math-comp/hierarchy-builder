@@ -269,7 +269,7 @@ rewrite new_concept.unlock.
 Time Fail reflexivity. (* takes 7s, the original body is restored *)
 Abort.
 
-Print Module Type new_conceptLocked.
+Print Module Type new_concept_Locked.
 Print Module new_concept.
 (*
    Module Type new_conceptLocked = Sig

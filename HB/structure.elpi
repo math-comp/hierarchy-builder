@@ -170,7 +170,7 @@ declare Module BSkel Sort :- std.do! [
 
   if-verbose (coq.say {header} "operations meta-data module: ElpiOperations"),
 
-  ElpiOperationModName is "ElpiOperations" ^ {std.any->string {new_int}},
+  ElpiOperationModName is {calc (Module ^ "ElpiOperations")},
   log.coq.env.begin-module ElpiOperationModName none,
   acc-clauses current {std.append EX MixinFirstClass},
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,

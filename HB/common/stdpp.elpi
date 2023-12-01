@@ -118,11 +118,6 @@ constraint print-ctx mixin-src {
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% approximation, it should be logical path, not the file name
-pred coq.env.current-library o:string.
-coq.env.current-library L :- loc.fields {get-option "elpi.loc"} L _ _ _ _.
-coq.env.current-library "dummy.v".
-
 pred coq.term-is-gref? i:term, o:gref.
 coq.term-is-gref? (global GR) GR :- !.
 coq.term-is-gref? (pglobal GR _) GR :- !.

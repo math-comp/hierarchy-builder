@@ -3,55 +3,9 @@
 
 
 % This file contains some HB specific utilities
+accumulate HB/common/utils-synterp.
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
-
-% HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
-type attmap attribute-type.
-
-% runs P in a context where Coq #[attributes] are parsed
-pred with-attributes i:prop.
-with-attributes P :-
-  attributes A,
-
-% HACK: move to coq-elpi proper, remove when coq-elpi > 1.9.2
-(pi S L AS Prefix R R1 Map PS\
-  parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
-    if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
-    parse-attributes.aux AS Prefix R1,
-    (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
-    std.append R1 [get-option PS Map] R
-) =>
-
-  coq.parse-attributes A [
-    att "verbose" bool,
-    att "mathcomp" bool,
-    att "mathcomp.axiom" string,
-    att "short.type" string,
-    att "short.pack" string,
-    att "key" string,
-    att "arg_sort" bool,
-    att "log" bool,
-    att "log.raw" bool,
-    att "compress_coercions" bool,
-    att "export" bool,
-    att "skip" string,
-    att "local" bool,
-    att "fail" bool,
-    att "doc" string,
-    att "primitive" bool,
-    att "non_forgetful_inheritance" bool,
-    att "hnf" bool,
-  ] Opts, !,
-  Opts => (save-docstring, P).
-
-pred if-verbose i:prop.
-if-verbose P :- get-option "verbose" tt, !, P.
-if-verbose _.
-
-% header of if-verbose messages
-pred header o:string.
-header Msg :- Msg is "[" ^ {std.any->string {gettimeofday}} ^ "] HB: ".
 
 pred if-arg-sort i:prop.
 if-arg-sort P :- get-option "arg_sort" tt, !, P.
@@ -77,12 +31,6 @@ acc-clause Scope C :- coq.elpi.accumulate Scope "hb.db" (clause _ _ C).
 pred acc-clauses i:scope, i:list prop.
 acc-clauses Scope CL :- coq.elpi.accumulate-clauses Scope "hb.db" {std.map CL (c\r\ r = clause _ _ c)}.
 */
-
-pred save-docstring.
-save-docstring :-
-  if (get-option "elpi.loc" Loc, get-option "doc" Txt)
-     (acc-clause _ (docstring Loc Txt))
-     true.
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
