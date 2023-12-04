@@ -56,8 +56,6 @@ declare Module BSkel Sort :- std.do! [
   if-verbose (coq.say {header} "structure: mixin first class" MixinFirstClass),
 
 
-  private.declare-auto-infer-params-abbrev Structure MLwP LocType PHClauses,
-
   if-verbose (coq.say {header} "declaring clone abbreviation"),
   w-params.then MLwP phant.fun-real phant.fun-real
     (private.clone-phant-body ClassName SortProjection Structure) PhClone,
@@ -89,11 +87,7 @@ declare Module BSkel Sort :- std.do! [
   
   if (get-option "short.type" ShortType) (
     if-verbose (coq.say {header} "short name for type:" ShortType),
-    if (LocType = loc-abbreviation StrTypeAbbrev) (std.do! [
-      coq.notation.abbreviation-body StrTypeAbbrev NStrTypeAbbrev StrTypeTm,
-      @global! => log.coq.notation.add-abbreviation
-        ShortType NStrTypeAbbrev StrTypeTm ff _
-    ]) (@global! => log.coq.notation.add-abbreviation
+    (@global! => log.coq.notation.add-abbreviation
       ShortType 0 (global Structure) ff _)) true,
 
   coq.mk-app (global Structure) {coq.mk-n-holes {w-params.nparams MLwP}} HB_Instance,
@@ -133,7 +127,7 @@ declare Module BSkel Sort :- std.do! [
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
-      [gref-deps GRPack MLwP], MixinMems, [StructKeyClause], PHClauses
+      [gref-deps GRPack MLwP], MixinMems, [StructKeyClause]
     ]
     NewClauses,
   acc-clauses current NewClauses,
@@ -449,9 +443,7 @@ synthesize-fields.body _Params T ML (record "axioms_" {{ Type }} "Class" FS) :-
 
 pred mk-record+sort-field i:sort, i:name, i:term, i:(term -> record-decl), o:indt-decl.
 pred mk-record+sort-field i:universe, i:name, i:term, i:(term -> record-decl), o:indt-decl.
-mk-record+sort-field Sort _ T F (record RecordName (sort Sort) "Pack" (field _ "sort" T F)) :- !, std.do! [
-  if (get-option "infer" _) (RecordName = "type_") (RecordName = "type")
-].
+mk-record+sort-field Sort _ T F (record "type" (sort Sort) "Pack" (field _ "sort" T F)).
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
 mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global ClassName|Args]) _\end-record) :-
@@ -590,27 +582,6 @@ pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
   synthesis.infer-all-gref-deps PL T BuildC Class,
   mk-app (global PackS) {std.append PL [T, Class]} Body
 ].
-
-pred declare-auto-infer-params-abbrev i:structure, i:mixins, o:located, o:list prop.
-declare-auto-infer-params-abbrev GR MLwP (loc-abbreviation Abbrev) [phant-abbrev GR (const PhC) Abbrev] :-
-  get-option "infer" Map, !,
-  Map => mk-infer (global GR) MLwP PhT,
-  phant.add-abbreviation "type" PhT PhC Abbrev.
-declare-auto-infer-params-abbrev GR _ (loc-gref GR) [].
-
-pred mk-infer i:term, i:mixins, o:phant-term.
-mk-infer T (w-params.nil _ _ _) PH :- phant.init T PH.
-mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "Type" ; get-option ID ""), !,
-  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.fun-infer-type sortclass {coq.id->name ID} Ty PhT R.
-mk-infer T (w-params.cons ID Ty W) R :- (get-option ID "_ -> _"), !,
-  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.fun-infer-type funclass {coq.id->name ID} Ty PhT R.
-mk-infer T (w-params.cons ID Ty W) R :- not (get-option ID _), !,
-  @pi-parameter ID Ty t\ mk-infer {mk-app T [t]} (W t) (PhT t),
-  phant.fun-real {coq.id->name ID} Ty PhT R.
-mk-infer _ (w-params.cons ID _ _) _ :- get-option ID Infer,
-  coq.error "Automatic inference of paramter" ID "from" Infer "not supported".
 
 pred mk-infer-key i:class, i:term, i:mixins, i:term, o:phant-term.
 mk-infer-key CoeClass K (w-params.nil ID _ _) St PhK :-
