@@ -33,15 +33,16 @@
     "coq-8.18".coqPackages = mcHBcommon // {
       coq.override.version = "8.18";
       interval.job = false;
+      coq-elpi.override.version = "fix-synterp";
     };
 
-    "coq-8.17".coqPackages = mcHBcommon // {
-      coq.override.version = "8.17";
-    };
-
-    "coq-8.16".coqPackages = mcHBcommon // {
-      coq.override.version = "8.16";
-    };
+    # "coq-8.17".coqPackages = mcHBcommon // {
+    #   coq.override.version = "8.17";
+    # };
+# 
+    # "coq-8.16".coqPackages = mcHBcommon // {
+    #   coq.override.version = "8.16";
+    # };
   };
   cachix.coq = {};
   cachix.coq-community = {};
