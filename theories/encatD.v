@@ -1,3 +1,4 @@
+Require Import Coq.Program.Equality.
 Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
@@ -2102,15 +2103,17 @@ End test.
 
 (************************************************************************)
 
-(**** INTERNAL CATEGORIES - ALTERNATIVE DEFINITION *)
-(* still problematic *)
+(**** INTERNAL CATEGORIES - NEW DEFINITION *)
 
 (* Defining internal hom objects.
    C0 and C1 are objects of C.
    C0 is the object of objects,
    C1 is the object of morphims (and the subject).
    this will allow to define a generic _ *_C0 _ notation
-   by recognizing the structure of hom objects on the LHS and RHS *)
+   by recognizing the structure of hom objects on the LHS and RHS 
+   Basically, w.r.t. double categories, C1 represents 'horizontal' 
+   1-morpshisms and the D1 category, whereas C0 represents the objects 
+   of the base D0 category. *)
 HB.mixin Record isInternalHom {C: quiver} (C0 : C) (C1 : obj C) := {
    src : C1 ~> C0; tgt : C1 ~> C0
 }.
@@ -2125,27 +2128,12 @@ Notation "X ':>' C" := (X : obj C) (at level 60, C at next level).
 (* HB.instance Definition _ (T : cat) := Cat.on (obj T). *)
 (* HB.instance Definition _ (T : pbcat) := PBCat.on (obj T). *)
 
-(*
-Definition tgt' := @tgt.
-Arguments tgt' {_ _} _.
-*)
-(* The cospan is a type-level one: it says that for ANY morphism,
-source and target are objects (NOT necesarily the SAME object). X and
-Y are two instances of the morphism object (iHom C0), which here
-depends on the object of objects C0. Basically, X and Y are two
-versions of C1. X and Y are NOT two distinct morphisms in the ambient
-category. The cospan does NOT imply that ambient morphisms typed by X
-and Y are composable (i.e. adjacent). 'iprod' is not a morphism, it is
-just an object of C.
-
-Original code:
-
-Definition iprod {C} {C0 : C} (X Y : iHom C0) := bottom (pb (Cospan
-   (src X) (tgt Y))).  Notation "X *_ C0 Y" := (@iprod _ C0 X Y).
-
-HB.instance Definition iprod_iHom := isInternalHom.Build C0 (X *_C0 Y)
-   (src (bot2left _)) (tgt (bot2right _)).  *)
-
+(* constructs the pullback from the cospan given by target and source.
+   Type-level construction: it says that for ANY morphism, source and
+   target are objects (NOT necesarily the SAME object). X and Y are
+   two instances of the morphism object, specified by (iHom C0), and
+   are objects of (obj C). Here 'iprod' is just an object of (obj
+   C). *)
 Definition iprod_pb {C: pbcat} {C0 : C} (X Y : iHom C0) :
     span (X :> C) (Y :> C) :=
   pb _ _ (Cospan (tgt : (X :> C) ~> C0) (src : (Y :> C) ~> C0)).
@@ -2157,22 +2145,48 @@ Notation "X *_ C0 Y" := (@iprod _ C0 (X : iHom C0) (Y : iHom C0))
 Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
             (at level 99, C0 at level 0) : cat_scope.
 
-Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> (X :> C) :=
-  bot2left (iprod_pb X Y).
-Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) : X *_C0 Y ~> (Y :> C) :=
-  bot2right (iprod_pb X Y).
+(*
+(1) Defines pullback square (iprod_pb)
+
+         X --- tgt -----> C0
+         ^                 ^
+         |                 | 
+     bot2left             src
+         |                 |        
+        X*Y - bot2right -> Y    
+     
+
+(2) Defines source and target of the product (iprod_iHom)
+
+         X --- src -----> C0
+         ^                 ^
+         |                 | 
+       iprodl             tgt
+         |                 |        
+        X*Y -- iprodr ---> Y    
+*)
+
+(* left and right projection morphisms of the product *)
+Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) :
+  X *_C0 Y ~> (X :> C) := bot2left (iprod_pb X Y).
+Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) :
+  X *_C0 Y ~> (Y :> C) := bot2right (iprod_pb X Y).
 
 (* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
-is also an instance of (iHom C0). Notice, however, that X and Y do not
-represent composable morphisms *)
+is also an instance of (iHom C0). X and Y represent composable
+morphisms, as by pullback properties, the diagram (1) commutes.
+source and target are obtained by composing with product projections
+(2) *)
 Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
   @isInternalHom C C0 (X *_C0 Y) :=
   @isInternalHom.Build C C0 (X *_C0 Y)
     ((iprodl X Y) \; src)
     ((iprodr X Y) \; tgt).
 
-HB.instance Definition _ {C: pbcat} {C0: C} (X Y: @iHom C C0) := iprod_iHom X Y.
+HB.instance Definition iprod_iHom' {C: pbcat} {C0: C} (X Y: @iHom C C0) :
+  @isInternalHom C C0 (X *_C0 Y) := iprod_iHom X Y.
 
+(* the product as (iHom C0) object *)
 Definition pbC0 (C : pbcat) (C0 : C) (X Y : iHom C0) : iHom C0 :=
    (X *_C0 Y) : iHom C0.
 
@@ -2181,8 +2195,10 @@ HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :=
    isInternalHom.Build C C0 C0 idmap idmap.
 
 
-(* we need internal hom morphisms:
-the ones that preserve sources and targets *)
+(* we need internal hom morphisms: 
+the ones that preserve sources and targets.  
+basically, we recast morphisms in (obj C) into some in (@iHom C C0),
+i.e. into morphism between copies of C1 *)
 HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
      (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
   hom_src : f \; src = src;
@@ -2198,28 +2214,200 @@ HB.structure Definition InternalHomHom {C: pbcat}
 HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
   IsQuiver (@iHom C C0) :=
   IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
+Print iHom_quiver.
+
+Program Definition pre_iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
+  @IsInternalHomHom C C0 C1 C1 idmap :=
+  @IsInternalHomHom.Build C C0 C1 C1 idmap _ _.
+Obligation 1.
+setoid_rewrite comp1o; reflexivity.
+Defined.
+Obligation 2.
+setoid_rewrite comp1o; reflexivity.
+Defined.
+
+Program Definition iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
+  C1 ~>_(@iHom C C0) C1 := 
+  @InternalHomHom.Pack C C0 C1 C1 idmap _.
+(*
+The term "pre_iHom_id C1" has type "IsInternalHomHom.phant_axioms idmap"
+while it is expected to have type "InternalHomHom.axioms_ ?sort".
+*)
+Obligation 1.
+econstructor.
+eapply (@pre_iHom_id C C0 C1).
+Defined.
+
+Program Definition pre_iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
+  (f: C1 ~>_(@iHom C C0) C2) (g: C2 ~>_(@iHom C C0) C3) :
+  @IsInternalHomHom C C0 C1 C3 (f \; g) :=
+  @IsInternalHomHom.Build C C0 C1 C3 (f \; g) _ _.
+Obligation 1.
+setoid_rewrite <- compoA.
+repeat (setoid_rewrite hom_src); auto.
+Defined.
+Obligation 2.
+setoid_rewrite <- compoA.
+repeat (setoid_rewrite hom_tgt); auto.
+Defined.
+
+Program Definition iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
+  (f: C1 ~>_(@iHom C C0) C2) (g: C2 ~>_(@iHom C C0) C3) :
+  C1 ~>_(@iHom C C0) C3 :=
+  @InternalHomHom.Pack C C0 C1 C3 (f \; g) _.
+Obligation 1.
+econstructor.
+eapply (@pre_iHom_comp C C0 C1 C2 C3 f g).
+Defined.  
 
 Program Definition iHom_precat {C: pbcat} (C0 : C) :
   Quiver_IsPreCat (@iHom C C0) :=
   Quiver_IsPreCat.Build (@iHom C C0) _ _.
 Obligation 1.
-Admitted.
+eapply (@iHom_id C C0 a).
+Defined.
 Obligation 2.
-Admitted.
+eapply (@iHom_comp C C0 a b c0 X X0).
+Defined.
 
 HB.instance Definition iHom_precat' {C: pbcat} (C0 : C) := iHom_precat C0.
+
+Lemma iHom_LeftUnit_lemma (C : pbcat) (C0 : C)
+  (a b : iHom C0) (f : a ~> b) : idmap \; f = f.
+unfold idmap; simpl.
+unfold iHom_precat_obligation_1.
+unfold comp; simpl.
+unfold iHom_precat_obligation_2.
+unfold iHom_comp.
+remember f as f1.
+remember a as a1.
+remember b as b1.
+destruct f as [ff class].
+destruct a as [Ca class_a].
+destruct b as [Cb class_b].
+destruct class_a as [IMa].
+destruct class_b as [IMb].
+destruct class as [IM].
+destruct IMa.
+destruct IMb.
+destruct IM.
+unfold obj in *.
+simpl in *; simpl.
+
+eassert ( forall x, exists y, 
+    {|
+    InternalHomHom.sort := idmap \; f1;
+    InternalHomHom.class := x
+         |} =
+      {|
+    InternalHomHom.sort := f1;
+    InternalHomHom.class := y
+  |} ) as A2.
+{ rewrite Heqf1; simpl.
+  rewrite comp1o.
+  intros.
+  destruct x as [X].
+  econstructor.
+  destruct X.
+  reflexivity.
+}.  
+
+setoid_rewrite Heqf1 at 3.
+specialize (A2 (iHom_comp_obligation_1 (iHom_id a1) f1)).
+destruct A2.
+rewrite H.
+
+inversion Heqf1; subst.
+simpl.
+destruct x as [IM].
+destruct IM.
+
+assert (hom_src0 = hom_src1) as D1.
+{ eapply Prop_irrelevance. }
+
+assert (hom_tgt0 = hom_tgt1) as D2.
+{ eapply Prop_irrelevance. }
+
+rewrite D1.
+rewrite D2.
+reflexivity.
+Qed.
+
+Lemma iHom_RightUnit_lemma (C : pbcat) (C0 : C)
+  (a b : iHom C0) (f : a ~> b) : f \; idmap = f.
+unfold idmap; simpl.
+unfold iHom_precat_obligation_1.
+unfold comp; simpl.
+unfold iHom_precat_obligation_2.
+unfold iHom_comp.
+remember f as f1.
+remember a as a1.
+remember b as b1.
+destruct f as [ff class].
+destruct a as [Ca class_a].
+destruct b as [Cb class_b].
+destruct class_a as [IMa].
+destruct class_b as [IMb].
+destruct class as [IM].
+destruct IMa.
+destruct IMb.
+destruct IM.
+unfold obj in *.
+simpl in *; simpl.
+
+eassert ( forall x, exists y, 
+    {|
+    InternalHomHom.sort := f1 \; idmap;
+    InternalHomHom.class := x
+         |} =
+      {|
+    InternalHomHom.sort := f1;
+    InternalHomHom.class := y
+  |} ) as A2.
+{ rewrite Heqf1; simpl.
+  rewrite compo1.
+  intros.
+  destruct x as [X].
+  econstructor.
+  destruct X.
+  reflexivity.
+}.  
+
+setoid_rewrite Heqf1 at 3.
+specialize (A2 (iHom_comp_obligation_1 f1 (iHom_id b1))).
+destruct A2.
+rewrite H.
+
+inversion Heqf1; subst.
+simpl.
+destruct x as [IM].
+destruct IM.
+
+assert (hom_src0 = hom_src1) as D1.
+{ eapply Prop_irrelevance. }
+
+assert (hom_tgt0 = hom_tgt1) as D2.
+{ eapply Prop_irrelevance. }
+
+rewrite D1.
+rewrite D2.
+reflexivity.
+Qed.
+
 
 Program Definition iHom_cat {C: pbcat} (C0 : C) :
   PreCat_IsCat (@iHom C C0) :=
   PreCat_IsCat.Build (@iHom C C0) _ _ _.
 Obligation 1.
-Admitted.
+eapply iHom_LeftUnit_lemma; eauto.
+Qed.
 Obligation 2.
-Admitted.
+eapply iHom_RightUnit_lemma; eauto. 
+Qed.
 Obligation 3.
 Admitted.
 
-HB.instance Definition _ {C: pbcat} (C0 : C) := iHom_cat C0.
+HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
 
 Definition iprodlC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
   pbC0 X Y ~>_(iHom C0) X.
@@ -2248,24 +2436,29 @@ HB.structure Definition InternalQuiver (C : quiver) :=
 
 Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
-Coercion iquiver_cat (C : precat) (C0 : iquiver C) : C := C0 :> C.
+Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 
 
-(* PROBLEM: nested product does not typecheck *)
-Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0):
+(* nested product *)
+Program Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
   ((C1 *_C0 C2 : iHom C0) *_C0 C3) ~>_(iHom C0)
-   (C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0). (* := ... *)
+    (C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0).
+  (* := ... *)
    (* define it with the universal arrow of the pullback *)
 Admitted.
 
+(* product morphism *)
 Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
   (f : C1 ~> C3) (g : C2 ~> C4) : (C1 *_C0 C2) ~>_(iHom C0) (C3 *_C0 C4).
 Admitted.
 Notation "<( f , g )>" := (ipair f g).
 
 
-(* An internal precategory is an internal category with two operators that
-   must be src and tgt preserving, i.e. iHom morphisms *)
+(* An internal precategory is an internal category with two operators
+   that must be src and tgt preserving, i.e. iHom morphisms: identity
+   : C0 -> C1 (corresponding to horizontal 1-morphism identity in
+   double cat) and composition : C1 * C1 -> C1 (corresponding to
+   horizontal composition) *)
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
   of @InternalQuiver C C0 := {
     iid : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
@@ -2280,7 +2473,8 @@ HB.structure Definition InternalPreCat (C : pbcat) :=
 (* Check (iquiver Type <~> quiver). *)
 (* Check (iprecat Type <~> precat). *)
 
-(* An internal category moreover must satisfy additional properies on iid and icomp *)
+(* An internal category moreover must satisfy additional properies on iid and icomp
+(associativity and unit laws) *)
 #[key="C0"]
 HB.mixin Record IsInternalCat (C : pbcat) (C0 : obj C) of InternalPreCat C C0 := {
   (* icompA : <(icomp, idmap)> \; icomp = (iprodA _ _ _) \; <(idmap, icomp)> \; icomp; *)
@@ -2323,6 +2517,10 @@ Axiom cat_pb :
   prepullback_isTerminal cat a b c (@pb cat a b c).
 HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
 
+(* basically, the internal category adds the D1 category to the base
+D0 category, which is C0 (an object of cat, which is shown to have
+pullbacks) *)
 Definition doublecat := icat cat.
 
 (* Check (doublecat <~> ???) *)
+
