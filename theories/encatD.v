@@ -2394,7 +2394,74 @@ rewrite D2.
 reflexivity.
 Qed.
 
+Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C) 
+  (a b c d : iHom C0) (f : a ~> b) (g : b ~> c) (h : c ~> d) :
+  f \; g \; h = (f \; g) \; h.
+  unfold comp; simpl.
+  unfold iHom_precat_obligation_2; simpl.
+  unfold iHom_comp; simpl.
+  remember a as a1.  
+  remember b as b1.  
+  remember c as c1.  
+  remember d as d1.  
+  remember f as f1.  
+  remember g as g1.  
+  remember h as h1.  
+  destruct a as [C_a class_a].  
+  destruct b as [C_b class_b].  
+  destruct c as [C_c class_c].  
+  destruct d as [C_d class_d].  
+  destruct f as [M_f class_f].  
+  destruct g as [M_g class_g].  
+  destruct h as [M_h class_h].
+  destruct class_a as [IM_a].
+  destruct class_b as [IM_b].
+  destruct class_c as [IM_c].
+  destruct class_d as [IM_d].
+  destruct IM_a.
+  destruct IM_b.
+  destruct IM_c.
+  destruct IM_d.
+  destruct class_f as [IM_f].
+  destruct class_g as [IM_g].
+  destruct class_h as [IM_h].
+  destruct IM_f.
+  destruct IM_g.
+  destruct IM_h.
+  unfold obj in *; simpl in *; simpl.
 
+  eassert ( forall x y, 
+    {|
+    InternalHomHom.sort := f1 \; g1 \; h1;
+    InternalHomHom.class := x
+         |} =
+      {|
+    InternalHomHom.sort := (f1 \; g1) \; h1;
+    InternalHomHom.class := y
+  |} ) as A2.
+  { rewrite Heqf1; simpl.
+    rewrite compoA.
+    intros.
+    destruct x as [X].
+    destruct y as [Y].
+    destruct X.
+    destruct Y.
+  
+    assert (hom_src3 = hom_src4) as D1.
+    { eapply Prop_irrelevance. }
+
+    assert (hom_tgt3 = hom_tgt4) as D2.
+    { eapply Prop_irrelevance. }
+
+    rewrite D1.
+    rewrite D2.
+    reflexivity.
+  }.  
+
+  setoid_rewrite A2.
+  reflexivity.
+Qed.
+    
 Program Definition iHom_cat {C: pbcat} (C0 : C) :
   PreCat_IsCat (@iHom C C0) :=
   PreCat_IsCat.Build (@iHom C C0) _ _ _.
@@ -2405,7 +2472,8 @@ Obligation 2.
 eapply iHom_RightUnit_lemma; eauto. 
 Qed.
 Obligation 3.
-Admitted.
+eapply iHom_Assoc_lemma; eauto.
+Qed.
 
 HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
 
