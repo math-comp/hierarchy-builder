@@ -2196,14 +2196,15 @@ HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :=
    isInternalHom.Build C C0 C0 idmap idmap.
 
 
+
 (* we need internal hom morphisms: 
 the ones that preserve sources and targets.  
 basically, we recast morphisms in (obj C) into some in (@iHom C C0),
 i.e. into morphism between copies of C1 *)
 HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
      (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
-  hom_src : f \; src = src;
-  hom_tgt : f \; tgt = tgt;
+(*  hom_src : f \; src = src;
+  hom_tgt : f \; tgt = tgt; *)
 }.
 #[short(type="iHomHom")]
 HB.structure Definition InternalHomHom {C: pbcat}
@@ -2217,15 +2218,17 @@ HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
   IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
 Print iHom_quiver.
 
-Program Definition pre_iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
+Definition pre_iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
   @IsInternalHomHom C C0 C1 C1 idmap :=
-  @IsInternalHomHom.Build C C0 C1 C1 idmap _ _.
+  @IsInternalHomHom.Build C C0 C1 C1 idmap.
+(*
 Obligation 1.
 setoid_rewrite comp1o; reflexivity.
 Defined.
 Obligation 2.
 setoid_rewrite comp1o; reflexivity.
 Defined.
+*)
 
 Program Definition iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
   C1 ~>_(@iHom C C0) C1 := 
@@ -2239,10 +2242,11 @@ econstructor.
 eapply (@pre_iHom_id C C0 C1).
 Defined.
 
-Program Definition pre_iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
+Definition pre_iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
   (f: C1 ~>_(@iHom C C0) C2) (g: C2 ~>_(@iHom C C0) C3) :
   @IsInternalHomHom C C0 C1 C3 (f \; g) :=
-  @IsInternalHomHom.Build C C0 C1 C3 (f \; g) _ _.
+  @IsInternalHomHom.Build C C0 C1 C3 (f \; g).
+(*
 Obligation 1.
 setoid_rewrite <- compoA.
 repeat (setoid_rewrite hom_src); auto.
@@ -2251,6 +2255,7 @@ Obligation 2.
 setoid_rewrite <- compoA.
 repeat (setoid_rewrite hom_tgt); auto.
 Defined.
+*)
 
 Program Definition iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
   (f: C1 ~>_(@iHom C C0) C2) (g: C2 ~>_(@iHom C C0) C3) :
@@ -2322,15 +2327,6 @@ inversion Heqf1; subst.
 simpl.
 destruct x as [IM].
 destruct IM.
-
-assert (hom_src0 = hom_src1) as D1.
-{ eapply Prop_irrelevance. }
-
-assert (hom_tgt0 = hom_tgt1) as D2.
-{ eapply Prop_irrelevance. }
-
-rewrite D1.
-rewrite D2.
 reflexivity.
 Qed.
 
@@ -2383,15 +2379,6 @@ inversion Heqf1; subst.
 simpl.
 destruct x as [IM].
 destruct IM.
-
-assert (hom_src0 = hom_src1) as D1.
-{ eapply Prop_irrelevance. }
-
-assert (hom_tgt0 = hom_tgt1) as D2.
-{ eapply Prop_irrelevance. }
-
-rewrite D1.
-rewrite D2.
 reflexivity.
 Qed.
 
@@ -2447,15 +2434,6 @@ Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C)
     destruct y as [Y].
     destruct X.
     destruct Y.
-  
-    assert (hom_src3 = hom_src4) as D1.
-    { eapply Prop_irrelevance. }
-
-    assert (hom_tgt3 = hom_tgt4) as D2.
-    { eapply Prop_irrelevance. }
-
-    rewrite D1.
-    rewrite D2.
     reflexivity.
   }.  
 
@@ -2478,20 +2456,21 @@ Qed.
 
 HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
 
-(* PROBLEM: this morphism cannot exist, as the target of the product
-   isn't generally the same as the target of the first projection.
-   Similarly, the source of the product can be different from the
-   source of the sencond projection. *)
 Definition iprodlC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
   pbC0 X Y ~>_(iHom C0) X.
-  assert (@src C C0 (pbC0 X Y) = (iprodl X Y) \; @src C C0 X) as A1.
-  { auto. }
-  assert (@tgt C C0 (pbC0 X Y) = (iprodr X Y) \; @tgt C C0 Y) as A2.
-  { auto. }
-Admitted. 
+  econstructor.
+  instantiate (1:=(iprodl X Y)).
+  econstructor.
+  econstructor.
+Defined.
 Definition iprodrC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
   pbC0 X Y ~>_(iHom C0) Y.
-Admitted.
+  econstructor.
+  instantiate (1:=(iprodr X Y)).
+  econstructor.
+  econstructor.
+Defined.
+
 
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
@@ -2518,14 +2497,20 @@ Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 (* nested product *)
 Program Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
   ((C1 *_C0 C2 : iHom C0) *_C0 C3) ~>_(iHom C0)
-    (C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0).
+    (C1 *_C0 (C2 *_C0 C3 : iHom C0)).
   (* := ... *)
    (* OK define it with the universal arrow of the pullback *)
 Admitted.
 
-(* product morphism *)
-Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
-  (f : C1 ~> C3) (g : C2 ~> C4) : (C1 *_C0 C2) ~>_(iHom C0) (C3 *_C0 C4).
+(* product morphism. 
+  PROBLEM: f and g do not generally preserve source and target, 
+  therefore there is no guarantee that 
+      iprodlC0 \; f \; tgt = iprodrC0 \; g \; src
+  missing which, we cannot derive the existence of the morphism
+  between the two products.
+*)
+Definition ipair {C : pbcat} {C0 : C} {a b c d : iHom C0}
+  (f : a ~> c) (g : b ~> d) : (a *_C0 b) ~> (c *_C0 d).  
 Admitted.
 Notation "<( f , g )>" := (ipair f g).
 
