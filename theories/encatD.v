@@ -2476,12 +2476,12 @@ Obligation 3.
 eapply iHom_Assoc_lemma; eauto.
 Qed.
 
-HB.instance Definition iHom_cat' {C: pbcat} (C0 : C) := iHom_cat C0.
 
 (* PROBLEM: this morphism cannot exist, as the target of the product
    isn't generally the same as the target of the first projection.
    Similarly, the source of the product can be different from the
    source of the sencond projection. *)
+(*
 Definition iprodlC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
   pbC0 X Y ~>_(iHom C0) X.
   assert (@src C C0 (pbC0 X Y) = (iprodl X Y) \; @src C C0 X) as A1.
@@ -2492,6 +2492,7 @@ Admitted.
 Definition iprodrC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
   pbC0 X Y ~>_(iHom C0) Y.
 Admitted.
+*)
 
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
@@ -2514,21 +2515,45 @@ Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 
-
+Lemma ihom_morph (C : pbcat) (C0 : C) (a b: iHom C0) (f: a ~>_(iHom C0) b) :
+  (a :> C) ~>_C (b :> C).
+  simpl. 
+  destruct a.
+  destruct b.
+  destruct f.
+  simpl in *.
+  exact sort1.
+Defined.
+ 
 (* nested product *)
-Program Definition iprodA {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
+Program Definition iprodIAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
   ((C1 *_C0 C2 : iHom C0) *_C0 C3) ~>_(iHom C0)
     (C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0).
   (* := ... *)
    (* OK define it with the universal arrow of the pullback *)
 Admitted.
 
+Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
+  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
+    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
+eapply ihom_morph.
+eapply iprodIAsc; eauto.
+Defined.
+
 (* product morphism *)
-Definition ipair {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
+Program Definition ipairI {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
   (f : C1 ~> C3) (g : C2 ~> C4) : (C1 *_C0 C2) ~>_(iHom C0) (C3 *_C0 C4).
 Admitted.
-Notation "<( f , g )>" := (ipair f g).
 
+Program Definition ipairC {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
+  (f : C1 ~> C3) (g : C2 ~> C4) :
+  ((C1 *_C0 C2) :> C) ~>_C ((C3 *_C0 C4) :> C).
+eapply ihom_morph.
+eapply ipairI; eauto.
+Defined.
+
+Notation "<( f , g )>" := (ipairI f g).
+Notation "<(' f , g )>" := (ipairC f g).
 
 (* An internal precategory is an internal category with two operators
    that must be src and tgt preserving, i.e. iHom morphisms: identity
@@ -2537,8 +2562,8 @@ Notation "<( f , g )>" := (ipair f g).
    horizontal composition) *)
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
   of @InternalQuiver C C0 := {
-    iid : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
-    icomp : let C1 := @C1 C C0 : iHom C0 in
+    iidI : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
+    icompI : let C1 := @C1 C C0 : iHom C0 in
             let C2 := pbC0 C1 C1 : iHom C0 in
       (C2 ~>_(iHom C0) C1)
 }.
@@ -2546,19 +2571,53 @@ HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
 HB.structure Definition InternalPreCat (C : pbcat) :=
   { C0 of @IsInternalPreCat C C0 }.
 
+Program Definition iidC' {C : pbcat} {C0 : iprecat C} :
+  ((C0 : iHom C0) :> C) ~>_C
+    ((@C1 C C0 : iHom C0) :> C).
+destruct C0; simpl in *.
+destruct class as [IM1 IM2 IM3]; simpl in *.
+destruct IM3; simpl in *.
+exact iidI0.
+Defined.
+Program Definition iidC {C : pbcat} {C0 : iprecat C} :
+  (C0 :> C) ~>_C (@C1 C C0 :> C).
+eapply iidC'; eauto.
+Defined.
+
+Program Definition icompC {C : pbcat} {C0 : iprecat C} :
+  let C1 := @C1 C C0 : iHom C0 in
+            let C2 := pbC0 C1 C1 : iHom C0 in
+            ((C2 :> C) ~>_C (C1 :> C)).
+destruct C0; simpl in *.
+destruct class as [IM1 IM2 IM3]; simpl in *.
+destruct IM3; simpl in *.
+exact icompI0.
+Defined.
+
 (* Check (iquiver Type <~> quiver). *)
 (* Check (iprecat Type <~> precat). *)
 
 (* An internal category moreover must satisfy additional properies on iid and icomp
 (associativity and unit laws) *)
 #[key="C0"]
-HB.mixin Record IsInternalCat (C : pbcat) (C0 : obj C) of InternalPreCat C C0 := {
-  (* icompA : <(icomp, idmap)> \; icomp = (iprodA _ _ _) \; <(idmap, icomp)> \; icomp; *)
-  (* icomp1l : <(idmap, iid)> \; icomp = iprodlC0 C1 C1; *)
-  (* icomp1r : <(iid, idmap)> \; icomp = iprodrC0 C1 C1; *)
-}.
+  HB.mixin Record IsInternalCat (C : pbcat) (C0 : obj C)
+  of InternalPreCat C C0 := {
+
+    icompA1 :    
+ (<( (@icompI C C0),
+    (@idmap (iHom C0) (@C1 C C0: iHom C0)) )> \; icompI) =
+     ((@iprodIAsc C C0 (@C1 C C0: iHom C0) _ _) \;
+       <( (@idmap (iHom C0) (@C1 C C0: iHom C0)), icompI )> \; icompI) ; 
+
+    icomp1l : <(' @idmap (iHom C0) (@C1 C C0: iHom C0), (@iidI C C0) )> \;
+                 icompC = @iprodl C C0 (C1 :> C) (C0 :> C); 
+
+    icomp1r : <(' (@iidI C C0), @idmap (iHom C0) (@C1 C C0: iHom C0) )> \;
+                 icompC = @iprodr C C0 (C0 :> C) (C1 :> C); 
+  }.
 #[short(type="icat")]
-HB.structure Definition InternalCat (C : pbcat) := {C0 of @IsInternalCat C C0}.
+HB.structure Definition InternalCat (C : pbcat) :=
+  {C0 of @IsInternalCat C C0}.
 (* Check (icat Type <~> cat). *)
 
 
