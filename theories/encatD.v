@@ -2540,9 +2540,88 @@ eapply ihom_morph.
 eapply iprodIAsc; eauto.
 Defined.
 
+Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
+  (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
+  (f: P1 ~> A) (g: P1 ~> B) :
+  pbsquare p1 p2 t s ->  
+  f \; t = g \; s ->
+  sigma m: P1 ~> P0, f = m \; p1 /\ g = m \; p2. 
+  intros sq E.  
+  destruct sq as [IM1 IM2].
+
+  remember (Span p1 p2) as Spn0.  
+  remember (@Cospan C A B T t s) as Csp. 
+  remember (@Cospan C^op A B P1 f g) as Spn1. 
+
+  unfold Span in HeqSpn0.
+  
+  destruct IM1 as [IM3].
+  destruct IM2 as [IM4].
+
+  assert (bot2left Spn1 \; left2top Csp = bot2right Spn1 \; right2top Csp)
+    as K1.
+  { unfold bot2left, bot2right.
+    rewrite HeqCsp.
+    rewrite HeqSpn1.
+    simpl; auto.
+  }   
+  remember ( @isPrePullback.Build C A B Csp Spn1 K1) as Pb1.
+  assert (PrePullback.axioms_ Csp Spn1) as Pb2.
+  { econstructor.
+    exact Pb1. }
+  remember ( @PrePullback.Pack C A B Csp Spn1 Pb2) as PB.
+
+  destruct IM4 as [IM5 IM6].  
+  clear IM6.
+  specialize (IM5 PB).
+
+  inversion HeqSpn1; subst.
+  simpl in *.
+  clear H K1.
+  
+  unfold pb_terminal in *.
+  destruct Pb2 as [IM].
+  destruct IM.
+  simpl in *.
+
+  destruct IM5.
+  simpl in *.
+
+  econstructor.
+  instantiate (1:= top_map0).
+  split; auto.
+Qed.
+  
+Lemma pbquare_universal_aux1 {C: cat} (A0 A1 B0 B1 P0 P1 T : C)
+  (t: A0 ~> T) (s: B0 ~> T) (p01: P0 ~> A0) (p02: P0 ~> B0)
+  (f: A1 ~> A0) (g: B1 ~> B0) (p11: P1 ~> A1) (p12: P1 ~> B1) :
+  pbsquare p01 p02 t s ->   
+  p11 \; f \; t = p12 \; g \; s ->
+  sigma m: P1 ~> P0, p11 \; f = m \; p01 /\ p12 \; g = m \; p02. 
+  intros.
+  eapply pbsquare_universal; eauto.
+  setoid_rewrite <- compoA; auto.
+Qed.  
+
 (* product morphism *)
-Program Definition ipairI {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
-  (f : C1 ~> C3) (g : C2 ~> C4) : (C1 *_C0 C2) ~>_(iHom C0) (C3 *_C0 C4).
+Program Definition ipairI {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+  (f : x0 ~> x2) (g : x1 ~> x3) : (x0 *_C0 x1) ~>_(iHom C0) (x2 *_C0 x3).
+  unfold iprod.
+  unfold iprod_pb.
+  remember (pb (x0 :> C) (x1 :> C)
+               {| top := C0; left2top := tgt; right2top := src |}) as Pb1.
+  remember (pb (x2 :> C) (x3 :> C)
+               {| top := C0; left2top := tgt; right2top := src |}) as Pb2.
+  destruct Pb1 as [P1 J1].
+  destruct Pb2 as [P2 J2].
+
+  simpl in *; simpl.
+
+  remember ({| top := C0; left2top := tgt; right2top := src |}) as Csp.
+  
+  remember (@is_pb C (x0 :> C) (x1 :> C) Csp) as X.
+  clear HeqX.
+  destruct X.
 Admitted.
 
 Program Definition ipairC {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
