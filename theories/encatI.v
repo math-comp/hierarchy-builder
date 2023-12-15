@@ -1435,7 +1435,7 @@ basically, we recast morphisms in (obj C) into some in (@iHom C C0),
 i.e. into morphism between copies of C1 *)
 HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
      (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
-  hom_src : f \; src = src;
+  hom_src : f \; (@src C C0 C1') = (@src C C0 C1);
   hom_tgt : f \; tgt = tgt;
 }.
 #[short(type="iHomHom")]
@@ -1838,36 +1838,117 @@ Qed.
 
 (* Lemma is_pullback_in_pbcat {C: pbcat}  *)
 
+(*
+Set Debug "unification".
+Lemma ...
+Proof.   
+  Fail ... 
+*)
+
 (* product morphism *)
 Program Definition ipairI {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
-  (f : x0 ~> x2) (g : x1 ~> x3) :
+  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 : iHom C0) ~>_(iHom C0) (x2 *_C0 x3 : iHom C0).
-  unfold iprod.
-  unfold iprod_pb.
 
-  remember (@Cospan C (x0 :> C) (x1 :> C) _ tgt src) as Csp1.
+  remember (x0 *_ C0 x1 : iHom C0) as Pb1.
+  remember (x2 *_ C0 x3 : iHom C0) as Pb2.
 
-  remember (@Cospan C (x2 :> C) (x3 :> C) _ tgt src) as Csp2.
+  remember (@Cospan C (x0 :> C) (x1 :> C) C0
+              (@tgt C C0 x0) (@src C C0 x1)) as Csp1.
+
+  remember (@Cospan C (x2 :> C) (x3 :> C) C0
+              (@tgt C C0 x2) (@src C C0 x3)) as Csp2.
   
   remember (pbk (x0 :> C) (x1 :> C) Csp1) as Sp1.
   remember (pbk (x2 :> C) (x3 :> C) Csp2) as Sp2.
 
-  assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1).
+  assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1) as PBa1.
   admit.
 
-  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2).
+  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
   admit.
 
-  assert (@tgt C C0 x0 = (f : (x0 :> C) ~>_C (x2 :> C)) \; @tgt C C0 x2).
+  assert (((x0 *_ C0 x1) :> C) = bot Sp1) as Sp1_eq.
+  { unfold iprod.
+    unfold iprod_pb.
+    rewrite HeqSp1.
+    rewrite HeqCsp1.
+    auto.
+  }
+
+  assert (((x2 *_ C0 x3) :> C) = bot Sp2) as Sp2_eq.
+  { unfold iprod.
+    unfold iprod_pb.
+    rewrite HeqSp2.
+    rewrite HeqCsp2.
+    auto.
+  }
+  
+  assert (@tgt C C0 x0 = (f : (x0 :> C) ~>_C (x2 :> C)) \; @tgt C C0 x2) as E1.
   admit.
 
-  assert (@src C C0 x1 = (g : (x1 :> C) ~>_C (x3 :> C)) \; @src C C0 x3).
+  assert (@src C C0 x1 = (g : (x1 :> C) ~>_C (x3 :> C)) \; @src C C0 x3) as E2.
   admit.
 
   assert (bot2left Sp1 \; (f : (x0 :> C) ~>_C (x2 :> C)) \; @tgt C C0 x2 =
-          bot2right Sp1 \;  (g : (x1 :> C) ~>_C (x3 :> C)) \; @src C C0 x3).  
+          bot2right Sp1 \;  (g : (x1 :> C) ~>_C (x3 :> C)) \; @src C C0 x3)
+    as E3.  
+  admit.
+
+  assert (sigma m: bot Sp1 ~>_C bot Sp2, bot2left Sp1 \; f =
+                                           m \; bot2left Sp2 /\
+                             bot2right Sp1 \; g = m \; bot2right Sp2) as E4.
+  admit.
+
+  destruct E4 as [m4 E44].
+  destruct E44 as [A41 A42].
+  
+  assert (sigma m: ((x0 *_ C0 x1) :> C) ~>_C ((x2 *_ C0 x3) :> C),
+  (@iprodl C C0 x0 x1) \; f = m \; (@iprodl C C0 x2 x3) /\ 
+  (@iprodr C C0 x0 x1) \; g = m \; (@iprodr C C0 x2 x3)) as E5. 
+  admit.
+
+  destruct E5 as [m5 E55].
+  destruct E55 as [A51 A52].
+  
+  assert ((x0 :> C) ~>_C C0) as tgt1.
+  { destruct Csp1 as [u v z].
+    inversion HeqCsp1; subst.
+    exact v.
+  }  
+
+  assert ((x1 :> C) ~>_C C0) as src1.
+  { destruct Csp1 as [u v z].
+    inversion HeqCsp1; subst.
+    exact z.
+  }  
+    
+  assert (@isInternalHom C C0 (bot Sp1)) as MM.
+  { exact (@isInternalHom.Build C C0 (bot Sp1)
+           (bot2left Sp1 \; tgt1) (bot2right Sp1 \; src1)). }
+
+  assert (@InternalHom C C0 (bot Sp1)) as MM1.
+  { eapply (InternalHom.Pack (InternalHom.Class MM)). }
+
+  assert ((Pb1 :> C) ~>_C (Pb2 :> C)) as V.
+  { rewrite HeqPb1.
+    rewrite HeqPb2.
+    rewrite Sp1_eq.
+    rewrite Sp2_eq.
+    simpl.
+    eapply m5.
+  }
+
+  econstructor.
+  instantiate (1:= V).
+
+  econstructor.
+  econstructor.
+
+  assert (@src C C0 (x0 *_ C0 x1 : iHom C0) = (@iprodl C C0 x0 x1) \; src).
   admit.
 Admitted.
+
 
 Program Definition ipairC {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
   (f : C1 ~> C3) (g : C2 ~> C4) :
