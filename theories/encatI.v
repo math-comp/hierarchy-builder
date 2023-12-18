@@ -1806,7 +1806,143 @@ Proof.
   Fail ... 
 *)
 
+Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
+  (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
 
+  remember (x0 *_ C0 x1 : iHom C0) as Pb1.
+  remember (x2 *_ C0 x3 : iHom C0) as Pb2.
+
+  remember (@Cospan C (x0 :> C) (x1 :> C) C0
+              (@tgt C C0 x0) (@src C C0 x1)) as Csp1.
+
+  remember (@Cospan C (x2 :> C) (x3 :> C) C0
+              (@tgt C C0 x2) (@src C C0 x3)) as Csp2.
+
+  set (src0 := @src C C0 x0). 
+  set (tgt0 := @tgt C C0 x0). 
+
+  set (src1 := @src C C0 x1). 
+  set (tgt1 := @tgt C C0 x1). 
+
+  set (src2 := @src C C0 x2). 
+  set (tgt2 := @tgt C C0 x2). 
+
+  set (src3 := @src C C0 x3). 
+  set (tgt3 := @tgt C C0 x3). 
+
+  remember (@src C C0 (x0 *_C0 x1)) as src01. 
+  remember (@tgt C C0 (x0 *_C0 x1)) as tgt01. 
+  
+  remember (@src C C0 (x2 *_C0 x3)) as src23. 
+  remember (@tgt C C0 (x2 *_C0 x3)) as tgt23. 
+
+  set (Sp1 := pbk (x0 :> C) (x1 :> C) Csp1).
+  set (Sp2 := pbk (x2 :> C) (x3 :> C) Csp2).
+
+  (* follows from def of Sp1, Sp2 *)
+(*  assert (@pb (pbk (x0 :> C) (x1 :> C) Csp1)) as PBa1.
+  { remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    inversion HeqC'; subst.
+    auto.
+  }
+  
+  assert (@pb (pbk (x2 :> C) (x3 :> C) Csp2)) as PBa2.
+  { remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    inversion HeqC'; subst.
+    auto.
+  }
+ *)
+  
+  assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1) as PBa1.
+  { remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    assert (pb (pbk (x0 :> C') (x1 :> C') Csp1)).
+    inversion HeqC'; subst.
+    eapply B1; eauto.
+    econstructor; eauto.
+  }
+  
+  assert ((x0 *_ C0 x1) = bot Sp1) as E01.
+  { subst Sp1.
+    unfold iprod.
+    unfold iprod_pb. 
+    rewrite HeqCsp1; auto.
+  }  
+
+  assert ((x2 *_ C0 x3) = bot Sp2) as E23.
+  { subst Sp2.
+    unfold iprod.
+    unfold iprod_pb.
+    rewrite HeqCsp2; auto.
+  }  
+  
+  set (prj11 := @iprodl C C0 x0 x1). 
+  set (prj12 := @iprodr C C0 x0 x1). 
+
+  set (prj21 := @iprodl C C0 x2 x3). 
+  set (prj22 := @iprodr C C0 x2 x3). 
+
+  set (ff := prj11 \; f).
+  set (gg := prj12 \; g).
+
+  assert ((f : (x0 :> C) ~>_C (x2 :> C)) \; tgt2 = tgt0) as E20.
+  { remember f as f1.
+    destruct f as [fsort fclass].
+    destruct fclass as [fIM].
+    destruct fIM.
+    inversion Heqf1; subst.
+    simpl in *; simpl.
+    auto.
+  }  
+    
+  assert ((g : (x1 :> C) ~>_C (x3 :> C)) \; src3 = src1) as E31.
+  { remember g as g1.
+    destruct g as [gsort gclass].
+    destruct gclass as [gIM].
+    destruct gIM.
+    inversion Heqg1; subst.
+    simpl in *; simpl.
+    auto.
+  }  
+
+  assert (prj11 \; tgt0 = prj12 \; src1) as E11.
+  { destruct PBa1 as [C1 C2].
+    destruct C1 as [C3].
+    inversion HeqCsp1; subst.
+    simpl in *.
+    auto.
+   }
+  
+  assert (ff \; tgt2 = gg \; src3) as E1.
+  { subst ff gg.
+    setoid_rewrite <- compoA.
+    rewrite E20.
+    rewrite E31.
+    exact E11.
+  }  
+    
+  (* follows from pbquare_universal_aux1 and E1 *)
+  assert (sigma m: ((x0 *_ C0 x1) ~>_C (x2 *_ C0 x3) :> C),
+             ff = m \; prj21 /\ gg = m \; prj22) as EM.
+  { eapply (@pbsquare_universal C) ; eauto.
+    admit.
+  }  
+
+  destruct EM as [mm [EM1 EM2]].
+
+  exact mm.
+Admitted.   
+
+(*
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
@@ -1894,7 +2030,8 @@ Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
 
   exact mm.
 Admitted.   
-  
+*)  
+
 Notation "<( f , g )>" := (ipairC f g).
 
 (* An internal precategory is an internal category with two operators
