@@ -1709,24 +1709,6 @@ Obligation 3.
 eapply iHom_Assoc_lemma; eauto.
 Qed.
 
-
-(* PROBLEM: this morphism cannot exist, as the target of the product
-   isn't generally the same as the target of the first projection.
-   Similarly, the source of the product can be different from the
-   source of the sencond projection. *)
-(*
-Definition iprodlC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
-  pbC0 X Y ~>_(iHom C0) X.
-  assert (@src C C0 (pbC0 X Y) = (iprodl X Y) \; @src C C0 X) as A1.
-  { auto. }
-  assert (@tgt C C0 (pbC0 X Y) = (iprodr X Y) \; @tgt C C0 Y) as A2.
-  { auto. }
-Admitted. 
-Definition iprodrC0 {C: pbcat} {C0 : C} (X Y : iHom C0) :
-  pbC0 X Y ~>_(iHom C0) Y.
-Admitted.
-*)
-
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
 HB.mixin Record IsPreInternalQuiver (C : quiver) (C0 : obj C) :=
@@ -1748,30 +1730,11 @@ Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 
-Lemma ihom_morph (C : pbcat) (C0 : C) (a b: iHom C0) (f: a ~>_(iHom C0) b) :
-  (a :> C) ~>_C (b :> C).
-  simpl. 
-  destruct a.
-  destruct b.
-  destruct f.
-  simpl in *.
-  exact sort1.
-Defined.
- 
 (* nested product *)
-Program Definition iprodIAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
-  ((C1 *_C0 C2 : iHom C0) *_C0 C3 : iHom C0) ~>_(iHom C0)
-    (C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0).
-  (* := ... *)
-   (* OK define it with the universal arrow of the pullback *)
-Admitted.
-
 Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
   (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
     ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
-eapply ihom_morph.
-eapply iprodIAsc; eauto.
-Defined.
+Admitted.
 
 Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
   (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
@@ -1786,8 +1749,6 @@ Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
   remember (@Cospan C A B T t s) as Csp. 
   remember (@Span C A B P1 f g) as Spn1. 
 
-(*  unfold Span in HeqSpn0. *)
-  
   destruct IM1 as [IM3].
   destruct IM2 as [IM4].
 
@@ -1845,10 +1806,10 @@ Proof.
   Fail ... 
 *)
 
-(* product morphism *)
-Program Definition ipairI {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+
+Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
-  (x0 *_C0 x1 : iHom C0) ~>_(iHom C0) (x2 *_C0 x3 : iHom C0).
+  (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
 
   remember (x0 *_ C0 x1 : iHom C0) as Pb1.
   remember (x2 *_ C0 x3 : iHom C0) as Pb2.
@@ -1858,107 +1819,83 @@ Program Definition ipairI {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
 
   remember (@Cospan C (x2 :> C) (x3 :> C) C0
               (@tgt C C0 x2) (@src C C0 x3)) as Csp2.
+
+  remember (@src C C0 x0) as src0. 
+  remember (@tgt C C0 x0) as tgt0. 
+
+  remember (@src C C0 x1) as src1. 
+  remember (@tgt C C0 x1) as tgt1. 
+
+  remember (@src C C0 x2) as src2. 
+  remember (@tgt C C0 x2) as tgt2. 
+
+  remember (@src C C0 x3) as src3. 
+  remember (@tgt C C0 x3) as tgt3. 
+
+  remember (@src C C0 (x0 *_C0 x1)) as src01. 
+  remember (@tgt C C0 (x0 *_C0 x1)) as tgt01. 
   
+  remember (@src C C0 (x2 *_C0 x3)) as src23. 
+  remember (@tgt C C0 (x2 *_C0 x3)) as tgt23. 
+
   remember (pbk (x0 :> C) (x1 :> C) Csp1) as Sp1.
   remember (pbk (x2 :> C) (x3 :> C) Csp2) as Sp2.
 
+  (* follows from def of Sp1, Sp2 *)
   assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1) as PBa1.
   admit.
 
   assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
   admit.
 
-  assert (((x0 *_ C0 x1) :> C) = bot Sp1) as Sp1_eq.
-  { unfold iprod.
+  assert ((x0 *_ C0 x1) = bot Sp1) as E01.
+  { subst Sp1.
+    unfold iprod.
     unfold iprod_pb.
-    rewrite HeqSp1.
     rewrite HeqCsp1.
+    subst tgt0.
+    subst src1.
     auto.
-  }
+  }  
 
-  assert (((x2 *_ C0 x3) :> C) = bot Sp2) as Sp2_eq.
-  { unfold iprod.
+  assert ((x2 *_ C0 x3) = bot Sp2) as E23.
+  { subst Sp2.
+    unfold iprod.
     unfold iprod_pb.
-    rewrite HeqSp2.
     rewrite HeqCsp2.
+    subst tgt2.
+    subst src3.
     auto.
-  }
-  
-  assert (@tgt C C0 x0 = (f : (x0 :> C) ~>_C (x2 :> C)) \; @tgt C C0 x2) as E1.
-  admit.
-
-  assert (@src C C0 x1 = (g : (x1 :> C) ~>_C (x3 :> C)) \; @src C C0 x3) as E2.
-  admit.
-
-  assert (bot2left Sp1 \; (f : (x0 :> C) ~>_C (x2 :> C)) \; @tgt C C0 x2 =
-          bot2right Sp1 \;  (g : (x1 :> C) ~>_C (x3 :> C)) \; @src C C0 x3)
-    as E3.  
-  admit.
-
-  assert (sigma m: bot Sp1 ~>_C bot Sp2, bot2left Sp1 \; f =
-                                           m \; bot2left Sp2 /\
-                             bot2right Sp1 \; g = m \; bot2right Sp2) as E4.
-  admit.
-
-  destruct E4 as [m4 E44].
-  destruct E44 as [A41 A42].
-  
-  assert (sigma m: ((x0 *_ C0 x1) :> C) ~>_C ((x2 *_ C0 x3) :> C),
-  (@iprodl C C0 x0 x1) \; f = m \; (@iprodl C C0 x2 x3) /\ 
-  (@iprodr C C0 x0 x1) \; g = m \; (@iprodr C C0 x2 x3)) as E5. 
-  admit.
-
-  destruct E5 as [m5 E55].
-  destruct E55 as [A51 A52].
-  
-  assert ((x0 :> C) ~>_C C0) as tgt1.
-  { destruct Csp1 as [u v z].
-    inversion HeqCsp1; subst.
-    exact v.
   }  
+  
+  set (prj11 := @iprodl C C0 x0 x1). 
+  set (prj12 := @iprodr C C0 x0 x1). 
 
-  assert ((x1 :> C) ~>_C C0) as src1.
-  { destruct Csp1 as [u v z].
-    inversion HeqCsp1; subst.
-    exact z.
-  }  
-    
-  assert (@isInternalHom C C0 (bot Sp1)) as MM.
-  { exact (@isInternalHom.Build C C0 (bot Sp1)
-           (bot2left Sp1 \; tgt1) (bot2right Sp1 \; src1)). }
+  set (prj21 := @iprodl C C0 x2 x3). 
+  set (prj22 := @iprodr C C0 x2 x3). 
 
-  assert (@InternalHom C C0 (bot Sp1)) as MM1.
-  { eapply (InternalHom.Pack (InternalHom.Class MM)). }
+  set (ff := prj11 \; f).
+  set (gg := prj12 \; g).
 
-  assert ((Pb1 :> C) ~>_C (Pb2 :> C)) as V.
-  { rewrite HeqPb1.
-    rewrite HeqPb2.
-    rewrite Sp1_eq.
-    rewrite Sp2_eq.
-    simpl.
-    eapply m5.
-  }
-
-  econstructor.
-  instantiate (1:= V).
-
-  econstructor.
-  econstructor.
-
-  assert (@src C C0 (x0 *_ C0 x1 : iHom C0) = (@iprodl C C0 x0 x1) \; src).
+  (* follows from f being in iHomHom, so
+      f \; tgt2 = tgt0
+      g \; src3 = src1
+     and Pb1 being a pullback, so
+      prj11 \; tgt0 = prj12 \; src1 *)
+  assert (ff \; tgt2 = gg \; src3) as E1.
   admit.
-Admitted.
 
+  (* follows from pbquare_universal_aux1 and E1 *)
+  assert (sigma m: ((x0 *_ C0 x1) ~>_C (x2 *_ C0 x3) :> C),
+           ff = m \; prj21 /\ gg = m \; prj22) as EM.
+  admit.
 
-Program Definition ipairC {C : pbcat} {C0 : C} {C1 C2 C3 C4 : iHom C0}
-  (f : C1 ~> C3) (g : C2 ~> C4) :
-  ((C1 *_C0 C2) :> C) ~>_C ((C3 *_C0 C4) :> C).
-eapply ihom_morph.
-eapply ipairI; eauto.
-Defined.
+  destruct EM as [mm [EM1 EM2]].
 
-Notation "<( f , g )>" := (ipairI f g).
-Notation "<(' f , g )>" := (ipairC f g).
+  exact mm.
+Admitted.   
+  
+Notation "<( f , g )>" := (ipairC f g).
 
 (* An internal precategory is an internal category with two operators
    that must be src and tgt preserving, i.e. iHom morphisms: identity
@@ -1999,32 +1936,30 @@ destruct IM3; simpl in *.
 exact icompI0.
 Defined.
 
-(* Check (iquiver Type <~> quiver). *)
+(* Check (iquiver Type <~> quiver). *) 
 (* Check (iprecat Type <~> precat). *)
 
-(* An internal category moreover must satisfy additional properies on iid and icomp
-(associativity and unit laws) *)
+(* An internal category moreover must satisfy additional properies on
+iid and icomp (associativity and unit laws) *)
 #[key="C0"]
   HB.mixin Record IsInternalCat (C : pbcat) (C0 : obj C)
   of InternalPreCat C C0 := {
-
     icompA1 :    
  (<( (@icompI C C0),
-    (@idmap (iHom C0) (@C1 C C0: iHom C0)) )> \; icompI) =
-     ((@iprodIAsc C C0 (@C1 C C0: iHom C0) _ _) \;
-       <( (@idmap (iHom C0) (@C1 C C0: iHom C0)), icompI )> \; icompI) ; 
+     (@idmap (iHom C0) (@C1 C C0: iHom C0)) )> \; icompC) =
+     ((@iprodCAsc C C0 (@C1 C C0: iHom C0) _ _) \;
+       <( (@idmap (iHom C0) (@C1 C C0: iHom C0)), icompI )> \; icompC) ; 
 
-    icomp1l : <(' @idmap (iHom C0) (@C1 C C0: iHom C0), (@iidI C C0) )> \;
+    icomp1l : <( @idmap (iHom C0) (@C1 C C0: iHom C0), (@iidI C C0) )> \;
                  icompC = @iprodl C C0 (C1 :> C) (C0 :> C); 
 
-    icomp1r : <(' (@iidI C C0), @idmap (iHom C0) (@C1 C C0: iHom C0) )> \;
+    icomp1r : <( (@iidI C C0), @idmap (iHom C0) (@C1 C C0: iHom C0) )> \;
                  icompC = @iprodr C C0 (C0 :> C) (C1 :> C); 
   }.
 #[short(type="icat")]
 HB.structure Definition InternalCat (C : pbcat) :=
   {C0 of @IsInternalCat C C0}.
 (* Check (icat Type <~> cat). *)
-
 
 (* A double category is an internal category in cat
    - The objects are the objects of C0
