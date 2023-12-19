@@ -1634,28 +1634,12 @@ Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C)
   unfold comp; simpl.
   unfold iHom_precat_obligation_2; simpl.
   unfold iHom_comp; simpl.
-  remember a as a1.  
-  remember b as b1.  
-  remember c as c1.  
-  remember d as d1.  
   remember f as f1.  
   remember g as g1.  
   remember h as h1.  
-  destruct a as [C_a class_a].  
-  destruct b as [C_b class_b].  
-  destruct c as [C_c class_c].  
-  destruct d as [C_d class_d].  
   destruct f as [M_f class_f].  
   destruct g as [M_g class_g].  
   destruct h as [M_h class_h].
-  destruct class_a as [IM_a].
-  destruct class_b as [IM_b].
-  destruct class_c as [IM_c].
-  destruct class_d as [IM_d].
-  destruct IM_a.
-  destruct IM_b.
-  destruct IM_c.
-  destruct IM_d.
   destruct class_f as [IM_f].
   destruct class_g as [IM_g].
   destruct class_h as [IM_h].
@@ -1665,14 +1649,10 @@ Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C)
   unfold obj in *; simpl in *; simpl.
 
   eassert ( forall x y, 
-    {|
-    InternalHomHom.sort := f1 \; g1 \; h1;
-    InternalHomHom.class := x
-         |} =
-      {|
-    InternalHomHom.sort := (f1 \; g1) \; h1;
-    InternalHomHom.class := y
-  |} ) as A2.
+    {| InternalHomHom.sort := f1 \; g1 \; h1;
+       InternalHomHom.class := x |} =
+    {| InternalHomHom.sort := (f1 \; g1) \; h1;
+       InternalHomHom.class := y |} ) as A2.
   { rewrite Heqf1; simpl.
     rewrite compoA.
     intros.
@@ -1809,25 +1789,11 @@ Proof.
 Lemma pbk_eta {C: pbcat} {C0} (X Y: iHom C0) :
     (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))) =
     (Span (iprodl X Y) (iprodr X Y)).       
-  unfold iprodl.
-  unfold iprodr.
-  unfold iprod_pb.
-  assert ((X *_C0 Y :> C) = (bot (pbk (X :> C) (Y :> C) {| top := C0; left2top := tgt; right2top := src |})))
-    as A1.
-  { unfold iprod.
-    simpl.
-    unfold iprod_pb.
-    auto.
-  }
-  simpl.
-  
-  unfold iprod.
-  unfold iprod_pb.
-  simpl.
+  unfold iprodl, iprodr, iprod.
+  unfold iprod_pb; simpl.
   
   generalize (pbk (X :> C) (Y :> C) {| top := C0; left2top := tgt; right2top := src |}).
-
-  intros.
+  intro s0.
   destruct s0.
   simpl; auto.
 Qed.  
@@ -1983,6 +1949,7 @@ Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
     subst prj21 prj22.
 
     (* surprisingly, this does not work with pbsquare_is_pulback_sym *)
+    (* rewrite <- pbsquare_is_pullback_sym. *)
     rewrite pbsquare_is_pullback.
     inversion HeqCsp2; subst.
     subst Sp2.
