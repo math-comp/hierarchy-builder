@@ -1710,12 +1710,6 @@ Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 
-(* nested product *)
-Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
-  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
-    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
-Admitted.
-
 Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
   (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
   (f: P1 ~> A) (g: P1 ~> B) :
@@ -1820,6 +1814,125 @@ Lemma pbsquare_is_pullback {C: pbcat} {C0} (X Y: iHom C0) :
         (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))).
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
+
+Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
+  f \; match e with eq_refl => g end.  
+Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
+  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
+                             only parsing) : cat_scope.
+
+(* nested product *)
+Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
+  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
+    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
+remember C1 as c1.
+remember C2 as c2.
+remember C3 as c3.
+destruct C1 as [C1s C1c].
+destruct C2 as [C2s C2c].
+destruct C3 as [C3s C3c].
+destruct C1c as [IM1].
+destruct C2c as [IM2].
+destruct C3c as [IM3].
+
+destruct IM1 as [src1 tgt1].
+destruct IM2 as [src2 tgt2].
+destruct IM3 as [src3 tgt3].
+simpl in *; simpl.
+
+set (Pb12 := c1 *_ C0 c2 : iHom C0).
+set (Pb23 := c2 *_ C0 c3 : iHom C0).
+set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
+set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
+
+(*
+remember (c1 *_ C0 c2 : iHom C0) as Pb12.
+remember (c2 *_ C0 c3 : iHom C0) as Pb23.
+remember ((c1 *_ C0 Pb23) : iHom C0) as Pb15.
+remember ((Pb12 *_ C0 c3) : iHom C0) as Pb33.
+*)
+
+set (pb12 := c1 *_ C0 c2 :> C).
+set (pb23 := c2 *_ C0 c3 :> C).
+set (pb15 := (c1 *_ C0 Pb23) :> C).
+set (pb33 := (Pb12 *_ C0 c3) :> C).
+
+(*
+remember (c1 *_ C0 c2 :> C) as pb12.
+remember (c2 *_ C0 c3 :> C) as pb23.
+remember ((c1 *_ C0 Pb23) :> C) as pb15.
+remember ((Pb12 *_ C0 c3) :> C) as pb33.
+*)
+
+set (j12L := iprodl c1 c2).
+set (j12R := iprodr c1 c2).
+set (j23L := iprodl c2 c3).
+set (j23R := iprodr c2 c3).
+set (j15L := iprodl c1 Pb23).
+set (j15R := iprodr c1 Pb23).
+set (j33L := iprodl Pb12 c3).
+set (j33R := iprodr Pb12 c3).
+
+(*
+remember (iprodl c1 c2) as j12L.
+remember (iprodr c1 c2) as j12R.
+remember (iprodl c2 c3) as j23L.
+remember (iprodr c2 c3) as j23R.
+remember (iprodl c1 Pb23) as j15L.
+remember (iprodr c1 Pb23) as j15R.
+remember (iprodl Pb12 c3) as j33L.
+remember (iprodr Pb12 c3) as j33R.
+*)
+
+assert (forall (e1: C1s = (c1 :> C)) (e2: C2s = (c2 :> C)), 
+   j12L \;;_e1 tgt1 = j12R \;;_e2 src2) as sqPb12.
+admit.
+
+assert (forall (e1: C2s = (c2 :> C)) (e2: C3s = (c3 :> C)), 
+   j23L \;;_e1 tgt2 = j23R \;;_e2 src3) as sqPb23.
+admit.
+
+assert (@tgt C C0 Pb12 = j12R \; @tgt C C0 c2) as tgtPb12.
+admit.
+
+assert (@src C C0 Pb23 = j23L \; @src C C0 c2) as srcPb23.
+admit.
+
+assert (forall (e1: C1s = (c1 :> C)), 
+   j15L \;;_e1 tgt1 = j15R \; @src C C0 Pb23) as sqPb15.
+admit.
+
+assert (forall (e2: C3s = (c3 :> C)), 
+   j33L \; @tgt C C0 Pb12 = j33R \;;_e2 src3) as sqPb33.
+admit.
+
+assert (forall (e1: ((c1 *_C0 c2) :> C) = Pb12),
+    sigma (m12: Pb15 ~> Pb12),
+       (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R)) as M12. 
+admit.
+
+assert (forall (e1: ((c2 *_C0 c3) :> C) = Pb23),
+    sigma (m23: Pb33 ~> Pb23),
+       (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R)) as M23. 
+admit.
+
+(*
+unfold iprod.
+unfold iprod_pb; simpl.
+unfold iprod.
+unfold iprod_pb; simpl.
+unfold hom.
+unfold IsQuiver.hom.
+simpl.
+setoid_rewrite pbk_eta.
+simpl.
+unfold hom.
+unfold IsQuiver.hom.
+*)  
+
+Admitted.
+
+
 
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
