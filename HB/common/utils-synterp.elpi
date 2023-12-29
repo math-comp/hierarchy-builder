@@ -1,0 +1,73 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% runs P in a context where Coq #[attributes] are parsed
+pred with-attributes i:prop.
+with-attributes P :-
+  attributes A,
+  coq.parse-attributes A [
+    att "verbose" bool,
+    att "mathcomp" bool,
+    att "mathcomp.axiom" string,
+    att "short.type" string,
+    att "short.pack" string,
+    att "key" string,
+    att "arg_sort" bool,
+    att "log" bool,
+    att "log.raw" bool,
+    att "compress_coercions" bool,
+    att "export" bool,
+    att "skip" string,
+    att "local" bool,
+    att "fail" bool,
+    att "doc" string,
+    att "primitive" bool,
+    att "non_forgetful_inheritance" bool,
+    att "hnf" bool,
+  ] Opts, !,
+  Opts => (save-docstring, P).
+
+pred if-verbose i:prop.
+if-verbose P :- get-option "verbose" tt, !, P.
+if-verbose _.
+
+% header of if-verbose messages
+pred header o:string.
+header Msg :- Msg is "[" ^ {std.any->string {gettimeofday}} ^ "] HB: ".
+
+% approximation, it should be logical path, not the file name
+pred coq.env.current-library o:string.
+coq.env.current-library L :- loc.fields {get-option "elpi.loc"} L _ _ _ _.
+coq.env.current-library "dummy.v".
+
+% this is only declared in hb.db, this declaration is only to avoid a warning
+pred docstring o:loc, o:string.
+
+pred save-docstring.
+save-docstring :-
+  if (get-option "elpi.loc" Loc, get-option "elpi.phase" "interp", get-option "doc" Txt)
+     (coq.elpi.accumulate _ "hb.db" (clause _ _ (docstring Loc Txt)))
+     true.
+
+pred compute-filter i:option string, o:list string.
+compute-filter none [].
+compute-filter (some S) MFilter :- % S is a component of the current modpath
+  coq.env.current-path P,
+  rex_split "\\." S L,
+  compute-filter.aux P L MFilter, !.
+compute-filter (some S) MFilter :-
+  coq.locate-module S M,
+  coq.modpath->path M MFilter.
+compute-filter.aux [S|_] [S] [S] :- !.
+compute-filter.aux [S|XS] [S|SS] [S|YS] :- compute-filter.aux XS SS YS.
+compute-filter.aux [X|XS] L [X|YS] :- compute-filter.aux XS L YS.
+
+pred list-uniq i:list A, o:list A.
+pred list-uniq.seen i:A.
+list-uniq [] [].
+list-uniq [X|XS] YS :- list-uniq.seen X, !, list-uniq XS YS.
+list-uniq [X|XS] [X|YS] :- list-uniq.seen X => list-uniq XS YS.
+
+pred record-decl->id i:indt-decl, o:id.
+record-decl->id (parameter _ _ _ D) N :- pi p\ record-decl->id (D p) N.
+record-decl->id (record N _ _ _) N.

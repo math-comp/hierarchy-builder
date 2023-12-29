@@ -55,9 +55,9 @@ Global Open Scope HB_scope.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
 (** This data represents the hierarchy and some other piece of state to
-    implement the commands above *)
+    implement the commands of this file *)
 
-Elpi Db hb.db lp:{{
+#[interp] Elpi Db hb.db lp:{{
 
 typeabbrev mixinname   gref.
 typeabbrev classname   gref.
@@ -233,6 +233,13 @@ pred decl-location o:gref, o:loc.
 pred docstring o:loc, o:string.
 
 }}.
+
+(* This database is used by the parsing phase only *)
+#[synterp] Elpi Db export.db lp:{{
+  pred module-to-export   o:string, o:modpath.
+
+}}.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -447,9 +454,29 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
 
 :name "start"
-main [A] :- A = indt-decl _, !,
-  with-attributes (with-logging (factory.declare-mixin A)).
+main [A] :- with-attributes (with-logging (factory.declare-mixin A)).
 
+}}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate Db export.db.
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
+
+pred actions i:id.
+actions N :-
+  begin-module N none,
+    begin-section N,
+    end-section,
+    begin-module "Exports" none,
+    end-module E,
+  end-module _,
+  export-module E,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)).
+
+main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
+  
 main _ :-
   coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
 }}.
@@ -609,14 +636,52 @@ Elpi Accumulate File "HB/structure.elpi".
 Elpi Accumulate lp:{{
 
 :name "start"
-main [const-decl N (some B) Arity] :- !, std.do! [
+main [const-decl N (some B) Arity] :- std.do! [
   % compute the universe for the structure (default )
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
   with-attributes (with-logging (structure.declare N B Univ)),
 ].
-main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 
+}}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate Db export.db.
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ begin-module, end-module, begin-section, end-section, import-module, export-module }.
+
+pred actions i:id.
+actions N :-
+  begin-module N none,
+    begin-module "Exports" none,
+    end-module E,
+    import-module E,
+  end-module _,
+  export-module E,
+  begin-module {calc (N ^ "ElpiOperations")} none,
+  end-module O,
+  export-module O,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)),
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
+  if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (actions-compat N) true.
+
+pred actions-compat i:id.
+actions-compat ModuleName :-
+  CompatModuleName is "MathCompCompat" ^ ModuleName,
+  begin-module CompatModuleName none,
+    begin-module ModuleName none,
+    end-module _,
+  end-module O,
+  export-module O,
+  % is this a bug?
+  % coq.env.current-library File,
+  % coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)).
+  true.
+
+main [const-decl N _ _] :- !, with-attributes (actions N).
+  
+main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
 Elpi Typecheck.
 Elpi Export HB.structure.
@@ -702,8 +767,18 @@ main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
 
-main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
+}}.
+#[synterp] Elpi Accumulate lp:{{
 
+shorten coq.env.{ begin-section, end-section }.
+
+main [const-decl _ _ (arity _)] :- !.
+main [const-decl _ _ (parameter _ _ _ _)] :- !,
+  SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+  begin-section SectionName, end-section.
+main [_, _] :- !.
+
+main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
 }}.
 Elpi Typecheck.
 Elpi Export HB.instance.
@@ -731,9 +806,30 @@ Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
 
 :name "start"
-main [A] :- (A = indt-decl _ ; A = const-decl _ _ _), !,
-  with-attributes (with-logging (factory.declare A)).
+main [A] :- with-attributes (with-logging (factory.declare A)).
 
+}}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate Db export.db.
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
+
+pred actions i:id.
+actions N :-
+  begin-module N none,
+    begin-section N,
+    end-section,
+    begin-module "Exports" none,
+    end-module E,
+  end-module _,
+  export-module E,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)).
+
+main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
+main [const-decl N _ _] :- with-attributes (actions N).
+  
 main _ :-
   coq.error "Usage: HB.factory Record <FactoryName> T of F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
 }}.
@@ -794,10 +890,24 @@ Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate lp:{{
 
 :name "start"
-main [ctx-decl C] :- !, with-attributes (with-logging (builders.begin C)).
+main [ctx-decl C] :- with-attributes (with-logging (builders.begin C)).
 
+}}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ begin-module, end-module, begin-section }.
+
+pred actions i:id.
+actions N :-
+  begin-module N none,
+    begin-module "Super" none,
+    end-module _,
+    begin-section N.
+
+main [ctx-decl _] :- !, with-attributes (actions {calc ("Builders_" ^ {std.any->string {new_int} })}).
+  
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
-
 }}.
 Elpi Typecheck.
 Elpi Export HB.builders.
@@ -819,7 +929,26 @@ Elpi Accumulate File "HB/builders.elpi".
 Elpi Accumulate lp:{{
 
 :name "start"
-main [] :- !, with-attributes (with-logging builders.end).
+main [] :- with-attributes (with-logging builders.end).
+
+}}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate Db export.db.
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ end-module, end-section, begin-module, end-module, export-module }.
+
+pred actions.
+actions :-
+    end-section,
+    begin-module {calc ("Builders_Export_" ^ {std.any->string {new_int} })} none,
+    end-module M,
+  end-module _,
+  export-module M,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File M)).
+
+main [] :- !, with-attributes actions.
 main _ :- coq.error "Usage: HB.end.".
 
 }}.
@@ -874,6 +1003,23 @@ main [str M] :- !, with-attributes (with-logging (export.any M)).
 main _ :- coq.error "Usage: HB.export M.".
 
 }}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate Db export.db.
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ export-module }.
+
+pred actions i:list located.
+actions [loc-modpath MP] :- !,
+  export-module MP,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File MP)).
+actions [].
+
+main [str M] :- !, with-attributes (actions {coq.locate-all M}).
+main _ :- coq.error "Usage: HB.export M.".
+
+}}.
 Elpi Typecheck.
 Elpi Export HB.export.
 
@@ -904,6 +1050,30 @@ main [str M] :- !, with-attributes (with-logging (export.reexport-all-modules-an
 main _ :- coq.error "Usage: HB.reexport.".
 
 }}.
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
+#[synterp] Elpi Accumulate Db export.db.
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ export-module }.
+
+pred module-in-module i:list string, i:prop.
+module-in-module PM (module-to-export _ M) :-
+  coq.modpath->path M PC,
+  std.appendR PM _ PC. % sublist
+
+pred actions i:option id.
+actions Filter :-
+  coq.env.current-library File,
+  compute-filter Filter MFilter,
+  std.findall (module-to-export File Module_) ModsCL,
+  std.filter {list-uniq ModsCL} (module-in-module MFilter) ModsCLFiltered,
+  std.forall ModsCLFiltered (x\sigma mp\x = module-to-export _ mp, export-module mp).
+
+main [] :- !, with-attributes (actions none).
+main [str M] :- !, with-attributes (actions (some M)).
+main _ :- coq.error "Usage: HB.reexport.".
+
+}}.
 Elpi Typecheck.
 Elpi Export HB.reexport.
 
@@ -911,51 +1081,9 @@ Elpi Export HB.reexport.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(** [HB.lock] hides the body of a definition behind a sealed module.
+From elpi.apps Require Import locker.
 
-    Syntax to lock:
-
-[[
-HB.lock Definition foo : ty := t.
-]]
-
-    Pseudocode:
-
-[[
-Module Type fooLocked.
-Parameter body : ty.
-Parameter unlock : body = t.
-End fooLocked.
-
-Module foo : fooLocked.
-Definition body : ty := t.
-Lemma unlock : body = t. Proof. by []. Qed.
-End foo.
-
-Notation foo := foo.body.
-]]
-*)
-
-#[arguments(raw)] Elpi Command HB.lock.
-Elpi Accumulate Db hb.db.
-Elpi Accumulate File "HB/common/stdpp.elpi".
-Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
-Elpi Accumulate File "HB/common/utils.elpi".
-Elpi Accumulate File "HB/common/log.elpi".
-Elpi Accumulate File "HB/lock.elpi".
-Elpi Accumulate lp:{{
-
-:name "start"
-main [const-decl Name (some BoSkel) TySkel] :- !,
-  with-attributes (with-logging (lock.lock-def Name TySkel BoSkel)).
-main _ :- coq.error "Usage: HB.lock Definition name : ty := t.".
-
-}}.
-Elpi Typecheck.
-Elpi Export HB.lock.
-
+Elpi Export mlock As HB.lock.
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
@@ -1055,7 +1183,6 @@ check-or-not Skel :-
 }}.
 Elpi Typecheck.
 Elpi Export HB.check.
-
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

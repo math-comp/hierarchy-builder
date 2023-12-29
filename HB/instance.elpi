@@ -35,7 +35,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
      if-verbose (coq.say  "HB: skipping section opening"),
      SectionBody = Body
    ) (
-    SectionName is "hb_instance_" ^ {std.any->string {new_int}},
+    std.assert! (coq.next-synterp-action (begin-section SectionName)) "synterp code did not open section",
     log.coq.env.begin-section SectionName,
     private.postulate-arity TyWP [] Body SectionBody SectionTy
   ),
