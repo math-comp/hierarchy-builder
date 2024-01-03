@@ -12,10 +12,9 @@
       odd-order.override.version = "master";
       mathcomp-finmap.override.version = "master";
       mathcomp.analyis.override.version = "hierarchy-builder";
-      interval.override.version = "master";
       reglang.override.version = "master";
-      coq-bits.override.version = "hierarchy-builder";
-      deriving.job = false;
+      coq-bits.override.version = "master";
+      deriving.override.version = "master";
       mathcomp-bigenough.override.version = "master";
       multinomials.override.version = "master";
       mathcomp-real-closed.override.version = "master";
@@ -27,22 +26,16 @@
       coq-elpi.override.version = "coq-master";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
-      interval.job = false;
+    };
+
+    "coq-8.19".coqPackages = mcHBcommon // {
+      coq.override.version = "8.19";
     };
 
     "coq-8.18".coqPackages = mcHBcommon // {
       coq.override.version = "8.18";
-      interval.job = false;
-      coq-elpi.override.version = "fix-synterp";
     };
 
-    # "coq-8.17".coqPackages = mcHBcommon // {
-    #   coq.override.version = "8.17";
-    # };
-# 
-    # "coq-8.16".coqPackages = mcHBcommon // {
-    #   coq.override.version = "8.16";
-    # };
   };
   cachix.coq = {};
   cachix.coq-community = {};
