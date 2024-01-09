@@ -1710,6 +1710,12 @@ Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 
+Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
+  f \; match e with eq_refl => g end.  
+Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
+  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
+                             only parsing) : cat_scope.
+
 Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
   (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
   (f: P1 ~> A) (g: P1 ~> B) :
@@ -1759,6 +1765,18 @@ Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
   instantiate (1:= bot_map0).
   split; auto.
 Qed.
+
+Lemma jm_pbsquare_universal {C: cat} (A B T P0 P1 P2 : C)
+  (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
+  (f: P1 ~> A) (g: P1 ~> B) 
+  (sq: pbsquare p1 p2 t s)  
+  (E0: f \; t = g \; s) 
+  (e: P0 = P2) :
+  sigma m: P1 ~> P2, f = m \;;_e p1 /\ g = m \;;_e p2. 
+  unfold jmcomp.
+  dependent destruction e.
+  eapply pbsquare_universal; eauto.
+Qed.  
   
 Lemma pbquare_universal_aux1 {C: cat} (A0 A1 B0 B1 P0 P1 T : C)
   (t: A0 ~> T) (s: B0 ~> T) (p01: P0 ~> A0) (p02: P0 ~> B0)
@@ -1814,12 +1832,6 @@ Lemma pbsquare_is_pullback {C: pbcat} {C0} (X Y: iHom C0) :
         (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))).
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
-
-Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
-  f \; match e with eq_refl => g end.  
-Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
-  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
-                             only parsing) : cat_scope.
 
 (* nested product *)
 Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
@@ -1885,12 +1897,68 @@ remember (iprodr Pb12 c3) as j33R.
 *)
 
 assert (forall (e1: C1s = (c1 :> C)) (e2: C2s = (c2 :> C)), 
-   j12L \;;_e1 tgt1 = j12R \;;_e2 src2) as sqPb12.
-admit.
+           j12L \;;_e1 tgt1 = j12R \;;_e2 src2) as sqPb12.
+{
+  set (X := @is_ppbk C).
+  specialize (X C1s C2s).
+  specialize (X (Cospan tgt1 src2)).
+  destruct X as [X].
+  simpl in X.
+
+  inversion Heqc1; subst.
+  simpl; simpl in *.
+
+  assert (j12L = bot2left
+                   (pbk C1s C2s {| top := C0; left2top := tgt1;
+                                              right2top := src2 |})) as A1.
+  { auto. }
+  
+  assert (j12R = bot2right
+                   (pbk C1s C2s {| top := C0; left2top := tgt1;
+                                              right2top := src2 |})) as A2.
+  { auto. }
+
+  intros e1 e2.
+  rewrite A1.
+  rewrite A2.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  auto.
+}
 
 assert (forall (e1: C2s = (c2 :> C)) (e2: C3s = (c3 :> C)), 
    j23L \;;_e1 tgt2 = j23R \;;_e2 src3) as sqPb23.
-admit.
+{
+  set (X := @is_ppbk C).
+  specialize (X C2s C3s).
+  specialize (X (Cospan tgt2 src3)).
+  destruct X as [X].
+  simpl in X.
+
+  inversion Heqc2; subst.
+  simpl; simpl in *.
+
+  assert (j23L = bot2left
+                   (pbk C2s C3s {| top := C0; left2top := tgt2;
+                                              right2top := src3 |})) as A1.
+  { auto. }
+  
+  assert (j23R = bot2right
+                   (pbk C2s C3s {| top := C0; left2top := tgt2;
+                                              right2top := src3 |})) as A2.
+  { auto. }
+
+  intros e1 e2.
+  rewrite A1.
+  rewrite A2.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  auto.
+}
 
 assert (@tgt C C0 Pb12 = j12R \; @tgt C C0 c2) as tgtPb12.
 admit.
@@ -1906,14 +1974,40 @@ assert (forall (e2: C3s = (c3 :> C)),
    j33L \; @tgt C C0 Pb12 = j33R \;;_e2 src3) as sqPb33.
 admit.
 
-assert (forall (e1: ((c1 *_C0 c2) :> C) = Pb12),
-    sigma (m12: Pb15 ~> Pb12),
-       (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R)) as M12. 
-admit.
+assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
+    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
+          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
+  as M23.
+{ intro e1.
+  subst Pb33.
+  eapply (@jm_pbsquare_universal C _ _ _
+            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C) _ _
+            j23L j23R (j33L \; j12R) j33R _ _ e1); eauto.
+}
 
-assert (forall (e1: ((c2 *_C0 c3) :> C) = Pb23),
-    sigma (m23: Pb33 ~> Pb23),
-       (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R)) as M23. 
+assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
+    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
+          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
+  as M12. 
+{ intro e1.
+  subst Pb15.
+  eapply (@jm_pbsquare_universal C _ _ _
+            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C) _ _ 
+            j12L j12R j15L (j15R \; j23L) _ _ e1); eauto.
+}
+
+(*
+assert ((c2 *_ C0 c3) :> C = Pb23 :> C) as E2.
+{ auto. }
+
+specialize (M23 E2).
+
+destruct M23 as [mm X].
+subst Pb33.
+subst Pb23.
+subst Pb12.
+*)
+
 admit.
 
 (*
