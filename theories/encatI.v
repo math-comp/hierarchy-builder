@@ -1996,6 +1996,80 @@ assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
             j12L j12R j15L (j15R \; j23L) _ _ e1); eauto.
 }
 
+assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
+{ auto. }
+destruct (M12 E12) as [m12 [m12_E m12_U]].
+
+assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
+{ auto. }
+destruct (M23 E23) as [m23 [m23_E m23_U]].
+
+assert (C1s = (c1 :> C)) as E1.
+{ inversion Heqc2; subst.
+  simpl; auto.
+}  
+assert (C2s = (c2 :> C)) as E2.
+{ inversion Heqc2; subst.
+  simpl; auto.
+}  
+
+assert (forall (e1: (C2s = (c2 :> C))) (e2: ((c2 *_C0 c3) :> C) = Pb23),
+    j33L \; (j12R \;;_e1 src2) = m23 \;;_e2 j23L \;;_e1 src2) as M23_E1.
+{ intros e1 e2.
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  rewrite compoA.
+  rewrite m23_E.
+  rewrite compoA; auto.
+}  
+
+assert (forall (e1: (C1s = (c1 :> C)))
+               (e2: (C2s = (c2 :> C))) (e3: ((c2 *_C0 c3) :> C) = Pb23),
+    (j33L \; j12L) \;;_e1 tgt1 = m23 \;;_e3 j23L \;;_e2 src2) as M23_E2.
+{ intros e1 e2 e3.
+  specialize (sqPb12 E1 E2).
+  specialize (M23_E1 E2 E23).
+  unfold jmcomp in sqPb12, M23_E1.
+  dependent destruction E1.
+  dependent destruction E2.
+  dependent destruction E23.
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e3.
+  dependent destruction e2.
+  setoid_rewrite <- compoA.
+  rewrite sqPb12.
+  rewrite M23_E1.
+  auto.
+}
+
+assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
+{ auto. }
+
+assert (
+      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
+        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
+        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
+{ intro e1.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  rewrite comp1o.
+
+  subst Pb12.
+  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
+
+  2: {  
+    specialize (M23_E2 E1 E2 E23).
+    admit.
+  }
+  admit.
+}
+destruct (X E33) as [mm R].
+exact mm.
+Admitted. 
+
 (*
 assert ((c2 *_ C0 c3) :> C = Pb23 :> C) as E2.
 { auto. }
@@ -2006,11 +2080,9 @@ destruct M23 as [mm X].
 subst Pb33.
 subst Pb23.
 subst Pb12.
-*)
 
 admit.
 
-(*
 unfold iprod.
 unfold iprod_pb; simpl.
 unfold iprod.
@@ -2022,10 +2094,9 @@ setoid_rewrite pbk_eta.
 simpl.
 unfold hom.
 unfold IsQuiver.hom.
-*)  
-
+  
 Admitted.
-
+*)
 
 
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
