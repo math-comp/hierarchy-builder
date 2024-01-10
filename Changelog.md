@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [1.7.0] - 2024-01-10
+
+Compatible with
+- Coq 8.18 with Coq-Elpi 2.0.0
+- Coq 8.19 with Coq-Elpi 2.0.1
+
 - **Removed** the `#[primitive_class]` attribute, making it the default.
 - **New** `HB.saturate` to saturate instances w.r.t. the current hierarchy
 - **Removed** the `#[infer]` attribute made obsolete by reverse coercions
