@@ -1833,271 +1833,6 @@ Lemma pbsquare_is_pullback {C: pbcat} {C0} (X Y: iHom C0) :
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
 
-(* nested product *)
-Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
-  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
-    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
-remember C1 as c1.
-remember C2 as c2.
-remember C3 as c3.
-destruct C1 as [C1s C1c].
-destruct C2 as [C2s C2c].
-destruct C3 as [C3s C3c].
-destruct C1c as [IM1].
-destruct C2c as [IM2].
-destruct C3c as [IM3].
-
-destruct IM1 as [src1 tgt1].
-destruct IM2 as [src2 tgt2].
-destruct IM3 as [src3 tgt3].
-simpl in *; simpl.
-
-set (Pb12 := c1 *_ C0 c2 : iHom C0).
-set (Pb23 := c2 *_ C0 c3 : iHom C0).
-set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
-set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
-
-(*
-remember (c1 *_ C0 c2 : iHom C0) as Pb12.
-remember (c2 *_ C0 c3 : iHom C0) as Pb23.
-remember ((c1 *_ C0 Pb23) : iHom C0) as Pb15.
-remember ((Pb12 *_ C0 c3) : iHom C0) as Pb33.
-*)
-
-set (pb12 := c1 *_ C0 c2 :> C).
-set (pb23 := c2 *_ C0 c3 :> C).
-set (pb15 := (c1 *_ C0 Pb23) :> C).
-set (pb33 := (Pb12 *_ C0 c3) :> C).
-
-(*
-remember (c1 *_ C0 c2 :> C) as pb12.
-remember (c2 *_ C0 c3 :> C) as pb23.
-remember ((c1 *_ C0 Pb23) :> C) as pb15.
-remember ((Pb12 *_ C0 c3) :> C) as pb33.
-*)
-
-set (j12L := iprodl c1 c2).
-set (j12R := iprodr c1 c2).
-set (j23L := iprodl c2 c3).
-set (j23R := iprodr c2 c3).
-set (j15L := iprodl c1 Pb23).
-set (j15R := iprodr c1 Pb23).
-set (j33L := iprodl Pb12 c3).
-set (j33R := iprodr Pb12 c3).
-
-(*
-remember (iprodl c1 c2) as j12L.
-remember (iprodr c1 c2) as j12R.
-remember (iprodl c2 c3) as j23L.
-remember (iprodr c2 c3) as j23R.
-remember (iprodl c1 Pb23) as j15L.
-remember (iprodr c1 Pb23) as j15R.
-remember (iprodl Pb12 c3) as j33L.
-remember (iprodr Pb12 c3) as j33R.
-*)
-
-assert (forall (e1: C1s = (c1 :> C)) (e2: C2s = (c2 :> C)), 
-           j12L \;;_e1 tgt1 = j12R \;;_e2 src2) as sqPb12.
-{
-  set (X := @is_ppbk C).
-  specialize (X C1s C2s).
-  specialize (X (Cospan tgt1 src2)).
-  destruct X as [X].
-  simpl in X.
-
-  inversion Heqc1; subst.
-  simpl; simpl in *.
-
-  assert (j12L = bot2left
-                   (pbk C1s C2s {| top := C0; left2top := tgt1;
-                                              right2top := src2 |})) as A1.
-  { auto. }
-  
-  assert (j12R = bot2right
-                   (pbk C1s C2s {| top := C0; left2top := tgt1;
-                                              right2top := src2 |})) as A2.
-  { auto. }
-
-  intros e1 e2.
-  rewrite A1.
-  rewrite A2.
-
-  unfold jmcomp.
-  dependent destruction e1.
-  dependent destruction e2.
-  auto.
-}
-
-assert (forall (e1: C2s = (c2 :> C)) (e2: C3s = (c3 :> C)), 
-   j23L \;;_e1 tgt2 = j23R \;;_e2 src3) as sqPb23.
-{
-  set (X := @is_ppbk C).
-  specialize (X C2s C3s).
-  specialize (X (Cospan tgt2 src3)).
-  destruct X as [X].
-  simpl in X.
-
-  inversion Heqc2; subst.
-  simpl; simpl in *.
-
-  assert (j23L = bot2left
-                   (pbk C2s C3s {| top := C0; left2top := tgt2;
-                                              right2top := src3 |})) as A1.
-  { auto. }
-  
-  assert (j23R = bot2right
-                   (pbk C2s C3s {| top := C0; left2top := tgt2;
-                                              right2top := src3 |})) as A2.
-  { auto. }
-
-  intros e1 e2.
-  rewrite A1.
-  rewrite A2.
-
-  unfold jmcomp.
-  dependent destruction e1.
-  dependent destruction e2.
-  auto.
-}
-
-assert (@tgt C C0 Pb12 = j12R \; @tgt C C0 c2) as tgtPb12.
-admit.
-
-assert (@src C C0 Pb23 = j23L \; @src C C0 c2) as srcPb23.
-admit.
-
-assert (forall (e1: C1s = (c1 :> C)), 
-   j15L \;;_e1 tgt1 = j15R \; @src C C0 Pb23) as sqPb15.
-admit.
-
-assert (forall (e2: C3s = (c3 :> C)), 
-   j33L \; @tgt C C0 Pb12 = j33R \;;_e2 src3) as sqPb33.
-admit.
-
-assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
-    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
-          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
-  as M23.
-{ intro e1.
-  subst Pb33.
-  eapply (@jm_pbsquare_universal C _ _ _
-            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C) _ _
-            j23L j23R (j33L \; j12R) j33R _ _ e1); eauto.
-}
-
-assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
-    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
-          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
-  as M12. 
-{ intro e1.
-  subst Pb15.
-  eapply (@jm_pbsquare_universal C _ _ _
-            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C) _ _ 
-            j12L j12R j15L (j15R \; j23L) _ _ e1); eauto.
-}
-
-assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
-{ auto. }
-destruct (M12 E12) as [m12 [m12_E m12_U]].
-
-assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
-{ auto. }
-destruct (M23 E23) as [m23 [m23_E m23_U]].
-
-assert (C1s = (c1 :> C)) as E1.
-{ inversion Heqc2; subst.
-  simpl; auto.
-}  
-assert (C2s = (c2 :> C)) as E2.
-{ inversion Heqc2; subst.
-  simpl; auto.
-}  
-
-assert (forall (e1: (C2s = (c2 :> C))) (e2: ((c2 *_C0 c3) :> C) = Pb23),
-    j33L \; (j12R \;;_e1 src2) = m23 \;;_e2 j23L \;;_e1 src2) as M23_E1.
-{ intros e1 e2.
-  unfold jmcomp.
-  dependent destruction e1.
-  dependent destruction e2.
-  rewrite compoA.
-  rewrite m23_E.
-  rewrite compoA; auto.
-}  
-
-assert (forall (e1: (C1s = (c1 :> C)))
-               (e2: (C2s = (c2 :> C))) (e3: ((c2 *_C0 c3) :> C) = Pb23),
-    (j33L \; j12L) \;;_e1 tgt1 = m23 \;;_e3 j23L \;;_e2 src2) as M23_E2.
-{ intros e1 e2 e3.
-  specialize (sqPb12 E1 E2).
-  specialize (M23_E1 E2 E23).
-  unfold jmcomp in sqPb12, M23_E1.
-  dependent destruction E1.
-  dependent destruction E2.
-  dependent destruction E23.
-  unfold jmcomp.
-  dependent destruction e1.
-  dependent destruction e3.
-  dependent destruction e2.
-  setoid_rewrite <- compoA.
-  rewrite sqPb12.
-  rewrite M23_E1.
-  auto.
-}
-
-assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
-{ auto. }
-
-assert (
-      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
-        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
-        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
-{ intro e1.
-
-  unfold jmcomp.
-  dependent destruction e1.
-  rewrite comp1o.
-
-  subst Pb12.
-  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
-
-  2: {  
-    specialize (M23_E2 E1 E2 E23).
-    admit.
-  }
-  admit.
-}
-destruct (X E33) as [mm R].
-exact mm.
-Admitted. 
-
-(*
-assert ((c2 *_ C0 c3) :> C = Pb23 :> C) as E2.
-{ auto. }
-
-specialize (M23 E2).
-
-destruct M23 as [mm X].
-subst Pb33.
-subst Pb23.
-subst Pb12.
-
-admit.
-
-unfold iprod.
-unfold iprod_pb; simpl.
-unfold iprod.
-unfold iprod_pb; simpl.
-unfold hom.
-unfold IsQuiver.hom.
-simpl.
-setoid_rewrite pbk_eta.
-simpl.
-unfold hom.
-unfold IsQuiver.hom.
-  
-Admitted.
-*)
-
 
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
@@ -2239,6 +1974,933 @@ Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
 Qed.   
 
 Notation "<( f , g )>" := (ipairC f g).
+
+
+
+(* nested product *)
+Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
+  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
+    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
+remember C1 as c1.
+remember C2 as c2.
+remember C3 as c3.
+
+set (src1 := @src C C0 c1).
+set (src2 := @src C C0 c2).
+set (src3 := @src C C0 c3).
+set (tgt1 := @tgt C C0 c1).
+set (tgt2 := @tgt C C0 c2).
+set (tgt3 := @tgt C C0 c3).
+simpl.
+
+set (Pb12 := c1 *_ C0 c2 : iHom C0).
+set (Pb23 := c2 *_ C0 c3 : iHom C0).
+set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
+set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
+
+set (pb12 := c1 *_ C0 c2 :> C).
+set (pb23 := c2 *_ C0 c3 :> C).
+set (pb15 := (c1 *_ C0 Pb23) :> C).
+set (pb33 := (Pb12 *_ C0 c3) :> C).
+
+set (j12L := iprodl c1 c2).
+set (j12R := iprodr c1 c2).
+set (j23L := iprodl c2 c3).
+set (j23R := iprodr c2 c3).
+set (j15L := iprodl c1 Pb23).
+set (j15R := iprodr c1 Pb23).
+set (j33L := iprodl Pb12 c3).
+set (j33R := iprodr Pb12 c3).
+
+assert (j12L \; tgt1 = j12R \; src2) as sqPb12.
+{ set (X := @is_ppbk C).
+  specialize (X (c1 :> C) (c2 :> C)).
+  specialize (X (Cospan tgt1 src2)).
+  destruct X as [X].
+  simpl in X.
+  auto.
+}
+
+assert (j23L \; tgt2 = j23R \; src3) as sqPb23.
+{ set (X := @is_ppbk C).
+  specialize (X (c2 :> C) (c3 :> C)).
+  specialize (X (Cospan tgt2 src3)).
+  destruct X as [X].
+  simpl in X.
+  auto.
+}
+  
+assert (@src C C0 Pb23 = j23L \; src2) as srcPb23.
+{ subst Pb23 j23L src2.
+  auto.
+}  
+
+assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
+    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
+          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
+  as M23.
+{ intro e1.
+  subst Pb33.
+  
+  assert ((j33L \; j12R) \; tgt2 = j33R \; src3) as V1.
+  { (* setoid_rewrite <- compoA. subst j33L j33R j12R.
+        unfold Pb12. subst tgt2 src3. auto. *)
+    admit.
+  }  
+
+  assert (pbsquare j23L j23R tgt2 src3) as V2.
+  { admit. }
+  
+  eapply (@jm_pbsquare_universal C (c2 :> C) (c3 :> C) C0
+            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C)
+            tgt2 src3 j23L j23R (j33L \; j12R) j33R V2 V1 e1); eauto.
+}
+
+assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
+    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
+          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
+  as M12. 
+{ intro e1.
+  subst Pb15.
+
+  assert (j15L \; tgt1 = (j15R \; j23L) \; src2) as V1.
+  { (* setoid_rewrite <- compoA. subst j33L j33R j12R.
+        unfold Pb12. subst tgt2 src3. auto. *)
+    admit.
+  }  
+
+  assert (pbsquare j12L j12R tgt1 src2) as V2.
+  { admit. }
+  
+  eapply (@jm_pbsquare_universal C (c1 :> C) (c2 :> C) C0
+            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C)
+            tgt1 src2 j12L j12R j15L (j15R \; j23L) V2 V1 e1); eauto.  
+}
+
+assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
+{ auto. }
+destruct (M12 E12) as [m12 [m12_E m12_U]].
+
+assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
+{ auto. }
+destruct (M23 E23) as [m23 [m23_E m23_U]].
+
+assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
+    j33L \; (j12R \; src2) = m23 \;;_e2 j23L \; src2) as M23_E1.
+{ intros e2.
+  unfold jmcomp.
+  dependent destruction e2.
+  rewrite compoA.
+  rewrite m23_E.
+  unfold jmcomp.
+  dependent destruction E23.
+  rewrite compoA; auto.
+}  
+
+assert (forall (e3: ((c2 *_C0 c3) :> C) = Pb23),
+    (j33L \; j12L) \; tgt1 = m23 \;;_e3 j23L \; src2) as M23_E2.
+{ intros e3.
+  specialize (M23_E1 E23).
+  unfold jmcomp in M23_E1.
+  dependent destruction E23.
+  unfold jmcomp.
+  dependent destruction e3.
+  setoid_rewrite <- compoA.
+  rewrite sqPb12.
+  rewrite M23_E1.
+  auto.
+}
+
+assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
+{ auto. }
+
+assert (
+      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
+        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
+        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
+{ intro e1.
+  
+  unfold jmcomp.
+  dependent destruction e1.
+  rewrite comp1o.
+
+  subst Pb12.
+  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
+
+  2: {    
+    specialize (M23_E2 E23).
+    dependent destruction E23.
+    exact M23_E2.
+  }
+
+  set (Csp15 (* : cospan (c1 :> C) (Pb23 :> C) *) :=
+        @Cospan C (c1 :> C) (Pb23 :> C) _ tgt1 (j23L \; src2)).
+  
+  rewrite <- srcPb23.
+
+  subst j15L j15R tgt1.
+  rewrite pbsquare_is_pullback.
+
+  remember C as C'.
+  destruct C as [C class].
+  destruct class as [A1 A2 A3 A4 A5 A6].
+  destruct A6 as [B1].
+  assert (pb (pbk (c1 :> C') (Pb23 :> C') Csp15)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto. }
+  econstructor; eauto.
+}
+
+destruct (X E33) as [mm R].
+exact mm.
+Admitted. 
+
+
+
+(*  
+  assert ()
+  
+  inversion Heqc1; subst.
+
+     
+     
+  unfold iprodl.
+  unfold iprodr.
+  unfold iprod_pb.
+  simpl.
+  
+  unfold pbk.
+  unfold bot2left.
+  unfold bot2right.
+  simpl.
+  
+  econstructor; eauto.
+  
+  unfold jmcomp.
+  dependent destruction E2.
+  unfold src2.
+  rewrite <- srcPb23.
+  
+  econstructor.
+  
+  admit.
+}
+*)
+
+destruct (X E33) as [mm R].
+exact mm.
+Admitted. 
+
+
+
+
+
+
+
+(* nested product *)
+Program Definition iprodCAsc' {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
+  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
+    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
+remember C1 as c1.
+remember C2 as c2.
+remember C3 as c3.
+
+destruct C1 as [C1s C1c].
+destruct C2 as [C2s C2c].
+destruct C3 as [C3s C3c].
+destruct C1c as [IM1].
+destruct C2c as [IM2].
+destruct C3c as [IM3].
+
+destruct IM1 as [src1 tgt1].
+destruct IM2 as [src2 tgt2].
+destruct IM3 as [src3 tgt3].
+simpl in *; simpl.
+
+set (Pb12 := c1 *_ C0 c2 : iHom C0).
+set (Pb23 := c2 *_ C0 c3 : iHom C0).
+set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
+set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
+
+(*
+remember (c1 *_ C0 c2 : iHom C0) as Pb12.
+remember (c2 *_ C0 c3 : iHom C0) as Pb23.
+remember ((c1 *_ C0 Pb23) : iHom C0) as Pb15.
+remember ((Pb12 *_ C0 c3) : iHom C0) as Pb33.
+*)
+
+set (pb12 := c1 *_ C0 c2 :> C).
+set (pb23 := c2 *_ C0 c3 :> C).
+set (pb15 := (c1 *_ C0 Pb23) :> C).
+set (pb33 := (Pb12 *_ C0 c3) :> C).
+
+(*
+remember (c1 *_ C0 c2 :> C) as pb12.
+remember (c2 *_ C0 c3 :> C) as pb23.
+remember ((c1 *_ C0 Pb23) :> C) as pb15.
+remember ((Pb12 *_ C0 c3) :> C) as pb33.
+*)
+
+set (j12L := iprodl c1 c2).
+set (j12R := iprodr c1 c2).
+set (j23L := iprodl c2 c3).
+set (j23R := iprodr c2 c3).
+set (j15L := iprodl c1 Pb23).
+set (j15R := iprodr c1 Pb23).
+set (j33L := iprodl Pb12 c3).
+set (j33R := iprodr Pb12 c3).
+
+(*
+remember (iprodl c1 c2) as j12L.
+remember (iprodr c1 c2) as j12R.
+remember (iprodl c2 c3) as j23L.
+remember (iprodr c2 c3) as j23R.
+remember (iprodl c1 Pb23) as j15L.
+remember (iprodr c1 Pb23) as j15R.
+remember (iprodl Pb12 c3) as j33L.
+remember (iprodr Pb12 c3) as j33R.
+*)
+
+assert (forall (e1: C1s = (c1 :> C)) (e2: C2s = (c2 :> C)), 
+           j12L \;;_e1 tgt1 = j12R \;;_e2 src2) as sqPb12.
+{
+  set (X := @is_ppbk C).
+  specialize (X C1s C2s).
+  specialize (X (Cospan tgt1 src2)).
+  destruct X as [X].
+  simpl in X.
+
+  inversion Heqc1; subst.
+  simpl; simpl in *.
+
+  assert (j12L = bot2left
+                   (pbk C1s C2s {| top := C0; left2top := tgt1;
+                                              right2top := src2 |})) as A1.
+  { auto. }
+  
+  assert (j12R = bot2right
+                   (pbk C1s C2s {| top := C0; left2top := tgt1;
+                                              right2top := src2 |})) as A2.
+  { auto. }
+
+  intros e1 e2.
+  rewrite A1.
+  rewrite A2.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  auto.
+}
+
+assert (forall (e1: C2s = (c2 :> C)) (e2: C3s = (c3 :> C)), 
+   j23L \;;_e1 tgt2 = j23R \;;_e2 src3) as sqPb23.
+{
+  set (X := @is_ppbk C).
+  specialize (X C2s C3s).
+  specialize (X (Cospan tgt2 src3)).
+  destruct X as [X].
+  simpl in X.
+
+  inversion Heqc2; subst.
+  simpl; simpl in *.
+
+  assert (j23L = bot2left
+                   (pbk C2s C3s {| top := C0; left2top := tgt2;
+                                              right2top := src3 |})) as A1.
+  { auto. }
+  
+  assert (j23R = bot2right
+                   (pbk C2s C3s {| top := C0; left2top := tgt2;
+                                              right2top := src3 |})) as A2.
+  { auto. }
+
+  intros e1 e2.
+  rewrite A1.
+  rewrite A2.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  auto.
+}
+
+(*
+assert (@tgt C C0 Pb12 = j12R \; @tgt C C0 c2) as tgtPb12.
+admit.
+*)
+
+assert (@src C C0 Pb23 = j23L \; @src C C0 c2) as srcPb23.
+admit.
+
+assert (forall (e1: C1s = (c1 :> C)), 
+   j15L \;;_e1 tgt1 = j15R \; @src C C0 Pb23) as sqPb15.
+admit.
+
+assert (forall (e2: C3s = (c3 :> C)), 
+   j33L \; @tgt C C0 Pb12 = j33R \;;_e2 src3) as sqPb33.
+admit.
+
+assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
+    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
+          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
+  as M23.
+{ intro e1.
+  subst Pb33.
+  eapply (@jm_pbsquare_universal C _ _ _
+            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C) _ _
+            j23L j23R (j33L \; j12R) j33R _ _ e1); eauto.
+}
+
+assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
+    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
+          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
+  as M12. 
+{ intro e1.
+  subst Pb15.
+  eapply (@jm_pbsquare_universal C _ _ _
+            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C) _ _ 
+            j12L j12R j15L (j15R \; j23L) _ _ e1); eauto.
+}
+
+assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
+{ auto. }
+destruct (M12 E12) as [m12 [m12_E m12_U]].
+
+assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
+{ auto. }
+destruct (M23 E23) as [m23 [m23_E m23_U]].
+
+assert (C1s = (c1 :> C)) as E1.
+{ inversion Heqc2; subst.
+  simpl; auto.
+}  
+assert (C2s = (c2 :> C)) as E2.
+{ inversion Heqc2; subst.
+  simpl; auto.
+}  
+
+assert (@src C C0 Pb23 = j23L \;;_E2 src2) as srcPb23'.
+admit.
+
+assert (forall (e1: (C2s = (c2 :> C))) (e2: ((c2 *_C0 c3) :> C) = Pb23),
+    j33L \; (j12R \;;_e1 src2) = m23 \;;_e2 j23L \;;_e1 src2) as M23_E1.
+{ intros e1 e2.
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  rewrite compoA.
+  rewrite m23_E.
+  rewrite compoA; auto.
+}  
+
+assert (forall (e1: (C1s = (c1 :> C)))
+               (e2: (C2s = (c2 :> C))) (e3: ((c2 *_C0 c3) :> C) = Pb23),
+    (j33L \; j12L) \;;_e1 tgt1 = m23 \;;_e3 j23L \;;_e2 src2) as M23_E2.
+{ intros e1 e2 e3.
+  specialize (sqPb12 E1 E2).
+  specialize (M23_E1 E2 E23).
+  unfold jmcomp in sqPb12, M23_E1.
+  dependent destruction E1.
+  dependent destruction E2.
+  dependent destruction E23.
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e3.
+  dependent destruction e2.
+  setoid_rewrite <- compoA.
+  rewrite sqPb12.
+  rewrite M23_E1.
+  auto.
+}
+
+assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
+{ auto. }
+
+assert (
+      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
+        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
+        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
+{ intro e1.
+  
+  unfold jmcomp.
+  dependent destruction e1.
+  rewrite comp1o.
+
+  subst Pb12.
+(*  eapply (@jm_pbsquare_universal C _ _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23). *)
+  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
+
+(*  assert (forall y1 y2, pbsquare j15L j15R y1 y2). *)
+
+  2: {    
+    specialize (M23_E2 E1 E2 E23).
+    dependent destruction E23.
+    exact M23_E2.
+  }
+  dependent destruction E1.
+  rewrite <- srcPb23'.
+
+  subst j15R.
+
+  assert (pbsquare (iprodl c1 Pb23) (iprodr c1 Pb23) (@tgt C C0 c1)
+            (@src C C0 Pb23)).
+  {  
+     rewrite pbsquare_is_pullback.
+     admit.
+  }
+  destruct c1.
+  admit.
+}
+
+(*  
+  assert ()
+  
+  inversion Heqc1; subst.
+
+     
+     
+  unfold iprodl.
+  unfold iprodr.
+  unfold iprod_pb.
+  simpl.
+  
+  unfold pbk.
+  unfold bot2left.
+  unfold bot2right.
+  simpl.
+  
+  econstructor; eauto.
+  
+  unfold jmcomp.
+  dependent destruction E2.
+  unfold src2.
+  rewrite <- srcPb23.
+  
+  econstructor.
+  
+  admit.
+}
+*)
+
+destruct (X E33) as [mm R].
+exact mm.
+Admitted. 
+
+
+
+(* nested product *)
+Program Definition iprodCAsc {C : pbcat} {C0 : C} (C1 C2 C3 : iHom C0) :
+  (((C1 *_C0 C2 : iHom C0) *_C0 C3) :> C) ~>_C
+    ((C1 *_C0 (C2 *_C0 C3 : iHom C0) : iHom C0) :> C).
+remember C1 as c1.
+remember C2 as c2.
+remember C3 as c3.
+
+set (src1 := @src C C0 c1).
+set (src2 := @src C C0 c2).
+set (src3 := @src C C0 c3).
+set (tgt1 := @tgt C C0 c1).
+set (tgt2 := @tgt C C0 c2).
+set (tgt3 := @tgt C C0 c3).
+
+(*
+destruct C1 as [C1s C1c].
+destruct C2 as [C2s C2c].
+destruct C3 as [C3s C3c].
+destruct C1c as [IM1].
+destruct C2c as [IM2].
+destruct C3c as [IM3].
+
+destruct IM1 as [src1 tgt1].
+destruct IM2 as [src2 tgt2].
+destruct IM3 as [src3 tgt3].
+simpl in *; simpl.
+*)
+
+simpl.
+
+set (Pb12 := c1 *_ C0 c2 : iHom C0).
+set (Pb23 := c2 *_ C0 c3 : iHom C0).
+set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
+set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
+
+(*
+remember (c1 *_ C0 c2 : iHom C0) as Pb12.
+remember (c2 *_ C0 c3 : iHom C0) as Pb23.
+remember ((c1 *_ C0 Pb23) : iHom C0) as Pb15.
+remember ((Pb12 *_ C0 c3) : iHom C0) as Pb33.
+*)
+
+set (pb12 := c1 *_ C0 c2 :> C).
+set (pb23 := c2 *_ C0 c3 :> C).
+set (pb15 := (c1 *_ C0 Pb23) :> C).
+set (pb33 := (Pb12 *_ C0 c3) :> C).
+
+(*
+remember (c1 *_ C0 c2 :> C) as pb12.
+remember (c2 *_ C0 c3 :> C) as pb23.
+remember ((c1 *_ C0 Pb23) :> C) as pb15.
+remember ((Pb12 *_ C0 c3) :> C) as pb33.
+*)
+
+set (j12L := iprodl c1 c2).
+set (j12R := iprodr c1 c2).
+set (j23L := iprodl c2 c3).
+set (j23R := iprodr c2 c3).
+set (j15L := iprodl c1 Pb23).
+set (j15R := iprodr c1 Pb23).
+set (j33L := iprodl Pb12 c3).
+set (j33R := iprodr Pb12 c3).
+
+(*
+remember (iprodl c1 c2) as j12L.
+remember (iprodr c1 c2) as j12R.
+remember (iprodl c2 c3) as j23L.
+remember (iprodr c2 c3) as j23R.
+remember (iprodl c1 Pb23) as j15L.
+remember (iprodr c1 Pb23) as j15R.
+remember (iprodl Pb12 c3) as j33L.
+remember (iprodr Pb12 c3) as j33R.
+*)
+
+assert (j12L \; tgt1 = j12R \; src2) as sqPb12.
+{  
+  set (X := @is_ppbk C).
+  specialize (X (c1 :> C) (c2 :> C)).
+  specialize (X (Cospan tgt1 src2)).
+  destruct X as [X].
+  simpl in X.
+
+  auto.
+}
+
+assert (j23L \; tgt2 = j23R \; src3) as sqPb23.
+{
+  set (X := @is_ppbk C).
+  specialize (X (c2 :> C) (c3 :> C)).
+  specialize (X (Cospan tgt2 src3)).
+  destruct X as [X].
+  simpl in X.
+
+  auto.
+}
+  
+(*
+assert (j12L \; tgt1 = j12R \; src2) as sqPb12.
+{
+  set (X := @is_ppbk C).
+  specialize (X (c1 :> C) (c2 :> C)).
+  specialize (X (Cospan tgt1 src2)).
+  destruct X as [X].
+  simpl in X.
+
+  inversion Heqc1; subst.
+  simpl; simpl in *.
+
+  assert (j12L = bot2left
+                   (pbk C1s C2s {| top := C0; left2top := tgt1;
+                                              right2top := src2 |})) as A1.
+  { auto. }
+  
+  assert (j12R = bot2right
+                   (pbk C1s C2s {| top := C0; left2top := tgt1;
+                                              right2top := src2 |})) as A2.
+  { auto. }
+
+  intros e1 e2.
+  rewrite A1.
+  rewrite A2.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  auto.
+}
+*)
+(*
+assert (forall (e1: C2s = (c2 :> C)) (e2: C3s = (c3 :> C)), 
+   j23L \;;_e1 tgt2 = j23R \;;_e2 src3) as sqPb23.
+{
+  set (X := @is_ppbk C).
+  specialize (X C2s C3s).
+  specialize (X (Cospan tgt2 src3)).
+  destruct X as [X].
+  simpl in X.
+
+  inversion Heqc2; subst.
+  simpl; simpl in *.
+
+  assert (j23L = bot2left
+                   (pbk C2s C3s {| top := C0; left2top := tgt2;
+                                              right2top := src3 |})) as A1.
+  { auto. }
+  
+  assert (j23R = bot2right
+                   (pbk C2s C3s {| top := C0; left2top := tgt2;
+                                              right2top := src3 |})) as A2.
+  { auto. }
+
+  intros e1 e2.
+  rewrite A1.
+  rewrite A2.
+
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  auto.
+}
+*)
+(*
+assert (@tgt C C0 Pb12 = j12R \; tgt2) as tgtPb12.
+admit.
+*)
+
+assert (@src C C0 Pb23 = j23L \; src2) as srcPb23.
+admit.
+
+
+(*
+assert (j15L \; tgt1 = j15R \; @src C C0 Pb23) as sqPb15.
+admit.
+
+assert (j33L \; @tgt C C0 Pb12 = j33R \; src3) as sqPb33.
+admit.
+*)
+
+assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
+    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
+          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
+  as M23.
+{ intro e1.
+  subst Pb33.
+  eapply (@jm_pbsquare_universal C _ _ _
+            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C) _ _
+            j23L j23R (j33L \; j12R) j33R _ _ e1); eauto.
+}
+
+assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
+    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
+          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
+  as M12. 
+{ intro e1.
+  subst Pb15.
+  eapply (@jm_pbsquare_universal C _ _ _
+            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C) _ _ 
+            j12L j12R j15L (j15R \; j23L) _ _ e1); eauto.
+}
+
+assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
+{ auto. }
+destruct (M12 E12) as [m12 [m12_E m12_U]].
+
+assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
+{ auto. }
+destruct (M23 E23) as [m23 [m23_E m23_U]].
+
+(*
+assert (C1s = (c1 :> C)) as E1.
+{ inversion Heqc2; subst.
+  simpl; auto.
+}  
+assert (C2s = (c2 :> C)) as E2.
+{ inversion Heqc2; subst.
+  simpl; auto.
+}  
+
+assert (@src C C0 Pb23 = j23L \;;_E2 src2) as srcPb23'.
+admit.
+*)
+
+assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
+    j33L \; (j12R \; src2) = m23 \;;_e2 j23L \; src2) as M23_E1.
+{ intros e2.
+  unfold jmcomp.
+  dependent destruction e2.
+  rewrite compoA.
+  rewrite m23_E.
+  unfold jmcomp.
+  dependent destruction E23.
+  rewrite compoA; auto.
+}  
+
+assert (forall (e3: ((c2 *_C0 c3) :> C) = Pb23),
+    (j33L \; j12L) \; tgt1 = m23 \;;_e3 j23L \; src2) as M23_E2.
+{ intros e3.
+  specialize (M23_E1 E23).
+  unfold jmcomp in M23_E1.
+  dependent destruction E23.
+  unfold jmcomp.
+  dependent destruction e3.
+  setoid_rewrite <- compoA.
+  rewrite sqPb12.
+  rewrite M23_E1.
+  auto.
+}
+
+(*
+assert (forall (e1: (C2s = (c2 :> C))) (e2: ((c2 *_C0 c3) :> C) = Pb23),
+    j33L \; (j12R \;;_e1 src2) = m23 \;;_e2 j23L \;;_e1 src2) as M23_E1.
+{ intros e1 e2.
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e2.
+  rewrite compoA.
+  rewrite m23_E.
+  rewrite compoA; auto.
+}  
+
+assert (forall (e1: (C1s = (c1 :> C)))
+               (e2: (C2s = (c2 :> C))) (e3: ((c2 *_C0 c3) :> C) = Pb23),
+    (j33L \; j12L) \;;_e1 tgt1 = m23 \;;_e3 j23L \;;_e2 src2) as M23_E2.
+{ intros e1 e2 e3.
+  specialize (sqPb12 E1 E2).
+  specialize (M23_E1 E2 E23).
+  unfold jmcomp in sqPb12, M23_E1.
+  dependent destruction E1.
+  dependent destruction E2.
+  dependent destruction E23.
+  unfold jmcomp.
+  dependent destruction e1.
+  dependent destruction e3.
+  dependent destruction e2.
+  setoid_rewrite <- compoA.
+  rewrite sqPb12.
+  rewrite M23_E1.
+  auto.
+}
+*)
+
+assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
+{ auto. }
+
+assert (
+      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
+        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
+        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
+{ intro e1.
+  
+  unfold jmcomp.
+  dependent destruction e1.
+  rewrite comp1o.
+
+  subst Pb12.
+(*  eapply (@jm_pbsquare_universal C _ _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23). *)
+  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
+
+(*  assert (forall y1 y2, pbsquare j15L j15R y1 y2). *)
+
+  2: {    
+    specialize (M23_E2 E23).
+    dependent destruction E23.
+    exact M23_E2.
+  }
+
+(*  
+  set (Csp15 := cospan (c1 :> C) (Pb23 :> C)).
+  set (Spn15 := span (c1 :> C) (Pb23 :> C)).
+
+  assert (@Pullback C (c1 :> C) (Pb23 :> C) Csp15 Spn15) as PBa1.
+  { remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    assert (pb (pbk (x0 :> C') (x1 :> C') Csp1)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto. }
+    econstructor; eauto.
+  }
+*)
+
+  set (Csp15 (* : cospan (c1 :> C) (Pb23 :> C) *) :=
+        @Cospan C (c1 :> C) (Pb23 :> C) _ tgt1 (j23L \; src2)).
+  
+  rewrite <- srcPb23.
+
+  subst j15L j15R tgt1.
+  rewrite pbsquare_is_pullback.
+
+  remember C as C'.
+  destruct C as [C class].
+  destruct class as [A1 A2 A3 A4 A5 A6].
+  destruct A6 as [B1].
+  assert (pb (pbk (c1 :> C') (Pb23 :> C') Csp15)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto. }
+  econstructor; eauto.
+}
+
+destruct (X E33) as [mm R].
+exact mm.
+Admitted. 
+
+
+
+(*  
+  assert ()
+  
+  inversion Heqc1; subst.
+
+     
+     
+  unfold iprodl.
+  unfold iprodr.
+  unfold iprod_pb.
+  simpl.
+  
+  unfold pbk.
+  unfold bot2left.
+  unfold bot2right.
+  simpl.
+  
+  econstructor; eauto.
+  
+  unfold jmcomp.
+  dependent destruction E2.
+  unfold src2.
+  rewrite <- srcPb23.
+  
+  econstructor.
+  
+  admit.
+}
+*)
+
+destruct (X E33) as [mm R].
+exact mm.
+Admitted. 
+
+
+
+(*
+assert ((c2 *_ C0 c3) :> C = Pb23 :> C) as E2.
+{ auto. }
+
+specialize (M23 E2).
+
+destruct M23 as [mm X].
+subst Pb33.
+subst Pb23.
+subst Pb12.
+
+admit.
+
+unfold iprod.
+unfold iprod_pb; simpl.
+unfold iprod.
+unfold iprod_pb; simpl.
+unfold hom.
+unfold IsQuiver.hom.
+simpl.
+setoid_rewrite pbk_eta.
+simpl.
+unfold hom.
+unfold IsQuiver.hom.
+  
+Admitted.
+*)
+
+
 
 (* An internal precategory is an internal category with two operators
    that must be src and tgt preserving, i.e. iHom morphisms: identity
