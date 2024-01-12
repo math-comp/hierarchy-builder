@@ -2012,6 +2012,31 @@ set (j15R := iprodr c1 Pb23).
 set (j33L := iprodl Pb12 c3).
 set (j33R := iprodr Pb12 c3).
 
+set (src23 := @src C C0 Pb23).
+set (tgt23 := @tgt C C0 Pb23).
+set (src12 := @src C C0 Pb12).
+set (tgt12 := @tgt C C0 Pb12).
+
+assert (src23 = j23L \; src2) as srcPb23.
+{ subst src23 j23L src2.
+  auto.
+}
+
+assert (tgt23 = j23R \; tgt3) as tgtPb23.
+{ subst tgt23 j23R tgt3.
+  auto.
+}
+
+assert (src12 = j12L \; src1) as srcPb12.
+{ subst src12 j12L src1.
+  auto.
+}
+
+assert (tgt12 = j12R \; tgt2) as tgtPb12.
+{ subst tgt12 j12R tgt2.
+  auto.
+}
+
 assert (j12L \; tgt1 = j12R \; src2) as sqPb12.
 { set (X := @is_ppbk C).
   specialize (X (c1 :> C) (c2 :> C)).
@@ -2029,11 +2054,13 @@ assert (j23L \; tgt2 = j23R \; src3) as sqPb23.
   simpl in X.
   auto.
 }
-  
+
+(*
 assert (@src C C0 Pb23 = j23L \; src2) as srcPb23.
 { subst Pb23 j23L src2.
   auto.
 }  
+*)
 
 assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
     sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
@@ -2043,13 +2070,36 @@ assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
   subst Pb33.
   
   assert ((j33L \; j12R) \; tgt2 = j33R \; src3) as V1.
-  { (* setoid_rewrite <- compoA. subst j33L j33R j12R.
-        unfold Pb12. subst tgt2 src3. auto. *)
-    admit.
-  }  
-
+  { setoid_rewrite <- compoA.
+    assert (j33L \; tgt12 = j33R \; src3) as H.
+    { subst j33L j33R.
+      set (X := @is_ppbk C).  
+      specialize (X (Pb12 :> C) (c3 :> C)).
+      specialize (X (Cospan tgt12 src3)).
+      destruct X as [X].
+      simpl in X.
+      auto.
+   }   
+   rewrite tgtPb12 in H; auto. 
+  } 
+    
   assert (pbsquare j23L j23R tgt2 src3) as V2.
-  { admit. }
+  { subst j23L j23R.
+    rewrite pbsquare_is_pullback.
+
+    set (Csp23 := @Cospan C (c2 :> C) (c3 :> C) _ tgt2 src3).
+
+    remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    
+    assert (pb (pbk (c2 :> C') (c3 :> C') Csp23)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto.
+    }
+    econstructor; eauto.
+  }
   
   eapply (@jm_pbsquare_universal C (c2 :> C) (c3 :> C) C0
             (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C)
@@ -2064,14 +2114,37 @@ assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
   subst Pb15.
 
   assert (j15L \; tgt1 = (j15R \; j23L) \; src2) as V1.
-  { (* setoid_rewrite <- compoA. subst j33L j33R j12R.
-        unfold Pb12. subst tgt2 src3. auto. *)
-    admit.
-  }  
+  { setoid_rewrite <- compoA.
+    assert (j15L \; tgt1 = j15R \; src23) as H.
+    { subst j15L j15R.
+      set (X := @is_ppbk C).  
+      specialize (X (c1 :> C) (Pb23 :> C)).
+      specialize (X (Cospan tgt1 src23)).
+      destruct X as [X].
+      simpl in X.
+      auto.
+    }   
+    rewrite srcPb23 in H; auto. 
+  } 
 
   assert (pbsquare j12L j12R tgt1 src2) as V2.
-  { admit. }
-  
+  { subst j12L j12R.
+    rewrite pbsquare_is_pullback.
+
+    set (Csp12 := @Cospan C (c1 :> C) (c2 :> C) _ tgt1 src2).
+
+    remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    
+    assert (pb (pbk (c1 :> C') (c2 :> C') Csp12)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto.
+    }
+    econstructor; eauto.
+  }
+
   eapply (@jm_pbsquare_universal C (c1 :> C) (c2 :> C) C0
             (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C)
             tgt1 src2 j12L j12R j15L (j15R \; j23L) V2 V1 e1); eauto.  
@@ -2153,8 +2226,7 @@ assert (
 
 destruct (X E33) as [mm R].
 exact mm.
-Admitted. 
-
+Qed. 
 
 
 (* An internal precategory is an internal category with two operators
