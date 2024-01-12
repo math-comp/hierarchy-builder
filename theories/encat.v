@@ -1520,7 +1520,20 @@ HB.mixin Record IsDCat_UA T of CFunctor T := {
       let hh2 := hcomp a0 a2 a3 h12 h3 in 
       @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh1) x =
         @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) x
+  }.
+(*
+HB.mixin Record IsDCat_UA' T of CFunctor T := {
+    associator : forall (a0 a1 a2 a3: T)
+                        (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
+                        (h3: @hhom T a2 a3),
+      let h23 := hcomp a1 a2 a3 h2 h3 in
+      let h12 := hcomp a0 a1 a2 h1 h2 in     
+      let hh1 := hcomp a0 a1 a3 h1 h23 in 
+      let hh2 := hcomp a0 a2 a3 h12 h3 in 
+      @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) 
+                       (@HO T (@hhom T) a0 a3 hh1)
 }. 
+*)
 Unset Universe Checking.
 #[short(type="dcat_ua")]
 HB.structure Definition DCat_UA : Set := { C of IsDCat_UA C }.

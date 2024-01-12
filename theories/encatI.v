@@ -2378,7 +2378,7 @@ HB.structure Definition InternalCat (C : pbcat) :=
       and because iid is a iHom-map)
    - The horizontal composition of maps is the object part of icomp
    - The horizontal composition of 2-cells is the map part of icomp
-*)
+ *)
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
 Axiom cat_pbop : HasPBop cat.
 HB.instance Definition _ := cat_pbop.
@@ -3173,3 +3173,25 @@ Program Definition HC2Comp_flat (T: SDoubleCat.type) (a0 a1 a2 b0 b1 b2: T)
 Obligation 1.
 refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 k)).
 Defined.
+
+(* hcomp (hm, hu) = prj1 (hm, hu) = hm   
+   hcomp (hu, hm) = prj2 (hu, hm) = hm 
+   (hm1 * hm2) * hm3 ~> hm1 * (hm2 * hm3)
+
+
+(* Double category with universal characterization of weak
+   horizontal associativity *)
+HB.mixin Record IsDCat_UA T of CFunctor T := {
+    associator : forall (a0 a1 a2 a3: T)
+                        (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
+                        (h3: @hhom T a2 a3),
+      let h23 := hcomp a1 a2 a3 h2 h3 in
+      let h12 := hcomp a0 a1 a2 h1 h2 in     
+      let hh1 := hcomp a0 a1 a3 h1 h23 in 
+      let hh2 := hcomp a0 a2 a3 h12 h3 in 
+      @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) 
+                       (@HO T (@hhom T) a0 a3 hh1)
+}. 
+
+
+*)
