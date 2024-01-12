@@ -3178,7 +3178,6 @@ Defined.
    hcomp (hu, hm) = prj2 (hu, hm) = hm 
    (hm1 * hm2) * hm3 ~> hm1 * (hm2 * hm3)
 
-
 (* Double category with universal characterization of weak
    horizontal associativity *)
 HB.mixin Record IsDCat_UA T of CFunctor T := {
@@ -3192,6 +3191,5 @@ HB.mixin Record IsDCat_UA T of CFunctor T := {
       @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) 
                        (@HO T (@hhom T) a0 a3 hh1)
 }. 
-
 
 *)
