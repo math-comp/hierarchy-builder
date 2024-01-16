@@ -1190,6 +1190,7 @@ Qed.
 End natural2prepullback.
 
 End Pullback_Natural.
+
 Notation square u v f g :=
   (isPrePullback _ _ _ (Cospan f g) (Span u v)).
 Notation pbsquare u v f g :=
@@ -1197,6 +1198,9 @@ Notation pbsquare u v f g :=
 Notation pb s := (prepullback_isTerminal _ _ _ _ s).
 
 Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
+
+
+(**********************************************************************)
 
 Section th_of_pb.
 Variables (Q : cat) (A B C D E F : Q).
