@@ -1449,11 +1449,6 @@ Definition l_hcomp (T: SDCat.type) (a0 a1 a2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2) : D1obj T :=
   @TT2 T _ a0 a2 (h0 \; h1).
 
-Notation "'sigma' x .. y , p" :=
-  (sigT (fun x => .. (sigT (fun y => p)) ..))
-  (at level 200, x binder, right associativity,
-   format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
-  : type_scope.
 
 (** DPobj quiver *)
 Definition DP_hom (T: STUFunctor.type) (x y: DPobj T) :=
@@ -1925,5 +1920,259 @@ HB.mixin Record IsDCat_UA T of CFunctor T := {
       @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) 
                        (@HO T (@hhom T) a0 a3 hh1)
 }. 
-
 *)
+
+(*********************************************************************)
+
+Program Definition brel_fcast {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) :
+  R (G a2) (G b2) = R (F a1) (F b1).
+rewrite e1.
+rewrite e2.
+auto.
+Defined.
+
+Program Definition recast2 {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) : R (F a1) (F b1).
+rewrite -(brel_fcast e1 e2).
+exact x.
+Defined.
+
+Program Definition brel_fcast_h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop) :
+  P _ x = P _ (recast2 e1 e2 x).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+dependent destruction e1.
+dependent destruction e2.
+auto.
+Defined.
+
+Program Definition brel_fcast_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) :
+  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+dependent destruction e1.
+dependent destruction e2.
+dependent destruction e3.
+auto.
+Defined.
+
+Program Definition brel_fcast_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) :
+  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+dependent destruction e1.
+dependent destruction e2.
+dependent destruction e3.
+auto.
+Defined.
+
+Program Definition recast2_h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop)
+  (p: P _ x) : P _ (recast2 e1 e2 x).
+rewrite -(brel_fcast_h e1 e2).
+exact p.
+Defined.
+
+Program Definition recast2_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) 
+  (p: P _ _ _ x y z) :
+    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+rewrite -(brel_fcast_3h e1 e2 e3).
+exact p.
+Defined.
+
+Program Definition recast2_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) 
+  (p: P _ _ _ x y z) :
+    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+rewrite -(brel_fcast_3hh e1 e2 e3).
+exact p.
+Defined.
+
+Program Definition recast_hom {X Y C : precat} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: (G a2) ~> (G b2)) : (F a1) ~> (F b1).
+eapply recast2; eauto.
+Defined.
+
+Definition recast21 {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {R: C -> C -> Type} {a b: (X * Y)}
+  (e: (F (fst a), F (fst b)) = (G (snd a), G (snd b))) 
+(*
+  (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) *) 
+  (x: R (G (snd a)) (G (snd b))) : R (F (fst a)) (F (fst b)).
+  destruct a as [a1 a2].
+  destruct b as [b1 b2].
+  inversion e; subst.
+  rewrite H0.
+  rewrite H1.
+  auto.
+Defined.
+
+Definition mk_pair_eq {X Y C: Type} {F: X -> C} {G: Y -> C} {a b: (X * Y)}
+  (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) :
+  (F (fst a), F (fst b)) = (G (snd a), G (snd b)).
+  destruct a as [a1 a2].
+  destruct b as [b1 b2].
+  simpl in *; simpl.
+  rewrite e1.
+  rewrite e2.
+  auto.
+Defined.  
+
+Module commaE.
+Section homcommaE.
+Context {C D E : precat} (F : C ~> E) (G : D ~> E).
+
+Definition ptype := { x : C * D & F x.1 = G x.2 }.
+
+Definition hom_psubdef (a b : ptype) := {
+    f : tag a ~> tag b &
+   (F <$> f.1) = (recast2 (tagged a) (tagged b) (G <$> f.2)) }.
+HB.instance Definition _ := IsQuiver.Build ptype hom_psubdef.
+End homcommaE.
+Arguments hom_psubdef /.
+Section commaE.
+Context {C D E : cat} (F : C ~> E) (G : D ~> E).
+Notation ptype := (ptype F G).
+
+Program Definition idmap_psubdef (a : ptype) : a ~> a := @Tagged _ idmap _ _.
+Next Obligation.
+  unfold recast2.
+  unfold eq_rect.
+  unfold brel_fcast.
+  unfold eq_ind_r.
+  unfold eq_ind.  
+  unfold eq_sym.
+  destruct a.
+  destruct x.
+  simpl in *; simpl.  
+  rewrite F1.
+  rewrite F1.
+  unfold idmap.
+  simpl.
+  dependent destruction e.
+  auto.
+Defined.
+
+Program Definition comp_psubdef (a b c : ptype)
+  (f : a ~> b) (g : b ~> c) : a ~> c :=
+  @Tagged _ (tag f \; tag g) _ _.
+Next Obligation.
+  destruct f as [ff ef].
+  destruct g as [gg eg].
+  destruct a as [aa ea].
+  destruct aa as [a1 a2].
+  destruct b as [bb eb].
+  destruct bb as [b1 b2].
+  destruct c as [cc ec].
+  destruct cc as [c1 c2].
+  destruct ff as [f1 f2].
+  destruct gg as [g1 g2].
+
+  simpl; simpl in *.
+
+  rewrite Fcomp.
+  rewrite Fcomp.
+
+  rewrite ef.
+  rewrite eg.
+  clear ef eg.
+
+  eapply (@recast2_3hh _ _ _ _ _ _ _ _ _ _ _ _ 
+            ea eb ec (G <$> f2) (G <$> g2) (G <$> f2 \; G <$> g2)
+            (fun (d1 d2 d3: E) (x: d1 ~> d2) (y: d2 ~> d3)
+                 (z: d1 ~> d3) => x \; y = z) ); auto.  
+Defined.
+  (*  by rewrite !Fcomp -compoA (tagged g) compoA (tagged f) compoA. Qed. *)
+HB.instance Definition _ := IsPreCat.Build ptype idmap_psubdef comp_psubdef.
+Arguments idmap_psubdef /.
+Arguments comp_psubdef /.
+
+Lemma comma_homeqP (a b : ptype) (f g : a ~> b) : projT1 f = projT1 g -> f = g.
+Proof.
+case: f g => [f fP] [g +]/= eqfg; case: _ / eqfg => gP.
+by congr existT; apply: Prop_irrelevance.
+Qed.
+
+Lemma comma_is_cat : PreCat_IsCat ptype.
+Proof.
+by split=> [[a fa] [b fb] [*]|[a fa] [b fb] [*]|*];
+   apply/comma_homeqP; rewrite /= ?(comp1o, compo1, compoA).
+Qed.
+HB.instance Definition _ := comma_is_cat.
+End commaE.
+End commaE.
+(*
+Notation "F `/` G" := (@comma.type _ _ _ F G)
+  (at level 40, G at level 40, format "F `/` G") : cat_scope.
+Notation "a /` G" := (cst unit a `/` G)
+  (at level 40, G at level 40, format "a /` G") : cat_scope.
+Notation "F `/ b" := (F `/` cst unit b)
+  (at level 40, b at level 40, format "F `/ b") : cat_scope.
+Notation "a / b" := (cst unit a `/ b) : cat_scope.
+*)
+(*
+Lemma cat_pbop : HasPBop cat.
+  econstructor; intros.
+  destruct A.
+  destruct class as [B1 B2 B3].
+  destruct B1.
+  destruct H.
+  econstructor.
+Admitted. 
+*)
+(*  
+Program Definition pb_cat (A B: cat) (H: cospan A B) : cat.
+  remember A as a.
+  destruct a as [a_sort a_class].
+  remember B as b.
+  destruct b as [b_sort b_class].
+  remember H as H0.
+  destruct H as [t l r].
+
+  econstructor.  
+  instantiate (1:= sigma (x: a_sort) (y: b_sort), ).
+  
+  
+  remember t as t0.
+  destruct t as [s c].
+  destruct c as [a1 a2 a3].
+  econstructor.  
+*)  
