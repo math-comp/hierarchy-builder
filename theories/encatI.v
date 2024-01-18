@@ -1921,6 +1921,12 @@ HB.mixin Record IsDCat_UA T of CFunctor T := {
                        (@HO T (@hhom T) a0 a3 hh1)
 }. 
 *)
+(*
+Class pip (Y: Type) := {}.
+Class pip2 (T: Type) := {}.
+
+Instance pipO (T1 T2: Type) : pip T1 -> pip T2 -> pip2 (T1 + T2)%type. 
+*)
 
 (*********************************************************************)
 
