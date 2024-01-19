@@ -498,7 +498,7 @@ HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
 Unset Universe Checking.
-HB.about Functor.
+(* HB.about Functor. *)
 HB.structure Definition STUFunctor : Set :=
   {C of SFunctor C & TFunctor C & UFunctor C}.
 Set Universe Checking.
