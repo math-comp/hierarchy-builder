@@ -1199,6 +1199,11 @@ Notation pb s := (prepullback_isTerminal _ _ _ _ s).
 
 Notation "P <=> Q" := ((P -> Q) * (Q -> P))%type (at level 70).
 
+Notation "'sigma' x .. y , p" :=
+  (sigT (fun x => .. (sigT (fun y => p)) ..))
+  (at level 200, x binder, right associativity,
+   format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
+  : cat_scope.
 
 (**********************************************************************)
 
