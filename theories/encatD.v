@@ -13,12 +13,13 @@ Local Open Scope algebra_scope.
 
 Local Open Scope cat_scope.
 
+(*
 Notation "'sigma' x .. y , p" :=
   (sigT (fun x => .. (sigT (fun y => p)) ..))
   (at level 200, x binder, right associativity,
    format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
   : type_scope.
-
+*)
 
 (********************************************************************)
 
