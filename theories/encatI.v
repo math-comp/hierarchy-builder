@@ -101,8 +101,6 @@ Set Universe Checking.
 
 (*** CATEGORIES WITH PULLBACKS *)
 
-(* Local Open Scope type_scope. *)
-
 (* category with all prepullbacks *)
 (* Ideally span is in fact expanded and the final mixin has
 a pb : forall A B, cospan A B -> C
@@ -590,7 +588,8 @@ Lemma jm_pbsquare_universal {C: cat} (A B T P0 P1 P2 : C)
   (e: P0 = P2) :
   sigma m: P1 ~> P2, f = m \;;_e p1 /\ g = m \;;_e p2. 
   unfold jmcomp.
-  dependent destruction e.
+  destruct e.
+(*  dependent destruction e. *)
   eapply pbsquare_universal; eauto.
 Qed.  
   
@@ -778,7 +777,10 @@ Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
     subst prj21 prj22.
 
     (* surprisingly, this does not work with pbsquare_is_pulback_sym *)
-    (* rewrite <- pbsquare_is_pullback_sym. *)
+    (* rewrite - pbsquare_is_pullback_sym. 
+       Set Printing All. 
+    *)
+
     rewrite pbsquare_is_pullback.
     inversion HeqCsp2; subst.
     subst Sp2.
@@ -960,10 +962,11 @@ assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
     j33L \; (j12R \; src2) = m23 \;;_e2 j23L \; src2) as M23_E1.
 { intros e2.
   unfold jmcomp.
-  dependent destruction e2.
+  destruct e2.
+(*  dependent destruction e2. *)
   rewrite compoA.
   rewrite m23_E.
-  unfold jmcomp.
+  unfold jmcomp.  
   dependent destruction E23.
   rewrite compoA; auto.
 }  
@@ -973,7 +976,8 @@ assert (forall (e3: ((c2 *_C0 c3) :> C) = Pb23),
 { intros e3.
   specialize (M23_E1 E23).
   unfold jmcomp in M23_E1.
-  dependent destruction E23.
+  destruct E23.
+(*  dependent destruction E23. *)
   unfold jmcomp.
   dependent destruction e3.
   setoid_rewrite <- compoA.
@@ -999,7 +1003,7 @@ assert (pbsquare j15L j15R tgt1 src23) as pbsq15.
 }
 
 assert ((j33L \; j12L) \; tgt1 = m23 \; src23) as sqM23.
-{ specialize (M23_E2 E23).
+{ specialize (M23_E2 E23).  
   dependent destruction E23.
   exact M23_E2.
 }
@@ -1019,11 +1023,12 @@ assert (
   eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
   exact pbsq15.
   exact sqM23.
-}
-  
+}  
 destruct (X E33) as [mm R].
 exact mm.
 Qed. 
+
+Print Assumptions iprodCAsc.
 
 (* An internal precategory is an internal category with two operators
    that must be src and tgt preserving, i.e. iHom morphisms: identity
@@ -1133,7 +1138,7 @@ Definition doublecat := icat cat.
 (* Check (doublecat <~> ???) *)
 
 
-(*********************************************************************)
+(************************************************************************)
 
 Program Definition brel_fcast {X Y C : Type} {F: X -> C} {G: Y -> C}
   {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
@@ -1387,3 +1392,5 @@ Program Definition pb_cat (A B: cat) (H: cospan A B) : cat.
   destruct c as [a1 a2 a3].
   econstructor.  
 *)  
+
+ 
