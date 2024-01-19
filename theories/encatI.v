@@ -1027,7 +1027,7 @@ destruct (X E33) as [mm R].
 exact mm.
 Qed. 
 
-Print Assumptions iprodCAsc.
+(* Print Assumptions iprodCAsc. *)
 
 (* An internal precategory is an internal category with two operators
    that must be src and tgt preserving, i.e. iHom morphisms: identity
