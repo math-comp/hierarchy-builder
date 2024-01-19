@@ -21,6 +21,345 @@ Notation "'sigma' x .. y , p" :=
   : type_scope.
 *)
 
+(************************************************************************)
+
+Program Definition brel_fcast {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) :
+  R (G a2) (G b2) = R (F a1) (F b1).
+rewrite e1.
+rewrite e2.
+auto.
+Defined.
+
+Program Definition recast2 {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) : R (F a1) (F b1).
+rewrite -(brel_fcast e1 e2).
+exact x.
+Defined.
+
+Program Definition brel_fcast_h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop) :
+  P _ x = P _ (recast2 e1 e2 x).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+destruct e1.
+destruct e2.
+auto.
+Defined.
+
+Program Definition brel_fcast_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) :
+  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+destruct e1.
+destruct e2.
+destruct e3.
+auto.
+Defined.
+
+Program Definition brel_fcast_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) :
+  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+destruct e1.
+destruct e2.
+destruct e3.
+auto.
+Defined.
+
+Program Definition recast2_h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop)
+  (p: P _ x) : P _ (recast2 e1 e2 x).
+rewrite -(brel_fcast_h e1 e2).
+exact p.
+Defined.
+
+Program Definition recast2_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) 
+  (p: P _ _ _ x y z) :
+    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+rewrite -(brel_fcast_3h e1 e2 e3).
+exact p.
+Defined.
+
+Program Definition recast2_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) 
+  (p: P _ _ _ x y z) :
+    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+rewrite -(brel_fcast_3hh e1 e2 e3).
+exact p.
+Defined.
+
+Program Definition recast_hom {X Y C : precat} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: (G a2) ~> (G b2)) : (F a1) ~> (F b1).
+eapply recast2; eauto.
+Defined.
+
+Definition recast21 {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {R: C -> C -> Type} {a b: (X * Y)}
+  (e: (F (fst a), F (fst b)) = (G (snd a), G (snd b))) 
+(*
+  (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) *) 
+  (x: R (G (snd a)) (G (snd b))) : R (F (fst a)) (F (fst b)).
+  destruct a as [a1 a2].
+  destruct b as [b1 b2].
+  inversion e; subst.
+  rewrite H0.
+  rewrite H1.
+  auto.
+Defined.
+
+Definition mk_pair_eq {X Y C: Type} {F: X -> C} {G: Y -> C} {a b: (X * Y)}
+  (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) :
+  (F (fst a), F (fst b)) = (G (snd a), G (snd b)).
+  destruct a as [a1 a2].
+  destruct b as [b1 b2].
+  simpl in *; simpl.
+  rewrite e1.
+  rewrite e2.
+  auto.
+Defined.  
+
+
+Module commaE. 
+
+Section homcommaE.
+Context {C D E : precat} (F : C ~> E) (G : D ~> E).
+
+Definition ptype := { x : C * D & F x.1 = G x.2 }.
+
+Definition hom_psubdef (a b : ptype) := {
+    f : tag a ~> tag b &
+          (F <$> f.1) = (recast2 (tagged a) (tagged b) (G <$> f.2)) }.
+#[export]
+HB.instance Definition _ := IsQuiver.Build ptype hom_psubdef.
+End homcommaE.
+
+Arguments hom_psubdef /.
+
+Section commaS.
+Context {C D E : cat} (F : C ~> E) (G : D ~> E).
+Notation ptype := (ptype F G).
+
+Program Definition idmap_psubdef (a : ptype) : a ~> a := @Tagged _ idmap _ _.
+Next Obligation.
+  unfold recast2.
+  unfold eq_rect.
+  unfold brel_fcast.
+  unfold eq_ind_r.
+  unfold eq_ind.  
+  unfold eq_sym.
+  destruct a.
+  destruct x.
+  simpl in *; simpl.  
+  rewrite F1.
+  rewrite F1.
+  unfold idmap.
+  simpl.
+  destruct e.
+  auto.
+Defined.
+
+Program Definition comp_psubdef (a b c : ptype)
+  (f : a ~> b) (g : b ~> c) : a ~> c :=
+  @Tagged _ (tag f \; tag g) _ _.
+Next Obligation.
+  destruct f as [ff ef].
+  destruct g as [gg eg].
+  destruct a as [aa ea].
+  destruct aa as [a1 a2].
+  destruct b as [bb eb].
+  destruct bb as [b1 b2].
+  destruct c as [cc ec].
+  destruct cc as [c1 c2].
+  destruct ff as [f1 f2].
+  destruct gg as [g1 g2].
+
+  simpl; simpl in *.
+
+  rewrite Fcomp.
+  rewrite Fcomp.
+
+  rewrite ef.
+  rewrite eg.
+  clear ef eg.
+
+  eapply (@recast2_3hh _ _ _ _ _ _ _ _ _ _ _ _ 
+            ea eb ec (G <$> f2) (G <$> g2) (G <$> f2 \; G <$> g2)
+            (fun (d1 d2 d3: E) (x: d1 ~> d2) (y: d2 ~> d3)
+                 (z: d1 ~> d3) => x \; y = z) ); auto.  
+Defined.
+  (*  by rewrite !Fcomp -compoA (tagged g) compoA (tagged f) compoA. Qed. *)
+
+#[export]
+HB.instance Definition _ := IsPreCat.Build ptype idmap_psubdef comp_psubdef.
+Arguments idmap_psubdef /.
+Arguments comp_psubdef /.
+
+Lemma pcomma_homeqP (a b : ptype) (f g : a ~> b) : projT1 f = projT1 g -> f = g.
+Proof.
+case: f g => [f fP] [g +]/= eqfg; case: _ / eqfg => gP.
+by congr existT; apply: Prop_irrelevance.
+Qed.
+
+Lemma pcomma_is_cat : PreCat_IsCat ptype.
+Proof.
+by split=> [[a fa] [b fb] [*]|[a fa] [b fb] [*]|*];
+   apply/pcomma_homeqP; rewrite /= ?(comp1o, compo1, compoA).
+Qed.
+
+#[export]
+HB.instance Definition _ := pcomma_is_cat.
+
+End commaS.
+
+Module Exports.
+ HB.reexport.
+End Exports.
+  
+End commaE.
+
+Import commaE.Exports.
+
+(*
+Notation "F `/` G" := (@comma.type _ _ _ F G)
+  (at level 40, G at level 40, format "F `/` G") : cat_scope.
+Notation "a /` G" := (cst unit a `/` G)
+  (at level 40, G at level 40, format "a /` G") : cat_scope.
+Notation "F `/ b" := (F `/` cst unit b)
+  (at level 40, b at level 40, format "F `/ b") : cat_scope.
+Notation "a / b" := (cst unit a `/ b) : cat_scope.
+*)
+
+
+Definition pcat_prj1 {C D E F G} (P: @commaE.ptype C D E F G) : C :=
+  fst (tag P).
+
+Definition pcat_prj2 {C D E F G} (P: @commaE.ptype C D E F G) : D :=
+  snd (tag P).
+
+Program Definition pcat_prj1_isPreFunctor {C D E F G} :=
+  IsPreFunctor.Build _ _ (@pcat_prj1 C D E F G) _.
+Obligation 1.
+destruct X as [f Y].
+exact f.1.
+Defined.
+
+Program Definition pcat_prj2_isPreFunctor {C D E F G} :=
+  IsPreFunctor.Build _ _ (@pcat_prj2 C D E F G) _.
+Obligation 1.
+destruct X as [f Y].
+exact f.2.
+Defined.
+
+HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_prj1 :=
+  @pcat_prj1_isPreFunctor C D E F G.
+
+HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_prj2 :=
+  @pcat_prj2_isPreFunctor C D E F G.
+
+Program Definition pcat_prj1_isFunctor {C D E: cat} {F G} :=
+  PreFunctor_IsFunctor.Build _ _ (@pcat_prj1 C D E F G) _ _. 
+Obligation 2.
+destruct a.
+destruct b.
+destruct c0.
+destruct f.
+destruct g.
+simpl; simpl in *.
+unfold Fhom.
+simpl. auto.
+Defined.
+
+Program Definition pcat_prj2_isFunctor {C D E: cat} {F G} :=
+  PreFunctor_IsFunctor.Build _ _ (@pcat_prj2 C D E F G) _ _. 
+Obligation 2.
+destruct a.
+destruct b.
+destruct c0.
+destruct f.
+destruct g.
+simpl; simpl in *.
+unfold Fhom.
+simpl. auto.
+Defined.
+
+HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_prj1 :=
+  @pcat_prj1_isFunctor C D E F G.
+
+HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_prj2 :=
+  @pcat_prj2_isFunctor C D E F G.
+
+(*
+Definition pcat_prj1 {C D E F G} (P: @ptype C D E F G) : C :=
+  fst (tag P).
+
+Definition pcat_prj2 {C D E F G} (P: @ptype C D E F G) : D :=
+  snd (tag P).
+
+Program Definition pcat_prj1_isPreFunctor {C D E F G} :=
+  IsPreFunctor.Build _ _ (@pcat_prj1 C D E F G) _.
+Obligation 1.
+destruct X as [f Y].
+exact f.1.
+Defined.
+
+Program Definition pcat_prj2_isPreFunctor {C D E F G} :=
+  IsPreFunctor.Build _ _ (@pcat_prj2 C D E F G) _.
+Obligation 1.
+destruct X as [f Y].
+exact f.2.
+Defined.
+
+HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_prj1 :=
+  @pcat_prj1_isPreFunctor C D E F G.
+
+HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_prj2 :=
+  @pcat_prj2_isPreFunctor C D E F G.
+
+Program Definition pcat_prj1_isFunctor {C D E: cat} {F G} :=
+  PreFunctor_IsFunctor.Build _ _ (@pcat_prj1 C D E F G) _ _. 
+*)
+
+
+
+(************************************************************************)
+
 (*** GENERALISED ENRICHED CATEGORIES *)
 
 Declare Scope encat_scope.
@@ -359,7 +698,7 @@ eassert ( forall x, exists y,
   econstructor.
   destruct X.
   reflexivity.
-}.  
+}  
 
 setoid_rewrite Heqf1 at 3.
 specialize (A2 (iHom_comp_obligation_1 (iHom_id a1) f1)).
@@ -485,7 +824,7 @@ Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C)
     rewrite D1.
     rewrite D2.
     reflexivity.
-  }.  
+  }
 
   setoid_rewrite A2.
   reflexivity.
@@ -967,7 +1306,13 @@ assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
 (*  dependent destruction e2. *)
   rewrite compoA.
   rewrite m23_E.
-  unfold jmcomp.  
+  unfold jmcomp.
+(*  clear -E23.
+  rewrite -compoA.
+  congr (_ \; _ \; _).
+  Set Printing All.
+  case: _ / E23.
+  do [destruct E23] in j23L m23 *. *)
   dependent destruction E23.
   rewrite compoA; auto.
 }  
@@ -1120,7 +1465,47 @@ HB.structure Definition InternalCat (C : pbcat) :=
    - The horizontal composition of 2-cells is the map part of icomp
  *)
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
-Axiom cat_pbop : HasPBop cat.
+
+(* this proof, so painful, why? *)
+Lemma cat_pbop : HasPBop cat.
+  econstructor; intros.
+  destruct H.
+  simpl in *.
+  unfold hom in *.
+  simpl in *.
+
+  set (PB := (@commaE.ptype A B top left2top right2top : cat)).
+
+  assert (PB ~> A) as L1.
+  { subst PB.
+    unfold hom.
+    simpl.
+
+    set (ff := @pcat_prj1 A B top left2top right2top).
+    econstructor.
+    instantiate (1:=ff).
+    econstructor.
+    subst ff.
+    
+    eapply pcat_prj1_isFunctor.
+  } 
+
+  assert (PB ~> B) as R1.
+  { subst PB.
+    unfold hom.
+    simpl.
+
+    set (ff := @pcat_prj2 A B top left2top right2top).
+    econstructor.
+    instantiate (1:=ff).
+    econstructor.
+    subst ff.
+    
+    eapply pcat_prj2_isFunctor.
+  } 
+
+  eexact (@Span cat A B PB L1 R1).
+Qed.
 HB.instance Definition _ := cat_pbop.
 
 Axiom cat_preb :

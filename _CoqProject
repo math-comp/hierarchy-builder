@@ -1,6 +1,7 @@
 structures.v
 theories/cat.v
 theories/encatD.v
+theories/encatI.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
 -Q . HB
