@@ -262,7 +262,6 @@ HB.structure Definition InternalHomHom {C: pbcat}
 HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
   IsQuiver (@iHom C C0) :=
   IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
-Print iHom_quiver.
 
 Program Definition pre_iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
   @IsInternalHomHom C C0 C1 C1 idmap :=
