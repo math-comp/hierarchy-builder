@@ -1384,9 +1384,9 @@ Qed.
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
   of @InternalQuiver C C0 := {
     iidI : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
-    icompI : let C1 := @C1 C C0 : iHom C0 in
-            let C2 := pbC0 C1 C1 : iHom C0 in
-      (C2 ~>_(iHom C0) C1)
+    icompI : let C1' := @C1 C C0 : iHom C0 in
+             let C2 := pbC0 C1' C1' : iHom C0 in
+      (C2 ~>_(iHom C0) C1')
 }.
 #[short(type="iprecat")]
 HB.structure Definition InternalPreCat (C : pbcat) :=
