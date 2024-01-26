@@ -233,7 +233,7 @@ Set Universe Checking.
 
    horizontal 1-morhisms as 1-cells for D1: D1obj C ; 
 
-   2-morphisms (category D1 on C1obj): hom (D1obj C) ; 
+   2-morphisms (category D1 on D1obj): hom (D1obj C) ; 
 
    horizontally composable pairs of 1-cells : DPobj C ;   
 
@@ -953,6 +953,40 @@ HB.instance Definition DPCat (T: STUFunctor.type) := DPCatP T.
 
 (** Horizontal composition functor and strict double categories *)
 
+
+
+(* fst horizontal projection prefunctor *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHFPreFunctor T of STUFunctor T :=
+  { is_hfprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H2First T) }.
+HB.structure Definition HFPreFunctor : Set := {C of IsHFPreFunctor C}.
+Set Universe Checking.
+
+(* fst horizontal projection functor *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record HFPreFunctor_IsFunctor T of HFPreFunctor T := {
+    is_hffunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2First T) }.
+HB.structure Definition HFFunctor : Set := {C of HFPreFunctor_IsFunctor C}.
+Set Universe Checking.
+
+(* snd horizontal projection prefunctor *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record IsHSPreFunctor T of STUFunctor T :=
+  { is_hsprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H2Second T) }.
+HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
+Set Universe Checking.
+
+(* snd horizontal projection functor *)
+Unset Universe Checking.
+#[wrapper]
+HB.mixin Record HSPreFunctor_IsFunctor T of HSPreFunctor T := {
+    is_hsfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2Second T) }.
+HB.structure Definition HSFunctor : Set := {C of HSPreFunctor_IsFunctor C}.
+Set Universe Checking.
+
 (* composition prefunctor *)
 Unset Universe Checking.
 #[wrapper]
@@ -966,20 +1000,31 @@ Unset Universe Checking.
 #[wrapper]
 HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
     is_cfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
-#[short(type="sdoublecat")]
-HB.structure Definition SDoubleCat : Set := {C of CPreFunctor_IsFunctor C}.
+HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
 Set Universe Checking.
+
+Unset Universe Checking.
+(* HB.about Functor. *)
+HB.structure Definition FCFunctor : Set :=
+  {C of HFFunctor C & HSFunctor C & CFunctor C}.
+Set Universe Checking.
+
+Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
+  (m: @hom (DPobj T) a b) : H2First a ~> H2First b := (@H2First T) <$> m.
+
+Definition HH2Second (T: HSFunctor.type) (a b: DPobj T)
+  (m: @hom (DPobj T) a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
 
 (* horizontal 2-cell composition: maps two adjecent pairs of
    horizontal morphisms (a and b) and a pullback-category morphism
    between them (m, which basically gives two adjecent cells) to a
    2-cell morphism between the horizontal composition (HComp) of each
    pair *)
-Definition HC2Comp (T: SDoubleCat.type) (a b: DPobj T)
+Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
   (m: @hom (DPobj T) a b) :
   d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
 
-Program Definition HC2Comp_flat (T: SDoubleCat.type) (a0 a1 a2 b0 b1 b2: T)
+Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
   (hh0: D1hom h0 k0)
@@ -991,6 +1036,63 @@ Program Definition HC2Comp_flat (T: SDoubleCat.type) (a0 a1 a2 b0 b1 b2: T)
 Obligation 1.
 refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 k)).
 Defined.
+
+Lemma DPsource (T: CFunctor.type) (a: DPobj T) :
+  HSource (H1Comp a) = HSource (TT2 (h_first a)).
+  destruct a; simpl in *; simpl.
+  auto.
+Defined.  
+
+Lemma DPtarget (T: CFunctor.type) (a: DPobj T) :
+  HTarget (H1Comp a) = HTarget (TT2 (h_second a)).
+  destruct a; simpl in *; simpl.
+  auto.
+Defined.  
+
+
+Lemma DP1source (T: FCFunctor.type) (a b: DPobj T)
+  (m: DP_hom a b) :
+  TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)).
+(*  
+  simpl.
+  destruct a.
+  destruct b.
+  simpl.
+  unfold HC2Comp.
+  unfold H1Comp.
+  unfold HH2First.
+  unfold H2First.
+  simpl.
+  unfold DP_hom in m.
+  simpl in *; simpl.
+  unfold H1Source.
+  unfold HSource.
+  unfold hhom.
+  simpl.
+  unfold hhcomp.
+  simpl.
+  destruct m.
+  simpl; simpl in *.
+  unfold D1hom in x.
+  unfold d1hom in x.
+  destruct s.
+  simpl in *; simpl.
+*)
+
+  
+Unset Universe Checking.
+HB.mixin Record IsSDoubleCat T of FCFunctor T := {
+    source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
+      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
+
+    target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
+      TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ; 
+}.
+#[short(type="sdoublecat")]
+HB.structure Definition SDoubleCat : Set :=
+  { C of IsSDoubleCat C }.
+Set Universe Checking.
+
 
 (* hcomp (hm, hu) = prj1 (hm, hu) = hm   
    hcomp (hu, hm) = prj2 (hu, hm) = hm 
