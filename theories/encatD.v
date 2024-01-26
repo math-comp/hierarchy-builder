@@ -546,11 +546,13 @@ Definition l_hcomp (T: SDCat.type) (a0 a1 a2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2) : D1obj T :=
   @TT2 T _ a0 a2 (h0 \; h1).
 
+(*
 Notation "'sigma' x .. y , p" :=
   (sigT (fun x => .. (sigT (fun y => p)) ..))
   (at level 200, x binder, right associativity,
    format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
   : type_scope.
+*)
 
 (** DPobj quiver *)
 Definition DP_hom (T: STUFunctor.type) (x y: DPobj T) :=
@@ -964,6 +966,8 @@ Qed.
 HB.instance Definition DPCat (T: STUFunctor.type) := DPCatP T.
 
 
+(** Horizontal composition functor and strict double categories *)
+
 (* fst horizontal projection prefunctor *)
 Unset Universe Checking.
 #[wrapper]
@@ -1004,7 +1008,7 @@ HB.mixin Record IsCPreFunctor T of STUFunctor T :=
 HB.structure Definition CPreFunctor : Set := {C of IsCPreFunctor C}.
 Set Universe Checking.
 
-(* composition functor - gives the definition of Strict Double Category *)
+(* composition functor *)
 Unset Universe Checking.
 #[wrapper]
 HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
@@ -1012,7 +1016,7 @@ HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
 HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
-(** Horizontal composition functor and strict double categories *)
+(* All functors together *)
 Unset Universe Checking.
 HB.structure Definition FCFunctor : Set :=
   {C of HFFunctor C & HSFunctor C & CFunctor C}.
@@ -1054,12 +1058,10 @@ Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
   (hh0: D1hom h0 k0)
   (hh1: D1hom h1 k1)
-  (k: H1Target hh0 = H1Source hh1)
-  :   (* D1hom (hcomp _ _ _ h0 h1) (hcomp _ _ _ k0 k1) *)
-  d1hom (l_hcomp h0 h1) (l_hcomp k0 k1) :=
-  @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1) _.
+  (K: H1Target hh0 = H1Source hh1) : D1hom (h0 \; h1) (k0 \; k1) := 
+      @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1) _. 
 Obligation 1.
-refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 k)).
+refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
 Defined.
 
 
@@ -1067,7 +1069,7 @@ Defined.
 Unset Universe Checking.
 HB.mixin Record IsSDoubleCat T of FCFunctor T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
-      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
+     TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
 
     target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
       TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ; 
