@@ -522,6 +522,19 @@ Definition H1Target (T: TFunctor.type) (a b: @D1obj T)
 Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
   (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
 
+(* DP objects source and target *)
+Lemma DPsource (T: STUFunctor.type) (a: DPobj T) :
+  HSource (H1Comp a) = HSource (TT2 (h_first a)).
+  destruct a; simpl in *; simpl.
+  auto.
+Defined.  
+
+Lemma DPtarget (T: STUFunctor.type) (a: DPobj T) :
+  HTarget (H1Comp a) = HTarget (TT2 (h_second a)).
+  destruct a; simpl in *; simpl.
+  auto.
+Defined.  
+
 
 (** Horizontal product category (D1 *d0 D1) *)
 (* DPobj T is the pseudo-pullback category used to deal with
@@ -951,10 +964,6 @@ Qed.
 HB.instance Definition DPCat (T: STUFunctor.type) := DPCatP T.
 
 
-(** Horizontal composition functor and strict double categories *)
-
-
-
 (* fst horizontal projection prefunctor *)
 Unset Universe Checking.
 #[wrapper]
@@ -1003,12 +1012,14 @@ HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
 HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
+(** Horizontal composition functor and strict double categories *)
 Unset Universe Checking.
-(* HB.about Functor. *)
 HB.structure Definition FCFunctor : Set :=
   {C of HFFunctor C & HSFunctor C & CFunctor C}.
 Set Universe Checking.
 
+
+(* first and second projection from pairs of cells *)
 Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
   (m: @hom (DPobj T) a b) : H2First a ~> H2First b := (@H2First T) <$> m.
 
@@ -1037,49 +1048,8 @@ Obligation 1.
 refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 k)).
 Defined.
 
-Lemma DPsource (T: CFunctor.type) (a: DPobj T) :
-  HSource (H1Comp a) = HSource (TT2 (h_first a)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
 
-Lemma DPtarget (T: CFunctor.type) (a: DPobj T) :
-  HTarget (H1Comp a) = HTarget (TT2 (h_second a)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
-
-
-Lemma DP1source (T: FCFunctor.type) (a b: DPobj T)
-  (m: DP_hom a b) :
-  TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)).
-(*  
-  simpl.
-  destruct a.
-  destruct b.
-  simpl.
-  unfold HC2Comp.
-  unfold H1Comp.
-  unfold HH2First.
-  unfold H2First.
-  simpl.
-  unfold DP_hom in m.
-  simpl in *; simpl.
-  unfold H1Source.
-  unfold HSource.
-  unfold hhom.
-  simpl.
-  unfold hhcomp.
-  simpl.
-  destruct m.
-  simpl; simpl in *.
-  unfold D1hom in x.
-  unfold d1hom in x.
-  destruct s.
-  simpl in *; simpl.
-*)
-
-  
+(* definition of strict double category *)
 Unset Universe Checking.
 HB.mixin Record IsSDoubleCat T of FCFunctor T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
