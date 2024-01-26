@@ -1021,10 +1021,18 @@ Set Universe Checking.
 
 (* first and second projection from pairs of cells *)
 Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
+  (m: DP_hom a b) : H2First a ~> H2First b := (@H2First T) <$> m.
+
+Definition HH2Second (T: HSFunctor.type) (a b: DPobj T)
+  (m: DP_hom a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
+
+(*
+Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
   (m: @hom (DPobj T) a b) : H2First a ~> H2First b := (@H2First T) <$> m.
 
 Definition HH2Second (T: HSFunctor.type) (a b: DPobj T)
   (m: @hom (DPobj T) a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
+*)
 
 (* horizontal 2-cell composition: maps two adjecent pairs of
    horizontal morphisms (a and b) and a pullback-category morphism
@@ -1032,8 +1040,14 @@ Definition HH2Second (T: HSFunctor.type) (a b: DPobj T)
    2-cell morphism between the horizontal composition (HComp) of each
    pair *)
 Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
+  (m: DP_hom a b) :
+  d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
+
+(*
+Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
   (m: @hom (DPobj T) a b) :
   d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
+*)
 
 Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
