@@ -1079,6 +1079,30 @@ HB.structure Definition SDoubleCat : Set :=
   { C of IsSDoubleCat C }.
 Set Universe Checking.
 
+(* alternative definition of strict double category *)
+Unset Universe Checking.
+HB.mixin Record IsSDoubleCat1 T of FCFunctor T := {
+  source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1),
+      H1Source (HC2Comp_flat K) = H1Source hh0 ;
+
+  target_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1),
+      H1Target (HC2Comp_flat K) = H1Target hh1 ;
+}.    
+#[short(type="sdoublecat1")]
+HB.structure Definition SDoubleCat1 : Set :=
+  { C of IsSDoubleCat1 C }.
+Set Universe Checking.
+
 
 (* hcomp (hm, hu) = prj1 (hm, hu) = hm   
    hcomp (hu, hm) = prj2 (hu, hm) = hm 
