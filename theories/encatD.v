@@ -1074,9 +1074,24 @@ refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
 Defined.
 
 
+(* quasi-double category *)
+Unset Universe Checking.
+HB.mixin Record IsQDoubleCat T of FCFunctor T := {
+    unit_source : forall (a b: T) (m: hom a b),
+      H1Source (H2Unit m) = m ;
+
+    unit_target : forall (a b: T) (m: hom a b),
+      H1Target (H2Unit m) = m ;
+}.
+#[short(type="qdoublecat")]
+HB.structure Definition QDoubleCat : Set :=
+  { C of IsQDoubleCat C }.
+Set Universe Checking.
+
+
 (* definition of strict double category *)
 Unset Universe Checking.
-HB.mixin Record IsSDoubleCat T of FCFunctor T := {
+HB.mixin Record IsSDoubleCat T of QDoubleCat T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
 
@@ -1088,9 +1103,9 @@ HB.structure Definition SDoubleCat : Set :=
   { C of IsSDoubleCat C }.
 Set Universe Checking.
 
-(* alternative definition of strict double category *)
+(* alternative definition of strict double category (display-style) *)
 Unset Universe Checking.
-HB.mixin Record IsSDoubleCat1 T of FCFunctor T := {
+HB.mixin Record IsSDoubleCat1 T of QDoubleCat T := {
   source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
