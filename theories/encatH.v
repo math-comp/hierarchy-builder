@@ -1091,10 +1091,24 @@ Show Proof.
 Defined.
 
 
+(* quasi-double category *)
+Unset Universe Checking.
+HB.mixin Record IsQDoubleCat T of FCFunctor T := {
+    unit_source : forall (a b: T) (m: hom a b),
+      H1Source (H2Unit m) = m ;
+
+    unit_target : forall (a b: T) (m: hom a b),
+      H1Target (H2Unit m) = m ;
+}.
+#[short(type="qdoublecat")]
+HB.structure Definition QDoubleCat : Set :=
+  { C of IsQDoubleCat C }.
+Set Universe Checking.
+
 
 (* definition of strict double precategory *)
 Unset Universe Checking.
-HB.mixin Record IsPreSDoubleCat T of FCFunctor T := {
+HB.mixin Record IsPreSDoubleCat T of QDoubleCat T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
 
@@ -1108,7 +1122,7 @@ Set Universe Checking.
 
 (* alternative definition of strict double precategory *)
 Unset Universe Checking.
-HB.mixin Record IsPreSDoubleCat1 T of FCFunctor T := {
+HB.mixin Record IsPreSDoubleCat1 T of QDoubleCat T := {
   source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
@@ -1155,6 +1169,9 @@ HB.instance Definition H1Quiver (T: STUFunctor.type) :
   IsQuiver (H1obj T) :=
   IsQuiver.Build (H1obj T) (@H1hom T).  
 
+
+(* in progress... *)
+
 Program Definition H1_id (T: STUFunctor.type) (a: H1obj T) : a ~> a.
 unfold hom.
 simpl.
@@ -1176,7 +1193,7 @@ unfold Fhom.
 simpl.
 rewrite F1.
 
-Defined. 
+(* Defined. *)
 
 Program Definition H1_comp (T: PreSDoubleCat1.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
