@@ -180,10 +180,11 @@ declare Module BSkel Sort :- std.do! [
   log.coq.env.end-module-name ElpiOperationModName ElpiOperations,
   export.module ElpiOperationModName ElpiOperations,
 
-  % we need to filter the wrappers out of ML 
-  std.filter ML (x\ wrapper-mixin x _ _) WrapperML,
   % we need to assert locally the clauses in EX
-  EX => std.forall WrapperML private.reexport-wrapper-as-instance,
+  EX => std.forall ML private.reexport-wrapper-as-instance,
+  
+  %hack
+  hack,
 
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
 
@@ -195,6 +196,11 @@ declare Module BSkel Sort :- std.do! [
 % Automatic saturation disabled since it is expensive
 %  NewClauses => instance.saturate-instances,
 ].
+
+pred hack.
+hack :- coq.next-synterp-action (begin-section X), coq.env.begin-section X, hack.
+hack :- coq.next-synterp-action end-section, coq.env.end-section, hack.
+hack.
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
@@ -703,7 +709,7 @@ lift-to-the-subject.aux [factory-on-subject-lifter Expr _ _|_] _ _ :-
 % instance.declare-const (notably used in the API, i.e. in structures.v, 
 % HB.instance)
 pred reexport-wrapper-as-instance i:mixinname.
-reexport-wrapper-as-instance M :- std.do! [     
+reexport-wrapper-as-instance M :- wrapper-mixin M _ _, !, std.do! [     
 
     % need the body of the wrapper projection type  
      exported-op M _ C,
@@ -718,5 +724,11 @@ reexport-wrapper-as-instance M :- std.do! [
 
      get-option "wrapper" ff => instance.declare-const Str B Arity _
  ]. 
+reexport-wrapper-as-instance _ :-
+  std.assert! (coq.next-synterp-action (begin-section SectionName)) "synterp code did not open section",
+  coq.env.begin-section SectionName,
+  std.assert! (coq.next-synterp-action (end-section)) "synterp code did not close section",
+  coq.env.end-section.
+
 
 }}

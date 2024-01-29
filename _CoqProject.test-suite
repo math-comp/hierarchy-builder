@@ -100,4 +100,4 @@ tests/tag_wrap.v
 -R tests HB.tests
 -R examples HB.examples
 
--Q . HB
+-R theories HB
