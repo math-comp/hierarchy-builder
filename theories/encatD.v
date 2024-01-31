@@ -270,19 +270,22 @@ Set Universe Checking.
 (* transpose for horizontal morphism quiver.
    HB.tag needed to identify transpose as lifter *)
 HB.tag Definition transpose (C : quiver) : U := C.
-(*
-#[wrapper] HB.mixin Record _IsHQuiver C of IsQuiver C := {
-    is_hquiver : IsQuiver (transpose C)
-}. *)
-Unset Implicit Arguments.
+
 (* vertical and horizontal quivers, defining cells *)
-Unset Universe Checking.
-#[short(type="vhquiver"),verbose]
+#[short(type="vhquiver"),unsafe(univ)]
 HB.structure Definition VHQuiver : Set :=
   { C of IsQuiver C & IsQuiver (transpose C) }.
-Set Universe Checking.
 
-x
+
+(*
+Print VHQuiver.axioms_.
+Print wrapper_4_transpose_cat_IsQuiver.
+Record wrapper_4_transpose_cat_IsQuiver (C : U) (m : IsQuiver.axioms_ C) : U :=
+  wrapper_4_transpose_cat_IsQuiver_build {
+    wrapper_4_transpose_cat_IsQuiver_private :
+      IsQuiver.phant_axioms (transpose {| Quiver.sort := C;
+        Quiver.class := {| Quiver.cat_IsQuiver_mixin := m |} |}) }.
+*)
 
 HB.tag Definition hhom (c : VHQuiver.type) : c -> c -> U := @hom (transpose c).
 Notation "a +> b" := (hhom a b)
