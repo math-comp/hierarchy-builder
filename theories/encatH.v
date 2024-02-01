@@ -1105,7 +1105,7 @@ HB.structure Definition QDoubleCat : Set :=
   { C of IsQDoubleCat C }.
 Set Universe Checking.
 
-
+(*
 (* definition of strict double precategory *)
 Unset Universe Checking.
 HB.mixin Record IsPreSDoubleCat T of QDoubleCat T := {
@@ -1119,6 +1119,7 @@ HB.mixin Record IsPreSDoubleCat T of QDoubleCat T := {
 HB.structure Definition PreSDoubleCat : Set :=
   { C of IsPreSDoubleCat C }.
 Set Universe Checking.
+*)
 
 (* alternative definition of strict double precategory *)
 Unset Universe Checking.
@@ -1170,9 +1171,7 @@ HB.instance Definition H1Quiver (T: STUFunctor.type) :
   IsQuiver.Build (H1obj T) (@H1hom T).  
 
 
-(* in progress... *)
-
-Program Definition H1_id (T: STUFunctor.type) (a: H1obj T) : a ~> a.
+Program Definition H1_id (T: QDoubleCat.type) (a: H1obj T) : a ~> a.
 unfold hom.
 simpl.
 unfold H1hom.
@@ -1181,19 +1180,10 @@ simpl; simpl in *.
 econstructor 1 with (x:= hunit source0).
 econstructor 1 with (x:= hunit target0).
 econstructor 1 with (x:= H2Unit this_morph0).
-unfold H1Source, H1Target.
-unfold HSource, HTarget.
-unfold H2Unit.
-unfold H1Unit.
 split.
-rewrite F1.
-unfold hhunit.
-rewrite - F1.
-unfold Fhom.
-simpl.
-rewrite F1.
-
-(* Defined. *)
+eapply unit_source. 
+eapply unit_target.
+Defined.
 
 Program Definition H1_comp (T: PreSDoubleCat1.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
@@ -1202,24 +1192,36 @@ destruct b.
 destruct c.
 unfold hom in *; simpl in *.
 unfold H1hom in *; simpl in *.
-destruct hh1 as [h1 [k1 hk1]].
-destruct hh2 as [h2 [k2 hk2]].
+destruct hh1 as [h1 [k1 [hk1 [hk1S hk1T]]]].
+destruct hh2 as [h2 [k2 [hk2 [hk2S hk2T]]]].
 econstructor 1 with (x:= hcomp _ _ _ h1 h2).
 econstructor 1 with (x:= hcomp _ _ _ k1 k2).
 assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
           @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
 { 
-  unfold D1hom in *.
-  
+  rewrite hk1T.
+  rewrite hk2S; auto. 
 }
-eexact (HC2Comp_flat K).
-Admitted. 
 
-HB.instance Definition H1PreCat (T: FCFunctor.type) :
+econstructor 1 with (x := HC2Comp_flat K).
+
+split.
+rewrite source_comp_dist1; auto.
+rewrite target_comp_dist1; auto.
+Defined.
+
+HB.instance Definition H1PreCat (T: PreSDoubleCat1.type) :
   IsPreCat (H1obj T) :=
   IsPreCat.Build (H1obj T) (@H1_id T) (@H1_comp T).  
 
-
+Unset Universe Checking.
+#[wrapper] 
+HB.mixin Record IsSDoubleCat (T: PreSDoubleCat1.type) := {
+    is_sdcat : PreCat_IsCat (H1obj T) }.
+#[short(type="sdcat")]
+HB.structure Definition SDoubleCat : Set :=
+  { C of IsSDoubleCat C }.
+Set Universe Checking.
 
 
 
