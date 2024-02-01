@@ -1,6 +1,6 @@
 Require Import ssreflect ssrfun.
 Unset Universe Checking.
-From HB Require Import structures cat.
+From HB Require Import structures cat encatD.
 Set Universe Checking.
 Require Import Coq.Program.Equality.
 
@@ -23,203 +23,7 @@ Notation "'sigma' x .. y , p" :=
 
 (********************************************************************)
 
-(*** INTERNAL CATEGORIES assuming products *)
-(* based on the NLab definition at 
-   https://ncatlab.org/nlab/show/internal+category
-*) 
-
-(* category extended with internal objects *)
-HB.mixin Record HasIObjects C of Cat C := {
-    Obj : C ;
-    Mor : C
-}.
-HB.structure Definition IObjects :=
-  { C of HasIObjects C }.
-
-(* operators (meant to abstract over pullbacks and pushouts*)
-HB.mixin Record HasPOps C of IObjects C := {
-    prd : C -> C -> C ;
-    prj1 : forall c1 c2, prd c1 c2 ~> c1 ;
-    prj2 : forall c1 c2, prd c1 c2 ~> c2 ;
-    mprd : forall c1 c2 c3 c4,
-      (c1 ~> c3) -> (c2 ~> c4) -> prd c1 c2 ~> prd c3 c4 ;
-    mjn : forall c1 c2 c3,
-      (c1 ~> c2) -> (c1 ~> c3) -> c1 ~> prd c2 c3
-}.
-HB.structure Definition POps :=
-  { C of HasPOps C }.
-
-(* category extended with internal morphisms *)
-HB.mixin Record IsIQuiver C of POps C := {
-    iid : Obj ~>_C Mor ;
-    isrc : Mor ~>_C Obj ;
-    itrg : Mor ~>_C Obj ;
-    icmp : @prd C Mor Mor ~> Mor
-}.
-HB.structure Definition IQuiver :=
-  { C of IsIQuiver C }.
-
-Notation idO C := (@idmap C Obj).
-Notation idM C := (@idmap C Mor).
-Notation prdMM := (prd Mor Mor).
-Notation prdPM := (prd (prd Mor Mor) Mor).
-Notation prjMM1 := (prj1 Mor Mor).
-Notation prjMM2 := (prj2 Mor Mor).
-Notation prjOM1 := (prj1 Obj Mor).
-Notation prjOM2 := (prj2 Obj Mor).
-Notation prjMO1 := (prj1 Mor Obj).
-Notation prjMO2 := (prj2 Mor Obj).
-Notation prjPM1 := (prj1 (prd Mor Mor) Mor).
-Notation prjPM2 := (prj2 (prd Mor Mor) Mor).
-Notation prjPM1_ C := (@prj1 C (prd Mor Mor) Mor).
-Notation prjPM2_ C := (@prj2 C (prd Mor Mor) Mor).
-Notation prjMP1 := (prj1 Mor (prd Mor Mor)).
-Notation prjMP2 := (prj2 Mor (prd Mor Mor)).
-Notation mprdOMMM := (mprd Obj Mor Mor Mor).
-Notation mprdMOMM := (mprd Mor Obj Mor Mor).
-Notation mprdPMMM := (mprd (prd Mor Mor) Mor Mor Mor).
-Notation mprdMPMM := (mprd Mor (prd Mor Mor) Mor Mor).
-
-(* internal quiver extended with the required pullback properties *)
-HB.mixin Record IsIPreCat C of IQuiver C := {
-    pbkMM : prjMM2 \; @isrc C = prjMM1 \; itrg ;
-    pbkPMcmp : prjPM2 \; @isrc C = prjPM1 \; icmp \; itrg ;
-    pbkMPcmp : prjMP2 \; @icmp C \; isrc = prjMP1 \; itrg ;
-    pbkPM : prjPM2 \; @isrc C = prjPM1 \; prjMM2 \; itrg ;
-    pbkMP : prjMP2 \; prjMM1 \; @isrc C = prjMP1 \; itrg ;
-    pbkPM2MM1 : prjPM1_ C \; prjMM2 =
-                mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2 \; prjMM1 ;
-    pbkPM2MM2 : prjPM2_ C =
-              mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2 \; prjMM2 ;
-    pbkPM2MP1 : prjPM1_ C \; prjMM1 =
-        mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
-          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP1 ;
-    pbkPM2MP2 : mjn prdPM Mor Mor (prjPM1_ C \; prjMM2) prjPM2 =
-        mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
-          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \; prjMP2 ;
-}.
-HB.structure Definition IPreCat :=
-  { C of IsIPreCat C }.
-
-(* definition of internal category *)
-HB.mixin Record IsICat C of IPreCat C := {
-    iid_s : iid \; isrc = idO C ;
-    iid_t : iid \; itrg = idO C ;
-    icmp_s : @icmp C \; isrc = prjMM1 \; isrc ;
-    icmp_t : @icmp C \; itrg = prjMM2 \; itrg ;
-    unit_l : mprdOMMM iid (idM C) \; icmp = prjOM2 ;
-    unit_r : mprdMOMM (idM C) iid \; icmp = prjMO1 ;
-    assoc : mprdPMMM icmp (idM C) \; icmp =
-        mjn prdPM Mor prdMM (prjPM1 \; prjMM1)
-          (mjn prdPM Mor Mor (prjPM1 \; prjMM2) prjPM2) \;
-          mprdMPMM (idM C) icmp \; icmp
-}.
-HB.structure Definition ICat :=
-  { C of IsICat C }.
-(*
-HB.mixin Record IsICat C of IQuiver C := {
-    iid_s : iid \; isrc = @idmap C Obj ;
-    iid_t : iid \; itrg = @idmap C Obj ;
-    icmp_s : @icmp C \; isrc = prj1 Mor Mor \; isrc ;
-    icmp_t : @icmp C \; itrg = prj2 Mor Mor \; itrg ;
-    unit_l : mprd Obj Mor Mor Mor iid (@idmap C Mor) \; icmp =
-               prj2 Obj Mor ;
-    unit_r : mprd Mor Obj Mor Mor (@idmap C Mor) iid \; icmp =
-               prj1 Mor Obj ;
-    assoc : mprd (prd Mor Mor) Mor Mor Mor icmp (@idmap C Mor)
-              \; icmp =
-        (mjn (prd (prd Mor Mor) Mor) Mor (prd Mor Mor)
-          (prj1 (prd Mor Mor) Mor \; prj1 Mor Mor)
-          (mjn (prd (prd Mor Mor) Mor) Mor Mor
-             (prj1 (prd Mor Mor) Mor \; prj2 Mor Mor)
-             (prj2 (prd Mor Mor) Mor))) \;
-          (mprd Mor (prd Mor Mor) Mor Mor (@idmap C Mor) icmp)
-          \; icmp
-}.
-*)             
-
-(********************************************************************)
-
-(*** GENERALISED ENRICHED CATEGORIES *)
-
-Declare Scope encat_scope.
-Delimit Scope encat_scope with encat.
-Local Open Scope encat_scope.
-
-(* Enrichment in a monoidal category, following
-   https://ncatlab.org/nlab/show/enriched+category
-*)
-HB.mixin Record IsEnQuiver (V: Type) C := {
-    hom_object : C -> C -> V
-  }.
-Unset Universe Checking.
-HB.structure Definition EnQuiver (V: Type) : Set :=
-  { C of IsEnQuiver V C }.
-Set Universe Checking.
-
-(* Monoidal precategory with the enrichment operators (no axioms) *)
-HB.mixin Record IsEnPreCat (V: PreMonoidal.type) C of
-  EnQuiver (PreMonoidal.sort V) C := {
-    id_element : forall (a: C),
-      @hom V onec (hom_object a a) ;
-    comp_morphism : forall (a b c: C),
-      @hom V (@hom_object V C b c * @hom_object V C a b)
-             (@hom_object V C a c)
-}.
-Unset Universe Checking.
-HB.structure Definition EnPreCat (V: PreMonoidal.type) : Set :=
-  { C of IsEnPreCat V C }.
-Set Universe Checking.
-
-Notation "a ~^ b" := (hom_object a b)
-   (at level 99, b at level 200, format "a ~^ b") : encat_scope.
-Notation "a ~^_ ( V , C ) b" := (@hom_object V C a b)
-  (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
-Notation "~^IE a" := (id_element a)
-   (at level 99, format "~^IE a") : cat_scope.
-Notation "~^IE_ ( V , C ) a" := (@id_element V C a)
-  (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
-(* not working *)
-Notation "~^CM a b c" := (comp_morphism a b c)
-                          (at level 99,
-                            format "~^CM a b c") : cat_scope.
-Notation "~^CM_ ( V , C ) a b c" := (@comp_morphism V C a b c)
-  (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
-
-(* V-enriched category:
-   V is the monoidal category;
-   C is the base category that gets enriched
-*)
-HB.mixin Record IsEnCat (V: Monoidal.type) C of EnPreCat V C := {
-   ecat_comp_assoc : forall a b c d: C,
-    forall alpha:
-      (((c ~^_(V,C) d) * (b ~^_(V,C) c)) * (a ~^_(V,C) b)) ~>_V
-      ((c ~^_(V,C) d) * ((b ~^_(V,C) c) * (a ~^_(V,C) b))),
-        ((@comp_morphism V C b c d) <*> (@idmap V (a ~^_(V,C) b))) \;
-        (@comp_morphism V C a b d)
-        =
-        alpha \;
-        ((@idmap V (c ~^_(V,C) d)) <*> (@comp_morphism V C a b c)) \;
-        (@comp_morphism V C a c d) ;
-
-   ecat_comp_left_unital : forall a b: C,
-    forall l: onec * (a ~^_(V,C) b) ~>_V (a ~^_(V,C) b),
-      l = ((@id_element V C b) <*> (@idmap V (a ~^_(V,C) b))) \;
-          (@comp_morphism V C a b b) ;
-   ecat_comp_right_unital : forall a b: C,
-    forall r: (a ~^_(V,C) b) * onec ~>_V (a ~^_(V,C) b),
-      r = ((@idmap V (a ~^_(V,C) b)) <*> (@id_element V C a)) \;
-          (@comp_morphism V C a a b)
-}.
-Unset Universe Checking.
-#[verbose]
-HB.structure Definition EnCat (V: Monoidal.type) : Set :=
-                          { C of IsEnCat V C }.
-Set Universe Checking.
-
-(********************************************************************)
-
-(*** DOUBLE CATEGORIES (without internal categories) *)
+(*** DOUBLE CATEGORIES (without internal categories, with H1) *)
 
 (* Strict double categories, from
    https://ncatlab.org/nlab/show/double+category
@@ -233,6 +37,8 @@ Set Universe Checking.
 
    horizontal 1-morhisms as 1-cells for D1: D1obj C ; 
 
+   vertical 1-morhisms as 1-cells for H1: H1obj C ; 
+
    2-morphisms (category D1 on D1obj): hom (D1obj C) ; 
 
    horizontally composable pairs of 1-cells : DPobj C ;   
@@ -240,14 +46,12 @@ Set Universe Checking.
    horizontally composable pairs of 2-morphisms 
         (product category DP, D1 *0 D1) : hom (DPobj C) ;
 
-   The definition of Strict Double Category, SDouble = (D0, H, D1, Dp), 
+   The definition of Strict Double Category, SDouble = (D0, D1, Dp, H1), 
    is given by:
 
    - base objects C    
 
    - (level-1) category (D0) of vertical 1-morphism on C 
-
-   - (level-1) category (H) of horizontal 1-morphism (D1obj) on C
 
    - (level-2) category (D1) of vertical 2-morphism on D1obj 
 
@@ -255,13 +59,19 @@ Set Universe Checking.
                 horizontally D0-composable D1 products 
                                 ($\mbox{D1} *_0 \mbox{D1}$)
 
-   - Source functor: $\mbox{D1} \to \mbox{D0}$
+   - (level-2) category (H1) of horizontal 12morphism on H1obj
 
-   - Target functor: $\mbox{D1} \to \mbox{D0}$
+   - Source functor: D1 -> D0
 
-   - Horizontal unit functor: $\mbox{D0} \to \mbox{D1}$
+   - Target functor: D1 -> D0
 
-   - Horizontal composition functor: $\mbox{DP} \to \mbox{D1}$
+   - Horizontal unit functor: D0 -> D1
+
+   - Horizontal composition functor: DP -> D1 
+
+   - First DP projection: DP -> D1 
+
+   - Second DP projection: DP -> D1 
 *)
 
 
@@ -1105,7 +915,7 @@ HB.structure Definition QDoubleCat : Set :=
   { C of IsQDoubleCat C }.
 Set Universe Checking.
 
-(*
+
 (* definition of strict double precategory *)
 Unset Universe Checking.
 HB.mixin Record IsPreSDoubleCat T of QDoubleCat T := {
@@ -1119,7 +929,7 @@ HB.mixin Record IsPreSDoubleCat T of QDoubleCat T := {
 HB.structure Definition PreSDoubleCat : Set :=
   { C of IsPreSDoubleCat C }.
 Set Universe Checking.
-*)
+
 
 (* alternative definition of strict double precategory *)
 Unset Universe Checking.
@@ -1216,7 +1026,9 @@ HB.instance Definition H1PreCat (T: PreSDoubleCat1.type) :
 
 Unset Universe Checking.
 #[wrapper] 
-HB.mixin Record IsSDoubleCat (T: PreSDoubleCat1.type) := {
+(* Fail HB.mixin Record IsSDoubleCat T of PreSDoubleCat1 T := {
+   Fail HB.mixin Record IsSDoubleCat T of IsPreSDoubleCat1 T := { *)
+HB.mixin Record IsSDoubleCat (T: PreSDoubleCat1.type) := { 
     is_sdcat : PreCat_IsCat (H1obj T) }.
 #[short(type="sdcat")]
 HB.structure Definition SDoubleCat : Set :=

@@ -219,7 +219,7 @@ Set Universe Checking.
 
 (********************************************************************)
 
-(*** DOUBLE CATEGORIES (without internal categories) *)
+(*** DOUBLE CATEGORIES (without internal categories, with H0) *)
 
 (* Strict double categories, from
    https://ncatlab.org/nlab/show/double+category
@@ -255,13 +255,17 @@ Set Universe Checking.
                 horizontally D0-composable D1 products 
                                 ($\mbox{D1} *_0 \mbox{D1}$)
 
-   - Source functor: $\mbox{D1} \to \mbox{D0}$
+   - Source functor: D1 -> D0
 
-   - Target functor: $\mbox{D1} \to \mbox{D0}$
+   - Target functor: D1 -> D0
 
-   - Horizontal unit functor: $\mbox{D0} \to \mbox{D1}$
+   - Horizontal unit functor: D0 -> D1
 
-   - Horizontal composition functor: $\mbox{DP} \to \mbox{D1}$
+   - Horizontal composition functor: DP -> D1 
+
+   - First DP projection: DP -> D1 
+
+   - Second DP projection: DP -> D1 
 *)
 
 
