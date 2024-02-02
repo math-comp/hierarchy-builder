@@ -14,7 +14,7 @@ declare Module BSkel Sort :-
 
   disable-id-phant BSkel BSkelNoId,
   failsafe-structure-inference BSkelNoId BSkelNoIdX,
-  coq.say {coq.term->string BSkelNoIdX} BSkelNoIdX,
+  %coq.say {coq.term->string BSkelNoIdX} BSkelNoIdX,
   std.assert-ok! (coq.elaborate-skeleton BSkelNoIdX _ BNoId) "illtyped structure definition",
   re-enable-id-phant BNoId B,
   private.sigT->list-w-params B GRFSwP_or_ThingtoBeWrapped ClosureCheck,
@@ -699,7 +699,7 @@ lift-to-the-subject.aux [] _ [].
 lift-to-the-subject.aux [factory-on-the-type F|Rest] T [F|Rest1] :-
   lift-to-the-subject.aux Rest T Rest1.
 lift-to-the-subject.aux [factory-on-subject-lifter _ F OP|Rest] T [WF|Rest1] :-
-  wrapper-mixin Wrapper OP F, !, std.spy-do! [
+  wrapper-mixin Wrapper OP F, !, std.do! [
   factory-nparams Wrapper NParams,
   coq.mk-app {coq.env.global Wrapper} {std.append {coq.mk-n-holes NParams} [T]} W,
   factory? W WF,
@@ -713,8 +713,7 @@ declare-wrappers B C :- std.do! [
   private.sigT->list-w-params B X _,
   declare-wrappers.aux X Wrappers,
   distribute-w-params Wrappers WrappersWP,
-  std.map WrappersWP declare-wrapper Clauses,
-  std.flatten Clauses C,
+  std.fold WrappersWP [] declare-wrapper C,
 ].
 declare-wrappers.aux (w-params.cons ID T F) (w-params.cons ID T F1) :-
   @pi-parameter ID T x\ declare-wrappers.aux (F x) (F1 x).
@@ -725,13 +724,20 @@ declare-wrappers.aux2 [factory-on-subject-lifter _ F G|XS] R :- wrapper-mixin _ 
 declare-wrappers.aux2 [factory-on-subject-lifter T F G|XS] [triple (triple T F G) _ _|R] :- coq.say "TODO wrapper" T F G, declare-wrappers.aux2 XS R.
 declare-wrappers.aux2 [] [].
 
-pred declare-wrapper i:one-w-params (triple term gref gref), o:list prop.
-declare-wrapper F C :- std.do! [
+pred declare-wrapper i:one-w-params (triple term gref gref), i:list prop, o:list prop.
+declare-wrapper F C0 C :- C0 => std.do! [
+  coq.say "Missing" F,
   missing-wrapper->record F RSkel OP M,
-  std.assert-ok! (coq.elaborate-indt-decl-skeleton RSkel RDecl) "illtyped wrapper",
-  coq.say RDecl,
-  expand-structures RDecl W MLwP,
-  std.assert-ok! (coq.typecheck-indt-decl W) "illtyped wrapper record",
+  %coq.say "Wrapper skel" RSkel,
+  disable-id-phant-indt-decl RSkel RSkelNoId,
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton RSkelNoId RDeclNoId) "illtyped wrapper",
+  re-enable-id-phant-indt-decl RDeclNoId RDecl,
+  %coq.say "Record wrapper" RDecl,
+  expand-structures RDecl W' MLwP,
+  %coq.say "Expanded record wrapper" W',
+  %std.assert-ok! (coq.typecheck-indt-decl W) "illtyped wrapper record",
+  coq.say W',
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton W' W) "illtyped wrapper record",
   coq.say W,
   std.spy(log.coq.env.add-indt W R),
   coq.env.indt R tt _ _ _ [K] _,
@@ -756,7 +762,7 @@ declare-wrapper F C :- std.do! [
 
   GRDepsClauses => FRClauses => factory.private.declare-id-builder GR IdBuilderClause,
 
-  std.flatten [
+  std.flatten [ C0,
     [ wrapper-mixin GR OP M,
       factory-constructor GR GRK,
       factory-nparams GR NParams,
@@ -786,13 +792,13 @@ expand-structures (parameter ID I T ((s\record _ _ _ _) as R)) (parameter ID I _
   get-constructor GR SK,
   coq.mk-app (global K) Args KArgs,
   coq.mk-app (global SK) Args SKArgs,
-  (pi x\
+  (@pi-decl `TheType` {{ Type }} x\ % TYPE is wrong
     apply-w-params ML Args x (F x),
     expand-structures.aux (F x) {coq.mk-app SKArgs [x]} {coq.mk-app KArgs [x]} R (R1 x)),
 ].
 expand-structures.aux [triple M PS X|MS] Pack Class R (parameter "m" explicit Ty R1) :- std.do! [
   synthesis.infer-all-gref-deps PS X M Ty,
-  (@pi-decl `m` Ty m\
+  (@pi-decl `m` Ty m\ mixin-src X M m =>
     expand-structures.aux MS Pack {coq.mk-app Class [m]} R (R1 m)),
 ].
 expand-structures.aux [] Pack Class R R1 :- R1 = R {coq.mk-app Pack [Class]}.

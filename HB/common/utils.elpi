@@ -76,7 +76,7 @@ gref->modname GR NComp Sep ModName :-
   std.length Path Len,
   if (Len >= NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
   std.take NComp Mods L,
-  std.string.concat Sep {std.rev L} ModName.
+  std.string.concat Sep {std.rev [{std.any->string {new_int}}|L]} ModName.
 pred gref->modname-label i:gref, i:int, i:string, o:string.
 gref->modname-label GR NComp Sep ModName :-
   coq.gref->path GR Path,
@@ -314,6 +314,19 @@ re-enable-id-phant T T1 :-
   (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
   (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
   copy T T1.
+
+pred disable-id-phant-indt-decl i:indt-decl, o:indt-decl.
+disable-id-phant-indt-decl D D1 :-
+  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  copy-indt-decl D D1.
+
+pred re-enable-id-phant-indt-decl i:indt-decl, o:indt-decl.
+re-enable-id-phant-indt-decl D D1 :-
+  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
+  (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
+  copy-indt-decl D D1.
+
 
 pred failsafe-structure-inference i:term, o:term.
 failsafe-structure-inference T T1 :-
