@@ -504,8 +504,14 @@ Set Universe Checking.
 
 Unset Universe Checking.
 (* HB.about Functor. *)
+HB.structure Definition STFunctor : Set :=
+  {C of SFunctor C & TFunctor C}.
+Set Universe Checking.
+
+Unset Universe Checking.
+(* HB.about Functor. *)
 HB.structure Definition STUFunctor : Set :=
-  {C of SFunctor C & TFunctor C & UFunctor C}.
+  {C of STFunctor C & UFunctor C}.
 Set Universe Checking.
 
 
@@ -568,19 +574,19 @@ Notation "'sigma' x .. y , p" :=
 *)
 
 (** DPobj quiver *)
-Definition DP_hom (T: STUFunctor.type) (x y: DPobj T) :=
+Definition DP_hom (T: STFunctor.type) (x y: DPobj T) :=
    sigma (hh0: D1hom (h_first x) (h_first y))
          (hh1: D1hom (h_second x) (h_second y)),
     H1Target hh0 = H1Source hh1.
 
-HB.instance Definition DPQuiver (T: STUFunctor.type) :
+HB.instance Definition DPQuiver (T: STFunctor.type) :
   IsQuiver (DPobj T) :=
   IsQuiver.Build (DPobj T) (fun A B => @DP_hom T A B).
 
 
 (** Product precategory *)
 
-Lemma DP_id_eq (T : STUFunctor.type) (a: DPobj T) :
+Lemma DP_id_eq (T : STFunctor.type) (a: DPobj T) :
   H1Target (@idmap (@D1obj T) (H2First a)) =
               H1Source (@idmap (@D1obj T) (H2Second a)).
 unfold H1Target, HTarget.
@@ -589,7 +595,7 @@ repeat rewrite F1; auto.
 Defined.
 
 (* DPobj identity *)
-Definition DP_id (T: STUFunctor.type) (A: DPobj T) : A ~> A  :=
+Definition DP_id (T: STFunctor.type) (A: DPobj T) : A ~> A  :=
   let h0 := h_first A
   in let h1 := h_second A
   in let uu0 := @idmap (D1obj T) (TT2 h0)
@@ -601,7 +607,7 @@ Definition DP_id (T: STUFunctor.type) (A: DPobj T) : A ~> A  :=
        (fun hh1: (D1hom h1 h1) => H1Target uu0 = H1Source hh1) uu1
          (@DP_id_eq T A)).
 
-Definition DP_comp_auxA (T : STUFunctor.type)
+Definition DP_comp_auxA (T : STFunctor.type)
   (A B C : DPobj T)
   (hhA0 : D1hom (h_first A) (h_first B))
   (hhA1 : D1hom (h_second A) (h_second B))
@@ -616,7 +622,7 @@ Definition DP_comp_auxA (T : STUFunctor.type)
   reflexivity.
 Defined.
 
-Definition DP_comp_auxS (T : STUFunctor.type)
+Definition DP_comp_auxS (T : STFunctor.type)
   (A B C : DPobj T)
   (hhA0 : D1hom (h_first A) (h_first B))
   (hhA1 : D1hom (h_second A) (h_second B))
@@ -630,7 +636,7 @@ Definition DP_comp_auxS (T : STUFunctor.type)
   reflexivity.
 Defined.
 
-Definition DP_comp_auxT (T : STUFunctor.type)
+Definition DP_comp_auxT (T : STFunctor.type)
   (A B C : DPobj T)
   (hhA0 : D1hom (h_first A) (h_first B))
   (hhA1 : D1hom (h_second A) (h_second B))
@@ -644,7 +650,7 @@ Definition DP_comp_auxT (T : STUFunctor.type)
   reflexivity.
 Defined.
 
-Definition DP_comp_auxI (T : STUFunctor.type)
+Definition DP_comp_auxI (T : STFunctor.type)
   (A B C : DPobj T)
   (hhA0 : D1hom (h_first A) (h_first B))
   (hhA1 : D1hom (h_second A) (h_second B))
@@ -661,7 +667,7 @@ Definition DP_comp_auxI (T : STUFunctor.type)
 Defined.
 
 (* DPobj composition, defined in proof mode *)
-Definition DP_comp (T: STUFunctor.type) (A B C: DPobj T) :
+Definition DP_comp (T: STFunctor.type) (A B C: DPobj T) :
   (A ~> B) -> (B ~> C) -> A ~> C.
   intros chA chB.
   destruct chA as [hhA0 [hhA1 ppA]].
@@ -670,7 +676,7 @@ Definition DP_comp (T: STUFunctor.type) (A B C: DPobj T) :
 Defined.
 
 (* DPobj is a precategory *)
-HB.instance Definition DPPreCat (T: STUFunctor.type) :
+HB.instance Definition DPPreCat (T: STFunctor.type) :
   Quiver_IsPreCat (DPobj T) :=
   Quiver_IsPreCat.Build (DPobj T) (@DP_id T) (@DP_comp T).
 
@@ -690,7 +696,7 @@ HB.instance Definition DPPreCat (T: STUFunctor.type) :
 
 (** Product category *)
 
-Lemma DP_LeftUnit_lemma (T : STUFunctor.type) :
+Lemma DP_LeftUnit_lemma (T : STFunctor.type) :
   forall (a b : DPobj T) (f : a ~> b), idmap \; f = f.
 
   move => a b [x [x0 e]] /=.
@@ -755,7 +761,7 @@ Lemma DP_LeftUnit_lemma (T : STUFunctor.type) :
   eapply C.
 Qed.
 
-Lemma DP_RightUnit_lemma (T : STUFunctor.type) :
+Lemma DP_RightUnit_lemma (T : STFunctor.type) :
   forall (a b : DPobj T) (f : a ~> b), f \; idmap = f.
 
   move => a b [x [x0 e]] /=.
@@ -823,7 +829,7 @@ Lemma DP_RightUnit_lemma (T : STUFunctor.type) :
   eapply C.
 Qed.
 
-Lemma DP_Assoc_lemma (T : STUFunctor.type) :
+Lemma DP_Assoc_lemma (T : STFunctor.type) :
   forall (a b c d : DPobj T) (f : a ~> b) (g : b ~> c) (h : c ~> d),
   f \; g \; h = (f \; g) \; h.
   intros.
@@ -967,7 +973,7 @@ Lemma DP_Assoc_lemma (T : STUFunctor.type) :
   eapply KA.
 Qed.
 
-Program Definition DPCatP (T: STUFunctor.type) :
+Program Definition DPCatP (T: STFunctor.type) :
                                  PreCat_IsCat (DPobj T).
 econstructor.
 eapply DP_LeftUnit_lemma; eauto.
@@ -976,7 +982,7 @@ eapply DP_Assoc_lemma; eauto.
 Qed.
 
 (* DPobj is a category *)
-HB.instance Definition DPCat (T: STUFunctor.type) := DPCatP T.
+HB.instance Definition DPCat (T: STFunctor.type) := DPCatP T.
 
 
 (** Horizontal composition functor and strict double categories *)
