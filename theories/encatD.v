@@ -990,7 +990,7 @@ HB.instance Definition DPCat (T: STFunctor.type) := DPCatP T.
 (* fst horizontal projection prefunctor *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsHFPreFunctor T of STUFunctor T :=
+HB.mixin Record IsHFPreFunctor T of STFunctor T :=
   { is_hfprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H2First T) }.
 HB.structure Definition HFPreFunctor : Set := {C of IsHFPreFunctor C}.
 Set Universe Checking.
@@ -1006,7 +1006,7 @@ Set Universe Checking.
 (* snd horizontal projection prefunctor *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsHSPreFunctor T of STUFunctor T :=
+HB.mixin Record IsHSPreFunctor T of STFunctor T :=
   { is_hsprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H2Second T) }.
 HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
 Set Universe Checking.
@@ -1035,10 +1035,15 @@ HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
 HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
 Set Universe Checking.
 
+Unset Universe Checking.
+HB.structure Definition QCFunctor : Set :=
+  {C of HFFunctor C & HSFunctor C}.
+Set Universe Checking.
+
 (* All functors together *)
 Unset Universe Checking.
 HB.structure Definition FCFunctor : Set :=
-  {C of HFFunctor C & HSFunctor C & CFunctor C}.
+  {C of QCFunctor C & CFunctor C}.
 Set Universe Checking.
 
 
