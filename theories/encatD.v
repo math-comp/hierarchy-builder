@@ -1378,7 +1378,7 @@ Program Definition H1_id (T: QDoubleCat.type) (a: H1obj T) : a ~> a.
 unfold hom.
 simpl.
 unfold H1hom.
-destruct a.
+destruct a as [source0 target0 this_morph0]. 
 simpl; simpl in *.
 econstructor 1 with (x:= hunit source0).
 econstructor 1 with (x:= hunit target0).
@@ -1402,10 +1402,8 @@ econstructor 1 with (x:= hcomp _ _ _ h1 h2).
 econstructor 1 with (x:= hcomp _ _ _ k1 k2).
 assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
           @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
-{ 
-  rewrite hk1T.
-  rewrite hk2S; auto. 
-}
+{ rewrite hk1T.
+  rewrite hk2S; auto. }
 
 econstructor 1 with (x := HC2Comp_flat K).
 
@@ -1421,7 +1419,6 @@ HB.instance Definition H1PreCat (T: PreSDoubleCat1.type) :
 
 (**** Strict double category definition,
       based on IsPreSDoubleCat1 ***)
-
 Unset Universe Checking.
 #[wrapper] 
 (* Fail HB.mixin Record IsSDoubleCat T of PreSDoubleCat1 T := {
