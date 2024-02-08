@@ -907,6 +907,46 @@ HB.structure Definition UHPreDDCat : Set :=
   { C of IsUHPreDDCat C }.
 Set Universe Checking.
 
+(* strict double category, adding
+   distribution of source and target on h-comp to UHDDCat *)
+Unset Universe Checking.
+HB.mixin Record IsCUHPreDDCatS T of UHPreDDCat T := {
+    source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
+     TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
+
+    target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
+      TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ;
+}.
+#[short(type="cuhpreddcats")]
+HB.structure Definition CUHPreDDCatS : Set :=
+  { C of IsCUHPreDDCatS C }.
+Set Universe Checking.
+
+(* alternative definition of strict double category,
+   adding a display-style form of distribution to UHDDCat  *)
+Unset Universe Checking.
+HB.mixin Record IsCUHPreDDCatD T of UHPreDDCat T := {
+  source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1),
+      H1Source (HC2Comp_flat K) = H1Source hh0 ;
+
+  target_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1),
+      H1Target (HC2Comp_flat K) = H1Target hh1 ;
+}.    
+#[short(type="cuhpreddcatd")]
+HB.structure Definition CUHPreDDCatD : Set :=
+  { C of IsCUHPreDDCatD C }.
+Set Universe Checking.
+
 
 (*********** Strict double categories from an horizontal H-D0 category  ***)
 Module H0.
@@ -922,13 +962,31 @@ HB.structure Definition H0Cat : Set :=
   { C of PreCat_IsCat (transpose C) }.
 Set Universe Checking.
 
+
+Module H0S.
+  
 Unset Universe Checking.
-#[short(type="uhddcat")]
-HB.structure Definition UHDDCat : Set :=
-  { C of H0Cat C & UHPreDDCat C }.
+#[short(type="strictdoublecat")]
+HB.structure Definition StrictDoubleCat : Set :=
+  { C of H0Cat C & CUHPreDDCatS C }.
 Set Universe Checking.
 
+End H0S.
 
+Module H0D.
+
+Unset Universe Checking.
+#[short(type="strictdoublecat")]
+HB.structure Definition StrictDoubleCat : Set :=
+  { C of H0Cat C & CUHPreDDCatD C }.
+Set Universe Checking.
+
+End H0D.
+
+End H0.
+
+
+(*
 (* strict double category, adding
    distribution of source and target on h-comp to UHDDCat *)
 Unset Universe Checking.
@@ -971,3 +1029,4 @@ Set Universe Checking.
 
 End H0.
 
+*)

@@ -80,7 +80,7 @@ Notation "'sigma' x .. y , p" :=
 
 (*********** Strict double categories from an horizontal H-D1 category  ***)
 Module H1.
-
+(*
 (** definition of strict double precategory,
    with distribution of source and target on comp *)
 Unset Universe Checking.
@@ -120,7 +120,7 @@ HB.mixin Record  IsCUHPreDDCat1 T of UHPreDDCat T := {
 HB.structure Definition CUHPreDDCat1 : Set :=
   { C of IsCUHPreDDCat1 C }.
 Set Universe Checking.
-
+*)
 
 (**** Horizontal 2-cell level category (H1 category),
       using CQDoubleCat1 **)
@@ -155,7 +155,7 @@ eapply unit_target.
 Defined.
 
 (* uses CUHPreDDCat1 *)
-Program Definition H1_comp (T: CUHPreDDCat1.type) (a b c: H1obj T)
+Program Definition H1_comp (T: CUHPreDDCatD.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
 destruct a.
 destruct b.
@@ -178,7 +178,7 @@ rewrite source_comp_dist1; auto.
 rewrite target_comp_dist1; auto.
 Defined.
 
-HB.instance Definition H1PreCat (T: CUHPreDDCat1.type) :
+HB.instance Definition H1PreCat (T: CUHPreDDCatD.type) :
   IsPreCat (H1obj T) :=
   IsPreCat.Build (H1obj T) (@H1_id T) (@H1_comp T).  
 
@@ -189,14 +189,110 @@ Unset Universe Checking.
 #[wrapper] 
 (* Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := {
    Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := { *)
-HB.mixin Record IsStrictDoubleCatH1 (T: CUHPreDDCat1.type) := { 
+HB.mixin Record IsStrictDoubleCat (T: CUHPreDDCatD.type) := { 
     is_sdcat : PreCat_IsCat (H1obj T) }.
-#[short(type="strictdcath1")]
-HB.structure Definition SDoubleCatH1 : Set :=
-  { C of IsStrictDoubleCatH1 C }.
+#[short(type="strictdoublecat")]
+HB.structure Definition StrictDoubleCat : Set :=
+  { C of IsStrictDoubleCat C }.
 Set Universe Checking.
 
 End H1.  
 
 
+(** Logic eauivalence of the definitions in H0.H0D and H1 *)
+
+Lemma StrictDoubleCat_H02H1 : 
+  H0.H0D.StrictDoubleCat.type -> H1.StrictDoubleCat.type.
+  intros H.
+  
+  assert (CUHPreDDCatD.type) as A1.
+  { destruct H as [T C].
+    destruct C.
+    econstructor; eauto.
+    econstructor; eauto.
+  }
+
+  set (X := H1.H1PreCat A1).
+  
+  assert (Cat (H1.H1obj A1)) as A2.
+  { admit. }
+
+Admitted.
+(*  
+  assert (PreCat_IsCat (H1.H1obj A1)) as A3.
+  { admit. }
+
+  
+  exact (H1.IsStrictDoubleCat.Build A1 A2).
+  
+  econstructor 1 with (sort:=A1).
+  econstructor; eauto.
+  destruct A2 as [A2a A2b A2c].
+  destruct A2c; simpl in *.
+  econstructor; eauto.
+  econstructor; eauto.
+  exact comp1o.
+  
+  
+  destruct A1 as [A1a A1b].
+  subst X.
+  econstructor; eauto; simpl.
+  
+  
+  
+  destruct A2 as [A2a A2b A2c].
+  destruct A2c; simpl in *.
+  econstructor; eauto; simpl.
+  econstructor; eauto; simpl.
+  econstructor; eauto; simpl.
+  econstructor; eauto; simpl.
+  simpl in *.
+  eapply comp1o.
+  
+  
+  
+(*  remember H as A0. *)
+  destruct H as [T C].
+  
+  assert (CUHPreDDCatD T) as A1.
+  { destruct C.
+    econstructor; eauto. }
+
+  assert (HD0Quiver T) as A2.
+  { destruct C.
+    econstructor; eauto. }
+
+  assert (STUFunctor T) as A3.
+  { destruct C.
+    econstructor; eauto. }
+
+  set (B := H1.H1Quiver T).
+
+
+
+  
+  assert (HD0Quiver (H1.H1obj T)).
+  
+  destruct C.  
+  
+  assert (H1.H1PreCat (CUHPreDDCatD.sort)).
+  
+  set (X := H1.H1PreCat X).
+
+
+  (H1.H1obj T)). 
+  
+  econstructor; eauto.
+
+  
+  assert (H1.CUHPreDDCat1 T).
+  econstructor; eauto; simpl.
+  destruct X.
+  econstructor; eauto.
+  
+  
+  econstructor 1 with (sort:= T).
+  destruct C; simpl.
+  
+*)
 
