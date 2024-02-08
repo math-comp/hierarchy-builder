@@ -901,20 +901,14 @@ Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
 Definition HH2Second (T: HSFunctor.type) (a b: DPobj T)
   (m: DP_hom a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
 
-
-(* HF and HS functors (all functors so far) *)
+(**** HF and HS functors (all functors so far) *)
 Unset Universe Checking.
 HB.structure Definition QCFunctor : Set :=
   {C of HFFunctor C & HSFunctor C}.
 Set Universe Checking.
 
 
-(*********** Strict double categories from an horizontal H-D0 category  ***)
-Module H0.
-
-(** Horizonal D0-level category (H-D0) *)
-
-(* Precategory based on the HQuiver (i.e. horizontal precategory on D0
+(*** Precategory based on the HQuiver (i.e. horizontal precategory on D0
    objects) *)
 Unset Universe Checking.
 #[wrapper]
@@ -925,31 +919,20 @@ HB.structure Definition H0PreCat : Set :=
   { C of Quiver_IsPreCat (transpose C) }.
 Set Universe Checking.
 
-(* The category based on the HQuiver (i.e. horizontal category on D0
-   objects) *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsH0Cat T of H0PreCat T := {
-    is_h0cat : PreCat_IsCat (transpose T) }.
-#[short(type="h0cat")]
-HB.structure Definition H0Cat : Set :=
-  { C of PreCat_IsCat (transpose C) }.
-Set Universe Checking.
+Definition hunit (T: h0precat) (a: T) : @hhom T a a  :=
+   @idmap (transpose T) a.
 
-(* Naked strict double category. Vertical (V-D0), horizontal (H-D0)
-   and D1 categories. Strict double category without functors *)
-Unset Universe Checking.
-#[short(type="hdcat")]
-HB.structure Definition HDCat : Set := { C of DDCat C & H0Cat C }.
-Set Universe Checking.
-
+Definition hcomp (T: h0precat) (a b c: T)
+  (h1: @hhom T a b) (h2: @hhom T b c) : @hhom T a c :=
+   h1 \; h2.
 
 (** Horizontal Unit functor operator *)
 
 (* H0Cat unit, 
    used to define the horizontal unit functor: D0 -> D1 *)
 Definition hhunit (T: h0precat) (a: T) : D1obj T :=
-  @TT2 T (@hhom T) a a (@idmap (transpose T) a).
+  TT2 (hunit a).
+(*  @TT2 T (@hhom T) a a (@idmap (transpose T) a). *)
 HB.tag Definition H1Unit (C: h0precat) :=
   fun (x: H0PreCat.sort C) => @hhunit C x.
 
@@ -960,7 +943,8 @@ HB.tag Definition H1Unit (C: h0precat) :=
    used to define the horizontal composition functor: D1 * D1 -> D1 *)
 Definition hhcomp (T: h0precat) (x: DPobj T) : D1obj T :=
   match x with
-    @GC _ _ a b c h1 h2 => @TT2 T (@hhom T) a c (h1 \; h2) end.
+    @GC _ _ a b c h1 h2 => TT2 (hcomp h1 h2) end.
+(*  @GC _ _ a b c h1 h2 => @TT2 T (@hhom T) a c (h1 \; h2) end. *)
 HB.tag Definition H1Comp (C: h0precat) :=
   fun (x: DPobj C) => @hhcomp C x.
 
@@ -988,12 +972,20 @@ Definition l_hcomp (T: h0precat) (a0 a1 a2: T)
    at the morphism-level (between 2-cells).  *)
 
 
+(**** Double H-precategory: vertical (V-D0) and D1 categories, 
+   horizontal (H-D0) precategory. ***)
+Unset Universe Checking.
+#[short(type="h0preddcat")]
+HB.structure Definition H0PreDDCat : Set := { C of DDCat C & H0PreCat C }.
+Set Universe Checking.
+
+
 (** Unit functor *)
 
 (* unit prefunctor. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record IsUPreFunctor T of HDCat T :=
+HB.mixin Record IsUPreFunctor T of H0PreDDCat T :=
   { is_uprefunctor : IsPreFunctor T (D1obj T) (@H1Unit T) }.
 HB.structure Definition UPreFunctor : Set := {C of IsUPreFunctor C}.
 Set Universe Checking.
@@ -1013,11 +1005,8 @@ HB.structure Definition STUFunctor : Set :=
   {C of STFunctor C & UFunctor C}.
 Set Universe Checking.
 
-
-(** Lifting of Unit functor to D1 morphism *)
-
-(* horizontal 2-cell unit (maps vertical morphisms to horizontally
-   unitary 2-cells) *)
+(* Lifting of Unit functor to D1 morphism: horizontal 2-cell unit
+    (maps vertical morphisms to horizontally unitary 2-cells) *)
 Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
   (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
 
@@ -1039,21 +1028,21 @@ Lemma DPtarget (T: STUFunctor.type) (a: DPobj T) :
 Defined.  
 
 (* Horizontal unit source *)
-Lemma unit_source (T: STUFunctor.type) (a: T) :
+Lemma unit_H0source (T: STUFunctor.type) (a: T) :
   HSource (H1Unit a) = a.
   simpl in *; simpl; auto.
 Defined.
 
 (* Horizontal unit target *)
-Lemma unit_target (T: STUFunctor.type) (a: T) :
+Lemma unit_H0target (T: STUFunctor.type) (a: T) :
   HTarget (H1Unit a) = a.
   simpl in *; simpl; auto.
 Defined.
 
 
-(** Horizontal composition functor *)
+(** Horizontal composition *)
 
-(* composition prefunctor *)
+(* H-composition prefunctor *)
 Unset Universe Checking.
 #[wrapper]
 HB.mixin Record IsCPreFunctor T of STUFunctor T :=
@@ -1061,7 +1050,7 @@ HB.mixin Record IsCPreFunctor T of STUFunctor T :=
 HB.structure Definition CPreFunctor : Set := {C of IsCPreFunctor C}.
 Set Universe Checking.
 
-(* composition functor *)
+(* H-composition functor *)
 Unset Universe Checking.
 #[wrapper]
 HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
@@ -1091,49 +1080,70 @@ refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
 Defined.
 
 
-(** All functors together *)
+(**** All functors together *)
 Unset Universe Checking.
+#[short(type="fcfunctor")]
 HB.structure Definition FCFunctor : Set :=
   {C of QCFunctor C & CFunctor C}.
 Set Universe Checking.
 
 
-(** quasi-double category,
-    with distribution of source and target on unit *)
+(** double H-precategory (D0 and D1 categories, H precategory), 
+    with distribution of source and target on h-unit *)
 Unset Universe Checking.
-HB.mixin Record IsUQDoubleCat T of FCFunctor T := {
+HB.mixin Record IsUHPreDDCat T of FCFunctor T := {
     unit_source : forall (a b: T) (m: hom a b),
       H1Source (H2Unit m) = m ;
 
     unit_target : forall (a b: T) (m: hom a b),
       H1Target (H2Unit m) = m ;
 }.
-#[short(type="uqdoublecat")]
-HB.structure Definition UQDoubleCat : Set :=
-  { C of IsUQDoubleCat C }.
+#[short(type="uhpreddcat")]
+HB.structure Definition UHPreDDCat : Set :=
+  { C of IsUHPreDDCat C }.
 Set Universe Checking.
 
 
-(**** Strict double category definitions ***)
+(*********** Strict double categories from an horizontal H-D0 category  ***)
+Module H0.
 
-(* definition of strict double category,
-   with distribution of source and target on comp *)
+(** Horizonal D0-level category (H-D0), based on the HD0Quiver
+   (i.e. horizontal category on D0 objects) *)
 Unset Universe Checking.
-HB.mixin Record IsSDoubleCat T of UQDoubleCat T := {
+#[wrapper]
+HB.mixin Record IsH0Cat T of H0PreCat T := {
+    is_h0cat : PreCat_IsCat (transpose T) }.
+#[short(type="h0cat")]
+HB.structure Definition H0Cat : Set :=
+  { C of PreCat_IsCat (transpose C) }.
+Set Universe Checking.
+
+Unset Universe Checking.
+#[short(type="uhddcat")]
+HB.structure Definition UHDDCat : Set :=
+  { C of H0Cat C & UHPreDDCat C }.
+Set Universe Checking.
+
+
+(* strict double category, adding
+   distribution of source and target on h-comp to UHDDCat *)
+Unset Universe Checking.
+HB.mixin Record IsStrictDoubleCatH0A T of UHDDCat T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
 
     target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
       TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ;
 }.
-#[short(type="sdoublecat")]
-HB.structure Definition SDoubleCat : Set :=
-  { C of IsSDoubleCat C }.
+#[short(type="strictdoublecath0a")]
+HB.structure Definition StrcitDoubleCatH0A : Set :=
+  { C of IsStrictDoubleCatH0A C }.
 Set Universe Checking.
 
-(* alternative definition of strict double category (display-style) *)
+(* alternative definition of strict double category,
+   adding a display-style form of distribution to UHDDCat  *)
 Unset Universe Checking.
-HB.mixin Record IsStrictDoubleCat T of UQDoubleCat T := {
+HB.mixin Record IsStrictDoubleCatH0 T of UHDDCat T := {
   source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
@@ -1150,9 +1160,9 @@ HB.mixin Record IsStrictDoubleCat T of UQDoubleCat T := {
   (K: H1Target hh0 = H1Source hh1),
       H1Target (HC2Comp_flat K) = H1Target hh1 ;
 }.    
-#[short(type="strictdoublecat")]
-HB.structure Definition SstrictDoubleCat : Set :=
-  { C of IsStrictDoubleCat C }.
+#[short(type="strictdoublecath0")]
+HB.structure Definition StrictDoubleCatH0 : Set :=
+  { C of IsStrictDoubleCatH0 C }.
 Set Universe Checking.
 
 End H0.
@@ -1161,174 +1171,25 @@ End H0.
 (*********** Strict double categories from an horizontal H-D1 category  ***)
 Module H1.
 
-(** DQuiver extended with horizontal unit and composition *)  
-HB.mixin Record IsHDQuiver T of HD0Quiver T := {
-    hunit : forall a: T, @hhom T a a ;
-    hcomp : forall (a b c: T), @hhom T a b -> @hhom T b c -> @hhom T a c;
-}.                                  
-Unset Universe Checking.
-#[short(type="hdquiver")]
-HB.structure Definition HDQuiver : Set := { C of IsHDQuiver C }.
-Set Universe Checking.
-
-(** Horizontal Unit functor operator *)
-
-(* HDQuiver unit, 
-   used to define the horizontal unit functor: D0 -> D1 *)
-Definition hhunit (T: hdquiver) (a: T) : D1obj T :=
-  @TT2 T (@hhom T) a a (hunit a).
-HB.tag Definition H1Unit (C: hdquiver) :=
-  fun (x: HDQuiver.sort C) => @hhunit C x.
-
-(** 2-cell Horizontal Composition functor operator *)
-
-(* HDQuiver composition,
-   used to define the horizontal composition functor: D1 * D1 -> D1 *)
-Definition hhcomp (T: hdquiver) (x: DPobj T) : D1obj T := 
-  match x with 
-  @GC _ _ a b c h1 h2 => @TT2 T (@hhom T) a c (hcomp a b c h1 h2) end.
-HB.tag Definition H1Comp (C: hdquiver) :=
-  fun (x: DPobj C) => @hhcomp C x.
-
-(* horizontal composition of two (naked) horizontal morphisms *)
-Definition l_hcomp (T: HDQuiver.type) (a0 a1 a2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2) : D1obj T :=
-  @TT2 T _ a0 a2 (hcomp a0 a1 a2 h0 h1).
-
-
-(** Unit functor *)
-
-(* unit prefunctor. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsUPreFunctor T of HDQuiver T & TFunctor T :=
-  { is_uprefunctor : IsPreFunctor T (D1obj T) (@H1Unit T) }.
-HB.structure Definition UPreFunctor : Set := {C of IsUPreFunctor C}.
-Set Universe Checking.
-
-(* unit functor. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record UPreFunctor_IsFunctor T of UPreFunctor T := {
-    is_ufunctor : PreFunctor_IsFunctor T (D1obj T) (@H1Unit T) }.
-HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-(* target, source and unit functors *)
-Unset Universe Checking.
-(* HB.about Functor. *)
-HB.structure Definition STUFunctor : Set :=
-  {C of SFunctor C & TFunctor C & UFunctor C}.
-Set Universe Checking.
-
-
-(** Lifting of Unit functor to D1 morphism *)
-
-(* horizontal 2-cell unit (maps vertical morphisms to horizontally
-   unitary 2-cells) *)
-Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
-  (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
-
-(* Horizontal composition source *)
-Lemma DPsource (T: STUFunctor.type) (a: DPobj T) :
-  HSource (H1Comp a) = HSource (TT2 (h_first a)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
-
-(* Horizontal composition target *)
-Lemma DPtarget (T: STUFunctor.type) (a: DPobj T) :
-  HTarget (H1Comp a) = HTarget (TT2 (h_second a)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
-
-
-(** Horizontal composition functor *)
-
-(* composition prefunctor *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsCPreFunctor T of STUFunctor T :=
-  { is_cprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
-HB.structure Definition CPreFunctor : Set := {C of IsCPreFunctor C}.
-Set Universe Checking.
-
-(* composition functor - gives the definition of Strict Double Category *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
-    is_cfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
-(* #[short(type="sdoublecat")] *)
-HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-(* horizontal 2-cell composition: maps two adjecent pairs of
-   horizontal morphisms (a and b) and a pullback-category morphism
-   between them (m, which basically gives two adjecent cells) to a
-   2-cell morphism between the horizontal composition (HComp) of each
-   pair *)
-Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
-  (m: DP_hom a b) :
-  d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
-
-(* flat, display-style version *)
-Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2)
-  (k0: hhom b0 b1) (k1: hhom b1 b2)
-  (hh0: D1hom h0 k0)
-  (hh1: D1hom h1 k1)
-  (k: H1Target hh0 = H1Source hh1) :
-      D1hom (hcomp _ _ _ h0 h1) (hcomp _ _ _ k0 k1)  :=
-     (* d1hom (l_hcomp h0 h1) (l_hcomp k0 k1) := *)
-  @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1) _.
-Obligation 1.
-refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 k)).
-Defined.
-
-
-(** All functors together *)
-Unset Universe Checking.
-HB.structure Definition FCFunctor : Set :=
-  {C of QCFunctor C & CFunctor C}.
-Set Universe Checking.
-
-
-(** quasi-double category, 
-    with distribution of source and target on unit *)
-Unset Universe Checking.
-HB.mixin Record IsUQDoubleCat T of FCFunctor T := {
-    unit_source : forall (a b: T) (m: hom a b),
-      H1Source (H2Unit m) = m ;
-
-    unit_target : forall (a b: T) (m: hom a b),
-      H1Target (H2Unit m) = m ;
-}.
-#[short(type="uqdoublecat")]
-HB.structure Definition UQDoubleCat : Set :=
-  { C of IsUQDoubleCat C }.
-Set Universe Checking.
-
-
 (** definition of strict double precategory,
    with distribution of source and target on comp *)
 Unset Universe Checking.
-HB.mixin Record IsCQDoubleCat T of UQDoubleCat T := {
+HB.mixin Record IsCUHPreDDCat0 T of UHPreDDCat T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
 
     target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
       TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ; 
 }.
-#[short(type="cqdoublecat")]
-HB.structure Definition CQDoubleCat : Set :=
-  { C of IsCQDoubleCat C }.
+#[short(type="cuhpreddcat0")]
+HB.structure Definition CUHPreDDCat0 : Set :=
+  { C of IsCUHPreDDCat0 C }.
 Set Universe Checking.
 
 
 (* alternative definition of strict double precategory *)
 Unset Universe Checking.
-HB.mixin Record IsCQDoubleCat1 T of UQDoubleCat T := {
+HB.mixin Record  IsCUHPreDDCat1 T of UHPreDDCat T := {
   source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
@@ -1345,16 +1206,16 @@ HB.mixin Record IsCQDoubleCat1 T of UQDoubleCat T := {
   (K: H1Target hh0 = H1Source hh1),
       H1Target (HC2Comp_flat K) = H1Target hh1 ;
 }.    
-#[short(type="presdoublecat1")]
-HB.structure Definition CQDoubleCat1 : Set :=
-  { C of IsCQDoubleCat1 C }.
+#[short(type="cuhpreddcat1")]
+HB.structure Definition CUHPreDDCat1 : Set :=
+  { C of IsCUHPreDDCat1 C }.
 Set Universe Checking.
 
 
 (**** Horizontal 2-cell level category (H1 category),
       using CQDoubleCat1 **)
 
-HB.tag Definition H1obj (C: HDQuiver.type) := Total2 (@hom C).
+HB.tag Definition H1obj (C: HD0Quiver.type) := Total2 (@hom C).
 
 (* a and b are vertical (D0) morphisms. Gives the condition for a
    horizontal (H1) morphism between them. Given two horizontal (H0)
@@ -1365,12 +1226,11 @@ Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
   sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
     (hh: D1hom h1 h2),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b.                          
-
 HB.instance Definition H1Quiver (T: STUFunctor.type) :
   IsQuiver (H1obj T) :=
   IsQuiver.Build (H1obj T) (@H1hom T).  
 
-Program Definition H1_id (T: UQDoubleCat.type) (a: H1obj T) : a ~> a.
+Program Definition H1_id (T: UHPreDDCat.type) (a: H1obj T) : a ~> a.
 unfold hom.
 simpl.
 unfold H1hom.
@@ -1384,8 +1244,8 @@ eapply unit_source.
 eapply unit_target.
 Defined.
 
-(* uses CQDoubleCat1 *)
-Program Definition H1_comp (T: CQDoubleCat1.type) (a b c: H1obj T)
+(* uses CUHPreDDCat1 *)
+Program Definition H1_comp (T: CUHPreDDCat1.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
 destruct a.
 destruct b.
@@ -1394,8 +1254,8 @@ unfold hom in *; simpl in *.
 unfold H1hom in *; simpl in *.
 destruct hh1 as [h1 [k1 [hk1 [hk1S hk1T]]]].
 destruct hh2 as [h2 [k2 [hk2 [hk2S hk2T]]]].
-econstructor 1 with (x:= hcomp _ _ _ h1 h2).
-econstructor 1 with (x:= hcomp _ _ _ k1 k2).
+econstructor 1 with (x:= hcomp h1 h2).
+econstructor 1 with (x:= hcomp k1 k2).
 assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
           @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
 { rewrite hk1T.
@@ -1408,22 +1268,24 @@ rewrite source_comp_dist1; auto.
 rewrite target_comp_dist1; auto.
 Defined.
 
-HB.instance Definition H1PreCat (T: CQDoubleCat1.type) :
+HB.instance Definition H1PreCat (T: CUHPreDDCat1.type) :
   IsPreCat (H1obj T) :=
   IsPreCat.Build (H1obj T) (@H1_id T) (@H1_comp T).  
 
 
 (**** Strict double category definition,
-      based on IsPreSDoubleCat1 ***)
+      based on CUHPreDDCat1 ***)
 Unset Universe Checking.
 #[wrapper] 
-(* Fail HB.mixin Record IsSDoubleCat T of PreSDoubleCat1 T := {
-   Fail HB.mixin Record IsSDoubleCat T of IsPreSDoubleCat1 T := { *)
-HB.mixin Record IsStrictDoubleCat (T: CQDoubleCat1.type) := { 
+(* Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := {
+   Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := { *)
+HB.mixin Record IsStrictDoubleCatH1 (T: CUHPreDDCat1.type) := { 
     is_sdcat : PreCat_IsCat (H1obj T) }.
-#[short(type="strictdcat")]
-HB.structure Definition SDoubleCat : Set :=
-  { C of IsStrictDoubleCat C }.
+#[short(type="strictdcath1")]
+HB.structure Definition SDoubleCatH1 : Set :=
+  { C of IsStrictDoubleCatH1 C }.
 Set Universe Checking.
 
 End H1.  
+
+
