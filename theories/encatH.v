@@ -23,7 +23,8 @@ Notation "'sigma' x .. y , p" :=
 
 (********************************************************************)
 
-(*** DOUBLE CATEGORIES (without internal categories, with H1) *)
+(*** DOUBLE CATEGORIES (without internal categories, assuming
+     horizontal category H1) *)
 
 (* Strict double categories, from
    https://ncatlab.org/nlab/show/double+category
@@ -33,20 +34,22 @@ Notation "'sigma' x .. y , p" :=
 
    vertical 1-morphisms (category D0 on C): hom C ; 
 
-   horizontal 1-morphisms (category H on C): hom (transpose C) ;
+   horizontal 1-morphisms (precategory H0 on C): hom (transpose C) ;
 
-   horizontal 1-morhisms as 1-cells for D1: D1obj C ; 
+   horizontal 1-morphisms as 1-cells for D1: D1obj C ; 
 
-   vertical 1-morhisms as 1-cells for H1: H1obj C ; 
+   vertical 1-morphisms as 1-cells for H1: H1obj C ; 
 
    2-morphisms (category D1 on D1obj): hom (D1obj C) ; 
+
+   2-morphisms (category H1 on H1obj, based on H0): hom (H1obj) ;
 
    horizontally composable pairs of 1-cells : DPobj C ;   
 
    horizontally composable pairs of 2-morphisms 
         (product category DP, D1 *0 D1) : hom (DPobj C) ;
 
-   The definition of Strict Double Category, SDouble = (D0, D1, Dp, H1), 
+   The definition of Strict Double Category, SDouble = (D0, D1, DP, H1), 
    is given by:
 
    - base objects C    
@@ -56,10 +59,9 @@ Notation "'sigma' x .. y , p" :=
    - (level-2) category (D1) of vertical 2-morphism on D1obj 
 
    - (derived) category (DP) of vertical 2-morphisms on
-                horizontally D0-composable D1 products 
-                                ($\mbox{D1} *_0 \mbox{D1}$)
+                horizontally D0-composable D1 products (D1 *_0 D1)
 
-   - (level-2) category (H1) of horizontal 12morphism on H1obj
+   - (level-2) category (H1) of horizontal 2-morphism on H1obj
 
    - Source functor: D1 -> D0
 
@@ -72,868 +74,32 @@ Notation "'sigma' x .. y , p" :=
    - First DP projection: DP -> D1 
 
    - Second DP projection: DP -> D1 
+
+   - distribution of source and target on horizontal unit and composition 
 *)
 
+(*********** Strict double categories from an horizontal H-D1 category  ***)
+Module H1.
 
-(** Quivers for double categories *)
-
-(* transpose for horizontal morphism quiver.
-   HB.tag needed to identify transpose as lifter *)
-HB.tag Definition transpose (C : quiver) : U := C.
-#[wrapper] HB.mixin Record _IsHQuiver C of IsQuiver C := {
-    is_hquiver : IsQuiver (transpose C)
-}.
-(* vertical and horizontal quivers, defining cells *)
+(** definition of strict double precategory,
+   with distribution of source and target on comp *)
 Unset Universe Checking.
-#[short(type="vhquiver")]
-HB.structure Definition VHQuiver : Set :=
-  { C of IsQuiver C & IsQuiver (transpose C) }.
-Set Universe Checking.
-
-HB.tag Definition hhom (c : VHQuiver.type) : c -> c -> U := @hom (transpose c).
-Notation "a +> b" := (hhom a b)
-   (at level 99, b at level 200, format "a  +>  b") : cat_scope.
-
-(* record to represent the set of morphims 
-   (needed for 2-objects, i.e. horizontal morphisms) *)
-Record Total2 T (h: T -> T -> U) : Type := TT2 {
-    source : T;
-    target : T;
-    this_morph : h source target }.
-
-(* the set of horizontal morphisms. *)
-HB.tag Definition D1obj (C: vhquiver) := Total2 (@hhom C).
-
-(* D1 quiver requirement (includes D0 quiver and its transpose). *)
-#[wrapper]
-HB.mixin Record _IsDQuiver T of VHQuiver T :=
-  { is_dquiver : Quiver (D1obj T) }.
-Unset Universe Checking.
-#[short(type="dquiver")]
-HB.structure Definition DQuiver : Set := { C of Quiver (D1obj C) }.
-Set Universe Checking.
-
-
-(** Horizonal D0-level category (H-D0) *)
-(*
-(* Precategory based on the HQuiver (i.e. horizontal precategory on D0
-   objects) *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsHPreCat T of VHQuiver T := {
-    is_hprecat : Quiver_IsPreCat (transpose T) }.
-#[short(type="hprecat")]
-HB.structure Definition HPreCat : Set :=
-  { C of Quiver_IsPreCat (transpose C) }.
-Set Universe Checking.
-
-(* The category based on the HQuiver (i.e. horizontal category on D0
-   objects) *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsHCat T of HPreCat T := {
-    is_hcat : PreCat_IsCat (transpose T) }.
-#[short(type="hcat")]
-HB.structure Definition HCat : Set :=
-  { C of PreCat_IsCat (transpose C) }.
-Set Universe Checking.
-*)
-
-(** Vertical 2-cell level category (D1 category) *)
-
-(* Precategory based on the DQuiver (i.e. precategory D1). Gives: 
-   vertical 2-cell identity morphism.  
-   vertical 2-cell composition. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsD1PreCat T of DQuiver T := {
-    is_d1precat : Quiver_IsPreCat (@D1obj T) }.
-#[short(type="d1precat")]
-HB.structure Definition D1PreCat : Set :=
-  { C of Quiver_IsPreCat (@D1obj C) }.
-Set Universe Checking.
-
-(* The category based on the DQuiver (i.e. category D1). *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsD1Cat T of D1PreCat T := {
-    is_d1cat : PreCat_IsCat (@D1obj T) }.
-#[short(type="d1cat")]
-HB.structure Definition D1Cat : Set :=
-  { C of PreCat_IsCat (@D1obj C) }.
-Set Universe Checking.
-
-
-(** Naked double category *)
-
-(* Naked double category. Vertical (V-D0) and D1 categories. Double
-   category without horizontal operators and functors *)
-Unset Universe Checking.
-#[short(type="dcat")]
-HB.structure Definition DCat : Set :=
-  { C of Cat C & D1Cat C }.
-Set Universe Checking.
-
-
-(* composable pairs of morphisms as a set *)
-Record GenComp T (h: T -> T -> U) := GC {
-   h_one : T;
-   h_two : T ;
-   h_three : T;
-   h_first : h h_one h_two ;
-   h_second : h h_two h_three }.
-
-(* composable pairs of horizontal morphisms as a set *)
-HB.tag Definition DPobj (C: vhquiver) := GenComp (@hhom C).
-
-
-HB.mixin Record IsHDQuiver T of DQuiver T := {
-    hunit : forall a: T, @hhom T a a ;
-    hcomp : forall (a b c: T), @hhom T a b -> @hhom T b c -> @hhom T a c;
-}.                                  
-Unset Universe Checking.
-#[short(type="hdquiver")]
-HB.structure Definition HDQuiver : Set := { C of IsHDQuiver C }.
-Set Universe Checking.
-
-Definition hhunit (T: hdquiver) (a: T) : D1obj T :=
-  @TT2 T (@hhom T) a a (hunit a).
-HB.tag Definition H1Unit (C: hdquiver) :=
-  fun (x: HDQuiver.sort C) => @hhunit C x.
-
-(* horizontal composition of two horizontal morphisms from a 
-   cell product *)
-Definition hhcomp (T: hdquiver) (x: DPobj T) : D1obj T := 
-  match x with 
-  @GC _ _ a b c h1 h2 => @TT2 T (@hhom T) a c (hcomp a b c h1 h2) end.
-HB.tag Definition H1Comp (C: hdquiver) :=
-  fun (x: DPobj C) => @hhcomp C x.
-
-
-(*
-(* Naked double category. Vertical V-D0 
-   and V-D1 categories. Strict double category without functors *)
-Unset Universe Checking.
-#[short(type="sd2cat")]
-HB.structure Definition SDCat : Set := { C of Cat C (* & HCat C *) & D1Cat C }.
-Set Universe Checking.
-*)
-
-(** Auxiliary notions for Source, Target and 
-    Horizontal Unit functors *)
-
-(* homsets of 2-cell (D1) morphisms *)
-Definition d1hom (D: DQuiver.type) : D1obj D -> D1obj D -> U :=
-  @hom (D1obj D).
-(* type-level smart constructor for D1 homsets *)
-Definition D1hom (D: DQuiver.type) (a b c d: D) (h0: hhom a b)
-  (h1: hhom c d) : U := d1hom (TT2 h0) (TT2 h1).
-
-(* smart projections for: 
-   source functor (for horizontal morphisms): D1 -> D0.
-   defined as object-level function, by functoriality lifted to a
-   (2-cell, vertical) morphism-level one *)
-HB.tag Definition HSource C := fun (X: D1obj C) => @source C (@hhom C) X.
-(* target functor (for horizontal morphisms): D1 -> D0. *)
-HB.tag Definition HTarget C := fun (X: D1obj C) => @target C (@hhom C) X.
-
-(*
-(* horizontal unit functor: D0 -> D1 *)
-Definition hhunit (T: hprecat) (a: T) : D1obj T :=
-  @TT2 T (@hhom T) a a (@idmap (transpose T) a).
-HB.tag Definition H1Unit (C: hprecat) :=
-  fun (x: HPreCat.sort C) => @hhunit C x.
-*)
-
-(** Auxiliary notions for 2-cell Horizontal Composition functor *)
-
-(* smart projections *)
-Definition H2First (C: vhquiver) (X: @DPobj C) : D1obj C :=
-    @TT2 C _ (h_one X) (h_two X) (h_first X).
-Definition H2Second (C: vhquiver) (X: @DPobj C) : D1obj C :=
-    @TT2 C _ (h_two X) (h_three X) (h_second X).
-
-(*
-(* horizontal composition functor: D1 * D1 -> D1 *)
-Definition hhcomp (T: hprecat) (x: DPobj T) : D1obj T :=
-  match x with
-    @GC _ _ a b c h1 h2 => @TT2 T (@hhom T) a c (h1 \; h2) end.
-HB.tag Definition H1Comp (C: hprecat) :=
-  fun (x: DPobj C) => @hhcomp C x.
-*)
-
-(* hhunit - horizontal unit functor.
-
-   hhcomp - horizontal composition functor (horizontal composition of
-   two horizontal morphisms from a cell product).
-
-   Both specified as object-level functions (they actually come for
-   free from the H-D0 category, since we are in the strict case), to
-   be lifted by functoriality to morphism-level ones.
-
-   At the object level, hhunit gives a horizontal identity morphism
-   for each D0 object. At the morphism level, it gives horizontal
-   2-cell identity for each vertical morphism.
-  
-   In the case of hhcomp, relying on functoriality requires some care
-   in defining the product category, making sure that adjacency at the
-   object-level (between horizontal morphisms) is matched by adjacency
-   at the morphism-level (between 2-cells).  *)
-
-
-(** Source and target functors *)
-
-(* source prefunctor. 
-   D1obj T is the quiver of the 2-morphisms, thanks to VHQuiver. 
-   T is the quiver of 1-morphisms. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsSPreFunctor T of DCat T := {
-    is_sprefunctor : IsPreFunctor (D1obj T) T (@HSource T) }.
-HB.structure Definition SPreFunctor : Set := {C of IsSPreFunctor C}.
-Set Universe Checking.
-
-(* target prefunctor. *)
-Unset Universe Checking.
-#[wrapper]
-  HB.mixin Record IsTPreFunctor T of DCat T := {
-    is_tprefunctor : IsPreFunctor (D1obj T) T (@HTarget T) }.
-HB.structure Definition TPreFunctor : Set := {C of IsTPreFunctor C}.
-Set Universe Checking.
-
-(* source functor. *)
-Unset Universe Checking.
-#[wrapper]
-  HB.mixin Record SPreFunctor_IsFunctor T of SPreFunctor T := {
-    is_sfunctor : PreFunctor_IsFunctor (D1obj T) T (@HSource T) }.
-HB.structure Definition SFunctor : Set := {C of SPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-(* target functor. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record TPreFunctor_IsFunctor T of TPreFunctor T := {
-    is_tfunctor : PreFunctor_IsFunctor (D1obj T) T (@HTarget T) }.
-HB.structure Definition TFunctor : Set := {C of TPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-
-(** Unit functor *)
-
-(* unit prefunctor. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsUPreFunctor T of HDQuiver T & TFunctor T :=
-  { is_uprefunctor : IsPreFunctor T (D1obj T) (@H1Unit T) }.
-HB.structure Definition UPreFunctor : Set := {C of IsUPreFunctor C}.
-Set Universe Checking.
-
-(* unit functor. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record UPreFunctor_IsFunctor T of UPreFunctor T := {
-    is_ufunctor : PreFunctor_IsFunctor T (D1obj T) (@H1Unit T) }.
-HB.structure Definition UFunctor : Set := {C of UPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-Unset Universe Checking.
-(* HB.about Functor. *)
-HB.structure Definition STUFunctor : Set :=
-  {C of SFunctor C & TFunctor C & UFunctor C}.
-Set Universe Checking.
-
-
-(** Lifting of Source, Target and Unit functors to D1 morphisms *)
-
-(* 2-cell source *)
-Definition H1Source (T: SFunctor.type) (a b: @D1obj T)
-  (m: @d1hom T a b) :
-  (HSource a) ~> (HSource b) := (@HSource T) <$> m.
-
-(* 2-cell target *)
-Definition H1Target (T: TFunctor.type) (a b: @D1obj T)
-  (m: @d1hom T a b) :
-  (HTarget a) ~> (HTarget b) := (@HTarget T) <$> m.
-
-(* horizontal 2-cell unit (maps vertical morphisms to horizontally
-   unitary 2-cells) *)
-Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
-  (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
-
-(* DP objects source and target *)
-Lemma DPsource (T: STUFunctor.type) (a: DPobj T) :
-  HSource (H1Comp a) = HSource (TT2 (h_first a)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
-
-Lemma DPtarget (T: STUFunctor.type) (a: DPobj T) :
-  HTarget (H1Comp a) = HTarget (TT2 (h_second a)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
-
-
-(** Horizontal product category (D1 *d0 D1) *)
-(* DPobj T is the pseudo-pullback category used to deal with
-    products of D1 (where the adjacency condition is expressed
-    w.r.t. D0 *)
-
-(* horizontal composition of two (naked) horizontal morphisms *)
-Definition l_hcomp (T: UFunctor.type) (a0 a1 a2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2) : D1obj T :=
-  @TT2 T _ a0 a2 (hcomp a0 a1 a2 h0 h1).
-
-(*
-Notation "'sigma' x .. y , p" :=
-  (sigT (fun x => .. (sigT (fun y => p)) ..))
-  (at level 200, x binder, right associativity,
-   format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
-  : type_scope.
-*)
-
-(** DPobj quiver *)
-Definition DP_hom (T: STUFunctor.type) (x y: DPobj T) :=
-   sigma (hh0: D1hom (h_first x) (h_first y))
-         (hh1: D1hom (h_second x) (h_second y)),
-    H1Target hh0 = H1Source hh1.
-
-HB.instance Definition DPQuiver (T: STUFunctor.type) :
-  IsQuiver (DPobj T) :=
-  IsQuiver.Build (DPobj T) (fun A B => @DP_hom T A B).
-
-
-(** Product precategory *)
-
-Lemma DP_id_eq (T : STUFunctor.type) (a: DPobj T) :
-  H1Target (@idmap (@D1obj T) (H2First a)) =
-              H1Source (@idmap (@D1obj T) (H2Second a)).
-unfold H1Target, HTarget.
-unfold H1Source, HSource.
-repeat rewrite F1; auto.
-Defined.
-
-(* DPobj identity *)
-Definition DP_id (T: STUFunctor.type) (A: DPobj T) : A ~> A  :=
-  let h0 := h_first A
-  in let h1 := h_second A
-  in let uu0 := @idmap (D1obj T) (TT2 h0)
-  in let uu1 := @idmap (D1obj T) (TT2 h1)
-  in @existT (D1hom h0 h0)
-    (fun hh0: (D1hom h0 h0) =>
-       sigma (hh1 : D1hom h1 h1), H1Target hh0 = H1Source hh1) uu0
-    (@existT (D1hom h1 h1)
-       (fun hh1: (D1hom h1 h1) => H1Target uu0 = H1Source hh1) uu1
-         (@DP_id_eq T A)).
-
-Definition DP_comp_auxA (T : STUFunctor.type)
-  (A B C : DPobj T)
-  (hhA0 : D1hom (h_first A) (h_first B))
-  (hhA1 : D1hom (h_second A) (h_second B))
-  (ppA : H1Target hhA0 = H1Source hhA1)
-  (hhB0 : D1hom (h_first B) (h_first C))
-  (hhB1 : D1hom (h_second B) (h_second C))
-  (ppB : H1Target hhB0 = H1Source hhB1) :
-  (H1Target hhA0) \; (H1Target hhB0) =
-  (H1Source hhA1) \; (H1Source hhB1).
-  rewrite ppA.
-  rewrite ppB.
-  reflexivity.
-Defined.
-
-Definition DP_comp_auxS (T : STUFunctor.type)
-  (A B C : DPobj T)
-  (hhA0 : D1hom (h_first A) (h_first B))
-  (hhA1 : D1hom (h_second A) (h_second B))
-  (ppA : H1Target hhA0 = H1Source hhA1)
-  (hhB0 : D1hom (h_first B) (h_first C))
-  (hhB1 : D1hom (h_second B) (h_second C))
-  (ppB : H1Target hhB0 = H1Source hhB1) :
-  H1Source (hhA1 \; hhB1) = (H1Source hhA1) \; (H1Source hhB1).
-  unfold H1Source, HSource.
-  repeat rewrite Fcomp.
-  reflexivity.
-Defined.
-
-Definition DP_comp_auxT (T : STUFunctor.type)
-  (A B C : DPobj T)
-  (hhA0 : D1hom (h_first A) (h_first B))
-  (hhA1 : D1hom (h_second A) (h_second B))
-  (ppA : H1Target hhA0 = H1Source hhA1)
-  (hhB0 : D1hom (h_first B) (h_first C))
-  (hhB1 : D1hom (h_second B) (h_second C))
-  (ppB : H1Target hhB0 = H1Source hhB1) :
-  H1Target (hhA0 \; hhB0) = (H1Target hhA0) \; (H1Target hhB0).
-  unfold H1Target, HTarget.
-  repeat rewrite Fcomp.
-  reflexivity.
-Defined.
-
-Definition DP_comp_auxI (T : STUFunctor.type)
-  (A B C : DPobj T)
-  (hhA0 : D1hom (h_first A) (h_first B))
-  (hhA1 : D1hom (h_second A) (h_second B))
-  (ppA : H1Target hhA0 = H1Source hhA1)
-  (hhB0 : D1hom (h_first B) (h_first C))
-  (hhB1 : D1hom (h_second B) (h_second C))
-  (ppB : H1Target hhB0 = H1Source hhB1) :
-  A ~> C.
-  econstructor 1 with (comp hhA0 hhB0).
-  econstructor 1 with (comp hhA1 hhB1).
-  setoid_rewrite DP_comp_auxS; eauto.
-  setoid_rewrite DP_comp_auxT; eauto.
-  eapply DP_comp_auxA; eauto.
-Defined.
-
-(* DPobj composition, defined in proof mode *)
-Definition DP_comp (T: STUFunctor.type) (A B C: DPobj T) :
-  (A ~> B) -> (B ~> C) -> A ~> C.
-  intros chA chB.
-  destruct chA as [hhA0 [hhA1 ppA]].
-  destruct chB as [hhB0 [hhB1 ppB]].
-  eapply DP_comp_auxI; eauto.
-Defined.
-
-(* DPobj is a precategory *)
-HB.instance Definition DPPreCat (T: STUFunctor.type) :
-  Quiver_IsPreCat (DPobj T) :=
-  Quiver_IsPreCat.Build (DPobj T) (@DP_id T) (@DP_comp T).
-
-(*
-  have HcompP :
-        (a b : DPobj T)
-        (f g : a ~> b),
-      proj1T f = proj1t f ->
-        
-   ->
-     f = g.
-
-  exists a b p,
-    fst f = a
-  f = (a,b,p)
-*)  
-
-(** Product category *)
-
-Lemma DP_LeftUnit_lemma (T : STUFunctor.type) :
-  forall (a b : DPobj T) (f : a ~> b), idmap \; f = f.
-
-  move => a b [x [x0 e]] /=.
-  simpl in *.
-  unfold idmap; simpl.
-  unfold DP_id; simpl.
-  unfold comp; simpl.
-  unfold DP_comp_auxI; simpl.
-
-  assert (idmap \; x = x) as A.
-  { rewrite comp1o; auto. }
-
-  assert (idmap \; x0 = x0) as A0.
-  { rewrite comp1o; auto. }
-
-  assert (H1Target (idmap \; x) = H1Source (idmap \; x0)) as B.
-  { rewrite A.
-    rewrite A0; auto. }
-
-  destruct a eqn: aaa.
-  destruct b eqn: bbb.
-  simpl.
-
-  assert (existT
-    (fun hh0 : D1hom h_first0 h_first1 =>
-       sigma hh1 : D1hom h_second0 h_second1,H1Target hh0 = H1Source hh1)
-    (idmap \; x)
-    (existT
-       (fun hh1 : D1hom h_second0 h_second1 =>
-          H1Target (idmap \; x) = H1Source hh1)
-       (idmap \; x0)
-       B) =
-  existT
-    (fun hh0 : D1hom h_first0 h_first1 =>
-       sigma hh1 : D1hom h_second0 h_second1,H1Target hh0 = H1Source hh1)
-    x
-    (existT
-       (fun hh1 : D1hom h_second0 h_second1 => H1Target x = H1Source hh1)
-       x0
-       e)) as C.
-  { revert B.
-    revert A.
-    revert A0.
-    generalize (idmap \; x) as v.
-    generalize (idmap \; x0) as v0.
-    intros v0 v A0.
-    rewrite A0.
-    intro A.
-    rewrite A.
-    intro B.
-
-    assert (B = e) as BE.
-    { eapply Prop_irrelevance. }
-
-    rewrite BE.
-    reflexivity.
-}
-
-  inversion aaa; subst.
-  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
-    (Prop_irrelevance _ B).
-  eapply C.
-Qed.
-
-Lemma DP_RightUnit_lemma (T : STUFunctor.type) :
-  forall (a b : DPobj T) (f : a ~> b), f \; idmap = f.
-
-  move => a b [x [x0 e]] /=.
-  simpl in *.
-  unfold idmap; simpl.
-  unfold DP_id; simpl.
-  unfold comp; simpl.
-  unfold DP_comp_auxI; simpl.
-
-  assert (x \; idmap = x) as A.
-  { rewrite compo1; auto. }
-
-  assert (x0 \; idmap = x0) as A0.
-  { rewrite compo1; auto. }
-
-  assert (H1Target (x \; idmap) = H1Source (x0 \; idmap)) as B.
-  { rewrite A.
-    rewrite A0; auto. }
-
-  destruct a eqn: aaa.
-  destruct b eqn: bbb.
-  simpl.
-
-  assert (existT
-    (fun hh0 : D1hom h_first0 h_first1 =>
-       sigma hh1 : D1hom h_second0 h_second1,
-         H1Target hh0 = H1Source hh1)
-    (x \; idmap)
-    (existT
-       (fun hh1 : D1hom h_second0 h_second1 =>
-          H1Target (x \; idmap) = H1Source hh1)
-       (x0 \; idmap)
-       B) =
-  existT
-    (fun hh0 : D1hom h_first0 h_first1 =>
-       sigma hh1 : D1hom h_second0 h_second1,
-         H1Target hh0 = H1Source hh1)
-    x
-    (existT
-       (fun hh1 : D1hom h_second0 h_second1 =>
-          H1Target x = H1Source hh1)
-       x0
-       e)) as C.
-  { revert B.
-    revert A.
-    revert A0.
-    generalize (x \; idmap) as v.
-    generalize (x0 \; idmap) as v0.
-    intros v0 v A0.
-    rewrite A0.
-    intro A.
-    rewrite A.
-    intro B.
-
-    assert (B = e) as BE.
-    { eapply Prop_irrelevance. }
-
-    rewrite BE.
-    reflexivity.
-  }
-
-  inversion aaa; subst.
-  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
-    (Prop_irrelevance _ B).
-  eapply C.
-Qed.
-
-Lemma DP_Assoc_lemma (T : STUFunctor.type) :
-  forall (a b c d : DPobj T) (f : a ~> b) (g : b ~> c) (h : c ~> d),
-  f \; g \; h = (f \; g) \; h.
-  intros.
-  remember f as f1.
-  remember g as g1.
-  remember h as h1.
-  destruct f as [x0 s0].
-  destruct g as [x1 s1].
-  destruct h as [x2 s2].
-  destruct s0 as [y0 e0].
-  destruct s1 as [y1 e1].
-  destruct s2 as [y2 e2].
-  simpl.
-
-  set (x01 := comp x0 x1).
-  set (x12 := comp x1 x2).
-  set (x0_12 := comp x0 x12).
-  set (x01_2 := comp x01 x2).
-  set (y01 := comp y0 y1).
-  set (y12 := comp y1 y2).
-  set (y0_12 := comp y0 y12).
-  set (y01_2 := comp y01 y2).
-
-  assert (x0_12 = x01_2) as X0.
-  { subst x0_12 x01_2.
-    rewrite compoA; eauto. }
-  assert (y0_12 = y01_2) as Y0.
-  { subst y0_12 y01_2.
-    rewrite compoA; eauto. }
-
-  set (x01_t := comp (H1Target x0) (H1Target x1)).
-  set (x01_2_t := comp x01_t (H1Target x2)).
-  set (x12_t := comp (H1Target x1) (H1Target x2)).
-  set (x0_12_t := comp (H1Target x0) x12_t).
-  set (y01_s := comp (H1Source y0) (H1Source y1)).
-  set (y01_2_s := comp y01_s (H1Source y2)).
-  set (y12_s := comp (H1Source y1) (H1Source y2)).
-  set (y0_12_s := comp (H1Source y0) y12_s).
-
-  assert (x01_t = y01_s) as E01.
-  { subst x01_t y01_s.
-    rewrite e0.
-    rewrite e1; auto. }
-  assert (x01_2_t = y01_2_s) as E01_2.
-  { subst x01_2_t y01_2_s.
-    rewrite E01.
-    rewrite e2; auto. }
-  assert (x12_t = y12_s) as E12.
-  { subst x12_t y12_s.
-    rewrite e1.
-    rewrite e2; auto. }
-  assert (x0_12_t = y0_12_s) as E0_12.
-  { subst x0_12_t y0_12_s.
-    rewrite E12.
-    rewrite e0; auto. }
-
-  assert (x0_12_t = x01_2_t) as E02T.
-  { subst x0_12_t x01_2_t.
-    subst x12_t x01_t.
-    rewrite compoA; auto. }
-  assert (y0_12_s = y01_2_s) as E02S.
-  { subst y0_12_s y01_2_s.
-    subst y12_s y01_s.
-    rewrite compoA; auto. }
-
-  unfold comp.
-  simpl.
-  unfold DP_comp.
-  simpl.
-  inversion Heqf1; subst.
-  clear H.
-
-  unfold DP_comp_auxI; simpl.
-
-  assert (H1Target (x0 \; x1 \; x2) =
-            H1Source (y0 \; y1 \; y2)) as KR.
-  { subst x0_12_t y0_12_s.
-    subst x12_t y12_s.
-    unfold H1Target.
-    repeat rewrite Fcomp; simpl.
-    unfold H1Target in E0_12.
-    rewrite E0_12.
-    unfold H1Source.
-    repeat rewrite Fcomp; simpl.
-    auto.
-  }
-
-  assert (H1Target ((x0 \; x1) \; x2) =
-            H1Source ((y0 \; y1) \; y2)) as KL.
-  { subst x01_2_t y01_2_s.
-    subst x01_t y01_s.
-    unfold H1Target.
-    repeat rewrite Fcomp; simpl.
-    unfold H1Target in E01_2.
-    rewrite E01_2.
-    unfold H1Source.
-    repeat rewrite Fcomp; simpl.
-    auto.
-  }
-
-  assert (existT
-    (fun hh0 : D1hom (h_first a) (h_first d) =>
-     sigma hh1 : D1hom (h_second a) (h_second d),
-         H1Target hh0 = H1Source hh1)
-    (x0 \; x1 \; x2)
-    (existT
-       (fun hh1 : D1hom (h_second a) (h_second d) =>
-            H1Target (x0 \; x1 \; x2) = H1Source hh1)
-       (y0 \; y1 \; y2)
-       KR)
-          =
-  existT
-    (fun hh0 : D1hom (h_first a) (h_first d) =>
-     sigma hh1 : D1hom (h_second a) (h_second d),
-         H1Target hh0 = H1Source hh1)
-    ((x0 \; x1) \; x2)
-    (existT
-       (fun hh1 : D1hom (h_second a) (h_second d) =>
-           H1Target ((x0 \; x1) \; x2) = H1Source hh1)
-       ((y0 \; y1) \; y2)
-       KL)) as KA.
-  { revert KL.
-    revert KR.
-    subst x0_12 x01_2 x12 x01.
-    subst y0_12 y01_2 y12 y01.
-    rewrite <- X0.
-    rewrite <- Y0.
-    intros KR KL.
-
-    assert (KR = KL) as I1.
-    { eapply Prop_irrelevance. }
-    rewrite I1.
-    reflexivity.
-  }
-
-  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
-    (Prop_irrelevance _ KR).
-
-  rewrite [Morphisms.trans_sym_co_inv_impl_morphism _ _ _ _ _]
-    (Prop_irrelevance _ KL).
-  eapply KA.
-Qed.
-
-Program Definition DPCatP (T: STUFunctor.type) :
-                                 PreCat_IsCat (DPobj T).
-econstructor.
-eapply DP_LeftUnit_lemma; eauto.
-eapply DP_RightUnit_lemma; eauto.
-eapply DP_Assoc_lemma; eauto.
-Qed.
-
-(* DPobj is a category *)
-HB.instance Definition DPCat (T: STUFunctor.type) := DPCatP T.
-
-
-(** Horizontal composition functor and strict double categories *)
-
-(* fst horizontal projection prefunctor *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsHFPreFunctor T of STUFunctor T :=
-  { is_hfprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H2First T) }.
-HB.structure Definition HFPreFunctor : Set := {C of IsHFPreFunctor C}.
-Set Universe Checking.
-
-(* fst horizontal projection functor *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record HFPreFunctor_IsFunctor T of HFPreFunctor T := {
-    is_hffunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2First T) }.
-HB.structure Definition HFFunctor : Set := {C of HFPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-(* snd horizontal projection prefunctor *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsHSPreFunctor T of STUFunctor T :=
-  { is_hsprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H2Second T) }.
-HB.structure Definition HSPreFunctor : Set := {C of IsHSPreFunctor C}.
-Set Universe Checking.
-
-(* snd horizontal projection functor *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record HSPreFunctor_IsFunctor T of HSPreFunctor T := {
-    is_hsfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2Second T) }.
-HB.structure Definition HSFunctor : Set := {C of HSPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-(* composition prefunctor *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record IsCPreFunctor T of STUFunctor T :=
-  { is_cprefunctor : IsPreFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
-HB.structure Definition CPreFunctor : Set := {C of IsCPreFunctor C}.
-Set Universe Checking.
-
-(* composition functor - gives the definition of Strict Double Category *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record CPreFunctor_IsFunctor T of CPreFunctor T := {
-    is_cfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H1Comp T) }.
-(* #[short(type="sdoublecat")] *)
-HB.structure Definition CFunctor : Set := {C of CPreFunctor_IsFunctor C}.
-Set Universe Checking.
-
-(* All functors together *)
-Unset Universe Checking.
-HB.structure Definition FCFunctor : Set :=
-  {C of HFFunctor C & HSFunctor C & CFunctor C}.
-Set Universe Checking.
-
-
-(* first and second projection from pairs of cells *)
-Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
-  (m: DP_hom a b) : H2First a ~> H2First b := (@H2First T) <$> m.
-
-Definition HH2Second (T: HSFunctor.type) (a b: DPobj T)
-  (m: DP_hom a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
-
-
-(* horizontal 2-cell composition: maps two adjecent pairs of
-   horizontal morphisms (a and b) and a pullback-category morphism
-   between them (m, which basically gives two adjecent cells) to a
-   2-cell morphism between the horizontal composition (HComp) of each
-   pair *)
-Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
-  (m: DP_hom a b) :
-  d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
-
-(*
-Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
-  (m: @hom (DPobj T) a b) :
-  d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
-*)
-
-Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2)
-  (k0: hhom b0 b1) (k1: hhom b1 b2)
-  (hh0: D1hom h0 k0)
-  (hh1: D1hom h1 k1)
-  (k: H1Target hh0 = H1Source hh1) :
-      D1hom (hcomp _ _ _ h0 h1) (hcomp _ _ _ k0 k1)  :=
-     (* d1hom (l_hcomp h0 h1) (l_hcomp k0 k1) := *)
-  @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1) _.
-Obligation 1.
-refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 k)).
-Show Proof.
-
-Defined.
-
-
-(* quasi-double category *)
-Unset Universe Checking.
-HB.mixin Record IsQDoubleCat T of FCFunctor T := {
-    unit_source : forall (a b: T) (m: hom a b),
-      H1Source (H2Unit m) = m ;
-
-    unit_target : forall (a b: T) (m: hom a b),
-      H1Target (H2Unit m) = m ;
-}.
-#[short(type="qdoublecat")]
-HB.structure Definition QDoubleCat : Set :=
-  { C of IsQDoubleCat C }.
-Set Universe Checking.
-
-
-(* definition of strict double precategory *)
-Unset Universe Checking.
-HB.mixin Record IsPreSDoubleCat T of QDoubleCat T := {
+HB.mixin Record IsCUHPreDDCat0 T of UHPreDDCat T := {
     source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
      TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
 
     target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
       TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ; 
 }.
-#[short(type="presdoublecat")]
-HB.structure Definition PreSDoubleCat : Set :=
-  { C of IsPreSDoubleCat C }.
+#[short(type="cuhpreddcat0")]
+HB.structure Definition CUHPreDDCat0 : Set :=
+  { C of IsCUHPreDDCat0 C }.
 Set Universe Checking.
 
 
 (* alternative definition of strict double precategory *)
 Unset Universe Checking.
-HB.mixin Record IsPreSDoubleCat1 T of QDoubleCat T := {
+HB.mixin Record  IsCUHPreDDCat1 T of UHPreDDCat T := {
   source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
@@ -950,42 +116,35 @@ HB.mixin Record IsPreSDoubleCat1 T of QDoubleCat T := {
   (K: H1Target hh0 = H1Source hh1),
       H1Target (HC2Comp_flat K) = H1Target hh1 ;
 }.    
-#[short(type="presdoublecat1")]
-HB.structure Definition PreSDoubleCat1 : Set :=
-  { C of IsPreSDoubleCat1 C }.
+#[short(type="cuhpreddcat1")]
+HB.structure Definition CUHPreDDCat1 : Set :=
+  { C of IsCUHPreDDCat1 C }.
 Set Universe Checking.
 
 
+(**** Horizontal 2-cell level category (H1 category),
+      using CQDoubleCat1 **)
 
-(** Horizontal 2-cell level category (H1 category) *)
-
-HB.tag Definition H1obj (C: VHQuiver.type) := Total2 (@hom C).
+HB.tag Definition H1obj (C: HD0Quiver.type) := Total2 (@hom C).
 
 (* a and b are vertical (D0) morphisms. Gives the condition for a
-horizontal (H1) morphism between them. Given two horizontal (H0)
-morphisms h1 and h2 between sources and targets of the vertical ones,
-respectively, we expect that there is a vertical (D1) morphism between
-them. *)
+   horizontal (H1) morphism between them. Given two horizontal (H0)
+   morphisms h1 and h2 between sources and targets of the vertical
+   ones, respectively, we expect that there is a vertical (D1)
+   morphism between them. *)
 Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
   sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
     (hh: D1hom h1 h2),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b.                          
-(*
-Definition H1hom (T: DQuiver.type) (a b: H1obj T) :=
-  sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b)),
-        @hom (D1obj T) (TT2 h1) (TT2 h2).
-*)
-
 HB.instance Definition H1Quiver (T: STUFunctor.type) :
   IsQuiver (H1obj T) :=
   IsQuiver.Build (H1obj T) (@H1hom T).  
 
-
-Program Definition H1_id (T: QDoubleCat.type) (a: H1obj T) : a ~> a.
+Program Definition H1_id (T: UHPreDDCat.type) (a: H1obj T) : a ~> a.
 unfold hom.
 simpl.
 unfold H1hom.
-destruct a.
+destruct a as [source0 target0 this_morph0]. 
 simpl; simpl in *.
 econstructor 1 with (x:= hunit source0).
 econstructor 1 with (x:= hunit target0).
@@ -995,7 +154,8 @@ eapply unit_source.
 eapply unit_target.
 Defined.
 
-Program Definition H1_comp (T: PreSDoubleCat1.type) (a b c: H1obj T)
+(* uses CUHPreDDCat1 *)
+Program Definition H1_comp (T: CUHPreDDCat1.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
 destruct a.
 destruct b.
@@ -1004,14 +164,12 @@ unfold hom in *; simpl in *.
 unfold H1hom in *; simpl in *.
 destruct hh1 as [h1 [k1 [hk1 [hk1S hk1T]]]].
 destruct hh2 as [h2 [k2 [hk2 [hk2S hk2T]]]].
-econstructor 1 with (x:= hcomp _ _ _ h1 h2).
-econstructor 1 with (x:= hcomp _ _ _ k1 k2).
+econstructor 1 with (x:= hcomp h1 h2).
+econstructor 1 with (x:= hcomp k1 k2).
 assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
           @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
-{ 
-  rewrite hk1T.
-  rewrite hk2S; auto. 
-}
+{ rewrite hk1T.
+  rewrite hk2S; auto. }
 
 econstructor 1 with (x := HC2Comp_flat K).
 
@@ -1020,246 +178,25 @@ rewrite source_comp_dist1; auto.
 rewrite target_comp_dist1; auto.
 Defined.
 
-HB.instance Definition H1PreCat (T: PreSDoubleCat1.type) :
+HB.instance Definition H1PreCat (T: CUHPreDDCat1.type) :
   IsPreCat (H1obj T) :=
   IsPreCat.Build (H1obj T) (@H1_id T) (@H1_comp T).  
 
+
+(**** Strict double category definition,
+      based on CUHPreDDCat1 ***)
 Unset Universe Checking.
 #[wrapper] 
-(* Fail HB.mixin Record IsSDoubleCat T of PreSDoubleCat1 T := {
-   Fail HB.mixin Record IsSDoubleCat T of IsPreSDoubleCat1 T := { *)
-HB.mixin Record IsSDoubleCat (T: PreSDoubleCat1.type) := { 
+(* Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := {
+   Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := { *)
+HB.mixin Record IsStrictDoubleCatH1 (T: CUHPreDDCat1.type) := { 
     is_sdcat : PreCat_IsCat (H1obj T) }.
-#[short(type="sdcat")]
-HB.structure Definition SDoubleCat : Set :=
-  { C of IsSDoubleCat C }.
+#[short(type="strictdcath1")]
+HB.structure Definition SDoubleCatH1 : Set :=
+  { C of IsStrictDoubleCatH1 C }.
 Set Universe Checking.
 
-
-
-(*
-Program Definition H2hom (T: DQuiver.type) (a b: H1obj T) :=
-  match (a, b) with
-  | (@TT2 _ _ sa ta ma, @TT2 _ _ sb tb mb) =>
-      sigma (h1: hhom sa sb) (h2: hhom ta tb), (@TT2 T _ h1) ~> (TT2 h2) end.
-
-(* Precategory based on the DQuiver (i.e. precategory D1). Gives: 
-   vertical 2-cell identity morphism.  
-   vertical 2-cell composition. *)
-HB.instance Definition H2Quiver (T: DQuiver.type) :
-  IsQuiver (transpose (D1obj T)) :=
-  IsQuiver.Build (transpose (D1obj T)) 
+End H1.  
 
 
 
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsD1PreCat T of DQuiver T := {
-    is_d1precat : Quiver_IsPreCat (@D1obj T) }.
-#[short(type="d1precat")]
-HB.structure Definition D1PreCat : Set :=
-  { C of Quiver_IsPreCat (@D1obj C) }.
-Set Universe Checking.
-
-
-(* Like requiring HCat T *)
-HB.mixin Record IsDCat T of CFunctor T := {
-    h1_left_unital : forall (a0 a1: T) (h : hhom a0 a1),
-      @hcomp T a0 a0 a1 (hunit a0) h = h ;
-
-    h1_right_unital : forall (a0 a1: T) (h : hhom a0 a1),
-      @hcomp T a0 a1 a1 h (hunit a1) = h ;
-
-    h1_assoc : forall (a0 a1 a2 a3: T)
-                      (h1 : hhom a0 a1)
-                      (h2: hhom a1 a2) (h3: hhom a2 a3),
-      @hcomp T a0 a2 a3 (@hcomp T a0 a1 a2 h1 h2) h3 =
-      @hcomp T a0 a1 a3 h1 (@hcomp T a1 a2 a3 h2 h3)
-}.
-Unset Universe Checking.
-#[short(type="sdoublecat")]
-HB.structure Definition SDoubleCat : Set := { C of IsDCat C }.
-Set Universe Checking.
-
-Lemma DP1source (T: CFunctor.type) (a b: DPobj T)
-  (m: DP_hom a b) :
-  H1Source (HC2Comp m) =  H1Source (HC2Comp m) /\
-    H1Source (projT1 m) = H1Source (projT1 m).
-  remember m as m1.
-  destruct m1.
-  simpl.
-  destruct s.
-  unfold HC2Comp.
-  unfold H1Comp.
-  unfold hhcomp.
- 
-  unfold Fhom.
-  simpl.
-  unfold H1Source.
-  unfold HSource.
-  unfold hhom.
-  simpl.
-  destruct a.
-  destruct b.
-  unfold hhom in *.
-  simpl; simpl in *.
-  unfold DP_hom in m.
-  simpl in *.
-
-Lemma DP1source (T: CFunctor.type) (a b: DPobj T)
-  (m: @hom (DPobj T) a b) :
-  H1Source (HC2Comp m) = 
-    H1Source (TT2 (h_first m)).
-  destruct a; simpl in *; simpl.
-  auto.
-Defined.  
-
-
-Lemma Adj12_3 (T: CFunctor.type) (a b: DPobj T)
-  (m: @hom (DPobj T) a b) :
-  H1Source (HC2Comp m) = H1Source (projT1 a).
-
-
-
-    T: CFunctor.type} {a0 a1 a2 a3 b0 b1 b2 b3: T} 
-          {h1: hhom a0 a1} {h2: hhom a1 a2} {h3: hhom a2 a3} 
-          {k1: hhom b0 b1} {k2: hhom b1 b2} {k3: hhom b2 b3}
-          (hh1: D1hom h1 k1) (hh2: D1hom h2 k2) (hh3: D1hom h3 k3) 
-          (A1: H1Target hh1 = H1Source hh2)
-          (A2: H1Target hh2 = H1Source hh3) :
-  let hh12 := @HC2Comp_flat T a0 a1 a2 b0 b1 b2 h1 h2 k1 k2 hh1 hh2 A1
-  in H1Target hh12 = H1Source hh3.
-
-
-
-
-Lemma Adj12_3 {T: CFunctor.type} {a0 a1 a2 a3 b0 b1 b2 b3: T} 
-          {h1: hhom a0 a1} {h2: hhom a1 a2} {h3: hhom a2 a3} 
-          {k1: hhom b0 b1} {k2: hhom b1 b2} {k3: hhom b2 b3}
-          (hh1: D1hom h1 k1) (hh2: D1hom h2 k2) (hh3: D1hom h3 k3) 
-          (A1: H1Target hh1 = H1Source hh2)
-          (A2: H1Target hh2 = H1Source hh3) :
-  let hh12 := @HC2Comp_flat T a0 a1 a2 b0 b1 b2 h1 h2 k1 k2 hh1 hh2 A1
-  in H1Target hh12 = H1Source hh3.
-  simpl.
-  rewrite - A2.
-  clear A2 hh3.
-  clear h3 k3.
-  unfold HC2Comp_flat.
-  unfold H1Comp.
-  
-  unfold H1Target, H1Source in *.
-  unfold HTarget, HSource in *.
-  unfold target.  
-  unfold HC2Comp_flat_obligation_1; simpl.
-  unfold H1Comp; simpl.
-  unfold hhcomp; simpl.
-
-  unfold Fhom in * ; simpl.
-  unfold IsPreFunctor.Fhom in *.
-  simpl; simpl in *.
-  unfold D1hom in *.
-  unfold d1hom in *; simpl in *.
-  unfold hhom in *.
-  unfold hom in *.
-  simpl in *.
-   
-  unfold l_hcomp.
-  unfold hcomp.
-  simpl.
-  
-  
-  unfold D1hom in *.
-  simpl.
-  unfold H1Target, H1Source in A1.
-  unfold HTarget, HSource in A1.
-  simpl in *.
-  unfold Fhom in A1. 
-  
-  assert (forall U, U <$>
-    (IsPreFunctor.Fhom (Op_isMx__306__ELIM T)
-       (existT
-          (fun hh0 : D1hom h1 k1 =>
-           sigma hh3 : D1hom h2 k2, H1Target hh0 = H1Source hh3) hh1
-          (existT (fun hh0 : D1hom h2 k2 => H1Target hh1 = H1Source hh0) hh2
-             A1))) =
-                      U <$> hh2).
-  
-  rewrite - A2.
-  unfold H1Target, H1Source.
-  unfold HTarget, HSource.
-  unfold D1hom in *.
-  unfold d1hom in *.
-  unfold hom.
-  simpl.
-  unfold Fhom.
-  simpl.
-Admitted.   
-
-Lemma Adj1_23 {T: CFunctor.type} {a0 a1 a2 a3 b0 b1 b2 b3: T} 
-          {h1: hhom a0 a1} {h2: hhom a1 a2} {h3: hhom a2 a3} 
-          {k1: hhom b0 b1} {k2: hhom b1 b2} {k3: hhom b2 b3}
-          (hh1: D1hom h1 k1) (hh2: D1hom h2 k2) (hh3: D1hom h3 k3) 
-          (A1: H1Target hh1 = H1Source hh2)
-          (A2: H1Target hh2 = H1Source hh3) :
-  let hh23 := @HC2Comp_flat T a1 a2 a3 b1 b2 b3 h2 h3 k2 k3 hh2 hh3 A2
-  in H1Target hh1 = H1Source hh23.
-Admitted.
-
-HB.mixin Record IsDCat2 T of CFunctor T := {
-    h2_left_unital : forall (a0 a1 b0 b1: T) (m: @hom T a0 b0)
-                            (h1: hhom a0 a1) (k1: hhom b0 b1)
-                            (hh1: D1hom h1 k1)
-                            (A: H1Target (@H2Unit T a0 b0 m) = H1Source hh1),
-      TT2 (@HC2Comp_flat T a0 a0 a1 b0 b0 b1 (hunit a0) h1 (hunit b0) k1
-        (@H2Unit T a0 b0 m) hh1 A) = TT2 hh1 ;
-
-    h2_right_unital : forall (a0 a1 b0 b1: T) (m: @hom T a1 b1)
-                            (h1: hhom a0 a1) (k1: hhom b0 b1)
-                            (hh1: D1hom h1 k1)
-                            (A: H1Target hh1 = H1Source (@H2Unit T a1 b1 m)),
-      TT2 (@HC2Comp_flat T a0 a1 a1 b0 b1 b1 h1 (hunit a1) k1 (hunit b1) 
-        hh1 (@H2Unit T a1 b1 m) A) = TT2 hh1 ;
-
-    h2_assoc : forall (a0 a1 a2 a3 b0 b1 b2 b3: T) 
-                      (h1: hhom a0 a1) (h2: hhom a1 a2) (h3: hhom a2 a3) 
-                      (k1: hhom b0 b1) (k2: hhom b1 b2) (k3: hhom b2 b3)
-                      (hh1: D1hom h1 k1) (hh2: D1hom h2 k2) (hh3: D1hom h3 k3) 
-                      (A1: H1Target hh1 = H1Source hh2)
-                      (A2: H1Target hh2 = H1Source hh3),
-      let hh12 := 
-         @HC2Comp_flat T a0 a1 a2 b0 b1 b2 h1 h2 k1 k2 hh1 hh2 A1
-      in let hh23 :=
-         @HC2Comp_flat T a1 a2 a3 b1 b2 b3 h2 h3 k2 k3 hh2 hh3 A2
-      in TT2 (HC2Comp_flat (Adj12_3 A1 A2)) =
-         TT2 (HC2Comp_flat (Adj1_23 A1 A2)) ;
-}.              
-Unset Universe Checking.
-#[short(type="sdoublecat2")]
-HB.structure Definition SDoubleCat2 : Set := { C of IsDCat2 C }.
-Set Universe Checking.
-
-
-(* hcomp (hm, hu) = prj1 (hm, hu) = hm   
-   hcomp (hu, hm) = prj2 (hu, hm) = hm 
-   (hm1 * hm2) * hm3 ~> hm1 * (hm2 * hm3)
-
-(* Double category with universal characterization of weak
-   horizontal associativity *)
-HB.mixin Record IsDCat_UA T of CFunctor T := {
-    associator : forall (a0 a1 a2 a3: T)
-                        (h1: @hhom T a0 a1) (h2: @hhom T a1 a2)
-                        (h3: @hhom T a2 a3),
-      let h23 := hcomp a1 a2 a3 h2 h3 in
-      let h12 := hcomp a0 a1 a2 h1 h2 in     
-      let hh1 := hcomp a0 a1 a3 h1 h23 in 
-      let hh2 := hcomp a0 a2 a3 h12 h3 in 
-      @hom (HHomSet T) (@HO T (@hhom T) a0 a3 hh2) 
-                       (@HO T (@hhom T) a0 a3 hh1)
-}. 
-*)
-
-Definition l_hcomp (T: SDCat.type) (a0 a1 a2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2) : D1obj T :=
-  @TT2 T _ a0 a2 (h0 \; h1).
-*)
