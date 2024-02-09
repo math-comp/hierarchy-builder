@@ -181,11 +181,15 @@ Record GenComp T (h: T -> T -> U) := GC {
 (* composable pairs of horizontal morphisms as a set *)
 HB.tag Definition DPobj (C: hd0quiver) := GenComp (@hhom C).
 
-(* smart projections *)
-Definition H2First (C: hd0quiver) (X: @DPobj C) : D1obj C :=
-    @TT2 C _ (h_one X) (h_two X) (h_first X).
-Definition H2Second (C: hd0quiver) (X: @DPobj C) : D1obj C :=
-    @TT2 C _ (h_two X) (h_three X) (h_second X).
+
+(** Product projections *)
+
+(* smart projections:
+   used to define functors for first and second projection of a product *)
+HB.tag Definition H2First (C: hd0quiver) : DPobj C -> D1obj C :=
+  fun (X: DPobj C) => @TT2 C _ (h_one X) (h_two X) (h_first X).
+HB.tag Definition H2Second (C: hd0quiver) : DPobj C -> D1obj C :=
+  fun (X: @DPobj C) => @TT2 C _ (h_two X) (h_three X) (h_second X).
 
 
 (** Source and target functors *)
@@ -984,7 +988,6 @@ Set Universe Checking.
 End H0D.
 
 End H0.
-
 
 (*
 (* strict double category, adding
