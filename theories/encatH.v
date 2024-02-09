@@ -217,7 +217,163 @@ Lemma StrictDoubleCat_H02H1 :
   assert (Cat (H1.H1obj A1)) as A2.
   { admit. }
 
+  destruct A2 as [B1 B2 B3].
+  
+(*  assert (PreCat_IsCat (H1.H1obj A1)) as A2.
+  { admit. }
+*)
+
+(*  set (Y:= H1.IsStrictDoubleCat.Build A1 B3). *) 
+  
 Admitted.
+
+
+  
+Print CUHPreDDCatD.type.
+(* 
+Record type : Set := Pack { sort : U;  class : CUHPreDDCatD.axioms_ sort }.
+*)  
+Check  CUHPreDDCatD.sort.
+(*
+CUHPreDDCatD.sort : cuhpreddcatd -> U
+*)
+Check  CUHPreDDCatD.class.
+(*
+CUHPreDDCatD.class
+     : forall record : cuhpreddcatd, CUHPreDDCatD.axioms_ record
+*)
+Print  CUHPreDDCatD.axioms_.
+(*
+Record axioms_ (C : U) : U := Class
+  { cat_IsQuiver_mixin : IsQuiver.axioms_ C;
+    ... }.
+ *)
+Print  IsCUHPreDDCatD.Build.
+Print  IsQuiver.Build.
+Print  H1.IsStrictDoubleCat.Build.
+
+Lemma StrictDoubleCat_H02H1a (T: CUHPreDDCatD.type) : 
+  H0.H0D.StrictDoubleCat T -> H1.StrictDoubleCat T.
+  intros H.
+  destruct H.
+  econstructor; eauto.
+  econstructor; eauto.
+
+  destruct cat_PreCat_IsCat_mixin.
+  econstructor; eauto.
+  admit.
+  admit.
+  admit.
+Admitted.
+
+Lemma StrictDoubleCat_H02H1aa (T: CUHPreDDCatD.type) : 
+  H0.H0D.StrictDoubleCat.axioms_ T -> H1.IsStrictDoubleCat.axioms_ T.
+  intros H.
+  destruct H.
+  econstructor; eauto.
+
+  destruct cat_PreCat_IsCat_mixin.
+  econstructor; eauto.
+  admit.
+  admit.
+  admit.
+Admitted.
+
+Lemma StrictDoubleCat_H02H1b : 
+  H0.H0D.StrictDoubleCat.type -> H1.StrictDoubleCat.type.
+  intros H.
+
+  assert (CUHPreDDCatD.type) as A1.
+  { destruct H as [T C].
+    destruct C.
+    econstructor; eauto.
+    econstructor; eauto.
+  }
+
+  destruct H.
+  
+  econstructor; eauto.
+  
+  Fail assert (H1.StrictDoubleCat.axioms_ sort). 
+  
+  Fail eapply (@StrictDoubleCat_H02H1aa sort) in class; eauto.
+
+  Fail eapply (StrictDoubleCat_H02H1a sort).
+
+  Fail eapply (@StrictDoubleCat_H02H1aa A1) in class; eauto.
+
+  assert (H1.StrictDoubleCat.axioms_ A1).
+  econstructor; eauto.
+  admit.
+   
+  econstructor; eauto.
+  eapply StrictDoubleCat_H02H1a; eauto.
+
+
+
+(***************************************************)  
+  
+  eapply StrictDoubleCat_H02H1aa in class; eauto.
+  
+  set (X := Pack 
+  econstructor; eauto.
+  eapply StrictDoubleCat_H02H1a; eauto.
+  eexact class.
+  
+
+
+
+  remember H as K0. 
+  destruct H as [T C].
+  destruct C.
+
+  set (PC := encatD_IsCUHPreDDCatD_mixin).
+
+  (* Check (CUHPreDDCatD.axioms_ T). *)
+
+  set (A1 := CUHPreDDCatD.Pack T PC).
+
+  assert (CUHPreDDCatD.type) as A1.
+  { econstructor; eauto.
+    econstructor; eauto. }
+
+Check (IsCUHPreDDCatD.Build A1).
+
+
+Check IsCUHPreDDCatD.axioms_.
+Check CUHPreDDCatD.axioms_.
+Check (IsCUHPreDDCatD.Build T).
+  
+  set (PS := @IsCUHPreDDCatD.Build T PC).
+  
+  set (X := H1.H1PreCat PC).
+  
+
+  
+  assert (CUHPreDDCatD.type) as A1.
+  { econstructor; eauto.
+    econstructor; eauto. }
+      
+  set (X := H1.H1PreCat A1).
+  
+  eassert (IsCUHPreDDCatD _).
+  { destruct H as [T C].
+    destruct C.
+    econstructor; eauto.
+    econstructor; eauto.
+  }
+
+  set (X := H1.H1PreCat A1).
+  
+  assert (Cat (H1.H1obj A1)) as A2.
+  { admit. }
+
+  set (Y:= H1.IsStrictDoubleCat.Build A1 A2).
+  
+Admitted.
+
+
+
 (*  
   assert (PreCat_IsCat (H1.H1obj A1)) as A3.
   { admit. }
