@@ -80,50 +80,9 @@ Notation "'sigma' x .. y , p" :=
 
 (*********** Strict double categories from an horizontal H-D1 category  ***)
 Module H1.
-(*
-(** definition of strict double precategory,
-   with distribution of source and target on comp *)
-Unset Universe Checking.
-HB.mixin Record IsCUHPreDDCat0 T of UHPreDDCat T := {
-    source_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
-     TT2 (H1Source (HC2Comp m)) = TT2 (H1Source (HH2First m)) ;
-
-    target_comp_dist : forall (a b: DPobj T) (m: DP_hom a b),
-      TT2 (H1Target (HC2Comp m)) = TT2 (H1Target (HH2Second m)) ; 
-}.
-#[short(type="cuhpreddcat0")]
-HB.structure Definition CUHPreDDCat0 : Set :=
-  { C of IsCUHPreDDCat0 C }.
-Set Universe Checking.
-
-
-(* alternative definition of strict double precategory *)
-Unset Universe Checking.
-HB.mixin Record  IsCUHPreDDCat1 T of UHPreDDCat T := {
-  source_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2)
-  (k0: hhom b0 b1) (k1: hhom b1 b2)
-  (hh0: D1hom h0 k0)
-  (hh1: D1hom h1 k1)
-  (K: H1Target hh0 = H1Source hh1),
-      H1Source (HC2Comp_flat K) = H1Source hh0 ;
-
-  target_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
-  (h0: hhom a0 a1) (h1: hhom a1 a2)
-  (k0: hhom b0 b1) (k1: hhom b1 b2)
-  (hh0: D1hom h0 k0)
-  (hh1: D1hom h1 k1)
-  (K: H1Target hh0 = H1Source hh1),
-      H1Target (HC2Comp_flat K) = H1Target hh1 ;
-}.    
-#[short(type="cuhpreddcat1")]
-HB.structure Definition CUHPreDDCat1 : Set :=
-  { C of IsCUHPreDDCat1 C }.
-Set Universe Checking.
-*)
 
 (**** Horizontal 2-cell level category (H1 category),
-      using CQDoubleCat1 **)
+      using CQDoubleCatD **)
 
 HB.tag Definition H1obj (C: HD0Quiver.type) := Total2 (@hom C).
 
@@ -154,7 +113,7 @@ eapply unit_source.
 eapply unit_target.
 Defined.
 
-(* uses CUHPreDDCat1 *)
+(* uses CUHPreDDCatD *)
 Program Definition H1_comp (T: CUHPreDDCatD.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
 destruct a.
@@ -184,7 +143,7 @@ HB.instance Definition H1PreCat (T: CUHPreDDCatD.type) :
 
 
 (**** Strict double category definition,
-      based on CUHPreDDCat1 ***)
+      based on CUHPreDDCatD ***)
 Unset Universe Checking.
 #[wrapper] 
 (* Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCat1 T := {
