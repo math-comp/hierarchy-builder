@@ -208,6 +208,24 @@ Lemma StrictDoubleCat_H0toH1_par T :
 
   destruct cat_PreCat_IsCat_mixin.
   econstructor; eauto.
+
+  intros.
+  unfold comp; simpl.
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  
+  unfold hom in f; simpl in *.
+  unfold H1.H1hom in f.
+  destruct f as [h1 [h2 [hhm [hhs hht]]]].
+  unfold D1hom in hhm.
+  unfold d1hom in hhm.
+  unfold hom in hhm.
+  simpl in *.
+
+  unfold hcomp.
+  unfold hunit.
+(* setoid_rewrite compoA. *)
+  
   admit.
   admit.
   admit.
