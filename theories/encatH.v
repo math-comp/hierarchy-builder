@@ -206,7 +206,9 @@ Lemma StrictDoubleCat_H0toH1_par T :
   econstructor; eauto.
   econstructor; eauto.
 
-  destruct cat_PreCat_IsCat_mixin.
+  destruct H0_IsH0Cat_mixin.
+  destruct is_h0cat as [comp1o_h compo1_h compoA_h]. 
+(*  destruct cat_PreCat_IsCat_mixin. *)
   econstructor; eauto.
 
   intros.
@@ -222,8 +224,87 @@ Lemma StrictDoubleCat_H0toH1_par T :
   unfold hom in hhm.
   simpl in *.
 
+(*  unfold hhom in *. *)
+(*  Set Printing All. *)
+
+  unfold hhom in *.
+  assert (idmap \; h1 = h1) as A0.
+  { Fail rewrite (comp1o h1).
+    Fail setoid_rewrite (comp1o h1).
+    Fail rewrite (comp1o_h sa sb h1).
+    set (k := comp1o_h sa sb h1).
+    rewrite k; auto.
+  }
+
   unfold hcomp.
   unfold hunit.
+
+
+
+existT
+    (fun h0 : sa ~> sb =>
+     sigma (h3 : ta ~> tb)(hh : D1hom h0 h3),
+      H1Source hh = ma /\ H1Target hh = mb) (idmap \; h1)
+    (existT
+       (fun h0 : ta ~> tb =>
+        sigma hh : D1hom (idmap \; h1) h0,
+         H1Source hh = ma /\ H1Target hh = mb) (idmap \; h2)
+       (existT
+          (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+           H1Source hh = ma /\ H1Target hh = mb)
+          (HC2Comp_flat
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (eq_ind_r [eta eq ma] (erefl ma) hhs) 
+                (unit_target sa ta ma)))
+          (conj
+             (eq_ind_r (eq^~ ma) (unit_source sa ta ma)
+                (source_comp_dist1 sa sa sb ta ta tb idmap h1 idmap h2
+                   (H2Unit ma) hhm
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq ma] (erefl ma) hhs)
+                      (unit_target sa ta ma))))
+             (eq_ind_r (eq^~ mb) hht
+                (target_comp_dist1 sa sa sb ta ta tb idmap h1 idmap h2
+                   (H2Unit ma) hhm
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq ma] (erefl ma) hhs)
+                      (unit_target sa ta ma))))))) =
+  existT
+    (fun h0 : sa ~> sb =>
+     sigma (h3 : ta ~> tb)(hh : D1hom h0 h3),
+      H1Source hh = ma /\ H1Target hh = mb) h1
+    (existT
+       (fun h0 : ta ~> tb =>
+        sigma hh : D1hom h1 h0, H1Source hh = ma /\ H1Target hh = mb) h2
+       (existT (fun hh : D1hom h1 h2 => H1Source hh = ma /\ H1Target hh = mb)
+          hhm (conj hhs hht)))
+
+goal 2 (ID 4890) is:
+ forall (a b : H1.H1obj T) (f : a ~> b), f \; idmap = f
+goal 3 (ID 4891) is:
+ forall (a b c d : H1.H1obj T) (f : a ~> b) (g : b ~> c) (h : c ~> d),
+ f \; g \; h = (f \; g) \; h
+
+
+
+
+  
+  set (k := comp1o_h sa sb h1).
+  rewrite k.
+  
+  unfold hcomp.
+  unfold hunit.
+
+  rewrite A0.
+  
+  simpl in *; simpl.
+
+  
+  assert (@comp1o sa sb h1).
+  unfold hom in h1.
+  simpl in h1.
+  assert (@comp1o sa sb h1).
+  
 (* setoid_rewrite compoA. *)
   
   admit.
