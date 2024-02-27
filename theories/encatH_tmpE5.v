@@ -590,7 +590,7 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
 
   pose XXT : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
   exact XXT.
-Qed.
+Defined.
 
  
 Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
@@ -759,11 +759,91 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
   
   pose XXT : H1.StrictDoubleCat.type := HB.pack XT H1_cat. 
   exact XXT.
-Qed.
+Defined.
+
+
+Unset Universe Checking.
+#[short(type="sdd")]
+HB.structure Definition SDD : Set :=
+  { C of H0.H0D.StrictDoubleCat C & H1.StrictDoubleCat C}.
+Set Universe Checking.
+
+(*
+Lemma ESDD (XT: CUHPreDDCatD.type)
+  (T1: H0Cat.type) (T2: IsPreCat (H1obj XT)) : SDD.type.
+
+  have H1_hyp := @is_sdcat XT.
+*)  
+
+(*
+Unset Universe Checking.
+#[short(type="esdd")]
+  HB.structure Definition ESDD (XT: CUHPreDDCatD.type)
+  (T1: H0Cat.type) (T2: IsPreCat (H1obj XT)) : Set :=
+  { C of H0.H0D.StrictDoubleCat C & H1.StrictDoubleCat C}.
+Set Universe Checking.
+*)
+
+Lemma StrictDoubleCat_H0toH1_eq (T : SDD.type) :
+  SDD.type.
+
+  pose XT : CUHPreDDCatD.type := HB.pack T.
+
+(*  pose YT : H0Cat.type := HB.pack T. *)
+  
+  have @H0_hyp : IsH0Cat XT.
+  { destruct T. destruct class.
+    assumption. }
+
+  have @H1_hyp := @is_sdcat XT.
+    
+  have @H0_req : PreCat_IsCat (transpose XT).
+  { destruct H0_hyp as [is_h0cat0].
+    destruct is_h0cat0 as [comp1o_h0 compo1_h0 compoA_h0].
+    econstructor.
+    admit. admit. admit.
+   }  
+   
+  have @H0_wreq : IsH0Cat XT. 
+    by apply: (IsH0Cat.Build XT H0_req).
+  
+  have @H1_req : PreCat_IsCat (H1obj XT).
+  { destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
+    econstructor.
+    admit. admit. admit.
+  }
+    
+  have @H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
+  { exact H1_req. }
+
+  assert (H0_hyp = H0_wreq).
+  { admit. }
+  
+  assert (H1_hyp = H1_wreq).
+  { admit. }
+
+  have H1_cat : H1.IsStrictDoubleCat XT.
+    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
+  
+  pose XXT1 : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
+
+  pose XXT2 :  H1.StrictDoubleCat.type := HB.pack XXT1 H1_cat.  
+  exact XXT2.
+Admitted.      
+  
+  
+Definition H0toH1_eq (T : H0.H0D.StrictDoubleCat.type) :
+  T = StrictDoubleCat_H1toH0_par (StrictDoubleCat_H0toH1_par T). 
+  destruct T.
+  destruct class.
+(* (* gets too slow *)
+   simpl.
+   unfold  StrictDoubleCat_H1toH0_par.
+*) 
+Abort.
 
 
 
- 
 (**** Strict double category definition,
       based on CUHPreDDCatD ***)
 

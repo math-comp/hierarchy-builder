@@ -381,8 +381,10 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     unfold hcomp in comp1o_h1.
     simpl in comp1o_h1.
 
+    (* too weak! *)
+    inversion comp1o_h1; subst. 
     dependent destruction comp1o_h1.
-
+    auto.
     admit.
   }  
  
