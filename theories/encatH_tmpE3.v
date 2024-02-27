@@ -13,13 +13,12 @@ Local Open Scope algebra_scope.
 
 Local Open Scope cat_scope.
 
-(*
-Notation "'sigma' x .. y , p" :=
-  (sigT (fun x => .. (sigT (fun y => p)) ..))
+
+Notation "'psigma' x .. y , p" :=
+  (sig (fun x => .. (sig (fun y => p)) ..))
   (at level 200, x binder, right associativity,
-   format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
+   format "'[' 'psigma'  '/ ' x .. y ,  '/ ' p ']'")
   : type_scope.
-*)
 
 (********************************************************************)
 
@@ -85,15 +84,28 @@ Notation "'sigma' x .. y , p" :=
 
 HB.tag Definition H1obj (C: Quiver.type) := Total2 (@hom C).
 
+HB.tag Definition D2obj (C: D1Quiver.type) := Total2 (@d1hom C).
+
 (* a and b are vertical (D0) morphisms. Gives the condition for a
    horizontal (H1) morphism between them. Given two horizontal (H0)
    morphisms h1 and h2 between sources and targets of the vertical
    ones, respectively, we expect that there is a vertical (D1)
    morphism between them. *)
-Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
+Definition H1homOld (T: STUFunctor.type) (a b: H1obj T) :=
   sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
     (hh: D1hom h1 h2),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b.
+
+Definition H1homAlt1 (T: STUFunctor.type) (a b: H1obj T) :=
+  sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b)),
+    exists (hh: D1hom h1 h2),
+    H1Source hh = this_morph a /\ H1Target hh = this_morph b.
+
+Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
+  exists (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
+    (hh: D1hom h1 h2),
+    H1Source hh = this_morph a /\ H1Target hh = this_morph b.
+
 
 
 Module H1.
@@ -125,14 +137,18 @@ destruct b.
 destruct c.
 unfold hom in *; simpl in *.
 unfold H1hom in *; simpl in *.
-destruct hh1 as [h1 [k1 [hk1 [hk1S hk1T]]]].
-destruct hh2 as [h2 [k2 [hk2 [hk2S hk2T]]]].
+destruct hh1 as [h1 [k1 R1]].
+destruct hh2 as [h2 [k2 R2]].
 econstructor 1 with (x:= hcomp h1 h2).
 econstructor 1 with (x:= hcomp k1 k2).
-assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
-          @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
-{ rewrite hk1T.
-  rewrite hk2S; auto. }
+inversion R1; subst.
+inversion R2; subst.
+destruct H as [R11 R12].
+destruct H0 as [R21 R22].
+assert (@H1Target T (TT2 h1) (TT2 k1) x =
+          @H1Source T (TT2 h2) (TT2 k2) x0) as K.
+{ rewrite R12.
+  rewrite R21; auto. }
 
 econstructor 1 with (x := HC2Comp_flat K).
 
@@ -182,18 +198,6 @@ Import H1.
 Import H0.
 Import H0.H0D.
 
-
-(* PROBLEM: transpose cannot really distinguish between cat and h0cat
-*)
-(* Set Printing All. *)
-Goal forall c : cat, (transpose c) = c :> cat.
-  move => c.
-  reflexivity.
-Qed.  
-Goal forall c : h0cat, (transpose c) = c :> h0cat.
-  move => c.
-  reflexivity.
-Qed.
 
 
 Lemma D1hom_right_unit (T: H0.H0D.StrictDoubleCat.type) (a1 a2 b1 b2: T)
@@ -319,97 +323,6 @@ Lemma unit_aux1 (T: H0.H0D.StrictDoubleCat.type)
 rewrite unit_target; auto.
 Defined. 
 
-(*
-Program Definition lunit_flat_comp (T: H0.H0D.StrictDoubleCat.type)
-  (a0 a1 b0 b1: T)
-  (h: hhom a0 a1) (k: hhom b0 b1) (hk: D1hom h k) :
-  TT2 (@HC2Comp_flat T a0 a0 a1 b0 b0 b1
-    (hunit a0) h (hunit b0) k
-    (H2Unit (H1Source hk)) hk (unit_aux1 hk)) = TT2 hk := _.
-Obligation 1.
-set (K := @HC2Comp_flat T a0 a0 a1 b0 b0 b1
-    (hunit a0) h (hunit b0) k
-    (H2Unit (H1Source hk)) hk (unit_aux1 hk)).
-
-destruct T.
-destruct class.
-destruct H0_IsH0Cat_mixin.
-destruct is_h0cat0 as [comp1o_h compo1_h compoA_h].
-
-assert (D1hom (hunit a0 \; h) (hunit b0 \; k) = D1hom h k ) as C1.
-rewrite comp1o_h.
-rewrite comp1o_h.
-auto.
-
-assert (D1hom h k = D1hom (hunit a0 \; h) (hunit b0 \; k) ) as C2.
-rewrite comp1o_h.
-rewrite comp1o_h.
-auto.
-
-assert (K = match C2 with eq_refl => hk end).
-subst K.
-unfold HC2Comp_flat.
-simpl.
-unfold unit_aux1.
-unfold encatD.HC2Comp_flat_obligation_1.
-simpl.
-unfold H1Comp.
-simpl.
-unfold D1hom in C2.
-unfold d1hom in C2.                
-unfold hhcomp.
-simpl.
-
-assert (existT
-              (fun hh0 : D1hom (hunit a0) (hunit b0) =>
-               sigma hh1 : D1hom h k, H1Target hh0 = H1Source hh1)
-              (H2Unit (H1Source hk))
-              (existT
-                 (fun hh1 : D1hom h k =>
-                  H1Target (H2Unit (H1Source hk)) = H1Source hh1) hk
-                 (eq_ind_r (eq^~ (H1Source hk)) (erefl (H1Source hk))
-                    (unit_target a0 b0 (H1Source hk)))) = ... hk).
-
-simpl.
-unfold HC2Comp_flat.
-simpl.
-unfold H1Comp.
-simpl.
-unfold hhcomp.
-simpl.
-
-assert ({| source := a0; target := a1; this_morph := hunit a0 \; h |} =
-        {| source := a0; target := a1; this_morph := h |} ) as A.
-rewrite comp1o_h.
-auto.
-
-assert ({| source := b0; target := b1; this_morph := hunit b0 \; k |} =
-          {| source := b0; target := b1; this_morph := k |} ) as B.
-rewrite comp1o_h.
-auto.
-
-
-Check (match C1 with eq_refl => hk end).
-
-assert ({|
-    source := {| source := a0; target := a1; this_morph := h |};
-    target := {| source := b0; target := b1; this_morph := k |};
-    this_morph := hk
-         |} =
-   {|
-    source := {| source := a0; target := a1; this_morph := hunit a0 \; h |};
-    target := {| source := b0; target := b1; this_morph := hunit b0 \; k |};
-    this_morph := match C with eq_refl => hk end
-  |} ).
-*)
-
-(*
-Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
-  f \; match e with eq_refl => g end.  
-Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
-  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
-                             only parsing) : cat_scope.
-*)
 
 Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
   H0.H0D.StrictDoubleCat.type.
@@ -469,9 +382,10 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     simpl in comp1o_h1.
 
     dependent destruction comp1o_h1.
-    auto.
-  }  
 
+    admit.
+  }  
+ 
   { simpl in a, b.
     set (v1 := idmap_d0 a : hom a a).
     set (vv1 := TT2 v1 : H1obj T).
@@ -510,7 +424,8 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     simpl in compo1_h1.
 
     dependent destruction compo1_h1.
-    auto.
+
+    admit.
   }  
 
   {
@@ -605,7 +520,8 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     simpl in compoA_h1.
 
     dependent destruction compoA_h1.
-    auto.
+
+    admit.
   }
 
   (* missing feature, HB.pack should wrap m1 for me *)
@@ -614,114 +530,10 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
 
   pose XXT : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
   exact XXT.
-Qed.
-
+Admitted.
 
 
   
-Lemma HC2Comp_flat_right_unit (T: H0.H0D.StrictDoubleCat.type)
-  (e2 : forall (a1 a2 b1 b2: T) (h0: hhom a1 a2) (k0: hhom b1 b2),
-      D1hom h0 k0 = D1hom (hunit a1 \; h0) (hunit b1 \; k0)) 
-  (e1 : forall (a1 a2 b1 b2: T) (h0: hhom a1 a2) (k0: hhom b1 b2)
-      (hh0: D1hom h0 k0), H1Target (H2Unit (H1Source hh0)) = H1Source hh0)
-    (a1 a2 b1 b2: T)
-    (h: hhom a1 a2)
-    (k: hhom b1 b2)
-    (hh: D1hom h k) :
-  @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
-    (H2Unit (H1Source hh)) hh (e1 a1 a2 b1 b2 h k hh) =
-    match e2 a1 a2 b1 b2 h k with eq_refl => hh end.
-
-  simpl.
-  unfold hhom in *.
-
-  unfold HC2Comp_flat.
-  unfold H1Comp.
-  unfold hhcomp.
-  unfold encatD.HC2Comp_flat_obligation_1.
-  simpl.
-
-  set (w := e1 a1 a2 b1 b2 h k hh).
-  generalize w.
-  subst w.
-
-  unfold hhom.
-  simpl.
-  unfold reverse_coercion.
-  clear e1.
-  
-  set (deq1 := e2 a1 a2 b1 b2 h k).
-
-  generalize hh as kk.
-  rewrite deq1 in hh.
-  intro kk.
-
-  assert (hh = match deq1 with eq_refl => kk end).
-
-  unfold D1hom in *.
-  unfold hunit in *.
-  unfold d1hom in *.
-  revert hh.
-Abort.  
-
-
-Lemma HC2Comp_flat_right_unit (T: H0.H0D.StrictDoubleCat.type)
-  (a1 a2 b1 b2: T)
-  (h: hhom a1 a2)
-  (k: hhom b1 b2)
-  (hh: D1hom h k) 
-  (e1 : H1Target (H2Unit (H1Source hh)) = H1Source hh)
-  (e2 : D1hom h k = D1hom (hunit a1 \; h) (hunit b1 \; k)) :
-  @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
-    (H2Unit (H1Source hh)) hh e1 =
-          match e2 with eq_refl => hh end.  
-  unfold HC2Comp_flat.
-  unfold H1Comp.
-  unfold encatD.HC2Comp_flat_obligation_1.
-  simpl.
-
-(*  rewrite unit_target_source in e1. *)
-  
-  unfold H1Target, H1Source, H2Unit in e1.
-  unfold HTarget, HSource, H1Unit in e1.
-  unfold hhunit in e1.
-  simpl in e1.
-  unfold hhom in *.
-  unfold hunit in *.
-
-  revert e1.
-  revert hh.
-  revert e2.
-
-  (*
-  set (comp1o_h := @comp1o T). 
-  rewrite (comp1o_h a1 a2 h).
-   *)
-  
-  remember T as T1.
-  destruct T.
-  destruct class.
-  destruct H0_IsH0Cat_mixin.
-  destruct is_h0cat0 as [comp1o_h compo1_h compoA_h].
-  inversion HeqT1; subst.
-  unfold D1hom.
-  unfold d1hom; simpl.
-  unfold Fhom; simpl.
-
-  unfold H1Source, H1Target, H2Unit.
-  unfold HSource, HTarget, H1Unit.
-  simpl.
-  unfold hhom.
-  unfold hunit.
-  unfold Fhom.
-    
- (* rewrite (comp1o_h a1 a2 h).
-  rewrite (comp1o_h b1 b2 k).
-  *)
-Abort.
-   
-  
- 
 Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
   H1.StrictDoubleCat.type.
 
@@ -776,17 +588,43 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
 
   f_equal.
 
-  eapply (eq_existT_curried K1).
+  eapply (eq_ex_intro K1).
 
-  set (q := idmap \; h1).
- (* dependent destruction K1. *)
-
-  (* DEAD END *)
-  
  (* setoid_rewrite K1 at 1. *)
 admit.
 admit.
 admit.
+
+(* DEAD END *)
+
+(*  
+  generalize (idmap \; h1).
+  
+  assert (ex_intro (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+             H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) =
+         ex_intro (fun hh : D1hom h1 h2 =>
+             H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)).
+
+  
+(ex_intro
+          (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+           H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+          (HC2Comp_flat
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (eq_ind_r [eta eq (H1Source hhm)] 
+                   (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                (unit_target sa ta (H1Source hhm))))
+
+  
+  rewrite comp1o_h0 at 1.
+  
+  dependent destruction comp1o_h0.
+  
+*)
+
+  
+
+(*******************************************************)
 
   have H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
   { assumption. }
@@ -801,7 +639,485 @@ admit.
   exact XXT.
 Admitted.
 
+  
+
+(*
+Program Definition lunit_flat_comp (T: H0.H0D.StrictDoubleCat.type)
+  (a0 a1 b0 b1: T)
+  (h: hhom a0 a1) (k: hhom b0 b1) (hk: D1hom h k) :
+  TT2 (@HC2Comp_flat T a0 a0 a1 b0 b0 b1
+    (hunit a0) h (hunit b0) k
+    (H2Unit (H1Source hk)) hk (unit_aux1 hk)) = TT2 hk := _.
+Obligation 1.
+set (K := @HC2Comp_flat T a0 a0 a1 b0 b0 b1
+    (hunit a0) h (hunit b0) k
+    (H2Unit (H1Source hk)) hk (unit_aux1 hk)).
+
+destruct T.
+destruct class.
+destruct H0_IsH0Cat_mixin.
+destruct is_h0cat0 as [comp1o_h compo1_h compoA_h].
+
+assert (D1hom (hunit a0 \; h) (hunit b0 \; k) = D1hom h k ) as C1.
+rewrite comp1o_h.
+rewrite comp1o_h.
+auto.
+
+assert (D1hom h k = D1hom (hunit a0 \; h) (hunit b0 \; k) ) as C2.
+rewrite comp1o_h.
+rewrite comp1o_h.
+auto.
+
+assert (K = match C2 with eq_refl => hk end).
+subst K.
+unfold HC2Comp_flat.
+simpl.
+unfold unit_aux1.
+unfold encatD.HC2Comp_flat_obligation_1.
+simpl.
+unfold H1Comp.
+simpl.
+unfold D1hom in C2.
+unfold d1hom in C2.                
+unfold hhcomp.
+simpl.
+
+assert (existT
+              (fun hh0 : D1hom (hunit a0) (hunit b0) =>
+               sigma hh1 : D1hom h k, H1Target hh0 = H1Source hh1)
+              (H2Unit (H1Source hk))
+              (existT
+                 (fun hh1 : D1hom h k =>
+                  H1Target (H2Unit (H1Source hk)) = H1Source hh1) hk
+                 (eq_ind_r (eq^~ (H1Source hk)) (erefl (H1Source hk))
+                    (unit_target a0 b0 (H1Source hk)))) = ... hk).
+
+simpl.
+unfold HC2Comp_flat.
+simpl.
+unfold H1Comp.
+simpl.
+unfold hhcomp.
+simpl.
+
+assert ({| source := a0; target := a1; this_morph := hunit a0 \; h |} =
+        {| source := a0; target := a1; this_morph := h |} ) as A.
+rewrite comp1o_h.
+auto.
+
+assert ({| source := b0; target := b1; this_morph := hunit b0 \; k |} =
+          {| source := b0; target := b1; this_morph := k |} ) as B.
+rewrite comp1o_h.
+auto.
+
+
+Check (match C1 with eq_refl => hk end).
+
+assert ({|
+    source := {| source := a0; target := a1; this_morph := h |};
+    target := {| source := b0; target := b1; this_morph := k |};
+    this_morph := hk
+         |} =
+   {|
+    source := {| source := a0; target := a1; this_morph := hunit a0 \; h |};
+    target := {| source := b0; target := b1; this_morph := hunit b0 \; k |};
+    this_morph := match C with eq_refl => hk end
+  |} ).
+*)
+
+(*
+Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
+  f \; match e with eq_refl => g end.  
+Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
+  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
+                             only parsing) : cat_scope.
+*)
+
  
+
+
+(* PROBLEM: transpose cannot really distinguish between cat and h0cat
+*)
+(* Set Printing All. *)
+Goal forall c : cat, (transpose c) = c :> cat.
+  move => c.
+  reflexivity.
+Qed.  
+Goal forall c : h0cat, (transpose c) = c :> h0cat.
+  move => c.
+  reflexivity.
+Qed.
+
+
+Parameter F : forall (C: Quiver.type) (a : H1obj C), H1obj C.
+
+Axiom uuu : forall (T: STUFunctor.type) (a: H1obj T), F a = a.
+
+Lemma xxx0 (T: STUFunctor.type) (a b: H1obj T) (d: H1hom a b) :
+  H1hom (F a) (F b).
+  rewrite - (uuu a) in d.
+  rewrite - (uuu b) in d.
+  exact d.
+  Show Proof.
+Defined.
+
+Lemma xxx1 (T: STUFunctor.type) (a b: H1obj T) (d: H1hom a b) :
+  H1hom (F a) (F b).
+  rewrite uuu.
+  rewrite uuu.
+  exact d.
+  Show Proof.
+Defined.  
+  
+Fail Lemma yyy (T: STUFunctor.type) (a b: H1obj T) (d: H1hom a b) :
+  d = xxx1 d.
+
+
+Lemma StrictDoubleCat_H0toH1_old T : 
+  H0.H0D.StrictDoubleCat T -> H1.StrictDoubleCat T.
+  intros.
+(*  destruct X.
+  destruct cat_PreCat_IsCat_mixin.
+*) 
+  
+  econstructor; eauto.
+  econstructor; eauto.
+  
+  Unshelve.
+  2: { destruct X. exact cat_IsQuiver_mixin. }
+  2: { destruct X. exact cat_Quiver_IsPreCat_mixin. }
+  2: { destruct X. exact cat_PreCat_IsCat_mixin. }
+  2: { destruct X. exact encatD__IsH0Quiver_mixin. }
+  2: { destruct X. exact encatD_IsD1Quiver_mixin. }
+  2: { destruct X. exact encatD__IsD1PreCat_mixin. }
+  2: { destruct X. exact encatD__IsD1Cat_mixin. }
+  2: { destruct X. exact encatD_IsTPreFunctor_mixin. }
+  2: { destruct X. exact encatD_TPreFunctor_IsFunctor_mixin. }
+  2: { destruct X. exact encatD_IsSPreFunctor_mixin. }
+  2: { destruct X. exact encatD_SPreFunctor_IsFunctor_mixin. }
+  2: { destruct X. exact encatD_IsHSPreFunctor_mixin. }
+  2: { destruct X. exact encatD_HSPreFunctor_IsFunctor_mixin. }
+  2: { destruct X. exact encatD_IsHFPreFunctor_mixin. }
+  2: { destruct X. exact encatD_HFPreFunctor_IsFunctor_mixin. }
+  2: { destruct X. exact encatD__IsH0PreCat_mixin. }
+  2: { destruct X. exact encatD_IsUPreFunctor_mixin. }
+  2: { destruct X. exact encatD_UPreFunctor_IsFunctor_mixin. }
+  2: { destruct X. exact encatD_IsCPreFunctor_mixin. }
+  2: { destruct X. exact encatD_CPreFunctor_IsFunctor_mixin. }
+  2: { destruct X. exact encatD_IsUHPreDDCat_mixin. }
+  2: { destruct X. exact encatD_IsCUHPreDDCatD_mixin. }
+
+  econstructor; eauto.   
+ 
+  3: {
+
+  intros.
+   
+(*  
+  remember (idmap \; f) as g.
+  rewrite - Heqg.
+*)  
+(*
+  unfold comp; simpl.
+  unfold H1_comp.
+  simpl.
+  
+  assert (forall e: , idmap \; f = match e with eq_refl => f end).
+  
+  pattern f.
+*) 
+  unfold comp; simpl.  
+  destruct a as [sa ta va].
+  destruct b as [sb tb vb].
+  destruct c as [sc tc vc].
+  destruct d as [sd td vd].
+  
+  simpl.
+  unfold hcomp.
+  
+(*  unfold source_comp_dist1.
+  unfold target_comp_dist1.
+  simpl.
+*)
+(*  unfold unit_target.
+  unfold unit_source.
+  simpl. *)
+  
+  destruct f as [hf [kf [vf [R1f R2f]]]].
+  destruct g as [hg [kg [vg [R1g R2g]]]].
+  destruct h as [hj [kj [vj [R1j R2j]]]].
+
+  simpl.
+
+  destruct X.
+  destruct H0_IsH0Cat_mixin.
+  destruct is_h0cat0 as [comp1o_h compo1_h compoA_h]. 
+Abort.
+
+  
+(*
+  eapply (eq_existT_curried (comp1o_h _ _ hM)).
+  unfold eq_rect.
+  unfold hhom.
+  simpl.
+  revert vv.
+  unfold eq_ind_r.
+  simpl.
+  unfold eq_ind.
+  simpl.
+*)
+
+ 
+  
+Lemma HC2Comp_flat_right_unit (T: H0.H0D.StrictDoubleCat.type)
+  (e2 : forall (a1 a2 b1 b2: T) (h0: hhom a1 a2) (k0: hhom b1 b2),
+      D1hom h0 k0 = D1hom (hunit a1 \; h0) (hunit b1 \; k0)) 
+  (e1 : forall (a1 a2 b1 b2: T) (h0: hhom a1 a2) (k0: hhom b1 b2)
+      (hh0: D1hom h0 k0), H1Target (H2Unit (H1Source hh0)) = H1Source hh0)
+    (a1 a2 b1 b2: T)
+    (h: hhom a1 a2)
+    (k: hhom b1 b2)
+    (hh: D1hom h k) :
+  @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
+    (H2Unit (H1Source hh)) hh (e1 a1 a2 b1 b2 h k hh) =
+    match e2 a1 a2 b1 b2 h k with eq_refl => hh end.
+
+  simpl.
+
+  unfold hhom in *.
+
+  unfold HC2Comp_flat.
+  unfold H1Comp.
+  unfold hhcomp.
+  unfold encatD.HC2Comp_flat_obligation_1.
+  simpl.
+
+  set (w := e1 a1 a2 b1 b2 h k hh).
+  generalize w.
+  subst w.
+
+  unfold hhom.
+  simpl.
+  unfold reverse_coercion.
+  clear e1.
+  
+  set (deq1 := e2 a1 a2 b1 b2 h k).
+
+  generalize hh as kk.
+  rewrite deq1 in hh.
+  intro kk.
+
+  assert (hh = match deq1 with eq_refl => kk end).
+  
+  unfold D1hom in *.
+  unfold hunit in *.
+  unfold d1hom in *.
+  revert hh.
+Abort.
+  
+
+Lemma HC2Comp_flat_right_unit (T: H0.H0D.StrictDoubleCat.type)
+  (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hh: D1hom h k) 
+  (e1 : H1Target (H2Unit (H1Source hh)) = H1Source hh)
+  (e2 : D1hom h k = D1hom (hunit a1 \; h) (hunit b1 \; k)) :
+  @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
+    (H2Unit (H1Source hh)) hh e1 =
+          match e2 with eq_refl => hh end.  
+  unfold HC2Comp_flat.
+  unfold H1Comp.
+  unfold encatD.HC2Comp_flat_obligation_1.
+  simpl.
+
+(*  rewrite unit_target_source in e1. *)
+  
+  unfold H1Target, H1Source, H2Unit in e1.
+  unfold HTarget, HSource, H1Unit in e1.
+  unfold hhunit in e1.
+  simpl in e1.
+  unfold hhom in *.
+  unfold hunit in *.
+
+  revert e1.
+  revert hh.
+  revert e2.
+
+  (*
+  set (comp1o_h := @comp1o T). 
+  rewrite (comp1o_h a1 a2 h).
+   *)
+  
+  remember T as T1.
+  destruct T.
+  destruct class.
+  destruct H0_IsH0Cat_mixin.
+Abort.
+(*
+  destruct is_h0cat as [comp1o_h compo1_h compoA_h].
+  inversion HeqT1; subst.
+  unfold D1hom.
+  unfold d1hom; simpl.
+  unfold Fhom; simpl.
+
+  unfold H1Source, H1Target, H2Unit.
+  unfold HSource, HTarget, H1Unit.
+  simpl.
+  unfold hhom.
+  unfold hunit.
+  unfold Fhom.
+    
+  rewrite (comp1o_h a1 a2 h).
+  rewrite (comp1o_h b1 b2 k).
+*)  
+
+
+ 
+(** Logic equivalence of the definitions in H0.H0D and H1 *)
+
+Lemma StrictDoubleCat_H0toH1_par' T : 
+  H0.H0D.StrictDoubleCat T -> H1.StrictDoubleCat T.
+  intros H.
+  destruct H.
+  econstructor; eauto.
+  econstructor; eauto.
+
+  destruct H0_IsH0Cat_mixin.
+  destruct is_h0cat0 as [comp1o_h compo1_h compoA_h]. 
+(*  destruct cat_PreCat_IsCat_mixin. *)
+  econstructor; eauto.
+
+  intros.
+  unfold comp; simpl.
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  
+  unfold H1hom in f.
+  unfold H1_comp.
+  simpl.
+  unfold hom in f; simpl in *.
+  destruct f as [h1 [h2 [hhm [hhs hht]]]].
+  simpl.
+  unfold D1hom in hhm.
+  unfold d1hom in hhm.
+  unfold hom in hhm.
+  simpl in *.
+
+(*  unfold hhom in *. *)
+(*  Set Printing All. *)
+
+  unfold hhom in *.
+  assert (idmap \; h1 = h1) as A0.
+  { Fail rewrite (comp1o h1).
+    Fail setoid_rewrite (comp1o h1).
+    Fail rewrite (comp1o_h sa sb h1).
+    set (k := comp1o_h sa sb h1).
+    rewrite k; auto.
+  }
+
+  unfold hcomp.
+  unfold hunit.
+  
+  
+  unfold HC2Comp_flat.
+  unfold H1Comp.
+  unfold encatD.HC2Comp_flat_obligation_1.
+  simpl.
+  unfold hhcomp.
+  unfold H2Unit.
+  unfold H1Unit.
+  unfold hhunit.
+  simpl.
+  unfold DPobj.
+Abort.
+  
+(*
+existT
+    (fun h0 : sa ~> sb =>
+     sigma (h3 : ta ~> tb)(hh : D1hom h0 h3),
+      H1Source hh = ma /\ H1Target hh = mb) (idmap \; h1)
+  (existT
+       (fun h0 : ta ~> tb =>
+        sigma hh : D1hom (idmap \; h1) h0,
+         H1Source hh = ma /\ H1Target hh = mb) (idmap \; h2)
+    (existT
+          
+          (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+             H1Source hh = ma /\ H1Target hh = mb)
+          
+          (HC2Comp_flat
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (eq_ind_r [eta eq ma] (erefl ma) hhs) 
+                (unit_target sa ta ma)))
+          
+          (conj
+             (eq_ind_r (eq^~ ma) (unit_source sa ta ma)
+                (source_comp_dist1 sa sa sb ta ta tb idmap h1 idmap h2
+                   (H2Unit ma) hhm
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq ma] (erefl ma) hhs)
+                      (unit_target sa ta ma))))
+             (eq_ind_r (eq^~ mb) hht
+                (target_comp_dist1 sa sa sb ta ta tb idmap h1 idmap h2
+                   (H2Unit ma) hhm
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq ma] (erefl ma) hhs)
+                      (unit_target sa ta ma))))))) =
+existT
+    (fun h0 : sa ~> sb =>
+     sigma (h3 : ta ~> tb)(hh : D1hom h0 h3),
+      H1Source hh = ma /\ H1Target hh = mb) h1
+  (existT
+       (fun h0 : ta ~> tb =>
+        sigma hh : D1hom h1 h0, H1Source hh = ma /\ H1Target hh = mb) h2
+   (existT
+
+        (fun hh : D1hom h1 h2 => H1Source hh = ma /\ H1Target hh = mb)
+        hhm
+        (conj hhs hht)))
+
+goal 2 (ID 4890) is:
+ forall (a b : H1.H1obj T) (f : a ~> b), f \; idmap = f
+goal 3 (ID 4891) is:
+ forall (a b c d : H1.H1obj T) (f : a ~> b) (g : b ~> c) (h : c ~> d),
+ f \; g \; h = (f \; g) \; h
+*)
+
+
+
+Lemma StrictDoubleCat_H0toH1 : 
+  H0.H0D.StrictDoubleCat.type -> H1.StrictDoubleCat.type.
+  intros H.
+  destruct H.
+  exists sort. 
+  eapply StrictDoubleCat_H0toH1_par; eauto.
+Qed.  
+  
+Lemma StrictDoubleCat_H1toH0_par T : 
+  H1.StrictDoubleCat T -> H0.H0D.StrictDoubleCat T.
+  intros H.
+  destruct H.
+  econstructor; eauto.
+  econstructor; eauto.
+  econstructor; eauto.
+  admit.
+  admit.
+  admit.
+Admitted.
+
+Lemma StrictDoubleCat_H1toH0 : 
+  H1.StrictDoubleCat.type -> H0.H0D.StrictDoubleCat.type.
+  intros H.
+  destruct H.
+  exists sort. 
+  eapply StrictDoubleCat_H1toH0_par; eauto.
+Qed.  
+
+
+
+
+
 (**** Strict double category definition,
       based on CUHPreDDCatD ***)
 
