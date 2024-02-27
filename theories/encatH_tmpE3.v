@@ -563,9 +563,9 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
   
   have H1_req : PreCat_IsCat (H1obj XT).
 
-  econstructor.
-  intros.
+  econstructor; intros.
 
+  {
   destruct a as [sa ta ma].
   destruct b as [sb tb mb].
   destruct f as [h1 [h2 [hhm [hhs hht]]]].
@@ -586,6 +586,201 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
   set (K1 := comp1o_h0 sa sb h1).
   set (K2 := comp1o_h0 ta tb h2).
 
+  assert (
+    forall (x y: sa +> sb) P Q, 
+   ex_intro
+    (fun h0 : sa +> sb =>
+     exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+   ex_intro
+    (fun h0 : sa +> sb =>
+     exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
+      ).
+  { intros.
+    eapply Prop_irrelevance. }
+  eapply H.
+  }
+  
+(*** OK *)
+  
+  assert (
+        (eq_ind_r (eq^~ (H1Source hhm))
+                (unit_source sa ta (H1Source hhm))
+                (IsCUHPreDDCatD.source_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))
+        =
+          
+        (erefl (H1Source hhm))  
+    ).
+  
+  assert (
+     (conj
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (unit_source sa ta (H1Source hhm))
+                (IsCUHPreDDCatD.source_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))
+             
+             (eq_ind_r (eq^~ (H1Target hhm)) (erefl (H1Target hhm))
+                (IsCUHPreDDCatD.target_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm))))))
+
+     =
+
+      (conj (erefl (H1Source hhm)) (erefl (H1Target hhm)))
+    ).
+  
+  assert (
+   (ex_intro
+          (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+             H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+          
+          (HC2Comp_flat
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (eq_ind_r [eta eq (H1Source hhm)] (erefl (H1Source hhm))
+                   (erefl (H1Source hhm))) (unit_target sa ta (H1Source hhm))))
+
+          (conj
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (unit_source sa ta (H1Source hhm))
+                (IsCUHPreDDCatD.source_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))
+             (eq_ind_r (eq^~ (H1Target hhm)) (erefl (H1Target hhm))
+                (IsCUHPreDDCatD.target_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))))
+
+         =
+
+           (ex_intro
+          (fun hh : D1hom h1 h2 =>
+             H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+
+          hhm
+          
+          (conj (erefl (H1Source hhm)) (erefl (H1Target hhm))))
+           
+      ).
+  
+  assert (
+
+      (ex_intro
+       (fun h0 : ta +> tb =>
+          exists hh : D1hom (idmap \; h1) h0,
+            H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+       
+       (idmap \; h2)
+       
+       (ex_intro
+          (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+           H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+          (HC2Comp_flat
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (eq_ind_r [eta eq (H1Source hhm)] (erefl (H1Source hhm))
+                   (erefl (H1Source hhm))) (unit_target sa ta (H1Source hhm))))
+          (conj
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (unit_source sa ta (H1Source hhm))
+                (IsCUHPreDDCatD.source_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))
+             (eq_ind_r (eq^~ (H1Target hhm)) (erefl (H1Target hhm))
+                (IsCUHPreDDCatD.target_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))))) 
+
+      =
+
+        (ex_intro
+           
+       (fun h0 : ta +> tb =>
+        exists hh : D1hom h1 h0,
+          H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+
+       h2
+       
+       (ex_intro
+          (fun hh : D1hom h1 h2 =>
+           H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) hhm
+          (conj (erefl (H1Source hhm)) (erefl (H1Target hhm)))))
+
+      ).
+  
+  ex_intro
+
+    (fun h0 : sa +> sb =>
+     exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+      
+      (idmap \; h1)
+      
+    (ex_intro
+       (fun h0 : ta +> tb =>
+        exists hh : D1hom (idmap \; h1) h0,
+          H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+       (idmap \; h2)
+       (ex_intro
+          (fun hh : D1hom (idmap \; h1) (idmap \; h2) =>
+           H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+          (HC2Comp_flat
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (eq_ind_r [eta eq (H1Source hhm)] (erefl (H1Source hhm))
+                   (erefl (H1Source hhm))) (unit_target sa ta (H1Source hhm))))
+          (conj
+             (eq_ind_r (eq^~ (H1Source hhm))
+                (unit_source sa ta (H1Source hhm))
+                (IsCUHPreDDCatD.source_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))
+             (eq_ind_r (eq^~ (H1Target hhm)) (erefl (H1Target hhm))
+                (IsCUHPreDDCatD.target_comp_dist1 (CUHPreDDCatD.class XT)
+                   (eq_ind_r (eq^~ (H1Source hhm))
+                      (eq_ind_r [eta eq (H1Source hhm)] 
+                         (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                      (unit_target sa ta (H1Source hhm)))))))) =
+
+
+      ex_intro
+        
+    (fun h0 : sa +> sb =>
+     exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm)
+
+    h1
+    
+    (ex_intro
+       (fun h0 : ta +> tb =>
+        exists hh : D1hom h1 h0,
+          H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) h2
+       (ex_intro
+          (fun hh : D1hom h1 h2 =>
+           H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) hhm
+          (conj (erefl (H1Source hhm)) (erefl (H1Target hhm)))))
+
+
+
+      
+  
   f_equal.
 
   eapply (eq_ex_intro K1).
