@@ -90,10 +90,18 @@ HB.tag Definition H1obj (C: Quiver.type) := Total2 (@hom C).
    ones, respectively, we expect that there is a vertical (D1)
    morphism between them. *)
 Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
+   psigma (h12: (hhom (source a) (source b))
+              * hhom (target a) (target b)), 
+       exists (hh: D1hom (fst h12) (snd h12)),
+    H1Source hh = this_morph a /\ H1Target hh = this_morph b.
+
+(*
+Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
    sig (fun h12: (hhom (source a) (source b))
               * hhom (target a) (target b) => 
      exists (hh: D1hom (fst h12) (snd h12)),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b).
+*)
 
 Module H1.
 
@@ -783,8 +791,8 @@ Unset Universe Checking.
   { C of H0.H0D.StrictDoubleCat C & H1.StrictDoubleCat C}.
 Set Universe Checking.
 *)
-
-Lemma StrictDoubleCat_H0toH1_eq (T : SDD.type) :
+(*
+Lemma StrictDoubleCat_H0toH1_eqf (T : SDD.type) :
   SDD.type.
 
   pose XT : CUHPreDDCatD.type := HB.pack T.
@@ -830,8 +838,57 @@ Lemma StrictDoubleCat_H0toH1_eq (T : SDD.type) :
   pose XXT2 :  H1.StrictDoubleCat.type := HB.pack XXT1 H1_cat.  
   exact XXT2.
 Admitted.      
+*)  
+
+Lemma StrictDoubleCat_H0toH1_eq (T : SDD.type) :
+  psigma T1: SDD.type, T1 = T.
+
+  pose XT : CUHPreDDCatD.type := HB.pack T.
+
+(*  pose YT : H0Cat.type := HB.pack T. *)
   
+  have @H0_hyp : IsH0Cat XT.
+  { destruct T. destruct class.
+    assumption. }
+
+  have @H1_hyp := @is_sdcat XT.
+    
+  have @H0_req : PreCat_IsCat (transpose XT).
+  { destruct H0_hyp as [is_h0cat0].
+    destruct is_h0cat0 as [comp1o_h0 compo1_h0 compoA_h0].
+    econstructor.
+    admit. admit. admit.
+   }  
+   
+  have @H0_wreq : IsH0Cat XT. 
+    by apply: (IsH0Cat.Build XT H0_req).
   
+  have @H1_req : PreCat_IsCat (H1obj XT).
+  { destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
+    econstructor.
+    admit. admit. admit.
+  }
+    
+  have @H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
+  { exact H1_req. }
+
+  assert (H0_hyp = H0_wreq).
+  { admit. }
+  
+  assert (H1_hyp = H1_wreq).
+  { admit. }
+
+  have H1_cat : H1.IsStrictDoubleCat XT.
+    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
+  
+  pose XXT1 : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
+
+  pose XXT2 :  H1.StrictDoubleCat.type := HB.pack XXT1 H1_cat.  
+  exists XXT2.
+  auto.
+Admitted.      
+
+
 Definition H0toH1_eq (T : H0.H0D.StrictDoubleCat.type) :
   T = StrictDoubleCat_H1toH0_par (StrictDoubleCat_H0toH1_par T). 
   destruct T.

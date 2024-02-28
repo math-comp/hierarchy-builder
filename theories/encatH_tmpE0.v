@@ -13,13 +13,12 @@ Local Open Scope algebra_scope.
 
 Local Open Scope cat_scope.
 
-(*
-Notation "'sigma' x .. y , p" :=
-  (sigT (fun x => .. (sigT (fun y => p)) ..))
+
+Notation "'psigma' x .. y , p" :=
+  (sig (fun x => .. (sig (fun y => p)) ..))
   (at level 200, x binder, right associativity,
-   format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
+   format "'[' 'psigma'  '/ ' x .. y ,  '/ ' p ']'")
   : type_scope.
-*)
 
 (********************************************************************)
 
@@ -91,10 +90,10 @@ HB.tag Definition H1obj (C: Quiver.type) := Total2 (@hom C).
    ones, respectively, we expect that there is a vertical (D1)
    morphism between them. *)
 Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
-  sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
-    (hh: D1hom h1 h2),
+   sigma (h12: (hhom (source a) (source b))
+               * hhom (target a) (target b)),
+    psigma (hh: D1hom (fst h12) (snd h12)),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b.
-
 
 Module H1.
 
@@ -104,15 +103,12 @@ HB.instance Definition H1Quiver (T: STUFunctor.type) :
   IsQuiver.Build (H1obj T) (@H1hom T).  
 
 Program Definition H1_id (T: UHPreDDCat.type) (a: H1obj T) : a ~> a.
-unfold hom.
-simpl.
+unfold hom; simpl.
 unfold H1hom.
 destruct a as [source0 target0 this_morph0]. 
 simpl; simpl in *.
-econstructor 1 with (x:= hunit source0).
-econstructor 1 with (x:= hunit target0).
-econstructor 1 with (x:= H2Unit this_morph0).
-split.
+econstructor 1 with (x:= (hunit source0, hunit target0)).
+econstructor 1 with (x:= H2Unit this_morph0); split.
 eapply unit_source. 
 eapply unit_target.
 Defined.
@@ -120,23 +116,20 @@ Defined.
 (* uses CUHPreDDCatD *)
 Program Definition H1_comp (T: CUHPreDDCatD.type) (a b c: H1obj T)
   (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
-destruct a.
-destruct b.
-destruct c.
+destruct a, b, c.
 unfold hom in *; simpl in *.
 unfold H1hom in *; simpl in *.
-destruct hh1 as [h1 [k1 [hk1 [hk1S hk1T]]]].
-destruct hh2 as [h2 [k2 [hk2 [hk2S hk2T]]]].
-econstructor 1 with (x:= hcomp h1 h2).
-econstructor 1 with (x:= hcomp k1 k2).
+destruct hh1 as [[h1 k1] R1].
+destruct hh2 as [[h2 k2] R2].
+simpl in R1, R2.
+econstructor 1 with (x:= (hcomp h1 h2, hcomp k1 k2)); simpl.
+destruct R1 as [hk1 [e1 e2]].
+destruct R2 as [hk2 [e3 e4]].
 assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
           @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
-{ rewrite hk1T.
-  rewrite hk2S; auto. }
+{ rewrite e2; rewrite e3; auto. }
 
-econstructor 1 with (x := HC2Comp_flat K).
-
-split.
+econstructor 1 with (x := HC2Comp_flat K); split.
 rewrite source_comp_dist1; auto.
 rewrite target_comp_dist1; auto.
 Defined.
@@ -181,19 +174,6 @@ Import H0.H0D.Exports.
 Import H1.
 Import H0.
 Import H0.H0D.
-
-
-(* PROBLEM: transpose cannot really distinguish between cat and h0cat
-*)
-(* Set Printing All. *)
-Goal forall c : cat, (transpose c) = c :> cat.
-  move => c.
-  reflexivity.
-Qed.  
-Goal forall c : h0cat, (transpose c) = c :> h0cat.
-  move => c.
-  reflexivity.
-Qed.
 
 
 Lemma D1hom_right_unit (T: H0.H0D.StrictDoubleCat.type) (a1 a2 b1 b2: T)
@@ -451,8 +431,8 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     have @hh2 : H1hom vv1 vv2.
     {
       unfold H1hom.
-      exists f.
-      exists f.
+      simpl.
+      exists (f,f).
       exists hh.
       subst hh; simpl.
       subst h; simpl.
@@ -492,8 +472,7 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     have @hh2 : H1hom vv1 vv2.
     {
       unfold H1hom.
-      exists f.
-      exists f.
+      exists (f,f).
       exists hh.
       subst hh; simpl.
       subst h; simpl.
@@ -561,8 +540,7 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     have @wf : H1hom vv1 vv2.
     {
       unfold H1hom.
-      exists f.
-      exists f.
+      exists (f,f).
       exists jjf.
       subst jjf; simpl.
       subst jf; simpl.
@@ -572,8 +550,7 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     have @wg : H1hom vv2 vv3.
     {
       unfold H1hom.
-      exists g.
-      exists g.
+      exists (g,g).
       exists jjg.
       subst jjg; simpl.
       subst jg; simpl.
@@ -583,8 +560,7 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     have @wh : H1hom vv3 vv4.
     {
       unfold H1hom.
-      exists h.
-      exists h.
+      exists (h,h).
       exists jjh.
       subst jjh; simpl.
       subst jh; simpl.
@@ -614,113 +590,8 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
 
   pose XXT : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
   exact XXT.
-Qed.
+Defined.
 
-
-
-  
-Lemma HC2Comp_flat_right_unit (T: H0.H0D.StrictDoubleCat.type)
-  (e2 : forall (a1 a2 b1 b2: T) (h0: hhom a1 a2) (k0: hhom b1 b2),
-      D1hom h0 k0 = D1hom (hunit a1 \; h0) (hunit b1 \; k0)) 
-  (e1 : forall (a1 a2 b1 b2: T) (h0: hhom a1 a2) (k0: hhom b1 b2)
-      (hh0: D1hom h0 k0), H1Target (H2Unit (H1Source hh0)) = H1Source hh0)
-    (a1 a2 b1 b2: T)
-    (h: hhom a1 a2)
-    (k: hhom b1 b2)
-    (hh: D1hom h k) :
-  @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
-    (H2Unit (H1Source hh)) hh (e1 a1 a2 b1 b2 h k hh) =
-    match e2 a1 a2 b1 b2 h k with eq_refl => hh end.
-
-  simpl.
-  unfold hhom in *.
-
-  unfold HC2Comp_flat.
-  unfold H1Comp.
-  unfold hhcomp.
-  unfold encatD.HC2Comp_flat_obligation_1.
-  simpl.
-
-  set (w := e1 a1 a2 b1 b2 h k hh).
-  generalize w.
-  subst w.
-
-  unfold hhom.
-  simpl.
-  unfold reverse_coercion.
-  clear e1.
-  
-  set (deq1 := e2 a1 a2 b1 b2 h k).
-
-  generalize hh as kk.
-  rewrite deq1 in hh.
-  intro kk.
-
-  assert (hh = match deq1 with eq_refl => kk end).
-
-  unfold D1hom in *.
-  unfold hunit in *.
-  unfold d1hom in *.
-  revert hh.
-Abort.  
-
-
-Lemma HC2Comp_flat_right_unit (T: H0.H0D.StrictDoubleCat.type)
-  (a1 a2 b1 b2: T)
-  (h: hhom a1 a2)
-  (k: hhom b1 b2)
-  (hh: D1hom h k) 
-  (e1 : H1Target (H2Unit (H1Source hh)) = H1Source hh)
-  (e2 : D1hom h k = D1hom (hunit a1 \; h) (hunit b1 \; k)) :
-  @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
-    (H2Unit (H1Source hh)) hh e1 =
-          match e2 with eq_refl => hh end.  
-  unfold HC2Comp_flat.
-  unfold H1Comp.
-  unfold encatD.HC2Comp_flat_obligation_1.
-  simpl.
-
-(*  rewrite unit_target_source in e1. *)
-  
-  unfold H1Target, H1Source, H2Unit in e1.
-  unfold HTarget, HSource, H1Unit in e1.
-  unfold hhunit in e1.
-  simpl in e1.
-  unfold hhom in *.
-  unfold hunit in *.
-
-  revert e1.
-  revert hh.
-  revert e2.
-
-  (*
-  set (comp1o_h := @comp1o T). 
-  rewrite (comp1o_h a1 a2 h).
-   *)
-  
-  remember T as T1.
-  destruct T.
-  destruct class.
-  destruct H0_IsH0Cat_mixin.
-  destruct is_h0cat0 as [comp1o_h compo1_h compoA_h].
-  inversion HeqT1; subst.
-  unfold D1hom.
-  unfold d1hom; simpl.
-  unfold Fhom; simpl.
-
-  unfold H1Source, H1Target, H2Unit.
-  unfold HSource, HTarget, H1Unit.
-  simpl.
-  unfold hhom.
-  unfold hunit.
-  unfold Fhom.
-    
- (* rewrite (comp1o_h a1 a2 h).
-  rewrite (comp1o_h b1 b2 k).
-  *)
-Abort.
-   
-  
  
 Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
   H1.StrictDoubleCat.type.
@@ -751,289 +622,55 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
   
   have H1_req : PreCat_IsCat (H1obj XT).
 
-  econstructor.
-  intros.
+  econstructor; intros.
 
-  destruct a as [sa ta ma].
-  destruct b as [sb tb mb].
-  destruct f as [h1 [h2 [hhm [hhs hht]]]].
-  simpl in hhs, hht.
-  simpl in *.
-  inversion hhs; subst.
-  clear H.
-  simpl.
+  { destruct a as [sa ta ma].
+    destruct b as [sb tb mb].
+    destruct f as [[h1 h2] [hhm [hhs hht]]].
+    simpl in *.
+    inversion hhs; subst.
+    clear H.
 
-  unfold comp.
-  simpl.
-  unfold hcomp, hunit.
-  simpl.
+    unfold comp; simpl.
+    unfold hcomp, hunit; simpl.
+    unfold source_comp_dist1.
+    unfold target_comp_dist1.
+    set (K1 := comp1o_h0 sa sb h1).
+    set (K2 := comp1o_h0 ta tb h2).
+    simpl.
 
-  unfold source_comp_dist1.
-  unfold target_comp_dist1.
-    
-  set (K1 := comp1o_h0 sa sb h1).
-  set (K2 := comp1o_h0 ta tb h2).
-  simpl.
-
-  assert ( forall (x y:  (sa +> sb)) (e: x = y) P Q,
-      match e with eq_refl => P end = Q ->
+    assert (
+        forall (x y: (sa +> sb) * (ta +> tb))
+               (e: x = y) P Q,
+        match e with eq_refl => P end = Q ->
       existT
-    (fun h0 : sa +> sb =>
-     sigma (h3 : ta +> tb)(hh : D1hom h0 h3),
-       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
-     existT
-    (fun h0 : sa +> sb =>
-     sigma (h3 : ta +> tb)(hh : D1hom h0 h3),
-      H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q 
+        (fun h12 : (sa +> sb) * (ta +> tb) =>
+          psigma hh : D1hom h12.1 h12.2,
+           H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+      existT
+        (fun h12 : (sa +> sb) * (ta +> tb) =>
+         psigma hh : D1hom h12.1 h12.2,
+          H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
     ).
-   { intros.
-     inversion H; subst.
-     
+    { intros.
+      inversion H; subst.
       eapply (eq_existT_curried eq_refl).
-      simpl.
+      simpl.    
       auto.
-   }
-   
-   eapply (H _ _ K1); eauto.
-   simpl.
-   inversion K1; subst.
-     
-(*  f_equal.
-  eapply (eq_existT_curried K1).
-  set (q := idmap \; h1). *)
- (* dependent destruction K1. *)
+    }
 
-  (* DEAD END *)
-  
- (* setoid_rewrite K1 at 1. *)
-admit.
-admit.
-admit.
+    assert (((idmap \; h1), (idmap \; h2)) = (h1, h2)) as K12.
+    { rewrite K1; rewrite K2; auto. }
+    
+    eapply (H _ _ K12).
+    simpl.
+    dependent destruction K12.
+    dependent destruction x0.
+    dependent destruction x1.
+    simpl.
 
-  have H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
-  { assumption. }
+    f_equal.
+    admit.
+  (* DEAD AEND *)
+Abort.
 
-(*  have xxx : CUHPreDDCatD.type.
-  assumption. *)
-
-  have H1_cat : H1.IsStrictDoubleCat XT.
-    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
-  
-  pose XXT : H1.StrictDoubleCat.type := HB.pack XT H1_cat. 
-  exact XXT.
-Admitted.
-
- 
-(**** Strict double category definition,
-      based on CUHPreDDCatD ***)
-
-(* *** BUG *** 
-    Mixin def fails to type-check with PreCat_IsCat. 
-    Mixin def succeds with Cat, but structure def fails. *)
-(*
-Unset Universe Checking.
-#[wrapper] 
-(* not good:
-   HB.mixin Record IsStrictDoubleCat (T: CUHPreDDCatD.type) := { *)
-(* Fail HB.mixin Record IsStrictDoubleCat T of IsCUHPreDDCatD T := { *) 
-HB.mixin Record IsStrictDoubleCat T of CUHPreDDCatD T := { 
-    is_sdcat : PreCat_IsCat (H1obj T) }. 
-(*    is_sdcat : Cat (H1obj T) }. *)
-#[short(type="strictdoublecat")]
-HB.structure Definition StrictDoubleCat : Set :=
-  { C of IsStrictDoubleCat C }.
-Set Universe Checking.
-*)
-
-(*
-Module H2.
-
-(*
-Definition H1hom (T: STUFunctor.type)
-  (a b c d: T) (v1: hom a b) (v2: hom c d) :=
-  sigma (h1: hhom a c) (h2: hhom b d),
-  let k := H1Target 
-      hh := HC2Comp_flat   
-    H1Source hh = this_morph a /\ H1Target hh = this_morph b.
-*)
-
-#[export]
-HB.instance Definition H1Quiver (T: STUFunctor.type) :
-  IsQuiver (H1obj T) :=
-  IsQuiver.Build (H1obj T) (@H1hom T).  
-
-Program Definition H1_id (T: UHPreDDCat.type) (a: H1obj T) : a ~> a.
-unfold hom.
-simpl.
-unfold H1hom.
-destruct a as [source0 target0 this_morph0]. 
-simpl; simpl in *.
-econstructor 1 with (x:= hunit source0).
-econstructor 1 with (x:= hunit target0).
-(*
-intros.
-split.
-unfold H1Source.
-unfold D1hom in hh.
-simpl in *.
-eapply unit_source. 
-eapply unit_target.
-Defined.
-*)
-econstructor 1 with (x:= H2Unit this_morph0).
-split.
-eapply unit_source. 
-eapply unit_target.
-Defined.
-
-(* uses CUHPreDDCatD *)
-Program Definition H1_comp (T: CUHPreDDCatD.type) (a b c: H1obj T)
-  (hh1: a ~> b) (hh2: b ~> c) : a ~> c.
-destruct a.
-destruct b.
-destruct c.
-unfold hom in *; simpl in *.
-unfold H1hom in *; simpl in *.
-destruct hh1 as [h1 [k1 [hk1 [hk1S hk1T]]]].
-destruct hh2 as [h2 [k2 [hk2 [hk2S hk2T]]]].
-econstructor 1 with (x:= hcomp h1 h2).
-econstructor 1 with (x:= hcomp k1 k2).
-
-set (h12 := GC h1 h2).
-set (k12 := GC k1 k2).
-
-assert (@H1Target T (TT2 h1) (TT2 k1) hk1 =
-          @H1Source T (TT2 h2) (TT2 k2) hk2) as K.
-{ rewrite hk1T.
-  rewrite hk2S; auto. }
-
-assert (DP_hom h12 k12) as w.
-{ exists hk1.
-  exists hk2.
-  exact K. }
-
-econstructor 1 with (x := HC2Comp w).
-
-split.
-assert (TT2 (H1Source (HC2Comp w)) = TT2 (H1Target (HH2Second w))) as E1.
-eapply source_comp_dist; auto.
-
-
-injection source_comp_dist; auto.
-rewrite target_comp_dist1; auto.
-Defined.
-
-(* H1 on (H1obj T) is a precategory *)
-#[export]
-HB.instance Definition H1PreCat (T: CUHPreDDCatD.type) :
-  IsPreCat (H1obj T) :=
-  IsPreCat.Build (H1obj T) (@H1_id T) (@H1_comp T).  
-
-
-(**** Strict double category definition,
-      based on CUHPreDDCatD ***)
-
-(* *** BUG *** 
-    Mixin def fails to type-check with PreCat_IsCat. 
-    Mixin def succeds with Cat, but structure def fails. *)
-(*
-Unset Universe Checking.
-#[wrapper] 
-(* not good:
-   HB.mixin Record IsStrictDoubleCat (T: CUHPreDDCatD.type) := { *)
-(* Fail HB.mixin Record IsStrictDoubleCat T of IsCUHPreDDCatD T := { *) 
-HB.mixin Record IsStrictDoubleCat T of CUHPreDDCatD T := { 
-    is_sdcat : PreCat_IsCat (H1obj T) }. 
-(*    is_sdcat : Cat (H1obj T) }. *)
-#[short(type="strictdoublecat")]
-HB.structure Definition StrictDoubleCat : Set :=
-  { C of IsStrictDoubleCat C }.
-Set Universe Checking.
-*)
-
-(* temporary fix: lifter for H1obj in PreCat_IsCat *)
-Definition PreCat_IsCat_LIFT_H1obj := fun T: CUHPreDDCatD.type =>
-      PreCat_IsCat (H1obj T).
-
-(**** Strict double category definition,
-      based on CUHPreDDCatD ***)
-Unset Universe Checking.
-(* #[wrapper] *)
-  (* HB.mixin Record IsSDoubleCat T of CUHPreDDCatD T := { *)
-  (* Fail HB.mixin Record IsSDoubleCat T of CUHPreDDCatD T := { *) 
-HB.mixin Record IsStrictDoubleCat T of CUHPreDDCatD T := { 
-    is_sdcat : PreCat_IsCat_LIFT_H1obj T }.
-#[short(type="strictdoublecat")]
-HB.structure Definition StrictDoubleCat : Set :=
-  { C of IsStrictDoubleCat C }.
-Set Universe Checking.
-
-
-Module Exports.
- HB.reexport.
-End Exports.
- 
-End H2.  
-
-*)
-
-
-
-(*
-(** Logic equivalence of the definitions in H0.H0D and H1 *)
-
-Lemma StrictDoubleCat_H0toH1_par T : 
-  H0.H0S.StrictDoubleCat T -> H1.StrictDoubleCat T.
-  intros H.
-  destruct H.
-  econstructor; eauto.
-  econstructor; eauto.
-
-  destruct H0_IsH0Cat_mixin.
-  destruct is_h0cat as [comp1o_h compo1_h compoA_h]. 
-(*  destruct cat_PreCat_IsCat_mixin. *)
-  econstructor; eauto.
-
-  intros.
-  unfold comp; simpl.
-  destruct a as [sa ta ma].
-  destruct b as [sb tb mb].
-  
-  unfold H1.H1_comp.
-  simpl.
-  unfold hom in f; simpl in *.
-  destruct f as [h1 [h2 [hhm [hhs hht]]]].
-  simpl.
-  unfold D1hom in hhm.
-  unfold d1hom in hhm.
-  unfold hom in hhm.
-  simpl in *.
-
-(*  unfold hhom in *. *)
-(*  Set Printing All. *)
-
-  unfold hhom in *.
-  assert (idmap \; h1 = h1) as A0.
-  { Fail rewrite (comp1o h1).
-    Fail setoid_rewrite (comp1o h1).
-    Fail rewrite (comp1o_h sa sb h1).
-    set (k := comp1o_h sa sb h1).
-    rewrite k; auto.
-  }
-
-  unfold hcomp.
-  unfold hunit.
-  
-  
-  unfold HC2Comp_flat.
-  unfold H1Comp.
-  unfold encatD.HC2Comp_flat_obligation_1.
-  simpl.
-  unfold hhcomp.
-  unfold H2Unit.
-  unfold H1Unit.
-  unfold hhunit.
-  simpl.
-  unfold DPobj.
-Admitted.  
-*)
