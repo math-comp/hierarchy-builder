@@ -886,9 +886,10 @@ Lemma StrictDoubleCat_H0toH1_eq (T : SDD.type) :
   pose XXT2 :  H1.StrictDoubleCat.type := HB.pack XXT1 H1_cat.  
   exists XXT2.
   auto.
+Show Proof.  
 Admitted.      
 
-
+  
 Definition H0toH1_eq (T : H0.H0D.StrictDoubleCat.type) :
   T = StrictDoubleCat_H1toH0_par (StrictDoubleCat_H0toH1_par T). 
   destruct T.

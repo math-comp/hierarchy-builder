@@ -671,6 +671,66 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
 
     f_equal.
     admit.
-  (* DEAD AEND *)
+    (* DEAD END *)
+  }
+    
+  2: {
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  destruct c as [sc tc mc].
+  destruct d as [sd td md].
+    
+  destruct f as [[hf1 hf2] [hhf [hhfs hhft]]].
+  destruct g as [[hg1 hg2] [hhg [hhgs hhgt]]].
+  rename h into j.
+  destruct j as [[hj1 hj2] [hhj [hhjs hhjt]]].
+    
+  simpl; simpl in *.
+  inversion hhfs; subst.
+  clear H.
+
+  unfold comp; simpl.
+  unfold hcomp; simpl.
+  unfold source_comp_dist1.
+  unfold target_comp_dist1.
+  set (K1 := compoA_h0 sa sb sc sd hf1 hg1 hj1).
+  set (K2 := compoA_h0 ta tb tc td hf2 hg2 hj2).
+  simpl.
+
+  assert (
+    forall (x y: (sa +> sd) * (ta +> td)) (e: x = y) P Q,
+        match e with eq_refl => P end = Q ->
+(*     forall (x y: (sa +> sd) * (ta +> td)) P Q, x = y -> *)
+  existT
+    (fun h12 : (sa +> sd) * (ta +> td) =>
+     psigma hh : D1hom h12.1 h12.2,
+         H1Source hh = H1Source hhf /\ H1Target hh = H1Target hhj) x P =
+   existT
+    (fun h12 : (sa +> sd) * (ta +> td) =>
+     psigma hh : D1hom h12.1 h12.2,
+         H1Source hh = H1Source hhf /\ H1Target hh = H1Target hhj) y Q).  
+    { intros.
+      inversion H; subst.
+      eapply (eq_existT_curried eq_refl).
+      simpl.    
+      auto.
+    }
+    assert (((hf1 \; hg1 \; hj1), (hf2 \; hg2 \; hj2)) =
+              ((hf1 \; hg1) \; hj1, (hf2 \; hg2) \; hj2)) as K12.
+    { rewrite K1; rewrite K2; auto. }
+    
+    eapply (H _ _ K12).
+    simpl.
+    dependent destruction K12.
+    dependent destruction x0.
+    dependent destruction x1.
+    simpl.
+    unfold HC2Comp_flat.
+    simpl.
+ (*   dependent destruction K0. *)
+ (* DEAD END *)
+    admit.
+  }
+  admit.
 Abort.
 

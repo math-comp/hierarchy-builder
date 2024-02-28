@@ -567,44 +567,97 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
 
   econstructor; intros.
 
-  {
-  destruct a as [sa ta ma].
-  destruct b as [sb tb mb].
-  destruct f as [h1 [h2 [hhm [hhs hht]]]].
-  simpl in hhs, hht.
-  simpl in *.
-  inversion hhs; subst.
-  clear H.
-  simpl.
+  { destruct a as [sa ta ma].
+    destruct b as [sb tb mb].
+    destruct f as [h1 [h2 [hhm [hhs hht]]]].
+    simpl in hhs, hht.
+    simpl in *.
+    inversion hhs; subst.
+    clear H.
+    simpl.
 
-  unfold comp.
-  simpl.
-  unfold hcomp, hunit.
-  simpl.
+    unfold comp; simpl.
+    unfold hcomp, hunit; simpl.
 
-  unfold source_comp_dist1.
-  unfold target_comp_dist1.
+    unfold source_comp_dist1.
+    unfold target_comp_dist1.
     
-  set (K1 := comp1o_h0 sa sb h1).
-  set (K2 := comp1o_h0 ta tb h2).
+    set (K1 := comp1o_h0 sa sb h1).
+    set (K2 := comp1o_h0 ta tb h2).
 
-  assert (
-    forall (x y: sa +> sb) P Q, 
-   ex_intro
-    (fun h0 : sa +> sb =>
-     exists (h3 : ta +> tb) (hh : D1hom h0 h3),
-       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
-   ex_intro
-    (fun h0 : sa +> sb =>
-     exists (h3 : ta +> tb) (hh : D1hom h0 h3),
-       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
-      ).
-  { intros.
-    eapply Prop_irrelevance. }
-  eapply H.
+    assert (
+      forall (x y: sa +> sb) P Q, 
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
+    ).
+    { intros.
+      eapply Prop_irrelevance. }
+    eapply H.
   }
+
+  { destruct a as [sa ta ma].
+    destruct b as [sb tb mb].
+    destruct f as [h1 [h2 [hhm [hhs hht]]]].
+    simpl in hhs, hht.
+    simpl in *.
+    inversion hhs; subst.
+    clear H.
+    simpl.
+
+    unfold comp; simpl.
+    unfold hcomp, hunit; simpl.
+
+    unfold source_comp_dist1.
+    unfold target_comp_dist1.
+    
+    set (K1 := compo1_h0 sa sb h1).
+    set (K2 := compo1_h0 ta tb h2).
+
+    assert (
+      forall (x y: sa +> sb) P Q, 
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
+    ).
+    { intros.
+      eapply Prop_irrelevance. }
+    eapply H.
+  }
+
+  admit.
   
 (*** OK *)
+
+  have H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
+  { assumption. }
+
+(*  have xxx : CUHPreDDCatD.type.
+  assumption. *)
+
+  have H1_cat : H1.IsStrictDoubleCat XT.
+    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
+  
+  pose XXT : H1.StrictDoubleCat.type := HB.pack XT H1_cat. 
+  exact XXT.
+Admitted.
+
+
+
+
+
+
+
   
   assert (
         (eq_ind_r (eq^~ (H1Source hhm))
