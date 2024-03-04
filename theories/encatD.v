@@ -304,7 +304,7 @@ HB.structure Definition DQuiver : Set := { C of IsQuiver (D1obj C) }.
    objects) *)
 #[short(type="hprecat"),unsafe(univ)]
 HB.structure Definition HPreCat : Set :=
-  { C of Quiver_IsPreCat (transpose C) }. MISSING DEPS, wrapper drops phants
+  { C of Quiver_IsPreCat (transpose C) }.
 
 (* The category based on the HQuiver (i.e. horizontal category on D0
    objects) *)
@@ -322,6 +322,7 @@ HB.structure Definition HCat : Set :=
 HB.structure Definition D1PreCat : Set :=
   { C of Quiver_IsPreCat (D1obj C) }.
 
+x
 (* The category based on the DQuiver (i.e. category D1). *)
 Unset Universe Checking.
 #[wrapper]

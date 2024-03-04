@@ -20,7 +20,7 @@ namespace phant {
 % term T and an abbreviation Name as per Ph.
 % Use the API below to build a PhT as you like.
 pred add-abbreviation i:string, i:phant-term, o:constant, o:abbreviation.
-add-abbreviation N (private.phant-term AL T1) C Abbrev :- std.spy-do! [
+add-abbreviation N (private.phant-term AL T1) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.elaborate-skeleton T1 TTy T) "add-abbreviation: T illtyped",
   log.coq.env.add-const-noimplicits NC T TTy @transparent! C,

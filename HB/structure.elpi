@@ -670,7 +670,7 @@ product->triples  {{ lib:hb.prod lp:A lp:B  }} T L ClosureCheck :- !,
   std.append GRA GRB L.
 product->triples {{ True }} _ [] tt :- !.
 product->triples {{ False }} _ [] ff :- !.
-product->triples A T [factory-on-the-type F] tt :- factory? A F, F = triple _ _ T, !.
+product->triples A T [factory-on-the-type F] tt :- (factory? A F), (F = triple _ _ T), !.
 product->triples A _ [factory-on-subject-lifter A F OP] tt :- factory-on-some-structure-op? A [] F OP, !.
 product->triples A T _ _ :-
   coq.error "HB: expecting a factory on" {coq.term->string T}
@@ -750,17 +750,17 @@ pred declare-wrapper i:w-params (pair gref (w-args mixinname)), i:list prop, o:l
 declare-wrapper F C0 C :- C0 => std.do! [
   %coq.say "Missing" F,
   missing-wrapper->record F RSkel OP M,
-  coq.say "Wrapper skel" RSkel,
-  disable-id-phant-indt-decl RSkel RSkelNoId,
-  std.assert-ok! (coq.elaborate-indt-decl-skeleton RSkelNoId RDeclNoId) "illtyped wrapper",
-  re-enable-id-phant-indt-decl RDeclNoId RDecl,
+  %coq.say "Wrapper skel" F "=" RSkel,
+  %disable-id-phant-indt-decl RSkel RSkelNoId,
+  %std.assert-ok! (coq.elaborate-indt-decl-skeleton RSkelNoId RDeclNoId) "illtyped wrapper",
+  %re-enable-id-phant-indt-decl RDeclNoId RDecl,
   %coq.say "Record wrapper" RDecl,
   gref-deps M MDeps,
   wrap-deps OP MDeps WrappedDeps,
-  expand-structures RDecl WrappedDeps W',
+  ((pi X Y L\ copy X Y :- var X _ L, prune Y L) => copy-indt-decl RSkel RSkel'), std.spy(expand-structures RSkel' WrappedDeps W'),
   %coq.say "Expanded record wrapper" W',
   %std.assert-ok! (coq.typecheck-indt-decl W) "illtyped wrapper record",
-  coq.say "Wrapper:" W',
+  coq.say "Wrapper for" OP "and" M "is" W',
   std.assert-ok! (coq.elaborate-indt-decl-skeleton W' W) "illtyped wrapper record",
   %coq.say W,
   log.coq.env.add-indt W R,
@@ -771,7 +771,7 @@ declare-wrapper F C0 C :- C0 => std.do! [
   coq.gref->id GR Name,
 
   wrapper-deps F W MLwP,
-  coq.say "W deps" MLwP,
+  %coq.say "W deps" F "=" MLwP,
 
   w-params.nparams MLwP NParams,
   factory.private.build-deps-for-projections R MLwP GRDepsClausesProjs,
@@ -798,7 +798,7 @@ declare-wrapper F C0 C :- C0 => std.do! [
     GRDepsClauses,
   ] C,
     %factory-builder-nparams BuildConst NParams,
-  coq.say "Wrapper DONE",
+  coq.say "Wrapper DONE" F,
 ].
 
 pred missing-wrapper->record i:w-params (pair gref (w-args mixinname)), o:indt-decl, o:gref, o:mixinname.
@@ -835,9 +835,8 @@ wrapper-deps.aux (parameter ID explicit T F1) X [triple M Params X|ML] :-
 wrapper-deps.aux (record _ _ _ _) _ [].
 
 pred expand-structures i:indt-decl, i:mixins, o:indt-decl.
-expand-structures(parameter ID I T F) Deps (parameter ID I T F1) :-
-  @pi-parameter ID T x\ expand-structures (F x) Deps (F1 x).
-expand-structures (parameter ID I T ((s\record _ _ _ _) as R)) Deps (parameter ID I _ R1) :- !, std.do! [
+expand-structures (parameter ID I T ((s\record _ _ _ (field _ _ (X s) _\end-record)) as R)) Deps (parameter ID I _ R1) :- !, std.spy-do! [
+  (@pi-decl `TheType` T x\ std.assert-ok! (coq.typecheck (X x) (Ty_ x)) "illtyped subject"),
   coq.safe-dest-app T (global GR) Args, is-structure GR, class-def (class C GR ML),
   coq.mk-n-holes {w-params.nparams Deps} Holes,
   get-constructor C K,
@@ -849,6 +848,8 @@ expand-structures (parameter ID I T ((s\record _ _ _ _) as R)) Deps (parameter I
     %toposort-mixins {std.append (F x) (DepsX x)} (MoreParams x),
     expand-structures.aux (F x) (DepsX x) [] {coq.mk-app SKArgs [x]} K Args x R (R1 x)),
 ].
+expand-structures(parameter ID I T F) Deps (parameter ID I T F1) :-
+  @pi-parameter ID T x\ expand-structures (F x) Deps (F1 x).
 expand-structures.aux [triple M PS X|MS] D ACC Pack K KA Subj R (parameter "m" explicit Ty R1) :- std.do! [
   synthesis.infer-all-gref-deps PS X M Ty,
   (@pi-decl `m` Ty m\ mixin-src X M m =>
