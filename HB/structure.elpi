@@ -711,28 +711,18 @@ lift-to-the-subject.aux [factory-on-subject-lifter Expr _ _|_] _ _ :-
 pred declare-wrappers i:term, o:list prop.
 declare-wrappers B C :- std.do! [
   private.sigT->list-w-params B X _,
-  declare-wrappers.filter-lifted X FWrappers,
-  distribute-w-params FWrappers FWrappersWP,
-  factories-provide FWrappersWP WrappersWP,
-  declare-wrappers.filter-new WrappersWP NewWrappersWP,
-  std.fold NewWrappersWP [] declare-wrapper C,
+  declare-wrappers.aux X Wrappers,
+  distribute-w-params Wrappers WrappersWP,
+  std.fold WrappersWP [] declare-wrapper C,
 ].
-declare-wrappers.filter-lifted (w-params.cons ID T F) (w-params.cons ID T F1) :-
-  @pi-parameter ID T x\ declare-wrappers.filter-lifted (F x) (F1 x).
-declare-wrappers.filter-lifted (w-params.nil ID T F) (w-params.nil ID T F1) :-
-  @pi-parameter ID T x\ declare-wrappers.filter-lifted.aux (F x) (F1 x).
-declare-wrappers.filter-lifted.aux [factory-on-the-type _|XS] R :- declare-wrappers.filter-lifted.aux XS R.
-declare-wrappers.filter-lifted.aux [factory-on-subject-lifter T F G|XS] [triple T F G|R] :- declare-wrappers.filter-lifted.aux XS R.
-declare-wrappers.filter-lifted.aux [] [].
-
-declare-wrappers.filter-new (w-params.cons ID T F) (w-params.cons ID T F1) :-
-  @pi-parameter ID T x\ declare-wrappers.filter-new (F x) (F1 x).
-declare-wrappers.filter-new (w-params.nil ID T F) (w-params.nil ID T F1) :-
-  @pi-parameter ID T x\ declare-wrappers.filter-new.aux (F x) (F1 x).
-declare-wrappers.filter-new.aux [factory-on-the-type _|XS] R :- declare-wrappers.filter-new.aux XS R.
-declare-wrappers.filter-new.aux [factory-on-subject-lifter _ F G|XS] R :- wrapper-mixin _ G F, !, declare-wrappers.filter-new.aux XS R.
-declare-wrappers.filter-new.aux [factory-on-subject-lifter T F G|XS] [triple T F G|R] :- declare-wrappers.filter-new.aux XS R.
-declare-wrappers.filter-new.aux [] [].
+declare-wrappers.aux (w-params.cons ID T F) (w-params.cons ID T F1) :-
+  @pi-parameter ID T x\ declare-wrappers.aux (F x) (F1 x).
+declare-wrappers.aux (w-params.nil ID T F) (w-params.nil ID T F1) :-
+  @pi-parameter ID T x\ declare-wrappers.aux2 (F x) (F1 x).
+declare-wrappers.aux2 [factory-on-the-type _|XS] R :- declare-wrappers.aux2 XS R.
+declare-wrappers.aux2 [factory-on-subject-lifter _ F G|XS] R :- wrapper-mixin _ G F, !, declare-wrappers.aux2 XS R.
+declare-wrappers.aux2 [factory-on-subject-lifter T F G|XS] [triple (triple T F G) _ _|R] :-coq.say "TODO wrapper" T F G, declare-wrappers.aux2 XS R.
+declare-wrappers.aux2 [] [].
 
 pred wrap-deps i:gref, i:mixins, o:mixins.
 wrap-deps OP (w-params.cons ID T F) (w-params.cons ID T F1) :-
