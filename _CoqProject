@@ -1,7 +1,12 @@
-structures.v
+theories/structures.v
+theories/cat.v
+theories/encatD.v
+theories/encatI.v
+theories/encatH.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
--Q . HB
+-arg -w -arg -redundant-canonical-projection
 
 -R tests HB.tests
 -R examples HB.examples
+-R theories HB

@@ -74,6 +74,13 @@ infer-all-args-let Ps T GR X Diag :- std.do! [
   private.instantiate-all-args-let FT T X Diag,
 ].
 
+pred try-infer-all-args-let i:list term, i:term, i:gref, o:term.
+try-infer-all-args-let Ps T GR X :- std.do! [
+  coq.env.typeof GR Ty,
+  coq.mk-eta (-1) Ty (global GR) EtaF,
+  coq.subst-fun {std.append Ps [T]} EtaF FT,
+  private.try-instantiate-all-args-let FT T X,
+].
 
 % [assert!-infer-mixin TheType M Out] infers one mixin M on TheType and
 % aborts with an error message if the mixin cannot be inferred
@@ -102,6 +109,17 @@ under-mixin-src-from-factory.do! TheType TheFactory LP :- std.do! [
   std.map ML (m\c\ c = mixin-src TheType m TheFactory) MLClauses,
   MLClauses => std.do! LP
 ].
+
+
+% Given TheType makes the provided list of mixins and instances
+% available for inference.
+pred under-these-mixin-src.do! i:term, i:list mixinname, i:list constant, o:list prop, i:list prop.
+under-these-mixin-src.do! TheType ML TheMixins ClausesHas LP :- std.do! [
+  std.map2 ML TheMixins (m\mi\c\ c = mixin-src TheType m (global (const mi))) MLClauses,
+  std.map-filter MLClauses mixin-src->has-mixin-instance ClausesHas,
+  MLClauses => std.do! LP
+].
+
 
 % Given TheType and a factory instance (on it), builds all the *new* mixins
 % provided by the factory available for and passes them to the given
@@ -242,6 +260,7 @@ instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M,
   std.mem! ML M,
+  factory? Tm (triple _ _ Subj), Subj = T, % check the subject is T (do not pass T to factory?)
   !,
   mixin-for T M X, !,
   instantiate-all-these-mixin-args (F X) T ML R.
@@ -260,6 +279,15 @@ instantiate-all-args-let (fun N Tm F) T (let N Tm X R) Diag :- !, std.do! [
              " for " ^ {coq.term->string T}),
 ].
 instantiate-all-args-let F _ F ok.
+
+pred try-instantiate-all-args-let i:term, i:term, o:term.
+try-instantiate-all-args-let (fun N Tm F) T (let N Tm X R) :- !, std.do! [
+  coq.safe-dest-app Tm (global TmGR) _,
+  factory-alias->gref TmGR M,
+  (mixin-for T M X ; true),
+  (@pi-def N Tm X m\ try-instantiate-all-args-let (F m) T (R m)),
+].
+try-instantiate-all-args-let F _ F.
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins

@@ -14,5 +14,5 @@ Print HB_unnamed_mixin_8.
 
 HB.instance Definition _ := f.Build bool (3 + 2).
 Print Datatypes_bool__canonical__hnf_S.
-Print HB_unnamed_mixin_12.
+(* Print HB_unnamed_mixin_12. *)
 

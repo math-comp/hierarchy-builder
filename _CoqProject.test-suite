@@ -53,7 +53,7 @@ examples/Coq2020_material/CoqWS_abstract.v
 examples/Coq2020_material/CoqWS_expansion/withHB.v
 examples/Coq2020_material/CoqWS_expansion/withoutHB.v
 
-# examples/cat/cat.v
+tests/enriched_cat_case6.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
@@ -94,8 +94,10 @@ tests/unit/mk_src_map.v
 tests/unit/close_hole_term.v
 tests/unit/struct.v
 tests/factory_when_notation.v
+tests/monoid_enriched_cat.v
+tests/tag_wrap.v
 
 -R tests HB.tests
 -R examples HB.examples
 
--Q . HB
+-R theories HB

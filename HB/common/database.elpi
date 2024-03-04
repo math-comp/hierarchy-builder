@@ -179,10 +179,18 @@ toposort-proj Proj ES In Out :- !, toposort-proj.acc Proj ES [] In Out.
 pred topo-find i:B, o:A.
 pred toposort-proj.acc i:(A -> B -> prop), i:list (pair B B), i:list B, i:list A, o:list A.
 toposort-proj.acc _ ES Acc [] Out :- !,
-  std.map {std.toposort ES Acc} topo-find Out.
+  std.map {std.toposort ES Acc} topo-find-all Out.
 toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
   Proj A B,
   topo-find B A => toposort-proj.acc Proj ES [B|Acc] In Out
+].
+
+pred topo-find-all i:B, o:A.
+topo-find-all B A :- std.do! [
+  std.findall (topo-find B C_) L,
+  % if there were dusplicates, we ensure we keep the most instantiated, eg
+  % (triple m [X,Y] t) v.s. (triple m [a,b] t)
+  std.assert! (std.forall L (x\ x = topo-find B A)) "topofind bad",
 ].
 
 % Classes can be topologically sorted according to the subclass relation
@@ -438,11 +446,14 @@ structure-nparams Structure NParams :-
   class-def (class Class Structure _),
   factory-nparams Class NParams.
 
+pred factory?-split i:term, o:factoryname, o:list term, o:term, o:list term.
+factory?-split (app[global GR|Args]) F [global GR|Params] T Rest :-
+  factory-alias->gref GR F, factory-nparams F NP, !,
+  std.split-at NP Args Params [T|Rest].
+
 pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
-  not (var S), !,
-  safe-dest-app S (global GR) Args, factory-alias->gref GR F, factory-nparams F NP, !,
-  std.split-at NP Args Params [T|_].
+  factory?-split S F [_|Params] T _.
 
 % [find-max-classes Mixins Classes] states that Classes is a list of classes
 %   which contain all the mixins in Mixins.
@@ -462,3 +473,8 @@ find-max-classes [M|Mixins] [C|Classes] :-
   ].
 find-max-classes [M|_] _ :- coq.error "HB: cannot find a class containing mixin" M.
 
+pred is-subject-lifter i:term, o:int, o:classname.
+is-subject-lifter (global (const C)) N  Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
+is-subject-lifter (app[global (const C)|_]) N Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
+is-subject-lifter (global GR) N Class :- tag GR Class N, wrapper-mixin _ GR _.
+is-subject-lifter (app[global GR|_]) N Class :- tag GR Class N, wrapper-mixin _ GR _.

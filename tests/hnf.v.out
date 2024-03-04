@@ -5,8 +5,5 @@ HB_unnamed_mixin_8 =
 {| M.x := f.y nat HB_unnamed_factory_6 + 1 |}
      : M.axioms_ nat
 Datatypes_bool__canonical__hnf_S =
-{| S.sort := bool; S.class := {| S.hnf_M_mixin := HB_unnamed_mixin_12 |} |}
+{| S.sort := bool; S.class := {| S.hnf_M_mixin := hnf_f__to__hnf_M__11 |} |}
      : S.type
-HB_unnamed_mixin_12 =
-Builders_1.HB_unnamed_factory_3 bool HB_unnamed_factory_9
-     : M.axioms_ bool

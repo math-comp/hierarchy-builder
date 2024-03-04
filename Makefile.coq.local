@@ -1,5 +1,5 @@
 # Coq does not know about Elpi Accumulate File, so we declare the dependency here
-structures.vo : $(wildcard HB/*.elpi HB/common/*.elpi)
+theories/structures.vo : $(wildcard HB/*.elpi HB/common/*.elpi)
 
 clean::
 	$(SHOW)'CLEAN *.hb *.hb.old'

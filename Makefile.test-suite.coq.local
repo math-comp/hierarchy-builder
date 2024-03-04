@@ -7,7 +7,7 @@ output_for=`\
 	fi`
 
 DIFF=\
-	@if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
+	if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	echo OUTPUT DIFF $(1);\
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile $(1) \
 	  < $(1) 2>/dev/null \

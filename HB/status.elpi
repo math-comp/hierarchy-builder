@@ -28,6 +28,13 @@ print-hierarchy :- std.do! [
     std.forall BDL private.pp-builder-decl
   ),
 
+  std.findall (wrapper-mixin _ _ _) WL,
+  if (WL = []) true (
+    coq.say "",
+    coq.say "--------------------- Wrappers ----------------------",
+    std.forall WL private.pp-wrapper
+  ),
+
   std.findall (current-mode BF_) BFL,
   if (BFL = []) true (
     coq.say "",
@@ -75,6 +82,10 @@ pred pp-builder-decl i:prop.
 pp-builder-decl (builder-decl (builder N F M GR)) :-
   coq.say "builder" GR "with serial number" N 
     "will build mixin" M "from factory" F.
+
+pred pp-wrapper i:prop.
+pp-wrapper (wrapper-mixin W O M) :-
+  coq.say "wrapper" W "for mixin" M "for lifter" O.
 
 pred pp-current-mode i:prop.
 pp-current-mode (current-mode (builder-from TheType TheFactory GRF Mod)) :-
