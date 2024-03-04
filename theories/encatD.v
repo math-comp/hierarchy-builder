@@ -296,7 +296,7 @@ HB.tag Definition D1obj (C: vhquiver) := Total2 (@hhom C).
 
 (* D1 quiver requirement (includes D0 quiver and its transpose). *)
 #[short(type="dquiver"),unsafe(univ)]
-HB.structure Definition DQuiver : Set := { C of Quiver (D1obj C) }.
+HB.structure Definition DQuiver : Set := { C of IsQuiver (D1obj C) }.
 
 (** Horizonal D0-level category (H-D0) *)
 
@@ -304,7 +304,7 @@ HB.structure Definition DQuiver : Set := { C of Quiver (D1obj C) }.
    objects) *)
 #[short(type="hprecat"),unsafe(univ)]
 HB.structure Definition HPreCat : Set :=
-  { C of Quiver_IsPreCat (transpose C) }.
+  { C of Quiver_IsPreCat (transpose C) }. MISSING DEPS
 
 (* The category based on the HQuiver (i.e. horizontal category on D0
    objects) *)

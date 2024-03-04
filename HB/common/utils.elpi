@@ -293,7 +293,7 @@ pack? (indc K) C :-
   coq.env.indc K _ _ _ KTy, prod-last-gref KTy (indt I), % TODO: use new API
   class-def (class C (indt I) _).
 
-pred distribute-w-params i:list-w-params A, o:list (one-w-params A).
+pred distribute-w-params i:w-params (list A), o:list (w-params A).
 distribute-w-params (w-params.cons N T F) L :-
   pi x\ distribute-w-params (F x) (L1 x), std.map (L1 x) (bind-cons N T x) L.
 distribute-w-params (w-params.nil N T F) L :-

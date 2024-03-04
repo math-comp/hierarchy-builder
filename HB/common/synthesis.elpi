@@ -260,6 +260,7 @@ instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M,
   std.mem! ML M,
+  factory? Tm (triple _ _ Subj), Subj = T, % check the subject is T (do not pass T to factory?)
   !,
   mixin-for T M X, !,
   instantiate-all-these-mixin-args (F X) T ML R.
