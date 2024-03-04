@@ -861,23 +861,20 @@ expand-structures.aux [] [triple M PS X|D]  ACC Pack K KA Subj R (parameter "m" 
   std.assert! (coq.env.projections I [some Priv]) "wrapper with no projection",
   (@pi-decl `m` Ty m\ sigma PM\
       coq.mk-app (app [{coq.env.global (const Priv)}|Args]) [m] PM,
-      mixin-src X M m => unwrap-dep m PM =>
-      expand-structures.aux [] D [m|ACC] Pack K KA Subj R (R1 m)),
+      mixin-src X M m =>
+      expand-structures.aux [] D [PM|ACC] Pack K KA Subj R (R1 m)),
 ].
 expand-structures.aux [] [] WrappedDepsRev Pack K KA Subj R R2 :- std.do! [
   synthesis.infer-all-gref-deps KA Subj K Class,
   R1 = R {coq.mk-app Pack [Class]},
   R1 = record  N S NK (field FA FN T _\end-record),
   R2 = record  N S NK (field FA FN T1 _\end-record),
-  factory?-split T _ FParams LiftedSubject _Deps,
+  factory? T (triple F Params LiftedSubject),
   %std.assert! (std.forall Deps var) "wrapper: deps should be inferred, not given",
   %CONVOLUTED
   std.rev WrappedDepsRev WrappedDeps,
-  std.map WrappedDeps unwrap-dep ProjWrappedDeps,
-  coq.mk-app (app FParams) [LiftedSubject|ProjWrappedDeps] T1,
+  coq.mk-app (app [global F|Params]) [LiftedSubject|WrappedDeps] T1,
 ].
-
-pred unwrap-dep i:term, o:term.
 
 % M is the gref of the wrapper mixin.
 % C gets now instantiated to the projection, i.e. hom_isMon_private.
