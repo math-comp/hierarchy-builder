@@ -711,40 +711,67 @@ lift-to-the-subject.aux [factory-on-subject-lifter Expr _ _|_] _ _ :-
 pred declare-wrappers i:term, o:list prop.
 declare-wrappers B C :- std.do! [
   private.sigT->list-w-params B X _,
-  declare-wrappers.aux X Wrappers,
-  distribute-w-params Wrappers WrappersWP,
-  std.fold WrappersWP [] declare-wrapper C,
+  declare-wrappers.filter-lifted X FWrappers,
+  distribute-w-params FWrappers FWrappersWP,
+  factories-provide FWrappersWP WrappersWP,
+  declare-wrappers.filter-new WrappersWP NewWrappersWP,
+  std.fold NewWrappersWP [] declare-wrapper C,
 ].
-declare-wrappers.aux (w-params.cons ID T F) (w-params.cons ID T F1) :-
-  @pi-parameter ID T x\ declare-wrappers.aux (F x) (F1 x).
-declare-wrappers.aux (w-params.nil ID T F) (w-params.nil ID T F1) :-
-  @pi-parameter ID T x\ declare-wrappers.aux2 (F x) (F1 x).
-declare-wrappers.aux2 [factory-on-the-type _|XS] R :- declare-wrappers.aux2 XS R.
-declare-wrappers.aux2 [factory-on-subject-lifter _ F G|XS] R :- wrapper-mixin _ G F, !, declare-wrappers.aux2 XS R.
-declare-wrappers.aux2 [factory-on-subject-lifter T F G|XS] [triple (triple T F G) _ _|R] :- coq.say "TODO wrapper" T F G, declare-wrappers.aux2 XS R.
-declare-wrappers.aux2 [] [].
+declare-wrappers.filter-lifted (w-params.cons ID T F) (w-params.cons ID T F1) :-
+  @pi-parameter ID T x\ declare-wrappers.filter-lifted (F x) (F1 x).
+declare-wrappers.filter-lifted (w-params.nil ID T F) (w-params.nil ID T F1) :-
+  @pi-parameter ID T x\ declare-wrappers.filter-lifted.aux (F x) (F1 x).
+declare-wrappers.filter-lifted.aux [factory-on-the-type _|XS] R :- declare-wrappers.filter-lifted.aux XS R.
+declare-wrappers.filter-lifted.aux [factory-on-subject-lifter T F G|XS] [triple T F G|R] :- declare-wrappers.filter-lifted.aux XS R.
+declare-wrappers.filter-lifted.aux [] [].
+
+declare-wrappers.filter-new (w-params.cons ID T F) (w-params.cons ID T F1) :-
+  @pi-parameter ID T x\ declare-wrappers.filter-new (F x) (F1 x).
+declare-wrappers.filter-new (w-params.nil ID T F) (w-params.nil ID T F1) :-
+  @pi-parameter ID T x\ declare-wrappers.filter-new.aux (F x) (F1 x).
+declare-wrappers.filter-new.aux [factory-on-the-type _|XS] R :- declare-wrappers.filter-new.aux XS R.
+declare-wrappers.filter-new.aux [factory-on-subject-lifter _ F G|XS] R :- wrapper-mixin _ G F, !, declare-wrappers.filter-new.aux XS R.
+declare-wrappers.filter-new.aux [factory-on-subject-lifter T F G|XS] [triple T F G|R] :- declare-wrappers.filter-new.aux XS R.
+declare-wrappers.filter-new.aux [] [].
+
+pred wrap-deps i:gref, i:mixins, o:mixins.
+wrap-deps OP (w-params.cons ID T F) (w-params.cons ID T F1) :-
+  @pi-parameter ID T x\ wrap-deps OP (F x) (F1 x).
+wrap-deps OP (w-params.nil ID T F) (w-params.nil ID T F1) :-
+  @pi-parameter ID T x\ wrap-deps.mixins OP (F x) (F1 x).
+
+pred wrap-deps.mixins i:gref, i:list (w-args mixinname), o:list (w-args mixinname).
+wrap-deps.mixins _ [] [].
+wrap-deps.mixins OP [triple M P X|ML] [triple WM P X|ML1] :-
+  std.assert! (wrapper-mixin WM OP M) "no wrapper for the lifter on a dep",
+  wrap-deps.mixins OP ML ML1.
 
 pred declare-wrapper i:one-w-params (triple term gref gref), i:list prop, o:list prop.
 declare-wrapper F C0 C :- C0 => std.do! [
-  coq.say "Missing" F,
+  %coq.say "Missing" F,
   missing-wrapper->record F RSkel OP M,
   %coq.say "Wrapper skel" RSkel,
   disable-id-phant-indt-decl RSkel RSkelNoId,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RSkelNoId RDeclNoId) "illtyped wrapper",
   re-enable-id-phant-indt-decl RDeclNoId RDecl,
   %coq.say "Record wrapper" RDecl,
-  expand-structures RDecl W' MLwP,
+  gref-deps M MDeps,
+  wrap-deps OP MDeps WrappedDeps,
+  expand-structures RDecl WrappedDeps W',
   %coq.say "Expanded record wrapper" W',
   %std.assert-ok! (coq.typecheck-indt-decl W) "illtyped wrapper record",
-  coq.say W',
+  coq.say "Wrapper:" W',
   std.assert-ok! (coq.elaborate-indt-decl-skeleton W' W) "illtyped wrapper record",
-  coq.say W,
-  std.spy(log.coq.env.add-indt W R),
+  %coq.say W,
+  log.coq.env.add-indt W R,
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
   GR = indt R,
 
   coq.gref->id GR Name,
+
+  wrapper-deps F W MLwP,
+  %coq.say "W deps" MLwP,
 
   w-params.nparams MLwP NParams,
   factory.private.build-deps-for-projections R MLwP GRDepsClausesProjs,
@@ -778,34 +805,81 @@ pred missing-wrapper->record i:one-w-params (triple term gref gref), o:indt-decl
 missing-wrapper->record (w-params.cons ID T F) (parameter ID explicit T F1) OP M:-
   @pi-parameter ID T x\ missing-wrapper->record (F x) (F1 x) OP M.
 missing-wrapper->record (w-params.nil ID T F) (parameter ID explicit T F1) OP M:-
-  @pi-parameter ID T x\ missing-wrapper->record.aux (F x) (F1 x) OP M.
-missing-wrapper->record.aux (triple (triple T M OP) _ _)
-  (record Name _ Bname (field [] Fname T (x\end-record))) OP M :-
+  @pi-parameter ID T x\ missing-wrapper->record.body (F x) (F1 x) OP M.
+
+pred unfold-phant i:term, o:term.
+unfold-phant (app [global (const C)|A]) R :-
+  coq.env.const C (some B) _,
+  unwind {hd-beta B A} R.
+
+pred missing-wrapper->record.body i:w-args (triple term gref gref), o:indt-decl, o:gref, o:mixinname.
+missing-wrapper->record.body (triple (triple T M OP) _ _)
+  (record Name _ Bname (field [] Fname T1 (x\end-record))) OP M :- std.do! [
+  coq.safe-dest-app T (global PM) _,
+  if (not(PM = M)) % the term uses a _phant alias
+     (unfold-phant T T1)
+     (T1 = T),
+  
   Name is "wrapper_" ^ {std.any->string {new_int}} ^ "_" ^ {coq.gref->id OP} ^ "_" ^ {nice-gref->string M},
   Fname is Name ^ "_private",
-  Bname is Name ^ "_build".
+  Bname is Name ^ "_build",
+].
 
-pred expand-structures i:indt-decl, o:indt-decl, o:mixins.
-expand-structures (parameter ID I T ((s\record _ _ _ _) as R)) (parameter ID I _ R1) ML :- !, std.do! [
+pred wrapper-deps i:one-w-params (triple term gref gref), i:indt-decl, o:mixins.
+wrapper-deps (w-params.cons _ _ F) (parameter ID explicit T F1) (w-params.cons ID T ML) :-
+  @pi-parameter ID T x\ wrapper-deps (F x) (F1 x) (ML x).
+wrapper-deps (w-params.nil _ _ _) (parameter ID explicit T F1) (w-params.nil ID T ML) :-
+  @pi-parameter ID T x\ wrapper-deps.aux (F1 x) x (ML x).
+wrapper-deps.aux (parameter ID explicit T F1) X [triple M Params X|ML] :-
+  coq.safe-dest-app T Mixin ParamsXStuff,
+  coq.env.global M Mixin,
+  std.appendR Params [X|_] ParamsXStuff,
+  @pi-parameter ID T x\ wrapper-deps.aux (F1 x) X ML.
+wrapper-deps.aux (record _ _ _ _) _ [].
+
+pred expand-structures i:indt-decl, i:mixins, o:indt-decl.
+expand-structures(parameter ID I T F) Deps (parameter ID I T F1) :-
+  @pi-parameter ID T x\ expand-structures (F x) Deps (F1 x).
+expand-structures (parameter ID I T ((s\record _ _ _ _) as R)) Deps (parameter ID I _ R1) :- !, std.do! [
   coq.safe-dest-app T (global GR) Args, is-structure GR, class-def (class C GR ML),
+  coq.mk-n-holes {w-params.nparams Deps} Holes,
   get-constructor C K,
   get-constructor GR SK,
-  coq.mk-app (global K) Args KArgs,
   coq.mk-app (global SK) Args SKArgs,
   (@pi-decl `TheType` {{ Type }} x\ % TYPE is wrong
     apply-w-params ML Args x (F x),
-    expand-structures.aux (F x) {coq.mk-app SKArgs [x]} {coq.mk-app KArgs [x]} R (R1 x)),
+    apply-w-params Deps Holes x (DepsX x),
+    %toposort-mixins {std.append (F x) (DepsX x)} (MoreParams x),
+    expand-structures.aux (F x) (DepsX x) [] {coq.mk-app SKArgs [x]} K Args x R (R1 x)),
 ].
-expand-structures.aux [triple M PS X|MS] Pack Class R (parameter "m" explicit Ty R1) :- std.do! [
+expand-structures.aux [triple M PS X|MS] D ACC Pack K KA Subj R (parameter "m" explicit Ty R1) :- std.do! [
   synthesis.infer-all-gref-deps PS X M Ty,
   (@pi-decl `m` Ty m\ mixin-src X M m =>
-    expand-structures.aux MS Pack {coq.mk-app Class [m]} R (R1 m)),
+    expand-structures.aux MS D ACC Pack K KA Subj R (R1 m)),
 ].
-expand-structures.aux [] Pack Class R R1 :- R1 = R {coq.mk-app Pack [Class]}.
+expand-structures.aux [] [triple M PS X|D]  ACC Pack K KA Subj R (parameter "m" explicit Ty R1) :- std.do! [
+  synthesis.infer-all-gref-deps PS X M Ty,
+  coq.safe-dest-app Ty _ Args,
+  M = indt I,
+  std.assert! (coq.env.projections I [some Priv]) "wrapper with no projection",
+  (@pi-decl `m` Ty m\ sigma PM\
+      coq.mk-app (app [{coq.env.global (const Priv)}|Args]) [m] PM,
+      mixin-src X M m => unwrap-dep m PM =>
+      expand-structures.aux [] D [m|ACC] Pack K KA Subj R (R1 m)),
+].
+expand-structures.aux [] [] WrappedDepsRev Pack K KA Subj R R2 :- std.spy-do! [
+  synthesis.infer-all-gref-deps KA Subj K Class,
+  R1 = R {coq.mk-app Pack [Class]},
+  R1 = record  N S NK (field FA FN T _\end-record),
+  R2 = record  N S NK (field FA FN T1 _\end-record),
+  factory?-split T _ FParams LiftedSubject Deps,
+  std.assert! (std.forall Deps var) "wrapper: deps should be inferred, not given",
+  std.rev WrappedDepsRev WrappedDeps,
+  std.map WrappedDeps unwrap-dep ProjWrappedDeps,
+  coq.mk-app (app FParams) [LiftedSubject|ProjWrappedDeps] T1,
+].
 
-
-expand-structures(parameter ID I T F) (parameter ID I T F1) ML :-
-  @pi-parameter ID T x\ expand-structures (F x) (F1 x) ML.
+pred unwrap-dep i:term, o:term.
 
 % M is the gref of the wrapper mixin.
 % C gets now instantiated to the projection, i.e. hom_isMon_private.

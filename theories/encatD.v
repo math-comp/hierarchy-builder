@@ -308,30 +308,19 @@ HB.structure Definition HPreCat : Set :=
 
 (* The category based on the HQuiver (i.e. horizontal category on D0
    objects) *)
-(* Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsHCat T of HPreCat T := {
-    is_hcat : PreCat_IsCat (transpose T) }. *)
 #[short(type="hcat"),unsafe(univ)]
-HB.structure Definition HCat : Set := HERE: do not only read deps from transpose, but also from PreCat_IsCat...
+HB.structure Definition HCat : Set :=
   { C of HPreCat C & PreCat_IsCat (transpose C) }.
-(*Set Universe Checking.*)
-
-x
-
+  
 (** Vertical 2-cell level category (D1 category) *)
 
 (* Precategory based on the DQuiver (i.e. precategory D1). Gives: 
    vertical 2-cell identity morphism.  
    vertical 2-cell composition. *)
-Unset Universe Checking.
-#[wrapper]
-HB.mixin Record _IsD1PreCat T of DQuiver T := {
-    is_d1precat : Quiver_IsPreCat (@D1obj T) }.
-#[short(type="d1precat")]
+   HB.status.
+#[short(type="d1precat"),unsafe(univ)]
 HB.structure Definition D1PreCat : Set :=
-  { C of Quiver_IsPreCat (@D1obj C) }.
-Set Universe Checking.
+  { C of Quiver_IsPreCat (D1obj C) }.
 
 (* The category based on the DQuiver (i.e. category D1). *)
 Unset Universe Checking.
