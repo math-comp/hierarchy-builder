@@ -276,8 +276,6 @@ Definition pcat_prj2 {C D E F G} (P: @commaE.ptype C D E F G) : D :=
 Program Definition pcat_prj1_isPreFunctor {C D E F G} :=
   IsPreFunctor.Build _ _ (@pcat_prj1 C D E F G) _.
 Obligation 1.
-About IsPreFunctor.phant_Build.
-Show.
 destruct H as [f Y].
 exact f.1.
 Defined.
@@ -300,8 +298,7 @@ Program Definition pcat_prj1_isFunctor {C D E: cat} {F G} :=
 Obligation 2.
 destruct a.
 destruct b.
-Show.
-destruct x.
+destruct c0.
 destruct f.
 destruct g.
 simpl; simpl in *.
@@ -314,7 +311,7 @@ Program Definition pcat_prj2_isFunctor {C D E: cat} {F G} :=
 Obligation 2.
 destruct a.
 destruct b.
-destruct x.
+destruct c0.
 destruct f.
 destruct g.
 simpl; simpl in *.
@@ -358,88 +355,6 @@ HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_prj2 :=
 Program Definition pcat_prj1_isFunctor {C D E: cat} {F G} :=
   PreFunctor_IsFunctor.Build _ _ (@pcat_prj1 C D E F G) _ _. 
 *)
-
-
-
-(************************************************************************)
-
-(*** GENERALISED ENRICHED CATEGORIES *)
-
-Declare Scope encat_scope.
-Delimit Scope encat_scope with encat.
-Local Open Scope encat_scope.
-
-(* Enrichment in a monoidal category, following
-   https://ncatlab.org/nlab/show/enriched+category
-*)
-HB.mixin Record IsEnQuiver (V: Type) C := {
-    hom_object : C -> C -> V
-  }.
-Unset Universe Checking.
-HB.structure Definition EnQuiver (V: Type) : Set :=
-  { C of IsEnQuiver V C }.
-Set Universe Checking.
-
-(* Monoidal precategory with the enrichment operators (no axioms) *)
-HB.mixin Record IsEnPreCat (V: PreMonoidal.type) C of
-  EnQuiver (PreMonoidal.sort V) C := {
-    id_element : forall (a: C),
-      @hom V onec (hom_object a a) ;
-    comp_morphism : forall (a b c: C),
-      @hom V (@hom_object V C b c * @hom_object V C a b)
-             (@hom_object V C a c)
-}.
-Unset Universe Checking.
-HB.structure Definition EnPreCat (V: PreMonoidal.type) : Set :=
-  { C of IsEnPreCat V C }.
-Set Universe Checking.
-
-Notation "a ~^ b" := (hom_object a b)
-   (at level 99, b at level 200, format "a ~^ b") : encat_scope.
-Notation "a ~^_ ( V , C ) b" := (@hom_object V C a b)
-  (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
-Notation "~^IE a" := (id_element a)
-   (at level 99, format "~^IE a") : cat_scope.
-Notation "~^IE_ ( V , C ) a" := (@id_element V C a)
-  (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
-(* not working *)
-Notation "~^CM a b c" := (comp_morphism a b c)
-                          (at level 99,
-                            format "~^CM a b c") : cat_scope.
-Notation "~^CM_ ( V , C ) a b c" := (@comp_morphism V C a b c)
-  (at level 99, V at level 0, C at level 0, only parsing) : cat_scope.
-
-(* V-enriched category:
-   V is the monoidal category;
-   C is the base category that gets enriched
-*)
-HB.mixin Record IsEnCat (V: Monoidal.type) C of EnPreCat V C := {
-   ecat_comp_assoc : forall a b c d: C,
-    forall alpha:
-      (((c ~^_(V,C) d) * (b ~^_(V,C) c)) * (a ~^_(V,C) b)) ~>_V
-      ((c ~^_(V,C) d) * ((b ~^_(V,C) c) * (a ~^_(V,C) b))),
-        ((@comp_morphism V C b c d) <*> (@idmap V (a ~^_(V,C) b))) \;
-        (@comp_morphism V C a b d)
-        =
-        alpha \;
-        ((@idmap V (c ~^_(V,C) d)) <*> (@comp_morphism V C a b c)) \;
-        (@comp_morphism V C a c d) ;
-
-   ecat_comp_left_unital : forall a b: C,
-    forall l: onec * (a ~^_(V,C) b) ~>_V (a ~^_(V,C) b),
-      l = ((@id_element V C b) <*> (@idmap V (a ~^_(V,C) b))) \;
-          (@comp_morphism V C a b b) ;
-   ecat_comp_right_unital : forall a b: C,
-    forall r: (a ~^_(V,C) b) * onec ~>_V (a ~^_(V,C) b),
-      r = ((@idmap V (a ~^_(V,C) b)) <*> (@id_element V C a)) \;
-          (@comp_morphism V C a a b)
-}.
-Unset Universe Checking.
-#[verbose]
-HB.structure Definition EnCat (V: Monoidal.type) : Set :=
-                          { C of IsEnCat V C }.
-Set Universe Checking.
-
 
 (************************************************************************)
 
@@ -658,8 +573,7 @@ Obligation 1.
 eapply (@iHom_id C C0 a).
 Defined.
 Obligation 2.
-Show.
-eapply (@iHom_comp C C0 _ _ _ H H0).
+eapply (@iHom_comp C C0 a b c0 H H0).
 Defined.
 
 HB.instance Definition iHom_precat' {C: pbcat} (C0 : C) := iHom_precat C0.
@@ -1378,63 +1292,23 @@ destruct (X E33) as [mm R].
 exact mm.
 Qed. 
 
+(* Print Assumptions iprodCAsc. *)
 
 (* An internal precategory is an internal category with two operators
    that must be src and tgt preserving, i.e. iHom morphisms: identity
    : C0 -> C1 (corresponding to horizontal 1-morphism identity in
    double cat) and composition : C1 * C1 -> C1 (corresponding to
    horizontal composition) *)
-
-(*Set Printing All.*) (* bug in elpi 2.0.1 *)
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
   of @InternalQuiver C C0 := {
     iidI : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
-    icompI :
-    
-       let C1 : iHom C0 := @C1 C C0 in
-       let C2 : iHom C0 := @pbC0 C C0 C1 C1 in
-    
-      (C2 ~>_(iHom C0) C1 )
+    icompI : let C1' := @C1 C C0 : iHom C0 in
+             let C2 := pbC0 C1' C1' : iHom C0 in
+      (C2 ~>_(iHom C0) C1')
 }.
-(* bad
--------> G: PBCat.type
--------> G: (obj C)
--------> G: (@InternalQuiver.axioms_ C C0)
--------> G: (IsPreInternalQuiver.axioms_ (encatI_PBCat__to__cat_Quiver C) C0)
--------> G: (IsInternalQuiver.axioms_ (encatI_PBCat__to__cat_Quiver C) C0
-   local_mixin_encatI_IsPreInternalQuiver)
--------> G: Type
--------> G: (@hom (@InternalHom.type (elpi.hole elpi.hole) C0)
-   (C0 : @InternalHom.type (elpi.hole elpi.hole) C0)
-   (@C1 C C0 : @InternalHom.type (elpi.hole elpi.hole) C0))
--------> G: (let C1 := @C1 C C0 in
- let C2 := @pbC0 C C0 C1 C1 in
-@hom (@InternalHom.type (elpi.hole C2 C1 elpi.hole) C0) C2 C1)
-
-
-
-
--------> G: PBCat.type
--------> G: (obj C)
--------> G: (@InternalQuiver.axioms_ C C0)
--------> G: (IsPreInternalQuiver.axioms_ (encatI_PBCat__to__cat_Quiver C) C0)
--------> G: (IsInternalQuiver.axioms_ (encatI_PBCat__to__cat_Quiver C) C0
-   local_mixin_encatI_IsPreInternalQuiver)
--------> G: Type
--------> G: (@hom (@InternalHom.type (elpi.hole elpi.hole) C0)
-   (C0 : @InternalHom.type (elpi.hole elpi.hole) C0)
-   (@C1 C C0 : @InternalHom.type (elpi.hole elpi.hole) C0))
--------> G: (let C1 : @InternalHom.type (elpi.hole elpi.hole) C0 := @C1 C C0 in
- let C2 : @InternalHom.type (elpi.hole C1 elpi.hole) C0 := 
-   @pbC0 C C0 C1 C1 in
- @hom (@InternalHom.type (elpi.hole C2 C1 elpi.hole) C0) C2 C1)
- *)
-
 #[short(type="iprecat")]
 HB.structure Definition InternalPreCat (C : pbcat) :=
   { C0 of @IsInternalPreCat C C0 }.
-
-Unset Printing All.
 
 Program Definition iidC' {C : pbcat} {C0 : iprecat C} :
   ((C0 : iHom C0) :> C) ~>_C
@@ -1512,7 +1386,7 @@ HB.structure Definition InternalCat (C : pbcat) :=
 
 (* this proof, so painful, why? *)
 Lemma cat_pbop : HasPBop cat.
-  econstructor; intros A B H.
+  econstructor; intros.
   destruct H.
   simpl in *.
   unfold hom in *.
@@ -1566,6 +1440,7 @@ pullbacks) *)
 Definition doublecat := icat cat.
 
 (* Check (doublecat <~> ???) *)
+
 
 (*
 Lemma cat_pbop : HasPBop cat.

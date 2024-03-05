@@ -875,15 +875,105 @@ Definition HC2Comp (T: CFunctor.type) (a b: DPobj T)
   (m: DP_hom a b) :  (* (m: @hom (DPobj T) a b) : *)
   d1hom (H1Comp a) (H1Comp b) := @Fhom _ _ (@H1Comp T) a b m.
 
+  
 (* flat, display-style version *)
+Program Definition HC2Comp_flat0 (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1) : D1hom (h0 \; h1) (k0 \; k1) :=
+  @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1)
+     (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
+(*
+Obligation 1.
+refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
+Defined.
+*)
+(*
+
+Definition dconv (T: CFunctor.type) (a0 a1 b0 b1: T)
+  (h0 h1: hhom a0 a1) 
+  (k0 k1: hhom b0 b1)
+  (pf : D1hom h0 k0 = D1hom h1 k1) 
+  (hh: D1hom h0 k0) 
+  : D1hom h1 k1 := match pf with eq_refl => hh end.
+
+Definition dconv1 (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (pf : D1hom (h0 \; h1) (k0 \; k1) = D1hom h3 k3) 
+  (hh: D1hom (h0 \; h1) (k0 \; k1)) 
+  : D1hom h3 k3 := match pf with eq_refl => hh end.
+*)
+
+Definition dconv2 (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (pf : D1hom (h0 \; h1) (k0 \; k1) = D1hom h3 k3) 
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1)
+  (F: forall (hh0: D1hom h0 k0)
+             (hh1: D1hom h1 k1)
+             (K: H1Target hh0 = H1Source hh1), D1hom (h0 \; h1) (k0 \; k1))   
+(*  (he: h0 \; h1 = h3)
+  (ke: k0 \; k1 = k3) *)
+  : D1hom h3 k3 := match pf with eq_refl => F hh0 hh1 K end.
+
+Definition HC2Comp_flat1 (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (K: H1Target hh0 = H1Source hh1)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (pf : D1hom (h0 \; h1) (k0 \; k1) = D1hom h3 k3) :
+  D1hom h3 k3 :=
+  @dconv2 T a0 a1 a2 b0 b1 b2 h0 h1 k0 k1 h3 k3 pf hh0 hh1 K 
+    (@HC2Comp_flat0 T a0 a1 a2 b0 b1 b2 h0 h1 k0 k1).
+
+Lemma D1hom_eq (T: CFunctor.type) (a0 a1 b0 b1: T)
+  (h0: hhom a0 a1) (h1: hhom a0 a1)
+  (k0: hhom b0 b1) (k1: hhom b0 b1)
+  (he: h0 = h1) (ke: k0 = k1) :
+  D1hom h0 k0 = D1hom h1 k1.
+  rewrite he; rewrite ke; auto.
+Qed.
+
 Program Definition HC2Comp_flat (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
   (hh0: D1hom h0 k0)
   (hh1: D1hom h1 k1)
-  (K: H1Target hh0 = H1Source hh1) : D1hom (h0 \; h1) (k0 \; k1) := 
-  @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1)
-        (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)). 
+  (K: H1Target hh0 = H1Source hh1)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (eh : h0 \; h1 = h3) 
+  (ek : k0 \; k1 = k3) : D1hom h3 k3 :=
+  @HC2Comp_flat1 T a0 a1 a2 b0 b1 b2 h0 h1 k0 k1 hh0 hh1 K
+    h3 k3 (@D1hom_eq T a0 a2 b0 b2 (h0 \; h1) h3 (k0 \; k1) k3 eh ek).
+
+
+(*
+Program Definition HC2Comp_flat' (T: CFunctor.type) (a0 a1 a2 b0 b1 b2: T)
+  (h0: hhom a0 a1) (h1: hhom a1 a2)
+  (k0: hhom b0 b1) (k1: hhom b1 b2)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (hh0: D1hom h0 k0)
+  (hh1: D1hom h1 k1)
+  (pf : D1hom (h0 \; h1) (k0 \; k1) = D1hom h3 k3) :
+  forall (K: H1Target hh0 = H1Source hh1),
+   D1hom h3 k3 :=
+  fun (K: H1Target hh0 = H1Source hh1) =>
+  match pf (* return (H1Target hh0 = H1Source hh1 ->
+                             D1hom (h0 \; h1) (k0 \; k1)) *)
+  with eq_refl => 
+    fun K0 => @Fhom _ _ (@H1Comp T) (GC h0 h1) (GC k0 k1)
+    (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K0)) end K.
+*)
+
 (*
 Obligation 1.
 refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
@@ -937,16 +1027,50 @@ HB.mixin Record IsCUHPreDDCatD T of UHPreDDCat T := {
   (k0: hhom b0 b1) (k1: hhom b1 b2)
   (hh0: D1hom h0 k0)
   (hh1: D1hom h1 k1)
-  (K: H1Target hh0 = H1Source hh1),
-      H1Source (HC2Comp_flat K) = H1Source hh0 ;
+  (K: H1Target hh0 = H1Source hh1)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (eh : h0 \; h1 = h3)
+  (ek : k0 \; k1 = k3) 
+  (hh: D1hom h3 k3) 
+  (eh: hh = @HC2Comp_flat T a0 a1 a2 b0 b1 b2
+              h0 h1 k0 k1 hh0 hh1             
+              K h3 k3 eh ek),  
+      H1Source hh = H1Source hh0 ;
 
   target_comp_dist1 : forall (a0 a1 a2 b0 b1 b2: T)
   (h0: hhom a0 a1) (h1: hhom a1 a2)
   (k0: hhom b0 b1) (k1: hhom b1 b2)
   (hh0: D1hom h0 k0)
   (hh1: D1hom h1 k1)
-  (K: H1Target hh0 = H1Source hh1),
-      H1Target (HC2Comp_flat K) = H1Target hh1 ;
+  (K: H1Target hh0 = H1Source hh1)
+  (h3: hhom a0 a2) (k3: hhom b0 b2)
+  (eh : h0 \; h1 = h3)
+  (ek : k0 \; k1 = k3) 
+  (hh: D1hom h3 k3) 
+  (eh: hh = @HC2Comp_flat T a0 a1 a2 b0 b1 b2
+              h0 h1 k0 k1 hh0 hh1             
+              K h3 k3 eh ek),
+      H1Target hh = H1Target hh1 ;
+
+  lunit_flat_comp1 : forall (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k)
+  (eh: hunit a1 \; h = h)
+  (ek: hunit b1 \; k = k),
+  let e1 := @unit_target T _ _ (H1Source hk)                       
+  in @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
+       (H2Unit (H1Source hk)) hk e1 h k eh ek = hk ;
+
+  runit_flat_comp1 : forall (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k)
+  (eh: h \; hunit a2 = h)
+  (ek: k \; hunit b2 = k),
+  let e1 := eq_sym (@unit_source T _ _ (H1Target hk))             
+  in @HC2Comp_flat T a1 a2 a2 b1 b2 b2 h (hunit a2) k (hunit b2) 
+       hk (H2Unit (H1Target hk)) e1 h k eh ek = hk ;
 }.    
 #[short(type="cuhpreddcatd")]
 HB.structure Definition CUHPreDDCatD : Set :=
@@ -968,6 +1092,20 @@ HB.structure Definition H0Cat : Set :=
   { C of PreCat_IsCat (transpose C) }.
 Set Universe Checking.
 
+(*
+HB.mixin Record IsH00Cat T of H0PreCat T := {
+   lunit_flat_comp2 : forall (a1 a2 b1 b2: T)
+  (h: @hhom T a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k)
+  (eh: hunit a1 \; h = h)
+  (ek: hunit b1 \; k = k),
+      let e1 := @unit_target T _ _ (H1Source hk)
+      in let ggg :=  @comp1o (transpose T)                       
+  in @HC2Comp_flat T a1 a1 a2 b1 b1 b2 (hunit a1) h (hunit b1) k
+       (H2Unit (H1Source hk)) hk e1 h k eh ek = hk;    }.
+#[short(type="h0cat")]
+*)
 
 Module H0S.
   
