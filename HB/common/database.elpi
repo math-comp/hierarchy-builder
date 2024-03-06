@@ -224,9 +224,9 @@ findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   std.bubblesort LFILunsorted leq-builder LFIL.
 
-pred findall-has-mixin-instance o:list prop.
-findall-has-mixin-instance CL :-
-   std.findall (has-mixin-instance  _ _ _) CL.
+pred findall-has-mixin-instance i:cs-pattern,  o:list prop.
+findall-has-mixin-instance P CL :-
+   std.findall (has-mixin-instance P _ _) CL.
 
 pred has-mixin-instance_key i:prop, o:cs-pattern.
 has-mixin-instance_key (has-mixin-instance P _ _) P.
