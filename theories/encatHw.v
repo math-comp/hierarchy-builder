@@ -86,12 +86,18 @@ HB.tag Definition H1obj (C: Quiver.type) := Total2 (@hom C).
 
 HB.tag Definition D2obj (C: D1Quiver.type) := Total2 (@d1hom C).
 
-(* a and b are vertical (D0) morphisms. Gives the condition for a
-   horizontal (H1) morphism between them. Given two horizontal (H0)
-   morphisms h1 and h2 between sources and targets of the vertical
-   ones, respectively, we expect that there is a vertical (D1)
-   morphism between them. *)
-Definition H1homOld (T: STUFunctor.type) (a b: H1obj T) :=
+(* a and b are vertical (D0) morphisms. Gives the (weak) condition for
+   a horizontal (H1) morphism between them. There have to be
+   horizontal (H0) morphisms h1 and h2 between sources and targets of
+   the vertical ones, respectively, and a vertical (D1) morphism
+   between them (identities don't matter). *)
+Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
+  exists (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
+    (hh: D1hom h1 h2),
+    H1Source hh = this_morph a /\ H1Target hh = this_morph b.
+
+(*
+Definition H1hom' (T: STUFunctor.type) (a b: H1obj T) :=
   sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
     (hh: D1hom h1 h2),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b.
@@ -100,13 +106,7 @@ Definition H1homAlt1 (T: STUFunctor.type) (a b: H1obj T) :=
   sigma (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b)),
     exists (hh: D1hom h1 h2),
     H1Source hh = this_morph a /\ H1Target hh = this_morph b.
-
-Definition H1hom (T: STUFunctor.type) (a b: H1obj T) :=
-  exists (h1: hhom (source a) (source b)) (h2: hhom (target a) (target b))
-    (hh: D1hom h1 h2),
-    H1Source hh = this_morph a /\ H1Target hh = this_morph b.
-
-
+*)
 
 Module H1.
 
@@ -198,6 +198,203 @@ Import H1.
 Import H0.
 Import H0.H0D.
 
+
+(* OK *)  
+Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
+  H1.StrictDoubleCat.type.
+
+  pose XT : CUHPreDDCatD.type := HB.pack T.
+
+(*  pose YT : H0Cat.type := HB.pack T. *)
+  
+  have H0_hyp : IsH0Cat XT.
+  { destruct T. destruct class.
+    assumption. }
+  (* 
+  have H1_hyp := @is_sdcat XT.
+  destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
+   *)
+
+  destruct H0_hyp as [is_h0cat0].
+  destruct is_h0cat0 as [comp1o_h0 compo1_h0 compoA_h0].
+  
+  set (idmap_d0 := @idmap T).
+  set (comp_d0 := @comp T).
+  set (idmap_d1 := @idmap (D1obj T)).
+  set (comp_d1 := @comp (D1obj T)).
+  set (idmap_h0 := @idmap (transpose T)).
+  set (comp_h0 := @comp (transpose T)).
+  set (idmap_h1 := @idmap (H1obj T)).
+  set (comp_h1 := @comp (H1obj T)).
+  
+  have H1_req : PreCat_IsCat (H1obj XT).
+
+  econstructor; intros.
+
+  { destruct a as [sa ta ma].
+    destruct b as [sb tb mb].
+    destruct f as [h1 [h2 [hhm [hhs hht]]]].
+    simpl in hhs, hht.
+    simpl in *.
+    inversion hhs; subst.
+    clear H.
+    simpl.
+
+    unfold comp; simpl.
+    unfold hcomp, hunit; simpl.
+
+    unfold source_comp_dist1.
+    unfold target_comp_dist1.
+    
+    set (K1 := comp1o_h0 sa sb h1).
+    set (K2 := comp1o_h0 ta tb h2).
+
+    assert (
+      forall (x y: sa +> sb) P Q, 
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
+    ).
+    { intros.
+      eapply Prop_irrelevance. }
+    eapply H.
+  }
+
+  { destruct a as [sa ta ma].
+    destruct b as [sb tb mb].
+    destruct f as [h1 [h2 [hhm [hhs hht]]]].
+    simpl in hhs, hht.
+    simpl in *.
+    inversion hhs; subst.
+    clear H.
+    simpl.
+
+    unfold comp; simpl.
+    unfold hcomp, hunit; simpl.
+
+    unfold source_comp_dist1.
+    unfold target_comp_dist1.
+    
+    set (K1 := compo1_h0 sa sb h1).
+    set (K2 := compo1_h0 ta tb h2).
+
+    assert (
+      forall (x y: sa +> sb) P Q, 
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+     ex_intro
+      (fun h0 : sa +> sb =>
+       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
+         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
+    ).
+    { intros.
+      eapply Prop_irrelevance. }
+    eapply H.
+  }
+
+  admit.
+  
+(*** OK *)
+
+  have H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
+  { assumption. }
+
+(*  have xxx : CUHPreDDCatD.type.
+  assumption. *)
+
+  have H1_cat : H1.IsStrictDoubleCat XT.
+    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
+  
+  pose XXT : H1.StrictDoubleCat.type := HB.pack XT H1_cat. 
+  exact XXT.
+Admitted.
+
+
+(* Fails *)
+Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
+  H0.H0D.StrictDoubleCat.type.
+
+  pose XT : CUHPreDDCatD.type := HB.pack T.
+
+  have H1_hyp := @is_sdcat XT.
+  destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
+
+  set (idmap_d0 := @idmap T).
+  set (comp_d0 := @comp T).
+  set (idmap_d1 := @idmap (D1obj T)).
+  set (comp_d1 := @comp (D1obj T)).
+  set (idmap_h0 := @idmap (transpose T)).
+  set (comp_h0 := @comp (transpose T)).
+  set (idmap_h1 := @idmap (H1obj T)).
+  set (comp_h1 := @comp (H1obj T)).
+  
+  have H0_req : PreCat_IsCat (transpose XT).
+
+  econstructor; eauto; intros.
+  { simpl in a, b.
+    set (v1 := idmap_d0 a : hom a a).
+    set (vv1 := TT2 v1 : H1obj T).
+    set (v2 := idmap_d0 b).
+    set (vv2 := TT2 v2).
+    set (h := TT2 f : D1obj T). 
+    set (hh := idmap_d1 h : D1hom f f).
+
+    assert (H1Source hh = this_morph vv1
+            /\ H1Target hh = this_morph vv2) as R.
+    { subst hh.
+      subst vv1 vv2.
+      unfold H1Source, H1Target; simpl.
+      rewrite F1. rewrite F1.
+      split; eauto.
+    }  
+      
+    have @hh2 : H1hom vv1 vv2.
+    {
+      unfold H1hom.
+      exists f.
+      exists f.
+      exists hh.
+      subst hh; simpl.
+      subst h; simpl.
+      eapply R.
+    }
+
+    simpl in hh2.
+    destruct R as [R1 R2].
+    
+    specialize (comp1o_h1 vv1 vv2 hh2).
+    subst hh2.
+    unfold idmap, comp in comp1o_h1.
+    unfold hcomp in comp1o_h1.
+    simpl in comp1o_h1.
+
+    (* too weak! *)
+    inversion comp1o_h1; subst. 
+    dependent destruction comp1o_h1.
+    auto.
+    admit.
+  }  
+ 
+  admit.
+  admit.
+  
+  (* missing feature, HB.pack should wrap m1 for me *)
+  have H0_wreq : IsH0Cat XT. 
+    by apply: (IsH0Cat.Build XT H0_req).
+
+  pose XXT : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
+  exact XXT.
+Admitted.
+
+
+(*****************************************************************)
 
 
 Lemma D1hom_right_unit (T: H0.H0D.StrictDoubleCat.type) (a1 a2 b1 b2: T)
@@ -322,337 +519,5 @@ Lemma unit_aux1 (T: H0.H0D.StrictDoubleCat.type)
   H1Target (H2Unit (H1Source hk)) = H1Source hk.
 rewrite unit_target; auto.
 Defined. 
-
-
-Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
-  H0.H0D.StrictDoubleCat.type.
-
-  pose XT : CUHPreDDCatD.type := HB.pack T.
-
-  have H1_hyp := @is_sdcat XT.
-  destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
-
-  set (idmap_d0 := @idmap T).
-  set (comp_d0 := @comp T).
-  set (idmap_d1 := @idmap (D1obj T)).
-  set (comp_d1 := @comp (D1obj T)).
-  set (idmap_h0 := @idmap (transpose T)).
-  set (comp_h0 := @comp (transpose T)).
-  set (idmap_h1 := @idmap (H1obj T)).
-  set (comp_h1 := @comp (H1obj T)).
-  
-  have H0_req : PreCat_IsCat (transpose XT).
-
-  econstructor; eauto; intros.
-  { simpl in a, b.
-    set (v1 := idmap_d0 a : hom a a).
-    set (vv1 := TT2 v1 : H1obj T).
-    set (v2 := idmap_d0 b).
-    set (vv2 := TT2 v2).
-    set (h := TT2 f : D1obj T). 
-    set (hh := idmap_d1 h : D1hom f f).
-
-    assert (H1Source hh = this_morph vv1
-            /\ H1Target hh = this_morph vv2) as R.
-    { subst hh.
-      subst vv1 vv2.
-      unfold H1Source, H1Target; simpl.
-      rewrite F1. rewrite F1.
-      split; eauto.
-    }  
-      
-    have @hh2 : H1hom vv1 vv2.
-    {
-      unfold H1hom.
-      exists f.
-      exists f.
-      exists hh.
-      subst hh; simpl.
-      subst h; simpl.
-      eapply R.
-    }
-
-    simpl in hh2.
-    destruct R as [R1 R2].
-    
-    specialize (comp1o_h1 vv1 vv2 hh2).
-    subst hh2.
-    unfold idmap, comp in comp1o_h1.
-    unfold hcomp in comp1o_h1.
-    simpl in comp1o_h1.
-
-    (* too weak! *)
-    inversion comp1o_h1; subst. 
-    dependent destruction comp1o_h1.
-    auto.
-    admit.
-  }  
- 
-  { simpl in a, b.
-    set (v1 := idmap_d0 a : hom a a).
-    set (vv1 := TT2 v1 : H1obj T).
-    set (v2 := idmap_d0 b).
-    set (vv2 := TT2 v2).
-    set (h := TT2 f : D1obj T). 
-    set (hh := idmap_d1 h : D1hom f f).
-
-    assert (H1Source hh = this_morph vv1
-            /\ H1Target hh = this_morph vv2) as R.
-    { subst hh.
-      subst vv1 vv2.
-      unfold H1Source, H1Target; simpl.
-      rewrite F1. rewrite F1.
-      split; eauto.
-    }  
-      
-    have @hh2 : H1hom vv1 vv2.
-    {
-      unfold H1hom.
-      exists f.
-      exists f.
-      exists hh.
-      subst hh; simpl.
-      subst h; simpl.
-      eapply R.
-    }
-
-    simpl in hh2.
-    destruct R as [R1 R2].
-    
-    specialize (compo1_h1 vv1 vv2 hh2).
-    subst hh2.
-    unfold idmap, comp in compo1_h1.
-    unfold hcomp in compo1_h1.
-    simpl in compo1_h1.
-
-    dependent destruction compo1_h1.
-
-    admit.
-  }  
-
-  {
-    simpl in a, b, c, d.
-    set (v1 := idmap_d0 a : hom a a).
-    set (vv1 := TT2 v1 : H1obj T).
-    set (v2 := idmap_d0 b).
-    set (vv2 := TT2 v2).
-    set (v3 := idmap_d0 c : hom c c).
-    set (vv3 := TT2 v3 : H1obj T).
-    set (v4 := idmap_d0 d).
-    set (vv4 := TT2 v4).
-    
-    set (jf := TT2 f : D1obj T). 
-    set (jjf := idmap_d1 jf : D1hom f f).
-    set (jg := TT2 g : D1obj T). 
-    set (jjg := idmap_d1 jg : D1hom g g).
-    set (jh := TT2 h : D1obj T). 
-    set (jjh := idmap_d1 jh : D1hom h h).
-
-    assert (H1Source jjf = this_morph vv1
-            /\ H1Target jjf = this_morph vv2) as Rf.
-    { subst jjf.
-      subst vv1 vv2.
-      unfold H1Source, H1Target; simpl.
-      rewrite F1. rewrite F1.
-      split; eauto.
-    }  
-
-    assert (H1Source jjg = this_morph vv2
-            /\ H1Target jjg = this_morph vv3) as Rg.
-    { subst jjg.
-      subst vv2 vv3.
-      unfold H1Source, H1Target; simpl.
-      rewrite F1. rewrite F1.
-      split; eauto.
-    }  
-    
-    assert (H1Source jjh = this_morph vv3
-            /\ H1Target jjh = this_morph vv4) as Rh.
-    { subst jjh.
-      subst vv3 vv4.
-      unfold H1Source, H1Target; simpl.
-      rewrite F1. rewrite F1.
-      split; eauto.
-    }  
-
-    have @wf : H1hom vv1 vv2.
-    {
-      unfold H1hom.
-      exists f.
-      exists f.
-      exists jjf.
-      subst jjf; simpl.
-      subst jf; simpl.
-      eapply Rf.
-    }
-
-    have @wg : H1hom vv2 vv3.
-    {
-      unfold H1hom.
-      exists g.
-      exists g.
-      exists jjg.
-      subst jjg; simpl.
-      subst jg; simpl.
-      eapply Rg.
-    }
-
-    have @wh : H1hom vv3 vv4.
-    {
-      unfold H1hom.
-      exists h.
-      exists h.
-      exists jjh.
-      subst jjh; simpl.
-      subst jh; simpl.
-      eapply Rh.
-    }
-    
-    simpl in wh.
-    destruct Rf as [Rf1 Rf2].
-    simpl in wg.
-    destruct Rg as [Rg1 Rg2].
-    simpl in wh.
-    destruct Rh as [Rh1 Rh2].
-
-    specialize (compoA_h1 vv1 vv2 vv3 vv4 wf wg wh).
-    subst wf wg wh.
-    unfold comp in compoA_h1.
-    unfold hcomp in compoA_h1.
-    simpl in compoA_h1.
-
-    dependent destruction compoA_h1.
-
-    admit.
-  }
-
-  (* missing feature, HB.pack should wrap m1 for me *)
-  have H0_wreq : IsH0Cat XT. 
-    by apply: (IsH0Cat.Build XT H0_req).
-
-  pose XXT : H0.H0D.StrictDoubleCat.type := HB.pack XT H0_wreq.
-  exact XXT.
-Admitted.
-
-
-  
-Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
-  H1.StrictDoubleCat.type.
-
-  pose XT : CUHPreDDCatD.type := HB.pack T.
-
-(*  pose YT : H0Cat.type := HB.pack T. *)
-  
-  have H0_hyp : IsH0Cat XT.
-  { destruct T. destruct class.
-    assumption. }
-  (* 
-  have H1_hyp := @is_sdcat XT.
-  destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
-   *)
-
-  destruct H0_hyp as [is_h0cat0].
-  destruct is_h0cat0 as [comp1o_h0 compo1_h0 compoA_h0].
-  
-  set (idmap_d0 := @idmap T).
-  set (comp_d0 := @comp T).
-  set (idmap_d1 := @idmap (D1obj T)).
-  set (comp_d1 := @comp (D1obj T)).
-  set (idmap_h0 := @idmap (transpose T)).
-  set (comp_h0 := @comp (transpose T)).
-  set (idmap_h1 := @idmap (H1obj T)).
-  set (comp_h1 := @comp (H1obj T)).
-  
-  have H1_req : PreCat_IsCat (H1obj XT).
-
-  econstructor; intros.
-
-  { destruct a as [sa ta ma].
-    destruct b as [sb tb mb].
-    destruct f as [h1 [h2 [hhm [hhs hht]]]].
-    simpl in hhs, hht.
-    simpl in *.
-    inversion hhs; subst.
-    clear H.
-    simpl.
-
-    unfold comp; simpl.
-    unfold hcomp, hunit; simpl.
-
-    unfold source_comp_dist1.
-    unfold target_comp_dist1.
-    
-    set (K1 := comp1o_h0 sa sb h1).
-    set (K2 := comp1o_h0 ta tb h2).
-
-    assert (
-      forall (x y: sa +> sb) P Q, 
-     ex_intro
-      (fun h0 : sa +> sb =>
-       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
-         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
-     ex_intro
-      (fun h0 : sa +> sb =>
-       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
-         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
-    ).
-    { intros.
-      eapply Prop_irrelevance. }
-    eapply H.
-  }
-
-  { destruct a as [sa ta ma].
-    destruct b as [sb tb mb].
-    destruct f as [h1 [h2 [hhm [hhs hht]]]].
-    simpl in hhs, hht.
-    simpl in *.
-    inversion hhs; subst.
-    clear H.
-    simpl.
-
-    unfold comp; simpl.
-    unfold hcomp, hunit; simpl.
-
-    unfold source_comp_dist1.
-    unfold target_comp_dist1.
-    
-    set (K1 := compo1_h0 sa sb h1).
-    set (K2 := compo1_h0 ta tb h2).
-
-    assert (
-      forall (x y: sa +> sb) P Q, 
-     ex_intro
-      (fun h0 : sa +> sb =>
-       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
-         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
-     ex_intro
-      (fun h0 : sa +> sb =>
-       exists (h3 : ta +> tb) (hh : D1hom h0 h3),
-         H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q
-    ).
-    { intros.
-      eapply Prop_irrelevance. }
-    eapply H.
-  }
-
-  admit.
-  
-(*** OK *)
-
-  have H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
-  { assumption. }
-
-(*  have xxx : CUHPreDDCatD.type.
-  assumption. *)
-
-  have H1_cat : H1.IsStrictDoubleCat XT.
-    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
-  
-  pose XXT : H1.StrictDoubleCat.type := HB.pack XT H1_cat. 
-  exact XXT.
-Admitted.
-
-
-
 
 

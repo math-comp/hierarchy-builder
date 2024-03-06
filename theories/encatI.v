@@ -266,7 +266,6 @@ Notation "F `/ b" := (F `/` cst unit b)
 Notation "a / b" := (cst unit a `/ b) : cat_scope.
 *)
 
-
 Definition pcat_prj1 {C D E F G} (P: @commaE.ptype C D E F G) : C :=
   fst (tag P).
 
@@ -1384,7 +1383,326 @@ HB.structure Definition InternalCat (C : pbcat) :=
  *)
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
 
-(* this proof, so painful, why? *)
+Lemma cat_pbop : HasPBop cat.
+  econstructor; intros.
+  destruct H; simpl in *.
+
+  set (PB := (@commaE.ptype A B top left2top right2top : cat)).
+
+  assert (PB ~> A) as L1.
+  { econstructor.
+    econstructor.
+    eapply pcat_prj1_isFunctor.
+  }
+
+  assert (PB ~> B) as R1.
+  { econstructor.
+    econstructor.
+    eapply pcat_prj2_isFunctor.
+  }
+
+  exact (@Span cat A B PB L1 R1).
+Defined.
+HB.instance Definition cat_HasPBop := cat_pbop.
+
+Axiom cat_preb :
+   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
+HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_preb a b c.
+Axiom cat_pb :
+   forall (a b: cat) (c: cospan a b),
+  prepullback_isTerminal cat a b c (@pbk cat a b c).
+HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
+
+(* basically, the internal category adds the D1 category to the base
+D0 category, which is C0 (an object of cat, which is shown to have
+pullbacks) *)
+Definition doublecat := icat cat.
+
+(* Check (doublecat <~> ???) *)
+
+(*
+  
+Require Import FunctionalExtensionality.
+
+Lemma cat_preb :
+  forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).  
+  intros.
+  destruct c; simpl in *; simpl.  
+  econstructor; simpl.
+  unfold comp; simpl.
+  unfold pcat_prj1, pcat_prj2.
+  simpl.
+  unfold commaE.ptype.
+  unfold tag.
+  simpl.
+
+  eapply functorP.
+  simpl.
+
+  (*
+  assert (bot2left \; left2top =1 bot2right \; right2top) as K.
+  { simpl.
+    unfold eqfun.
+    simpl.
+    intros.
+    inversion HeqK; subst.
+    clear HeqK.
+
+    dependent destruction H2.
+    dependent destruction H1.
+    simpl.
+    destruct x as [[x1 x2] e].
+    simpl; simpl in *.
+    unfold pcat_prj1.
+    unfold pcat_prj2.
+    simpl.
+    auto.
+  }
+
+  bot top
+            (left2top \o bot2left) (right2top \o bot2right)).  
+  *)
+  
+
+Lemma cat_preb :
+   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
+  intros.
+  Set Printing All.
+  remember (@pbk
+       (@reverse_coercion PBop.type Set Cat_type__canonical__encatI_PBop
+          Cat.type) a b c) as K.
+
+  Unset Printing All.
+
+  destruct K.
+  econstructor.
+  simpl.
+
+  destruct c eqn: csp.
+  simpl; simpl in *.
+
+  unfold comp.
+  simpl.
+
+  
+  assert ((left2top \o bot2left)%FUN = bot2left \; left2top). 
+  { auto. }
+  rewrite H.
+  assert ((right2top \o bot2right)%FUN = bot2right \; right2top).
+  { auto. }
+  rewrite H0.
+
+  unfold comp.
+  simpl.
+
+  unfold pbk in HeqK.
+  simpl in HeqK.
+
+  clear H H0.
+  assert (bot2left \; left2top =1 bot2right \; right2top) as K.
+  { simpl.
+    unfold eqfun.
+    simpl.
+    intros.
+    inversion HeqK; subst.
+    clear HeqK.
+
+    dependent destruction H2.
+    dependent destruction H1.
+    simpl.
+    destruct x as [[x1 x2] e].
+    simpl; simpl in *.
+    unfold pcat_prj1.
+    unfold pcat_prj2.
+    simpl.
+    auto.
+  }
+  
+  simpl in *.
+    
+  eapply (@functorP bot top
+            (left2top \o bot2left) (right2top \o bot2right) K); eauto.
+  intros.
+  unfold eq_rect.
+  simpl.
+  unfold hom in f.
+  simpl in f.
+  unfold comp.
+  simpl.
+
+  inversion HeqK; subst.
+  clear HeqK.
+  dependent destruction H2.
+  dependent destruction H1.
+  simpl.
+  unfold Fhom.
+  simpl.
+  unfold Fhom.
+  simpl.
+  unfold pcat_prj1_isPreFunctor_obligation_1.
+  unfold pcat_prj2_isPreFunctor_obligation_1.
+  simpl.
+  destruct a0.
+  destruct b0.
+  destruct x.
+  destruct x0.
+  destruct f.
+  simpl; simpl in *.
+  unfold hom in x.
+  simpl in *.
+  unfold prod_hom_subdef in x.
+  destruct x.
+  simpl in *.
+
+  dependent destruction e1.
+
+  unfold Fhom in x.
+  simpl in x.
+  rewrite x.
+  unfold recast2.
+  unfold eq_rect.
+  unfold brel_fcast.
+  unfold eq_ind_r.
+  unfold eq_ind.
+  unfold eq_sym.
+  clear x.
+  unfold eqfun in K.
+  simpl in K.
+
+Check funext.
+  unfold funext.  
+  
+  
+  dependent destruction K.
+  rewrite Fcomp.
+  
+  
+  eapply functional_extensionality_dep.
+  
+  rewrite - Ucomp.
+  
+  remember (pbk a b c) as K.
+  destruct K.
+  econstructor.
+  destruct c eqn: csp.
+  simpl; simpl in *.
+
+  unfold pbk in HeqK.
+  simpl in HeqK.
+  
+(*  set (P := cat_HasPBop).
+  unfold cat_HasPBop in P.
+  unfold cat_pbop in P.
+  simpl in P.
+  destruct pbk0.
+*)
+  
+  unfold comp.
+  simpl.
+
+  assert ((left2top \o pcat_prj1)%FUN = pcat_prj1 \; left2top). 
+  
+  unfold pcat_prj1.
+  unfold pcat_prj2.
+  unfold tag.
+  unfold commaE.ptype.
+  
+  assert 
+
+  
+  unfold pcat_prj1.
+  unfold pcat_prj2.
+  destruct top.
+  destruct a.
+  destruct b.
+  simpl; simpl in *.
+  
+  
+  rewrite - Ucompx.
+
+  
+  assert (K = )
+  simpl; simpl in *.
+  unfold comp.
+  simpl.
+
+
+  rewrite - Ucomp.
+
+  
+  unfold pcat_prj1.
+  unfold pcat_prj2.
+  destruct top.
+  simpl in *; simpl.
+
+  unfold commaE.ptype.
+  
+  rewrite - Ucompx.
+  
+  assert ((left2top \o pcat_prj1)%FUN = pcat_prj1 \; left2top). 
+  
+  rewrite - Ucomp.
+  rewrite - Ucompx.
+  rewrite - Ucompx.
+  rewrite - Ucompx.
+  rewrite - Ucompx.
+  
+  
+  unfold pbk in HeqK.
+  simpl in HeqK.
+
+  rewrite - Ucomp.
+  unfold pcat_prj1.
+  unfold pcat_prj2.
+  setoid_rewrite <- Ucomp.
+  
+
+    
+  unfold comp in HeqK.
+  unfold cat_HasPBop in HeqK.
+  unfold HasPBop.pbk in HeqK.
+  destruc
+  
+  unfold pbk.
+  simpl.
+  unfold HasPBop.pbk.
+  simpl.
+  destruct a.
+  
+Print pbk.  
+
+*)
+
+(*
+Lemma cat_pbop : HasPBop cat.
+  econstructor; intros.
+  destruct A.
+  destruct class as [B1 B2 B3].
+  destruct B1.
+  destruct H.
+  econstructor.
+Admitted. 
+*)
+(*  
+Program Definition pb_cat (A B: cat) (H: cospan A B) : cat.
+  remember A as a.
+  destruct a as [a_sort a_class].
+  remember B as b.
+  destruct b as [b_sort b_class].
+  remember H as H0.
+  destruct H as [t l r].
+
+  econstructor.  
+  instantiate (1:= sigma (x: a_sort) (y: b_sort), ).
+  
+  
+  remember t as t0.
+  destruct t as [s c].
+  destruct c as [a1 a2 a3].
+  econstructor.  
+*)  
+
+(* 
 Lemma cat_pbop : HasPBop cat.
   econstructor; intros.
   destruct H.
@@ -1423,52 +1741,7 @@ Lemma cat_pbop : HasPBop cat.
   } 
 
   eexact (@Span cat A B PB L1 R1).
-Qed.
-HB.instance Definition _ := cat_pbop.
-
-Axiom cat_preb :
-   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
-HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_preb a b c.
-Axiom cat_pb :
-   forall (a b: cat) (c: cospan a b),
-  prepullback_isTerminal cat a b c (@pbk cat a b c).
-HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
-
-(* basically, the internal category adds the D1 category to the base
-D0 category, which is C0 (an object of cat, which is shown to have
-pullbacks) *)
-Definition doublecat := icat cat.
-
-(* Check (doublecat <~> ???) *)
-
-
-(*
-Lemma cat_pbop : HasPBop cat.
-  econstructor; intros.
-  destruct A.
-  destruct class as [B1 B2 B3].
-  destruct B1.
-  destruct H.
-  econstructor.
-Admitted. 
+Defined.
+HB.instance Definition cat_HasPBop := cat_pbop.
 *)
-(*  
-Program Definition pb_cat (A B: cat) (H: cospan A B) : cat.
-  remember A as a.
-  destruct a as [a_sort a_class].
-  remember B as b.
-  destruct b as [b_sort b_class].
-  remember H as H0.
-  destruct H as [t l r].
-
-  econstructor.  
-  instantiate (1:= sigma (x: a_sort) (y: b_sort), ).
-  
-  
-  remember t as t0.
-  destruct t as [s c].
-  destruct c as [a1 a2 a3].
-  econstructor.  
-*)  
-
  

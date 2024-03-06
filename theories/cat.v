@@ -135,7 +135,7 @@ Lemma prefunctorP (C D : quiver) (F G : C ~> D) (eqFG : F =1 G) :
    let homF a b F := F a ~> F b in
    (forall a b f, eq_rect _ (homF a b) (F <$> f) _ (funext eqFG) = G <$> f) ->
   F = G.
-Proof.
+Proof.  
 move: F G => [F [[/= Fhom]]] [G [[/= Ghom]]] in eqFG *.
 case: _ / (funext eqFG) => /= in Ghom * => eqFGhom.
 congr PreFunctor.Pack; congr PreFunctor.Class; congr IsPreFunctor.Axioms_.
