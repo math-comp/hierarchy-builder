@@ -193,9 +193,8 @@ pred mixin-class o:mixinname, o:classname.
 % Coq's CS database (which is just for structures).
 pred mixin-src o:term, o:mixinname, o:term.
 
-% [has-mixin-instance P M G] states that G is a reference to an instance
-% which can be used to reconstruct an instance 
-% of the form [M P …] with eventually some parameters for P.
+% [has-mixin-instance K M G] states that G is a reference to an instance
+% of mixin M for subject K
 pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
 
 %% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -690,7 +689,8 @@ Elpi Export HB.structure.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
-(* [HB.saturate] saturates all instances w.r.t. the current hierarchy.
+(* [HB.saturate [key]] saturates all instances (of all known keys, if key is not
+   given) w.r.t. the current hierarchy.
 
    When two (unrelated) files are imported it might be that the instances
    declared in one file are sufficient to instantiate structures declared
@@ -715,8 +715,11 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (with-logging (instance.saturate-instances)).
-main _ :- coq.error "Usage: HB.saturate".
+main [] :- !, with-attributes (with-logging (instance.saturate-instances _)).
+main [str "Type"] :- !, with-attributes (with-logging (instance.saturate-instances (cs-sort _))).
+main [str K] :- !, coq.locate K GR, with-attributes (with-logging (instance.saturate-instances (cs-gref GR))).
+main [trm T] :- !, term->cs-pattern T P, with-attributes (with-logging (instance.saturate-instances P)).
+main _ :- coq.error "Usage: HB.saturate [key]".
 }}.
 Elpi Typecheck.
 Elpi Export HB.saturate.
