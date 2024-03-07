@@ -29,7 +29,7 @@ Program Definition brel_fcast {X Y C : Type} {F: X -> C} {G: Y -> C}
   R (G a2) (G b2) = R (F a1) (F b1).
 rewrite e1.
 rewrite e2.
-auto.
+reflexivity.
 Defined.
 
 Program Definition recast2 {X Y C : Type} {F: X -> C} {G: Y -> C}
@@ -168,6 +168,37 @@ Definition hom_psubdef (a b : ptype) := {
           (F <$> f.1) = (recast2 (tagged a) (tagged b) (G <$> f.2)) }.
 #[export]
 HB.instance Definition _ := IsQuiver.Build ptype hom_psubdef.
+
+Program Definition functor_ptype_eq 
+  (x y: ptype) :=
+    (forall (m: hom x y),
+        @Fhom C E F (tag x).1 (tag y).1 (tag m).1 =
+          @Fhom D E G (tag x).2 (tag y).2 (tag m).2).
+Obligation 1.
+destruct x as [[x1 x2] ex].
+destruct y as [[y1 y2] ey].
+auto.
+Defined.
+Obligation 2.
+destruct x as [[x1 x2] ex].
+destruct y as [[y1 y2] ey].
+auto.
+Defined.
+
+Definition p2type := sigma (x: C * D) (p: ptype * ptype),
+    (x = tag (fst p) \/ x = tag (snd p)) /\ functor_ptype_eq (fst p) (snd p).
+
+
+(*
+Program Definition functor_ptype_open_eq 
+  (x y: C * D) (p1: F x.1 = G x.2) (p2: F y.1 = G y.2) :=
+    (forall (m: hom x y),
+        @Fhom C E F x.1 y.1 m.1 = @Fhom D E G x.2 y.2 m.2).
+
+Program Definition functor_ptype_eq' 
+  (x y: ptype) :=
+   functor_ptype_open_eq (tagged x) (tagged y).
+*)
 End homcommaE.
 
 Arguments hom_psubdef /.
@@ -244,7 +275,7 @@ by split=> [[a fa] [b fb] [*]|[a fa] [b fb] [*]|*];
 Qed.
 
 #[export]
-HB.instance Definition _ := pcomma_is_cat.
+HB.instance Definition pcomma_cat := pcomma_is_cat.
 
 End commaS.
 
@@ -254,6 +285,7 @@ End Exports.
   
 End commaE.
 
+Import commaE.
 Import commaE.Exports.
 
 (*
@@ -323,6 +355,53 @@ HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_prj1 :=
 
 HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_prj2 :=
   @pcat_prj2_isFunctor C D E F G.
+
+
+(******)
+(*
+Lemma functor_ptype_eq_lemma {C D E : precat}
+  (F : C ~> E) (G : D ~> E)
+  (x y: ptype F G) : functor_ptype_eq x y.
+  unfold functor_ptype_eq.
+  intros.
+  destruct x as [[x1 x2] ex].
+  destruct y as [[y1 y2] ey].
+  destruct m as [[m1 m2] em].
+  simpl; simpl in *.
+  rewrite em.
+  clear em.
+  unfold recast2.
+  unfold brel_fcast.
+  unfold eq_ind_r.
+  unfold eq_ind.
+  unfold eq_sym.
+  
+  unfold eq_rect.
+  simpl.
+  unfold eq_ind_r.
+  unfold eq_ind.
+  unfold eq_sym.
+  simpl.
+  unfold Fhom.
+  simpl.
+  unfold IsPreFunctor.Fhom.
+  unfold hom in m1.
+  unfold hom in m2.
+  simpl in *; simpl.
+  revert m1 m2.
+  
+  dependent destruction ex.
+  
+  unfold hom in m1, m2.
+  simpl in *.
+  
+  unfold Fhom.
+  simpl.
+  unfold eq_rect.
+  unfold eq_sym.
+  simpl.
+  unfold IsPreFunctor.Fhom.
+*)
 
 (*
 Definition pcat_prj1 {C D E F G} (P: @ptype C D E F G) : C :=
@@ -1383,6 +1462,7 @@ HB.structure Definition InternalCat (C : pbcat) :=
  *)
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
 
+
 Lemma cat_pbop : HasPBop cat.
   econstructor; intros.
   destruct H; simpl in *.
@@ -1404,6 +1484,301 @@ Lemma cat_pbop : HasPBop cat.
   exact (@Span cat A B PB L1 R1).
 Defined.
 HB.instance Definition cat_HasPBop := cat_pbop.
+  
+Require Import FunctionalExtensionality.
+
+
+(********************)
+
+Lemma cat_preb' :
+   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
+  intros.
+
+  set K := pbk a b c.
+  remember (pbk a b c) as K0.
+  subst K.
+  destruct c; simpl in *; simpl.  
+  econstructor; simpl.
+  unfold comp; simpl.
+
+  destruct K0 eqn: K.
+  have C1 : (bot2left \; left2top =1 bot2right \; right2top).
+  { simpl.
+    unfold eqfun; simpl.
+    intros.
+    inversion HeqK0; subst.
+    clear HeqK0.
+
+    dependent destruction H2.
+    dependent destruction H1.
+    simpl.
+    destruct x as [[x1 x2] e].
+    simpl; simpl in *.
+    unfold pcat_prj1.
+    unfold pcat_prj2.
+    simpl; auto.
+  }
+
+(*  clear HeqK0. *)
+  clear K.
+  clear K0.
+
+  eapply (@functorP bot top
+            (left2top \o bot2left) (right2top \o bot2right) C1); eauto.
+  intros x y m.
+
+  move : {C1} (funext C1).
+  move : (bot2right \; right2top). 
+  move => G H.
+  
+  Fail destruct H.
+  
+  Set Printing All.
+
+  do! [set T := cat_Cat__to__cat_PreCat top;
+       set B := cat_Cat__to__cat_PreCat bot;
+       set It := cat_PreCat__to__cat_Quiver T;
+       set Ib := cat_PreCat__to__cat_Quiver B;
+       set CAT := Cat_type__canonical__cat_PreCat                        
+   ] in y x m G H *.
+(*
+    rewrite -[@cat_Functor__to__cat_PreFunctor B T g]/
+               (@PreFunctor.Pack Ib It (@Functor.sort B T g) _).
+*)
+(*
+    rewrite -[@cat_Functor__to__cat_PreFunctor B T _]/
+               (@PreFunctor.Pack Ib It (@Functor.sort B T _) _).
+*)
+(*  move: (@Functor.class B T _). *)
+
+  move: H.  
+  Fail destruct H.
+  
+  Check cat_Functor__to__cat_PreFunctor.
+    
+  (* 'Functor.sort B T G' means 'G' *)
+  Fail generalize (@Functor.sort B T G). 
+  (* like generalize *)
+  Fail move: (@Functor.sort B T G).
+  
+  rewrite -[@cat_Functor__to__cat_PreFunctor B T G]/
+             (@PreFunctor.Pack Ib It (@Functor.sort B T G) _).
+(*
+ (* In the first arg of 'eq', 
+   'eq_rect' is using 'H' to rewrite the 'Fhom ... comp' term using the 'Functor.sort' one,
+    so we want to make the second arg of 'eq' depend on 'Functor.sort' *) 
+ forall
+    H : @eq (forall _ : Quiver.sort Ib, Quiver.sort It)     
+            (@Functor.sort B T (@comp CAT bot a top bot2left left2top))
+            (@Functor.sort B T G),
+    
+  @eq (@hom It (@Functor.sort B T G x) (@Functor.sort B T G y))
+
+      (@eq_rect (forall _ : Quiver.sort Ib, Quiver.sort It)
+        (@PreFunctor.sort Ib It
+          (@cat_Functor__to__cat_PreFunctor B T
+             (@comp CAT bot a top bot2left left2top)))
+        (fun F : forall _ : Quiver.sort Ib, Quiver.sort It => @hom It (F x) (F y))
+        (@Fhom Ib It
+          (@cat_Functor__to__cat_PreFunctor B T
+             (@comp CAT bot a top bot2left left2top)) x y m) 
+        (@Functor.sort B T G)
+        H)
+      
+      (@Fhom Ib It (@cat_Functor__to__cat_PreFunctor B T G) x y m)
+*)
+  
+  move: (@Functor.class B T G).
+  move: (@Functor.sort B T G).
+
+  move=> idx class_of_idx H. destruct H.
+
+  (* simpl in X, i.e. in the first 'eq' term *)
+  rewrite [X in @eq _ X _]/=.
+(*
+   rewrite -[@PreFunctor.Pack _ _ _ _]/
+         ((@cat_Functor__to__cat_PreFunctor B T (@comp CAT bot a  top bot2left left2top))).
+*)
+   Unset Printing All.
+   simpl. unfold cat_Functor__to__cat_PreFunctor. simpl.
+   Locate "<$>".  
+   Print Fhom.
+   Set Printing All.
+
+   Unset Printing All.
+
+   unfold pbk in HeqK0.
+   simpl in HeqK0.
+   inversion HeqK0; simpl.
+   dependent destruction H1.
+   dependent destruction H2.
+   simpl.
+   
+   destruct (class_of_idx).
+   f_equal.
+   intros.
+   dependent destruction H1.
+   auto.
+
+   f_equal.
+   
+   cut (HB_unnamed_factory_38 = cat_IsPreFunctor_mixin).
+
+   intro H.
+   inversion H; subst.
+   auto.
+   
+   { unfold HB_unnamed_factory_38.
+     destruct cat_IsPreFunctor_mixin.
+     f_equal.
+     eapply functional_extensionality_dep.
+     intros.
+     eapply functional_extensionality_dep.
+     intros.
+     eapply functional_extensionality_dep.
+     intros.
+     rename Fhom into Fhom0.   
+     unfold Fhom.
+     simpl.
+
+     destruct x0 as [[x01 x02] ex0].
+     destruct x1 as [[x11 x12] ex1].
+     destruct x2 as [[m21 m22] em2].
+     simpl; simpl in *.
+     admit.
+Admitted. 
+     
+Lemma cat_preb'' :
+   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
+  intros.
+
+  set K := pbk a b c.
+  remember (pbk a b c) as K0.
+  subst K.
+  destruct c; simpl in *; simpl.  
+  econstructor; simpl.
+  unfold comp; simpl.
+
+  destruct K0 eqn: K.
+  have C1 : (bot2left \; left2top =1 bot2right \; right2top).
+  { simpl.
+    unfold eqfun; simpl.
+    intros.
+    inversion HeqK0; subst.
+    clear HeqK0.
+
+    dependent destruction H2.
+    dependent destruction H1.
+    simpl.
+    destruct x as [[x1 x2] e].
+    simpl; simpl in *.
+    unfold pcat_prj1.
+    unfold pcat_prj2.
+    simpl; auto.
+  }
+
+(*  clear HeqK0. *)
+  clear K.
+  clear K0.
+  simpl; simpl in *. 
+  
+  unfold pbk in HeqK0.
+  simpl in HeqK0.
+  inversion HeqK0; subst.
+  clear HeqK0.
+  dependent destruction H2.
+  dependent destruction H1.
+  simpl; simpl in *.
+
+  unfold pcat_prj1.
+  unfold pcat_prj2.
+  Locate "\o".
+  unfold ssrfun.comp.
+  Fail eapply functional_extensionality_dep.
+
+  Locate "=1".
+  unfold eqfun in C1.
+
+  cut (forall x : ptype left2top right2top, 
+          left2top (tag x).1 = right2top (tag x).2).
+
+  2: { intros.
+       specialize (C1 x).
+       simpl in *; simpl.
+       rewrite C1.
+       auto.
+     }
+  
+  intros.
+  eapply functional_extensionality in H.
+  eauto.
+
+  rewrite H.
+  auto.
+  clear H.
+  
+  Fail reflexivity.
+
+(*  
+  eapply functorP.
+  instantiate (1:= C1).
+  intros.
+  simpl.
+  
+  (* dependent generalize *)
+  move : {C1} (funext C1).
+  move : ((right2top \o pcat_prj2)%FUN). 
+  move => G H.
+*)
+  
+  f_equal.
+  unfold ssrfun_comp__canonical__cat_Functor.
+
+  assert ((left2top \o
+         {|
+           Functor.sort := fun P : ptype left2top right2top => (tag P).1;
+           Functor.class :=
+             {|
+               Functor.cat_IsPreFunctor_mixin :=
+                 HB_unnamed_factory_148 left2top right2top;
+               Functor.cat_PreFunctor_IsFunctor_mixin := pcat_prj1_isFunctor
+             |}
+         |})%FUN =
+            (right2top \o
+         {|
+           Functor.sort := fun P : ptype left2top right2top => (tag P).2;
+           Functor.class :=
+             {|
+               Functor.cat_IsPreFunctor_mixin :=
+                 HB_unnamed_factory_151 left2top right2top;
+               Functor.cat_PreFunctor_IsFunctor_mixin := pcat_prj2_isFunctor
+             |}
+         |})%FUN) as H.
+  { simpl.
+    eapply functional_extensionality.
+    intros.
+    rewrite C1.
+    reflexivity.
+  }
+
+  simpl; simpl in *.
+
+  eapply functorP.
+  instantiate (1:= C1).
+  intros x y m.
+
+  simpl.
+  
+  move : {C1} (funext C1).
+(*  move : (fun x0 : ptype left2top right2top => right2top (pcat_prj2 x0)).
+  move : ((right2top \o (fun P : ptype left2top right2top => (tag P).2))%FUN). 
+  move => G H.
+  
+  Set Printing All.
+*)   
+Admitted.  
+ 
+  
 
 Axiom cat_preb :
    forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
@@ -1419,288 +1794,6 @@ pullbacks) *)
 Definition doublecat := icat cat.
 
 (* Check (doublecat <~> ???) *)
-
-(*
-  
-Require Import FunctionalExtensionality.
-
-Lemma cat_preb :
-  forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).  
-  intros.
-  destruct c; simpl in *; simpl.  
-  econstructor; simpl.
-  unfold comp; simpl.
-  unfold pcat_prj1, pcat_prj2.
-  simpl.
-  unfold commaE.ptype.
-  unfold tag.
-  simpl.
-
-  eapply functorP.
-  simpl.
-
-  (*
-  assert (bot2left \; left2top =1 bot2right \; right2top) as K.
-  { simpl.
-    unfold eqfun.
-    simpl.
-    intros.
-    inversion HeqK; subst.
-    clear HeqK.
-
-    dependent destruction H2.
-    dependent destruction H1.
-    simpl.
-    destruct x as [[x1 x2] e].
-    simpl; simpl in *.
-    unfold pcat_prj1.
-    unfold pcat_prj2.
-    simpl.
-    auto.
-  }
-
-  bot top
-            (left2top \o bot2left) (right2top \o bot2right)).  
-  *)
-  
-
-Lemma cat_preb :
-   forall (a b: cat) (c: cospan a b), isPrePullback cat a b c (@pbk cat a b c).
-  intros.
-  Set Printing All.
-  remember (@pbk
-       (@reverse_coercion PBop.type Set Cat_type__canonical__encatI_PBop
-          Cat.type) a b c) as K.
-
-  Unset Printing All.
-
-  destruct K.
-  econstructor.
-  simpl.
-
-  destruct c eqn: csp.
-  simpl; simpl in *.
-
-  unfold comp.
-  simpl.
-
-  
-  assert ((left2top \o bot2left)%FUN = bot2left \; left2top). 
-  { auto. }
-  rewrite H.
-  assert ((right2top \o bot2right)%FUN = bot2right \; right2top).
-  { auto. }
-  rewrite H0.
-
-  unfold comp.
-  simpl.
-
-  unfold pbk in HeqK.
-  simpl in HeqK.
-
-  clear H H0.
-  assert (bot2left \; left2top =1 bot2right \; right2top) as K.
-  { simpl.
-    unfold eqfun.
-    simpl.
-    intros.
-    inversion HeqK; subst.
-    clear HeqK.
-
-    dependent destruction H2.
-    dependent destruction H1.
-    simpl.
-    destruct x as [[x1 x2] e].
-    simpl; simpl in *.
-    unfold pcat_prj1.
-    unfold pcat_prj2.
-    simpl.
-    auto.
-  }
-  
-  simpl in *.
-    
-  eapply (@functorP bot top
-            (left2top \o bot2left) (right2top \o bot2right) K); eauto.
-  intros.
-  unfold eq_rect.
-  simpl.
-  unfold hom in f.
-  simpl in f.
-  unfold comp.
-  simpl.
-
-  inversion HeqK; subst.
-  clear HeqK.
-  dependent destruction H2.
-  dependent destruction H1.
-  simpl.
-  unfold Fhom.
-  simpl.
-  unfold Fhom.
-  simpl.
-  unfold pcat_prj1_isPreFunctor_obligation_1.
-  unfold pcat_prj2_isPreFunctor_obligation_1.
-  simpl.
-  destruct a0.
-  destruct b0.
-  destruct x.
-  destruct x0.
-  destruct f.
-  simpl; simpl in *.
-  unfold hom in x.
-  simpl in *.
-  unfold prod_hom_subdef in x.
-  destruct x.
-  simpl in *.
-
-  dependent destruction e1.
-
-  unfold Fhom in x.
-  simpl in x.
-  rewrite x.
-  unfold recast2.
-  unfold eq_rect.
-  unfold brel_fcast.
-  unfold eq_ind_r.
-  unfold eq_ind.
-  unfold eq_sym.
-  clear x.
-  unfold eqfun in K.
-  simpl in K.
-
-Check funext.
-  unfold funext.  
-  
-  
-  dependent destruction K.
-  rewrite Fcomp.
-  
-  
-  eapply functional_extensionality_dep.
-  
-  rewrite - Ucomp.
-  
-  remember (pbk a b c) as K.
-  destruct K.
-  econstructor.
-  destruct c eqn: csp.
-  simpl; simpl in *.
-
-  unfold pbk in HeqK.
-  simpl in HeqK.
-  
-(*  set (P := cat_HasPBop).
-  unfold cat_HasPBop in P.
-  unfold cat_pbop in P.
-  simpl in P.
-  destruct pbk0.
-*)
-  
-  unfold comp.
-  simpl.
-
-  assert ((left2top \o pcat_prj1)%FUN = pcat_prj1 \; left2top). 
-  
-  unfold pcat_prj1.
-  unfold pcat_prj2.
-  unfold tag.
-  unfold commaE.ptype.
-  
-  assert 
-
-  
-  unfold pcat_prj1.
-  unfold pcat_prj2.
-  destruct top.
-  destruct a.
-  destruct b.
-  simpl; simpl in *.
-  
-  
-  rewrite - Ucompx.
-
-  
-  assert (K = )
-  simpl; simpl in *.
-  unfold comp.
-  simpl.
-
-
-  rewrite - Ucomp.
-
-  
-  unfold pcat_prj1.
-  unfold pcat_prj2.
-  destruct top.
-  simpl in *; simpl.
-
-  unfold commaE.ptype.
-  
-  rewrite - Ucompx.
-  
-  assert ((left2top \o pcat_prj1)%FUN = pcat_prj1 \; left2top). 
-  
-  rewrite - Ucomp.
-  rewrite - Ucompx.
-  rewrite - Ucompx.
-  rewrite - Ucompx.
-  rewrite - Ucompx.
-  
-  
-  unfold pbk in HeqK.
-  simpl in HeqK.
-
-  rewrite - Ucomp.
-  unfold pcat_prj1.
-  unfold pcat_prj2.
-  setoid_rewrite <- Ucomp.
-  
-
-    
-  unfold comp in HeqK.
-  unfold cat_HasPBop in HeqK.
-  unfold HasPBop.pbk in HeqK.
-  destruc
-  
-  unfold pbk.
-  simpl.
-  unfold HasPBop.pbk.
-  simpl.
-  destruct a.
-  
-Print pbk.  
-
-*)
-
-(*
-Lemma cat_pbop : HasPBop cat.
-  econstructor; intros.
-  destruct A.
-  destruct class as [B1 B2 B3].
-  destruct B1.
-  destruct H.
-  econstructor.
-Admitted. 
-*)
-(*  
-Program Definition pb_cat (A B: cat) (H: cospan A B) : cat.
-  remember A as a.
-  destruct a as [a_sort a_class].
-  remember B as b.
-  destruct b as [b_sort b_class].
-  remember H as H0.
-  destruct H as [t l r].
-
-  econstructor.  
-  instantiate (1:= sigma (x: a_sort) (y: b_sort), ).
-  
-  
-  remember t as t0.
-  destruct t as [s c].
-  destruct c as [a1 a2 a3].
-  econstructor.  
-*)  
 
 (* 
 Lemma cat_pbop : HasPBop cat.
@@ -1744,4 +1837,75 @@ Lemma cat_pbop : HasPBop cat.
 Defined.
 HB.instance Definition cat_HasPBop := cat_pbop.
 *)
+
+(*
+Lemma cat_pbop : HasPBop cat.
+  econstructor; intros.
+  destruct A.
+  destruct class as [B1 B2 B3].
+  destruct B1.
+  destruct H.
+  econstructor.
+Admitted. 
+*)
+(*  
+Program Definition pb_cat (A B: cat) (H: cospan A B) : cat.
+  remember A as a.
+  destruct a as [a_sort a_class].
+  remember B as b.
+  destruct b as [b_sort b_class].
+  remember H as H0.
+  destruct H as [t l r].
+
+  econstructor.  
+  instantiate (1:= sigma (x: a_sort) (y: b_sort), ).
+  
+  
+  remember t as t0.
+  destruct t as [s c].
+  destruct c as [a1 a2 a3].
+  econstructor.  
+*)  
+
  
+(*
+Program Definition functor_eq1 {C D E : precat} (F : C ~> E) (G : D ~> E)
+  (x: C * D) (p: F x.1 = G x.2) :=
+    (F x.1 = G x.2) /\
+    (forall (y: C * D) (m: hom x y),
+        @Fhom C E F x.1 y.1 m.1 = @Fhom D E G x.2 y.2 m.2).
+
+Program Definition functor_eq2 {C D E : precat} (F : C ~> E) (G : D ~> E)
+  (x: (C * D) * (C * D)) :=
+    (F x.1.1 = G x.1.2) /\ (F x.2.1 = G x.2.2) /\
+    (forall (m: hom x.1 x.2),
+        @Fhom C E F x.1.1 x.2.1 m.1 = @Fhom D E G x.1.2 x.2.2 m.2).
+
+Definition ddd := functor_eq2.
+
+(*
+Program Definition functor_eq {C D E : precat} :=
+  (forall (x: ptype), F (tag x).1 = G (tag x).2) /\
+    (forall (x y: ptype) (m: hom (tag x) (tag y)),
+        @Fhom C E F x.1 y.1 m.1 = @Fhom D E G x.2 y.2 m.2).                     
+Obligation 1.
+simpl.
+*)
+
+Program Definition functor_eq1 {C D E : precat} (F : C ~> E) (G : D ~> E)
+  (x: C * D) :=
+    (F x.1 = G x.2) /\
+    (forall (y: C * D) (m: hom x y),
+        @Fhom C E F x.1 y.1 m.1 = @Fhom D E G x.2 y.2 m.2).                     
+Obligation 1.
+
+Program Definition functor_eq2 {C D E : precat} (F : C ~> E) (G : D ~> E)
+  (x: (C * D) * (C * D)) :=
+    (F x.1.1 = G x.1.2) /\ (F x.2.1 = G x.2.2) /\
+    (forall (m: hom x.1 x.2),
+        @Fhom C E F x.1.1 x.2.1 m.1 = @Fhom D E G x.1.2 x.2.2 m.2).
+Defined.
+
+Definition fptype {C D E : precat} (F : C ~> E) (G : D ~> E) :=
+  { x : ((C * D) * (C * D)) & functor_eq2 F G x }. 
+*)
