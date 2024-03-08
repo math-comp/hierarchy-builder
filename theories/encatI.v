@@ -1487,15 +1487,14 @@ HB.instance Definition cat_HasPBop := cat_pbop.
 (********************)
 
 Lemma cat_preb (a b: cat) (c: cospan a b) :
-   isPrePullback cat a b c (@pbk cat a b c).
+   isPrePullback cat a b c (pbk a b c).
 Proof.
 constructor; case: c => /= c l r.
 pose p1 := @pcat_prj1 _ _ _ l r.
 pose p2 := @pcat_prj2 _ _ _ l r.
 have @l1r2 : (l \o p1)%FUN =1 (r \o p2)%FUN by exact: tagged.
 apply/functorPcast => /= -[[/= a0 b0] ab0] [[/= a1 b1] ab1].
-case=> -[/= a01 b01 larb] /=; do !rewrite /Fhom/=.
-by rewrite -![IsPreFunctor.Fhom _]/Fhom -{}larb.
+by case=> -[/= a01 b01 larb] /=; rewrite /Fhom/= -larb.
 Qed.
 HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_preb a b c.
 
