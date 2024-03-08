@@ -20,6 +20,18 @@ Axiom funext : forall {T : Type} {U : T -> Type} [f g : forall t, U t],
 Axiom propext : forall P Q : Prop, P <-> Q -> P = Q.
 Axiom Prop_irrelevance : forall (P : Prop) (x y : P), x = y.
 
+(* we also assume that congr1 of funext is the identity *)
+Axiom congr1_funext : forall U V (f g : U -> V) (e : f =1 g) x,
+  congr1 (@^~ x) (funext e) = e x.
+
+
+Arguments congr1_funext {U V f g}.
+
+(* Shortcut for double cast:
+  e.g. ecast2 x y (x ~> y) e1 e2 (F <$> a) *)
+Notation ecast2 x y T ex ey u :=
+  (ecast x ((fun y => T) _) ex (ecast y ((fun x => T) _) ey u)).
+
 (* Shortcut *)
 Notation U := Type.
 
@@ -165,6 +177,33 @@ Lemma functorP (C D : precat) (F G : C ~> D) (eqFG : F =1 G) :
   F = G.
 Proof.
 move=> /= /prefunctorP {eqFG}.
+case: F G => [F [/= Fm Fm']] [G [/= Gm Gm']]//=.
+move=> [_] /EqdepFacts.eq_sigT_iff_eq_dep eqFG.
+case: _ / eqFG in Gm' *.
+congr Functor.Pack; congr Functor.Class.
+case: Fm' Gm' => [F1 Fc] [G1 Gc].
+by congr PreFunctor_IsFunctor.Axioms_; apply: Prop_irrelevance.
+Qed.
+
+
+Lemma prefunctorPcast (C D : quiver) (F G : C ~> D) (eqFG : F =1 G) :
+   (forall a b f,
+     ecast2 x y (x ~> y) (eqFG a) (eqFG b) (F <$> f) = G <$> f) ->
+  F = G.
+Proof.
+move: F G => [F [[/= Fhom]]] [G [[/= Ghom]]] in eqFG *.
+have -> : eqFG = (fun x => congr1 (@^~ x) (funext eqFG)).
+  by apply/funext => x; rewrite congr1_funext.
+move: (funext eqFG) Ghom => {eqFG}; case: _ / => Ghom /= eqFGhom.
+congr PreFunctor.Pack. congr PreFunctor.Class; congr IsPreFunctor.Axioms_.
+by do 3!apply: funext=> ?.
+Qed.
+
+Lemma functorPcast (C D : precat) (F G : C ~> D) (eqFG : F =1 G) :
+   (forall a b f, ecast2 x y (x ~> y) (eqFG a) (eqFG b) (F <$> f) = G <$> f) ->
+  F = G.
+Proof.
+move=> /= /prefunctorPcast {eqFG}.
 case: F G => [F [/= Fm Fm']] [G [/= Gm Gm']]//=.
 move=> [_] /EqdepFacts.eq_sigT_iff_eq_dep eqFG.
 case: _ / eqFG in Gm' *.
