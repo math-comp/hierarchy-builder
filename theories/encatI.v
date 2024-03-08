@@ -185,9 +185,13 @@ destruct y as [[y1 y2] ey].
 auto.
 Defined.
 
+(*
 Definition p2type := sigma (x: C * D) (p: ptype * ptype),
     (x = tag (fst p) \/ x = tag (snd p)) /\ functor_ptype_eq (fst p) (snd p).
+*)
 
+Definition p2type := sigma (p: ptype * ptype),
+                      functor_ptype_eq (fst p) (snd p).
 
 (*
 Program Definition functor_ptype_open_eq 
