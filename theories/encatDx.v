@@ -669,6 +669,54 @@ HB.instance Definition DPCat (T: STFunctor.type) := DPCatP T.
 
 (**** Projection functors  ***)
 
+
+Lemma H2First_PreFunctor_lemma (T: STFunctor.type) :
+  IsPreFunctor (DPobj T) (D1obj T) (@H2First T).
+  econstructor; eauto.
+  intros a b [h1 [h2 e]].
+  exact h1.
+Defined.
+  
+Lemma H2Second_PreFunctor_lemma (T: STFunctor.type) :
+  IsPreFunctor (DPobj T) (D1obj T) (@H2Second T).
+  econstructor; eauto.
+  intros a b [h1 [h2 e]].
+  exact h2.
+Defined.
+  
+(* fst horizontal projection prefunctor *)
+HB.instance Definition H2First_HFPreFunctor (T: STFunctor.type) :=
+  H2First_PreFunctor_lemma T. 
+
+(* snd horizontal projection prefunctor *)
+HB.instance Definition H2Second_HFPreFunctor (T: STFunctor.type) :=
+  H2Second_PreFunctor_lemma T. 
+
+Lemma H2First_Functor_lemma (T: STFunctor.type) :
+  PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2First T).
+  econstructor; eauto.
+  intros a b c [hf1 [hf2 ef]] [hg1 [hg2 eg]]; simpl; simpl in *.
+  unfold H2First; simpl.
+  unfold Fhom; simpl; auto.
+Defined.
+
+Lemma H2Second_Functor_lemma (T: STFunctor.type) :
+  PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2Second T).
+  econstructor; eauto.
+  intros a b c [hf1 [hf2 ef]] [hg1 [hg2 eg]]; simpl; simpl in *.
+  unfold H2Second; simpl.
+  unfold Fhom; simpl; auto.
+Defined.
+
+(* fst horizontal projection functor *)
+HB.instance Definition H2First_HFFunctor (T: STFunctor.type) :=
+  H2First_Functor_lemma T. 
+
+(* snd horizontal projection functor *)
+HB.instance Definition H2Second_HFFunctor (T: STFunctor.type) :=
+  H2Second_Functor_lemma T. 
+
+(*
 (* fst horizontal projection prefunctor *)
 Unset Universe Checking.
 #[wrapper]
@@ -700,7 +748,17 @@ HB.mixin Record HSPreFunctor_IsFunctor T of HSPreFunctor T := {
     is_hsfunctor : PreFunctor_IsFunctor (DPobj T) (D1obj T) (@H2Second T) }.
 HB.structure Definition HSFunctor : Set := {C of HSPreFunctor_IsFunctor C}.
 Set Universe Checking.
+*)
 
+(* first projection from pairs of cells *)
+Definition HH2First (T: STFunctor.type) (a b: DPobj T)
+  (m: DP_hom a b) : H2First a ~> H2First b := (@H2First T) <$> m.
+
+(* second projection from pairs of cells *)
+Definition HH2Second (T: STFunctor.type) (a b: DPobj T)
+  (m: DP_hom a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
+
+(*
 (* first projection from pairs of cells *)
 Definition HH2First (T: HFFunctor.type) (a b: DPobj T)
   (m: DP_hom a b) : H2First a ~> H2First b := (@H2First T) <$> m.
@@ -714,7 +772,7 @@ Unset Universe Checking.
   HB.structure Definition QCFunctor : Set :=
   {C of HFFunctor C & HSFunctor C}.
 Set Universe Checking.
-
+*)
 
 (*** Precategory based on the HQuiver (i.e. horizontal precategory on D0
    objects) *)
@@ -979,19 +1037,19 @@ Obligation 1.
 refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
 Defined.
 *)
-
+(*
 (**** All functors together *)
 Unset Universe Checking.
 #[short(type="fcfunctor")]
 HB.structure Definition FCFunctor : Set :=
-  {C of QCFunctor C & CFunctor C}.
+  {C of STFunctor C & CFunctor C}.
 Set Universe Checking.
-
+*)
 
 (** double H-precategory (D0 and D1 categories, H precategory), 
     with distribution of source and target on h-unit *)
 Unset Universe Checking.
-HB.mixin Record IsUHPreDDCat T of FCFunctor T := {
+HB.mixin Record IsUHPreDDCat T of CFunctor T := {
     unit_source : forall (a b: T) (m: hom a b),
       H1Source (H2Unit m) = m ;
 

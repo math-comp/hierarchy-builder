@@ -1498,8 +1498,21 @@ by case=> -[/= a01 b01 larb] /=; rewrite /Fhom/= -larb.
 Qed.
 HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_preb a b c.
 
-Axiom cat_pb :
+Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
+  prepullback_isTerminal cat a b c (@pbk cat a b c).
+  intros; unfold prepullback_isTerminal.
+  econstructor; eauto.
+  econstructor; eauto.
+  unfold pbk; simpl.
+  destruct c; simpl.
+  intros.
+  unfold pb_terminal in f.
+  simpl in *.
+Admitted.  
+
+(* Axiom cat_pb :
+   forall (a b: cat) (c: cospan a b), *)
   prepullback_isTerminal cat a b c (@pbk cat a b c).
 HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
 
