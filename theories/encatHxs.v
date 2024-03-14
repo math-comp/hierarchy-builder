@@ -417,11 +417,13 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
   simpl in *.
   unfold hhom in *; simpl in *.
 
+  set YY := (HC2Comp_flat (unit_target a1 b1 (H1Source hk))).
+    
+  set XX := (X in X = _).
 
   
-  set G := (ecast x0 (D1hom x0 k) (comp1o h)
-    (ecast y0 (D1hom (hunit a1 \; h) y0) (comp1o k)
-       (HC2Comp_flat (unit_target a1 b1 (H1Source hk))))).
+
+
   
   eapply Prop_irrelevance.
   
