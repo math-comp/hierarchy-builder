@@ -466,7 +466,7 @@ Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.StrictDoubleCat.type) :
    eapply (H _ _ K1); eauto.
    simpl.
    inversion K1; subst.
-     
+
 (*  f_equal.
   eapply (eq_existT_curried K1).
   set (q := idmap \; h1). *)
