@@ -1512,8 +1512,8 @@ Lemma cat_pb :
 Admitted.  
 
 (* Axiom cat_pb :
-   forall (a b: cat) (c: cospan a b), *)
-  prepullback_isTerminal cat a b c (@pbk cat a b c).
+   forall (a b: cat) (c: cospan a b), 
+  prepullback_isTerminal cat a b c (@pbk cat a b c). *)
 HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
 
 (* basically, the internal category adds the D1 category to the base
@@ -1522,6 +1522,114 @@ pullbacks) *)
 Definition doublecat := icat cat.
 
 (* Check (doublecat <~> ???) *)
+
+
+(********************************************************************)
+(**** Extra stuff, just for the record *)
+
+Require Import FunctionalExtensionality.
+
+(* alternate proof of cat_preb - for comparison *)
+Lemma cat_preb' :
+  forall (a b: cat) (c: cospan a b),
+    isPrePullback cat a b c (@pbk cat a b c).
+  intros.
+
+  set K := pbk a b c.
+  remember (pbk a b c) as K0.
+  subst K.
+  destruct c; simpl in *; simpl.  
+  econstructor; simpl.
+  unfold comp; simpl.
+
+  destruct K0 eqn: K.
+  have C1 : (bot2left \; left2top =1 bot2right \; right2top).
+  { simpl.
+    unfold eqfun; simpl.
+    intros.
+    inversion HeqK0; subst.
+    clear HeqK0.
+
+    dependent destruction H2.
+    dependent destruction H1.
+    simpl.
+    destruct x as [[x1 x2] e].
+    simpl; simpl in *.
+    unfold pcat_prj1.
+    unfold pcat_prj2.
+    simpl; auto.
+  }
+
+(*  clear HeqK0. *)
+  clear K.
+  clear K0.
+  simpl; simpl in *. 
+  
+  unfold pbk in HeqK0.
+  simpl in HeqK0.
+  inversion HeqK0; subst.
+  clear HeqK0.
+  dependent destruction H2.
+  dependent destruction H1.
+  simpl; simpl in *.
+
+  unfold pcat_prj1.
+  unfold pcat_prj2.
+  Locate "\o".
+  unfold ssrfun.comp.
+  Fail eapply functional_extensionality_dep.
+
+  Locate "=1".
+  unfold eqfun in C1.
+
+  cut (forall x : ptype left2top right2top, 
+          left2top (tag x).1 = right2top (tag x).2).
+
+  2: { intros.
+       specialize (C1 x).
+       simpl in *; simpl.
+       rewrite C1.
+       auto.
+     }
+  
+  intros.
+  eapply functional_extensionality in H.
+  eauto.
+
+  rewrite H.
+  auto.
+  clear H.
+  
+  Fail reflexivity.
+
+  eapply functorPcast.
+  instantiate (1:=C1).
+  intros.
+  destruct f.
+  destruct x.
+  simpl in *; simpl.
+  destruct a0.
+  destruct b0.
+  simpl in *; simpl.
+  destruct x.
+  destruct x0.
+  simpl in *; simpl.
+  
+  assert ((C1 (existT (fun x : a * b => left2top x.1 = right2top x.2)
+                 (s, s0) e0)) =  e0) as H.
+  eapply Prop_irrelevance.
+  rewrite H.
+  
+  assert ((C1
+             (existT (fun x : a * b => left2top x.1 = right2top x.2)
+                (s1, s2) e1)) = e1) as H1.
+  eapply Prop_irrelevance.
+  rewrite H1.
+  rewrite e.
+  simpl.
+  reflexivity.
+Defined.  
+
 
 (* 
 Lemma cat_pbop : HasPBop cat.
