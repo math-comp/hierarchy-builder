@@ -183,6 +183,146 @@ Import H0.
 Import H0.H0D.
 
 
+(* Fails *) 
+Lemma StrictDoubleCat_H0toH1_par (T : H0.H0D.SStrictDoubleCat.type) :
+  H1.StrictDoubleCat.type.
+
+  pose XT : CUHPreDDCatD.type := HB.pack T.
+
+(*  pose YT : H0Cat.type := HB.pack T. *)
+  
+  have H0_hyp : IsH0Cat XT.
+  { destruct T. destruct class. assumption. }
+  (* 
+  have H1_hyp := @is_sdcat XT.
+  destruct H1_hyp as [comp1o_h1 compo1_h1 compoA_h1].
+   *)
+
+  destruct H0_hyp as [is_h0cat0].
+  destruct is_h0cat0 as [comp1o_h0 compo1_h0 compoA_h0].
+
+  have SSD_hyp : IsSStrictDoubleCat XT.
+  { destruct T. destruct class. assumption. }
+
+  destruct SSD_hyp.
+  unfold lunit_comp_type2 in *.
+  unfold runit_comp_type2 in *.
+  
+  set (idmap_d0 := @idmap T).
+  set (comp_d0 := @comp T).
+  set (idmap_d1 := @idmap (D1obj T)).
+  set (comp_d1 := @comp (D1obj T)).
+  set (idmap_h0 := @idmap (transpose T)).
+  set (comp_h0 := @comp (transpose T)).
+  set (idmap_h1 := @idmap (H1obj T)).
+  set (comp_h1 := @comp (H1obj T)).
+  
+  have H1_req : PreCat_IsCat (H1obj XT).
+
+  econstructor.
+  intros.
+
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  destruct f as [h1 [h2 [hhm [hhs hht]]]].
+  simpl in hhs, hht.
+  simpl in *.
+  inversion hhs; subst.
+  clear H.
+  simpl.
+
+  unfold comp.
+  simpl.
+  unfold hcomp, hunit.
+  simpl.
+
+  unfold source_comp_dist1.
+  unfold target_comp_dist1.
+    
+  set (K1 := comp1o_h0 sa sb h1).
+  set (K2 := comp1o_h0 ta tb h2).
+  simpl.
+
+  assert ( forall (x y:  (sa +> sb)) (e: x = y) P Q,
+      match e with eq_refl => P end = Q ->
+      existT
+    (fun h0 : sa +> sb =>
+     sigma (h3 : ta +> tb)(hh : D1hom h0 h3),
+       H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) x P =
+     existT
+    (fun h0 : sa +> sb =>
+     sigma (h3 : ta +> tb)(hh : D1hom h0 h3),
+      H1Source hh = H1Source hhm /\ H1Target hh = H1Target hhm) y Q 
+    ) as H1.
+   { intros.
+     inversion H; subst.
+     
+      eapply (eq_existT_curried eq_refl).
+      simpl.
+      auto.
+   }
+   
+   eapply (H1 _ _ K1); eauto.
+   clear H1.
+   simpl.
+   inversion K1; subst.
+
+   set lunit := @lunit_flat_comp2 _ _ _ _ _ _ hhm.
+   set runit := @runit_flat_comp2 _ _ _ _ _ _ hhm.
+   
+   move: (eq_ind_r (eq^~ (H1Source hhm))
+                 (eq_ind_r [eta eq (H1Source hhm)] 
+                    (erefl (H1Source hhm)) (erefl (H1Source hhm)))
+                 (unit_target sa ta (H1Source hhm))).
+
+   intro.
+
+   clear runit.
+   
+   move: lunit.
+   move: (comp1o h1).
+   intro.
+   move: (cat.comp1o h2).
+   intro.
+   move: (conj
+              (Logic.eq_ind_r (eq^~ (H1Source hhm))
+                 (unit_source sa ta (H1Source hhm))
+                 (IsCUHPreDDCatD.source_comp_dist1 
+                    (SStrictDoubleCat.class T) eq_ind_r))
+              (Logic.eq_ind_r (eq^~ (H1Target hhm)) 
+                 (erefl (H1Target hhm))
+                 (IsCUHPreDDCatD.target_comp_dist1 
+                    (SStrictDoubleCat.class T) eq_ind_r))).
+   
+   
+(*  f_equal.
+  eapply (eq_existT_curried K1).
+  set (q := idmap \; h1). *)
+ (* dependent destruction K1. *)
+
+  (* DEAD END *)
+  
+ (* setoid_rewrite K1 at 1. *)
+admit.
+admit.
+admit.
+
+  have H1_wreq : PreCat_IsCat_LIFT_H1obj XT.
+  { assumption. }
+
+(*  have xxx : CUHPreDDCatD.type.
+  assumption. *)
+
+  have H1_cat : H1.IsStrictDoubleCat XT.
+    by apply: (H1.IsStrictDoubleCat.Build XT H1_wreq).
+  
+  pose XXT : H1.StrictDoubleCat.type := HB.pack XT H1_cat. 
+  exact XXT.
+Admitted.
+
+
+
+
 (* OK *)
 Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
   H0.H0D.SStrictDoubleCat.type.
@@ -391,7 +531,13 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
 
   econstructor; intros; eauto.
 
-  unfold lunit_comp_type.
+  unfold lunit_comp_type1.
+  simpl.
+
+  unfold HC2Comp_flat.
+  unfold H1Comp.
+  simpl.
+  unfold hhunit.
   simpl.
 
   set vo1 := TT2 (H1Source hk).
@@ -409,7 +555,74 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     exists hk.
     exact K.
   }  
-             
+  
+  have J := comp1o_h1 (TT2 (H1Source hk)) (TT2 (H1Target hk)) w.
+  simpl in J.
+
+  subst vo1 vo2.
+  simpl in w.
+  simpl in K.
+  dependent destruction K.
+  dependent destruction e.
+  dependent destruction e0.
+  simpl in *; simpl.
+  clear x.
+  clear x0.
+
+  subst w.
+  simpl in *.
+  unfold comp in J.
+  simpl in J.
+
+  dependent destruction J.
+  unfold hcomp in *.
+  rewrite x.
+  
+  simpl in J.
+  
+  destruct (unit_target a1 b1 (H1Source hk)).
+
+  set X := (comp1o k).
+  generalize X.
+  subst X.
+  set X := (comp1o h).
+  generalize X.
+  subst X.
+  intros X X0.
+  revert hk.
+  unfold HC2Comp_flat.
+  unfold H1Comp.
+  simpl.
+  
+  dependent destruction X.
+  
+  destruct (comp1o k).
+  simpl.
+  
+  generalize (comp1o k).
+  
+  
+  set vo1 := TT2 (H1Source hk).
+  set vo2 := TT2 (H1Target hk).
+
+  assert (H1Source hk = this_morph vo1 /\ H1Target hk = this_morph vo2) as K.
+  { subst vo1 vo2.
+    unfold H1Source, H1Target.
+    simpl; auto.
+  }  
+  
+  have @w : H1hom vo1 vo2.
+  { exists h.
+    exists k.
+    exists hk.
+    exact K.
+  }  
+  
+  have J := comp1o_h1 (TT2 (H1Source hk)) (TT2 (H1Target hk)) w.
+  simpl in J.
+
+  generalize (comp1o h).
+  
   pose J := comp1o_h1 (TT2 (H1Source hk)) (TT2 (H1Target hk)) w.
   simpl in J.
 
@@ -421,6 +634,8 @@ Lemma StrictDoubleCat_H1toH0_par (T : H1.StrictDoubleCat.type) :
     
   set XX := (X in X = _).
 
+  revert XX.
+  revert YY.
   
 
 

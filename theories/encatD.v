@@ -936,31 +936,6 @@ refine (@existT (D1hom h0 k0) _ hh0 (@existT (D1hom h1 k1) _ hh1 K)).
 Defined.
 *)
 
-(*
-(**** All functors together *)
-Unset Universe Checking.
-#[short(type="fcfunctor")]
-HB.structure Definition FCFunctor : Set :=
-  {C of STFunctor C & CFunctor C}.
-Set Universe Checking.
-*)
-(*
-Lemma D1hom_right_unit (T: CFunctor.type) (a1 a2 b1 b2: T)
-  (h: hhom a1 a2)
-  (k: hhom b1 b2) :
-  D1hom h k = 
-  D1hom
-    (hunit (HSource {| source := a1; target := a2; this_morph := h |}) \; h)
-    (hunit (HSource {| source := b1; target := b2; this_morph := k |}) \; k).
-  unfold hunit.
-  unfold hhom in *.
-  simpl; simpl in *.
-  rewrite (comp1o h).
-  rewrite (comp1o k).
-  auto.
-Defined.  
-*)
-
 (** double H-precategory (D0 and D1 categories, H precategory), 
     with distribution of source and target on h-unit *)
 Unset Universe Checking.
@@ -975,6 +950,11 @@ HB.mixin Record IsUHPreDDCat T of CFunctor T := {
 HB.structure Definition UHPreDDCat : Set :=
   { C of IsUHPreDDCat C }.
 Set Universe Checking.
+
+
+(***********************************************************************)
+
+(*** dependently typed version (S): values boxed by TT2 *)
 
 (* strict double category, adding
    distribution of source and target on h-comp to UHDDCat *)
@@ -992,30 +972,9 @@ HB.structure Definition CUHPreDDCatS : Set :=
 Set Universe Checking.
 
 
-Definition lunit_comp_type (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
-  (h: hhom a1 a2)
-  (k: hhom b1 b2)
-  (hk: D1hom h k)
-  (eh: hunit a1 \; h = h)
-  (ek: hunit b1 \; k = k) : Prop := 
-  let K := @unit_target T _ _ (H1Source hk)
-  in let hk1 := HC2Comp_flat K
-(*  in HC2Comp_flat (H2Unit (H1Source hk) hk = hk *)
- (* in TT2 (HC2Comp_flat K) = TT2 hk ; *) 
-(*  in (ecast2 x0 y0 (fun x0 y0 => D1hom x0 y0) eh ek hk1) = hk ;  *)   
-  in (ecast2 x0 y0 (D1hom x0 y0) eh ek hk1) = hk.     
+(***********************************************************************)
 
-Definition runit_comp_type (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
-  (h: hhom a1 a2)
-  (k: hhom b1 b2)
-  (hk: D1hom h k)
-  (eh: h \; hunit a2 = h)
-  (ek: k \; hunit b2 = k) : Prop := 
-  let K := eq_sym (@unit_source T _ _ (H1Target hk))
-  in let hk1 := HC2Comp_flat K
-(*  in let hk1 := @HC2Comp_flat T _ _ _ _ _ _ _ _ _ _ 
-                                     hk (H2Unit (H1Target hk)) K *) 
-  in (ecast2 x0 y0 (D1hom x0 y0) eh ek hk1) = hk.     
+(*** fibered version (D) *)
 
 (* alternative definition of strict double category,
    adding a display-style form of distribution to UHDDCat  *)
@@ -1044,6 +1003,7 @@ Set Universe Checking.
 
 
 (*********** Strict double categories from an horizontal H-D0 category  ***)
+
 Module H0.
 
 (** Horizonal D0-level category (H-D0), based on the HD0Quiver
@@ -1057,13 +1017,50 @@ HB.structure Definition H0Cat : Set :=
   { C of PreCat_IsCat (transpose C) }.
 Set Universe Checking.
 
+(*****************************************************************)
+
 
 Module H0S.
+
+(** Dependently typed version (S) *)
   
 Unset Universe Checking.
 #[short(type="strictdoublecat")]
 HB.structure Definition StrictDoubleCat : Set :=
   { C of H0Cat C & CUHPreDDCatS C }.
+Set Universe Checking.
+
+Definition lunit_comp_type (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k) : Prop := 
+  let K := @unit_target T _ _ (H1Source hk)
+  in let hk1 := HC2Comp_flat K 
+  in TT2 hk1 = TT2 hk.     
+
+Definition runit_comp_type (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k) : Prop := 
+  let K := eq_sym (@unit_source T _ _ (H1Target hk))
+  in let hk1 := HC2Comp_flat K
+  in TT2 hk1 = TT2 hk.     
+ 
+(* definition of strict double category
+   (associativity still missing)  *)
+Unset Universe Checking.
+HB.mixin Record IsSStrictDoubleCat T of StrictDoubleCat T := {
+  lunit_flat_comp : forall (a1 a2 b1 b2: T)
+                   (h: hhom a1 a2) (k: hhom b1 b2) (hk: D1hom h k),
+      @lunit_comp_type T _ _ _ _ h k hk ;
+
+  runit_flat_comp : forall (a1 a2 b1 b2: T)
+                   (h: hhom a1 a2) (k: hhom b1 b2) (hk: D1hom h k),
+      @runit_comp_type T _ _ _ _ h k hk ;
+}.    
+#[short(type="sstrictdoublecat")]
+HB.structure Definition SStrictDoubleCat : Set :=
+  { C of IsSStrictDoubleCat C }.
 Set Universe Checking.
 
 Module Exports.
@@ -1072,41 +1069,107 @@ End Exports.
 
 End H0S.
 
+(********************************************************************)
+
+
 Module H0D.
 
+(* Fibered version (D). *)
+  
 Unset Universe Checking.
 #[short(type="strictdoublecat")]
 HB.structure Definition StrictDoubleCat : Set :=
   { C of H0Cat C & CUHPreDDCatD C }.
 Set Universe Checking.
 
-(* alternative definition of strict double category,
-   adding a display-style form of distribution to UHDDCat  *)
-Unset Universe Checking.
-HB.mixin Record IsSStrictDoubleCat T of StrictDoubleCat T := {
-  lunit_flat_comp : forall (a1 a2 b1 b2: T)
+Lemma D1hom_right_unit (T: StrictDoubleCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2) :
+  D1hom h k = 
+  D1hom (hunit (HSource (TT2 h)) \; h) (hunit (HSource (TT2 k)) \; k).
+  unfold hunit; unfold hhom in *.
+  simpl; simpl in *.
+  rewrite (comp1o h).
+  rewrite (comp1o k); auto.
+Defined.  
+
+Lemma D1hom_right_unit_sym (T: StrictDoubleCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2) :
+  D1hom (hunit (HSource (TT2 h)) \; h) (hunit (HSource (TT2 k)) \; k) =
+  D1hom h k.
+  symmetry; eapply D1hom_right_unit.  
+Defined.      
+
+Definition lunit_comp_type1 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
   (h: hhom a1 a2)
   (k: hhom b1 b2)
-  (hk: D1hom h k), @lunit_comp_type T _ _ _ _ h k hk (comp1o h) (comp1o k) ;
-(*                       
+  (hk: D1hom h k)
+  (eh: hunit a1 \; h = h)
+  (ek: hunit b1 \; k = k) : Prop := 
   let K := @unit_target T _ _ (H1Source hk)
   in let hk1 := HC2Comp_flat K
 (*  in HC2Comp_flat (H2Unit (H1Source hk) hk = hk *)
  (* in TT2 (HC2Comp_flat K) = TT2 hk ; *) 
 (*  in (ecast2 x0 y0 (fun x0 y0 => D1hom x0 y0) eh ek hk1) = hk ;  *)   
-  in (ecast2 x0 y0 (D1hom x0 y0) eh ek hk1) = hk ;     
-*)
+  in (ecast2 x0 y0 (D1hom x0 y0) eh ek hk1) = hk.     
 
-  runit_flat_comp : forall (a1 a2 b1 b2: T)
+Definition runit_comp_type1 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
   (h: hhom a1 a2)
   (k: hhom b1 b2)
-  (hk: D1hom h k), @runit_comp_type T _ _ _ _ h k hk (compo1 h) (compo1 k) ;
+  (hk: D1hom h k)
+  (eh: h \; hunit a2 = h)
+  (ek: k \; hunit b2 = k) : Prop := 
+  let K := eq_sym (@unit_source T _ _ (H1Target hk))
+  in let hk1 := HC2Comp_flat K
+(*  in let hk1 := @HC2Comp_flat T _ _ _ _ _ _ _ _ _ _ 
+                                     hk (H2Unit (H1Target hk)) K *) 
+  in (ecast2 x0 y0 (D1hom x0 y0) eh ek hk1) = hk.     
+
+Definition lunit_comp_type2 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k)
+  (eh: hunit a1 \; h = h)
+  (ek: hunit b1 \; k = k) : Prop := 
+  let K := @unit_target T _ _ (H1Source hk)
+  in let hk1 := HC2Comp_flat K
+(*  in HC2Comp_flat (H2Unit (H1Source hk) hk = hk *)
+ (* in TT2 (HC2Comp_flat K) = TT2 hk ; *) 
+(*  in (ecast2 x0 y0 (fun x0 y0 => D1hom x0 y0) eh ek hk1) = hk ;  *)   
+  in hk1 = ecast2 x0 y0 (D1hom x0 y0) (eq_sym eh) (eq_sym ek) hk.     
+
+Definition runit_comp_type2 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k)
+  (eh: h \; hunit a2 = h)
+  (ek: k \; hunit b2 = k) : Prop := 
+  let K := eq_sym (@unit_source T _ _ (H1Target hk))
+  in let hk1 := HC2Comp_flat K
+(*  in let hk1 := @HC2Comp_flat T _ _ _ _ _ _ _ _ _ _ 
+                                     hk (H2Unit (H1Target hk)) K *) 
+  in hk1 = ecast2 x0 y0 (D1hom x0 y0) (eq_sym eh) (eq_sym ek) hk.     
+
+
+(* alternative definition of strict double category,
+   adding a display-style form of distribution to UHDDCat
+   (associativity still missing)  *)
+Unset Universe Checking.
+HB.mixin Record IsSStrictDoubleCat T of StrictDoubleCat T := {
+  lunit_flat_comp1 : forall (a1 a2 b1 b2: T)
+                   (h: hhom a1 a2) (k: hhom b1 b2) (hk: D1hom h k),
+      @lunit_comp_type2 T _ _ _ _ h k hk (comp1o h) (comp1o k) ;
+
+  runit_flat_comp1 : forall (a1 a2 b1 b2: T)
+                   (h: hhom a1 a2) (k: hhom b1 b2) (hk: D1hom h k),
+      @runit_comp_type2 T _ _ _ _ h k hk (compo1 h) (compo1 k) ;
 }.    
 #[short(type="sstrictdoublecat")]
 HB.structure Definition SStrictDoubleCat : Set :=
   { C of IsSStrictDoubleCat C }.
 Set Universe Checking.
-
+ 
 Module Exports.
 HB.reexport.
 End Exports.
