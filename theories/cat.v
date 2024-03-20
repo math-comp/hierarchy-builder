@@ -240,9 +240,9 @@ HB.instance Definition _ := PreFunctor_IsFunctor.Build C E (G \o F)%FUN
 End comp_functor.
 
 (* precat and cat have a precategory structure *)
-HB.instance Definition _ := Quiver_IsPreCat.Build precat
+HB.instance Definition cat_id := Quiver_IsPreCat.Build precat
   (fun=> idfun) (fun C D E (F : C ~> D) (G : D ~> E) => (G \o F)%FUN).
-HB.instance Definition _ := Quiver_IsPreCat.Build cat
+HB.instance Definition cat_comp := Quiver_IsPreCat.Build cat
   (fun=> idfun) (fun C D E (F : C ~> D) (G : D ~> E) => (G \o F)%FUN).
 
 Lemma funext_frefl A B (f : A -> B) : funext (frefl f) = erefl.

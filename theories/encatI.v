@@ -1460,12 +1460,21 @@ HB.structure Definition InternalCat (C : pbcat) :=
  *)
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
 
+Definition catprod (C D E : cat) (F : C ~> E) (G : D ~> E) : cat :=
+  @commaE.ptype C D E F G.
+
+(*
+Program Definition contractor (A B: cat) (F: A ~> B) : A ~> catprod F F.   
+unfold catprod.
+unfold hom; simpl.
+*)
 
 Lemma cat_pbop : HasPBop cat.
   econstructor; intros.
   destruct H; simpl in *.
 
-  set (PB := (@commaE.ptype A B top left2top right2top : cat)).
+  set (PB := catprod left2top right2top).
+(*  set (PB := (@commaE.ptype A B top left2top right2top : cat)). *)
 
   assert (PB ~> A) as L1.
   { econstructor.
@@ -1502,12 +1511,14 @@ Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
   prepullback_isTerminal cat a b c (@pbk cat a b c).
   intros; unfold prepullback_isTerminal.
+  destruct c.
   econstructor; eauto.
   econstructor; eauto.
+
+  unfold pb_terminal.
   unfold pbk; simpl.
   destruct c; simpl.
   intros.
-  unfold pb_terminal in f.
   simpl in *.
 Admitted.  
 

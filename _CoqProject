@@ -3,7 +3,6 @@ theories/cat.v
 theories/encatD.v
 theories/encatH.v
 theories/encatI.v
-theories/encat.v
 theories/algebra.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
