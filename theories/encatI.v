@@ -1510,6 +1510,154 @@ unfold hom; simpl.
 exact (@splitter A). 
 Defined.
 
+Definition fsplitter (A B C: cat) (F: A ~> B) (G: A ~> C) :
+  A -> ((B * C)%type : cat) := fun x => (F x, G x).
+
+Program Definition fsplitter_Fhom (A B C: cat) (F: A ~> B) (G: A ~> C) :
+  forall (a b : A), (a ~> b) -> (fsplitter F G a ~> fsplitter F G b).
+intros.
+unfold fsplitter.
+unfold hom; simpl.
+unfold prod_hom_subdef; simpl.
+split.
+unfold hom in F, G; simpl in *.
+eapply Fhom; auto.
+eapply Fhom; auto.
+Defined.
+
+Lemma fsplitter_IsPreFunctor_lemma (A B C: cat) (F: A ~> B) (G: A ~> C) :
+  IsPreFunctor A ((B * C)%type : cat) (@fsplitter _ _ _ F G).
+  econstructor; eauto.
+  intros.
+  unfold fsplitter, hom; simpl.
+  unfold prod_hom_subdef; simpl.
+  split.
+  unfold hom in F, G; simpl in *.
+  eapply Fhom; auto.
+  eapply Fhom; auto.
+Defined.  
+  
+HB.instance Definition fsplitter_IsPreFunctor
+  (A B C: cat) (F: A ~> B) (G: A ~> C) :=
+  fsplitter_IsPreFunctor_lemma F G.
+
+Lemma fsplitter_IsFunctor_lemma (A B C: cat) (F: A ~> B) (G: A ~> C) :
+  PreFunctor_IsFunctor A ((B * C)%type : cat) (fsplitter F G).
+  econstructor; eauto.
+  intros; unfold fsplitter; simpl.
+  unfold hom in F, G; simpl in *.
+  unfold Fhom; simpl.
+  rewrite F1.
+  rewrite F1.
+  unfold idmap; simpl.
+  auto.
+  intros; unfold fsplitter; simpl.
+  unfold hom in F, G; simpl in *.
+  unfold Fhom; simpl.
+  rewrite Fcomp.
+  rewrite Fcomp.
+  auto.
+Defined.
+
+HB.instance Definition fsplitter_IsFunctor
+  (A B C: cat) (F: A ~> B) (G: A ~> C) :=
+  fsplitter_IsFunctor_lemma F G.
+
+Program Definition fsplitter_morph (A B C: cat) (F: A ~> B) (G: A ~> C) :
+  A ~> ((B * C)%type : cat).
+unfold hom; simpl.
+exact (fsplitter F G). 
+Defined.
+
+Definition fst0 {A B: U} : (A * B)%type -> A := fst.
+Definition snd0 {A B: U} : (A * B)%type -> B := snd.
+
+HB.instance Definition fst0_IsPreFunctor (C D : quiver) :=
+  IsPreFunctor.Build (C * D)%type C fst0
+     (fun (a b : C * D) (f : a ~> b) => f.1).
+HB.instance Definition snd0_IsPreFunctor (C D : quiver) :=
+  IsPreFunctor.Build (C * D)%type D snd0
+    (fun (a b : C * D) (f : a ~> b) => f.2).
+Lemma fst0_IsFunctor_lemma (C D: cat) :
+  PreFunctor_IsFunctor ((C * D)%type: cat) C fst0.
+  econstructor; eauto.
+Defined.  
+Lemma snd0_IsFunctor_lemma (C D: cat) :
+  PreFunctor_IsFunctor ((C * D)%type: cat) D snd0.
+  econstructor; eauto.
+Defined.  
+HB.instance Definition fst0_IsFunctor (C D : cat) :=
+  fst0_IsFunctor_lemma C D.
+HB.instance Definition snd0_IsFunctor (C D : cat) :=
+  snd0_IsFunctor_lemma C D.
+
+Program Definition fstF {A B: cat} : ((A * B)%type : cat) ~> A.
+econstructor; eauto.
+econstructor; eauto.
+eapply (fst0_IsFunctor A B).
+Defined.
+
+Program Definition sndF {A B: cat} : ((A * B)%type : cat) ~> B.
+econstructor; eauto.
+econstructor; eauto.
+eapply (snd0_IsFunctor A B).
+Defined.
+
+Program Definition joiner (A B C: cat) (F: A ~> C) (G: B ~> C) 
+  (e: fstF \; F = sndF \; G) : ((A * B)%type : cat) -> (ptype F G : cat).
+simpl; intro ab.
+(*destruct X as [a b]. *)
+exists ab.
+unfold fstF, sndF in e.
+unfold comp in e.
+simpl in e.
+unfold fst0, snd0 in e.
+simpl in e.
+unfold comp in e.
+
+destruct F.
+destruct G.
+simpl in *; simpl.
+Admitted.
+
+
+
+
+
+
+(*
+Program Definition joiner (A B C: cat) (F: A ~> C) (G: B ~> C) 
+  (e: fstF \; F = sndF \; G) : ((A * B)%type : cat) ~> (ptype F G : cat).       unfold hom; simpl.
+unfold fstF, sndF in e.
+unfold comp in e.
+simpl in e.
+unfold fst0, snd0 in e.
+simpl in e.
+econstructor; eauto.
+econstructor; eauto.
+econstructor; eauto.
+
+
+unfold ptype; simpl.
+econstructor; eauto.
+econstructor; eauto.
+econstructor; eauto.
+intros.
+destruct a.
+unfold Fhom; simpl.
+
+  
+
+instantiate (1:= (idmap, idmap)).
+
+
+
+Program Definition joiner (A B C: cat) (F: A ~> C) (G: B ~> C) :
+  let F1 : ((A * B)%type : cat) ~> C := fstF \; F
+  in let G1 : ((A * B)%type : cat) ~> C := sndF \; G
+  in F1 = G1 -> ((A * B)%type : cat) ~> (ptype F G : cat).                      *)                 
+
+
 Lemma cat_pbop : HasPBop cat.
   econstructor; intros.
   destruct H; simpl in *.
@@ -1552,7 +1700,10 @@ Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
   prepullback_isTerminal cat a b c (@pbk cat a b c).
   intros; unfold prepullback_isTerminal.
+  remember (pbk a b c) as P.
   destruct c.
+  unfold pbk in HeqP; simpl in *.
+  simpl; simpl in *.
   econstructor; eauto.
   econstructor; eauto.
 
