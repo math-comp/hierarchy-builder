@@ -452,7 +452,7 @@ HB.mixin Record HasPreBCat C of PBop C : Type := {
   is_ppbk : forall (a b : C) (c : cospan a b),
       isPrePullback C a b c (@pbk C a b c)
   }.
-#[short(type="pbcat")]
+#[short(type="prepbcat")]
 HB.structure Definition PreBCat :=
   {C of HasPreBCat C}.
 
@@ -500,11 +500,11 @@ Notation "X ':>' C" := (X : obj C) (at level 60, C at next level).
    target of X and the source of Y. The pullback provides a commuting
    square on the cospan, which basically ensures that the morphisms in
    X and Y can be composed.  *)
-Definition iprod_pb {C: pbcat} {C0 : C} (X Y : iHom C0) :
+Definition iprod_pb {C: prepbcat} {C0 : C} (X Y : iHom C0) :
     span (X :> C) (Y :> C) :=
   pbk _ _ (Cospan (tgt : (X :> C) ~> C0) (src : (Y :> C) ~> C0)).
 
-Definition iprod {C: pbcat} {C0 : obj C} (X Y : iHom C0) : obj C :=
+Definition iprod {C: prepbcat} {C0 : obj C} (X Y : iHom C0) : obj C :=
   bot (@iprod_pb C C0 X Y).
 Notation "X *_ C0 Y" := (@iprod _ C0 (X : iHom C0) (Y : iHom C0))
             (at level 99, C0 at level 0, only parsing) : cat_scope.
@@ -533,9 +533,9 @@ Notation "X *_ C0 Y" := (@iprod _ C0 X Y)
 *)
 
 (* left and right projection morphisms of the product *)
-Definition iprodl {C: pbcat} {C0 : C} (X Y : iHom C0) :
+Definition iprodl {C: prepbcat} {C0 : C} (X Y : iHom C0) :
   X *_C0 Y ~> (X :> C) := bot2left (iprod_pb X Y).
-Definition iprodr {C: pbcat} {C0 : C} (X Y : iHom C0) :
+Definition iprodr {C: prepbcat} {C0 : C} (X Y : iHom C0) :
   X *_C0 Y ~> (Y :> C) := bot2right (iprod_pb X Y).
 
 (* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
@@ -543,34 +543,34 @@ is also an instance of (iHom C0). X and Y represent composable
 morphisms, as by pullback properties, the diagram (1) commutes.
 source and target are obtained by composing with product projections
 (2) *)
-Definition iprod_iHom {C: pbcat} {C0: C} (X Y: @iHom C C0) :
+Definition iprod_iHom {C: prepbcat} {C0: C} (X Y: @iHom C C0) :
   @isInternalHom C C0 (X *_C0 Y) :=
   @isInternalHom.Build C C0 (X *_C0 Y)
     ((iprodl X Y) \; src)
     ((iprodr X Y) \; tgt).
 
-HB.instance Definition iprod_iHom' {C: pbcat} {C0: C} (X Y: @iHom C C0) :
+HB.instance Definition iprod_iHom' {C: prepbcat} {C0: C} (X Y: @iHom C C0) :
   @isInternalHom C C0 (X *_C0 Y) := iprod_iHom X Y.
 
 (* the product as (iHom C0) object *)
-Definition pbC0 (C : pbcat) (C0 : C) (X Y : iHom C0) : iHom C0 :=
+Definition pbC0 (C : prepbcat) (C0 : C) (X Y : iHom C0) : iHom C0 :=
    (X *_C0 Y) : iHom C0.
 
 (* we also define the trivial internal hom type *)
-HB.instance Definition trivial_iHom {C: pbcat} {C0: C} :
+HB.instance Definition trivial_iHom {C: prepbcat} {C0: C} :
    @isInternalHom C C0 C0 :=
    isInternalHom.Build C C0 C0 idmap idmap.
 
 (**)
 
-Definition trivial_iHom' {C: pbcat} {C0: C} : @iHom C C0 :=
+Definition trivial_iHom' {C: prepbcat} {C0: C} : @iHom C C0 :=
   InternalHom.Pack (InternalHom.Class (@trivial_iHom C C0)).
 
-Definition trivial_iprod_iHom {C: pbcat} {C0: C} :
+Definition trivial_iprod_iHom {C: prepbcat} {C0: C} :
   @isInternalHom C C0 ((@trivial_iHom' C C0) *_C0 (@trivial_iHom' C C0)) :=
   @iprod_iHom' C C0 (@trivial_iHom' C C0) (@trivial_iHom' C C0).
 
-Definition trivial_iprod_iHom' {C: pbcat} {C0: C} : @iHom C C0 :=
+Definition trivial_iprod_iHom' {C: prepbcat} {C0: C} : @iHom C C0 :=
   InternalHom.Pack (InternalHom.Class (@trivial_iprod_iHom C C0)).
   
 (**)
@@ -579,23 +579,23 @@ Definition trivial_iprod_iHom' {C: pbcat} {C0: C} : @iHom C C0 :=
 the ones that preserve sources and targets.  
 basically, we recast morphisms in (obj C) into some in (@iHom C C0),
 i.e. into morphism between copies of C1 *)
-HB.mixin Record IsInternalHomHom {C: pbcat} (C0 : C)
+HB.mixin Record IsInternalHomHom {C: prepbcat} (C0 : C)
      (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
   hom_src : f \; (@src C C0 C1') = (@src C C0 C1);
   hom_tgt : f \; tgt = tgt;
 }.
 #[short(type="iHomHom")]
-HB.structure Definition InternalHomHom {C: pbcat}
+HB.structure Definition InternalHomHom {C: prepbcat}
   (C0 : C) (C1 C1' : @iHom C C0) :=
   { f of @IsInternalHomHom C C0 C1 C1' f }.
 
 (* internal homs form a category,
    the morphisms are the one that preserve source and target *)
-HB.instance Definition iHom_quiver {C: pbcat} (C0 : C) :
+HB.instance Definition iHom_quiver {C: prepbcat} (C0 : C) :
   IsQuiver (@iHom C C0) :=
   IsQuiver.Build (@iHom C C0) (@iHomHom C C0).
 
-Program Definition pre_iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
+Program Definition pre_iHom_id {C: prepbcat} (C0 : C) (C1 : @iHom C C0) :
   @IsInternalHomHom C C0 C1 C1 idmap :=
   @IsInternalHomHom.Build C C0 C1 C1 idmap _ _.
 Obligation 1.
@@ -605,7 +605,7 @@ Obligation 2.
 setoid_rewrite comp1o; reflexivity.
 Defined.
 
-Program Definition iHom_id {C: pbcat} (C0 : C) (C1 : @iHom C C0) :
+Program Definition iHom_id {C: prepbcat} (C0 : C) (C1 : @iHom C C0) :
   C1 ~>_(@iHom C C0) C1 := 
   @InternalHomHom.Pack C C0 C1 C1 idmap _.
 (*
@@ -617,7 +617,7 @@ econstructor.
 eapply (@pre_iHom_id C C0 C1).
 Defined.
 
-Program Definition pre_iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
+Program Definition pre_iHom_comp {C: prepbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
   (f: C1 ~>_(@iHom C C0) C2) (g: C2 ~>_(@iHom C C0) C3) :
   @IsInternalHomHom C C0 C1 C3 (f \; g) :=
   @IsInternalHomHom.Build C C0 C1 C3 (f \; g) _ _.
@@ -630,7 +630,7 @@ setoid_rewrite <- compoA.
 repeat (setoid_rewrite hom_tgt); auto.
 Defined.
 
-Program Definition iHom_comp {C: pbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
+Program Definition iHom_comp {C: prepbcat} (C0 : C) (C1 C2 C3: @iHom C C0)
   (f: C1 ~>_(@iHom C C0) C2) (g: C2 ~>_(@iHom C C0) C3) :
   C1 ~>_(@iHom C C0) C3 :=
   @InternalHomHom.Pack C C0 C1 C3 (f \; g) _.
@@ -639,7 +639,7 @@ econstructor.
 eapply (@pre_iHom_comp C C0 C1 C2 C3 f g).
 Defined.  
 
-Program Definition iHom_precat {C: pbcat} (C0 : C) :
+Program Definition iHom_precat {C: prepbcat} (C0 : C) :
   Quiver_IsPreCat (@iHom C C0) :=
   Quiver_IsPreCat.Build (@iHom C C0) _ _.
 Obligation 1.
@@ -651,9 +651,9 @@ move=> C C0 a b c0 X X0.
 eapply (@iHom_comp C C0 a b c0 X X0).
 Defined.
 
-HB.instance Definition iHom_precat' {C: pbcat} (C0 : C) := iHom_precat C0.
+HB.instance Definition iHom_precat' {C: prepbcat} (C0 : C) := iHom_precat C0.
 
-Lemma iHom_LeftUnit_lemma (C : pbcat) (C0 : C)
+Lemma iHom_LeftUnit_lemma (C : prepbcat) (C0 : C)
   (a b : iHom C0) (f : a ~> b) : idmap \; f = f.
 unfold idmap; simpl.
 unfold iHom_precat_obligation_1.
@@ -714,7 +714,7 @@ rewrite D2.
 reflexivity.
 Qed.
 
-Lemma iHom_RightUnit_lemma (C : pbcat) (C0 : C)
+Lemma iHom_RightUnit_lemma (C : prepbcat) (C0 : C)
   (a b : iHom C0) (f : a ~> b) : f \; idmap = f.
 unfold idmap; simpl.
 unfold iHom_precat_obligation_1.
@@ -775,7 +775,7 @@ rewrite D2.
 reflexivity.
 Qed.
 
-Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C) 
+Lemma iHom_Assoc_lemma {C : prepbcat} (C0 : C) 
   (a b c d : iHom C0) (f : a ~> b) (g : b ~> c) (h : c ~> d) :
   f \; g \; h = (f \; g) \; h.
   unfold comp; simpl.
@@ -823,7 +823,7 @@ Lemma iHom_Assoc_lemma {C : pbcat} (C0 : C)
   reflexivity.
 Qed.
     
-Program Definition iHom_cat {C: pbcat} (C0 : C) :
+Program Definition iHom_cat {C: prepbcat} (C0 : C) :
   PreCat_IsCat (@iHom C C0) :=
   PreCat_IsCat.Build (@iHom C C0) _ _ _.
 Obligation 1.
@@ -947,7 +947,7 @@ Proof.
   Fail ... 
 *)
 
-Lemma pbk_eta {C: pbcat} {C0} (X Y: iHom C0) :
+Lemma pbk_eta {C: prepbcat} {C0} (X Y: iHom C0) :
     (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))) =
     (Span (iprodl X Y) (iprodr X Y)).       
   unfold iprodl, iprodr, iprod.
@@ -959,7 +959,7 @@ Lemma pbk_eta {C: pbcat} {C0} (X Y: iHom C0) :
   simpl; auto.
 Qed.  
   
-Lemma pbk_pullback_is_pullback {C: pbcat} {C0} (X Y: iHom C0) :
+Lemma pbk_pullback_is_pullback {C: prepbcat} {C0} (X Y: iHom C0) :
       Pullback C (Cospan (@tgt C C0 X) (@src C C0 Y))
         (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))) =
       Pullback C (Cospan (@tgt C C0 X) (@src C C0 Y))
@@ -968,14 +968,14 @@ Lemma pbk_pullback_is_pullback {C: pbcat} {C0} (X Y: iHom C0) :
   auto.
 Qed.  
   
-Lemma pbsquare_is_pullback_sym {C: pbcat} {C0} (X Y: iHom C0) :
+Lemma pbsquare_is_pullback_sym {C: prepbcat} {C0} (X Y: iHom C0) :
       Pullback C (Cospan (@tgt C C0 X) (@src C C0 Y))
         (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))) =
       pbsquare (iprodl X Y) (iprodr X Y) (@tgt C C0 X) (@src C C0 Y).
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
 
-Lemma pbsquare_is_pullback {C: pbcat} {C0} (X Y: iHom C0) :
+Lemma pbsquare_is_pullback {C: prepbcat} {C0} (X Y: iHom C0) :
       pbsquare (iprodl X Y) (iprodr X Y) (@tgt C C0 X) (@src C C0 Y) =
       Pullback C (Cospan (@tgt C C0 X) (@src C C0 Y))
         (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))).
@@ -1460,21 +1460,62 @@ HB.structure Definition InternalCat (C : pbcat) :=
  *)
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
 
-Definition catprod (C D E : cat) (F : C ~> E) (G : D ~> E) : cat :=
+(*
+Definition cprod (C D E : cat) (F : C ~> E) (G : D ~> E) : cat :=
   @commaE.ptype C D E F G.
-
+*)
 (*
 Program Definition contractor (A B: cat) (F: A ~> B) : A ~> catprod F F.   
 unfold catprod.
 unfold hom; simpl.
 *)
+(*
+Check prod_is_cat.
+Print prod_is_cat.
+*)
+
+Definition splitter (A: cat) : A -> ((A * A)%type : cat) := fun x => (x, x).
+
+Program Definition splitter_Fhom (A: cat) :
+  forall (a b : A), (a ~> b) -> (splitter a ~> splitter b).
+intros.
+unfold splitter.
+unfold hom; simpl.
+unfold prod_hom_subdef; simpl.
+exact (X, X).
+Defined.
+
+Lemma splitter_IsPreFunctor_lemma (A: cat) :
+  IsPreFunctor A ((A * A)%type : cat) (@splitter A).
+  econstructor; eauto.
+  intros.
+  unfold splitter, hom; simpl.
+  unfold prod_hom_subdef; simpl.
+  exact (H, H).
+Defined.  
+  
+HB.instance Definition splitter_IsPreFunctor (A: cat) :=
+  splitter_IsPreFunctor_lemma A.
+
+Lemma splitter_IsFunctor_lemma (A: cat) :
+  PreFunctor_IsFunctor A ((A * A)%type : cat) (@splitter A).
+  econstructor; eauto.
+Defined.
+
+HB.instance Definition splitter_IsFunctor (A: cat) :=
+  splitter_IsFunctor_lemma A.
+
+Program Definition splitter_morph (A: cat) : A ~> ((A * A)%type : cat).
+unfold hom; simpl.
+exact (@splitter A). 
+Defined.
 
 Lemma cat_pbop : HasPBop cat.
   econstructor; intros.
   destruct H; simpl in *.
 
-  set (PB := catprod left2top right2top).
-(*  set (PB := (@commaE.ptype A B top left2top right2top : cat)). *)
+(*  set (PB := catprod left2top right2top). *)
+  set (PB := (@commaE.ptype A B top left2top right2top : cat)). 
 
   assert (PB ~> A) as L1.
   { econstructor.
