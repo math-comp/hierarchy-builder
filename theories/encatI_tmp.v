@@ -508,7 +508,8 @@ Defined.
 Definition fsplitter (A B C: cat) (F: A ~> B) (G: A ~> C) :
   A -> ((B * C)%type : cat) := fun x => (F x, G x).
 
-Program Definition fsplitter_Fhom (A B C: cat) (F: A ~> B) (G: A ~> C) :
+Program Definition fsplitter_Fhom (A B C: cat)
+  (F: A ~> B) (G: A ~> C) :
   forall (a b : A), (a ~> b) -> (fsplitter F G a ~> fsplitter F G b).
 intros.
 unfold fsplitter.
@@ -520,7 +521,8 @@ eapply Fhom; auto.
 eapply Fhom; auto.
 Defined.
 
-Lemma fsplitter_IsPreFunctor_lemma (A B C: cat) (F: A ~> B) (G: A ~> C) :
+Lemma fsplitter_IsPreFunctor_lemma (A B C: cat)
+  (F: A ~> B) (G: A ~> C) :
   IsPreFunctor A ((B * C)%type : cat) (@fsplitter _ _ _ F G).
   econstructor; eauto.
   intros.
@@ -558,8 +560,8 @@ HB.instance Definition fsplitter_IsFunctor
   (A B C: cat) (F: A ~> B) (G: A ~> C) :=
   fsplitter_IsFunctor_lemma F G.
 
-Program Definition fsplitter_morph (A B C: cat) (F: A ~> B) (G: A ~> C) :
-  A ~> ((B * C)%type : cat).
+Program Definition fsplitter_morph (A B C: cat)
+  (F: A ~> B) (G: A ~> C) : A ~> ((B * C)%type : cat).
 unfold hom; simpl.
 exact (fsplitter F G). 
 Defined.
@@ -600,13 +602,64 @@ Defined.
 
 Require Import FunctionalExtensionality.
 
+(*
+Lemma fsplitter_proj1 (A B C: cat) (F: A ~> B) (G: A ~> C) :
+    (fsplitter F G : Functor.type _ _) \; fstF = F.
+  unfold fsplitter.
+  unfold fstF.
+  unfold comp.
+  simpl.
+  unfold fsplitter.
+  unfold fst0.
+  unfold fst.
+  unfold ssrfun.comp; simpl.
+  destruct F.
+
+  compute.
+  f_equal.
+  destruct class.
+  simpl.
+  
+  eapply functional_extensionality.
+  destruct F.
+  destruct G.
+  destruct class as [X Y].
+  destruct class0 as [X0 Y0].
+  destruct X.
+  destruct X0.
+  
+  forall x, fstF (fsplitter F G x) = F x.   
+*)  
+
 Definition joiner (A B C: cat) (F: A ~> C) (G: B ~> C) 
   (e: forall x: A * B, F (x.1) = G (x.2)) :
   ((A * B)%type : cat) -> (ptype F G : cat) :=
   fun ab => existT (fun x : A * B => F x.1 = G x.2) ab (e ab).
 
 Program Definition joiner1 (A B C: cat) (F: A ~> C) (G: B ~> C) 
-  (e: fstF \; F = sndF \; G) : ((A * B)%type : cat) -> (ptype F G : cat).
+  (e: fstF \; F = sndF \; G) :
+  ((A * B)%type : cat) -> (ptype F G : cat).
+intro ab.
+exists ab.
+dependent destruction e.
+eapply equal_f in x; eauto.
+(*  unfold ssrfun.comp in e; simpl in e. *)
+Defined.  
+
+(*
+unfold comp in e.
+simpl in e.
+unfold comp in e.
+unfold fst0, snd0 in e.
+
+destruct F.
+destruct G.
+simpl; simpl in *.
+(* unfold ssrfun.comp in e. *)
+inversion e; subst.
+eapply equal_f in H0; eauto.
+Defined.
+
 simpl; intro ab.
 (*destruct X as [a b]. *)
 exists ab.
@@ -619,15 +672,386 @@ destruct F.
 destruct G.
 simpl; simpl in *.
 (* unfold ssrfun.comp in e. *)
-
 inversion e; subst.
 eapply equal_f in H0; eauto.
 Defined.
+*)
+
+Lemma mediating_fun (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) : A -> (ptype F2 G2 : cat).
+  intro X.
+  exists (fsplitter F1 G1 X); simpl.
+(*  exists ((F1 X, G1 X)); simpl. *)
+  dependent destruction e.
+  eapply equal_f in x; eauto.
+(*  unfold ssrfun.comp in e; simpl in e. *)
+Defined.  
+
+Lemma Fhom_comp (A B C: cat)
+  (F1: A ~> B) (F2: B ~> C) (x y: obj A) (m: x ~> y) :
+  (F1 \; F2) <$> m = F2 <$> (F1 <$> m).
+  auto.
+Defined.
+
+Lemma Fhom_comp' (A B C: cat)
+  (F1: A ~> B) (F2: B ~> C) (x y: obj A) (m: x ~> y) :
+  @Fhom A C (F1 \; F2) x y m =
+  @Fhom B C F2 (F1 x) (F1 y) (@Fhom A B F1 x y m).
+  auto.
+Defined.
+
+Lemma prefunctorPcast_inv
+  (C D : quiver) (F G : C ~> D) (eqFG : F =1 G) :
+  (forall a b f,
+      F = G ->  
+     ecast2 x y (x ~> y) (eqFG a) (eqFG b) (F <$> f) = G <$> f).
+(* 
+ecast x (x ~> G b) (eqFG a) (ecast y (F a ~> y) (eqFG b) (F <$> f)) =
+  G <$> f *)
+Proof.
+  intros a b f H.
+  dependent destruction H.
+  destruct F.
+  simpl.
+  simpl in *.
+  Locate "=1".
+  unfold eqfun in *.
+  destruct class as [X].
+  simpl; simpl in *.
+  unfold Fhom.
+  simpl.
+  destruct X; simpl.
+  move: (eqFG a).
+  move: (eqFG b).
+  intros.
+  dependent destruction eqFG0.
+  dependent destruction eqFG1.
+  auto.
+Defined.  
+
+Lemma lower_eq (A B C : cat)
+  (F: A ~> C) (G: B ~> C)
+  (e: @fstF A B \; F = @sndF A B \; G) :
+  forall x: A * B, F (x.1) = G (x.2).
+  intros.
+  destruct F.
+  destruct G.
+  unfold fstF, sndF in *.
+  unfold comp in *.
+  simpl; simpl in *.
+  dependent destruction e.
+  unfold ssrfun.comp in x; simpl in x.
+  eapply equal_f in x; eauto.
+Qed.  
+  
+Lemma cond_joiner_IsPreFunctor_lemma (A B C : cat)
+  (F: A ~> C) (G: B ~> C)
+  (e: @fstF A B \; F = @sndF A B \; G) :
+  IsPreFunctor (A * B)%type (ptype F G) (joiner (lower_eq e)).
+  unfold joiner; simpl.
+  econstructor; eauto.
+  intros ab1 ab2 fg.
+  exists fg.
+
+  set F1 := (@fstF A B \; F).
+  set G1 := (@sndF A B \; G).
+
+  assert (F1 =1 G1) as eqFG1.
+  { subst F1 G1.
+    unfold eqfun.
+    intros.
+    unfold fstF, sndF.
+    simpl.
+    unfold fstF, sndF in e.
+    unfold fst0, snd0 in *.
+    unfold comp in *.
+    simpl in *.
+    destruct F.
+    destruct G.
+    simpl in *.
+    inversion e; subst.
+    unfold ssrfun.comp in H0; simpl in H0.
+    eapply equal_f in H0; eauto.
+  }  
+  
+  assert (F1 = G1) as eqFG2.
+  { auto. } 
+
+  assert (ecast x (x ~> G1 ab2) (eqFG1 ab1)
+        (ecast y (F1 ab1 ~> y) (eqFG1 ab2) (F1 <$> fg)) = (G1 <$> fg)) as Eh.
+  { eapply prefunctorPcast_inv; eauto.
+    f_equal; auto. }
+
+  subst F1 G1.
+  unfold sndF in *.
+  simpl in *.
+  unfold snd0 in *; simpl in *.
+  unfold Fhom in Eh; simpl in *.
+  unfold Fhom in Eh; simpl in *.
+  unfold Fhom; simpl.
+  rewrite -Eh.
+
+  assert ((lower_eq e ab1) = (eqFG1 ab1)) as A1.
+  { eapply Prop_irrelevance. }
+  rewrite A1.
+
+  assert ((lower_eq e ab2) = (eqFG1 ab2)) as A2.
+  { eapply Prop_irrelevance. }
+  rewrite A2.
+
+  auto.
+Defined.
+
+
+(*
+Lemma prefunctorPcast_inv2
+  (C D : quiver) (F G : C ~> D) (eqFG : F =1 G) :
+  (forall a b f,
+      F = G ->  
+     ecast2 x y (x ~> y) (eqFG a) (eqFG b) (F <$> f) = G <$> f).
+Proof.
+*)
+
+
+Lemma mediating_morph_fun (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  IsPreFunctor A (ptype F2 G2) (mediating_fun e).
+  econstructor; eauto.
+  intros a1 a2 hh.
+  unfold hom; simpl.
+  unfold hom; simpl.
+
+  set MM := fsplitter F1 G1 <$> hh.
+  exists MM.
+
+  have @fstF1 : forall h, fstF (fsplitter F1 G1 <$> h) = F1 <$> h. 
+  
+  assert (MM \; fstF = F1).
+  
+Lemma mediating_morph_fun (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  IsPreFunctor A (ptype F2 G2) (mediating_fun e).
+  remember (mediating_fun e) as M.
+  econstructor; eauto.
+  intros a1 a2 hh.
+
+  have mm : tag (M a1) ~> tag (M a2).
+  { inversion HeqM; subst; simpl.
+    exact (F1 <$> hh, G1 <$> hh).
+  }    
+
+  exists mm; simpl.
+(*
+  destruct mm.
+  set F1 := (@fstF A B \; F).
+  set G1 := (@sndF A B \; G).
+*)  
+  
+  move: mm.
+  move: (M a1).
+  move: (M a2).
+  intros.
+  destruct M0.
+  destruct M1.
+  
+  simpl; simpl in *.
+  destruct x.
+  destruct x0.
+  destruct mm.
+  simpl; simpl in *.
+
+  destruct F1.
+  destruct F2.
+  destruct G1.
+  destruct G2.
+ 
+  destruct class as [X].
+  destruct class0 as [X0].
+  destruct class1 as [X1].
+  destruct class2 as [X2].
+  destruct X.
+  destruct X0.
+  destruct X1.
+  destruct X2.
+  simpl; simpl in *.
+  
+  move: e0.
+  move: e1.
+
+  clear HeqM.
+  clear M.
+  unfold comp in e; simpl in *.
+
+(*  
+  dependent destruction e.
+  dependent destruction H.
+
+  move: (sort0 s1).
+  
+  intros.
+
+   
+  
+  dependent destruction e1.
+  
+  
+  eapply prefunctorPcast_inv.
+*)  
+Admitted. 
+
+(*  
+  eapply prefunctorPcast_inv.
+
+  unfold hom; simpl.
+  unfold hom; simpl.
+  unfold prod_hom_subdef; simpl.
+
+  exists (F1 <$> hh, G1 <$> hh); simpl.
+  rewrite -Fhom_comp.
+  rewrite -Fhom_comp.
+  
+  assert (@Fhom A D (F1 \; F2) = @Fhom A D (G1 \; G2)).
+
+  destruct F1.
+  destruct F2.
+  destruct G1.
+  destruct G2.
+  simpl; simpl in *.
+  unfold comp in e; simpl in *.
+  inversion e; subst.
+  simpl.
+  inversion H0; subst.
+*)  
+
+Lemma mediating_morph_fun' (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  IsPreFunctor A (ptype F2 G2) (mediating_fun e).
+  remember (mediating_fun e) as M.
+  econstructor; eauto.
+  intros a1 a2 hh.
+
+  have mm : tag (M a1) ~> tag (M a2).
+  { inversion HeqM; subst; simpl.
+    exact (F1 <$> hh, G1 <$> hh).
+  }    
+
+  destruct M.
+  
+
+
+
+Lemma mediating_morph_fun' (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  IsPreFunctor A (ptype F2 G2) (mediating_fun e).
+  econstructor; eauto.
+  intros a1 a2 hh.
+  unfold hom.
+  
+  unfold mediating_fun; simpl.
+
+  
+
+  exists (F1 <$> hh, G1 <$> hh).
+  
+
+  
+  have mm : tag (M a1) ~> tag (M a2).
+  { inversion HeqM; subst; simpl.
+    exact (F1 <$> hh, G1 <$> hh).
+
+
+
+
 
 Lemma joiner_IsPreFunctor_lemma (A B C : cat)
   (F: A ~> C) (G: B ~> C) (e: forall x: A * B, F (x.1) = G (x.2)) :
   IsPreFunctor (A * B)%type (ptype F G) (joiner e).
+(*  remember (joiner e) as M. *)
   econstructor; eauto.
+  intros ab1 ab2 fg.
+  exists fg; simpl.
+
+  set F1 := (@fstF A B \; F).
+  set G1 := (@sndF A B \; G).
+
+  assert (F1 =1 G1) as eqFG1.
+  { subst F1 G1.
+    unfold eqfun.
+    intros.
+    unfold fstF, sndF.
+    simpl.
+    rewrite e; auto.
+  }  
+  
+  assert (F1 = G1) as eqFG2.
+  
+  admit.
+  
+  assert (ecast x (x ~> G1 ab2) (eqFG1 ab1)
+        (ecast y (F1 ab1 ~> y) (eqFG1 ab2) (F1 <$> fg)) = (G1 <$> fg)) as Eh.
+  { eapply prefunctorPcast_inv; eauto.
+    f_equal; auto. }
+
+  subst F1 G1.
+  unfold sndF in *.
+  simpl in *.
+  unfold snd0 in *; simpl in *.
+  unfold Fhom in Eh; simpl in *.
+  unfold Fhom in Eh; simpl in *.
+  unfold Fhom; simpl.
+  rewrite -Eh.
+
+  assert ((e ab1) = (eqFG1 ab1)) as A1.
+  { eapply Prop_irrelevance. }
+  rewrite A1.
+
+  assert ((e ab2) = (eqFG1 ab2)) as A2.
+  { eapply Prop_irrelevance. }
+  rewrite A2.
+
+  auto.
+Admitted.  
+
+
+
+
+    eapply 
+    simpl; simpl in *.
+    
+
+
+  
+  destruct ab1 as [a1 b1].
+  destruct ab2 as [a2 b2].
+  destruct fg as [f g].
+  simpl; simpl in *.
+
+  move: (e (a1, b1)). 
+  move: (e (a2, b2)).
+
+  simpl.
+  intros.
+
+  
+  destruct F.
+  destruct G.
+  destruct class as [X Y].
+  destruct class0 as [X0 Y0].
+  destruct X.
+  destruct X0.
+  destruct Y as [A1 A2].
+  destruct Y0 as [A3 A4].
+  simpl; simpl in *.
+  clear e.
+
+
+  
+  
   unfold hom in F, G; simpl in *.
   
 (*
@@ -639,12 +1063,7 @@ Lemma joiner_IsPreFunctor_lemma (A B C : cat)
   unfold hom; simpl.
 *)  
   
-  intros ab1 ab2 fg.
   unfold hom; simpl.
-  exists fg. 
-  destruct ab1 as [a1 b1].
-  destruct ab2 as [a2 b2].
-  simpl.
 
   set F1 := (@fstF A B \; F).
 
