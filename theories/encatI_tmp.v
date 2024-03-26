@@ -602,21 +602,132 @@ Defined.
 
 Require Import FunctionalExtensionality.
 
-(*
+
 Lemma fsplitter_proj1 (A B C: cat) (F: A ~> B) (G: A ~> C) :
     (fsplitter F G : Functor.type _ _) \; fstF = F.
   unfold fsplitter.
   unfold fstF.
   unfold comp.
   simpl.
+  
+(*  unfold ssrfun.comp; simpl. *)
+  
   unfold fsplitter.
   unfold fst0.
   unfold fst.
+  destruct F.
+  destruct class as [X0 X1].
+  f_equal.
+
+  move: {|
+         Functor.sort := sort;
+         Functor.class :=
+           {|
+             Functor.cat_IsPreFunctor_mixin := X0;
+             Functor.cat_PreFunctor_IsFunctor_mixin := X1
+           |}
+        |}.
+  simpl; intros.
+
+(*  destruct G.
+  destruct class.
+  destruct t.
+  destruct class. *)
+
+  unfold ssrfun.comp; simpl.
+  assert ([eta t] = t).
+  { destruct t.
+    simpl.
+    eapply functional_extensionality.
+    intros.
+    auto.
+  }
+  Fail exact H.
+
+  destruct t.
+  destruct class.
+  destruct G.
+  destruct class.
+  simpl; simpl in *.
+  f_equal.
+  f_equal.
+(*  
+  destruct G.
+  simpl.
+  compute.
+*)    
+(*  Set Printing All. *)
+Admitted.
+
+  
+(*  
+    rewrite H.
+    clear H.
+  destruct t.
+  destruct class.
+  f_equal.
+  f_equal.
+  destruct G.
+  simpl.
+  compute.
+  
+  
+  change_no_check t with [eta t].
+
+ 
+  
+  change_no_check ({|
+    Functor.sort := sort;
+    Functor.class :=
+      {|
+        Functor.cat_IsPreFunctor_mixin := X0;
+        Functor.cat_PreFunctor_IsFunctor_mixin := X1
+      |}
+  |}) with (((fun p : B * C => let (x, _) := p in x) \o
+     (fun x : A =>
+      ({|
+         Functor.sort := sort;
+         Functor.class :=
+           {|
+             Functor.cat_IsPreFunctor_mixin := X0;
+             Functor.cat_PreFunctor_IsFunctor_mixin := X1
+           |}
+        |} x, G x)))%FUN).
+  simpl.
+  
+  
+  
   unfold ssrfun.comp; simpl.
   destruct F.
 
+  change_no_check ([eta {|
+         Functor.sort := sort;
+         Functor.class :=
+           {|
+             Functor.cat_IsPreFunctor_mixin := X0;
+             Functor.cat_PreFunctor_IsFunctor_mixin := X1
+           |}
+       |}]) with ({|
+         Functor.sort := sort;
+         Functor.class :=
+           {|
+             Functor.cat_IsPreFunctor_mixin := X0;
+             Functor.cat_PreFunctor_IsFunctor_mixin := X1
+           |}
+       |}).
+
+  simpl.
+  f_equal.
+  compute.
+  
   compute.
   f_equal.
+  
+
+About comp_F1.
+
+  
+  unfold 
   destruct class.
   simpl.
   
@@ -629,7 +740,8 @@ Lemma fsplitter_proj1 (A B C: cat) (F: A ~> B) (G: A ~> C) :
   destruct X0.
   
   forall x, fstF (fsplitter F G x) = F x.   
-*)  
+*)
+  
 
 Definition joiner (A B C: cat) (F: A ~> C) (G: B ~> C) 
   (e: forall x: A * B, F (x.1) = G (x.2)) :
@@ -744,7 +856,70 @@ Lemma lower_eq (A B C : cat)
   unfold ssrfun.comp in x; simpl in x.
   eapply equal_f in x; eauto.
 Qed.  
+
+(*
+Lemma cond_joiner_IsPreFunctor_lemma (A B C : cat)
+  (F: A ~> C) (G: B ~> C)
+  (e: @fstF A B \; F = @sndF A B \; G) :
+  IsPreFunctor (A * B)%type (ptype F G) (joiner (lower_eq e)).
+  unfold joiner; simpl.
+  econstructor; eauto.
+  intros ab1 ab2 fg.
+  exists fg.
+
+  set F1 := (@fstF A B \; F).
+  set G1 := (@sndF A B \; G).  
+
   
+  
+  assert (F1 =1 G1) as eqFG1.
+  { subst F1 G1.
+    unfold eqfun.
+    intros.
+    unfold fstF, sndF.
+    simpl.
+    unfold fstF, sndF in e.
+    unfold fst0, snd0 in *.
+    unfold comp in *.
+    simpl in *.
+    destruct F.
+    destruct G.
+    simpl in *.
+    inversion e; subst.
+    unfold ssrfun.comp in H0; simpl in H0.
+    eapply equal_f in H0; eauto.
+  }  
+  
+  assert (F1 = G1) as eqFG2.
+  { auto. } 
+
+  assert (ecast x (x ~> G1 ab2) (eqFG1 ab1)
+        (ecast y (F1 ab1 ~> y) (eqFG1 ab2) (F1 <$> fg)) = (G1 <$> fg)) as Eh.
+  { eapply prefunctorPcast_inv; eauto.
+    f_equal; auto. }
+
+  subst F1 G1.
+  unfold sndF in *.
+  simpl in *.
+  unfold snd0 in *; simpl in *.
+  unfold Fhom in Eh; simpl in *.
+  unfold Fhom in Eh; simpl in *.
+  unfold Fhom; simpl.
+  rewrite -Eh.
+
+  assert ((lower_eq e ab1) = (eqFG1 ab1)) as A1.
+  { eapply Prop_irrelevance. }
+  rewrite A1.
+
+  assert ((lower_eq e ab2) = (eqFG1 ab2)) as A2.
+  { eapply Prop_irrelevance. }
+  rewrite A2.
+
+  auto.
+Defined.
+*)
+
+
 Lemma cond_joiner_IsPreFunctor_lemma (A B C : cat)
   (F: A ~> C) (G: B ~> C)
   (e: @fstF A B \; F = @sndF A B \; G) :
