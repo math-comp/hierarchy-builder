@@ -1014,16 +1014,22 @@ Lemma mediating_morph_prefunctor (A B C D: cat)
   exists (fsplitter F1 G1 <$> hh).
 
   have ->: (fsplitter F1 G1 <$> hh).2 = G1 <$> hh.
-    admit.
+  { unfold fsplitter; simpl; auto. }
 
   have ->: G2 <$> G1 <$> hh = (G1 \; G2) <$> hh.
-    admit.
+  { auto. }
 
   have ->: (fsplitter F1 G1 <$> hh).1 = F1 <$> hh.
-    admit.
-
+  { unfold fsplitter; simpl; auto. }
+  
   have ->: F2 <$> F1 <$> hh = (F1 \; F2) <$> hh.
-    admit.
+  { auto. }
+
+  assert (F1 \; F2 =1 G1 \; G2) as eqFG.
+  { unfold eqfun.
+    intros.
+    rewrite e; auto.
+  }  
 
   move: (tagged (mediating_fun e a1)).
   intros tagged1.
@@ -1033,145 +1039,36 @@ Lemma mediating_morph_prefunctor (A B C D: cat)
 
   simpl in tagged1.
   simpl in tagged2.
+  
+  set U := (@prefunctorPcast_inv _ _ _ _ eqFG a1 a2 hh).
+
+  move: U.
+  intro U.
+
+  assert (ecast x (x ~> (G1 \; G2) a2) (eqFG a1)
+       (ecast y ((F1 \; F2) a1 ~> y) (eqFG a2) ((F1 \; F2) <$> hh)) =
+           (G1 \; G2) <$> hh) as W.
+  { eapply U; auto.
+    rewrite e; auto.
+  }  
+    
+(*  dependent destruction e. *)
+
+  assert (tagged1 = eqFG a1).
+  { eapply Prop_irrelevance. }
+
+  inversion H; subst.
+  clear H0.
+
+  assert (tagged2 = eqFG a2).
+  { eapply Prop_irrelevance. }
+
+  inversion H; subst.
+  clear H0.
   simpl.
-
-  assert ((F1 \; F2) a1 = F2 (F1 a1)) as H.
-  { auto. }
-
-  move: tagged1.
-  move: tagged2.
-  clear e.
-
-  rewrite H.
-  
-  move: e.
-  
-
-    
-  unfold mediating_fun; simpl.
-
-
-  
-  
-  move: ((eq_ind_r (eq^~ (G2 (G1 a1)))
-       (eq_ind_r (fun _pattern_value_ : A ~> D => _pattern_value_ a1 = G2 (G1 a1)) 
-          (erefl (G2 (G1 a1))) e) (erefl (F2 (F1 a1))))).
-    
-    
-  assert (G1 \; G2 =
-  (fun x => ecast x (x ~> G2 (tag (mediating_fun e a2)).2) (tagged (mediating_fun e a1))
-    (ecast y (F2 (tag (mediating_fun e a1)).1 ~> y) (tagged (mediating_fun e a2)) ((F1 \; F2) <$> x)))). 
-
-
-    
-  assert (ecast x (x ~> G2 (tag (mediating_fun e a2)).2) (tagged (mediating_fun e a1))
-    (ecast y (F2 (tag (mediating_fun e a1)).1 ~> y) (tagged (mediating_fun e a2)) ((F1 \; F2) <$> hh)) =
-  (fun x => ecast x (x ~> G2 (tag (mediating_fun e a2)).2) (tagged (mediating_fun e a1))
-    (ecast y (F2 (tag (mediating_fun e a1)).1 ~> y) (tagged (mediating_fun e a2)) ((F1 \; F2) <$> x))) hh). 
-
-          
-  simpl.  
-  dependent destruction e.
-  dependent destruction H.  
-  simpl.
-  
-  assert (ecast x (x ~> G2 (tag (mediating_fun e a2)).2) (tagged (mediating_fun e a1))
-    (ecast y (F2 (tag (mediating_fun e a1)).1 ~> y) (tagged (mediating_fun e a2)) ((F1 \; F2))) =
-  (G1 \; G2)).
-
-    
-  unfold mediating_fun; simpl.
-  unfold eq_ind_r.
-  unfold eq_ind.
-  unfold eq_sym.
-  destruct F1.
-  destruct F2.
-  destruct G1.
-  destruct G2.
-  destruct class.
-  destruct class0.
-  destruct class1.
-  destruct class2.
-  unfold hom; simpl.
-  unfold Fhom; simpl.
-  unfold Fhom; simpl.
-  unfold comp in e.
-  simpl in *.
-  unfold comp; simpl.
-
-  dependent destruction e.
-  dependent destruction H.
-  
-  have ->: (sort2 (sort1 a2) = (sort2 \o sort1)%FUN a1).
-
-  
-  dependent destruction e.
-  un
-  
-  
-  have ->: (G2 (G1 a2) = (G1 \; G2) a1).
-    
-    unfold hom; simpl.
-    unfold Fhom; simpl.
-    
-   
-  
-    
-   destruct e.
-     
-    unfold hom; simpl.
-  unfold hom; simpl.
-
-  exists (fsplitter F1 G1 <$> hh).
-  unfold comp in e; simpl in *.
-  unfold comp; simpl.
-
-  inversion e; subst.
-  dependent destruction H1.
-
-(*  
-  exists (F1 <$> hh, G1 <$> hh).
-  unfold Fhom; simpl.
-  destruct F1.
-  destruct F2.
-  destruct G1.
-  destruct G2.
-  simpl.
-  unfold comp in e; simpl in *.
-  
-  simpl.
-  
-  assert (forall (a1 a2 : A) (hh: a1 ~> a2), (fsplitter F1 G1 <$> hh).1 = (F1 <$> hh)).
-
-  assert (forall (a1 a2 : A) (hh: a1 ~> a2),
-             ((fsplitter F1 G1: Functor.type _ _) \; fstF) <$> hh = (F1 <$> hh)).
-*)
-(*
-Lemma mediating_morph_prefunctor (A B C: cat)
-  (F1: A ~> B) (G1: A ~> C)
-  (e: F1 \; F2 = G1 \; G2) :
-  forall (a1 a2 : A) (hh: a1 ~> a2),
-     ((fsplitter F1 G1: Functor.type _ _) \; fstF) <$> hh = (F1 <$> hh).
-
-  
-  
-  set MM := fsplitter F1 G1 <$> hh.
-  exists MM.
-
-  set HH := F1 <$> hh.
-  
-  assert (MM.1 = HH).
-  subst MM HH.
-  unfold fsplitter.
-  simpl; auto.
-  
-  
-  assert (MM \; fstF = F1).
-
-  
-  have @fstF1 : forall h, fstF (fsplitter F1 G1 <$> h) = F1 <$> h. 
-*)  
-Admitted.
+  simpl in W.
+  auto.
+Defined.
 HB.instance Definition mediating_morph_PreFunctor (A B C D: cat)
   (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
   (e: F1 \; F2 = G1 \; G2) : 
@@ -1197,6 +1094,17 @@ Lemma mediating_morph_functor (A B C T : cat)
   instantiate (2:= @mediating_fun C A B T b2l b2r l2t r2t sq).
   instantiate (1:= mediating_morph_PreFunctor sq).
   econstructor; eauto.
+(*  intros.
+  unfold mediating_fun.
+  simpl.
+  rewrite F1.
+  unfold fsplitter; simpl.
+  unfold Fhom; simpl.
+  unfold mediating_morph_PreFunctor.
+  unfold mediating_morph_prefunctor.
+  simpl.
+  rewrite F1.
+*)                      
 Admitted. 
 
 Lemma cat_pbk_univ_prop (A B : cat)
@@ -1207,12 +1115,9 @@ Lemma cat_pbk_univ_prop (A B : cat)
   destruct X.
   destruct csp0 as [T l2t r2t] ; simpl in *.
   destruct sp1 as [C b2l b2r]; simpl in *.
-  unfold hom; simpl.
-  unfold hom; simpl.
-  unfold pbk; simpl.
-
   exists (mediating_morph_functor is_square);
   unfold comp; simpl.
+  
   admit.
   admit.
 Admitted.   
