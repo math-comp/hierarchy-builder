@@ -1081,6 +1081,31 @@ HB.instance Definition mediating_morph_PreFunctor (A B C D: cat)
   assert (MM \; fstF = F1).
 *)
 
+Lemma mediating_morph_eq_proj1 (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  F1 \; F2 = (fsplitter F1 G1: Functor.type _ _) \; fstF \; F2.
+  rewrite compoA.
+  rewrite fsplitter_proj1.
+  auto.
+Qed.
+
+Lemma mediating_morph_eq_proj2 (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  G1 \; G2 = (fsplitter F1 G1: Functor.type _ _) \; sndF \; G2.
+  rewrite compoA.
+  rewrite fsplitter_proj2.
+  auto.
+Qed.
+
+(*
+Lemma mediating_morph_decomp (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  mediating_fun e = (fsplitter F1 G1) \; (joiner )
+*)
+
 Lemma mediating_morph_functor (A B C T : cat)
   (l2t : A ~> T)
   (r2t : B ~> T)
@@ -1088,12 +1113,32 @@ Lemma mediating_morph_functor (A B C T : cat)
   (b2r : C ~> B)
   (sq : b2l \; l2t = b2r \; r2t) :
   C ~> ptype l2t r2t.
-  unfold hom; simpl.
+  unfold ptype.  
   econstructor; eauto.
   econstructor; eauto.
   instantiate (2:= @mediating_fun C A B T b2l b2r l2t r2t sq).
   instantiate (1:= mediating_morph_PreFunctor sq).
   econstructor; eauto.
+  intros.
+  unfold idmap; simpl.
+  unfold idmap_psubdef; simpl.
+  unfold mediating_fun; simpl.
+  unfold fsplitter; simpl.
+  unfold Tagged; simpl.
+  unfold Fhom; simpl.
+  unfold fsplitter; simpl.
+(*  
+
+ (fun X : C =>
+   existT (fun x : A * B => l2t x.1 = r2t x.2) (b2l X, b2r X)
+     (eq_ind_r (eq^~ (r2t (b2r X)))
+        (eq_ind_r
+           (fun _pattern_value_ : C ~> T => _pattern_value_ X = r2t (b2r X))
+           (erefl (r2t (b2r X))) sq) (erefl (l2t (b2l X))))) <$> 
+  Quiver_IsPreCat.idmap (Cat.class C) a
+*)
+  intros.
+  unfold mediating_fun; simpl.  
 (*  intros.
   unfold mediating_fun.
   simpl.
@@ -1138,6 +1183,68 @@ Admitted.
             {| PrePullback.cat_isPrePullback_mixin := {| isPrePullback.is_square := is_square |} |}
         |} ~> pbk0
 *)
+
+Lemma cat_pb :
+   forall (a b: cat) (c: cospan a b),
+     prepullback_isTerminal cat a b c (@pbk cat a b c).
+  intros.
+(*  unfold pbk; simpl. *)
+  econstructor; eauto.
+  econstructor; eauto.
+  intros ppb0 ppb0M.
+  (* prepullback morphism *)
+  unfold hom in ppb0M; simpl in *.
+  (* span morphism *)
+  unfold hom in ppb0M; simpl in *.
+
+  (* build 'from' as span_map ... using ppb0 *) 
+  destruct ppb0 as [sp0 class0].
+  destruct class0 as [X0].
+  destruct X0.
+  simpl in *; simpl.
+
+  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
+
+  (* mediating function *)
+  have @med_fun : bot sp0 -> bot (pbk a b c).
+  admit.
+
+  unfold hom in bot_map0; simpl in *.
+
+  (* use mediating function to define mediating morphism (functor) *)  
+  have @med_morph : bot sp0 ~> bot (pbk a b c).
+  admit.
+
+  (* prove span morphism properties of the mediating morphism *)
+  have bot2left_mapM : med_morph \; bot2left (pbk a b c) = bot2left sp0.
+  admit.
+  have bot2right_mapM : med_morph \; bot2right (pbk a b c) = bot2right sp0.
+  admit.
+
+  (* define med_span_morph externally, so to allow for instantiation 
+     of metavariable ?from *)
+  set med_span_morph :=
+    SpanMap bot2left_mapM bot2right_mapM. 
+
+(********************************************************************)  
+  
+  set pbk0 := pbk a b c.
+  remember c as c0.
+  destruct c.
+  
+  econstructor; eauto.
+  econstructor; eauto.
+ 
+  unfold pb_terminal.
+  intros pp ppm.
+  destruct pp.
+  destruct class as [X].
+  destruct X.
+  simpl in *; simpl.
+
+  assert ().
+
+
 
 
 Lemma cat_pb :
