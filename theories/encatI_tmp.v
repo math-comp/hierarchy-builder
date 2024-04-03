@@ -1152,7 +1152,7 @@ Lemma mediating_morph_functor (A B C T : cat)
 *)                      
 Admitted. 
 
-Lemma cat_pbk_univ_prop (A B : cat)
+Lemma mediating_prepullback_morph (A B : cat)
   (csp0 : cospan A B)
   (pp : prepullback csp0) : pp ~> pbk A B csp0.  
   destruct pp as [sp1 class].
@@ -1183,7 +1183,92 @@ Admitted.
             {| PrePullback.cat_isPrePullback_mixin := {| isPrePullback.is_square := is_square |} |}
         |} ~> pbk0
 *)
+(*
+Lemma cat_pb_med (a b : cat) (c : cospan a b)
+  (ppb0 : prepullback c) : ppb0 ~> pb_terminal (pbk a b c).
+  destruct ppb0 as [sp0 class0].
+  destruct class0 as [X0].
+  destruct X0.
+  simpl in *; simpl.
+  unfold pb_terminal.
 
+ (* construct a prepullback morphism *)
+ unfold hom; simpl.
+ (* construct a span morphism *)
+ econstructor; eauto.
+Admitted. 
+*)
+
+Lemma cat_pb :
+   forall (a b: cat) (c: cospan a b),
+     prepullback_isTerminal cat a b c (@pbk cat a b c).
+  intros.
+  econstructor; eauto.
+ 
+  set mpm := @mediating_prepullback_morph a b c.  
+  econstructor; eauto.
+  intros ppb0 ppb0M.
+  instantiate (1:=mpm).
+
+  (* need to build 'from' as span morphism ... using ppb0 *) 
+
+  (* prepullback ppb0 is given by span sp0 *)
+  destruct ppb0 as [sp0 class0].
+  destruct class0 as [X0].
+  destruct X0.
+  simpl in *; simpl.
+
+  (* ppb0M is a prepullback morphism *)
+  unfold hom in ppb0M; simpl in *.
+  (* ppb0M is the underlying span morphism *)
+  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
+  simpl in *; simpl. 
+  (* botmap0 is a cat morphism, i.e. a functor *)
+  destruct bot_map0 as [med_fun classM].
+  simpl; simpl in *.
+  (* med_fun is the underlying function *)
+  unfold mpm.
+  
+  destruct sp0 as [bot1 bot2left1 bot2right1].
+  simpl; simpl in *.
+  
+  destruct c as [top0 left2top0 right2top0].
+  simpl; simpl in *.
+  unfold comp in bot2left_map0; simpl in *.
+  unfold comp in bot2right_map0; simpl in *.
+  clear mpm.
+  destruct classM as [A1 A2].
+  destruct A1 as [Fhom_mf].
+  destruct A2 as [F1_mf Fcomp_mf].
+  simpl; simpl in *.
+Admitted.
+
+(*  
+  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
+
+  (* mediating function *)
+  have @med_fun : bot sp0 -> bot (pbk a b c).
+  admit.
+
+  unfold hom in bot_map0; simpl in *.
+
+  (* use mediating function to define mediating morphism (functor) *)  
+  have @med_morph : bot sp0 ~> bot (pbk a b c).
+  admit.
+
+  (* prove span morphism properties of the mediating morphism *)
+  have bot2left_mapM : med_morph \; bot2left (pbk a b c) = bot2left sp0.
+  admit.
+  have bot2right_mapM : med_morph \; bot2right (pbk a b c) = bot2right sp0.
+  admit.
+
+  (* define med_span_morph externally, so to allow for instantiation 
+     of metavariable ?from *)
+  set med_span_morph :=
+    SpanMap bot2left_mapM bot2right_mapM. 
+*)
+
+(*
 Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
      prepullback_isTerminal cat a b c (@pbk cat a b c).
@@ -1192,9 +1277,11 @@ Lemma cat_pb :
   econstructor; eauto.
   econstructor; eauto.
   intros ppb0 ppb0M.
-  (* prepullback morphism *)
+  (* ppb0M is a prepullback morphism *)
+(*  destruct ppb0M.
+  simpl in *; simpl. *)
   unfold hom in ppb0M; simpl in *.
-  (* span morphism *)
+  (* ppb0M is a span morphism *)
   unfold hom in ppb0M; simpl in *.
 
   (* build 'from' as span_map ... using ppb0 *) 
@@ -1225,6 +1312,19 @@ Lemma cat_pb :
      of metavariable ?from *)
   set med_span_morph :=
     SpanMap bot2left_mapM bot2right_mapM. 
+
+*)
+
+(* Axiom cat_pb :
+   forall (a b: cat) (c: cospan a b), 
+  prepullback_isTerminal cat a b c (@pbk cat a b c). *)
+HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
+
+(* basically, the internal category adds the D1 category to the base
+D0 category, which is C0 (an object of cat, which is shown to have
+pullbacks) *)
+(* Definition doublecat := icat cat. *)
+
 
 (********************************************************************)  
   
