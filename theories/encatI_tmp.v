@@ -1205,10 +1205,10 @@ Lemma cat_pb :
   intros.
   econstructor; eauto.
  
-  set mpm := @mediating_prepullback_morph a b c.  
+  set med_funX := @mediating_prepullback_morph a b c.  
   econstructor; eauto.
   intros ppb0 ppb0M.
-  instantiate (1:=mpm).
+  instantiate (1:=med_funX).
 
   (* need to build 'from' as span morphism ... using ppb0 *) 
 
@@ -1224,23 +1224,34 @@ Lemma cat_pb :
   destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
   simpl in *; simpl. 
   (* botmap0 is a cat morphism, i.e. a functor *)
-  destruct bot_map0 as [med_fun classM].
+  destruct bot_map0 as [med_fun0 class0].
   simpl; simpl in *.
   (* med_fun is the underlying function *)
-  unfold mpm.
+  (* unfold med_funX. *)
   
-  destruct sp0 as [bot1 bot2left1 bot2right1].
+  destruct sp0 as [bot0 bot2left0 bot2right0].
   simpl; simpl in *.
   
-  destruct c as [top0 left2top0 right2top0].
+  destruct c as [topX left2topX right2topX].
   simpl; simpl in *.
-  unfold comp in bot2left_map0; simpl in *.
-  unfold comp in bot2right_map0; simpl in *.
-  clear mpm.
-  destruct classM as [A1 A2].
+(*  unfold comp in bot2left_map0; simpl in *.
+  unfold comp in bot2right_map0; simpl in *. *)
+  (* clear med_funX. *)
+  destruct class0 as [A1 A2].
   destruct A1 as [Fhom_mf].
   destruct A2 as [F1_mf Fcomp_mf].
   simpl; simpl in *.
+
+(*  Definition fjoiner (A B C: cat) (F: A ~> C) (G: B ~> C) :
+  A -> ((B * C)%type : cat) := fun x: A => (F x, G x). *)
+  
+  set mon_f := fsplitter bot2left0 bot2right0. 
+
+  (*
+  set path0 := med_fun0 \; mon_f.
+  set pathX := med_funX \; mon_f.
+  *)  
+
 Admitted.
 
 (*  
