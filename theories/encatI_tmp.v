@@ -1197,8 +1197,149 @@ Lemma cat_pb_med (a b : cat) (c : cospan a b)
  (* construct a span morphism *)
  econstructor; eauto.
 Admitted. 
-*)
+ *)
 
+(*
+Lemma fsplitter_exchange (bot0 A B topK : cat)
+  (left2topK : A ~> topK)
+  (right2topK : B ~> topK)
+  (bot2left0 : bot0 ~> A)
+  (bot2right0 : bot0 ~> B)
+  (is_square : bot2left0 \; left2topK = bot2right0 \; right2topK)
+  (bot_map0 : bot0 ~> ptype left2topK right2topK)
+  (bot2left_map0 : bot_map0 \; (pcat_prj1: Functor.type _ _) = bot2left0)
+  (bot2right_map0 : bot_map0 \; (pcat_prj2: Functor.type _ _) = bot2right0) :
+    bot_map0 \;
+      (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) 
+    = 
+      (fsplitter (bot2left0: Functor.type _ _)
+                 (bot2right0: Functor.type _ _) : Functor.type _ _).
+
+assert (    bot_map0 \;
+      (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) 
+    =1 
+      (fsplitter (bot2left0: Functor.type _ _)
+         (bot2right0: Functor.type _ _) : Functor.type _ _)) as eqFG.
+   { rewrite -bot2left_map0.
+     rewrite -bot2right_map0.
+     auto. }
+
+  simpl; simpl in *.
+  eapply functorPcast; eauto.
+  instantiate (1:=eqFG).
+  simpl; intros.
+
+  revert eqFG.
+  
+  rewrite -bot2left_map0.
+  rewrite -bot2right_map0.
+
+  intros.
+  clear bot2left_map0 bot2right_map0.
+  unfold fsplitter; simpl.
+  destruct bot_map0; simpl; simpl in *.
+  unfold comp; simpl.
+  unfold fsplitter; simpl.
+  unfold ssrfun.comp; simpl.
+
+  move: (eqFG a).
+  intro.
+  move: (eqFG b).
+  intro.
+  unfold Fhom; simpl.
+  unfold Fhom; simpl.
+  unfold Fhom; simpl.
+  move: (pcat_prj1_isPreFunctor_obligation_1 (IsPreFunctor.Fhom class f)).
+  intro.
+  move: (pcat_prj2_isPreFunctor_obligation_1 (IsPreFunctor.Fhom class f)).
+  intro.
+  simpl.
+
+  dependent destruction eqFG0.
+  dependent destruction eqFG1.
+  auto.
+Qed.
+*)
+   
+Lemma fsplitter_exchange0 (bot0 A B topK : cat)
+  (left2topK : A ~> topK)
+  (right2topK : B ~> topK)
+  (bot2left0 : bot0 ~> A)
+  (bot2right0 : bot0 ~> B)
+(*  (is_square : bot2left0 \; left2topK = bot2right0 \; right2topK) *)
+  (bot_map0 : bot0 ~> ptype left2topK right2topK) :
+    bot_map0 \;
+      (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) 
+    = 
+      (fsplitter (bot_map0 \; (pcat_prj1: Functor.type _ _))
+         (bot_map0 \; (pcat_prj2: Functor.type _ _)): Functor.type _ _).
+
+  assert (bot_map0 \;
+      (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) 
+    =1 
+      (fsplitter (bot_map0 \; (pcat_prj1: Functor.type _ _))
+         (bot_map0 \; (pcat_prj2: Functor.type _ _)): Functor.type _ _))
+    as eqFG.
+  { auto. }
+
+  simpl; simpl in *.
+  eapply functorPcast; eauto.
+  instantiate (1:=eqFG).
+  simpl; intros.
+
+  revert eqFG.
+  
+  intros.
+  unfold fsplitter; simpl.
+  destruct bot_map0; simpl; simpl in *.
+  unfold comp; simpl.
+  unfold fsplitter; simpl.
+  unfold ssrfun.comp; simpl.
+
+  move: (eqFG a).
+  intro.
+  move: (eqFG b).
+  intro.
+  unfold Fhom; simpl.
+  unfold Fhom; simpl.
+  unfold Fhom; simpl.
+  move: (pcat_prj1_isPreFunctor_obligation_1 (IsPreFunctor.Fhom class f)).
+  intro.
+  move: (pcat_prj2_isPreFunctor_obligation_1 (IsPreFunctor.Fhom class f)).
+  intro.
+  simpl.
+
+  dependent destruction eqFG0.
+  dependent destruction eqFG1.
+  auto.
+Qed.
+  
+Lemma fsplitter_exchange (bot0 A B topK : cat)
+  (left2topK : A ~> topK)
+  (right2topK : B ~> topK)
+  (bot2left0 : bot0 ~> A)
+  (bot2right0 : bot0 ~> B)
+  (is_square : bot2left0 \; left2topK = bot2right0 \; right2topK)
+  (bot_map0 : bot0 ~> ptype left2topK right2topK)
+  (bot2left_map0 : bot_map0 \; (pcat_prj1: Functor.type _ _) = bot2left0)
+  (bot2right_map0 : bot_map0 \; (pcat_prj2: Functor.type _ _) = bot2right0) :
+    bot_map0 \;
+      (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) 
+    = 
+      (fsplitter (bot2left0: Functor.type _ _)
+                 (bot2right0: Functor.type _ _) : Functor.type _ _).
+
+  rewrite -bot2left_map0.
+  rewrite -bot2right_map0.
+  eapply fsplitter_exchange0; eauto.
+Qed.  
+
+  
 Lemma cat_unique_med (A B: cat)
     (csp: cospan A B) (ppb : prepullback csp) :
   forall (ppbM0 ppbM1 : ppb ~> pbk A B csp),
@@ -1232,16 +1373,33 @@ Lemma cat_unique_med (A B: cat)
   set path1 := bot_map1 \; mon_F.
 
   (* follows from the commuting triangles *)
-  assert (path0 = path1) as E1.
-  admit.
+
+  assert (path0 = bot_map0 \;
+                (fsplitter bot2leftK bot2rightK : Functor.type _ _)) as E0.
+  { auto. }
+
+  assert (path1 = bot_map1 \;
+                (fsplitter bot2leftK bot2rightK : Functor.type _ _)) as E1.
+  { auto. }
+
+  assert (path0 = path1) as E2.
+  { subst bot2leftK bot2rightK.
+    rewrite E0.
+    rewrite E1.
+    simpl; simpl in *.
+    rewrite (@fsplitter_exchange bot0 A B topK left2topK right2topK
+               bot2left0 bot2right0); eauto.
+    rewrite (@fsplitter_exchange bot0 A B topK left2topK right2topK
+               bot2left0 bot2right0); eauto.
+  }  
 
   assert (@IsMono cat _ _ mon_F) as X.  
   admit.
 
   destruct X.
   specialize (monoP bot0 bot_map0 bot_map1).
-  eapply monoP in E1.
-  inversion E1; subst.
+  eapply monoP in E2.
+  inversion E2; subst.
   f_equal.
   eapply Prop_irrelevance.
   eapply Prop_irrelevance.
@@ -1252,28 +1410,13 @@ Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
      prepullback_isTerminal cat a b c (@pbk cat a b c).
   intros.
-
-(*
-  set botK := bot (pbk a b c).
-  set bot2leftK := bot2left (pbk a b c).
-  set bot2rightK := bot2right (pbk a b c).
-*)
-
-  (* destruct (pbk a b c) as [botK bot2leftK bot2rightK] eqn: pbk_eq.
-     simpl in *; simpl. *)
-
-  econstructor; eauto.
- 
+  econstructor; eauto. 
   set abs_med_funX := @mediating_prepullback_morph a b c.  
   econstructor; eauto.
-  (* ppb0M is a fresh prepullback morphism from ppb0 tp pbk *)
+  (* ppb0M is a fresh prepullback morphism from ppb0 to pbk *)
   intros ppb0 ppb0M.
   instantiate (1:=abs_med_funX).
-  
-  (* need to build 'from' as span morphism ... using ppb0 *) 
-
   set med_funX := abs_med_funX ppb0.
-
   eapply cat_unique_med; eauto.
 Qed.  
 
