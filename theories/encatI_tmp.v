@@ -292,24 +292,33 @@ Program Definition comp_psubdef (a b c : ptype)
   (f : a ~> b) (g : b ~> c) : a ~> c :=
   @Tagged _ (tag f \; tag g) _ _.
 Next Obligation.
-
+  intros; simpl.  
+  rewrite Fcomp.
+  rewrite Fcomp.
 
   destruct f as [ff ef].
   destruct g as [gg eg].
+  destruct ff as [f1 f2].
+  destruct gg as [g1 g2].
+  simpl; simpl in *.
   destruct a as [aa ea].
   destruct aa as [a1 a2].
   destruct b as [bb eb].
   destruct bb as [b1 b2].
   destruct c as [cc ec].
   destruct cc as [c1 c2].
-  destruct ff as [f1 f2].
-  destruct gg as [g1 g2].
-
   simpl; simpl in *.
-  rewrite Fcomp.
-  rewrite Fcomp.
-Admitted.
-  (*  by rewrite !Fcomp -compoA (tagged g) compoA (tagged f) compoA. Qed. *)
+
+  rewrite -eg.
+  rewrite -ef.
+
+  clear ef eg.
+  
+  dependent destruction ea.
+  dependent destruction eb.
+  dependent destruction ec.
+  auto.
+Defined.  
 
 #[export]
 HB.instance Definition _ := IsPreCat.Build ptype idmap_psubdef comp_psubdef.
@@ -1339,7 +1348,255 @@ Lemma fsplitter_exchange (bot0 A B topK : cat)
   eapply fsplitter_exchange0; eauto.
 Qed.  
 
+Lemma fsplitter_fst_eq (A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK) :
+  ((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) \; fstF) =
+    (pcat_prj1 : Functor.type (ptype left2topK right2topK) _).
+  simpl.
+  eapply fsplitter_proj1; eauto.
+Qed.  
+
+(*
+  assert (((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) \; fstF) =1
+        (pcat_prj1 : Functor.type (ptype left2topK right2topK) _)) as eqFG.
+  { simpl.
+    unfold eqfun.
+    intro. unfold fsplitter; simpl.
+    auto. }
+    
+  eapply functorPcast.
+  instantiate (1:= eqFG). 
+  intros. simpl in *; simpl.
+  unfold fsplitter; simpl.
+  unfold fstF; simpl.
+
+  move: (eqFG a).
+  intro.
+  move: (eqFG b).
+  intro.
+  simpl.
   
+  destruct a.
+  destruct b.
+  destruct x.
+  destruct x0.
+  simpl in *; simpl.
+  unfold pcat_prj1 in *.
+  unfold pcat_prj2 in *.
+  simpl; simpl in *.
+  
+  dependent destruction eqFG0.
+  dependent destruction eqFG1.
+  f_equal.
+Qed.  
+*)
+
+Lemma fsplitter_snd_eq (A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK) :
+  ((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) \; sndF) =
+    (pcat_prj2 : Functor.type (ptype left2topK right2topK) _).
+  simpl.
+  eapply fsplitter_proj2; eauto.
+Qed.  
+
+
+(***********************************************************************)
+
+(* need TAG functor *)
+
+Lemma fsplitter_tag_eq (A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK) :
+  (fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) =
+    (tag : Functor.type (ptype left2topK right2topK) _).
+  simpl.
+  eapply fsplitter_proj2; eauto.
+Qed.  
+
+
+
+
+(*
+Lemma fsplitter_simpl_eq (A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK) :
+  ((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) \; sndF) =
+    (pcat_prj2 : Functor.type (ptype left2topK right2topK) _).
+  simpl.
+
+  assert (((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) \; sndF) =1
+        (pcat_prj2 : Functor.type (ptype left2topK right2topK) _)) as eqFG.
+  { simpl.
+    unfold eqfun.
+    intro. unfold fsplitter; simpl.
+    auto. }
+    
+  eapply functorPcast.
+  instantiate (1:= eqFG). 
+  intros. simpl in *; simpl.
+  unfold fsplitter; simpl.
+  unfold sndF; simpl.
+
+  move: (eqFG a).
+  intro.
+  move: (eqFG b).
+  intro.
+  simpl.
+  
+  destruct a.
+  destruct b.
+  destruct x.
+  destruct x0.
+  simpl in *; simpl.
+  unfold pcat_prj1 in *.
+  unfold pcat_prj2 in *.
+  simpl; simpl in *.
+  
+  dependent destruction eqFG0.
+  dependent destruction eqFG1.
+  f_equal.
+Qed.  
+*)
+
+
+Lemma fsplitter_mono (bot0 A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK)
+    (g1 g2 : bot0 ~> ptype left2topK right2topK) :
+  g1 \; (fsplitter (pcat_prj1: Functor.type _ _)
+           (pcat_prj2: Functor.type _ _) : Functor.type _ _) =
+  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
+           (pcat_prj2: Functor.type _ _) : Functor.type _ _) ->
+  g1 = g2.
+
+intros.
+  
+assert (g1 =1 g2) as eqFG.
+{ unfold eqfun.
+  intros.
+  inversion H; subst.
+  unfold fsplitter in H1; simpl in *.
+  unfold ssrfun.comp in H1; simpl in *.
+  unfold pcat_prj1, pcat_prj2 in *; simpl in *.
+  
+  destruct g1.
+  destruct g2.
+  simpl in *; simpl.
+  clear H2.
+
+  assert (forall x : bot0, ((tag (sort x)).1, (tag (sort x)).2) =
+                             ((tag (sort0 x)).1, (tag (sort0 x)).2)) as H0.
+  { eapply funext_equal_f; eauto. }
+  specialize (H0 x).
+  
+  clear H1.
+  revert H0.
+  move: (sort x).
+  intro.
+  move: (sort0 x).
+  intro.
+  destruct sort1.
+  destruct sort2.
+  destruct x0.
+  destruct x1.
+  simpl.
+  intros.
+  inversion H0; subst.
+  clear H0.
+  f_equal.
+  eapply Prop_irrelevance.
+}
+ 
+eapply functorPcast.
+intros.
+instantiate (1:=eqFG).
+simpl.
+move: (eqFG a).
+intro.
+move: (eqFG b).
+intro.
+unfold Fhom; simpl.
+destruct g1.
+destruct g2.
+simpl; simpl in *.
+destruct class as [R S].
+destruct class0 as [R0 S0].
+simpl; simpl in *.
+destruct R.
+destruct R0.
+simpl; simpl in *.
+
+
+dependent destruction eqFG0.
+
+
+  
+
+inversion H; subst.
+
+  
+  
+  unfold comp in H; simpl in *.
+  unfold fsplitter in H; simpl in *.
+  unfold ssrfun.comp in H; simpl in *.
+  assert ((pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
+            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
+  dependent destruction H.
+  f_equal.
+
+
+  
+  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
+           (pcat_prj2: Functor.type _ _) : Functor.type _ _)
+  
+  rewrite mediating_fun_ext_proj1.
+  
+  unfold fsplitter; simpl.
+  intros.
+
+  assert (g1 =1 g2) as eqFG.
+  unfold eqfun.
+  intros.
+  unfold comp in H; simpl in *.
+  unfold fsplitter in H; simpl in *.
+  unfold ssrfun.comp in H; simpl in *.
+  assert ((pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
+            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
+  dependent destruction H.
+  f_equal.
+  
+  
+  eapply functorP.
+  
+  
+  unfold fsplitter; simpl.
+  unfold comp; simpl.
+  unfold fsplitter; simpl.
+  unfold ssrfun.comp; simpl.
+  intros.
+  assert (forall x: bot0, (pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
+                            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
+  intro.
+  rewrite H. auto.
+   
+  destruct g1.
+  destruct g2; simpl.
+  
+  
+  intros.
+  
+  
+
+
 Lemma cat_unique_med (A B: cat)
     (csp: cospan A B) (ppb : prepullback csp) :
   forall (ppbM0 ppbM1 : ppb ~> pbk A B csp),
@@ -1397,6 +1654,18 @@ Lemma cat_unique_med (A B: cat)
   admit.
 
   destruct X.
+
+  subst mon_F.
+  subst mon_f.
+  
+Lemma fsplitter_mono (A B C : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK)
+    (g1 g2 : a ~> ptype left2topK right2topK) :
+          g1 \; (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) = g2 \;  (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
+        Functor.type _ _) -> g1 = g2.
+
+  
   specialize (monoP bot0 bot_map0 bot_map1).
   eapply monoP in E2.
   inversion E2; subst.

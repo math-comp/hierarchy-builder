@@ -790,7 +790,17 @@ Next Obligation. by rewrite !F1 comp1o compo1. Qed.
 Program Definition comp_subdef (a b c : type)
   (f : a ~> b) (g : b ~> c) : a ~> c :=
   @Tagged _ (tag f \; tag g) _ _.
-Next Obligation. by rewrite !Fcomp -compoA (tagged g) compoA (tagged f) compoA. Qed.
+Next Obligation.
+(*  rewrite Fcomp.
+  rewrite Fcomp.
+  rewrite -compoA.
+  rewrite (tagged g).
+  rewrite compoA.
+  rewrite (tagged f).
+  rewrite compoA.
+  auto.
+*)  
+  by rewrite !Fcomp -compoA (tagged g) compoA (tagged f) compoA. Qed.
 HB.instance Definition _ := IsPreCat.Build type idmap_subdef comp_subdef.
 Arguments idmap_subdef /.
 Arguments comp_subdef /.
