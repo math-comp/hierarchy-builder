@@ -1199,132 +1199,84 @@ Lemma cat_pb_med (a b : cat) (c : cospan a b)
 Admitted. 
 *)
 
-Lemma cat_pb :
-   forall (a b: cat) (c: cospan a b),
-     prepullback_isTerminal cat a b c (@pbk cat a b c).
+Lemma cat_unique_med (A B: cat)
+    (csp: cospan A B) (ppb : prepullback csp) :
+  forall (ppbM0 ppbM1 : ppb ~> pbk A B csp),
+    ppbM0 = ppbM1.
   intros.
-  econstructor; eauto.
- 
-  set med_funX := @mediating_prepullback_morph a b c.  
-  econstructor; eauto.
-  intros ppb0 ppb0M.
-  instantiate (1:=med_funX).
-
-  (* need to build 'from' as span morphism ... using ppb0 *) 
-
-  (* prepullback ppb0 is given by span sp0 *)
-  destruct ppb0 as [sp0 class0].
+  
+  destruct ppb as [sp0 class0].
   destruct class0 as [X0].
   destruct X0.
   simpl in *; simpl.
 
-  (* ppb0M is a prepullback morphism *)
-  unfold hom in ppb0M; simpl in *.
-  (* ppb0M is the underlying span morphism *)
-  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
-  simpl in *; simpl. 
-  (* botmap0 is a cat morphism, i.e. a functor *)
-  destruct bot_map0 as [med_fun0 class0].
-  simpl; simpl in *.
-  (* med_fun is the underlying function *)
-  (* unfold med_funX. *)
+  set botK := bot (pbk A B csp).
+  set bot2leftK := bot2left (pbk A B csp).
+  set bot2rightK := bot2right (pbk A B csp).
   
   destruct sp0 as [bot0 bot2left0 bot2right0].
   simpl; simpl in *.
-  
-  destruct c as [topX left2topX right2topX].
+
+  destruct csp as [topK left2topK right2topK].
   simpl; simpl in *.
-(*  unfold comp in bot2left_map0; simpl in *.
-  unfold comp in bot2right_map0; simpl in *. *)
-  (* clear med_funX. *)
-  destruct class0 as [A1 A2].
-  destruct A1 as [Fhom_mf].
-  destruct A2 as [F1_mf Fcomp_mf].
-  simpl; simpl in *.
-
-(*  Definition fjoiner (A B C: cat) (F: A ~> C) (G: B ~> C) :
-  A -> ((B * C)%type : cat) := fun x: A => (F x, G x). *)
   
-  set mon_f := fsplitter bot2left0 bot2right0. 
+  set mon_f := fsplitter bot2leftK bot2rightK. 
+  set mon_F: Functor.type _ _ := mon_f. 
+  
+  destruct ppbM0 as [bot_map0 bot2left_map0 bot2right_map0].
+  simpl in *; simpl.
+  destruct ppbM1 as [bot_map1 bot2left_map1 bot2right_map1].
+  simpl in *; simpl.
 
-  (*
-  set path0 := med_fun0 \; mon_f.
-  set pathX := med_funX \; mon_f.
-  *)  
+  set path0 := bot_map0 \; mon_F.
+  set path1 := bot_map1 \; mon_F.
 
-Admitted.
-
-(*  
-  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
-
-  (* mediating function *)
-  have @med_fun : bot sp0 -> bot (pbk a b c).
+  (* follows from the commuting triangles *)
+  assert (path0 = path1) as E1.
   admit.
 
-  unfold hom in bot_map0; simpl in *.
-
-  (* use mediating function to define mediating morphism (functor) *)  
-  have @med_morph : bot sp0 ~> bot (pbk a b c).
+  assert (@IsMono cat _ _ mon_F) as X.  
   admit.
 
-  (* prove span morphism properties of the mediating morphism *)
-  have bot2left_mapM : med_morph \; bot2left (pbk a b c) = bot2left sp0.
-  admit.
-  have bot2right_mapM : med_morph \; bot2right (pbk a b c) = bot2right sp0.
-  admit.
+  destruct X.
+  specialize (monoP bot0 bot_map0 bot_map1).
+  eapply monoP in E1.
+  inversion E1; subst.
+  f_equal.
+  eapply Prop_irrelevance.
+  eapply Prop_irrelevance.
+Admitted.   
+ 
 
-  (* define med_span_morph externally, so to allow for instantiation 
-     of metavariable ?from *)
-  set med_span_morph :=
-    SpanMap bot2left_mapM bot2right_mapM. 
-*)
-
-(*
 Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
      prepullback_isTerminal cat a b c (@pbk cat a b c).
   intros.
-(*  unfold pbk; simpl. *)
-  econstructor; eauto.
-  econstructor; eauto.
-  intros ppb0 ppb0M.
-  (* ppb0M is a prepullback morphism *)
-(*  destruct ppb0M.
-  simpl in *; simpl. *)
-  unfold hom in ppb0M; simpl in *.
-  (* ppb0M is a span morphism *)
-  unfold hom in ppb0M; simpl in *.
 
-  (* build 'from' as span_map ... using ppb0 *) 
-  destruct ppb0 as [sp0 class0].
-  destruct class0 as [X0].
-  destruct X0.
-  simpl in *; simpl.
-
-  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
-
-  (* mediating function *)
-  have @med_fun : bot sp0 -> bot (pbk a b c).
-  admit.
-
-  unfold hom in bot_map0; simpl in *.
-
-  (* use mediating function to define mediating morphism (functor) *)  
-  have @med_morph : bot sp0 ~> bot (pbk a b c).
-  admit.
-
-  (* prove span morphism properties of the mediating morphism *)
-  have bot2left_mapM : med_morph \; bot2left (pbk a b c) = bot2left sp0.
-  admit.
-  have bot2right_mapM : med_morph \; bot2right (pbk a b c) = bot2right sp0.
-  admit.
-
-  (* define med_span_morph externally, so to allow for instantiation 
-     of metavariable ?from *)
-  set med_span_morph :=
-    SpanMap bot2left_mapM bot2right_mapM. 
-
+(*
+  set botK := bot (pbk a b c).
+  set bot2leftK := bot2left (pbk a b c).
+  set bot2rightK := bot2right (pbk a b c).
 *)
+
+  (* destruct (pbk a b c) as [botK bot2leftK bot2rightK] eqn: pbk_eq.
+     simpl in *; simpl. *)
+
+  econstructor; eauto.
+ 
+  set abs_med_funX := @mediating_prepullback_morph a b c.  
+  econstructor; eauto.
+  (* ppb0M is a fresh prepullback morphism from ppb0 tp pbk *)
+  intros ppb0 ppb0M.
+  instantiate (1:=abs_med_funX).
+  
+  (* need to build 'from' as span morphism ... using ppb0 *) 
+
+  set med_funX := abs_med_funX ppb0.
+
+  eapply cat_unique_med; eauto.
+Qed.  
+
 
 (* Axiom cat_pb :
    forall (a b: cat) (c: cospan a b), 
@@ -1337,57 +1289,81 @@ pullbacks) *)
 (* Definition doublecat := icat cat. *)
 
 
+(*
+  (* prepullback ppb0 is given by span sp0 *)
+  destruct ppb0 as [sp0 class0].
+  destruct class0 as [X0].
+  destruct X0.
+  simpl in *; simpl.
+
+  destruct sp0 as [bot0 bot2left0 bot2right0].
+  simpl; simpl in *.
+
+  destruct c as [topK left2topK right2topK].
+  simpl; simpl in *.
+
+(*  assert (botK = ptype left2topK right2topK) as U1.
+  { auto. }
+
+  dependent destruction U1.
+*)  
+
+  (* ppb0M is a prepullback morphism *)
+  (*  unfold hom in ppb0M; simpl in *. *)
+  (* ppb0M is the underlying span morphism *)
+  destruct ppb0M as [bot_map0 bot2left_map0 bot2right_map0].
+  simpl in *; simpl. 
+  (* botmap0 (fresh) is a cat morphism, i.e. a functor *)
+  destruct bot_map0 as [med_fun0 class0] eqn:bot_map0_eq. 
+  simpl; simpl in *. 
+  (* med_fun (fresh) is the underlying function *)
+  (* unfold med_funX. *)
+  
+  (*  unfold comp in bot2left_map0; simpl in *.
+  unfold comp in bot2right_map0; simpl in *. *)
+  (* clear med_funX. *)
+  destruct class0 as [A1 A2].
+  destruct A1 as [Fhom_mf].
+  destruct A2 as [F1_mf Fcomp_mf].
+  simpl; simpl in *.
+
+(*  Definition fjoiner (A B C: cat) (F: A ~> C) (G: B ~> C) :
+  A -> ((B * C)%type : cat) := fun x: A => (F x, G x). *)
+ 
+  set mon_f := fsplitter bot2leftK bot2rightK. 
+
+  set path0 := bot_map0 \; (mon_f: Functor.type _ _).
+
+  unfold hom in med_funX.
+  simpl in med_funX.
+
+  unfold pbk in *; simpl in *; simpl.
+
+
+  (********************************)
+(*  
+  set pathX := med_funX \; (mon_f: Functor.type _ _).
+
+
+  
+  assert (pbk a b {| top := topK; left2top := left2topK; right2top := right2topK |} = (ptype left2topK right2topK)).
+  
+
+  
+  unfold pbk in pbk_eq; simpl in *.
+
+
+  rewrite U1 in mon_f.
+  simpl; simpl in *.
+  
+  set path0 := bot_map0 \; (mon_f: Functor.type _ _).
+  set pathX := med_funX \; mon_f.
+  
+*)
+Admitted.
+*)
+
 (********************************************************************)  
-  
-  set pbk0 := pbk a b c.
-  remember c as c0.
-  destruct c.
-  
-  econstructor; eauto.
-  econstructor; eauto.
- 
-  unfold pb_terminal.
-  intros pp ppm.
-  destruct pp.
-  destruct class as [X].
-  destruct X.
-  simpl in *; simpl.
-
-  assert ().
-
-
-
-
-Lemma cat_pb :
-   forall (a b: cat) (c: cospan a b),
-     prepullback_isTerminal cat a b c (@pbk cat a b c).
-  intros.
-  set pbk0 := pbk a b c.
-  remember c as c0.
-  destruct c.
-  
-  econstructor; eauto.
-  econstructor; eauto.
- 
-  unfold pb_terminal.
-  intros pp ppm.
-  destruct pp.
-  destruct class as [X].
-  destruct X.
-  simpl in *; simpl.
-
-  assert ().
-
-
-  
-  unfold hom in f; simpl in *.
-  
-  unfold pbk; simpl.
-  destruct c; simpl.
-  intros.
-  simpl in *.
-
-
 
 
 
