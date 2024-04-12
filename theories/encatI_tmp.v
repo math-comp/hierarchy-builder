@@ -359,6 +359,24 @@ Notation "a /` G" := (cst unit a `/` G)
 Notation "F `/ b" := (F `/` cst unit b)
   (at level 40, b at level 40, format "F `/ b") : cat_scope.
 Notation "a / b" := (cst unit a `/ b) : cat_scope.
+ *)
+
+(*
+Definition pcat_tag {C D E F G} (P: @commaE.ptype C D E F G) : (C * D) :=
+  tag P.
+
+Program Definition pcat_tag_isPreFunctor {C D E F G} :=
+  IsPreFunctor.Build _ _ (@pcat_tag C D E F G) _.
+Obligation 1. by move=> C D E F G a b [f Y]. Defined.
+
+HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_tag :=
+  @pcat_tag_isPreFunctor C D E F G.
+
+Program Definition pcat_tag_isFunctor {C D E: cat} {F G} :=
+  PreFunctor_IsFunctor.Build _ _ (@pcat_tag C D E F G) _ _.
+
+HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_tag :=
+  @pcat_tag_isFunctor C D E F G.
 *)
 
 Definition pcat_prj1 {C D E F G} (P: @commaE.ptype C D E F G) : C :=
@@ -414,6 +432,23 @@ HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_prj1 :=
 
 HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_prj2 :=
   @pcat_prj2_isFunctor C D E F G.
+
+
+Definition pcat_tag {C D E F G} (P: @commaE.ptype C D E F G) : (C * D) :=
+  (pcat_prj1 P, pcat_prj2 P).
+
+Program Definition pcat_tag_isPreFunctor {C D E F G} :=
+  IsPreFunctor.Build _ _ (@pcat_tag C D E F G) _.
+Obligation 1. by move=> C D E F G a b [f Y]. Defined.
+
+HB.instance Definition _ {C D E F G} : IsPreFunctor _ _ pcat_tag :=
+  @pcat_tag_isPreFunctor C D E F G.
+
+Program Definition pcat_tag_isFunctor {C D E: cat} {F G} :=
+  PreFunctor_IsFunctor.Build _ _ (@pcat_tag C D E F G) _ _.
+
+HB.instance Definition _ {C D E F G} : PreFunctor_IsFunctor _ _ pcat_tag :=
+  @pcat_tag_isFunctor C D E F G.
 
 
 (******)
@@ -1415,14 +1450,64 @@ Lemma fsplitter_tag_eq (A B topK : cat)
   (fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
              (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
      Functor.type _ _) =
-    (tag : Functor.type (ptype left2topK right2topK) _).
+    (pcat_tag : Functor.type (ptype left2topK right2topK) _).
+
+  assert ((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
+             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
+     Functor.type _ _) =1
+    (pcat_tag : Functor.type (ptype left2topK right2topK) _)) as eqFG.
+  { unfold eqfun.
+    intro x.
+    destruct x as [[a b] E].
+    unfold fsplitter, pcat_tag; simpl.
+    unfold fsplitter; simpl.
+    unfold pcat_prj1, pcat_prj2; simpl.
+    auto. }
+  
   simpl.
-  eapply fsplitter_proj2; eauto.
+  eapply functorPcast.
+  instantiate (1:= eqFG).
+  intros x1 x2 f.
+  destruct x1 as [[a1 b1] E1].
+  destruct x2 as [[a2 b2] E2].
+  simpl; simpl in *.
+   
+  unfold fsplitter, pcat_tag; simpl.
+  unfold pcat_prj1, pcat_prj2; simpl.
+  unfold tag.
+  destruct f as [[f1 f2] Ef] ; simpl; simpl in *.
+
+  move: (existT
+          (fun f : (a1, b1) ~> (a2, b2) =>
+           ecast x (x ~> right2topK b2) E1
+             (ecast y (left2topK a1 ~> y) E2 (left2topK <$> f.1)) =
+             right2topK <$> f.2) (f1, f2) Ef).
+  intro s.
+
+  move: (eqFG
+     (existT (fun x : A * B => left2topK x.1 = right2topK x.2) (a1, b1) E1)).
+  intro.
+
+  move: (eqFG
+          (existT (fun x : A * B => left2topK x.1 = right2topK x.2) (
+               a2, b2) E2)).
+  intro.
+
+  clear Ef.
+  dependent destruction s.
+  simpl; simpl in *.
+  destruct x.
+  simpl; simpl in *.
+  unfold fsplitter, pcat_tag in *; simpl in *.
+  unfold pcat_prj1, pcat_prj2 in *; simpl in *.
+
+  dependent destruction eqFG0.
+  dependent destruction eqFG1.
+  simpl.
+  auto.
 Qed.  
-
-
-
-
+                     
+  
 (*
 Lemma fsplitter_simpl_eq (A B topK : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK) :
