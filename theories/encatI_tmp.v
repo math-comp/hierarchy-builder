@@ -1619,6 +1619,19 @@ Lemma tag_functor_comp_Fhom (bot0 A B topK : cat)
  auto.
 Qed.
 
+Lemma tag_functor_comp_Fhom0 (bot0 A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK)
+    (g1 : bot0 ~> ptype left2topK right2topK) (a1 a2: bot0) :
+  @Fhom _ _ (g1 \; (pcat_tag: Functor.type _ _)) a1 a2 =
+    fun (f: a1 ~> a2) => tag (@Fhom _ _ g1 a1 a2 f).
+  
+ assert (@Fhom _ _ (g1 \; (pcat_tag: Functor.type _ _)) =
+           fun _ _ f => @Fhom _ _ pcat_tag _ _ (@Fhom _ _ g1 _ _ f)) as V.
+ eapply functor_comp_Fhom; eauto.
+ auto.
+Qed.
+
+
 (*
 Lemma tag_functor_comp_Fhom (bot0 A B topK : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK)
@@ -1775,9 +1788,30 @@ dependent destruction eT1.
 clear eT.
 clear eqFG.
 
+(*
 unfold comp in H; simpl in H.
 dependent destruction H.
+*)
 
+revert f.
+eapply funext_equal_f.
+rewrite -tag_functor_comp_Fhom0.
+rewrite -tag_functor_comp_Fhom0.
+
+inversion H; subst.
+dependent destruction H1; eauto.
+
+
+(*
+rewrite -H.
+intros.
+f_equal; simpl; intros.
+
+revert b.
+eapply funext_equal_f.
+
+setoid_rewrite <- tag_functor_comp_Fhom .
+*)
 
 assert (forall (a b : bot0) (f : a ~> b),
     pcat_tag <$> {|
@@ -1797,8 +1831,8 @@ assert (forall (a b : bot0) (f : a ~> b),
                         |}
                     |} <$> f).
 intros a0 b0.
-eapply funext.
-
+eapply funext_equal_f.
+rewrite x.
 
 
 
