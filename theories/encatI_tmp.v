@@ -318,8 +318,10 @@ Next Obligation.
   dependent destruction ea.
   dependent destruction eb.
   dependent destruction ec.
-  auto.
+  auto.  
 Defined.  
+
+Check comp_psubdef_obligation_1.
 
 #[export]
 HB.instance Definition _ := IsPreCat.Build ptype idmap_psubdef comp_psubdef.
@@ -886,7 +888,7 @@ dependent destruction e.
 eapply funext_equal_f in x0; eauto.
 Defined.  
 
-Program Definition mediating_fun (A B C D: cat)
+Program Definition mediating_fun' (A B C D: cat)
   (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
   (e: F1 \; F2 = G1 \; G2) : A -> (ptype F2 G2 : cat).
   intro X.
@@ -898,20 +900,23 @@ Program Definition mediating_fun (A B C D: cat)
   rewrite e; auto. 
 Defined.  
 
-(*
-Program Definition mediating_fun1 (A B C D: cat)
+Program Definition mediating_fun_prop (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) (X: A) :
+  F2 (F1 X) = G2 (G1 X).
+  assert (F2 (F1 X) = (F1 \; F2) X) as H.
+  { auto. }
+  rewrite H.
+  rewrite e; auto. 
+Qed.  
+  
+Program Definition mediating_fun (A B C D: cat)
   (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
   (e: F1 \; F2 = G1 \; G2) : A -> (ptype F2 G2 : cat).
   intro X.
   exists (fsplitter F1 G1 X); simpl.
-  (*  exists ((F1 X, G1 X)); simpl. *)
-  assert (F2 (F1 X) = (F1 \; F2) X) as H.
-  { auto. }
-  rewrite H.
-  rewrite e; auto.
-Show Proof.  
-Defined.  
-*)
+  eapply mediating_fun_prop; eauto.
+Defined.
 
 Lemma Fhom_comp (A B C: cat)
   (F1: A ~> B) (F2: B ~> C) (x y: obj A) (m: x ~> y) :
@@ -1324,6 +1329,103 @@ Lemma mediating_morph_functor (A B C T : cat)
     eapply (eq_existT_curried eq_refl); simpl.
     eapply Prop_irrelevance.
   }
+  { intros.
+    unfold mediating_fun; simpl.
+
+    unfold comp at 2; simpl.
+(*    unfold Fhom; simpl. *)
+
+    have E1: (fsplitter b2l b2r <$> (f \; g) =
+                ((fsplitter b2l b2r <$> f) \; (fsplitter b2l b2r <$> g))). 
+    { rewrite Fcomp; eauto. }
+
+    unfold comp_psubdef; simpl.
+    unfold Tagged; simpl.
+    
+    unfold Fhom at 1; simpl.
+
+(*    rewrite -E1.
+    
+    eapply (eq_existT_curried eq_refl); simpl.
+*)
+  
+    move: (mediating_morph_prefunctor_prop sq (f \; g)).
+    intro mPfg.
+
+(*    move: ((commaE.comp_psubdef_obligation_1
+       (_ <$> f)
+       (_ <$> g))).
+*)   
+(*
+comp_psubdef_obligation_1
+     : forall (a b c : ptype) (f : a ~> b) (g : b ~> c),
+       ecast x (x ~> G (tag c).2) (tagged a)
+         (ecast y (F (tag a).1 ~> y) (tagged c) (F <$> (tag f \; tag g).1)) =
+       G <$> (tag f \; tag g).2
+*)
+
+   eassert ( existT
+    (fun f0 : fsplitter b2l b2r a ~> fsplitter b2l b2r c =>
+     ecast x (x ~> r2t (b2r c)) (mediating_fun_prop sq a)
+       (ecast y (l2t (b2l a) ~> y) (mediating_fun_prop sq c) (l2t <$> f0.1)) =
+     r2t <$> f0.2) (fsplitter b2l b2r <$> (f \; g)) mPfg =
+  existT
+    (fun x : fsplitter b2l b2r a ~> fsplitter b2l b2r c =>
+     ecast x0 (x0 ~> r2t (b2r c)) (mediating_fun_prop sq a)
+       (ecast y (l2t (b2l a) ~> y) (mediating_fun_prop sq c) (l2t <$> x.1)) =
+     r2t <$> x.2) (fsplitter b2l b2r <$> f \; fsplitter b2l b2r <$> g)
+    _).
+(*
+   instantiate (1:=mPfg).
+
+    
+    move: (((fun X : C =>
+         existT (fun x : A * B => l2t x.1 = r2t x.2) 
+           (fsplitter b2l b2r X) (mediating_fun_prop sq X)) : PreFunctor.type _ _) <$> f).
+    
+    move: ((fun X : C =>
+         existT (fun x : A * B => l2t x.1 = r2t x.2) 
+           (fsplitter b2l b2r X) (mediating_fun_prop sq X))).
+    
+    move: (commaE.comp_psubdef_obligation_1
+       ((_: PreFunctor.type _ _) <$> f)
+       ((_: PreFunctor.type _ _) <$> g)).
+    
+    move: (mediating_morph_prefunctor_prop sq f).
+    intro mPf.
+
+    move: (mediating_morph_prefunctor_prop sq g).
+    intro mPg.
+  
+     
+    
+    assert (ecast x (x ~> r2t (tag (mediating_fun sq c)).2)
+           (tagged (mediating_fun sq a))
+           (ecast y (l2t (tag (mediating_fun sq a)).1 ~> y)
+              (tagged (mediating_fun sq c))
+              (l2t <$> (fsplitter b2l b2r <$> (f \; g)).1)) =
+         r2t <$> (fsplitter b2l b2r <$> (f \; g)).2) as mPfg2.
+    clear mPfg.
+    simpl in *; simpl.
+    unfold comp; simpl.
+    unfold Fhom; simpl.
+    
+    simpl in *.
+    
+    
+
+    
+    unfold comp_psubdef; simpl.
+    unfold commaE.comp_psubdef_obligation_1.
+    simpl.
+    unfold Tagged; simpl.
+
+    simpl in *.
+    
+    rewrite E1.
+    
+    rewrite E1.
+*)    
 Admitted. 
   
    
