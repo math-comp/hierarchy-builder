@@ -1708,8 +1708,9 @@ Lemma tag_functor_Fhom_eq (bot0 A B topK : cat)
 Qed.  
   
 
-Lemma fsplitter_mono (bot0 A B topK : cat)
-    (left2topK : A ~> topK) (right2topK : B ~> topK)
+Lemma fsplitter_mono (A B topK : cat)
+  (left2topK : A ~> topK) (right2topK : B ~> topK)
+  (bot0: cat)
     (g1 g2 : bot0 ~> ptype left2topK right2topK) :
   g1 \; (fsplitter (pcat_prj1: Functor.type _ _)
            (pcat_prj2: Functor.type _ _) : Functor.type _ _) =
@@ -1801,9 +1802,25 @@ rewrite -tag_functor_comp_Fhom0.
 inversion H; subst.
 dependent destruction H1; eauto.
 
+(**)
 
 (*
-rewrite -H.
+f_equal; intros; eauto.
+clear H3 H4.
+f_equal; intros; eauto.
+clear H7 H7.
+f_equal; intros; eauto.
+*)
+
+Fail rewrite -H.
+Fail rewrite H.
+Fail rewrite x.
+Fail rewrite -x.
+(*
+unfold Fhom; simpl.
+eapply funext_equal_f in x.
+
+rewrite x.
 intros.
 f_equal; simpl; intros.
 
@@ -1812,6 +1829,68 @@ eapply funext_equal_f.
 
 setoid_rewrite <- tag_functor_comp_Fhom .
 *)
+
+Require Import FunctionalExtensionality.
+
+unfold Fhom; simpl.
+
+eapply equal_f_dep in x.
+instantiate (1:= a) in x.
+eapply equal_f_dep in x.
+instantiate (1:=b) in x.
+auto.
+Qed.
+
+Lemma fsplitter_mono1 (A B topK : cat)
+  (left2topK : A ~> topK) (right2topK : B ~> topK) :
+  forall (bot0: cat)
+    (g1 g2 : bot0 ~> ptype left2topK right2topK),
+  g1 \; (fsplitter (pcat_prj1: Functor.type _ _)
+           (pcat_prj2: Functor.type _ _) : Functor.type _ _) =
+  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
+           (pcat_prj2: Functor.type _ _) : Functor.type _ _) ->
+  g1 = g2.
+intros. eapply fsplitter_mono; eauto.
+Qed.
+
+
+Fail HB.instance Definition fsplitter_IsMono (bot0 A B topK : cat)
+    (left2topK : A ~> topK) (right2topK : B ~> topK)
+    (g1 g2 : bot0 ~> ptype left2topK right2topK) :
+  @IsMono cat _ _ (fsplitter (pcat_prj1: Functor.type _ _)
+                     (pcat_prj2: Functor.type _ _) :
+      Functor.type _ _) :=
+  @IsMono.Build cat _ _ (fsplitter (pcat_prj1: Functor.type _ _)
+                     (pcat_prj2: Functor.type _ _) :
+      Functor.type _ _)            
+  (@fsplitter_mono1 A B topK left2topK right2topK).          
+
+(*
+assert (forall (f : a ~> b),
+    pcat_tag <$> {|
+                      Functor.sort := m2;
+                      Functor.class :=
+                        {|
+                          Functor.cat_IsPreFunctor_mixin := R1;
+                          Functor.cat_PreFunctor_IsFunctor_mixin := S1
+                        |}
+                    |} <$> f =
+       pcat_tag <$> {|
+                      Functor.sort := m2;
+                      Functor.class :=
+                        {|
+                          Functor.cat_IsPreFunctor_mixin := R2;
+                          Functor.cat_PreFunctor_IsFunctor_mixin := S2
+                        |}
+                    |} <$> f).
+eapply equal_f_dep in x.
+instantiate (1:= a) in x.
+eapply equal_f_dep in x.
+instantiate (1:=b) in x.
+eapply equal_f; eauto.
+eapply H0.
+
+
 
 assert (forall (a b : bot0) (f : a ~> b),
     pcat_tag <$> {|
@@ -1832,7 +1911,7 @@ assert (forall (a b : bot0) (f : a ~> b),
                     |} <$> f).
 intros a0 b0.
 eapply funext_equal_f.
-rewrite x.
+exact x.
 
 
 
@@ -2232,12 +2311,10 @@ inversion H; subst.
    
   destruct g1.
   destruct g2; simpl.
-  
-  
-  intros.
-  
 
+*)  
 
+(*
 Lemma fsplitter_mono (bot0 A B topK : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK)
     (g1 g2 : bot0 ~> ptype left2topK right2topK) :
@@ -2362,7 +2439,7 @@ inversion H; subst.
   
   
   intros.
-  
+*)  
   
 
 
@@ -2419,21 +2496,25 @@ Lemma cat_unique_med (A B: cat)
                bot2left0 bot2right0); eauto.
   }  
 
-  assert (@IsMono cat _ _ mon_F) as X.  
+(*  assert (@IsMono cat _ _ mon_F) as X.  
   admit.
 
   destruct X.
+*)
 
   subst mon_F.
   subst mon_f.
-  
+
+  set monoP := (@fsplitter_mono1 A B topK left2topK right2topK).
+
+  (*
 Lemma fsplitter_mono (A B C : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK)
     (g1 g2 : a ~> ptype left2topK right2topK) :
           g1 \; (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
         Functor.type _ _) = g2 \;  (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
         Functor.type _ _) -> g1 = g2.
-
+*)
   
   specialize (monoP bot0 bot_map0 bot_map1).
   eapply monoP in E2.
@@ -2441,8 +2522,8 @@ Lemma fsplitter_mono (A B C : cat)
   f_equal.
   eapply Prop_irrelevance.
   eapply Prop_irrelevance.
-Admitted.   
- 
+Qed.
+   
 
 Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
