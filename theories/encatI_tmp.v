@@ -3,6 +3,7 @@ Unset Universe Checking.
 From HB Require Import structures cat encatD.
 Set Universe Checking.
 Require Import Coq.Program.Equality.
+Require Import FunctionalExtensionality.
 
 Obligation Tactic := done || idtac.
 
@@ -894,8 +895,23 @@ Program Definition mediating_fun (A B C D: cat)
   assert (F2 (F1 X) = (F1 \; F2) X) as H.
   { auto. }
   rewrite H.
-  rewrite e; auto.
+  rewrite e; auto. 
 Defined.  
+
+(*
+Program Definition mediating_fun1 (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) : A -> (ptype F2 G2 : cat).
+  intro X.
+  exists (fsplitter F1 G1 X); simpl.
+  (*  exists ((F1 X, G1 X)); simpl. *)
+  assert (F2 (F1 X) = (F1 \; F2) X) as H.
+  { auto. }
+  rewrite H.
+  rewrite e; auto.
+Show Proof.  
+Defined.  
+*)
 
 Lemma Fhom_comp (A B C: cat)
   (F1: A ~> B) (F2: B ~> C) (x y: obj A) (m: x ~> y) :
@@ -1052,7 +1068,7 @@ Lemma cond_joiner_IsPreFunctor_lemma (A B C : cat)
   auto.
 Defined.
 
-Lemma mediating_morph_prefunctor (A B C D: cat)
+Lemma mediating_morph_prefunctor' (A B C D: cat)
   (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
   (e: F1 \; F2 = G1 \; G2) :
   IsPreFunctor A (ptype F2 G2) (mediating_fun e).
@@ -1117,6 +1133,115 @@ Lemma mediating_morph_prefunctor (A B C D: cat)
   simpl in W.
   auto.
 Defined.
+
+Lemma mediating_morph_prefunctor_prop (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2)
+  (a1 a2 : A)
+  (hh : a1 ~> a2) :
+  ecast x (x ~> G2 (tag (mediating_fun e a2)).2) (tagged (mediating_fun e a1))
+    (ecast y (F2 (tag (mediating_fun e a1)).1 ~> y)
+       (tagged (mediating_fun e a2)) (F2 <$> (fsplitter F1 G1 <$> hh).1)) =
+  G2 <$> (fsplitter F1 G1 <$> hh).2.
+  have ->: (fsplitter F1 G1 <$> hh).2 = G1 <$> hh.
+  { unfold fsplitter; simpl; auto. }
+
+  have ->: G2 <$> G1 <$> hh = (G1 \; G2) <$> hh.
+  { auto. }
+
+  have ->: (fsplitter F1 G1 <$> hh).1 = F1 <$> hh.
+  { unfold fsplitter; simpl; auto. }
+  
+  have ->: F2 <$> F1 <$> hh = (F1 \; F2) <$> hh.
+  { auto. }
+
+  assert (F1 \; F2 =1 G1 \; G2) as eqFG.
+  { unfold eqfun.
+    intros.
+    rewrite e; auto.
+  }  
+
+  move: (tagged (mediating_fun e a1)).
+  intros tagged1.
+
+  move: (tagged (mediating_fun e a2)).
+  intros tagged2.
+
+  simpl in tagged1.
+  simpl in tagged2.
+  simpl.
+  
+  have U := (@prefunctorPcast_inv _ _ _ _ eqFG a1 a2 hh).
+
+  have H : (tagged1 = eqFG a1).
+  { eapply Prop_irrelevance. }
+  have H0 : (tagged2 = eqFG a2).
+  { eapply Prop_irrelevance. }
+
+  inversion H; subst.
+  clear H1.
+
+  eapply U; eauto.
+  rewrite e.
+  reflexivity.
+Defined.  
+
+Lemma mediating_morph_prefunctor (A B C D: cat)
+  (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
+  (e: F1 \; F2 = G1 \; G2) :
+  IsPreFunctor A (ptype F2 G2) (mediating_fun e).
+  econstructor; eauto.
+  intros a1 a2 hh.
+
+  exists (fsplitter F1 G1 <$> hh). 
+
+  eapply mediating_morph_prefunctor_prop; eauto.
+Defined.  
+
+(*
+  have ->: (fsplitter F1 G1 <$> hh).2 = G1 <$> hh.
+  { unfold fsplitter; simpl; auto. }
+
+  have ->: G2 <$> G1 <$> hh = (G1 \; G2) <$> hh.
+  { auto. }
+
+  have ->: (fsplitter F1 G1 <$> hh).1 = F1 <$> hh.
+  { unfold fsplitter; simpl; auto. }
+  
+  have ->: F2 <$> F1 <$> hh = (F1 \; F2) <$> hh.
+  { auto. }
+
+  assert (F1 \; F2 =1 G1 \; G2) as eqFG.
+  { unfold eqfun.
+    intros.
+    rewrite e; auto.
+  }  
+
+  move: (tagged (mediating_fun e a1)).
+  intros tagged1.
+
+  move: (tagged (mediating_fun e a2)).
+  intros tagged2.
+
+  simpl in tagged1.
+  simpl in tagged2.
+  simpl.
+  
+  have U := (@prefunctorPcast_inv _ _ _ _ eqFG a1 a2 hh).
+
+  have H : (tagged1 = eqFG a1).
+  { eapply Prop_irrelevance. }
+  have H0 : (tagged2 = eqFG a2).
+  { eapply Prop_irrelevance. }
+
+  inversion H; subst.
+  clear H1.
+
+  eapply U; eauto.
+  rewrite e.
+  reflexivity.
+Defined.  
+*)
 HB.instance Definition mediating_morph_PreFunctor (A B C D: cat)
   (F1: A ~> B) (G1: A ~> C) (F2: B ~> D) (G2: C ~> D)
   (e: F1 \; F2 = G1 \; G2) : 
@@ -1154,6 +1279,14 @@ Lemma mediating_morph_decomp (A B C D: cat)
   mediating_fun e = (fsplitter F1 G1) \; (joiner )
 *)
 
+(*
+ a, b : cat
+  c : cospan a b
+  c0 : prepullback c
+  f : c0 ~> pb_terminal (pbk a b c)
+  ============================
+  f = ?from c0
+*)
 Lemma mediating_morph_functor (A B C T : cat)
   (l2t : A ~> T)
   (r2t : B ~> T)
@@ -1167,7 +1300,59 @@ Lemma mediating_morph_functor (A B C T : cat)
   instantiate (2:= @mediating_fun C A B T b2l b2r l2t r2t sq).
   instantiate (1:= mediating_morph_PreFunctor sq).
   econstructor; eauto.
-  intros.
+  { intros.
+    unfold mediating_fun; simpl.
+
+    unfold idmap at 2; simpl.
+    unfold Fhom; simpl.
+   
+    have E1 : (fsplitter b2l b2r <$> idmap = idmap).
+    { intros. rewrite F1; auto. }
+    specialize (E1 a).
+
+    move: (mediating_morph_prefunctor_prop sq idmap).
+    intro mP.
+    move: mP.
+  
+    rewrite E1.
+    intros.
+    simpl in *; simpl.
+    unfold idmap_psubdef.
+    simpl.
+    unfold Tagged; simpl.
+
+    eapply (eq_existT_curried eq_refl); simpl.
+    eapply Prop_irrelevance.
+  }
+Admitted. 
+  
+   
+(*  
+ Check existT.
+  
+  existT
+    (fun f : fsplitter b2l b2r a ~> fsplitter b2l b2r a =>
+     ecast x (x ~> r2t (b2r a))
+       (eq_ind_r (eq^~ (r2t (b2r a)))
+          (eq_ind_r
+             (fun _pattern_value_ : C ~> T => _pattern_value_ a = r2t (b2r a))
+             (erefl (r2t (b2r a))) sq) (erefl (l2t (b2l a))))
+       (ecast y (l2t (b2l a) ~> y)
+          (eq_ind_r (eq^~ (r2t (b2r a)))
+             (eq_ind_r
+                (fun _pattern_value_ : C ~> T =>
+                 _pattern_value_ a = r2t (b2r a)) (erefl (r2t (b2r a))) sq)
+             (erefl (l2t (b2l a)))) (l2t <$> f.1)) = r2t <$> f.2) idmap mP =
+  
+  
+  rewrite sq.
+  inversion sq; subst.
+  
+  
+  rewrite F1.
+  unfold mediating_morph_PreFunctor; simpl.
+  unfold mediating_morph_prefunctor; simpl.
+  
   unfold idmap; simpl.
   unfold idmap_psubdef; simpl.
   unfold mediating_fun; simpl.
@@ -1199,6 +1384,8 @@ Lemma mediating_morph_functor (A B C T : cat)
   rewrite F1.
 *)                      
 Admitted. 
+*)
+
 
 Lemma mediating_prepullback_morph (A B : cat)
   (csp0 : cospan A B)
@@ -1447,7 +1634,7 @@ Qed.
 
 (***********************************************************************)
 
-(* need TAG functor *)
+(* TAG functor *)
 
 Lemma fsplitter_tag_eq (A B topK : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK) :
@@ -1511,84 +1698,6 @@ Lemma fsplitter_tag_eq (A B topK : cat)
   auto.
 Qed.  
                      
-  
-(*
-Lemma fsplitter_simpl_eq (A B topK : cat)
-    (left2topK : A ~> topK) (right2topK : B ~> topK) :
-  ((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
-             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
-     Functor.type _ _) \; sndF) =
-    (pcat_prj2 : Functor.type (ptype left2topK right2topK) _).
-  simpl.
-
-  assert (((fsplitter (pcat_prj1: Functor.type (ptype left2topK right2topK) _)
-             (pcat_prj2: Functor.type (ptype left2topK right2topK) _) :
-     Functor.type _ _) \; sndF) =1
-        (pcat_prj2 : Functor.type (ptype left2topK right2topK) _)) as eqFG.
-  { simpl.
-    unfold eqfun.
-    intro. unfold fsplitter; simpl.
-    auto. }
-    
-  eapply functorPcast.
-  instantiate (1:= eqFG). 
-  intros. simpl in *; simpl.
-  unfold fsplitter; simpl.
-  unfold sndF; simpl.
-
-  move: (eqFG a).
-  intro.
-  move: (eqFG b).
-  intro.
-  simpl.
-  
-  destruct a.
-  destruct b.
-  destruct x.
-  destruct x0.
-  simpl in *; simpl.
-  unfold pcat_prj1 in *.
-  unfold pcat_prj2 in *.
-  simpl; simpl in *.
-  
-  dependent destruction eqFG0.
-  dependent destruction eqFG1.
-  f_equal.
-Qed.  
-*)
-(*
-Lemma fsplitter_mono (bot0 A B topK : cat)
-    (left2topK : A ~> topK) (right2topK : B ~> topK)
-    (g1 g2 : bot0 ~> ptype left2topK right2topK) :
-  g1 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _) =
-  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _) ->
-  g1 = g2.
-
-  rewrite fsplitter_tag_eq.
-  rewrite pcat_tag_simpl.
-  intros.
-  
-  destruct g1.
-  destruct g2.
-  unfold comp in H.
-  simpl in *.
-  unfold pcat_tag in H.
-  unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-  unfold ssrfun.comp in H; simpl in *.
-
-  assert (forall x : bot0, ((tag (sort x)).1, (tag (sort x)).2) =
-                             ((tag (sort0 x)).1, (tag (sort0 x)).2)) as H0.
-  { eapply funext_equal_f; eauto. }
-    
-  
-  unfold fst in H.
-  unfold snd in H.
-  unfold projT1 in H.
-  simpl in H.
-*)  
-
 (*
 Lemma fsplitter_tag_elim (bot0 A B topK : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK)
@@ -1630,7 +1739,6 @@ Lemma tag_functor_comp_Fhom0 (bot0 A B topK : cat)
  eapply functor_comp_Fhom; eauto.
  auto.
 Qed.
-
 
 (*
 Lemma tag_functor_comp_Fhom (bot0 A B topK : cat)
@@ -1802,35 +1910,14 @@ rewrite -tag_functor_comp_Fhom0.
 inversion H; subst.
 dependent destruction H1; eauto.
 
-(**)
-
 (*
 f_equal; intros; eauto.
-clear H3 H4.
-f_equal; intros; eauto.
-clear H7 H7.
-f_equal; intros; eauto.
-*)
 
 Fail rewrite -H.
 Fail rewrite H.
 Fail rewrite x.
 Fail rewrite -x.
-(*
-unfold Fhom; simpl.
-eapply funext_equal_f in x.
-
-rewrite x.
-intros.
-f_equal; simpl; intros.
-
-revert b.
-eapply funext_equal_f.
-
-setoid_rewrite <- tag_functor_comp_Fhom .
 *)
-
-Require Import FunctionalExtensionality.
 
 unfold Fhom; simpl.
 
@@ -1864,583 +1951,6 @@ Fail HB.instance Definition fsplitter_IsMono (bot0 A B topK : cat)
                      (pcat_prj2: Functor.type _ _) :
       Functor.type _ _)            
   (@fsplitter_mono1 A B topK left2topK right2topK).          
-
-(*
-assert (forall (f : a ~> b),
-    pcat_tag <$> {|
-                      Functor.sort := m2;
-                      Functor.class :=
-                        {|
-                          Functor.cat_IsPreFunctor_mixin := R1;
-                          Functor.cat_PreFunctor_IsFunctor_mixin := S1
-                        |}
-                    |} <$> f =
-       pcat_tag <$> {|
-                      Functor.sort := m2;
-                      Functor.class :=
-                        {|
-                          Functor.cat_IsPreFunctor_mixin := R2;
-                          Functor.cat_PreFunctor_IsFunctor_mixin := S2
-                        |}
-                    |} <$> f).
-eapply equal_f_dep in x.
-instantiate (1:= a) in x.
-eapply equal_f_dep in x.
-instantiate (1:=b) in x.
-eapply equal_f; eauto.
-eapply H0.
-
-
-
-assert (forall (a b : bot0) (f : a ~> b),
-    pcat_tag <$> {|
-                      Functor.sort := m2;
-                      Functor.class :=
-                        {|
-                          Functor.cat_IsPreFunctor_mixin := R1;
-                          Functor.cat_PreFunctor_IsFunctor_mixin := S1
-                        |}
-                    |} <$> f =
-       pcat_tag <$> {|
-                      Functor.sort := m2;
-                      Functor.class :=
-                        {|
-                          Functor.cat_IsPreFunctor_mixin := R2;
-                          Functor.cat_PreFunctor_IsFunctor_mixin := S2
-                        |}
-                    |} <$> f).
-intros a0 b0.
-eapply funext_equal_f.
-exact x.
-
-
-
-
-move: ({|
-       Functor.sort := m2;
-       Functor.class :=
-         {|
-           Functor.cat_IsPreFunctor_mixin := R1;
-           Functor.cat_PreFunctor_IsFunctor_mixin := S1
-         |}
-         |}).
-intro.
-move: ({|
-       Functor.sort := m2;
-       Functor.class :=
-         {|
-           Functor.cat_IsPreFunctor_mixin := R2;
-           Functor.cat_PreFunctor_IsFunctor_mixin := S2
-         |}
-     |} <$> f).
-intro.
-destruct Fhom.
-destruct Fhom0.
-simpl; simpl in *.
-
-
-unfold pcat_tag in H; simpl in *.
-unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-unfold fst, snd in H; simpl in *.
-unfold comp in H; simpl in *.
-
-unfold pcat_tag in H; simpl in *.
-unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-unfold fst, snd in H; simpl in *.
-unfold ssrfun.comp in H; simpl in *.
-
-
-
-
-assert (R1 = R2).
-{ destruct R1.
-  destruct R2.
-  destruct S1.
-  destruct S2.
-  simpl; simpl in *.
-  f_equal.
-  
-  inversion H; subst.
-  dependent destruction H1.
-
-  unfold pcat_tag in x; simpl in *.
-  unfold pcat_prj1, pcat_prj2 in x; simpl in *.
-  unfold fst, snd in x; simpl in *.
-  unfold tag in x; simpl in *.
-  
-  unfold pcat_tag in H; simpl in *.
-  unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-  unfold fst, snd in H; simpl in *.
-  unfold comp in H; simpl in *.
-
-  unfold pcat_tag in H; simpl in *.
-  unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-  unfold fst, snd in H; simpl in *.
-  unfold ssrfun.comp in H; simpl in *.
-
-  Set Printing All.
-
-Check reverse_coercion.
-
-  
-  unfold Fhom in H; simpl in *.
-unfold ssrfun.comp in H; simpl in *.
-unfold pcat_tag in H; simpl in *.
-unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-
-
-
-  
-  rewrite pcat_tag_simpl in x.
-  
-  unfold Fhom in x.
-  rewrite -comp_Fun in x.
-
-rewrite -Fcomp in H.
-
-
-
-(* clear f.
-clear a b.
- *)
-
-destruct R1.
-destruct R2.
-destruct S1.
-destruct S2.
-simpl; simpl in *.
-f_equal.
-
-assert (forall x : bot0, ((tag (m2 x)).1, (tag (m2 x)).2) =
-                           ((tag (m2 x)).1, (tag (m2 x)).2)).
-{ eapply funext_equal_f; eauto. }
-
-dependent destruction H; eauto.
-
-
-
-eapply functorP in x.
-
-
-eapply funext in H0.
-
-
-
-dependent destruction H; eauto.
-
-
-Set Printing All.
-
-
-assert (R1 = R2).
-eapply prefunctorPcast.
-
-
-destruct R1.
-destruct R2.
-simpl in *; simpl.
-
-simpl in *; simpl.
-
-(* assert (Fhom = Fhom0). *)
-dependent destruction H.
-
-
-
-
-Lemma fsplitter_mono (bot0 A B topK : cat)
-    (left2topK : A ~> topK) (right2topK : B ~> topK)
-    (g1 g2 : bot0 ~> ptype left2topK right2topK) :
-  g1 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _) =
-  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _) ->
-  g1 = g2.
-
-  rewrite fsplitter_tag_eq.
-  intros.
-  
-  assert (g1 =1 g2) as eqFG.
-  { unfold eqfun.
-    intros.
-    inversion H; subst.
-    unfold pcat_tag in H1; simpl in *.
-    unfold ssrfun.comp in H1; simpl in *.
-    unfold pcat_prj1, pcat_prj2 in *; simpl in *.
-  
-    destruct g1.
-    destruct g2.
-    simpl in *; simpl.
-    clear H2.
-
-    assert (forall x : bot0, ((tag (sort x)).1, (tag (sort x)).2) =
-                             ((tag (sort0 x)).1, (tag (sort0 x)).2)) as H0.
-    { eapply funext_equal_f; eauto. }
-    specialize (H0 x).
-  
-    clear H1.
-    revert H0.
-    move: (sort x).
-    intro.
-    move: (sort0 x).
-    intro.
-    destruct sort1.
-    destruct sort2.
-    destruct x0.
-    destruct x1.
-    simpl.
-    intros.
-    inversion H0; subst.
-    clear H0.
-    f_equal.
-    eapply Prop_irrelevance.
-}
- 
-eapply functorPcast.
-intros.
-instantiate (1:=eqFG).
-simpl.
-
-assert (forall x: bot0, ((g1 \; (pcat_tag: Functor.type _ _)) : bot0 -> _) x = tag (g1 x)) as Q.
-admit.
-
-simpl in *; simpl.
-
-destruct g1 as [m1 [R1 S1]].
-destruct g2 as [m2 [R2 S2]].
-simpl in *; simpl.
-
-unfold eqfun in eqFG.
-assert (m1 = m2) as E.
-{ eapply funext; eauto. }
-
-inversion E; subst.
-clear H0.
-
-move: (eqFG a).
-intro.
-move: (eqFG b).
-intro.
-dependent destruction eqFG0.
-dependent destruction eqFG1.
-
-(*
-assert (JMeq (({|
-        Functor.sort := m2;
-        Functor.class :=
-          {|
-            Functor.cat_IsPreFunctor_mixin := R1;
-            Functor.cat_PreFunctor_IsFunctor_mixin := S1
-          |}
-      |} \; (pcat_tag: Functor.type _ _)) <$> f) ({|
-        Functor.sort := m2;
-        Functor.class :=
-          {|
-            Functor.cat_IsPreFunctor_mixin := R1;
-            Functor.cat_PreFunctor_IsFunctor_mixin := S1
-          |}
-      |} <$> f)).
-eapply eq_dep_id_JMeq.
-simpl. unfold pcat_tag.
-simpl. unfold pcat_prj1, pcat_prj2; simpl.
-move: (m2 b).
-*)
-
-assert (R1 = R2).
-eapply prefunctorPcast.
-
-
-destruct R1.
-destruct R2.
-simpl in *; simpl.
-
-simpl in *; simpl.
-
-(* assert (Fhom = Fhom0). *)
-dependent destruction H.
-
-assert (forall (a : bot0) (b : bot0) (f : a ~> b),
-           pcat_tag <$> {|
-                      Functor.sort := m2;
-                      Functor.class :=
-                        {|
-                          Functor.cat_IsPreFunctor_mixin :=
-                            {| IsPreFunctor.Fhom := Fhom |};
-                          Functor.cat_PreFunctor_IsFunctor_mixin := S1
-                        |}
-                    |} <$> f =
-           pcat_tag <$> {|
-                      Functor.sort := m2;
-                      Functor.class :=
-                        {|
-                          Functor.cat_IsPreFunctor_mixin :=
-                            {| IsPreFunctor.Fhom := Fhom0 |};
-                          Functor.cat_PreFunctor_IsFunctor_mixin := S2
-                        |}
-                    |} <$> f).
-
-unfold pcat_tag in x; simpl in *.
-
-
-
-intros.
-rewrite x.
-
-
-Check funext_equal_f.
-eapply (@funext_equal_f _ _ _ _ x).
-
-
-
-
-clear eqFG.
-
-unfold comp in H; simpl in *.
-
-
-unfold comp in H; simpl in H.
-
-
-
-
-inversion H; subst.
-simpl in *; simpl.
-
-
-
-destruct (funext eqFG).
-
-destruct g1.
-destruct g2.
-simpl; simpl in *.
-
-destruct class as [R S].
-destruct class0 as [R0 S0].
-simpl in *; simpl.
-
-inversion H; subst.
-unfold pcat_tag in H1; simpl in *.
-unfold pcat_prj1, pcat_prj2 in H1; simpl in *.
-unfold ssrfun.comp in H1; simpl in *.
-
-
-
-assert (forall x: bot0, ((tag (sort x)).1, (tag (sort x)).2) =
-                          ((tag (sort0 x)).1, (tag (sort0 x)).2)) as E.
-{ eapply funext_equal_f; auto. }
-
-clear H2.
-clear H1.
-clear E.
-
-unfold Fhom; simpl.
-
-unfold comp in H.
-simpl in *.
-unfold pcat_tag in H; simpl in *.
-unfold pcat_prj1, pcat_prj2 in H; simpl in *.
-unfold ssrfun.comp in H; simpl in *.
-clear H.
-clear eqFG.
-
-
-
-have Ea := E a.
-
-
-
-destruct class as [R S].
-destruct class0 as [R0 S0].
-simpl; simpl in *.
-destruct R.
-destruct R0.
-simpl; simpl in *.
-
-
-dependent destruction eqFG0.
-
-
-  
-
-inversion H; subst.
-
-  
-  
-  unfold comp in H; simpl in *.
-  unfold fsplitter in H; simpl in *.
-  unfold ssrfun.comp in H; simpl in *.
-  assert ((pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
-            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
-  dependent destruction H.
-  f_equal.
-
-
-  
-  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _)
-  
-  rewrite mediating_fun_ext_proj1.
-  
-  unfold fsplitter; simpl.
-  intros.
-
-  assert (g1 =1 g2) as eqFG.
-  unfold eqfun.
-  intros.
-  unfold comp in H; simpl in *.
-  unfold fsplitter in H; simpl in *.
-  unfold ssrfun.comp in H; simpl in *.
-  assert ((pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
-            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
-  dependent destruction H.
-  f_equal.
-  
-  
-  eapply functorP.
-  
-  
-  unfold fsplitter; simpl.
-  unfold comp; simpl.
-  unfold fsplitter; simpl.
-  unfold ssrfun.comp; simpl.
-  intros.
-  assert (forall x: bot0, (pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
-                            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
-  intro.
-  rewrite H. auto.
-   
-  destruct g1.
-  destruct g2; simpl.
-
-*)  
-
-(*
-Lemma fsplitter_mono (bot0 A B topK : cat)
-    (left2topK : A ~> topK) (right2topK : B ~> topK)
-    (g1 g2 : bot0 ~> ptype left2topK right2topK) :
-  g1 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _) =
-  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _) ->
-  g1 = g2.
-
-intros.
-
-assert (g1 =1 g2) as eqFG.
-{ unfold eqfun.
-  intros.
-  inversion H; subst.
-  unfold fsplitter in H1; simpl in *.
-  unfold ssrfun.comp in H1; simpl in *.
-  unfold pcat_prj1, pcat_prj2 in *; simpl in *.
-  
-  destruct g1.
-  destruct g2.
-  simpl in *; simpl.
-  clear H2.
-
-  assert (forall x : bot0, ((tag (sort x)).1, (tag (sort x)).2) =
-                             ((tag (sort0 x)).1, (tag (sort0 x)).2)) as H0.
-  { eapply funext_equal_f; eauto. }
-  specialize (H0 x).
-  
-  clear H1.
-  revert H0.
-  move: (sort x).
-  intro.
-  move: (sort0 x).
-  intro.
-  destruct sort1.
-  destruct sort2.
-  destruct x0.
-  destruct x1.
-  simpl.
-  intros.
-  inversion H0; subst.
-  clear H0.
-  f_equal.
-  eapply Prop_irrelevance.
-}
- 
-eapply functorPcast.
-intros.
-instantiate (1:=eqFG).
-simpl.
-move: (eqFG a).
-intro.
-move: (eqFG b).
-intro.
-unfold Fhom; simpl.
-destruct g1.
-destruct g2.
-simpl; simpl in *.
-destruct class as [R S].
-destruct class0 as [R0 S0].
-simpl; simpl in *.
-destruct R.
-destruct R0.
-simpl; simpl in *.
-
-
-dependent destruction eqFG0.
-
-
-  
-
-inversion H; subst.
-
-  
-  
-  unfold comp in H; simpl in *.
-  unfold fsplitter in H; simpl in *.
-  unfold ssrfun.comp in H; simpl in *.
-  assert ((pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
-            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
-  dependent destruction H.
-  f_equal.
-
-
-  
-  g2 \; (fsplitter (pcat_prj1: Functor.type _ _)
-           (pcat_prj2: Functor.type _ _) : Functor.type _ _)
-  
-  rewrite mediating_fun_ext_proj1.
-  
-  unfold fsplitter; simpl.
-  intros.
-
-  assert (g1 =1 g2) as eqFG.
-  unfold eqfun.
-  intros.
-  unfold comp in H; simpl in *.
-  unfold fsplitter in H; simpl in *.
-  unfold ssrfun.comp in H; simpl in *.
-  assert ((pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
-            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
-  dependent destruction H.
-  f_equal.
-  
-  
-  eapply functorP.
-  
-  
-  unfold fsplitter; simpl.
-  unfold comp; simpl.
-  unfold fsplitter; simpl.
-  unfold ssrfun.comp; simpl.
-  intros.
-  assert (forall x: bot0, (pcat_prj1 (g1 x), pcat_prj2 (g1 x)) =
-                            (pcat_prj1 (g2 x), pcat_prj2 (g2 x))).
-  intro.
-  rewrite H. auto.
-   
-  destruct g1.
-  destruct g2; simpl.
-  
-  
-  intros.
-*)  
-  
 
 
 Lemma cat_unique_med (A B: cat)
@@ -2498,7 +2008,6 @@ Lemma cat_unique_med (A B: cat)
 
 (*  assert (@IsMono cat _ _ mon_F) as X.  
   admit.
-
   destruct X.
 *)
 
@@ -2506,15 +2015,6 @@ Lemma cat_unique_med (A B: cat)
   subst mon_f.
 
   set monoP := (@fsplitter_mono1 A B topK left2topK right2topK).
-
-  (*
-Lemma fsplitter_mono (A B C : cat)
-    (left2topK : A ~> topK) (right2topK : B ~> topK)
-    (g1 g2 : a ~> ptype left2topK right2topK) :
-          g1 \; (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
-        Functor.type _ _) = g2 \;  (fsplitter (pcat_prj1: Functor.type _ _) (pcat_prj2: Functor.type _ _) :
-        Functor.type _ _) -> g1 = g2.
-*)
   
   specialize (monoP bot0 bot_map0 bot_map1).
   eapply monoP in E2.
@@ -2529,7 +2029,20 @@ Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
      prepullback_isTerminal cat a b c (@pbk cat a b c).
   intros.
-  econstructor; eauto. 
+  econstructor; eauto.
+(**)
+(*  econstructor; intros.
+  destruct c.
+  destruct c0.
+  destruct class as [X].
+  destruct X.
+  simpl in *.
+  destruct f.
+  simpl in *.
+  destruct sort.
+  simpl in *.
+*)
+(**)  
   set abs_med_funX := @mediating_prepullback_morph a b c.  
   econstructor; eauto.
   (* ppb0M is a fresh prepullback morphism from ppb0 to pbk *)
@@ -2539,6 +2052,38 @@ Lemma cat_pb :
   eapply cat_unique_med; eauto.
 Qed.  
 
+(*
+a, b, top : cat
+  left2top : a ~> top
+  right2top : b ~> top
+  bot : cat
+  bot2left : bot ~> a
+  bot2right : bot ~> b
+  is_square : bot2left \; left2top = bot2right \; right2top
+  bot_map : bot ~> ptype left2top right2top
+  bot2left_map : bot_map \;
+                   {|
+                     Functor.sort := pcat_prj1;
+                     Functor.class :=
+                       {|
+                         Functor.cat_IsPreFunctor_mixin :=
+                           HB_unnamed_factory_89 left2top right2top;
+                         Functor.cat_PreFunctor_IsFunctor_mixin :=
+                           pcat_prj1_isFunctor
+                       |}
+                   |} = bot2left
+  bot2right_map : bot_map \;
+                    {|
+                      Functor.sort := pcat_prj2;
+                      Functor.class :=
+                        {|
+                          Functor.cat_IsPreFunctor_mixin :=
+                            HB_unnamed_factory_92 left2top right2top;
+                          Functor.cat_PreFunctor_IsFunctor_mixin :=
+                            pcat_prj2_isFunctor
+                        |}
+                    |} = bot2right
+*)
 
 (* Axiom cat_pb :
    forall (a b: cat) (c: cospan a b), 
