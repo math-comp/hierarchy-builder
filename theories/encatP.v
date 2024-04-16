@@ -24,140 +24,6 @@ Notation "'sigma' x .. y , p" :=
   : type_scope.
 *)
 
-(************************************************************************)
-
-Program Definition brel_fcast {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) :
-  R (G a2) (G b2) = R (F a1) (F b1).
-rewrite e1.
-rewrite e2.
-reflexivity.
-Defined.
-
-Program Definition recast2 {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) 
-  (x: R (G a2) (G b2)) : R (F a1) (F b1).
-rewrite -(brel_fcast e1 e2).
-exact x.
-Defined.
-
-Program Definition brel_fcast_h {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) 
-  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop) :
-  P _ x = P _ (recast2 e1 e2 x).
-unfold recast2.
-unfold eq_rect.
-unfold brel_fcast.
-unfold eq_ind_r.
-unfold eq_ind.
-unfold eq_sym.
-destruct e1.
-destruct e2.
-auto.
-Defined.
-
-Program Definition brel_fcast_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
-  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
-  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) :
-  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
-unfold recast2.
-unfold eq_rect.
-unfold brel_fcast.
-unfold eq_ind_r.
-unfold eq_ind.
-unfold eq_sym.
-destruct e1.
-destruct e2.
-destruct e3.
-auto.
-Defined.
-
-Program Definition brel_fcast_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
-  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
-  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) :
-  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
-unfold recast2.
-unfold eq_rect.
-unfold brel_fcast.
-unfold eq_ind_r.
-unfold eq_ind.
-unfold eq_sym.
-destruct e1.
-destruct e2.
-destruct e3.
-auto.
-Defined.
-
-Program Definition recast2_h {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) 
-  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop)
-  (p: P _ x) : P _ (recast2 e1 e2 x).
-rewrite -(brel_fcast_h e1 e2).
-exact p.
-Defined.
-
-Program Definition recast2_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
-  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
-  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) 
-  (p: P _ _ _ x y z) :
-    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
-rewrite -(brel_fcast_3h e1 e2 e3).
-exact p.
-Defined.
-
-Program Definition recast2_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
-  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
-  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) 
-  (p: P _ _ _ x y z) :
-    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
-rewrite -(brel_fcast_3hh e1 e2 e3).
-exact p.
-Defined.
-
-Program Definition recast_hom {X Y C : precat} {F: X -> C} {G: Y -> C}
-  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
-  (e1: F a1 = G a2) (e2: F b1 = G b2) 
-  (x: (G a2) ~> (G b2)) : (F a1) ~> (F b1).
-eapply recast2; eauto.
-Defined.
-
-Definition recast21 {X Y C : Type} {F: X -> C} {G: Y -> C}
-  {R: C -> C -> Type} {a b: (X * Y)}
-  (e: (F (fst a), F (fst b)) = (G (snd a), G (snd b))) 
-(* (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) *) 
-  (x: R (G (snd a)) (G (snd b))) : R (F (fst a)) (F (fst b)).
-  destruct a as [a1 a2].
-  destruct b as [b1 b2].
-  inversion e; subst.
-  rewrite H0.
-  rewrite H1.
-  auto.
-Defined.
-
-Definition mk_pair_eq {X Y C: Type} {F: X -> C} {G: Y -> C} {a b: (X * Y)}
-  (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) :
-  (F (fst a), F (fst b)) = (G (snd a), G (snd b)).
-  destruct a as [a1 a2].
-  destruct b as [b1 b2].
-  simpl in *; simpl.
-  rewrite e1.
-  rewrite e2.
-  auto.
-Defined.  
-
-
 (**************************************************************************)
 
 Definition fst0 {A B: U} : (A * B)%type -> A := fst.
@@ -243,21 +109,13 @@ Notation ptype := (ptype F G).
 
 Program Definition idmap_psubdef (a : ptype) : a ~> a := @Tagged _ idmap _ _.
 Next Obligation.
-  unfold recast2.
-  unfold eq_rect.
-  unfold brel_fcast.
-  unfold eq_ind_r.
-  unfold eq_ind.  
-  unfold eq_sym.
   destruct a.
   destruct x.
   simpl in *; simpl.  
   rewrite F1.
   rewrite F1.
-  unfold idmap.
   simpl.
-  destruct e.
-  auto.
+  destruct e; auto.
 Defined.
 
 Program Definition comp_psubdef (a b c : ptype)
@@ -283,7 +141,6 @@ Next Obligation.
 
   rewrite -eg.
   rewrite -ef.
-
   clear ef eg.
   
   dependent destruction ea.
@@ -292,14 +149,13 @@ Next Obligation.
   auto.  
 Defined.  
 
-Check comp_psubdef_obligation_1.
-
 #[export]
 HB.instance Definition _ := IsPreCat.Build ptype idmap_psubdef comp_psubdef.
 Arguments idmap_psubdef /.
 Arguments comp_psubdef /.
 
-Lemma pcomma_homeqP (a b : ptype) (f g : a ~> b) : projT1 f = projT1 g -> f = g.
+Lemma pcomma_homeqP (a b : ptype) (f g : a ~> b) :
+  projT1 f = projT1 g -> f = g.
 Proof.
 case: f g => [f fP] [g +]/= eqfg; case: _ / eqfg => gP.
 by congr existT; apply: Prop_irrelevance.
@@ -1678,3 +1534,138 @@ Fail HB.instance Definition fsplitter_IsMono (bot0 A B topK : cat)
       Functor.type _ _)            
   (@fsplitter_mono1 A B topK left2topK right2topK).          
 *)
+
+(************************************************************************)
+(*
+Program Definition brel_fcast {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) :
+  R (G a2) (G b2) = R (F a1) (F b1).
+rewrite e1.
+rewrite e2.
+reflexivity.
+Defined.
+
+Program Definition recast2 {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) : R (F a1) (F b1).
+rewrite -(brel_fcast e1 e2).
+exact x.
+Defined.
+
+Program Definition brel_fcast_h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop) :
+  P _ x = P _ (recast2 e1 e2 x).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+destruct e1.
+destruct e2.
+auto.
+Defined.
+
+Program Definition brel_fcast_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) :
+  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+destruct e1.
+destruct e2.
+destruct e3.
+auto.
+Defined.
+
+Program Definition brel_fcast_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) :
+  P _ _ _ x y z = P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+unfold recast2.
+unfold eq_rect.
+unfold brel_fcast.
+unfold eq_ind_r.
+unfold eq_ind.
+unfold eq_sym.
+destruct e1.
+destruct e2.
+destruct e3.
+auto.
+Defined.
+
+Program Definition recast2_h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: R (G a2) (G b2)) (P: forall T: Type, T -> Prop)
+  (p: P _ x) : P _ (recast2 e1 e2 x).
+rewrite -(brel_fcast_h e1 e2).
+exact p.
+Defined.
+
+Program Definition recast2_3h {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall T1 T2 T3: Type, T1 -> T2 -> T3 -> Prop) 
+  (p: P _ _ _ x y z) :
+    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+rewrite -(brel_fcast_3h e1 e2 e3).
+exact p.
+Defined.
+
+Program Definition recast2_3hh {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {a1 b1 c1: X} {a2 b2 c2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) (e3: F c1 = G c2) 
+  (x: R (G a2) (G b2)) (y: R (G b2) (G c2)) (z: R (G a2) (G c2))
+  (P: forall (d1 d2 d3: C), R d1 d2 -> R d2 d3 -> R d1 d3 -> Prop) 
+  (p: P _ _ _ x y z) :
+    P _ _ _ (recast2 e1 e2 x) (recast2 e2 e3 y) (recast2 e1 e3 z).
+rewrite -(brel_fcast_3hh e1 e2 e3).
+exact p.
+Defined.
+
+Program Definition recast_hom {X Y C : precat} {F: X -> C} {G: Y -> C}
+  {a1 b1: X} {a2 b2: Y} {R: C -> C -> Type}
+  (e1: F a1 = G a2) (e2: F b1 = G b2) 
+  (x: (G a2) ~> (G b2)) : (F a1) ~> (F b1).
+eapply recast2; eauto.
+Defined.
+
+Definition recast21 {X Y C : Type} {F: X -> C} {G: Y -> C}
+  {R: C -> C -> Type} {a b: (X * Y)}
+  (e: (F (fst a), F (fst b)) = (G (snd a), G (snd b))) 
+(* (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) *) 
+  (x: R (G (snd a)) (G (snd b))) : R (F (fst a)) (F (fst b)).
+  destruct a as [a1 a2].
+  destruct b as [b1 b2].
+  inversion e; subst.
+  rewrite H0.
+  rewrite H1.
+  auto.
+Defined.
+
+Definition mk_pair_eq {X Y C: Type} {F: X -> C} {G: Y -> C} {a b: (X * Y)}
+  (e1: F (fst a) = G (snd a)) (e2: F (fst b) = G (snd b)) :
+  (F (fst a), F (fst b)) = (G (snd a), G (snd b)).
+  destruct a as [a1 a2].
+  destruct b as [b1 b2].
+  simpl in *; simpl.
+  rewrite e1.
+  rewrite e2.
+  auto.
+Defined.  
+*)
+
