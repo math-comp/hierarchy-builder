@@ -1025,4 +1025,19 @@ Definition doublecat := icat cat.
 
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
 
+Definition D0_cat (X: doublecat) : cat.
+  destruct X.
+  exact sort.
+Defined.
+
+Definition D1_cat (X: doublecat) : cat.
+  destruct X.
+  destruct class.
+  destruct encatI_IsPreInternalQuiver_mixin.
+  exact C2.
+Defined.
+
+
+
+
 
