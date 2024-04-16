@@ -1374,7 +1374,7 @@ Lemma mediating_morph_functor (A B C T : cat)
 
     eapply Prop_irrelevance.
   }
-Qed.  
+Defined.  
 
 
 (*    
@@ -1523,13 +1523,117 @@ Lemma mediating_prepullback_morph (A B : cat)
   destruct X.
   destruct csp0 as [T l2t r2t] ; simpl in *.
   destruct sp1 as [C b2l b2r]; simpl in *.
-  exists (mediating_morph_functor is_square);
+  exists (mediating_morph_functor is_square).
+  {
+    unfold comp; simpl.
+
+    assert ((pcat_prj1 \o mediating_fun is_square)%FUN =1 b2l) as eqFG.
+    { (* unfold ssrfun.comp.
+      unfold pcat_prj1.
+      unfold eqfun. *)
+      intro; simpl; auto.
+    }
+
+    eapply functorPcast.
+    instantiate (1:=eqFG).
+    simpl; intros.
+  
+    unfold mediating_morph_functor.
+    unfold mediating_fun.
+    unfold pcat_prj1; simpl.
+    unfold fsplitter; simpl.
+    unfold tag.
+    simpl.
+    unfold ssrfun.comp; simpl.
+  
+    move: (eqFG a).
+    intro.
+    move: (eqFG b).
+    intro.
+    clear eqFG.
+    unfold ssrfun.comp in *.
+    unfold pcat_prj1 in *.
+    unfold tag in *.
+    simpl in *.
+
+    dependent destruction eqFG0.
+    dependent destruction eqFG1.
+    auto.
+  }
+  { unfold comp; simpl.
+
+    assert ((pcat_prj2 \o mediating_fun is_square)%FUN =1 b2r) as eqFG.
+    { (* unfold ssrfun.comp.
+      unfold pcat_prj1.
+      unfold eqfun. *)
+      intro; simpl; auto.
+    }
+
+    eapply functorPcast.
+    instantiate (1:=eqFG).
+    simpl; intros.
+  
+    unfold mediating_morph_functor.
+    unfold mediating_fun.
+    unfold pcat_prj2; simpl.
+    unfold fsplitter; simpl.
+    unfold tag.
+    simpl.
+    unfold ssrfun.comp; simpl.
+  
+    move: (eqFG a).
+    intro.
+    move: (eqFG b).
+    intro.
+    clear eqFG.
+    unfold ssrfun.comp in *.
+    unfold pcat_prj2 in *.
+    unfold tag in *.
+    simpl in *.
+
+    dependent destruction eqFG0.
+    dependent destruction eqFG1.
+    auto.
+  }
+Defined.  
+
+(*
+  unfold Fhom; simpl.
+  unfold Fhom; simpl.
+  unfold Fhom; simpl.
+  auto.
+
+  
+  simpl.
+  
+  assert (mediating_morph_functor is_square \;
+    bot2left (pbk A B {| top := T; left2top := l2t; right2top := r2t |}) =1
+  bot2left
+    {|
+      PrePullback.sort := {| bot := C; bot2left := b2l; bot2right := b2r |};
+      PrePullback.class :=
+        {|
+          PrePullback.cat_isPrePullback_mixin :=
+            {| isPrePullback.is_square := is_square |}
+        |}
+    |}) as eqFG.
+  
+  eapply functorPcast.
+  
   unfold comp; simpl.
+
+  unfold mediating_morph_functor.
+  unfold mediating_fun.
+  unfold ssrfun.comp.
+  unfold pcat_prj1.
+  unfold tag.
+  simpl.
+  
   
   admit.
   admit.
 Admitted.   
-  
+*)  
 
 (*  
   Heqc0 : c0 = {| top := top; left2top := left2top; right2top := right2top |}   
