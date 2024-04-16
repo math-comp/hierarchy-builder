@@ -1352,6 +1352,47 @@ Lemma mediating_morph_functor (A B C T : cat)
     move: (mediating_morph_prefunctor_prop sq (f \; g)).
     intro mPfg.
 
+    move: (commaE.comp_psubdef_obligation_1 _ _).
+    simpl; intro.
+
+(*    rename comp_psubdef_obligation_1 into E2.
+    simpl in *.
+
+    move: E2.
+    move: mPfg.
+    move: E1.
+
+(*    unfold fsplitter; simpl.
+    unfold Fhom; simpl.
+    unfold Fhom; simpl.
+    unfold comp; simpl.
+    unfold comp; simpl.
+*)
+    intros.
+*)    
+    eapply (eq_existT_curried E1); simpl.
+
+    eapply Prop_irrelevance.
+  }
+Qed.  
+
+
+(*    
+    dependent destruction E1.
+    
+
+    
+    Set Printing All.
+
+
+(commaE.comp_psubdef_obligation_1
+       ((fun X : C =>
+         existT (fun x : A * B => l2t x.1 = r2t x.2) 
+           (fsplitter b2l b2r X) (mediating_fun_prop sq X)) <$> f)
+       ((fun X : C =>
+         existT (fun x : A * B => l2t x.1 = r2t x.2) 
+           (fsplitter b2l b2r X) (mediating_fun_prop sq X)) <$> g))
+*)    
 (*    move: ((commaE.comp_psubdef_obligation_1
        (_ <$> f)
        (_ <$> g))).
@@ -1363,18 +1404,6 @@ comp_psubdef_obligation_1
          (ecast y (F (tag a).1 ~> y) (tagged c) (F <$> (tag f \; tag g).1)) =
        G <$> (tag f \; tag g).2
 *)
-
-   eassert ( existT
-    (fun f0 : fsplitter b2l b2r a ~> fsplitter b2l b2r c =>
-     ecast x (x ~> r2t (b2r c)) (mediating_fun_prop sq a)
-       (ecast y (l2t (b2l a) ~> y) (mediating_fun_prop sq c) (l2t <$> f0.1)) =
-     r2t <$> f0.2) (fsplitter b2l b2r <$> (f \; g)) mPfg =
-  existT
-    (fun x : fsplitter b2l b2r a ~> fsplitter b2l b2r c =>
-     ecast x0 (x0 ~> r2t (b2r c)) (mediating_fun_prop sq a)
-       (ecast y (l2t (b2l a) ~> y) (mediating_fun_prop sq c) (l2t <$> x.1)) =
-     r2t <$> x.2) (fsplitter b2l b2r <$> f \; fsplitter b2l b2r <$> g)
-    _).
 (*
    instantiate (1:=mPfg).
 
@@ -1425,10 +1454,7 @@ comp_psubdef_obligation_1
     rewrite E1.
     
     rewrite E1.
-*)    
-Admitted. 
-  
-   
+*)       
 (*  
  Check existT.
   
