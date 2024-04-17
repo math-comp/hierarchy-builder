@@ -1040,8 +1040,8 @@ Definition comp_hassoc_type (T: CUHPreDDCatD.type)
   in let K12 : (H1Target hk12 = H1Source hk3) := target_comp_dist_app K1 K2
   in let K23 : (H1Target hk1 = H1Source hk23) := source_comp_dist_app K1 K2
   in TT2 (HC2Comp_flat K23) = TT2 (HC2Comp_flat K12).                              
-(* fibered definition of strict double category
-   (associativity still missing)  *)
+(* mixed definition of strict double category.
+   H0 can be built from this. *)
 Unset Universe Checking.
 HB.mixin Record IsSStrictDoubleCat T of CUHPreDDCatD T := {
   lunit_flat_comp : forall (a1 a2 b1 b2: T)
@@ -1305,9 +1305,8 @@ Definition lunit_comp_type2 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
 
 (***********************************************************)
 
-(* alternative definition of strict double category,
-   adding a display-style form of distribution to UHDDCat
-   (associativity still missing)  *)
+(* fibered definition of strict double category, depending on H0,
+   adding a display-style form of distribution to UHDDCat *)
 Unset Universe Checking.
 HB.mixin Record IsSStrictDoubleCat T of StrictDoubleCat T := {
   lunit_flat_comp1 : forall (a1 a2 b1 b2: T)
