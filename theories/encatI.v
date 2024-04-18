@@ -1039,8 +1039,8 @@ Defined.
 
 Definition D1_cat (X: doublecat) : cat.
   destruct X.
-  destruct class.
-  destruct encatI_tmp_IsPreInternalQuiver_mixin.
+  destruct class as [K1 K2 K3 K4].
+  destruct K1. 
   exact C2.
 Defined.
 
@@ -1158,13 +1158,13 @@ Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
     
   have @SR : Functor.type D1 D0.
   { destruct T.    
-    destruct class.
+    destruct class as [K1 K2 K3 K4].
     subst D0 D1.
     simpl; simpl in *.
     
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+    destruct K1; simpl in *; simpl.
    
-    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
+    destruct K2 as [[[src0 tgt0]]];
       simpl in *; simpl.
     
     eapply src0.
@@ -1172,13 +1172,13 @@ Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
 
   have @TG : Functor.type D1 D0.
   { destruct T.    
-    destruct class.
+    destruct class as [K1 K2 K3 K4].
     subst D0 D1.
     simpl; simpl in *.
     
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+    destruct K1; simpl in *; simpl.
    
-    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
+    destruct K2 as [[[src0 tgt0]]];
       simpl in *; simpl.
     
     eapply tgt0.
@@ -1186,13 +1186,13 @@ Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
 
   have @UN : Functor.type D0 D1.
   { destruct T.    
-    destruct class.
+    destruct class as [K1 K2 K3 K4].
     subst D0 D1.
     simpl; simpl in *.
     
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+    destruct K1; simpl in *; simpl.
 
-    destruct encatI_tmp_IsInternalPreCat_mixin.
+    destruct K3.
 
     eapply iidI0.
   }  
