@@ -1,6 +1,6 @@
 Require Import ssreflect ssrfun.
 Unset Universe Checking.
-From HB Require Import structures cat encatP.
+From HB Require Import structures cat encatP encatD.
 Set Universe Checking.
 Require Import Coq.Program.Equality.
 
@@ -944,8 +944,7 @@ HB.structure Definition InternalPreCat (C : pbcat) :=
   { C0 of @IsInternalPreCat C C0 }.
 
 Program Definition iidC' {C : pbcat} {C0 : iprecat C} :
-  ((C0 : iHom C0) :> C) ~>_C
-    ((@C1 C C0 : iHom C0) :> C).
+  ((C0 : iHom C0) :> C) ~>_C ((@C1 C C0 : iHom C0) :> C).
 destruct C0; simpl in *.
 destruct class as [IM1 IM2 IM3]; simpl in *.
 destruct IM3; simpl in *.
@@ -992,6 +991,11 @@ HB.structure Definition InternalCat (C : pbcat) :=
 (* Check (icat Type <~> cat). *)
 
 
+(* Definition HHom (C0 : obj cat) (x y: C0) :=
+  let cmp := icompI (pbC0 (D1_cat X) (D1_cat X))
+  in x = src cmp /\ y = tgt cmp.
+*)
+
 (************************************************************************)
 
 (** DEFINITION OF DOUBLE CATEGORY (based on internal category) *)
@@ -1022,8 +1026,11 @@ pullbacks) *)
 Definition doublecat := icat cat.
 
 (* Check (doublecat <~> ???) *)
-
 (* HB.structure' Definition DoubleCat := @InternalCat cat.  *)
+(*
+Print Assumptions doublecat.
+About congr1_funext.
+*)
 
 Definition D0_cat (X: doublecat) : cat.
   destruct X.
@@ -1033,11 +1040,163 @@ Defined.
 Definition D1_cat (X: doublecat) : cat.
   destruct X.
   destruct class.
-  destruct encatI_IsPreInternalQuiver_mixin.
+  destruct encatI_tmp_IsPreInternalQuiver_mixin.
   exact C2.
 Defined.
 
+Lemma C0_IntQuiv (X: doublecat) : InternalQuiver.type cat.
+  Fail have xx: InternalQuiver.type cat := HB.pack X.
+  destruct X.
+  destruct class as [K1 K2 K3 K4].
+  econstructor; eauto.
+  instantiate (1:=sort).
+  econstructor; eauto.
+Defined.
 
+(*
+Lemma C0_IntQuiv (C: pbcat) (X: icat C) : InternalQuiver.type C.
+  destruct X.
+  destruct class as [K1 K2 K3 K4]. 
+  econstructor; eauto.
+  econstructor; eauto.
+Defined.
+*)
 
+Lemma C0_IntPCat (X: doublecat) : InternalPreCat.type cat.
+  Fail have xx: InternalPreCat.type cat := HB.pack X.
+  destruct X.
+  destruct class as [K1 K2 K3 K4].
+  econstructor; eauto.
+  instantiate (1:=sort).
+  econstructor; eauto.
+Defined.
+
+(*
+Lemma C0_ihom (X: doublecat) : @InternalHom.type cat.
+  Fail have xx: InternalQuiver.type cat := HB.pack X.
+  destruct X.
+  destruct class as [K1 K2 K3 K4].
+  econstructor; eauto.
+  instantiate (1:=sort).
+  econstructor; eauto.
+Defined.
+*)
+(*
+Lemma C1_IQ (X: doublecat) : InternalQuiver.type cat.
+  Fail have xx: InternalQuiver.type cat := HB.pack X.
+  destruct X.
+  destruct class as [K1 K2 K3 K4].
+  destruct K2 as [priv0].
+  econstructor; eauto.
+  instantiate (1:=C1).
+  destruct priv0 as [A].
+  destruct A.
+  econstructor; eauto.
+  econstructor; eauto.
+  econstructor; eauto.
+  
+Defined.
+*)
+
+Lemma HHom (X: doublecat) (x y: D0_cat X) : Type.
+
+  have @IP := C0_IntPCat X.
+
+  destruct X.
+  destruct class as [K1 K2 K3 K4]. 
+  destruct K2 as [priv0].
+  destruct priv0 as [A].
+  simpl; simpl in *.
+
+  set PB := @pbC0 cat sort.
+
+  have C2 : iHom sort.
+  { econstructor; eauto.
+    instantiate (1:=C1).
+    econstructor; eauto.
+  }  
+  specialize (PB C2 C2).
+
+  set cmp := @icompI cat IP. 
+  simpl in *.
+
+  have @cmp1 : _ ~>_cat C1 := cmp.
+
+  destruct A as [src0 tgt0].
+
+  (* exact (x = cmp1 \; src0 /\ y = cmp1 \; tgt0). *)
+Admitted.
+  
+(*  
+  cat sort ((@C1 cat IQ): iHom sort) C1.
+  
+  destruct PI.
+  inversion HeqPI; subst.
+ 
+  destruct encatI_tmp_IsInternalQuiver_mixin as [priv0].
+  destruct encatI_tmp_IsInternalPreCat_mixin.
+  destruct priv0.
+  destruct encatI_tmp_isInternalHom_mixin.
+  inversion encatI_tmp_IsInternalCat_mixin; subst.
+  
+  simpl in *; simpl.
+(*
+  destruct encatI_tmp_IsInternalQuiver_mixin; simpl in *; simpl.
+*)  
+
+  pose PB := pbC0 C2 C2.
+  set PB := @pbC0 cat sort (C2: iHom sort) (C2: iHom sort).
+  pose cmp := @icompI cat (D0_cat _).
+  
+  in x = src cmp /\ y = tgt cmp.
+*)
+
+Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
+  have @D0 : cat := D0_cat T.
+
+  have @D1 : cat := D1_cat T. 
+    
+  have @SR : Functor.type D1 D0.
+  { destruct T.    
+    destruct class.
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+   
+    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply src0.
+  }
+
+  have @TG : Functor.type D1 D0.
+  { destruct T.    
+    destruct class.
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+   
+    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply tgt0.
+  }
+
+  have @UN : Functor.type D0 D1.
+  { destruct T.    
+    destruct class.
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+
+    destruct encatI_tmp_IsInternalPreCat_mixin.
+
+    eapply iidI0.
+  }  
+
+Admitted.   
 
 

@@ -231,6 +231,7 @@ Set Universe Checking.
 (* source and target functors *)
 Unset Universe Checking.
 (* HB.about Functor. *)
+#[short(type="stfunctor")]
 HB.structure Definition STFunctor : Set :=
   {C of SFunctor C & TFunctor C}.
 Set Universe Checking.
@@ -309,6 +310,7 @@ Set Universe Checking.
 (* target, source and unit functors *)
 Unset Universe Checking.
 (* HB.about Functor. *)
+#[short(type="stufunctor")]
 HB.structure Definition STUFunctor : Set :=
   {C of STFunctor C & UFunctor C}.
 Set Universe Checking.
