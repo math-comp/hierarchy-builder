@@ -1097,36 +1097,6 @@ Lemma C1_IQ (X: doublecat) : InternalQuiver.type cat.
   
 Defined.
 *)
-
-Lemma HHom (X: doublecat) (x y: D0_cat X) : Type.
-
-  have @IP := C0_IntPCat X.
-
-  destruct X.
-  destruct class as [K1 K2 K3 K4]. 
-  destruct K2 as [priv0].
-  destruct priv0 as [A].
-  simpl; simpl in *.
-
-  set PB := @pbC0 cat sort.
-
-  have C2 : iHom sort.
-  { econstructor; eauto.
-    instantiate (1:=C1).
-    econstructor; eauto.
-  }  
-  specialize (PB C2 C2).
-
-  set cmp := @icompI cat IP. 
-  simpl in *.
-
-  have @cmp1 : _ ~>_cat C1 := cmp.
-
-  destruct A as [src0 tgt0].
-
-  (* exact (x = cmp1 \; src0 /\ y = cmp1 \; tgt0). *)
-Admitted.
-  
 (*  
   cat sort ((@C1 cat IQ): iHom sort) C1.
   
@@ -1150,6 +1120,116 @@ Admitted.
   
   in x = src cmp /\ y = tgt cmp.
 *)
+
+Lemma dcHsource (T: doublecat) :
+  Functor.type (D1_cat T) (D0_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.   
+ destruct K2 as [[[src0 tgt0]]];
+ simpl in *; simpl.   
+ eapply src0.
+Defined.
+
+Lemma dcHtarget (T: doublecat) :
+  Functor.type (D1_cat T) (D0_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.   
+ destruct K2 as [[[src0 tgt0]]];
+ simpl in *; simpl.   
+ eapply tgt0.
+Defined.
+
+Lemma dcHunit (T: doublecat) :
+  Functor.type (D0_cat T) (D1_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.
+ destruct K3.
+ eapply iidI0.  
+Defined.
+
+Definition dcHhom (T: doublecat) (x y: transpose (D0_cat T)) : Type :=
+  sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
+
+Unset Universe Checking.
+Fail HB.instance Definition dcH0QuiverD (T: doublecat) :
+  IsQuiver (transpose (D0_cat T)) :=
+  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
+Set Universe Checking.
+
+Unset Universe Checking.
+Definition dcH0QuiverD (T: doublecat) :
+  IsQuiver (transpose (D0_cat T)) :=
+  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
+Set Universe Checking.
+
+(*
+Unset Universe Checking.
+HB.instance Definition dcH0Quiver (T: doublecat) :
+  IsH0Quiver (D0_cat T) := IsH0Quiver.Build _ (dcH0QuiverD T).
+
+  @IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
+*)
+
+Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
+  set X := dcH0QuiverD T.
+  destruct T.
+  econstructor; eauto.
+  instantiate (1:=sort).
+  econstructor; eauto.
+  instantiate (1:=X).
+  econstructor; eauto.
+Defined.
+
+(*
+Definition dcHD0QuiverD (T: doublecat) : HD0Quiver (D0_cat T).
+  econstructor; eauto.
+  econstructor; eauto.
+  eapply (dcH0QuiverD T).
+Defined.
+
+HB.instance Definition dcHD0Quiver (T: doublecat) :
+  HD0Quiver (D0_cat T) := dcHD0QuiverD T. 
+*)
+
+Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
+  have @hh1 : (D0_cat T).
+  { destruct T.
+    simpl in *.
+    exact a.
+  }  
+  set hh := dcHunit T hh1.  
+  unfold hhom; simpl.  
+  unfold hom; simpl.
+  unfold dcHD0Quiver in *; simpl; simpl in *. 
+  destruct T; simpl; simpl in *.
+  unfold dcHhom.
+  exists hh.
+  subst hh.
+  subst hh1.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1; simpl; simpl in *.
+  destruct K2; simpl; simpl in *.
+  destruct K3; simpl; simpl in *.
+  destruct K4; simpl; simpl in *.
+  destruct priv0 as [D].
+  destruct D.
+  simpl; simpl in *.
+  (* assert (iidI0 \; src0 = idmap C0). *)
+  (* ??? missing axiom? iidI \; src = idmap ??? *)
+  destruct iidI0; simpl; simpl in *.
+  destruct class as [D].
+  destruct D.
+  unfold comp in *; simpl in *.
+Admitted.   
+
+
 
 Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
   have @D0 : cat := D0_cat T.
@@ -1200,3 +1280,31 @@ Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
 Admitted.   
 
 
+Lemma HHom' (X: doublecat) (x y: D0_cat X) : Type.
+
+  have @IP := C0_IntPCat X.
+
+  destruct X.
+  destruct class as [K1 K2 K3 K4]. 
+  destruct K2 as [priv0].
+  destruct priv0 as [A].
+  simpl; simpl in *.
+
+  set PB := @pbC0 cat sort.
+
+  have C2 : iHom sort.
+  { econstructor; eauto.
+    instantiate (1:=C1).
+    econstructor; eauto.
+  }  
+  specialize (PB C2 C2).
+
+  set cmp := @icompI cat IP. 
+  simpl in *.
+
+  have @cmp1 : _ ~>_cat C1 := cmp.
+
+  destruct A as [src0 tgt0].
+
+  (* exact (x = cmp1 \; src0 /\ y = cmp1 \; tgt0). *)
+Admitted.

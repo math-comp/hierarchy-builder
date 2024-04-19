@@ -80,7 +80,7 @@ Notation "'sigma' x .. y , p" :=
 (* transpose for horizontal morphism quiver.
    HB.tag needed to identify transpose as lifter *)
 HB.tag Definition transpose (C : quiver) : U := C.
-#[wrapper] HB.mixin Record _IsH0Quiver C of IsQuiver C := {
+#[wrapper] HB.mixin Record IsH0Quiver C of IsQuiver C := {
     is_hquiver : IsQuiver (transpose C)
 }.
 (* vertical and horizontal quivers, defining cells *)

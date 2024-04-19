@@ -1151,6 +1151,31 @@ Admitted.
   in x = src cmp /\ y = tgt cmp.
 *)
 
+Lemma doublecat2hsource (T: doublecat) :
+  Functor.type (D1_cat T) (D0_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.   
+ destruct K2 as [[[src0 tgt0]]];
+ simpl in *; simpl.   
+ eapply src0.
+Defined.
+
+Lemma doublecat2htarget (T: doublecat) :
+  Functor.type (D1_cat T) (D0_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.   
+ destruct K2 as [[[src0 tgt0]]];
+ simpl in *; simpl.   
+ eapply tgt0.
+Defined.
+
+
+
+
 Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
   have @D0 : cat := D0_cat T.
 
@@ -1200,3 +1225,43 @@ Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
 Admitted.   
 
 
+Definition HHom1 (T: doublecat) (x y: D0_cat T) : Type :=
+  sigma (h: D1_cat T),
+           
+
+
+Lemma HHom1 (T: doublecat) (x y: D0_cat T) : Type.
+  have @D0 : cat := D0_cat T.
+
+  have @D1 : cat := D1_cat T. 
+    
+  have @SR : Functor.type D1 D0.
+  { destruct T.    
+    destruct class.
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+   
+    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply src0.
+  }
+
+  have @TG : Functor.type D1 D0.
+  { destruct T.    
+    destruct class.
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
+   
+    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply tgt0.
+  }
+
+  
+  
