@@ -31,8 +31,8 @@ Notation "'sigma' x .. y , p" :=
    C0 and C1 are objects of C.
    C0 is the object of objects,
    C1 is the object of morphims (and the subject).
-   this will allow to define a generic _ *_C0 _ notation
-   by recognizing the structure of hom objects on the LHS and RHS 
+   this will allow us to define a generic _ *_C0 _ notation
+   by recognizing the structure of hom objects on the LHS and RHS. 
    Basically, w.r.t. double categories, C1 represents 'horizontal' 
    1-morpshisms and the D1 category, whereas C0 represents the objects 
    of the base D0 category. *)
@@ -97,9 +97,8 @@ Definition iprodr {C: prepbcat} {C0 : C} (X Y : iHom C0) :
 
 (* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
 is also an instance of (iHom C0). X and Y represent composable
-morphisms, as by pullback properties, the diagram (1) commutes.
-source and target are obtained by composing with product projections
-(2) *)
+morphisms, as by pullback properties, the diagram (1) commutes. source
+and target are obtained by composing with product projections (2) *)
 Definition iprod_iHom {C: prepbcat} {C0: C} (X Y: @iHom C C0) :
   @isInternalHom C C0 (X *_C0 Y) :=
   @isInternalHom.Build C C0 (X *_C0 Y)
@@ -132,10 +131,9 @@ Definition trivial_iprod_iHom' {C: prepbcat} {C0: C} : @iHom C C0 :=
   
 (**)
 
-(* we need internal hom morphisms: 
-the ones that preserve sources and targets.  
-basically, we recast morphisms in (obj C) into some in (@iHom C C0),
-i.e. into morphism between copies of C1 *)
+(* we need internal hom morphisms: the ones that preserve sources and
+targets.  basically, we recast morphisms in (obj C) into some in
+(@iHom C C0), i.e. into morphism between copies of C1. *)
 HB.mixin Record IsInternalHomHom {C: prepbcat} (C0 : C)
      (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
   hom_src : f \; (@src C C0 C1') = (@src C C0 C1);
@@ -539,7 +537,8 @@ Lemma pbsquare_is_pullback {C: prepbcat} {C0} (X Y: iHom C0) :
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
 
-
+(* we define pairing of preserving morphisms as a (non-preserving)
+morphism *)
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
@@ -685,7 +684,8 @@ Qed.
 Notation "<( f , g )>" := (ipairC f g).
 
 
-(* nested product *)
+(* nested product: there exists a morphism (here, a non-preserving
+one) that corresponds to the associativity of product *)
 Program Definition iprodCAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
     ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C).
@@ -931,7 +931,8 @@ Qed.
    that must be src and tgt preserving, i.e. iHom morphisms: identity
    : C0 -> C1 (corresponding to horizontal 1-morphism identity in
    double cat) and composition : C1 * C1 -> C1 (corresponding to
-   horizontal composition) *)
+   horizontal composition). This allows us to incorporate in the
+   definition distributive axioms about source and target. *)
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
   of @InternalQuiver C C0 := {
     iidI : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
@@ -1153,9 +1154,154 @@ Lemma dcHunit (T: doublecat) :
  eapply iidI0.  
 Defined.
 
+Lemma dcInternalHomT (T: doublecat) : InternalHom.type (D0_cat T).
+  unfold D0_cat; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4].
+  destruct K2.
+  econstructor; eauto.
+Defined.
+  
+Lemma dcInternalHom (T: doublecat) : @InternalHom cat (D0_cat T) (D1_cat T). 
+  destruct T.
+  unfold D0_cat, D1_cat; simpl.
+  destruct class as [K1 K2 K3 K4].
+  destruct K1.
+  simpl; simpl in *.
+  destruct K2.
+  auto.
+Defined.  
+
+Lemma dcInternalHom_eq (T: doublecat) :
+  InternalHom.sort (dcInternalHomT T) = D1_cat T.
+  unfold dcInternalHomT; simpl.
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1.
+  destruct K2; simpl.
+  auto.
+Qed.
+  
 Definition dcHhom (T: doublecat) (x y: transpose (D0_cat T)) : Type :=
   sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
 
+Lemma dcHsource_eq (T: doublecat) :
+  (@src _ _ (dcInternalHomT T)) ~= (dcHsource T).    
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1.
+  auto.
+Qed.  
+
+Lemma dcHtarget_eq (T: doublecat) :
+  (@tgt _ _ (dcInternalHomT T)) ~= (dcHtarget T).    
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1.
+  auto.
+Qed.  
+
+Lemma dcHhom_impl1 (T: doublecat) :
+  (sigma x y, @dcHhom T x y) -> (D1_cat T).
+  unfold D1_cat, dcHhom.
+  destruct T.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+  intro.
+  destruct X as [x [y [h X]]].
+  exact h.
+Defined.
+
+Lemma dcHhom_impl2 (T: doublecat) :
+  (D1_cat T) -> (sigma x y, @dcHhom T x y).
+  unfold D1_cat, dcHhom.
+  destruct T.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [C2].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+  
+  intro.
+  exists (src0 X).
+  exists (tgt0 X).
+  exists X.
+  auto.
+Defined.  
+  
+Lemma dcHhom_iso1 (T: doublecat) (x: D1_cat T) :
+   dcHhom_impl1 (dcHhom_impl2 x) = x.
+  unfold dcHhom_impl1, dcHhom_impl2; simpl.
+  unfold D1_cat in *; simpl; simpl in *.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  auto. 
+Qed.   
+   
+Lemma dcHhom_iso2 (T: doublecat) (x: sigma x y, @dcHhom T x y) :
+   dcHhom_impl2 (dcHhom_impl1 x) = x.
+  unfold dcHhom_impl1, dcHhom_impl2; simpl.
+  destruct x as [x [y [h [X1 X2]]]].
+  unfold D1_cat in *; simpl; simpl in *.
+  unfold D0_cat in *; simpl; simpl in *.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  inversion X1; subst.
+  auto.
+Qed.
+(*  
+  eapply (eq_existT_curried eq_refl).
+  eapply (eq_existT_curried eq_refl).
+  simpl.
+  auto.
+Qed.   
+*)   
+(*
+Lemma dcHhom_eq (T: doublecat) :
+  (sigma x y, @dcHhom T x y) = (D1_cat T).
+  unfold D1_cat, dcHhom.
+  destruct T.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+*)  
+
+(* why?? *)
 Unset Universe Checking.
 Fail HB.instance Definition dcH0QuiverD (T: doublecat) :
   IsQuiver (transpose (D0_cat T)) :=
@@ -1198,6 +1344,41 @@ HB.instance Definition dcHD0Quiver (T: doublecat) :
 *)
 
 Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
+  set X := (@dcHhom_impl2 T).
+  unfold D1_cat in *.
+  unfold transpose in *.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+  unfold hom in iidI0; simpl in *.
+  unfold hom in iidI0; simpl in *.
+  destruct iidI0 as [m class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+  unfold hom in m; simpl in *.
+  
+  set mm := m a.
+  unfold hhom.
+  unfold hom; simpl.
+  specialize (X mm).
+
+
+  
+  destruct X as [x [y d]].
+  unfold dcHhom in *; simpl in *.
+  destruct d as [h [A1 A2]].
+  
+  
+  unfold dcHhom; simpl.
+  eapply X.
+  
+  
   have @hh1 : (D0_cat T).
   { destruct T.
     simpl in *.
