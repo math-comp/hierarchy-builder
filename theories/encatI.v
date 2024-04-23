@@ -1154,6 +1154,8 @@ Lemma dcHunit (T: doublecat) :
  eapply iidI0.  
 Defined.
 
+(********************************************************************)
+
 Lemma dcInternalHomT (T: doublecat) : InternalHom.type (D0_cat T).
   unfold D0_cat; simpl.
   destruct T.
@@ -1278,6 +1280,25 @@ Lemma dcHhom_iso2 (T: doublecat) (x: sigma x y, @dcHhom T x y) :
   inversion X1; subst.
   auto.
 Qed.
+
+Require Import FunctionalExtensionality.
+
+(*
+Lemma ddd (T: doublecat) :
+  (sigma x y, @dcHhom T x y) = InternalHom.type (D0_cat T).
+  simpl.
+  destruct T; simpl.
+  unfold dcHhom; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.  
+  destruct K1 as [C2]; simpl.
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+*)
+ 
 (*  
   eapply (eq_existT_curried eq_refl).
   eapply (eq_existT_curried eq_refl).
@@ -1332,6 +1353,49 @@ Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
   econstructor; eauto.
 Defined.
 
+Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
+  unfold D0_cat, D1_cat in *; simpl in *; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  econstructor; eauto.
+  instantiate (1:= C2).
+  econstructor; eauto.
+  econstructor.
+  exact src0.
+  exact tgt0.
+Defined.  
+
+Definition iHom0_lift (T: doublecat) (x: D0_cat T) : iHom (D0_cat T).
+  unfold D0_cat, D1_cat in *; simpl in *; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  econstructor; eauto.
+  instantiate (1:= sort).
+  econstructor; eauto.
+  econstructor.
+  exact idmap.
+  exact idmap.
+Defined.  
+
+(*
+Definition ihom_prefunctor : IsPreFunctor cat U (@iHom cat).   
+
+Definition iHom_m01_lift (T: doublecat) (m: D0_cat T ~> D1_cat T) :
+  iHom (D0_cat T) ~> iHom (D0_cat T).
+*)
+
 (*
 Definition dcHD0QuiverD (T: doublecat) : HD0Quiver (D0_cat T).
   econstructor; eauto.
@@ -1344,10 +1408,29 @@ HB.instance Definition dcHD0Quiver (T: doublecat) :
 *)
 
 Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
-  set X := (@dcHhom_impl2 T).
-  unfold D1_cat in *.
-  unfold transpose in *.
-  destruct T.
+  set F1 := (@dcHhom_impl1 T).
+  set F2 := (@dcHhom_impl2 T).
+
+  have @a1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact a. }
+  
+  have @a2 : iHom (D0_cat T).
+  { eapply (iHom0_lift a1). }
+
+  pose src1 := @src cat (D0_cat T) a2.
+
+(*  pose mm := @iidI cat a2. *)
+  
+  simpl in *.
+
+(*  have src1 : C2 ~>_(iHom sort) sort. *)
+
+  unfold hhom.
+  unfold hom; simpl.
+      
+(*  unfold D1_cat in *.
+  unfold transpose in *. *)
+  destruct T; simpl in *.
   destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
   destruct K1 as [C2]; simpl in *; simpl.
   destruct K2 as [H1]; simpl in *; simpl.
@@ -1355,19 +1438,89 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   destruct H1; simpl in *; simpl.
   destruct K3; simpl in *; simpl.
   destruct K4; simpl in *; simpl.
+  
+  unfold hom in iidI0; simpl in *.
+  unfold hom in iidI0; simpl in *.
+  
+(*  
+  unfold iHomHom in iidI0.
+  
+  set ggg := iidI0 a2. 
 
-  unfold hom in iidI0; simpl in *.
-  unfold hom in iidI0; simpl in *.
+  
+  (* have mf : @iHom cat sort. *)
+  
+  have src1 : C2 ~>_(iHom sort) sort.
+*)
+  
   destruct iidI0 as [m class]; simpl in *.
   destruct class as [Q]; simpl in *.
   destruct Q as [p1 p2]; simpl in *.
+  
+(*  pose src1 := @src cat (D0_cat T) a2. *)
+  
+(*
+  assert (m \; (src :> (C1 ~>_sort _)) =
+            ((@src cat sort sort) :> (sort ~> sort))).
+
+
+  
+  assert (m \; ((@src cat sort C1) :> (C1 ~> sort)) =
+            ((@src cat sort sort) :> (sort ~> sort))).
+*)  
+
+  unfold dcHhom; simpl.
+  set mm := m a.
+
+  assert (m \; src0 = src1) as E1.
+  { auto. }
+
+  assert (src1 = idmap) as E2.
+  { auto. }
+
+  assert ((m \; src0) a = src1 a) as E3.
+
+
+(** OK **)
+
+
+  
+
+  have mm1 : @iHom cat sort ~> @iHom cat sort.
+  
+  unfold comp in p1, p2; simpl in *.
+  unfold ssrfun.comp in p1, p2; simpl in *.
+
+  have ggg : @iHom cat C1.
+  admit.
+  
+  have pp := ((fun x : sort => @src cat C1 ggg)). ((m x) : iHom C1)) a).
+  
+  assert ((m \; @src cat C1) =1 @src cat sort).
+  assert (@src _ (m a) 1= @src _ a) as A1.
+  
   unfold hom in m; simpl in *.
   
-  set mm := m a.
   unfold hhom.
   unfold hom; simpl.
-  specialize (X mm).
+  set mm := m a.
+  have @mm1 := (F2 mm).
+  unfold dcHhom in *; simpl in *.
 
+  inversion mm1; subst.
+  inversion X; subst.
+  inversion X0; subst.
+  
+  
+  unfold comp in p1, p2; simpl in *.
+  
+
+  have @mm2 := (F1 mm1).
+
+  assert (mm = mm2).
+  { subst mm mm2; auto. }
+
+  
 
   
   destruct X as [x [y d]].
