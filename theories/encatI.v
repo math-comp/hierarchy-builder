@@ -1418,6 +1418,7 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   { eapply (iHom0_lift a1). }
 
   pose src1 := @src cat (D0_cat T) a2.
+  pose tgt1 := @tgt cat (D0_cat T) a2.
 
 (*  pose mm := @iidI cat a2. *)
   
@@ -1472,20 +1473,35 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   unfold dcHhom; simpl.
   set mm := m a.
 
-  assert (m \; src0 = src1) as E1.
+  assert (m \; src0 = src1) as Es1.
   { auto. }
 
-  assert (src1 = idmap) as E2.
+  assert (src1 = idmap) as Es2.
   { auto. }
 
-  assert ((m \; src0) a = src1 a) as E3.
-
-
-(** OK **)
-
-
+  assert ((m \; src0) a = src1 a) as Es3.
+  { rewrite Es1; auto. }
   
+  assert (src0 (m a) = a) as Es4.
+  { eauto. }
 
+  assert (m \; tgt0 = tgt1) as Et1.
+  { auto. }
+
+  assert (tgt1 = idmap) as Et2.
+  { auto. }
+
+  assert ((m \; tgt0) a = tgt1 a) as Et3.
+  { rewrite Et1; auto. }
+  
+  assert (tgt0 (m a) = a) as Et4.
+  { eauto. }
+
+  exists (m a); eauto.
+Defined.  
+  
+  
+(*
   have mm1 : @iHom cat sort ~> @iHom cat sort.
   
   unfold comp in p1, p2; simpl in *.
@@ -1562,7 +1578,7 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   destruct D.
   unfold comp in *; simpl in *.
 Admitted.   
-
+*)
 
 
 Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
