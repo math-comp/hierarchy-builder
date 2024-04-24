@@ -269,6 +269,7 @@ Definition hcomp (T: h0precat) (a b c: T)
   (h1: @hhom T a b) (h2: @hhom T b c) : @hhom T a c :=
    h1 \; h2.
 
+
 (** Horizontal Unit functor operator *)
 
 (* H0Cat unit, 
@@ -286,7 +287,6 @@ Unset Universe Checking.
 #[short(type="h0preddcat")]
 HB.structure Definition H0PreDDCat : Set := { C of DDCat C & H0PreCat C }.
 Set Universe Checking.
-
 
 
 (** Unit functor *)
@@ -319,7 +319,6 @@ Set Universe Checking.
     (maps vertical morphisms to horizontally unitary 2-cells) *)
 Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
   (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
-
 
 
 (*****************************************************************)
