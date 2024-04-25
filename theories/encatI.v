@@ -1641,8 +1641,57 @@ Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
 Defined.  
 
 
+
+
+Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
+                   (h1: a +> b) (h2: b +> c) 
+
+  (x y: D1_cat T) :
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_lift x))
+               (@src cat (D0_cat T) (iHom_lift y)).
+  unfold commaE.ptype.
+  
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  simpl in *; simpl.
+
+  exists (x,y).
+  simpl; simpl in *.
+  
+  
+  econstructor.
+
+  Unshelve.
+
+  2: { exact (hh1, hh2). }
+
+    simpl; simpl in *.    
+    subst tgt_h1.
+    subst src_h2.
+    simpl.
+    subst hhh1 hhh2.
+    subst hh1 hh2.
+    simpl in *; simpl. 
+  
+    destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+    destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+    rewrite q1.
+    rewrite p2.
+    auto.
+  }
+
+*)
+
+
 Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   (h1: a +> b) (h2: b +> c) : a +> c.
+(*
   have @a1: D0_cat T.
   { unfold D0_cat. destruct T; simpl in *. exact a. }
   have @a2 : iHom (D0_cat T).
@@ -1655,12 +1704,9 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   { unfold D0_cat. destruct T; simpl in *. exact c. }
   have @c2 : iHom (D0_cat T).
   { eapply (iHom0_lift c1). }
-
+*)
   have @hh1: D1_cat T.
-  { unfold hhom in *.
-    unfold hom in *; simpl.
-    set impl1 := (@dcHhom_impl1 T).
-    eapply impl1.
+  { eapply (@dcHhom_impl1 T). 
     destruct T; simpl in *.
     exists a.
     exists b.
@@ -1692,25 +1738,6 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   pose src_h2 := @src cat (D0_cat T) hhh2.
   pose tgt_h2 := @tgt cat (D0_cat T) hhh2.
 
-  pose pb12 := iprod_pb hhh1 hhh2.
-  
-  have @mm : iHom (D0_cat T).
-  { eapply (iHom_prod_lift hh1 hh2). }
-
-  pose src_mm := @src cat (D0_cat T) mm.
-  pose tgt_mm := @tgt cat (D0_cat T) mm.
-
-  unfold iprod_pb in pb12; simpl in *.
-  unfold pbk in pb12; simpl in *.
-
-  have @XX : (@span cat (hhh1 :> cat) (hhh2 :> cat)).
-  { eapply pb12. }
-  
-  destruct XX as [b0 b2l b2r] eqn:Epb.
-
-  unfold iprod_pb in pb12; simpl in *.
-  unfold pbk in pb12; simpl in *.
-
   have @xxx : (commaE.ptype tgt_h1 src_h2).
   { unfold commaE.ptype.
         
@@ -1734,7 +1761,7 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     subst tgt_h1.
     subst src_h2.
     simpl.
-    subst hhh1 hhh2.
+  (*  subst hhh1 hhh2. *)
     subst hh1 hh2.
     simpl in *; simpl. 
   
@@ -1744,6 +1771,28 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     rewrite p2.
     auto.
   }
+
+
+  
+  pose pb12 := iprod_pb hhh1 hhh2.
+  
+  have @mm : iHom (D0_cat T).
+  { eapply (iHom_prod_lift hh1 hh2). }
+
+  pose src_mm := @src cat (D0_cat T) mm.
+  pose tgt_mm := @tgt cat (D0_cat T) mm.
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
+  have @XX : (@span cat (hhh1 :> cat) (hhh2 :> cat)).
+  { eapply pb12. }
+  
+  destruct XX as [b0 b2l b2r] eqn:Epb.
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
 Admitted. 
   
 (***)

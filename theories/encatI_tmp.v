@@ -31,8 +31,8 @@ Notation "'sigma' x .. y , p" :=
    C0 and C1 are objects of C.
    C0 is the object of objects,
    C1 is the object of morphims (and the subject).
-   this will allow to define a generic _ *_C0 _ notation
-   by recognizing the structure of hom objects on the LHS and RHS 
+   this will allow us to define a generic _ *_C0 _ notation
+   by recognizing the structure of hom objects on the LHS and RHS. 
    Basically, w.r.t. double categories, C1 represents 'horizontal' 
    1-morpshisms and the D1 category, whereas C0 represents the objects 
    of the base D0 category. *)
@@ -97,9 +97,8 @@ Definition iprodr {C: prepbcat} {C0 : C} (X Y : iHom C0) :
 
 (* Given (iHom C0) instances X and Y, we want to say that (X *_C0 Y)
 is also an instance of (iHom C0). X and Y represent composable
-morphisms, as by pullback properties, the diagram (1) commutes.
-source and target are obtained by composing with product projections
-(2) *)
+morphisms, as by pullback properties, the diagram (1) commutes. source
+and target are obtained by composing with product projections (2) *)
 Definition iprod_iHom {C: prepbcat} {C0: C} (X Y: @iHom C C0) :
   @isInternalHom C C0 (X *_C0 Y) :=
   @isInternalHom.Build C C0 (X *_C0 Y)
@@ -132,10 +131,9 @@ Definition trivial_iprod_iHom' {C: prepbcat} {C0: C} : @iHom C C0 :=
   
 (**)
 
-(* we need internal hom morphisms: 
-the ones that preserve sources and targets.  
-basically, we recast morphisms in (obj C) into some in (@iHom C C0),
-i.e. into morphism between copies of C1 *)
+(* we need internal hom morphisms: the ones that preserve sources and
+targets.  basically, we recast morphisms in (obj C) into some in
+(@iHom C C0), i.e. into morphism between copies of C1. *)
 HB.mixin Record IsInternalHomHom {C: prepbcat} (C0 : C)
      (C1 C1' : @iHom C C0) (f : (C1 :> C) ~> (C1' :> C)) := {
   hom_src : f \; (@src C C0 C1') = (@src C C0 C1);
@@ -539,7 +537,8 @@ Lemma pbsquare_is_pullback {C: prepbcat} {C0} (X Y: iHom C0) :
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
 
-
+(* we define pairing of preserving morphisms as a (non-preserving)
+morphism *)
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
@@ -685,7 +684,8 @@ Qed.
 Notation "<( f , g )>" := (ipairC f g).
 
 
-(* nested product *)
+(* nested product: there exists a morphism (here, a non-preserving
+one) that corresponds to the associativity of product *)
 Program Definition iprodCAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
     ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C).
@@ -931,7 +931,8 @@ Qed.
    that must be src and tgt preserving, i.e. iHom morphisms: identity
    : C0 -> C1 (corresponding to horizontal 1-morphism identity in
    double cat) and composition : C1 * C1 -> C1 (corresponding to
-   horizontal composition) *)
+   horizontal composition). This allows us to incorporate in the
+   definition distributive axioms about source and target. *)
 HB.mixin Record IsInternalPreCat (C : pbcat) (C0 : obj C)
   of @InternalQuiver C C0 := {
     iidI : (C0 : iHom C0) ~>_(iHom C0) (@C1 C C0 : iHom C0);
@@ -1039,8 +1040,8 @@ Defined.
 
 Definition D1_cat (X: doublecat) : cat.
   destruct X.
-  destruct class.
-  destruct encatI_tmp_IsPreInternalQuiver_mixin.
+  destruct class as [K1 K2 K3 K4].
+  destruct K1. 
   exact C2.
 Defined.
 
@@ -1097,8 +1098,1250 @@ Lemma C1_IQ (X: doublecat) : InternalQuiver.type cat.
   
 Defined.
 *)
+(*  
+  cat sort ((@C1 cat IQ): iHom sort) C1.
+  
+  destruct PI.
+  inversion HeqPI; subst.
+ 
+  destruct encatI_tmp_IsInternalQuiver_mixin as [priv0].
+  destruct encatI_tmp_IsInternalPreCat_mixin.
+  destruct priv0.
+  destruct encatI_tmp_isInternalHom_mixin.
+  inversion encatI_tmp_IsInternalCat_mixin; subst.
+  
+  simpl in *; simpl.
+(*
+  destruct encatI_tmp_IsInternalQuiver_mixin; simpl in *; simpl.
+*)  
 
-Lemma HHom (X: doublecat) (x y: D0_cat X) : Type.
+  pose PB := pbC0 C2 C2.
+  set PB := @pbC0 cat sort (C2: iHom sort) (C2: iHom sort).
+  pose cmp := @icompI cat (D0_cat _).
+  
+  in x = src cmp /\ y = tgt cmp.
+*)
+
+Lemma dcHsource (T: doublecat) :
+  Functor.type (D1_cat T) (D0_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.   
+ destruct K2 as [[[src0 tgt0]]];
+ simpl in *; simpl.   
+ eapply src0.
+Defined.
+
+Lemma dcHtarget (T: doublecat) :
+  Functor.type (D1_cat T) (D0_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.   
+ destruct K2 as [[[src0 tgt0]]];
+ simpl in *; simpl.   
+ eapply tgt0.
+Defined.
+
+Lemma dcHunit (T: doublecat) :
+  Functor.type (D0_cat T) (D1_cat T).
+ destruct T.    
+ destruct class as [K1 K2 K3 K4].
+ simpl; simpl in *.
+ destruct K1; simpl in *; simpl.
+ destruct K3.
+ eapply iidI0.  
+Defined.
+
+(********************************************************************)
+
+Lemma dcInternalHomT (T: doublecat) : InternalHom.type (D0_cat T).
+  unfold D0_cat; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4].
+  destruct K2.
+  econstructor; eauto.
+Defined.
+  
+Lemma dcInternalHom (T: doublecat) : @InternalHom cat (D0_cat T) (D1_cat T). 
+  destruct T.
+  unfold D0_cat, D1_cat; simpl.
+  destruct class as [K1 K2 K3 K4].
+  destruct K1.
+  simpl; simpl in *.
+  destruct K2.
+  auto.
+Defined.  
+
+Lemma dcInternalHom_eq (T: doublecat) :
+  InternalHom.sort (dcInternalHomT T) = D1_cat T.
+  unfold dcInternalHomT; simpl.
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1.
+  destruct K2; simpl.
+  auto.
+Qed.
+  
+Definition dcHhom (T: doublecat) (x y: transpose (D0_cat T)) : Type :=
+  sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
+
+Lemma dcHsource_eq (T: doublecat) :
+  (@src _ _ (dcInternalHomT T)) ~= (dcHsource T).    
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1.
+  auto.
+Qed.  
+
+Lemma dcHtarget_eq (T: doublecat) :
+  (@tgt _ _ (dcInternalHomT T)) ~= (dcHtarget T).    
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1.
+  auto.
+Qed.  
+
+Lemma dcHhom_impl1 (T: doublecat) :
+  (sigma x y, @dcHhom T x y) -> (D1_cat T).
+  unfold D1_cat, dcHhom.
+  destruct T.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+  intro.
+  destruct X as [x [y [h X]]].
+  exact h.
+Defined.
+
+Lemma dcHhom_impl2 (T: doublecat) :
+  (D1_cat T) -> (sigma x y, @dcHhom T x y).
+  unfold D1_cat, dcHhom.
+  destruct T.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [C2].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+  
+  intro.
+  exists (src0 X).
+  exists (tgt0 X).
+  exists X.
+  auto.
+Defined.  
+  
+Lemma dcHhom_iso1 (T: doublecat) (x: D1_cat T) :
+   dcHhom_impl1 (dcHhom_impl2 x) = x.
+  unfold dcHhom_impl1, dcHhom_impl2; simpl.
+  unfold D1_cat in *; simpl; simpl in *.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  auto. 
+Qed.   
+   
+Lemma dcHhom_iso2 (T: doublecat) (x: sigma x y, @dcHhom T x y) :
+   dcHhom_impl2 (dcHhom_impl1 x) = x.
+  unfold dcHhom_impl1, dcHhom_impl2; simpl.
+  destruct x as [x [y [h [X1 X2]]]].
+  unfold D1_cat in *; simpl; simpl in *.
+  unfold D0_cat in *; simpl; simpl in *.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  inversion X1; subst.
+  auto.
+Qed.
+
+Require Import FunctionalExtensionality.
+
+(*
+Lemma ddd (T: doublecat) :
+  (sigma x y, @dcHhom T x y) = InternalHom.type (D0_cat T).
+  simpl.
+  destruct T; simpl.
+  unfold dcHhom; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.  
+  destruct K1 as [C2]; simpl.
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+*)
+ 
+(*  
+  eapply (eq_existT_curried eq_refl).
+  eapply (eq_existT_curried eq_refl).
+  simpl.
+  auto.
+Qed.   
+*)   
+(*
+Lemma dcHhom_eq (T: doublecat) :
+  (sigma x y, @dcHhom T x y) = (D1_cat T).
+  unfold D1_cat, dcHhom.
+  destruct T.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1 as [H0].
+  destruct K2 as [H1] ; simpl.
+  destruct H1 as [H1]; simpl.
+  destruct H1; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *.
+*)  
+
+(* why?? *)
+Unset Universe Checking.
+Fail HB.instance Definition dcH0QuiverD (T: doublecat) :
+  IsQuiver (transpose (D0_cat T)) :=
+  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
+Set Universe Checking.
+
+Unset Universe Checking.
+Definition dcH0QuiverD (T: doublecat) :
+  IsQuiver (transpose (D0_cat T)) :=
+  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
+Set Universe Checking.
+
+(*
+Unset Universe Checking.
+HB.instance Definition dcH0Quiver (T: doublecat) :
+  IsH0Quiver (D0_cat T) := IsH0Quiver.Build _ (dcH0QuiverD T).
+
+  @IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
+*)
+
+Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
+  set X := dcH0QuiverD T.
+  destruct T.
+  econstructor; eauto.
+  instantiate (1:=sort).
+  econstructor; eauto.
+  instantiate (1:=X).
+  econstructor; eauto.
+Defined.
+
+Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
+  unfold D0_cat, D1_cat in *; simpl in *; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  econstructor; eauto.
+  instantiate (1:= C2).
+  econstructor; eauto.
+  econstructor.
+  exact src0.
+  exact tgt0.
+Defined.  
+
+Definition iHom0_lift (T: doublecat) (x: D0_cat T) : iHom (D0_cat T).
+  unfold D0_cat, D1_cat in *; simpl in *; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  econstructor; eauto.
+  instantiate (1:= sort).
+  econstructor; eauto.
+  econstructor.
+  exact idmap.
+  exact idmap.
+Defined.  
+
+(*
+Definition ihom_prefunctor : IsPreFunctor cat U (@iHom cat).   
+
+Definition iHom_m01_lift (T: doublecat) (m: D0_cat T ~> D1_cat T) :
+  iHom (D0_cat T) ~> iHom (D0_cat T).
+*)
+
+(*
+Definition dcHD0QuiverD (T: doublecat) : HD0Quiver (D0_cat T).
+  econstructor; eauto.
+  econstructor; eauto.
+  eapply (dcH0QuiverD T).
+Defined.
+
+HB.instance Definition dcHD0Quiver (T: doublecat) :
+  HD0Quiver (D0_cat T) := dcHD0QuiverD T. 
+*)
+
+Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
+  have @a1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact a. }
+  
+  have @a2 : iHom (D0_cat T).
+  { eapply (iHom0_lift a1). }
+
+  pose src1 := @src cat (D0_cat T) a2.
+  pose tgt1 := @tgt cat (D0_cat T) a2.
+  simpl in *.
+
+  unfold hhom.
+  unfold hom; simpl.
+      
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  
+  unfold hom in iidI0; simpl in *.
+  unfold hom in iidI0; simpl in *.
+    
+  destruct iidI0 as [m class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+  
+  unfold dcHhom; simpl.
+  set mm := m a.
+
+  assert (m \; src0 = src1) as Es1.
+  { auto. }
+
+(*  assert (src1 = idmap) as Es2.
+  { auto. } *)
+  assert ((m \; src0) a = src1 a) as Es3.
+  { rewrite Es1; auto. } 
+  
+  assert (src0 (m a) = a) as Es4.
+  { eauto. }
+
+  assert (m \; tgt0 = tgt1) as Et1.
+  { auto. }
+(*  assert (tgt1 = idmap) as Et2.
+  { auto. } *)
+
+  assert ((m \; tgt0) a = tgt1 a) as Et3.
+  { rewrite Et1; auto. }
+  
+  assert (tgt0 (m a) = a) as Et4.
+  { eauto. }
+
+  exists (m a); eauto.
+Defined.  
+
+
+Definition prod_span_mk (T: doublecat) (x y: D1_cat T) :
+  span ((@iHom_lift T x) :> cat) ((@iHom_lift T y) :> cat) :=
+  iprod_pb (@iHom_lift T x) (@iHom_lift T y).
+
+Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
+  iHom (D0_cat T).
+  set x1 := iHom_lift x.
+  set y1 := iHom_lift y.
+  set pp := iprod_pb x1 y1.
+  set il := iprodl x1 y1.
+  set ir := iprodr x1 y1.
+  econstructor.
+  instantiate (1 := x1 *_(D0_cat T) y1).
+  econstructor; eauto.
+  econstructor; eauto.
+  { destruct x1.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (il \; src0).
+  }  
+  { destruct y1.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (ir \; tgt0).
+  }  
+Defined.  
+
+Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T) 
+   (h1: a +> b) : D1_cat T.
+  eapply (@dcHhom_impl1 T). 
+  destruct T; simpl in *.
+  exists a.
+  exists b.
+  exact h1.
+Defined.
+
+Definition iHom_morph_lift  (T: doublecat) (a b: dcHD0Quiver T) 
+  (h1: a +> b) : iHom (D0_cat T) := iHom_lift (D1_morph_lift h1). 
+  
+Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
+                   (h1: a +> b) (h2: b +> c) :
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_lift h1))
+               (@src cat (D0_cat T) (iHom_morph_lift h2)).
+  unfold commaE.ptype.
+
+  have @hh1: D1_cat T := D1_morph_lift h1.
+  have @hh2: D1_cat T := D1_morph_lift h2.
+  
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  simpl in *; simpl.
+
+  exists (hh1, hh2).
+  subst hh1 hh2.
+  simpl; simpl in *.
+    
+  destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+  destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+  rewrite q1.
+  rewrite p2.
+  auto.
+Defined.  
+
+Lemma mk_prod_aux (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) :
+  (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2).
+  eapply mk_ptype_aux; eauto.
+Defined.  
+
+Definition iHom_prod_liftB (T: doublecat) (x y: iHom (D0_cat T)) :
+  iHom (D0_cat T).
+  set pp := iprod x y.
+  set il := iprodl x y.
+  set ir := iprodr x y.
+  econstructor.
+  instantiate (1 := pp).
+  econstructor; eauto.
+  econstructor; eauto.
+  { destruct x.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (il \; src0).
+  }  
+  { destruct y.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (ir \; tgt0).
+  }  
+Defined.  
+
+Lemma iHom_prod_liftA (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) : iHom (D0_cat T).
+  set hh1 := iHom_morph_lift h1. 
+  set hh2 := iHom_morph_lift h2.
+  eapply (iHom_prod_liftB hh1 hh2).
+Defined.  
+
+Definition iHom_prod_liftC (T: doublecat) (x y: iHom (D0_cat T))
+  (s: span x y) : iHom (D0_cat T).
+  set src1 := @src _ _ x.
+  set tgt2 := @tgt _ _ y.
+  simpl in *.
+  destruct T; simpl in *.
+  destruct s; simpl in *.
+  destruct bot; simpl in *.
+  exists sort0. 
+  econstructor; eauto.
+  destruct bot2left; simpl in *.
+  destruct bot2right; simpl in *.
+  econstructor; eauto.
+  exact (sort1 \; src1).
+  exact (sort2 \; tgt2).
+Defined.
+
+(** good *)
+Definition iHom_prod_liftC' (T: doublecat) (x y: iHom (D0_cat T))
+  (s: span (x :> cat) (y :> cat)) : iHom (D0_cat T).
+  set src1 := @src _ _ x.
+  set tgt2 := @tgt _ _ y.
+  simpl in *.
+  destruct T; simpl in *.
+  destruct s; simpl in *.
+  exists bot.
+  econstructor; eauto.
+  econstructor; eauto.
+  exact (bot2left \; src1).
+  exact (bot2right \; tgt2).
+Defined.
+
+(*
+Definition iHom_prod_liftCC (T: doublecat) (x y: iHom (D0_cat T))
+  (s: span (x :> cat) (y :> cat)) : iHom (x *_(D0_cat T) y).
+  set src1 := @src _ _ x.
+  set tgt2 := @tgt _ _ y.
+  simpl in *.
+  destruct T; simpl in *.
+  destruct s; simpl in *.
+  exists bot.
+  econstructor; eauto.
+  econstructor; eauto.
+  exact (bot2left \; src1).
+  exact (bot2right \; tgt2).
+Defined.
+*)
+
+(** good *)
+Definition iHom_prod_liftD (T: doublecat) (x y: iHom (D0_cat T)) :
+  iHom (D0_cat T).
+  set bb := @iprod_pb cat (D0_cat T) x y.
+  set ff := @iHom_prod_liftC' T x y.
+  destruct T; simpl in *.
+  specialize (ff bb); eauto.
+Defined.
+
+Definition iHom_prod_liftB' (T: doublecat) (x y: iHom (D0_cat T)) :
+  iHom (D0_cat T).
+  set pp := iprod x y.
+  set il := iprodl x y.
+  set ir := iprodr x y.
+  set src1 := @src _ _ x.
+  set tgt2 := @tgt _ _ y.
+  unfold iprodl, iprodr, iprod in *.
+  move: ir il pp.
+  set bb := iprod_pb x y.
+  simpl in *.
+  intros.
+  unfold iprod_pb in *.
+  unfold pbk in *.
+  simpl in *.
+  exists (@bot _ _ _ bb).
+  econstructor; eauto.
+  destruct T; simpl in *.
+  econstructor; eauto.
+  exact (il \; src1).
+  exact (ir \; tgt2).
+Defined.  
+
+
+Definition iHom_prod_comp (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) :
+  iHom (D0_cat T).
+  set hh1 := D1_morph_lift h1.
+  set hhh1 := iHom_lift hh1.
+  set hh2 := D1_morph_lift h2.
+  set hhh2 := iHom_lift hh2.
+  
+  set pp := iprod_pb hhh1 hhh2.
+  set il := iprodl hhh1 hhh2.
+  set ir := iprodr hhh1 hhh2.
+  simpl in *.
+  
+  pose pp_src := @src cat (D0_cat T) (iHom_prod_liftC' pp).
+  pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftC' pp).
+  
+  pose h1_src := @src cat (D0_cat T) hhh1.
+  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
+  
+  Fail pose PC : InternalPreCat.type cat := HB.pack T.
+
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+
+(*  
+  have @PC : InternalPreCat.type cat.
+  { destruct T.
+    destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+    destruct K3; eauto.
+    econstructor; eauto.
+    instantiate (1:= sort).
+    econstructor; eauto.
+    econstructor; eauto.
+  }
+  destruct PC as [C0 K]; simpl in *.
+  destruct K as [K1 K2 K3].
+  destruct K1.
+  destruct K2 as [H].
+  destruct H as [H].
+  destruct H.
+  destruct K3.
+  simpl in *.
+*)
+
+(*  unfold D0_cat; simpl.
+  destruct T; simpl; simpl in *. *)
+  econstructor; eauto. 
+  instantiate (1:= (hhh1 *_ sort hhh2)). (*   pbC0 C1 C1). *)
+  econstructor; eauto.
+  econstructor; eauto.
+Defined.
+
+
+
+(*
+  set gg := (icompI0 \; src0).
+  
+  destruct T.
+  destruct class.
+  
+  set cmp := @icompI cat (D0_cat T).
+  simpl in *.
+  
+  destruct T eqn: T1; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+  destruct icompI0 as [f class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+  
+  assert (f \; @src cat sort C2 = f \; @src cat sort C2).
+  
+  econstructor.
+  instantiate (1 := pp).
+  econstructor; eauto.
+  econstructor; eauto.
+  { destruct x.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (il \; src0).
+  }  
+  { destruct y.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (ir \; tgt0).
+  }  
+Defined.  
+*)
+
+
+(*
+
+Definition iHom_prod_comp (T: doublecat) (x y: iHom (D0_cat T)) :
+  iHom (D0_cat T).
+  set pp := iprod x y.
+  set il := iprodl x y.
+  set ir := iprodr x y.
+
+  Fail pose PC : InternalPreCat.type cat := HB.pack T.
+
+  destruct T eqn: T1; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+
+(*  
+  have @PC : InternalPreCat.type cat.
+  { destruct T.
+    destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+    destruct K3; eauto.
+    econstructor; eauto.
+    instantiate (1:= sort).
+    econstructor; eauto.
+    econstructor; eauto.
+  }
+  destruct PC as [C0 K]; simpl in *.
+  destruct K as [K1 K2 K3].
+  destruct K1.
+  destruct K2 as [H].
+  destruct H as [H].
+  destruct H.
+  destruct K3.
+  simpl in *.
+*)
+
+(*  unfold D0_cat; simpl.
+  destruct T; simpl; simpl in *. *)
+  econstructor; eauto. 
+  instantiate (1:= pbC0 C1 C1).
+  econstructor; eauto.
+  econstructor; eauto.
+  
+  set gg := (icompI0 \; src0).
+  
+  
+  destruct T.
+  destruct class.
+  
+  set cmp := @icompI cat (D0_cat T).
+  simpl in *.
+  
+  
+  destruct T eqn: T1; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+  destruct icompI0 as [f class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+  
+  assert (f \; @src cat sort C2 = f \; @src cat sort C2).
+  
+  econstructor.
+  instantiate (1 := pp).
+  econstructor; eauto.
+  econstructor; eauto.
+  { destruct x.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (il \; src0).
+  }  
+  { destruct y.
+    destruct class as [K]; simpl in *; simpl.
+    destruct K.
+    exact (ir \; tgt0).
+  }  
+Defined.  
+
+*)
+
+(*
+Lemma iHom_prod_liftE (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) : iHom (D0_cat T).
+  set xx := mk_prod_aux h1 h2.
+  set il := bot2left xx.
+  destruct xx as [[x1 x2] p].
+  set src1 := @src cat (D0_cat T) (iHom_morph_lift h1).
+  set tgt2 := @tgt cat (D0_cat T) (iHom_morph_lift h2).
+  set il := bot2left xx.
+  econstructor; eauto.
+  instantiate (1:=
+      (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2)).
+  econstructor; eauto.
+  econstructor; eauto.
+  
+  
+  set hh2 := iHom_morph_lift h2.
+  eapply (iHom_prod_liftB hh1 hh2).
+Defined.  
+*)
+
+(*
+  set X := mk_prod_aux h1 h2.
+  econstructor.
+  instantiate (1:=
+      (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2)).
+  econstructor; eauto.
+  econstructor; eauto.
+  destruct X as [[X1 X2] P].
+  simpl in *.
+  unfold iHom_morph_lift in *.
+  simpl; simpl in *.
+  unfold hom; simpl.
+
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  econstructor; eauto.
+  econstructor; eauto.
+  
+  unfold iHom_lift in X1; simpl in *.
+  
+  econstructor; eauto.
+ 
+  set sss := @src cat _ X1.
+  destruct x
+  econstructor.
+*)
+
+
+Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) : a +> c.
+(*
+  have @a1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact a. }
+  have @a2 : iHom (D0_cat T).
+  { eapply (iHom0_lift a1). }
+  have @b1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact b. }
+  have @b2 : iHom (D0_cat T).
+  { eapply (iHom0_lift b1). }
+  have @c1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact c. }
+  have @c2 : iHom (D0_cat T).
+  { eapply (iHom0_lift c1). }
+*)
+  have @hh1: D1_cat T := D1_morph_lift h1.
+  have @hhh1 : iHom (D0_cat T) := iHom_lift hh1.
+  have @hh2: D1_cat T := D1_morph_lift h2.
+  have @hhh2 : iHom (D0_cat T) := iHom_lift hh2.
+  simpl in *.
+ 
+  pose src_h1 := @src cat (D0_cat T) hhh1.
+  pose tgt_h1 := @tgt cat (D0_cat T) hhh1.
+  pose src_h2 := @src cat (D0_cat T) hhh2.
+  pose tgt_h2 := @tgt cat (D0_cat T) hhh2.
+
+  have @xxx := mk_prod_aux h1 h2.
+
+  set yyy := icompI xxx.
+(*  
+  have xxx1 := 
+  
+  have @yyy := iHom_prod_liftA h1 h2. 
+*)  
+
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  
+  unfold dcHhom in *; simpl in *; simpl.
+  
+  unfold hhom in icompI0; simpl in *.
+  unfold hom in icompI0; simpl in *.
+
+  destruct icompI0 as [f class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+
+  unfold hhom.
+  unfold hom; simpl; simpl in *.
+
+  set yyy := f xxx.
+  unfold dcHhom; simpl.
+  exists yyy.
+
+  destruct xxx as [[xxx1 xxx2] p] eqn: X.
+  simpl in *.
+  
+   assert (f \; src0 = src xxx1) as A.
+  
+  
+  pose pb12 := iprod_pb hhh1 hhh2.
+  
+  have @mm : iHom (D0_cat T).
+  { eapply (iHom_prod_lift hh1 hh2). }
+
+  pose src_mm := @src cat (D0_cat T) mm.
+  pose tgt_mm := @tgt cat (D0_cat T) mm.
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
+  have @XX : (@span cat (hhh1 :> cat) (hhh2 :> cat)).
+  { eapply pb12. }
+  
+  destruct XX as [b0 b2l b2r] eqn:Epb.
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
+Admitted. 
+  
+(***)
+(*  
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  
+  unfold dcHhom in *; simpl in *; simpl.
+  
+  unfold hhom in icompI0; simpl in *.
+  unfold hom in icompI0; simpl in *.
+
+  destruct icompI0 as [f class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+
+  unfold hhom.
+  unfold hom; simpl; simpl in *.
+
+  set yyy := f xxx.
+
+(*******)
+  
+
+  unfold commaE.ptype in *.
+  have @xxx : (commaE.ptype tgt_h1 src_h2).
+  { unfold commaE.ptype.
+        
+    destruct T; simpl in *.
+    destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+    destruct K1 as [C2]; simpl in *; simpl.
+    destruct K2 as [H1]; simpl in *; simpl.
+    destruct H1 as [H1]; simpl in *; simpl.
+    destruct H1; simpl in *; simpl.
+    destruct K3; simpl in *; simpl.
+    destruct K4; simpl in *; simpl.
+    simpl in *; simpl.
+    
+    econstructor.
+
+    Unshelve.
+
+    2: { exact (hh1, hh2). }
+
+    simpl; simpl in *.    
+    subst tgt_h1.
+    subst src_h2.
+    simpl.
+    subst hhh1 hhh2.
+    subst hh1 hh2.
+    simpl in *; simpl. 
+  
+    destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+    destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+    rewrite q1.
+    rewrite p2.
+    auto.
+  }
+
+  simpl in *.
+  
+(**)
+  set pb12 := iprod_pb hhh1 hhh2.
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
+  unfold commaE.ptype in *.
+
+Admitted.
+*)
+
+  
+(*  destruct pb12 as [B0 b2l b2r].
+  simpl in *.  
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+*)
+(*
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+  unfold dcHhom in *; simpl in *; simpl.
+  
+  unfold hom in icompI0; simpl in *.
+  unfold hom in icompI0; simpl in *.
+
+  destruct icompI0 as [m class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+
+  assert (src0 = src_h1) as Es1.
+  { auto. }
+  assert (src0 = src_h2) as Es2.
+  { auto. }
+  assert (tgt0 = tgt_h1) as Et1.
+  { auto. }
+  assert (tgt0 = tgt_h2) as Et2.
+  { auto. }
+  
+  set yyy := m xxx.
+  
+  unfold hhom in *.
+  unfold hom in *; simpl in *; simpl.
+
+  unfold dcHhom.
+  simpl.
+  exists yyy.
+  subst yyy.
+
+  assert (m xxx = hh1).
+  { subst xxx.
+    simpl.
+    destruct m; simpl.
+  
+(*  subst xxx. *)
+  simpl.
+  subst tgt_h1 src_h2.
+  simpl.
+  subst src_h1 tgt_h2.
+  simpl.
+  destruct h1 as [h1 [pp1 qq1]].
+  destruct h2 as [h2 [pp2 qq2]].
+  simpl in *; simpl.
+  unfold commaE.ptype in xxx.
+  
+  destruct m; simpl in *; simpl.
+  
+  move: (existT (fun x1 : C2 * C2 => _ = _) (
+          x, x0)
+          match a0 with
+          | conj _ H0 =>
+              match a3 with
+              | conj H1 _ =>
+                  eq_ind_r (eq^~ _) (eq_ind_r [eta eq b] (erefl b) H1)
+                    H0
+              end
+          end).
+  
+  move: (existT _ (
+          x, x0)
+          match a0 with
+          | conj _ H0 =>
+              match a3 with
+              | conj H1 _ =>
+                  eq_ind_r (eq^~ _) (eq_ind_r [eta eq b] (erefl b) H1)
+                    H0
+              end
+          end).
+  
+  split; eauto.
+  subst tgt_h1 src_h2.
+  simpl.
+  destruct xxx; simpl in *; simpl.
+  destruct x; simpl in *; simpl.
+  rewrite p1.
+  dependent destruction e.
+  
+  admit.
+  
+  simpl; simpl in *. 
+  
+  have xx : (hhh1 * hhh2)%type.
+  admit.
+  
+  unfold commaE.ptype.
+  exists xx.
+  
+  Locate "*".
+  unfold iprod.
+  
+  econstructor.
+  instantiate (1:= (hhh1,hhh2)).
+  
+  unfold hhom in *.
+  unfold hom in *; simpl in *; simpl.
+      
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+  unfold dcHhom in *; simpl in *; simpl.
+  
+  unfold hom in icompI0; simpl in *.
+  unfold hom in icompI0; simpl in *.
+
+  destruct icompI0 as [m class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+
+  unfold iprod_pb in pb12; simpl in *.
+  unfold iprod in m; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
+  Set Printing All.
+  Check m.
+  
+  assert (commaE.ptype tgt src).
+    
+  eapply (m (bot pb12)).
+  
+  destruct pb12 as [bot0 [bot2left0 both2right0]].
+  simpl in *.
+  eapply (m bot0).
+  
+  destruct h1 as [m1 [p1s p1t]].
+  destruct h2 as [m2 [p2s p2t]].
+
+  pose mm := iprod_pb m1 m2.
+  
+  pose compA := @comp cat (D0_cat T) a b.
+  pose compB := @comp cat (D0_cat T) b2 c2.
+  simpl in *.    
+*)
+
+(*
+  have mm1 : @iHom cat sort ~> @iHom cat sort.
+  
+  unfold comp in p1, p2; simpl in *.
+  unfold ssrfun.comp in p1, p2; simpl in *.
+
+  have ggg : @iHom cat C1.
+  admit.
+  
+  have pp := ((fun x : sort => @src cat C1 ggg)). ((m x) : iHom C1)) a).
+  
+  assert ((m \; @src cat C1) =1 @src cat sort).
+  assert (@src _ (m a) 1= @src _ a) as A1.
+  
+  unfold hom in m; simpl in *.
+  
+  unfold hhom.
+  unfold hom; simpl.
+  set mm := m a.
+  have @mm1 := (F2 mm).
+  unfold dcHhom in *; simpl in *.
+
+  inversion mm1; subst.
+  inversion X; subst.
+  inversion X0; subst.
+  
+  unfold comp in p1, p2; simpl in *.
+  
+  have @mm2 := (F1 mm1).
+
+  assert (mm = mm2).
+  { subst mm mm2; auto. }
+  
+  destruct X as [x [y d]].
+  unfold dcHhom in *; simpl in *.
+  destruct d as [h [A1 A2]].
+  
+  
+  unfold dcHhom; simpl.
+  eapply X.
+  
+  
+  have @hh1 : (D0_cat T).
+  { destruct T.
+    simpl in *.
+    exact a.
+  }  
+  set hh := dcHunit T hh1.  
+  unfold hhom; simpl.  
+  unfold hom; simpl.
+  unfold dcHD0Quiver in *; simpl; simpl in *. 
+  destruct T; simpl; simpl in *.
+  unfold dcHhom.
+  exists hh.
+  subst hh.
+  subst hh1.
+  simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1; simpl; simpl in *.
+  destruct K2; simpl; simpl in *.
+  destruct K3; simpl; simpl in *.
+  destruct K4; simpl; simpl in *.
+  destruct priv0 as [D].
+  destruct D.
+  simpl; simpl in *.
+  (* assert (iidI0 \; src0 = idmap C0). *)
+  (* ??? missing axiom? iidI \; src = idmap ??? *)
+  destruct iidI0; simpl; simpl in *.
+  destruct class as [D].
+  destruct D.
+  unfold comp in *; simpl in *.
+Admitted.   
+*)
+
+
+Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
+  have @D0 : cat := D0_cat T.
+
+  have @D1 : cat := D1_cat T. 
+    
+  have @SR : Functor.type D1 D0.
+  { destruct T.    
+    destruct class as [K1 K2 K3 K4].
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct K1; simpl in *; simpl.
+   
+    destruct K2 as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply src0.
+  }
+
+  have @TG : Functor.type D1 D0.
+  { destruct T.    
+    destruct class as [K1 K2 K3 K4].
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct K1; simpl in *; simpl.
+   
+    destruct K2 as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply tgt0.
+  }
+
+  have @UN : Functor.type D0 D1.
+  { destruct T.    
+    destruct class as [K1 K2 K3 K4].
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct K1; simpl in *; simpl.
+
+    destruct K3.
+
+    eapply iidI0.
+  }  
+
+Admitted.   
+
+
+Lemma HHom' (X: doublecat) (x y: D0_cat X) : Type.
 
   have @IP := C0_IntPCat X.
 
@@ -1126,142 +2369,3 @@ Lemma HHom (X: doublecat) (x y: D0_cat X) : Type.
 
   (* exact (x = cmp1 \; src0 /\ y = cmp1 \; tgt0). *)
 Admitted.
-  
-(*  
-  cat sort ((@C1 cat IQ): iHom sort) C1.
-  
-  destruct PI.
-  inversion HeqPI; subst.
- 
-  destruct encatI_tmp_IsInternalQuiver_mixin as [priv0].
-  destruct encatI_tmp_IsInternalPreCat_mixin.
-  destruct priv0.
-  destruct encatI_tmp_isInternalHom_mixin.
-  inversion encatI_tmp_IsInternalCat_mixin; subst.
-  
-  simpl in *; simpl.
-(*
-  destruct encatI_tmp_IsInternalQuiver_mixin; simpl in *; simpl.
-*)  
-
-  pose PB := pbC0 C2 C2.
-  set PB := @pbC0 cat sort (C2: iHom sort) (C2: iHom sort).
-  pose cmp := @icompI cat (D0_cat _).
-  
-  in x = src cmp /\ y = tgt cmp.
-*)
-
-Lemma doublecat2hsource (T: doublecat) :
-  Functor.type (D1_cat T) (D0_cat T).
- destruct T.    
- destruct class as [K1 K2 K3 K4].
- simpl; simpl in *.
- destruct K1; simpl in *; simpl.   
- destruct K2 as [[[src0 tgt0]]];
- simpl in *; simpl.   
- eapply src0.
-Defined.
-
-Lemma doublecat2htarget (T: doublecat) :
-  Functor.type (D1_cat T) (D0_cat T).
- destruct T.    
- destruct class as [K1 K2 K3 K4].
- simpl; simpl in *.
- destruct K1; simpl in *; simpl.   
- destruct K2 as [[[src0 tgt0]]];
- simpl in *; simpl.   
- eapply tgt0.
-Defined.
-
-
-
-
-Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
-  have @D0 : cat := D0_cat T.
-
-  have @D1 : cat := D1_cat T. 
-    
-  have @SR : Functor.type D1 D0.
-  { destruct T.    
-    destruct class.
-    subst D0 D1.
-    simpl; simpl in *.
-    
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
-   
-    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
-      simpl in *; simpl.
-    
-    eapply src0.
-  }
-
-  have @TG : Functor.type D1 D0.
-  { destruct T.    
-    destruct class.
-    subst D0 D1.
-    simpl; simpl in *.
-    
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
-   
-    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
-      simpl in *; simpl.
-    
-    eapply tgt0.
-  }
-
-  have @UN : Functor.type D0 D1.
-  { destruct T.    
-    destruct class.
-    subst D0 D1.
-    simpl; simpl in *.
-    
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
-
-    destruct encatI_tmp_IsInternalPreCat_mixin.
-
-    eapply iidI0.
-  }  
-
-Admitted.   
-
-
-Definition HHom1 (T: doublecat) (x y: D0_cat T) : Type :=
-  sigma (h: D1_cat T),
-           
-
-
-Lemma HHom1 (T: doublecat) (x y: D0_cat T) : Type.
-  have @D0 : cat := D0_cat T.
-
-  have @D1 : cat := D1_cat T. 
-    
-  have @SR : Functor.type D1 D0.
-  { destruct T.    
-    destruct class.
-    subst D0 D1.
-    simpl; simpl in *.
-    
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
-   
-    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
-      simpl in *; simpl.
-    
-    eapply src0.
-  }
-
-  have @TG : Functor.type D1 D0.
-  { destruct T.    
-    destruct class.
-    subst D0 D1.
-    simpl; simpl in *.
-    
-    destruct encatI_tmp_IsPreInternalQuiver_mixin; simpl in *; simpl.
-   
-    destruct encatI_tmp_IsInternalQuiver_mixin as [[[src0 tgt0]]];
-      simpl in *; simpl.
-    
-    eapply tgt0.
-  }
-
-  
-  
