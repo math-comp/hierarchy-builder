@@ -121,7 +121,7 @@ Set Universe Checking.
    vertical 2-cell composition. *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record _IsD1PreCat T of D1Quiver T := {
+HB.mixin Record IsD1PreCat T of D1Quiver T := {
     is_d1precat : Quiver_IsPreCat (@D1obj T) }.
 #[short(type="d1precat")]
 HB.structure Definition D1PreCat : Set :=
@@ -131,7 +131,7 @@ Set Universe Checking.
 (* The category based on the D1Quiver (i.e. category D1). *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record _IsD1Cat T of D1PreCat T := {
+HB.mixin Record IsD1Cat T of D1PreCat T := {
     is_d1cat : PreCat_IsCat (@D1obj T) }.
 #[short(type="d1cat")]
 HB.structure Definition D1Cat : Set :=
@@ -255,7 +255,7 @@ Definition H1Target (T: TFunctor.type) (a b: @D1obj T)
    objects) *)
 Unset Universe Checking.
 #[wrapper]
-HB.mixin Record _IsH0PreCat T of HD0Quiver T := {
+HB.mixin Record IsH0PreCat T of HD0Quiver T := {
     is_h0precat : Quiver_IsPreCat (transpose T) }.
 #[short(type="h0precat")]
 HB.structure Definition H0PreCat : Set :=

@@ -1021,6 +1021,8 @@ HB.structure Definition InternalCat (C : pbcat) :=
    - The horizontal composition of 2-cells is the map part of icomp
  *)
 
+(*
+
 (* basically, the internal category adds the D1 category to the base
 D0 category, which is C0 (an object of cat, which is shown to have
 pullbacks) *)
@@ -1465,6 +1467,11 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   exists (m a); eauto.
 Defined.  
 
+*)
+
+
+
+
 
 (*
 Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
@@ -1601,6 +1608,8 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
 Admitted.
  *)
 
+
+(*
 Definition prod_span_mk (T: doublecat) (x y: D1_cat T) :
   span ((@iHom_lift T x) :> cat) ((@iHom_lift T y) :> cat) :=
   iprod_pb (@iHom_lift T x) (@iHom_lift T y).
@@ -1688,7 +1697,7 @@ Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
 
 *)
 
-
+(*
 Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   (h1: a +> b) (h2: b +> c) : a +> c.
 (*
@@ -1794,7 +1803,9 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   unfold pbk in pb12; simpl in *.
 
 Admitted. 
-  
+*)
+
+
 (***)
 (*  
   destruct T; simpl in *.
@@ -2100,7 +2111,7 @@ Admitted.
 Admitted.   
 *)
 
-
+(*
 Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
   have @D0 : cat := D0_cat T.
 
@@ -2178,3 +2189,5 @@ Lemma HHom' (X: doublecat) (x y: D0_cat X) : Type.
 
   (* exact (x = cmp1 \; src0 /\ y = cmp1 \; tgt0). *)
 Admitted.
+
+*)
