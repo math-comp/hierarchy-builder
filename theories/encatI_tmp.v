@@ -1748,13 +1748,15 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   pose pp_src := @src cat (D0_cat T) (iHom_prod_liftE pp).
   pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftE pp).
   simpl in *.
-  (* alternative - source and target of the priduct as span *)
+  (* alternative - source and target of the product as span *)
   set prod_src_f := il \; h1_src.
   set prod_tgt_f := ir \; h2_tgt.
 
+(*  
   (*** product of C1 - alternative to il and ir *)
   set ilC1 := iprodl (@C1 cat T) (@C1 cat T).
   set irC1 := iprodr (@C1 cat T) (@C1 cat T).
+*)
   (* source and target of C1 - generic *)
   have @srcC1 : (@C1 cat T) ~> T.
   { destruct T.
@@ -1774,13 +1776,15 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     destruct H; simpl.
     exact tgt0.
   }
+(*
   (* source and target of the product - generic *)
   set prod_srcC1 := ilC1 \; srcC1.  
   set prod_tgtC1 := irC1 \; tgtC1.  
+*)  
 
   (*** product as ptype *)
   have @xxx0 := mk_ptype_aux h1 h2.
-  have @xxx := mk_prod_aux h1 h2.
+  have @xxx := mk_prod_aux h1 h2. 
   simpl in *.
   (* type equivalence, between product of C1 and span product *)
   assert ((@C1 cat T *_ T @C1 cat T) = (hhh1 *_ (D0_cat T) hhh2)) as Et.
@@ -1804,11 +1808,12 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
    comp_ihh \; src C1  =  prod_src_f  
 
    however, comp_ihh needs to become comp_f (a functor)
-*)  
-
+*)
+(*
   Fail assert (cmp_ihh \; srcC1 = cmp_ihh \; srcC1).   
   Fail assert (cmp_ihh \; src = prod_src_f).  
-
+ *)
+  
   (* composition as functor *)
   destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
   simpl in *.
@@ -1823,7 +1828,8 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   (*** source and target of the composition *)
   set cmp_f_src := cmp_f \; srcC1.
   set cmp_f_tgt := cmp_f \; tgtC1.
-  
+
+(*  
   (* sanity check *)
   assert (cmp_f_src = cmp_f \; srcC1).
   { destruct T.
@@ -1837,10 +1843,12 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     auto.
   }
   clear H.
-  
-  (* type mismatch *)
-  Fail assert (cmp_f_src = prod_src_f).  
+*)  
 
+  (* type mismatch *)
+(*  Fail assert (cmp_f_src = prod_src_f). *) 
+
+(*  
   (**************** type checks, but is not right *)
   assert (cmp_f_src = prod_srcC1) as U.
   { subst cmp_f_src.
@@ -1858,11 +1866,13 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     destruct K4; simpl.
     simpl in *.
     f_equal.
-    (* not good, composition not equal to projection *)
+    (* not good, composition can't be equal to projection *)
     admit.
   }  
+*)
 
   (****************** pointed result - too weak, anyway? *)
+  (* product of C1, from xxx  *)
   have @X : (@C1 cat T *_ T @C1 cat T).
   { unfold iprod.
     unfold iprod_pb.
@@ -1878,6 +1888,7 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     simpl in *. 
     exact xxx.
   }
+  (* product as a span, from xxx *)
   have @Y : (hhh1 *_ (D0_cat T) hhh2).
   { unfold iprod.
     unfold iprod_pb.
@@ -1885,9 +1896,73 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
     exact xxx.
   }
   (* functor application *)
+(*
+  (* the source of the composition object obtained from X, i.e. 
+     (composition morphism > source) X *)
   set cmp_obj_src := cmp_f_src X.
+  set cmp_obj_tgt := cmp_f_tgt X.
+  (* the source of the product object obtained from Y. i.e. 
+     (left projection > source) Y *)
   set prod_obj_src := prod_src_f Y.
-  
+  set prod_obj_tgt := prod_tgt_f Y.
+*)
+  (* this will type checks only after destructing T 
+      Fail set ttt := cmp_f xxx.
+  *)  
+
+  assert (cmp_f_src X = prod_src_f Y) as srcE.
+  { subst cmp_f_src prod_src_f.
+    subst srcC1.
+    subst h1_src; simpl.
+    destruct T.
+    destruct class as [K1 K2 K3 K4]; simpl.
+    destruct K1; simpl.
+    destruct K2 as [H]; simpl.
+    destruct H as [H]; simpl.
+    destruct H; simpl.
+    destruct K3; simpl.
+    destruct K4; simpl.
+    simpl in *. 
+    
+    assert (X = Y) as ee.
+    { auto. }
+    rewrite ee.
+    unfold pcat_prj1.
+
+    assert (src0 (cmp_f Y) = (cmp_f \; src0) Y) as ee1.
+    { auto. }
+    rewrite ee1.   
+    rewrite cmp_p1.
+    auto.
+  } 
+
+  assert (cmp_f_tgt X = prod_tgt_f Y) as tgtE.
+  { subst cmp_f_tgt prod_tgt_f.
+    subst tgtC1.
+    subst h2_tgt; simpl.
+    destruct T.
+    destruct class as [K1 K2 K3 K4]; simpl.
+    destruct K1; simpl.
+    destruct K2 as [H]; simpl.
+    destruct H as [H]; simpl.
+    destruct H; simpl.
+    destruct K3; simpl.
+    destruct K4; simpl.
+    simpl in *. 
+    
+    assert (X = Y) as ee.
+    { auto. }
+    rewrite ee.
+    unfold pcat_prj2.
+
+    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee1.
+    { auto. }
+
+    rewrite ee1.
+    rewrite cmp_p2.
+    auto.
+  } 
+
   destruct T.
   destruct class as [K1 K2 K3 K4]; simpl.
   destruct K1; simpl.
@@ -1898,9 +1973,39 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   destruct K4; simpl.
   simpl in *. 
 
-  assert (X = Y).
-  { auto. }
+  unfold hhom.
+  unfold hom; simpl; simpl in *.
+  unfold dcHhom.
+  simpl.
 
+  (* composition object *)
+  exists (cmp_f xxx).
+
+  split.
+  { rewrite srcE.
+    unfold pcat_prj1.
+    subst h1_src.
+    subst Y.
+    subst xxx; simpl.
+    unfold src; simpl.
+    destruct h1 as [m1 [ma1 mb1]].
+    auto.
+  }  
+  { rewrite tgtE.
+    unfold pcat_prj2.
+    subst h2_tgt.
+    subst Y.
+    subst xxx; simpl.
+    unfold tgt; simpl.
+    destruct h2 as [m2 [ma2 mb2]].
+    auto.
+  }  
+Defined.
+
+  
+(*    
+  (* does this make sense at all? it should, they both come from xxx
+  *)
   assert (cmp_obj_src = prod_obj_src).
   subst cmp_obj_src prod_obj_src.
   rewrite H.
@@ -1921,6 +2026,17 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   destruct h1.
   simpl. *)
   admit.
+*)
+
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1; simpl.
+  destruct K2 as [H]; simpl.
+  destruct H as [H]; simpl.
+  destruct H; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  simpl in *. 
 
   unfold hhom.
   unfold hom; simpl; simpl in *.
@@ -1936,6 +2052,28 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   (* basically, still corresponds to 
      (cmp_obj_src = prod_obj_src)   *)
   subst cmp_obj.
+
+  rewrite Eobj.
+  unfold pcat_prj1.
+  subst h1_src.
+  subst Y.
+  subst xxx.
+  simpl.
+  unfold src; simpl.
+  unfold hhom in h1.
+  unfold hom in h1; simpl in *.
+  unfold dcHhom in h1; simpl in *.
+  destruct h1; simpl in *.
+  destruct a0; auto.
+
+(*****)
+
+  
+  destruct h1.
+  
+  assert ((cmp_f \; srcC1) X = srcC1 X).
+  
+  unfold cmp_f.
   subst xxx.
   simpl.
   destruct cmp_f.
