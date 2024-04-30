@@ -87,8 +87,13 @@ HB.tag Definition transpose (C : quiver) : U := C.
 Unset Universe Checking.
 #[short(type="hd0quiver")]
 HB.structure Definition HD0Quiver : Set :=
+  { C of IsQuiver C & IsH0Quiver C }.
+Set Universe Checking.
+(*
+HB.structure Definition HD0Quiver : Set :=
   { C of IsQuiver C & IsQuiver (transpose C) }.
 Set Universe Checking.
+*)
 
 HB.tag Definition hhom (c : HD0Quiver.type) : c -> c -> U := @hom (transpose c).
 Notation "a +> b" := (hhom a b)

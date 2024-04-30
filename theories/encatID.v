@@ -59,19 +59,16 @@ Print Assumptions doublecat.
 About congr1_funext.
 *)
 
-Definition D0_cat (X: doublecat) : cat.
-  destruct X.
-  exact sort.
-Defined.
+(* HB.tag requires 'icat cat' instead of 'doublecat' *)
+Fail HB.tag
+Definition D0_cat (T: doublecat) : cat := @InternalCat.sort cat T.
 
-Definition D1_cat (X: doublecat) : cat.
-  destruct X.
-  destruct class as [K1 K2 K3 K4].
-  destruct K1. 
-  exact C1.
-Defined.
+(* probably this tag is not needed, anyway *)
+HB.tag Definition D0_cat (T: icat cat) : cat := @InternalCat.sort cat T.
 
-Lemma C0_IntQuiv (X: doublecat) : InternalQuiver.type cat.
+HB.tag Definition D1_cat (T: icat cat) : cat := @C1 cat T.
+
+Definition C0_IntQuiv' (X: doublecat) : InternalQuiver.type cat.
   Fail have xx: InternalQuiver.type cat := HB.pack X.
   destruct X.
   destruct class as [K1 K2 K3 K4].
@@ -80,7 +77,11 @@ Lemma C0_IntQuiv (X: doublecat) : InternalQuiver.type cat.
   econstructor; eauto.
 Defined.
 
-Lemma C0_IntPCat (X: doublecat) : InternalPreCat.type cat.
+(* HB.tag *)
+Definition C0_IntQuiv (X: icat cat) : InternalQuiver.type cat :=
+  C0_IntQuiv' X.
+
+Definition C0_IntPCat' (X: doublecat) : InternalPreCat.type cat.
   Fail have xx: InternalPreCat.type cat := HB.pack X.
   destruct X.
   destruct class as [K1 K2 K3 K4].
@@ -89,7 +90,11 @@ Lemma C0_IntPCat (X: doublecat) : InternalPreCat.type cat.
   econstructor; eauto.
 Defined.
 
-Lemma dcHsource (T: doublecat) :
+(* HB.tag *)
+Definition C0_IntPCat (X: icat cat) : InternalPreCat.type cat :=
+  C0_IntPCat' X.  
+
+Definition dcHsource' (T: doublecat) :
   Functor.type (D1_cat T) (D0_cat T).
  destruct T.    
  destruct class as [K1 K2 K3 K4].
@@ -100,7 +105,11 @@ Lemma dcHsource (T: doublecat) :
  eapply src0.
 Defined.
 
-Lemma dcHtarget (T: doublecat) :
+(* HB.tag *)
+Definition dcHsource (T: icat cat) : Functor.type (D1_cat T) (D0_cat T) :=
+  dcHsource' T.  
+
+Lemma dcHtarget' (T: doublecat) :
   Functor.type (D1_cat T) (D0_cat T).
  destruct T.    
  destruct class as [K1 K2 K3 K4].
@@ -111,7 +120,11 @@ Lemma dcHtarget (T: doublecat) :
  eapply tgt0.
 Defined.
 
-Lemma dcHunit (T: doublecat) :
+(* HB.tag *)
+Definition dcHtarget (T: icat cat) : Functor.type (D1_cat T) (D0_cat T) :=
+  dcHtarget' T.  
+
+Definition dcHunit' (T: doublecat) :
   Functor.type (D0_cat T) (D1_cat T).
  destruct T.    
  destruct class as [K1 K2 K3 K4].
@@ -121,9 +134,14 @@ Lemma dcHunit (T: doublecat) :
  eapply iidI.  
 Defined.
 
+(* HB.tag *)
+Definition dcHunit (T: icat cat) :
+  Functor.type (D0_cat T) (D1_cat T) := dcHunit' T.
+  
+
 (********************************************************************)
 
-Lemma dcInternalHomT (T: doublecat) : InternalHom.type (D0_cat T).
+Definition dcInternalHomT (T: doublecat) : InternalHom.type (D0_cat T).
   unfold D0_cat; simpl.
   destruct T.
   destruct class as [K1 K2 K3 K4].
@@ -131,7 +149,8 @@ Lemma dcInternalHomT (T: doublecat) : InternalHom.type (D0_cat T).
   econstructor; eauto.
 Defined.
   
-Lemma dcInternalHom (T: doublecat) : @InternalHom cat (D0_cat T) (D1_cat T). 
+Definition dcInternalHom (T: doublecat) :
+  @InternalHom cat (D0_cat T) (D1_cat T). 
   destruct T.
   unfold D0_cat, D1_cat; simpl.
   destruct class as [K1 K2 K3 K4].
@@ -150,9 +169,13 @@ Lemma dcInternalHom_eq (T: doublecat) :
   destruct K2; simpl.
   auto.
 Qed.
-  
-Definition dcHhom (T: doublecat) (x y: transpose (D0_cat T)) : Type :=
-  sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
+
+(*** definition of horizontal homset (corresponds to hhom) *)
+(* HB.tag *)
+Definition dcHhom (T: icat cat) :
+  transpose (D0_cat T) -> transpose (D0_cat T) -> U :=
+  fun x y =>
+    sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
 
 Lemma dcHsource_eq (T: doublecat) :
   (@src _ _ (dcInternalHomT T)) ~= (dcHsource T).    
@@ -176,7 +199,7 @@ Lemma dcHtarget_eq (T: doublecat) :
   auto.
 Qed.  
 
-Lemma dcHhom_impl1 (T: doublecat) :
+Definition dcHhom_impl1 (T: doublecat) :
   (sigma x y, @dcHhom T x y) -> (D1_cat T).
   unfold D1_cat, dcHhom.
   destruct T.
@@ -194,7 +217,7 @@ Lemma dcHhom_impl1 (T: doublecat) :
   exact h.
 Defined.
 
-Lemma dcHhom_impl2 (T: doublecat) :
+Definition dcHhom_impl2 (T: doublecat) :
   (D1_cat T) -> (sigma x y, @dcHhom T x y).
   unfold D1_cat, dcHhom.
   destruct T.
@@ -250,27 +273,41 @@ Qed.
 
 (*********************************************************************)
 
-(* why?? *)
-Unset Universe Checking.
-Fail HB.instance Definition dcH0QuiverD (T: doublecat) :
-  IsQuiver (transpose (D0_cat T)) :=
+(* tag probably not need, but definition is *)
+HB.tag Definition transpose_D0 (T: icat cat) : cat :=
+  transpose (D0_cat T).
+
+Unset Universe Checking. 
+Definition dcH0QuiverD (T: icat cat) :
+  IsQuiver (transpose_D0 T) :=
   IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
 Set Universe Checking.
 
-Unset Universe Checking.
-Definition dcH0QuiverD (T: doublecat) :
-  IsQuiver (transpose (D0_cat T)) :=
-  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
-Set Universe Checking.
+(* does not like the composed lifter *)
+Fail HB.instance Definition dcH0Quiver (T: icat cat) :
+  IsQuiver (transpose (D0_cat T)) := dcH0QuiverD T.
 
-(*
-Unset Universe Checking.
-HB.instance Definition dcH0Quiver (T: doublecat) :
-  IsH0Quiver (D0_cat T) := IsH0Quiver.Build _ (dcH0QuiverD T).
+(* non-forgetful inheritance warning, unclear.
+    IsH0Quiver (D0_cat T) should follow by wrapping *)
+HB.instance Definition dcH0Quiver (T: icat cat) :
+  IsQuiver (transpose_D0 T) := dcH0QuiverD T.
 
-  @IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
-*)
+Definition dcHD0QuiverD (T: doublecat) : HD0Quiver (D0_cat T).
+  set X := dcH0QuiverD T.
+  destruct T.
+  econstructor; eauto.
+  instantiate (1:=X).   (* wrapped instance *)
+  econstructor; eauto.
+Defined.
 
+(* non-forgetful inheritance warning, expected as this should be
+   automatically derived by wrapping dcH0Quiver and the fact that
+   D0_cat is a cat, hence a quiver *)
+HB.instance Definition dcHD0QuiverT (T: doublecat) : HD0Quiver (D0_cat T) :=
+  dcHD0QuiverD T.
+
+(* there should be no need for this. added to patch up types further
+   down, due to a failure to detect dcHD0QuiverT *)
 Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
   set X := dcH0QuiverD T.
   destruct T.
@@ -281,6 +318,7 @@ Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
   econstructor; eauto.
 Defined.
 
+(* lift to internal morphisms for D1 *)
 Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
   unfold D0_cat, D1_cat in *; simpl in *; simpl.
   destruct T.
@@ -299,6 +337,7 @@ Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
   exact tgt.
 Defined.  
 
+(* lift to internal morphisms for D0 *)
 Definition iHom0_lift (T: doublecat) (x: D0_cat T) : iHom (D0_cat T).
   unfold D0_cat, D1_cat in *; simpl in *; simpl.
   destruct T.
@@ -317,7 +356,11 @@ Definition iHom0_lift (T: doublecat) (x: D0_cat T) : iHom (D0_cat T).
   exact idmap.
 Defined.  
 
-Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
+(* why?? *)
+Fail Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : a +> a.
+
+(* H0 horizontal identity *)
+Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : dcHhom a a.
   have @a1: D0_cat T.
   { unfold D0_cat. destruct T; simpl in *. exact a. }
   
@@ -375,6 +418,14 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   exists (m a); eauto.
 Defined.  
 
+(* there should be no need for dcHD0Quiver *)
+Definition H0_cat_Id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
+  destruct T; simpl in *.
+  unfold hhom.
+  unfold hom; simpl.
+  eapply H0_cat_id.
+Defined.  
+
 (********************************************************************)
 
 Definition mk_prod_span (T: doublecat) (x y: D1_cat T) :
@@ -404,8 +455,8 @@ Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
   }  
 Defined.  
 
-Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T) 
-   (h1: a +> b) : D1_cat T.
+Definition D1_morph_liftA (T: doublecat) (a b: transpose (D0_cat T)) 
+   (h1: dcHhom a b) : D1_cat T.
   eapply (@dcHhom_impl1 T). 
   destruct T; simpl in *.
   exists a.
@@ -413,17 +464,28 @@ Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T)
   exact h1.
 Defined.
 
+Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T) 
+  (h1: a +> b) : D1_cat T.
+  destruct T.
+  unfold hhom in h1.
+  unfold hom in *; simpl in *.
+  eapply D1_morph_liftA; eauto.
+Defined.
+
+Definition iHom_morph_liftA  (T: doublecat) (a b: transpose (D0_cat T)) 
+  (h1: dcHhom a b) : iHom (D0_cat T) := iHom_lift (D1_morph_liftA h1). 
+
 Definition iHom_morph_lift  (T: doublecat) (a b: dcHD0Quiver T) 
   (h1: a +> b) : iHom (D0_cat T) := iHom_lift (D1_morph_lift h1). 
-  
-Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
-                   (h1: a +> b) (h2: b +> c) :
-  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_lift h1))
-               (@src cat (D0_cat T) (iHom_morph_lift h2)).
+
+Definition mk_ptype_auxA (T: doublecat) (a b c: transpose (D0_cat T))
+                   (h1: dcHhom a b) (h2: dcHhom b c) :
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_liftA h1))
+               (@src cat (D0_cat T) (iHom_morph_liftA h2)).
   unfold commaE.ptype.
 
-  have @hh1: D1_cat T := D1_morph_lift h1.
-  have @hh2: D1_cat T := D1_morph_lift h2.
+  have @hh1: D1_cat T := D1_morph_liftA h1.
+  have @hh2: D1_cat T := D1_morph_liftA h2.
   
   destruct T; simpl in *.
   destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
@@ -446,7 +508,43 @@ Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
   auto.
 Defined.  
 
-Lemma mk_prod_aux (T: doublecat) (a b c: dcHD0Quiver T)
+Definition mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
+                   (h1: a +> b) (h2: b +> c) :
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_lift h1))
+               (@src cat (D0_cat T) (iHom_morph_lift h2)).
+  unfold commaE.ptype. 
+
+  have @hh1: D1_cat T := D1_morph_lift h1.
+  have @hh2: D1_cat T := D1_morph_lift h2.
+
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  simpl in *; simpl.
+
+  exists (hh1, hh2).
+  subst hh1 hh2.
+  simpl; simpl in *.
+    
+  destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+  destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+  rewrite q1.
+  rewrite p2.
+  auto.
+Defined.  
+
+Definition mk_prod_auxA (T: doublecat) (a b c: transpose (D0_cat T))
+                   (h1: dcHhom a b) (h2: dcHhom b c) :
+  (iHom_morph_liftA h1) *_(D0_cat T) (iHom_morph_liftA h2).
+  eapply mk_ptype_auxA; eauto.
+Defined.  
+
+Definition mk_prod_aux (T: doublecat) (a b c: dcHD0Quiver T)
   (h1: a +> b) (h2: b +> c) :
   (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2).
   eapply mk_ptype_aux; eauto.
@@ -473,7 +571,7 @@ Definition iHom_prod_liftB (T: doublecat) (x y: iHom (D0_cat T)) :
   }  
 Defined.  
 
-Lemma iHom_prod_liftA (T: doublecat) (a b c: dcHD0Quiver T)
+Definition iHom_prod_liftA (T: doublecat) (a b c: dcHD0Quiver T)
   (h1: a +> b) (h2: b +> c) : iHom (D0_cat T).
   set hh1 := iHom_morph_lift h1. 
   set hh2 := iHom_morph_lift h2.
@@ -572,13 +670,17 @@ Definition iHom_prod_liftG (T: doublecat) (a b c: dcHD0Quiver T)
   eapply (iHom_prod_liftE pp).
 Defined.  
 
-Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
+(* why?? *)
+Fail Definition H0_cat_comp (T: icat cat) (a b c: transpose_D0 T) 
+   (h1: a +> b) (h2: b +> c) : a +> c.
 
+(* H0 horizontal composition *)
+Definition H0_cat_comp (T: icat cat) (a b c: transpose (D0_cat T)) 
+   (h1: dcHhom a b) (h2: dcHhom b c) : dcHhom a c.
   (*** lifting of h1 and h2 to D1 objects and iHoms *)
-  set hh1 := D1_morph_lift h1.
+  set hh1 := D1_morph_liftA h1.
   set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
+  set hh2 := D1_morph_liftA h2.
   set hhh2 := iHom_lift hh2.
 
   (* source of h1 (from the iHom object) *)
@@ -595,7 +697,7 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   set prod_tgt_f := ir \; h2_tgt.
 
   (*** product as ptype *)
-  have @xxx := mk_prod_aux h1 h2. 
+  have @xxx := mk_prod_auxA h1 h2. 
   simpl in *.
 
   (*** horizontal composition (as iHomHom) *) 
@@ -701,34 +803,72 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   }  
 Defined.
 
-
+Definition H0_cat_Comp (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) : a +> c.
+  destruct T.
+  unfold hhom in *.
+  unfold hom in *; simpl in *.
+  eapply H0_cat_comp; eauto.
+Defined.  
+  
+(*
 Definition dcH0QuiverA (T: doublecat) :
   IsH0Quiver (D0_cat T).
   econstructor; eauto.
   eapply (dcH0QuiverD T).
 Defined.
 
-(* non forgetful inheritance - why?? *)
+(* complains about non forgetful inheritance - why?? *)
 HB.instance Definition dcH0Quiver (T: doublecat) :
   IsH0Quiver (D0_cat T) := dcH0QuiverA T.
-
+*)
 (*
 Definition dcH0PreCatD (T: doublecat) : IsPreCat (transpose (D0_cat T)).
 Admitted. 
 *)
+(*
+Definition H0_dchom (T: doublecat) : 
+  transpose (D0_cat T) -> transpose (D0_cat T) -> U.
+  eapply dcHhom.
+*)
 
-(* ?? does not see the H0quiver instance *)
-Definition dcH0PreCatD (T: doublecat) :
-  IsPreCat (transpose (D0_cat T)).
+(* ?? does not see the H0Quiver instance, i.e. does not see the quiver
+   on (transpose_D0 T). it simplifies away transpose instead.  *)
+Definition dcH0PreCatD (T: icat cat) :
+  IsPreCat (transpose_D0 T).
 (*  := IsPreCat.Build (transpose (D0_cat T)) (@H0_cat_id T) (@H0_cat_comp T). *)
-  econstructor; eauto.
-  Fail eapply (@H0_cat_id T).
-  Admitted. 
+(*  unfold transpose_D0. *)
+  assert (forall (a: dcHD0Quiver T), a +> a) as A.
+  { eapply (@H0_cat_Id T). }
+    econstructor; eauto. (* wrongly simplifies tranpose *)
+    intros.
+    unfold hhom in *.
+    destruct T.
+    destruct class as [K1 K2 K3 K4]; simpl.
+    destruct K1; simpl.
+    destruct K2 as [H]; simpl.
+    destruct H as [H]; simpl.
+    destruct H; simpl.
+    destruct K3; simpl.
+    destruct K4; simpl.
+    simpl in *. 
+    unfold hom in *; simpl in *.
+    unfold hom; simpl.
+    Fail eapply A; eauto.
+admit.
+admit.
+Admitted. 
 
-(* ?? *)
-Fail HB.instance Definition dcH0PreCat (T: doublecat) :
-  IsPreCat (transpose (D0_cat T)) := dcH0PreCatD T.  
 
+Fail Definition dcH0PreCatD' (T: icat cat) :
+  IsH0PreCat (dcHD0Quiver T).
+
+Fail Definition dcH0PreCatD' (T: icat cat) :
+  IsH0PreCat (D0_cat T).
+
+(* non-forgetful inheritance warning *)
+HB.instance Definition dcH0PreCat (T: doublecat) :
+  IsPreCat (transpose_D0 T) := dcH0PreCatD T.  
 
 Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
   have @D0 : cat := D0_cat T.
