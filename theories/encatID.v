@@ -59,7 +59,7 @@ Print Assumptions doublecat.
 About congr1_funext.
 *)
 
-(* HB.tag requires 'icat cat' instead of 'doublecat' *)
+(* XXX HB.tag requires 'icat cat' instead of 'doublecat' *)
 Fail HB.tag
 Definition D0_cat (T: doublecat) : cat := @InternalCat.sort cat T.
 
@@ -283,11 +283,11 @@ Definition dcH0QuiverD (T: icat cat) :
   IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
 Set Universe Checking.
 
-(* does not like the composed lifter *)
+(* XXX does not like the composed lifter *)
 Fail HB.instance Definition dcH0Quiver (T: icat cat) :
   IsQuiver (transpose (D0_cat T)) := dcH0QuiverD T.
 
-(* non-forgetful inheritance warning, unclear.
+(* XXX non-forgetful inheritance warning, unclear.
     IsH0Quiver (D0_cat T) should follow by wrapping *)
 HB.instance Definition dcH0Quiver (T: icat cat) :
   IsQuiver (transpose_D0 T) := dcH0QuiverD T.
@@ -300,14 +300,14 @@ Definition dcHD0QuiverD (T: doublecat) : HD0Quiver (D0_cat T).
   econstructor; eauto.
 Defined.
 
-(* non-forgetful inheritance warning, expected as this should be
+(* XXX non-forgetful inheritance warning, expected as this should be
    automatically derived by wrapping dcH0Quiver and the fact that
    D0_cat is a cat, hence a quiver *)
 HB.instance Definition dcHD0QuiverT (T: doublecat) : HD0Quiver (D0_cat T) :=
   dcHD0QuiverD T.
 
-(* there should be no need for this. added to patch up types further
-   down, due to a failure to detect dcHD0QuiverT *)
+(* XXX there should be no need for this. added to patch up types
+   further down, due to a failure to detect dcHD0QuiverT *)
 Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
   set X := dcH0QuiverD T.
   destruct T.
@@ -356,7 +356,7 @@ Definition iHom0_lift (T: doublecat) (x: D0_cat T) : iHom (D0_cat T).
   exact idmap.
 Defined.  
 
-(* why?? *)
+(* XXX why?? *)
 Fail Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : a +> a.
 
 (* H0 horizontal identity *)
@@ -418,7 +418,7 @@ Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : dcHhom a a.
   exists (m a); eauto.
 Defined.  
 
-(* there should be no need for dcHD0Quiver *)
+(* XXX there should be no need for dcHD0Quiver *)
 Definition H0_cat_Id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   destruct T; simpl in *.
   unfold hhom.
@@ -670,11 +670,11 @@ Definition iHom_prod_liftG (T: doublecat) (a b c: dcHD0Quiver T)
   eapply (iHom_prod_liftE pp).
 Defined.  
 
-(* why?? *)
+(* XXX why?? *)
 Fail Definition H0_cat_comp (T: icat cat) (a b c: transpose_D0 T) 
    (h1: a +> b) (h2: b +> c) : a +> c.
 
-(* H0 horizontal composition *)
+(* XXX H0 horizontal composition *)
 Definition H0_cat_comp (T: icat cat) (a b c: transpose (D0_cat T)) 
    (h1: dcHhom a b) (h2: dcHhom b c) : dcHhom a c.
   (*** lifting of h1 and h2 to D1 objects and iHoms *)
@@ -832,8 +832,9 @@ Definition H0_dchom (T: doublecat) :
   eapply dcHhom.
 *)
 
-(* ?? does not see the H0Quiver instance, i.e. does not see the quiver
-   on (transpose_D0 T). it simplifies away transpose instead.  *)
+(* XXX ?? does not see the H0Quiver instance, i.e. does not see the
+   quiver on (transpose_D0 T). it simplifies away transpose instead.
+   *)
 Definition dcH0PreCatD (T: icat cat) :
   IsPreCat (transpose_D0 T).
 (*  := IsPreCat.Build (transpose (D0_cat T)) (@H0_cat_id T) (@H0_cat_comp T). *)
