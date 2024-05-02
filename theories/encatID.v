@@ -318,6 +318,8 @@ Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
   econstructor; eauto.
 Defined.
 
+(*******************************************************************)
+
 (* lift to internal morphisms for D1 *)
 Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
   unfold D0_cat, D1_cat in *; simpl in *; simpl.
@@ -810,26 +812,12 @@ Definition H0_cat_Comp (T: doublecat) (a b c: dcHD0Quiver T)
   unfold hom in *; simpl in *.
   eapply H0_cat_comp; eauto.
 Defined.  
-  
-(*
-Definition dcH0QuiverA (T: doublecat) :
-  IsH0Quiver (D0_cat T).
-  econstructor; eauto.
-  eapply (dcH0QuiverD T).
-Defined.
 
-(* complains about non forgetful inheritance - why?? *)
-HB.instance Definition dcH0Quiver (T: doublecat) :
-  IsH0Quiver (D0_cat T) := dcH0QuiverA T.
-*)
+(********************************************************************)
+
 (*
 Definition dcH0PreCatD (T: doublecat) : IsPreCat (transpose (D0_cat T)).
 Admitted. 
-*)
-(*
-Definition H0_dchom (T: doublecat) : 
-  transpose (D0_cat T) -> transpose (D0_cat T) -> U.
-  eapply dcHhom.
 *)
 
 (* XXX ?? does not see the H0Quiver instance, i.e. does not see the
