@@ -467,7 +467,7 @@ Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
   econstructor.
   instantiate (1:= bot_map).
   split; auto.
-Qed.
+Defined.
 
 Lemma jm_pbsquare_universal {C: cat} (A B T P0 P1 P2 : C)
   (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
@@ -480,7 +480,7 @@ Lemma jm_pbsquare_universal {C: cat} (A B T P0 P1 P2 : C)
   destruct e.
 (*  dependent destruction e. *)
   eapply pbsquare_universal; eauto.
-Qed.  
+Defined.  
   
 Lemma pbquare_universal_aux1 {C: cat} (A0 A1 B0 B1 P0 P1 T : C)
   (t: A0 ~> T) (s: B0 ~> T) (p01: P0 ~> A0) (p02: P0 ~> B0)
@@ -491,7 +491,7 @@ Lemma pbquare_universal_aux1 {C: cat} (A0 A1 B0 B1 P0 P1 T : C)
   intros.
   eapply pbsquare_universal; eauto.
   setoid_rewrite <- compoA; auto.
-Qed.  
+Defined.  
 
 (* Lemma is_pullback_in_pbcat {C: pbcat}  *)
 
@@ -506,9 +506,9 @@ Lemma pbk_eta {C: prepbcat} {C0} (X Y: iHom C0) :
     (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))) =
     (Span (iprodl X Y) (iprodr X Y)).       
   unfold iprodl, iprodr, iprod.
-  unfold iprod_pb; simpl.
-  
-  generalize (pbk (X :> C) (Y :> C) {| top := C0; left2top := tgt; right2top := src |}).
+  unfold iprod_pb; simpl.  
+  generalize (pbk (X :> C) (Y :> C)
+                  {| top := C0; left2top := tgt; right2top := src |}).
   intro s0.
   destruct s0.
   simpl; auto.
@@ -539,7 +539,8 @@ Qed.
 
 (* we define pairing of preserving morphisms as a (non-preserving)
 morphism *)
-Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+(*
+Program Definition ipairC' {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
 
@@ -679,14 +680,248 @@ Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
    
   destruct EM as [mm [EM1 EM2]].
   exact mm.
-Qed.   
+Defined.   
+*)
 
+Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
+  sigma mr: (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C),
+      @iprodl C C0 x0 x1 \; f = mr \; @iprodl C C0 x2 x3 /\
+      @iprodr C C0 x0 x1 \; g = mr \; @iprodr C C0 x2 x3. 
+
+  remember (x0 *_ C0 x1 : iHom C0) as Pb1.
+  remember (x2 *_ C0 x3 : iHom C0) as Pb2.
+
+  set (src0 := @src C C0 x0). 
+  set (tgt0 := @tgt C C0 x0). 
+
+  set (src1 := @src C C0 x1). 
+  set (tgt1 := @tgt C C0 x1). 
+
+  set (src2 := @src C C0 x2). 
+  set (tgt2 := @tgt C C0 x2). 
+
+  set (src3 := @src C C0 x3). 
+  set (tgt3 := @tgt C C0 x3). 
+
+  remember (@Cospan C (x0 :> C) (x1 :> C) C0 tgt0 src1) as Csp1.
+
+  remember (@Cospan C (x2 :> C) (x3 :> C) C0 tgt2 src3) as Csp2.
+  
+  remember (@src C C0 (x0 *_C0 x1)) as src01. 
+  remember (@tgt C C0 (x0 *_C0 x1)) as tgt01. 
+  
+  remember (@src C C0 (x2 *_C0 x3)) as src23. 
+  remember (@tgt C C0 (x2 *_C0 x3)) as tgt23. 
+
+  set (Sp1 := pbk (x0 :> C) (x1 :> C) Csp1).
+  set (Sp2 := pbk (x2 :> C) (x3 :> C) Csp2).
+
+(*  
+  set lside := iprodl x0 x1 \; f.
+  set rside := iprodr x0 x1 \; g.
+*)  
+
+  assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1) as PBa1.
+  { remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    assert (pb (pbk (x0 :> C') (x1 :> C') Csp1)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto. }
+    econstructor; eauto.
+  }
+
+  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
+  { remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    assert (pb (pbk (x2 :> C') (x3 :> C') Csp2)).
+    { inversion HeqC'; subst.
+      eapply B1; eauto. }
+    econstructor; eauto.
+  }
+  
+(*  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
+  admit.
+*)  
+  assert ((x0 *_ C0 x1) = bot Sp1) as E01.
+  { subst Sp1.
+    unfold iprod.
+    unfold iprod_pb. 
+    rewrite HeqCsp1; auto.
+  }  
+
+  assert ((x2 *_ C0 x3) = bot Sp2) as E23.
+  { subst Sp2.
+    unfold iprod.
+    unfold iprod_pb.
+    rewrite HeqCsp2; auto.
+  }  
+  
+  set (prj11 := @iprodl C C0 x0 x1). 
+  set (prj12 := @iprodr C C0 x0 x1). 
+
+  set (prj21 := @iprodl C C0 x2 x3). 
+  set (prj22 := @iprodr C C0 x2 x3). 
+
+  (**)
+  set (ff := prj11 \; f).
+  set (gg := prj12 \; g).
+  
+  assert ((f : (x0 :> C) ~>_C (x2 :> C)) \; tgt2 = tgt0) as E20.
+  { remember f as f1.
+    destruct f as [fsort fclass].
+    destruct fclass as [fIM].
+    destruct fIM.
+    inversion Heqf1; subst.
+    simpl in *; simpl; auto.
+  }  
+    
+  assert ((g : (x1 :> C) ~>_C (x3 :> C)) \; src3 = src1) as E31.
+  { remember g as g1.
+    destruct g as [gsort gclass].
+    destruct gclass as [gIM].
+    destruct gIM.
+    inversion Heqg1; subst.
+    simpl in *; simpl; auto.
+  }  
+
+  assert (prj11 \; tgt0 = prj12 \; src1) as E11.
+  { destruct PBa1 as [C1 C2].
+    destruct C1 as [C3].
+    inversion HeqCsp1; subst.
+    simpl in *; auto.
+   }
+  
+  assert (ff \; tgt2 = gg \; src3) as E1.
+  { subst ff gg.
+    setoid_rewrite <- compoA.
+    rewrite E20.
+    rewrite E31.
+    exact E11.
+  }  
+    
+  (* basically, follows from pbquare_universal and E1.
+     sordid eta-conversion issue fixed by pbsquare_is_pullback *)
+  assert (sigma m: ((x0 *_ C0 x1) ~>_C (x2 *_ C0 x3) :> C),
+            ff = m \; prj21 /\ gg = m \; prj22) as EM. 
+  { eapply (@pbsquare_universal C) ; eauto.
+
+    remember C as C'.
+    destruct C as [C class].
+    destruct class as [A1 A2 A3 A4 A5 A6].
+    destruct A6 as [B1].
+    subst prj21 prj22.
+
+    (* surprisingly, this does not work with pbsquare_is_pulback_sym *)
+    (* rewrite - pbsquare_is_pullback_sym. 
+       Set Printing All. 
+    *)
+
+    rewrite pbsquare_is_pullback.
+    inversion HeqCsp2; subst.
+    subst Sp2.
+    exact PBa2.
+  }  
+  exact EM.
+Defined.   
+
+Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
+  (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
+  set EM := ipairP f g.
+  destruct EM as [mm [EM1 EM2]].
+  exact mm.
+Defined.   
+
+Program Definition ipairI {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
+  (x0 *_C0 x1 : iHom C0) ~>_(iHom C0) (x2 *_C0 x3 : iHom C0).
+  set EM := ipairP f g.
+  destruct EM as [mm [EM1 EM2]].
+  econstructor; eauto.
+  instantiate (1 := mm).
+  destruct f as [f [[cf1 cf2]]].
+  destruct g as [g [[cg1 cg2]]].
+  econstructor; eauto.
+  simpl; simpl in *.
+  have ee0 : @src C C0 (x0 *_C0 x1) = iprodl x0 x1 \; @src C C0 x0 by auto. 
+  have ee2 : @src C C0 (x2 *_C0 x3) = iprodl x2 x3 \; @src C C0 x2 by auto. 
+  have ee1 : @tgt C C0 (x0 *_C0 x1) = iprodr x0 x1 \; @tgt C C0 x1 by auto. 
+  have ee3 : @tgt C C0 (x2 *_C0 x3) = iprodr x2 x3 \; @tgt C C0 x3 by auto. 
+  
+  econstructor; eauto.
+  { rewrite ee2.
+    rewrite ee0.
+    rewrite compoA.
+    rewrite -EM1.
+    rewrite -compoA.
+    rewrite cf1.
+    auto.
+  }
+  { rewrite ee1.
+    rewrite ee3.
+    rewrite compoA.
+    rewrite -EM2.
+    rewrite -compoA.
+    rewrite cg2.
+    auto.
+  }
+Defined.    
+  
 Notation "<( f , g )>" := (ipairC f g).
 
+Notation "<<( f , g )>>" := (ipairI f g).
+
+(*
+Lemma iprod_src {C : pbcat} {C0 : C} (x0 x1 : iHom C0) :
+  @src C C0 (x0 *_C0 x1) = iprodl x0 x1 \; @src C C0 x0.
+  auto.
+Defined.
+
+Lemma iprod_tgt {C : pbcat} {C0 : C} (x0 x1 : iHom C0) :
+  @tgt C C0 (x0 *_C0 x1) = iprodr x0 x1 \; @tgt C C0 x1.
+  auto.
+Defined.
+
+Lemma ipair_left {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
+  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
+  <(  f, g )> \; iprodl x2 x3 = iprodl x0 x1 \; f.
+destruct f as [f [[cf1 cf2]]].
+destruct g as [g [[cg1 cg2]]].
+simpl; simpl in *.
+unfold ipairC; simpl.
+unfold iprodl, iprodr.
+simpl.
+destruct x0 as [x0 [[src0 tgt0]]]; simpl; simpl in *.
+destruct x1 as [x1 [[src1 tgt1]]]; simpl; simpl in *.
+destruct x2 as [x2 [[src2 tgt2]]]; simpl; simpl in *.
+destruct x3 as [x3 [[src3 tgt3]]]; simpl; simpl in *.
+unfold iprod_pb; simpl.
+move: (pbk x0 x1 _).
+unfold pbk; simpl.
+
+destruct (pbsquare_universal _ _).
+destruct a; simpl; simpl in *.
+
+  
+  @src C C0 (x0 *_C0 x1) = iprodl x0 x1 \; @src C C0 x0.
+  auto.
+Defined.
+
+Lemma iprod_tgt {C : pbcat} {C0 : C} (x0 x1 : iHom C0) :
+  @tgt C C0 (x0 *_C0 x1) = iprodr x0 x1 \; @tgt C C0 x1.
+  auto.
+Defined.
+*)
 
 (* nested product: there exists a morphism (here, a non-preserving
 one) that corresponds to the associativity of product *)
-Program Definition iprodCAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
+(*
+Program Definition iprodCAsc' {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
     ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C).
 
@@ -924,6 +1159,308 @@ assert (
 destruct (X E33) as [mm R].
 exact mm.
 Qed. 
+*)
+
+(* nested product: there exists a morphism (here, a non-preserving
+one) that corresponds to the associativity of product *)
+Program Definition iprodPAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
+  sigma mr: (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
+               ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C),
+    iprodl (c1 *_C0 c2 : iHom C0) c3 \; iprodl c1 c2 =
+      mr \; iprodl c1 (c2 *_C0 c3 : iHom C0) /\
+   iprodr (c1 *_C0 c2 : iHom C0) c3 =
+      mr \; iprodr c1 (c2 *_C0 c3 : iHom C0) \; iprodr c2 c3.    
+    
+set (src1 := @src C C0 c1).
+set (src2 := @src C C0 c2).
+set (src3 := @src C C0 c3).
+set (tgt1 := @tgt C C0 c1).
+set (tgt2 := @tgt C C0 c2).
+set (tgt3 := @tgt C C0 c3).
+
+set (Pb12 := c1 *_ C0 c2 : iHom C0).
+set (Pb23 := c2 *_ C0 c3 : iHom C0).
+set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
+set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
+
+set (j12L := iprodl c1 c2).
+set (j12R := iprodr c1 c2).
+set (j23L := iprodl c2 c3).
+set (j23R := iprodr c2 c3).
+set (j15L := iprodl c1 Pb23).
+set (j15R := iprodr c1 Pb23).
+set (j33L := iprodl Pb12 c3).
+set (j33R := iprodr Pb12 c3).
+
+set (src23 := @src C C0 Pb23).
+set (tgt23 := @tgt C C0 Pb23).
+set (src12 := @src C C0 Pb12).
+set (tgt12 := @tgt C C0 Pb12).
+simpl.
+
+assert (src23 = j23L \; src2) as srcPb23.
+{ subst src23 j23L src2.
+  auto.
+}
+
+assert (tgt23 = j23R \; tgt3) as tgtPb23.
+{ subst tgt23 j23R tgt3.
+  auto.
+}
+
+assert (src12 = j12L \; src1) as srcPb12.
+{ subst src12 j12L src1.
+  auto.
+}
+
+assert (tgt12 = j12R \; tgt2) as tgtPb12.
+{ subst tgt12 j12R tgt2.
+  auto.
+}
+
+assert (j12L \; tgt1 = j12R \; src2) as sqPb12.
+{ set (X := @is_ppbk C).
+  specialize (X (c1 :> C) (c2 :> C)).
+  specialize (X (Cospan tgt1 src2)).
+  destruct X as [X].
+  simpl in X; auto.
+}
+
+assert (j23L \; tgt2 = j23R \; src3) as sqPb23.
+{ set (X := @is_ppbk C).
+  specialize (X (c2 :> C) (c3 :> C)).
+  specialize (X (Cospan tgt2 src3)).
+  destruct X as [X].
+  simpl in X; auto.
+}
+
+assert ((j33L \; j12R) \; tgt2 = j33R \; src3) as sqPb33.
+{ assert (j33L \; tgt12 = j33R \; src3) as H.
+  { subst j33L j33R.
+    set (X := @is_ppbk C).  
+    specialize (X (Pb12 :> C) (c3 :> C)).
+    specialize (X (Cospan tgt12 src3)).
+    destruct X as [X].
+    simpl in X.
+    auto.
+  }
+  setoid_rewrite <- compoA.
+  rewrite tgtPb12 in H; auto. 
+} 
+
+assert (pbsquare j23L j23R tgt2 src3) as pbsq23.
+{ subst j23L j23R.
+  rewrite pbsquare_is_pullback.
+
+  set (Csp23 := @Cospan C (c2 :> C) (c3 :> C) _ tgt2 src3).
+
+  remember C as C'.
+  destruct C as [C class].
+  destruct class as [A1 A2 A3 A4 A5 A6].
+  destruct A6 as [B1].
+    
+  assert (pb (pbk (c2 :> C') (c3 :> C') Csp23)) as X.
+  { inversion HeqC'; subst.
+    eapply B1; eauto.
+  }
+  econstructor; eauto.
+}
+
+assert (j15L \; tgt1 = (j15R \; j23L) \; src2) as sqPb15.
+{ assert (j15L \; tgt1 = j15R \; src23) as H.
+  { subst j15L j15R.
+    set (X := @is_ppbk C).  
+    specialize (X (c1 :> C) (Pb23 :> C)).
+    specialize (X (Cospan tgt1 src23)).
+    destruct X as [X].
+    simpl in X; auto.
+  }
+  setoid_rewrite <- compoA.
+  rewrite srcPb23 in H; auto. 
+} 
+
+assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
+    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
+          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
+  as M23.
+{ intro e1.
+  subst Pb33.
+
+  eapply (@jm_pbsquare_universal C (c2 :> C) (c3 :> C) C0
+            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C)
+            tgt2 src3 j23L j23R (j33L \; j12R) j33R pbsq23 sqPb33 e1); eauto.
+}
+
+assert (pbsquare j12L j12R tgt1 src2) as pbsq12.
+{ subst j12L j12R.
+  rewrite pbsquare_is_pullback.
+
+  set (Csp12 := @Cospan C (c1 :> C) (c2 :> C) _ tgt1 src2).
+
+  remember C as C'.
+  destruct C as [C class].
+  destruct class as [A1 A2 A3 A4 A5 A6].
+  destruct A6 as [B1].
+    
+  assert (pb (pbk (c1 :> C') (c2 :> C') Csp12)) as X.
+  { inversion HeqC'; subst.
+    eapply B1; eauto.
+  }
+  econstructor; eauto.
+}
+
+assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
+    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
+          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
+  as M12. 
+{ intro e1.
+  subst Pb15.
+
+  eapply (@jm_pbsquare_universal C (c1 :> C) (c2 :> C) C0
+            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C)
+            tgt1 src2 j12L j12R j15L (j15R \; j23L) pbsq12 sqPb15 e1); eauto.  
+}
+
+assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
+{ auto. }
+destruct (M12 E12) as [m12 [m12_E m12_U]].
+
+assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
+{ auto. }
+destruct (M23 E23) as [m23 [m23_E m23_U]].
+
+assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
+    j33L \; (j12R \; src2) = m23 \;;_e2 j23L \; src2) as M23_E1.
+{ intros e2.
+  unfold jmcomp.
+  destruct e2.
+(*  dependent destruction e2. *)
+  rewrite compoA.
+  rewrite m23_E.
+  unfold jmcomp.
+(*  clear -E23.
+  rewrite -compoA.
+  congr (_ \; _ \; _).
+  Set Printing All.
+  case: _ / E23.
+  do [destruct E23] in j23L m23 *. *)
+  dependent destruction E23.
+  rewrite compoA; auto.
+}  
+
+assert (forall (e3: ((c2 *_C0 c3) :> C) = Pb23),
+    (j33L \; j12L) \; tgt1 = m23 \;;_e3 j23L \; src2) as M23_E2.
+{ intros e3.
+  specialize (M23_E1 E23).
+  unfold jmcomp in M23_E1.
+  destruct E23.
+(*  dependent destruction E23. *)
+  unfold jmcomp.
+  dependent destruction e3.
+  setoid_rewrite <- compoA.
+  rewrite sqPb12.
+  rewrite M23_E1; auto.
+}
+
+assert (pbsquare j15L j15R tgt1 src23) as pbsq15.
+{ set (Csp15 :=
+        @Cospan C (c1 :> C) (Pb23 :> C) _ tgt1 (j23L \; src2)).
+  
+  subst j15L j15R.
+  rewrite pbsquare_is_pullback.
+
+  remember C as C'.
+  destruct C as [C class].
+  destruct class as [A1 A2 A3 A4 A5 A6].
+  destruct A6 as [B1].
+  assert (pb (pbk (c1 :> C') (Pb23 :> C') Csp15)) as X.
+  { inversion HeqC'; subst.
+    eapply B1; eauto. }
+  econstructor; eauto.
+}
+
+assert ((j33L \; j12L) \; tgt1 = m23 \; src23) as sqM23.
+{ specialize (M23_E2 E23).  
+  dependent destruction E23.
+  exact M23_E2.
+}
+
+assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
+{ auto. }
+
+assert (
+      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
+        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
+        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
+{ intro e1.
+  unfold jmcomp.
+  dependent destruction e1.
+  rewrite comp1o.
+  subst Pb12.
+  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
+  exact pbsq15.
+  exact sqM23.
+}  
+destruct (X E33) as [mm [R1 R2]].
+exists mm; split; auto.
+rewrite m23_U.
+rewrite compoA.
+
+assert (idmap \;;_E33 m23 = m23) as e23.
+{ dependent destruction E33.
+  unfold jmcomp.
+  rewrite comp1o; auto.
+}
+rewrite -R2.
+rewrite e23.
+dependent destruction E23.
+unfold jmcomp; simpl; auto.
+Defined.
+
+Program Definition iprodCAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
+  (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
+    ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C).
+  set X := iprodPAsc c1 c2 c3.
+  destruct X as [mm R].
+  exact mm.
+Defined.
+
+Program Definition iprodIAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
+  (((c1 *_C0 c2 : iHom C0) *_C0 c3) : iHom C0) ~>_(iHom C0)
+    (c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0). 
+  set X := iprodPAsc c1 c2 c3.
+  destruct X as [mm [R1 R2]].
+  econstructor; eauto.
+  instantiate (1 := mm).
+  econstructor; eauto.
+  econstructor; eauto.
+  { have ee1 : (@src C C0 ((c1 *_ C0 c2) *_ C0 c3) =
+                iprodl (c1 *_ C0 c2) c3 \; iprodl c1 c2 \; @src C C0 c1)
+    by auto.
+    have ee2 : (@src C C0 (c1 *_ C0 (c2 *_ C0 c3)) =
+                iprodl c1 (c2 *_ C0 c3) \; @src C C0 c1) by auto.
+
+    rewrite ee2.
+    rewrite compoA.
+    rewrite -R1.
+    rewrite ee1.
+    rewrite compoA; auto.
+  }
+  { have ee1 : (@tgt C C0 ((c1 *_ C0 c2) *_ C0 c3) =
+                iprodr (c1 *_C0 c2) c3 \; @tgt C C0 c3) by auto.
+    have ee2 : (@tgt C C0 (c1 *_ C0 (c2 *_ C0 c3)) =
+                  iprodr c1 (c2 *_C0 c3) \; iprodr c2 c3 \; @tgt C C0 c3)
+    by auto.             
+
+    rewrite ee1.
+    rewrite compoA in ee2.
+    rewrite ee2.
+    rewrite compoA.
+    rewrite -R2.
+    auto.
+  }
+Defined.  
+  
 
 (* Print Assumptions iprodCAsc. *)
 
@@ -969,16 +1506,41 @@ Defined.
 (* Check (iquiver Type <~> quiver). *) 
 (* Check (iprecat Type <~> precat). *)
 
+
+
+(* An internal category moreover must satisfy additional properies on
+iid and icomp (associativity and unit laws) *)
+#[key="C0"]
+  HB.mixin Record IsInternalCatW (C : pbcat) (C0 : obj C)
+  of InternalPreCat C C0 := {
+    icompA1w :    
+ (<( (@icompI C C0),
+     (@idmap (iHom C0) (@C1 C C0: iHom C0)) )> \; icompC) =
+     ((@iprodCAsc C C0 (@C1 C C0: iHom C0) _ _) \;
+       <( (@idmap (iHom C0) (@C1 C C0: iHom C0)), icompI )> \; icompC) ; 
+
+    icomp1lw : <( @idmap (iHom C0) (@C1 C C0: iHom C0), (@iidI C C0) )> \;
+                 icompC = @iprodl C C0 (C1 :> C) (C0 :> C); 
+
+    icomp1rw : <( (@iidI C C0), @idmap (iHom C0) (@C1 C C0: iHom C0) )> \;
+                 icompC = @iprodr C C0 (C0 :> C) (C1 :> C); 
+  }.
+#[short(type="icatw")]
+HB.structure Definition InternalCatW (C : pbcat) :=
+  {C0 of @IsInternalCatW C C0}.
+(* Check (icat Type <~> cat). *)
+
+
 (* An internal category moreover must satisfy additional properies on
 iid and icomp (associativity and unit laws) *)
 #[key="C0"]
   HB.mixin Record IsInternalCat (C : pbcat) (C0 : obj C)
   of InternalPreCat C C0 := {
     icompA1 :    
- (<( (@icompI C C0),
-     (@idmap (iHom C0) (@C1 C C0: iHom C0)) )> \; icompC) =
-     ((@iprodCAsc C C0 (@C1 C C0: iHom C0) _ _) \;
-       <( (@idmap (iHom C0) (@C1 C C0: iHom C0)), icompI )> \; icompC) ; 
+ (<<( (@icompI C C0),
+     (@idmap (iHom C0) (@C1 C C0: iHom C0)) )>> \; icompI) =
+     ((@iprodIAsc C C0 (@C1 C C0: iHom C0) _ _) \;
+       <<( (@idmap (iHom C0) (@C1 C C0: iHom C0)), icompI )>> \; icompI) ; 
 
     icomp1l : <( @idmap (iHom C0) (@C1 C C0: iHom C0), (@iidI C C0) )> \;
                  icompC = @iprodl C C0 (C1 :> C) (C0 :> C); 
@@ -1020,6 +1582,8 @@ HB.structure Definition InternalCat (C : pbcat) :=
    - The horizontal composition of maps is the object part of icomp
    - The horizontal composition of 2-cells is the map part of icomp
  *)
+
+(*
 
 (* basically, the internal category adds the D1 category to the base
 D0 category, which is C0 (an object of cat, which is shown to have
@@ -1465,10 +2029,166 @@ Lemma H0_cat_id (T: doublecat) (a: dcHD0Quiver T) : a +> a.
   exists (m a); eauto.
 Defined.  
 
+*)
 
+
+
+
+
+(*
+Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
+  (h1: a +> b) (h2: b +> c) : a +> c.
+  have @a1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact a. }
+  have @a2 : iHom (D0_cat T).
+  { eapply (iHom0_lift a1). }
+  have @b1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact b. }
+  have @b2 : iHom (D0_cat T).
+  { eapply (iHom0_lift b1). }
+  have @c1: D0_cat T.
+  { unfold D0_cat. destruct T; simpl in *. exact c. }
+  have @c2 : iHom (D0_cat T).
+  { eapply (iHom0_lift c1). }
+
+  have @hh1: D1_cat T.
+  { unfold hhom in *.
+    unfold hom in *; simpl.
+    set impl1 := (@dcHhom_impl1 T).
+    eapply impl1.
+    destruct T; simpl in *.
+    exists a.
+    exists b.
+    exact h1.
+  }
+  have @hhh1 : iHom (D0_cat T).
+  { eapply (iHom_lift hh1). }
+  have @hh2: D1_cat T.
+  { unfold hhom in *.
+    unfold hom in *; simpl.
+    set impl1 := (@dcHhom_impl1 T).
+    eapply impl1.
+    destruct T; simpl in *.
+    exists b.
+    exists c.
+    exact h2.
+  }
+  have @hhh2 : iHom (D0_cat T).
+  { eapply (iHom_lift hh2). }
+  simpl in *.
+ 
+  set pb12 := iprod_pb hhh1 hhh2.   
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+
+  pose src_h1 := @src cat (D0_cat T) hhh1.
+  pose tgt_h1 := @tgt cat (D0_cat T) hhh1.
+  pose src_h2 := @src cat (D0_cat T) hhh2.
+  pose tgt_h2 := @tgt cat (D0_cat T) hhh2.
+
+  have xxx : (commaE.ptype tgt_h1 src_h2).
+  unfold commaE.ptype.
+
+  econstructor.
+
+  Unshelve.
+
+  3: {
+      destruct T; simpl in *.
+      destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+      destruct K1 as [C2]; simpl in *; simpl.
+      destruct K2 as [H1]; simpl in *; simpl.
+      destruct H1 as [H1]; simpl in *; simpl.
+      destruct H1; simpl in *; simpl.
+      destruct K3; simpl in *; simpl.
+      destruct K4; simpl in *; simpl.
+      exact (hh1, hh2).
+      }
+
+  simpl; simpl in *.    
+  subst tgt_h1.
+  subst src_h2.
+  simpl.
+  subst hhh1 hhh2.
+  subst hh1 hh2.
+  simpl in *; simpl. 
+  
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  simpl in *; simpl.
+
+  destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+  destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+  rewrite q1.
+  rewrite p2.
+  auto.
+
+(**)
+
+  destruct T; simpl in *.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+
+  unfold dcHhom in *; simpl in *; simpl.
+  
+  unfold hom in icompI0; simpl in *.
+  unfold hom in icompI0; simpl in *.
+
+  destruct icompI0 as [m class]; simpl in *.
+  destruct class as [Q]; simpl in *.
+  destruct Q as [p1 p2]; simpl in *.
+
+  set yyy := m xxx.
+  
+  unfold hhom in *.
+  unfold hom in *; simpl in *; simpl.
+
+  unfold dcHhom.
+  simpl.
+  exists yyy.
+  subst yyy.
+  split; eauto.
+  subst tgt_h1 src_h2.
+  simpl.
+  destruct xxx; simpl in *; simpl.
+  destruct x; simpl in *; simpl.
+  Fail rewrite p1.  
+  admit.
+  admit.
+
+Admitted.
+ *)
+
+
+(*
 Definition prod_span_mk (T: doublecat) (x y: D1_cat T) :
   span ((@iHom_lift T x) :> cat) ((@iHom_lift T y) :> cat) :=
   iprod_pb (@iHom_lift T x) (@iHom_lift T y).
+(*
+set x1 := @iHom_lift T x.
+  set y1 := @iHom_lift T y.
+  set pp := iprod_pb x1 y1.
+  subst x1 y1.
+  simpl in *; simpl.
+  destruct pp.
+  exists bot.
+  econstructor; eauto.
+  destruct pp.
+  simpl in *.
+  econstructor; eauto.
+  instantiate (1:=bot).
+*)
 
 Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
   iHom (D0_cat T).
@@ -1481,38 +2201,26 @@ Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
   instantiate (1 := x1 *_(D0_cat T) y1).
   econstructor; eauto.
   econstructor; eauto.
-  { destruct x1.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (il \; src0).
-  }  
-  { destruct y1.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (ir \; tgt0).
-  }  
+  destruct x1.
+  destruct class as [K]; simpl in *; simpl.
+  destruct K.
+  exact (il \; src0).
+  destruct y1.
+  destruct class as [K]; simpl in *; simpl.
+  destruct K.
+  exact (ir \; tgt0).
 Defined.  
 
-Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T) 
-   (h1: a +> b) : D1_cat T.
-  eapply (@dcHhom_impl1 T). 
-  destruct T; simpl in *.
-  exists a.
-  exists b.
-  exact h1.
-Defined.
 
-Definition iHom_morph_lift  (T: doublecat) (a b: dcHD0Quiver T) 
-  (h1: a +> b) : iHom (D0_cat T) := iHom_lift (D1_morph_lift h1). 
-  
+
+
 Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
-                   (h1: a +> b) (h2: b +> c) :
-  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_lift h1))
-               (@src cat (D0_cat T) (iHom_morph_lift h2)).
-  unfold commaE.ptype.
+                   (h1: a +> b) (h2: b +> c) 
 
-  have @hh1: D1_cat T := D1_morph_lift h1.
-  have @hh2: D1_cat T := D1_morph_lift h2.
+  (x y: D1_cat T) :
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_lift x))
+               (@src cat (D0_cat T) (iHom_lift y)).
+  unfold commaE.ptype.
   
   destruct T; simpl in *.
   destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
@@ -1524,1762 +2232,34 @@ Lemma mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
   destruct K4; simpl in *; simpl.
   simpl in *; simpl.
 
-  exists (hh1, hh2).
-  subst hh1 hh2.
+  exists (x,y).
   simpl; simpl in *.
-    
-  destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
-  destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
-  rewrite q1.
-  rewrite p2.
-  auto.
-Defined.  
-
-Lemma mk_prod_aux (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2).
-  eapply mk_ptype_aux; eauto.
-Defined.  
-
-Definition iHom_prod_liftB (T: doublecat) (x y: iHom (D0_cat T)) :
-  iHom (D0_cat T).
-  set pp := iprod x y.
-  set il := iprodl x y.
-  set ir := iprodr x y.
-  econstructor.
-  instantiate (1 := pp).
-  econstructor; eauto.
-  econstructor; eauto.
-  { destruct x.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (il \; src0).
-  }  
-  { destruct y.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (ir \; tgt0).
-  }  
-Defined.  
-
-Lemma iHom_prod_liftA (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : iHom (D0_cat T).
-  set hh1 := iHom_morph_lift h1. 
-  set hh2 := iHom_morph_lift h2.
-  eapply (iHom_prod_liftB hh1 hh2).
-Defined.  
-
-Definition iHom_prod_liftC (T: doublecat) (x y: iHom (D0_cat T))
-  (s: span x y) : iHom (D0_cat T).
-  set src1 := @src _ _ x.
-  set tgt2 := @tgt _ _ y.
-  simpl in *.
-  destruct T; simpl in *.
-  destruct s; simpl in *.
-  destruct bot; simpl in *.
-  exists sort0. 
-  econstructor; eauto.
-  destruct bot2left; simpl in *.
-  destruct bot2right; simpl in *.
-  econstructor; eauto.
-  exact (sort1 \; src1).
-  exact (sort2 \; tgt2).
-Defined.
-
-(** good *)
-Definition iHom_prod_liftE (T: doublecat) (x y: iHom (D0_cat T))
-  (s: span (x :> cat) (y :> cat)) : iHom (D0_cat T).
-  set src1 := @src _ _ x.
-  set tgt2 := @tgt _ _ y.
-  simpl in *.
-  destruct T; simpl in *.
-  destruct s; simpl in *.
-  exists bot.
-  econstructor; eauto.
-  econstructor; eauto.
-  exact (bot2left \; src1).
-  exact (bot2right \; tgt2).
-Defined.
-
-(** good *)
-Definition iHom_prod_liftD (T: doublecat) (x y: iHom (D0_cat T)) :
-  iHom (D0_cat T).
-  set bb := @iprod_pb cat (D0_cat T) x y.
-  set ff := @iHom_prod_liftE T x y.
-  destruct T; simpl in *.
-  specialize (ff bb); eauto.
-Defined.
-
-Definition iHom_prod_liftF (T: doublecat) (x y: iHom (D0_cat T)) :
-  iHom (D0_cat T).
-  set pp := iprod x y.
-  set il := iprodl x y.
-  set ir := iprodr x y.
-  set src1 := @src _ _ x.
-  set tgt2 := @tgt _ _ y.
-  unfold iprodl, iprodr, iprod in *.
-  move: ir il pp.
-  set bb := iprod_pb x y.
-  simpl in *.
-  intros.
-  unfold iprod_pb in *.
-  unfold pbk in *.
-  simpl in *.
-  exists (@bot _ _ _ bb).
-  econstructor; eauto.
-  destruct T; simpl in *.
-  econstructor; eauto.
-  exact (il \; src1).
-  exact (ir \; tgt2).
-Defined.  
-
-(* good: based on iHom_prod_liftE or iHom_prod_liftD *)
-Definition iHom_prod_liftH (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  iHom (D0_cat T).
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  eapply (iHom_prod_liftD hhh1 hhh2).
-Defined.
   
-Definition iHom_prod_liftG (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  iHom (D0_cat T).
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-  
-  set pp := iprod_pb hhh1 hhh2.
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  simpl in *.
-
-  eapply (iHom_prod_liftE pp).
-Defined.  
-
-(*
-Definition iHom_prod_comp' (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  iHom (D0_cat T).
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-  
-  set pp := iprod_pb hhh1 hhh2. 
-  set pp1 := iprod hhh1 hhh2. 
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  have @xxx := mk_prod_aux h1 h2.
-  simpl in *.
-  
-  pose pp_src := @src cat (D0_cat T) (iHom_prod_liftE pp).
-  pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftE pp).
-  
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-  
-  Fail pose PC : InternalPreCat.type cat := HB.pack T.
-
-  destruct T; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-
-  unfold dcHhom in *; simpl in *; simpl.
-  
-  unfold hhom in icompI0; simpl in *.
-  unfold hom in icompI0; simpl in *.
-
-  destruct icompI0 as [ff class]; simpl in *.
-  destruct class as [Q]; simpl in *.
-  destruct Q as [p1 p2]; simpl in *.
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  
-  set yyy := ff xxx.
-  
-  econstructor; eauto. 
-  instantiate (1:= C1). 
-  econstructor; eauto.
-  econstructor.
-Admitted.
-*)
-(*  
-  assert (D1_cat T).
-  eapply (@src cat C1 (iHom_lift yyy)).
-
-  eauto.
-*)
-
-Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
-
-  Fail pose PC : InternalPreCat.type cat := HB.pack T.
-
-  (*** lifting of h1 and h2 to D1 objects and iHoms *)
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  (* source of h1 (from the iHom object) *)
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  (* target of h2 (from the iHom object) *)
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-
-  (*** product as a span *)
-  set pp := iprod_pb hhh1 hhh2. 
-  set pp1 := iprod hhh1 hhh2.
-  (* projections of the product as span *)
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  have @ipp := iHom_prod_liftH h1 h2.
-  (* source and target of the product as span *)
-  pose pp_src := @src cat (D0_cat T) (iHom_prod_liftE pp).
-  pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftE pp).
-  simpl in *.
-  (* alternative - source and target of the product as span *)
-  set prod_src_f := il \; h1_src.
-  set prod_tgt_f := ir \; h2_tgt.
-
-(*  
-  (*** product of C1 - alternative to il and ir *)
-  set ilC1 := iprodl (@C1 cat T) (@C1 cat T).
-  set irC1 := iprodr (@C1 cat T) (@C1 cat T).
-*)
-  (* source and target of C1 - generic *)
-  have @srcC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact src0.
-  }
-  have @tgtC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact tgt0.
-  }
-(*
-  (* source and target of the product - generic *)
-  set prod_srcC1 := ilC1 \; srcC1.  
-  set prod_tgtC1 := irC1 \; tgtC1.  
-*)  
-
-  (*** product as ptype *)
-  have @xxx0 := mk_ptype_aux h1 h2.
-  have @xxx := mk_prod_aux h1 h2. 
-  simpl in *.
-  (* type equivalence, between product of C1 and span product *)
-  assert ((@C1 cat T *_ T @C1 cat T) = (hhh1 *_ (D0_cat T) hhh2)) as Et.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    auto.
-  }
-
-  (*** horizontal composition (as iHomHom) *) 
-  set cmp_ihh := @icompI cat T.
-  simpl in *.
-  
-(* ideally, we need: 
-
-   comp_ihh \; src C1  =  prod_src_f  
-
-   however, comp_ihh needs to become comp_f (a functor)
-*)
-(*
-  Fail assert (cmp_ihh \; srcC1 = cmp_ihh \; srcC1).   
-  Fail assert (cmp_ihh \; src = prod_src_f).  
- *)
-  
-  (* composition as functor *)
-  destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
-  simpl in *.
-
- (* just to check the implicit types of C1 
-    (the answer is "@C1 cat T")
-
-    assert (@C1 cat T *_ T @C1 cat T ~> @C1 cat T).
-    exact cmp_f.
-  *)
-
-  (*** source and target of the composition *)
-  set cmp_f_src := cmp_f \; srcC1.
-  set cmp_f_tgt := cmp_f \; tgtC1.
-
-(*  
-  (* sanity check *)
-  assert (cmp_f_src = cmp_f \; srcC1).
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    auto.
-  }
-  clear H.
-*)  
-
-  (* type mismatch *)
-(*  Fail assert (cmp_f_src = prod_src_f). *) 
-
-(*  
-  (**************** type checks, but is not right *)
-  assert (cmp_f_src = prod_srcC1) as U.
-  { subst cmp_f_src.
-    subst prod_srcC1.
-    subst ilC1.
-    subst srcC1.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *.
-    f_equal.
-    (* not good, composition can't be equal to projection *)
-    admit.
-  }  
-*)
-
-  (****************** pointed result - too weak, anyway? *)
-  (* product of C1, from xxx  *)
-  have @X : (@C1 cat T *_ T @C1 cat T).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    exact xxx.
-  }
-  (* product as a span, from xxx *)
-  have @Y : (hhh1 *_ (D0_cat T) hhh2).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    exact xxx.
-  }
-  (* functor application *)
-(*
-  (* the source of the composition object obtained from X, i.e. 
-     (composition morphism > source) X *)
-  set cmp_obj_src := cmp_f_src X.
-  set cmp_obj_tgt := cmp_f_tgt X.
-  (* the source of the product object obtained from Y. i.e. 
-     (left projection > source) Y *)
-  set prod_obj_src := prod_src_f Y.
-  set prod_obj_tgt := prod_tgt_f Y.
-*)
-  (* this will type checks only after destructing T 
-      Fail set ttt := cmp_f xxx.
-  *)  
-
-  assert (cmp_f_src X = prod_src_f Y) as srcE.
-  { subst cmp_f_src prod_src_f.
-    subst srcC1.
-    subst h1_src; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj1.
-
-    assert (src0 (cmp_f Y) = (cmp_f \; src0) Y) as ee1.
-    { auto. }
-    rewrite ee1.   
-    rewrite cmp_p1.
-    auto.
-  } 
-
-  assert (cmp_f_tgt X = prod_tgt_f Y) as tgtE.
-  { subst cmp_f_tgt prod_tgt_f.
-    subst tgtC1.
-    subst h2_tgt; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj2.
-
-    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee1.
-    { auto. }
-
-    rewrite ee1.
-    rewrite cmp_p2.
-    auto.
-  } 
-
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  unfold dcHhom.
-  simpl.
-
-  (* composition object *)
-  exists (cmp_f xxx).
-
-  split.
-  { rewrite srcE.
-    unfold pcat_prj1.
-    subst h1_src.
-    subst Y.
-    subst xxx; simpl.
-    unfold src; simpl.
-    destruct h1 as [m1 [ma1 mb1]].
-    auto.
-  }  
-  { rewrite tgtE.
-    unfold pcat_prj2.
-    subst h2_tgt.
-    subst Y.
-    subst xxx; simpl.
-    unfold tgt; simpl.
-    destruct h2 as [m2 [ma2 mb2]].
-    auto.
-  }  
-Defined.
-
-
-Lemma H0_cat_comp' (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
-
-  Fail pose PC : InternalPreCat.type cat := HB.pack T.
-
-  (*** lifting of h1 and h2 to D1 objects and iHoms *)
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  (* source of h1 (from the iHom object) *)
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  (* target of h2 (from the iHom object) *)
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-
-(*  (*** product as a span *)
-  set pp := iprod_pb hhh1 hhh2. 
-  set pp1 := iprod hhh1 hhh2.
-*)
-  (* projections of the product as span *)
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  
-(*  have @ipp := iHom_prod_liftH h1 h2. *)
-(*
-  (* source and target of the product as span *)
-  pose pp_src := @src cat (D0_cat T) (iHom_prod_liftE pp).
-  pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftE pp).
-  simpl in *.
-*)
-  (* alternative - source and target of the product as span *)
-  set prod_src_f := il \; h1_src.
-  set prod_tgt_f := ir \; h2_tgt.
-
-(*  
-  (*** product of C1 - alternative to il and ir *)
-  set ilC1 := iprodl (@C1 cat T) (@C1 cat T).
-  set irC1 := iprodr (@C1 cat T) (@C1 cat T).
-*)
-  (* source and target of C1 - generic *)
-  have @srcC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact src0.
-  }
-  have @tgtC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact tgt0.
-  }
-(*
-  (* source and target of the product - generic *)
-  set prod_srcC1 := ilC1 \; srcC1.  
-  set prod_tgtC1 := irC1 \; tgtC1.  
-*)  
-
-  (*** product as ptype *)
-  have @xxx0 := mk_ptype_aux h1 h2.
-  have @xxx := mk_prod_aux h1 h2. 
-  simpl in *.
-
-(*  
-  (* type equivalence, between product of C1 and span product *)
-  assert ((@C1 cat T *_ T @C1 cat T) = (hhh1 *_ (D0_cat T) hhh2)) as Et.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    auto.
-  }
-*)
-
-  (*** horizontal composition (as iHomHom) *) 
-  set cmp_ihh := @icompI cat T.
-  simpl in *.
-  
-(* ideally, we need: 
-
-   comp_ihh \; src C1  =  prod_src_f  
-
-   however, comp_ihh needs to become comp_f (a functor)
-*)
-(*
-  Fail assert (cmp_ihh \; srcC1 = cmp_ihh \; srcC1).   
-  Fail assert (cmp_ihh \; src = prod_src_f).  
- *)
-  
-  (* composition as functor *)
-  destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
-  simpl in *.
-
- (* just to check the implicit types of C1 
-    (the answer is "@C1 cat T")
-
-    assert (@C1 cat T *_ T @C1 cat T ~> @C1 cat T).
-    exact cmp_f.
-  *)
-
-  (*** source and target of the composition *)
-  set cmp_f_src := cmp_f \; srcC1.
-  set cmp_f_tgt := cmp_f \; tgtC1.
-
-(*  
-  (* sanity check *)
-  assert (cmp_f_src = cmp_f \; srcC1).
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    auto.
-  }
-  clear H.
-*)  
-
-  (* type mismatch *)
-(*  Fail assert (cmp_f_src = prod_src_f). *) 
-
-(*  
-  (**************** type checks, but is not right *)
-  assert (cmp_f_src = prod_srcC1) as U.
-  { subst cmp_f_src.
-    subst prod_srcC1.
-    subst ilC1.
-    subst srcC1.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *.
-    f_equal.
-    (* not good, composition can't be equal to projection *)
-    admit.
-  }  
-*)
-
-  (****************** pointed result - too weak, anyway? *)
-  (* product of C1, from xxx  *)
-  have @X : (@C1 cat T *_ T @C1 cat T).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    exact xxx.
-  }
-  (* product as a span, from xxx *)
-  have @Y : (hhh1 *_ (D0_cat T) hhh2).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    exact xxx.
-  }
-  (* functor application *)
-(*
-  (* the source of the composition object obtained from X, i.e. 
-     (composition morphism > source) X *)
-  set cmp_obj_src := cmp_f_src X.
-  set cmp_obj_tgt := cmp_f_tgt X.
-  (* the source of the product object obtained from Y. i.e. 
-     (left projection > source) Y *)
-  set prod_obj_src := prod_src_f Y.
-  set prod_obj_tgt := prod_tgt_f Y.
-*)
-  (* this will type checks only after destructing T 
-      Fail set ttt := cmp_f xxx.
-  *)  
-
-  assert (cmp_f_src X = prod_src_f Y) as srcE.
-  { subst cmp_f_src prod_src_f.
-    subst srcC1.
-    subst h1_src; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj1.
-
-    assert (src0 (cmp_f Y) = (cmp_f \; src0) Y) as ee1.
-    { auto. }
-    rewrite ee1.   
-    rewrite cmp_p1.
-    auto.
-  } 
-
-  assert (cmp_f_tgt X = prod_tgt_f Y) as tgtE.
-  { subst cmp_f_tgt prod_tgt_f.
-    subst tgtC1.
-    subst h2_tgt; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj2.
-
-    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee1.
-    { auto. }
-
-    rewrite ee1.
-    rewrite cmp_p2.
-    auto.
-  } 
-
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  unfold dcHhom.
-  simpl.
-
-  (* composition object *)
-  exists (cmp_f xxx).
-
-  split.
-  { rewrite srcE.
-    unfold pcat_prj1.
-    subst h1_src.
-    subst Y.
-    subst xxx; simpl.
-    unfold src; simpl.
-    destruct h1 as [m1 [ma1 mb1]].
-    auto.
-  }  
-  { rewrite tgtE.
-    unfold pcat_prj2.
-    subst h2_tgt.
-    subst Y.
-    subst xxx; simpl.
-    unfold tgt; simpl.
-    destruct h2 as [m2 [ma2 mb2]].
-    auto.
-  }  
-Defined.
-
-
-Lemma H0_cat_comp'' (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
-
-  (*** lifting of h1 and h2 to D1 objects and iHoms *)
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  (* source of h1 (from the iHom object) *)
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  (* target of h2 (from the iHom object) *)
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-
-  (* projections of the product as span *)
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  
-  (* source and target of the product as span *)
-  set prod_src_f := il \; h1_src.
-  set prod_tgt_f := ir \; h2_tgt.
-
-  (*** product as ptype *)
-  have @xxx := mk_prod_aux h1 h2. 
-  simpl in *.
-
-  (*** horizontal composition (as iHomHom) *) 
-  set cmp_ihh := @icompI cat T.
-  simpl in *.
-
-  (* composition as functor *)
-  destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
-  simpl in *.
-  
-  (* product of C1, from xxx  *)
-  have @X : (@C1 cat T *_ T @C1 cat T).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    exact xxx.
-  }
-  (* product as a span, from xxx *)
-  have @Y : (hhh1 *_ (D0_cat T) hhh2).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    exact xxx.
-  }
-
-  set cmp_f_src := cmp_f \; src.
-  set cmp_f_tgt := cmp_f \; tgt.
-
-(*  
-  (* source and target of C1 - generic *)
-  have @srcC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact src0.
-  }
-  have @tgtC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact tgt0.
-  }
-*)
-  
-(* ideally, we need: 
-
-   comp_f \; src  =  prod_src_f  
-*)
-(*  
-  (*** source and target of the composition *)
-  set cmp_f_src := cmp_f \; srcC1.
-  set cmp_f_tgt := cmp_f \; tgtC1.
-*)
-  
-  (* functor application *)
-  (* the source of the composition object obtained from X, i.e. 
-     (composition morphism > source) X 
-   equals the source of the product object obtained from Y. i.e. 
-     (left projection > source) Y *)
-  assert (cmp_f_src X = prod_src_f Y /\
-          cmp_f_tgt X = prod_tgt_f Y) as stE.
-  { subst cmp_f_src prod_src_f.
-    subst cmp_f_tgt prod_tgt_f.
-    unfold src, tgt.
-    subst h1_src h2_tgt; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj1, pcat_prj2.
-
-    assert (src0 (cmp_f Y) = (cmp_f \; src0) Y) as ee1.
-    { auto. }
-    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee2.
-    { auto. }    
-    rewrite ee1.
-    rewrite ee2.
-    rewrite cmp_p1.
-    rewrite cmp_p2.
-    auto.
-  }
-
-  destruct stE as [srcE tgtE].
-
-(*  
-  (* similarly, for the target *)
-  assert (cmp_f_tgt X = prod_tgt_f Y) as tgtE.
-  { subst cmp_f_tgt prod_tgt_f.
-    unfold tgt.
-    subst h2_tgt; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj2.
-
-    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee1.
-    { auto. }
-
-    rewrite ee1.
-    rewrite cmp_p2.
-    auto.
-  } 
-*)
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  unfold dcHhom.
-  simpl.
-
-  (* composition object *)
-  exists (cmp_f xxx).
-
-  split.
-  { rewrite srcE.
-    unfold pcat_prj1.
-    subst h1_src.
-    subst Y.
-    subst xxx; simpl.
-    unfold src; simpl.
-    destruct h1 as [m1 [ma1 mb1]].
-    auto.
-  }  
-  { rewrite tgtE.
-    unfold pcat_prj2.
-    subst h2_tgt.
-    subst Y.
-    subst xxx; simpl.
-    unfold tgt; simpl.
-    destruct h2 as [m2 [ma2 mb2]].
-    auto.
-  }  
-Defined.
-
-
-Lemma H0_cat_comp''' (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
-
-  (*** lifting of h1 and h2 to D1 objects and iHoms *)
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  (* source of h1 (from the iHom object) *)
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  (* target of h2 (from the iHom object) *)
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-
-  (* projections of the product as span *)
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  
-  (* source and target of the product as span *)
-  set prod_src_f := il \; h1_src.
-  set prod_tgt_f := ir \; h2_tgt.
-
-  (*** product as ptype *)
-  have @xxx := mk_prod_aux h1 h2. 
-  simpl in *.
-
-  (*** horizontal composition (as iHomHom) *) 
-  set cmp_ihh := @icompI cat T.
-  simpl in *.
-
-  (* composition as functor *)
-  destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
-  simpl in *.
-  
-  (* product of C1, from xxx  *)
-  have @X : (@C1 cat T *_ T @C1 cat T).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    exact xxx.
-  }
-  (* product as a span, from xxx *)
-  have @Y : (hhh1 *_ (D0_cat T) hhh2).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    exact xxx.
-  }
-
-  set cmp_f_src := cmp_f \; src.
-  set cmp_f_tgt := cmp_f \; tgt.
-  
-  (* we need: comp_f \; src  =  prod_src_f *)
-  (* the source of the composition object obtained from X, i.e. 
-     (composition morphism > source) X 
-   equals the source of the product object obtained from Y. i.e. 
-     (left projection > source) Y 
-   and similarly for target *)
-  assert (cmp_f_src X = prod_src_f Y /\
-          cmp_f_tgt X = prod_tgt_f Y) as stE.
-  { subst cmp_f_src prod_src_f.
-    subst cmp_f_tgt prod_tgt_f.
-    unfold src, tgt.
-    subst h1_src h2_tgt; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj1, pcat_prj2.
-
-    assert (src0 (cmp_f Y) = (cmp_f \; src0) Y) as ee1.
-    { auto. }
-    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee2.
-    { auto. }    
-    rewrite ee1.
-    rewrite ee2.
-    rewrite cmp_p1.
-    rewrite cmp_p2.
-    auto.
-  }
-  destruct stE as [srcE tgtE].
-
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  unfold dcHhom.
-  simpl.
-
-  (* composition object *)
-  exists (cmp_f xxx).
-
-  split.
-  { rewrite srcE. 
-    destruct h1 as [m1 [ma1 mb1]].
-    auto.
-  }  
-  { rewrite tgtE.
-    destruct h2 as [m2 [ma2 mb2]].
-    auto.
-  }  
-Defined.
-
-
-Lemma H0_cat_comp'''' (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
-
-  (*** lifting of h1 and h2 to D1 objects and iHoms *)
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  (* source of h1 (from the iHom object) *)
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  (* target of h2 (from the iHom object) *)
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-
-  (* projections of the product as span *)
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  
-  (* source and target of the product as span *)
-  set prod_src_f := il \; h1_src.
-  set prod_tgt_f := ir \; h2_tgt.
-
-  (* source and target of C1 - generic *)
-  have @srcC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact src0.
-  }
-  have @tgtC1 : (@C1 cat T) ~> T.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    exact tgt0.
-  }
-
-  (*** product as ptype *)
-  have @xxx := mk_prod_aux h1 h2. 
-  simpl in *.
-
-  (*** horizontal composition (as iHomHom) *) 
-  set cmp_ihh := @icompI cat T.
-  simpl in *.
-  
-(* ideally, we need: 
-
-   comp_ihh \; src C1  =  prod_src_f  
-
-   however, comp_ihh needs to become comp_f (a functor)
-*)
-  
-  (* composition as functor *)
-  destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
-  simpl in *.
-
-  (*** source and target of the composition *)
-  set cmp_f_src := cmp_f \; srcC1.
-  set cmp_f_tgt := cmp_f \; tgtC1.
-
-  (* product of C1, from xxx  *)
-  have @X : (@C1 cat T *_ T @C1 cat T).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    exact xxx.
-  }
-  (* product as a span, from xxx *)
-  have @Y : (hhh1 *_ (D0_cat T) hhh2).
-  { unfold iprod.
-    unfold iprod_pb.
-    simpl.
-    exact xxx.
-  }
-  
-  (* functor application *)
-  (* the source of the composition object obtained from X, i.e. 
-     (composition morphism > source) X 
-   equals the source of the product object obtained from Y. i.e. 
-     (left projection > source) Y *)
-  assert (cmp_f_src X = prod_src_f Y) as srcE.
-  { subst cmp_f_src prod_src_f.
-    subst srcC1.
-    subst h1_src; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj1.
-
-    assert (src0 (cmp_f Y) = (cmp_f \; src0) Y) as ee1.
-    { auto. }
-    rewrite ee1.   
-    rewrite cmp_p1.
-    auto.
-  } 
-  (* similarly, for the target *)
-  assert (cmp_f_tgt X = prod_tgt_f Y) as tgtE.
-  { subst cmp_f_tgt prod_tgt_f.
-    subst tgtC1.
-    subst h2_tgt; simpl.
-    destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl.
-    destruct K1; simpl.
-    destruct K2 as [H]; simpl.
-    destruct H as [H]; simpl.
-    destruct H; simpl.
-    destruct K3; simpl.
-    destruct K4; simpl.
-    simpl in *. 
-    
-    assert (X = Y) as ee.
-    { auto. }
-    rewrite ee.
-    unfold pcat_prj2.
-
-    assert (tgt0 (cmp_f Y) = (cmp_f \; tgt0) Y) as ee1.
-    { auto. }
-
-    rewrite ee1.
-    rewrite cmp_p2.
-    auto.
-  } 
-
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  unfold dcHhom.
-  simpl.
-
-  (* composition object *)
-  exists (cmp_f xxx).
-
-  split.
-  { rewrite srcE.
-    unfold pcat_prj1.
-    subst h1_src.
-    subst Y.
-    subst xxx; simpl.
-    unfold src; simpl.
-    destruct h1 as [m1 [ma1 mb1]].
-    auto.
-  }  
-  { rewrite tgtE.
-    unfold pcat_prj2.
-    subst h2_tgt.
-    subst Y.
-    subst xxx; simpl.
-    unfold tgt; simpl.
-    destruct h2 as [m2 [ma2 mb2]].
-    auto.
-  }  
-Defined.
-
-
-
-(*    
-  (* does this make sense at all? it should, they both come from xxx
-  *)
-  assert (cmp_obj_src = prod_obj_src).
-  subst cmp_obj_src prod_obj_src.
-  rewrite H.
-  unfold pcat_prj1.
-  unfold h1_src.
-  unfold srcC1.
-  subst Y.
-  subst xxx.
-  simpl.
-  destruct h1; simpl.
-  (* need to apply cmp_p1, somehow *)
-  (*  
-  rewrite -cmp_p1.
-  f_equal.
-  subst Y.
-  subst xxx.
-  simpl.
-  destruct h1.
-  simpl. *)
-  admit.
-*)
-
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  unfold dcHhom.
-  simpl.
-
-  (* composition object *)
-  set cmp_obj := cmp_f xxx.
-  exists cmp_obj.
-
-  split.
-
-  (* basically, still corresponds to 
-     (cmp_obj_src = prod_obj_src)   *)
-  subst cmp_obj.
-
-  rewrite Eobj.
-  unfold pcat_prj1.
-  subst h1_src.
-  subst Y.
-  subst xxx.
-  simpl.
-  unfold src; simpl.
-  unfold hhom in h1.
-  unfold hom in h1; simpl in *.
-  unfold dcHhom in h1; simpl in *.
-  destruct h1; simpl in *.
-  destruct a0; auto.
-
-(*****)
-
-  
-  destruct h1.
-  
-  assert ((cmp_f \; srcC1) X = srcC1 X).
-  
-  unfold cmp_f.
-  subst xxx.
-  simpl.
-  destruct cmp_f.
-  simpl.
-  simpl in *.
-  (* as before, need to apply cmp_p1, somehow *)
-
-Admitted.  
-
-
-(********************************************************************)
-
-  destruct T; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-  
-
-  
-  assert (cmp_f \; src = prod_src_f).
-  destruct comp
-
-  set srcC1 := dcHsource T.
-  have srcC1' : D1_cat T ~> D0_cat T.
-  unfold D1_cat, D0_cat.
-  destruct T.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  destruct K1; simpl.
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  destruct K3; simpl.
-  destruct K4; simpl.
-  simpl in *. 
-  exact h1_src.
-  
-  exact (@src cat _ sort).
-  
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  
-  simpl in *.
-  
-  destruct K3; simpl.
-  destruct K4; simpl.
-    
-
-    := @src cat (D0_cat T).
-  
-  simpl in *.
-  destruct cmp_ihh as [cmp_f [[cmp_p1 cmp_p2]]].
-  simpl in *.
-  
-  assert (cmp_f \; (@src cat _ _) = cmp_f \; (@src cat _ _)).
-  unfold comp.
-  simpl.
-  unfold src.
-  simpl.
-  destruct T.
-  simpl.
-  destruct class as [K1 K2 K3 K4]; simpl.
-  (* destruct K1; simpl. *)
-  destruct K2 as [H]; simpl.
-  destruct H as [H]; simpl.
-  destruct H; simpl.
-  simpl in *.
-  
-  destruct K3; simpl.
-  destruct K4; simpl.
-  
-  set cmp_src := sort \; srcH.  
-  
-  
-  set cmp_src := cmp_ihh \; (@src cat (D0_cat T) (iHom_lift (D1_cat T))).
-
-  
-  unfold hom in cmp_ihh.
-  simpl in *.
-  assert ()  
-
-Definition iHom_prod_compA (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : D1_cat T.
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-  
-  set pp := iprod_pb hhh1 hhh2. 
-  set pp1 := iprod hhh1 hhh2. 
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  have @xxx := mk_prod_aux h1 h2.
-  simpl in *.
-  
-  pose pp_src := @src cat (D0_cat T) (iHom_prod_liftE pp).
-  pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftE pp).
-  
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-  
-  Fail pose PC : InternalPreCat.type cat := HB.pack T.
-
-  destruct T; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-
-  unfold dcHhom in *; simpl in *; simpl.
-  
-  unfold hhom in icompI0; simpl in *.
-  unfold hom in icompI0; simpl in *.
-
-  destruct icompI0 as [ff class]; simpl in *.
-  destruct class as [Q]; simpl in *.
-  destruct Q as [p1 p2]; simpl in *.
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-  
-  set yyy := ff xxx.
-  exact yyy.
-Defined.
-
-Definition iHom_prod_comp (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  iHom (D0_cat T) := iHom_lift (iHom_prod_compA h1 h2). 
-
-Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : a +> c.
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-  
-  set pp := iprod_pb hhh1 hhh2. 
-  set pp1 := iprod hhh1 hhh2. 
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  have @xxx := mk_prod_aux h1 h2.
-  simpl in *.
-  
-  pose pp_src := @src cat (D0_cat T) (iHom_prod_liftE pp).
-  pose pp_tgt := @tgt cat (D0_cat T) (iHom_prod_liftE pp).
-  
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
-
-  pose ww := iHom_prod_compA h1 h2. 
-  pose ww1 := iHom_prod_comp h1 h2. 
-
-  pose ww_src := @src cat (D0_cat T) ww1.
-  pose ww_tgt := @tgt cat (D0_cat T) ww1.
-
-  
-  
-  destruct T eqn: T1; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-  
-  unfold hhom; simpl.
-  unfold hom; simpl.
-  unfold dcHhom; simpl.
-  simpl; simpl in *.
-
-  exists ww.
-  split.
-  assert (src0 ww = ww_src ww) as E1.
-  { auto. }
-(*  rewrite E1. *)
-  destruct icompI0; simpl in *.
-  destruct class; simpl in *.
-  destruct encatI_tmp_IsInternalHomHom_mixin; simpl in *.
-  subst ww; simpl.
-
-  destruct src0.
-  simpl; simpl in *.
-  destruct h1.
-  destruct h2.
-
-  simpl; simpl in *.
-  destruct sort0; simpl in *; simpl.
-  destruct a0.
-  destruct a1.
-  rewrite -e.
-  f_equal.
-
-  rename x into x4.
-  subst hh1.
-  simpl; simpl in *.
-  subst xxx; simpl in *; simpl.
-  
-  destruct ww_src.
-  
-  destruct ww.
-  simpl in *.
-  
-  
-(*
-  set gg := (icompI0 \; src0).
-  
-  destruct T.
-  destruct class.
-  
-  set cmp := @icompI cat (D0_cat T).
-  simpl in *.
-  
-  destruct T eqn: T1; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-
-  destruct icompI0 as [f class]; simpl in *.
-  destruct class as [Q]; simpl in *.
-  destruct Q as [p1 p2]; simpl in *.
-  
-  assert (f \; @src cat sort C2 = f \; @src cat sort C2).
   
   econstructor.
-  instantiate (1 := pp).
-  econstructor; eauto.
-  econstructor; eauto.
-  { destruct x.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (il \; src0).
-  }  
-  { destruct y.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (ir \; tgt0).
-  }  
-Defined.  
-*)
 
+  Unshelve.
 
-(*
+  2: { exact (hh1, hh2). }
 
-Definition iHom_prod_comp (T: doublecat) (x y: iHom (D0_cat T)) :
-  iHom (D0_cat T).
-  set pp := iprod x y.
-  set il := iprodl x y.
-  set ir := iprodr x y.
-
-  Fail pose PC : InternalPreCat.type cat := HB.pack T.
-
-  destruct T eqn: T1; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-
-
-(*  
-  have @PC : InternalPreCat.type cat.
-  { destruct T.
-    destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-    destruct K3; eauto.
-    econstructor; eauto.
-    instantiate (1:= sort).
-    econstructor; eauto.
-    econstructor; eauto.
+    simpl; simpl in *.    
+    subst tgt_h1.
+    subst src_h2.
+    simpl.
+    subst hhh1 hhh2.
+    subst hh1 hh2.
+    simpl in *; simpl. 
+  
+    destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+    destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+    rewrite q1.
+    rewrite p2.
+    auto.
   }
-  destruct PC as [C0 K]; simpl in *.
-  destruct K as [K1 K2 K3].
-  destruct K1.
-  destruct K2 as [H].
-  destruct H as [H].
-  destruct H.
-  destruct K3.
-  simpl in *.
-*)
-
-(*  unfold D0_cat; simpl.
-  destruct T; simpl; simpl in *. *)
-  econstructor; eauto. 
-  instantiate (1:= pbC0 C1 C1).
-  econstructor; eauto.
-  econstructor; eauto.
-  
-  set gg := (icompI0 \; src0).
-  
-  
-  destruct T.
-  destruct class.
-  
-  set cmp := @icompI cat (D0_cat T).
-  simpl in *.
-  
-  
-  destruct T eqn: T1; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-
-  destruct icompI0 as [f class]; simpl in *.
-  destruct class as [Q]; simpl in *.
-  destruct Q as [p1 p2]; simpl in *.
-  
-  assert (f \; @src cat sort C2 = f \; @src cat sort C2).
-  
-  econstructor.
-  instantiate (1 := pp).
-  econstructor; eauto.
-  econstructor; eauto.
-  { destruct x.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (il \; src0).
-  }  
-  { destruct y.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (ir \; tgt0).
-  }  
-Defined.  
 
 *)
 
 (*
-Lemma iHom_prod_liftE (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : iHom (D0_cat T).
-  set xx := mk_prod_aux h1 h2.
-  set il := bot2left xx.
-  destruct xx as [[x1 x2] p].
-  set src1 := @src cat (D0_cat T) (iHom_morph_lift h1).
-  set tgt2 := @tgt cat (D0_cat T) (iHom_morph_lift h2).
-  set il := bot2left xx.
-  econstructor; eauto.
-  instantiate (1:=
-      (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2)).
-  econstructor; eauto.
-  econstructor; eauto.
-  
-  
-  set hh2 := iHom_morph_lift h2.
-  eapply (iHom_prod_liftB hh1 hh2).
-Defined.  
-*)
-
-(*
-  set X := mk_prod_aux h1 h2.
-  econstructor.
-  instantiate (1:=
-      (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2)).
-  econstructor; eauto.
-  econstructor; eauto.
-  destruct X as [[X1 X2] P].
-  simpl in *.
-  unfold iHom_morph_lift in *.
-  simpl; simpl in *.
-  unfold hom; simpl.
-
-  destruct T; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-  econstructor; eauto.
-  econstructor; eauto.
-  
-  unfold iHom_lift in X1; simpl in *.
-  
-  econstructor; eauto.
- 
-  set sss := @src cat _ X1.
-  destruct x
-  econstructor.
-*)
-
-
 Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   (h1: a +> b) (h2: b +> c) : a +> c.
 (*
@@ -3296,56 +2276,74 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   have @c2 : iHom (D0_cat T).
   { eapply (iHom0_lift c1). }
 *)
-  have @hh1: D1_cat T := D1_morph_lift h1.
-  have @hhh1 : iHom (D0_cat T) := iHom_lift hh1.
-  have @hh2: D1_cat T := D1_morph_lift h2.
-  have @hhh2 : iHom (D0_cat T) := iHom_lift hh2.
+  have @hh1: D1_cat T.
+  { eapply (@dcHhom_impl1 T). 
+    destruct T; simpl in *.
+    exists a.
+    exists b.
+    exact h1.
+  }
+  have @hhh1 : iHom (D0_cat T).
+  { eapply (iHom_lift hh1). }
+  have @hh2: D1_cat T.
+  { unfold hhom in *.
+    unfold hom in *; simpl.
+    set impl1 := (@dcHhom_impl1 T).
+    eapply impl1.
+    destruct T; simpl in *.
+    exists b.
+    exists c.
+    exact h2.
+  }
+  have @hhh2 : iHom (D0_cat T).
+  { eapply (iHom_lift hh2). }
   simpl in *.
  
+(*  set pb12 := iprod_pb hhh1 hhh2.   
+  unfold iprod_pb in pb12; simpl in *.
+  unfold pbk in pb12; simpl in *.
+*)
+
   pose src_h1 := @src cat (D0_cat T) hhh1.
   pose tgt_h1 := @tgt cat (D0_cat T) hhh1.
   pose src_h2 := @src cat (D0_cat T) hhh2.
   pose tgt_h2 := @tgt cat (D0_cat T) hhh2.
 
-  have @xxx := mk_prod_aux h1 h2.
+  have @xxx : (commaE.ptype tgt_h1 src_h2).
+  { unfold commaE.ptype.
+        
+    destruct T; simpl in *.
+    destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+    destruct K1 as [C2]; simpl in *; simpl.
+    destruct K2 as [H1]; simpl in *; simpl.
+    destruct H1 as [H1]; simpl in *; simpl.
+    destruct H1; simpl in *; simpl.
+    destruct K3; simpl in *; simpl.
+    destruct K4; simpl in *; simpl.
+    simpl in *; simpl.
+    
+    econstructor.
 
-  set yyy := icompI xxx.
-(*  
-  have xxx1 := 
+    Unshelve.
+
+    2: { exact (hh1, hh2). }
+
+    simpl; simpl in *.    
+    subst tgt_h1.
+    subst src_h2.
+    simpl.
+  (*  subst hhh1 hhh2. *)
+    subst hh1 hh2.
+    simpl in *; simpl. 
   
-  have @yyy := iHom_prod_liftA h1 h2. 
-*)  
+    destruct h1 as [h1 [p1 q1]]; simpl in *; simpl.
+    destruct h2 as [h2 [p2 q2]]; simpl in *; simpl.
+    rewrite q1.
+    rewrite p2.
+    auto.
+  }
 
-  destruct T; simpl in *.
-  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
-  destruct K1 as [C2]; simpl in *; simpl.
-  destruct K2 as [H1]; simpl in *; simpl.
-  destruct H1 as [H1]; simpl in *; simpl.
-  destruct H1; simpl in *; simpl.
-  destruct K3; simpl in *; simpl.
-  destruct K4; simpl in *; simpl.
-  
-  unfold dcHhom in *; simpl in *; simpl.
-  
-  unfold hhom in icompI0; simpl in *.
-  unfold hom in icompI0; simpl in *.
 
-  destruct icompI0 as [f class]; simpl in *.
-  destruct class as [Q]; simpl in *.
-  destruct Q as [p1 p2]; simpl in *.
-
-  unfold hhom.
-  unfold hom; simpl; simpl in *.
-
-  set yyy := f xxx.
-  unfold dcHhom; simpl.
-  exists yyy.
-
-  destruct xxx as [[xxx1 xxx2] p] eqn: X.
-  simpl in *.
-  
-   assert (f \; src0 = src xxx1) as A.
-  
   
   pose pb12 := iprod_pb hhh1 hhh2.
   
@@ -3367,7 +2365,9 @@ Lemma H0_cat_comp (T: doublecat) (a b c: dcHD0Quiver T)
   unfold pbk in pb12; simpl in *.
 
 Admitted. 
-  
+*)
+
+
 (***)
 (*  
   destruct T; simpl in *.
@@ -3673,7 +2673,7 @@ Admitted.
 Admitted.   
 *)
 
-
+(*
 Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
   have @D0 : cat := D0_cat T.
 
@@ -3751,3 +2751,5 @@ Lemma HHom' (X: doublecat) (x y: D0_cat X) : Type.
 
   (* exact (x = cmp1 \; src0 /\ y = cmp1 \; tgt0). *)
 Admitted.
+
+*)
