@@ -679,9 +679,7 @@ Definition dcHD0Quiver (T: doublecat) : HD0Quiver.type.
   econstructor; eauto.
 Defined.
 
-
 (************************************************************************)
-
 
 Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T) 
   (h1: a +> b) : D1_cat T.
@@ -778,14 +776,105 @@ Definition dcHcompI (T: doublecat) :
   simpl in *; simpl.
   exact icompI.
 Defined.
- 
-Program Definition ipairCCC (C: cat) {x0 x1 x2 x3 : C}
-  (f : x0 ~> x2) (g : x1 ~>_(iHom C0) x3) :
-  sigma mr: (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C),
-      @iprodl C C0 x0 x1 \; f = mr \; @iprodl C C0 x2 x3 /\
-      @iprodr C C0 x0 x1 \; g = mr \; @iprodr C C0 x2 x3. 
+*)
+
+Definition dcHcompI (T: doublecat) :
+  pbC0 (@C1 cat T) (@C1 cat T) ~>_(iHom T) (iHom_lift T).
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  eapply icompI.
+Defined.  
+
+Definition dcHunitI (T: doublecat) :
+ (iHom0_lift T) ~>_(iHom T) (iHom_lift T).
+  destruct T.    
+  destruct class as [K1 K2 K3 K4].
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  eapply iidI.  
+Defined.
+
+Definition dcIpairI (T: icat cat) {x0 x1 x2 x3 : iHom T}  
+  (f : x0 ~>_(iHom T) x2) (g : x1 ~>_(iHom T) x3) : 
+    (pbC0 x0 x1) ~>_(iHom T) (pbC0 x2 x3).
+eapply (@ipairI cat); eauto.
+Defined.
+
+Definition dcIprodIAsc (T: icat cat) (c1 c2 c3 : iHom T) :   
+(*   ((pbC0 (pbC0 c1 c2) c3)) ~>_(iHom T) (pbC0 c1 (pbC0 c2 c3)). *)
+  (((c1 *_T c2 : iHom T) *_T c3) : iHom T) ~>_(iHom T)
+    (c1 *_T (c2 *_T c3 : iHom T) : iHom T).  
+eapply (@iprodIAsc cat).             
+Defined.
+
+(*
+Definition icompA1_def (T: icat cat) :=    
+  (dcIpairI (dcHcompI T) (@idmap (iHom T) (iHom_lift T))
+     \; dcHcompI T). =
+     ((@iprodIAsc cat (D0_cat T) (D1_cat: D1_iHom T)) _ _) \;
+       <<( (@idmap  (D0_iHom T) (D1_cat: D1_iHom T)), dcHcomp T )>> \;
+       dcHcomp T.
+*)
 
 
+(**********************************************************************)
+
+Definition dcHsourceF (T: doublecat) (C: iHom T) :
+  Functor.type (C :> cat) (D0_cat T) := @src cat T C.
+
+Definition dcHtargetF (T: doublecat) (C: iHom T) :
+  Functor.type (C :> cat) (D0_cat T) := @tgt cat T C.
+
+Definition ipairCC1 (T: icat cat) {x0 x1 x2 x3 : iHom T}  
+  (f : (x0 :> cat) ~>_cat (x2 :> cat)) (g : (x1 :> cat) ~>_cat (x3 :> cat)) :
+  dcHsourceF x0 = f \; dcHsourceF x2 ->
+  dcHsourceF x1 = g \; dcHsourceF x3 ->
+  dcHtargetF x0 = f \; dcHtargetF x2 ->
+  dcHtargetF x1 = g \; dcHtargetF x3 ->  
+  sigma mr: (x0 *_T x1 :> cat) ~>_cat (x2 *_T x3 :> cat),
+      iprodl x0 x1 \; f = mr \; iprodl x2 x3 /\
+        iprodr x0 x1 \; g = mr \; iprodr x2 x3.
+Admitted. 
+
+Program Definition ipairCP (T: icat cat) {x0 x1 x2 x3 : iHom T}
+  (f : x0 ~>_(iHom T) x2) (g : x1 ~>_(iHom T) x3) :
+  sigma mr: (x0 *_T x1 :> cat) ~>_cat (x2 *_T x3 :> cat),
+      iprodl x0 x1 \; f = mr \; iprodl x2 x3 /\
+      iprodr x0 x1 \; g = mr \; iprodr x2 x3. 
+eapply (@ipairP cat); eauto.
+Defined.
+
+Program Definition ipairCC (T: icat cat) {x0 x1 x2 x3 : iHom T}
+  (f : x0 ~>_(iHom T) x2) (g : x1 ~>_(iHom T) x3) :
+  (x0 *_T x1 :> cat) ~>_cat (x2 *_T x3 :> cat). 
+eapply (@ipairC cat); eauto.
+Defined.
+
+Program Definition cat2ihom (T: icat cat) (C: cat) (s t: C ~> T) : iHom T.
+econstructor; eauto.
+instantiate (1:=C).
+econstructor; eauto.
+econstructor.
+exact s.
+exact t.
+Defined. 
+
+(*
+Program Definition ihom2cat (T: icat cat) (C: iHom T) : cat :=
+  InternalHom.sort T.
+*)
+
+(*
 Definition icompA1_def (T: icat cat) :=    
  ( <( dcHcomp T,
       @idmap (D0_iHom T) (D1_cat: D1_iHom T) )> \; dcHcomp T ) =
@@ -799,7 +888,6 @@ Definition icompA1_def (T: icat cat) :=
      ((@iprodIAsc cat (D0_cat T) (D1_cat: D1_iHom T)) _ _) \;
        <<( (@idmap  (D0_iHom T) (D1_cat: D1_iHom T)), dcHcomp T )>> \;
        dcHcomp T.
-
 *)
 
 (********************************************************************)

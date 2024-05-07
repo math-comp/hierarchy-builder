@@ -537,152 +537,7 @@ Lemma pbsquare_is_pullback {C: prepbcat} {C0} (X Y: iHom C0) :
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
 
-(* we define pairing of preserving morphisms as a (non-preserving)
-morphism *)
-(*
-Program Definition ipairC' {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
-  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
-  (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
-
-  remember (x0 *_ C0 x1 : iHom C0) as Pb1.
-  remember (x2 *_ C0 x3 : iHom C0) as Pb2.
-
-  remember (@Cospan C (x0 :> C) (x1 :> C) C0
-              (@tgt C C0 x0) (@src C C0 x1)) as Csp1.
-
-  remember (@Cospan C (x2 :> C) (x3 :> C) C0
-              (@tgt C C0 x2) (@src C C0 x3)) as Csp2.
-
-  set (src0 := @src C C0 x0). 
-  set (tgt0 := @tgt C C0 x0). 
-
-  set (src1 := @src C C0 x1). 
-  set (tgt1 := @tgt C C0 x1). 
-
-  set (src2 := @src C C0 x2). 
-  set (tgt2 := @tgt C C0 x2). 
-
-  set (src3 := @src C C0 x3). 
-  set (tgt3 := @tgt C C0 x3). 
-
-  remember (@src C C0 (x0 *_C0 x1)) as src01. 
-  remember (@tgt C C0 (x0 *_C0 x1)) as tgt01. 
-  
-  remember (@src C C0 (x2 *_C0 x3)) as src23. 
-  remember (@tgt C C0 (x2 *_C0 x3)) as tgt23. 
-
-  set (Sp1 := pbk (x0 :> C) (x1 :> C) Csp1).
-  set (Sp2 := pbk (x2 :> C) (x3 :> C) Csp2).
-
-  assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1) as PBa1.
-  { remember C as C'.
-    destruct C as [C class].
-    destruct class as [A1 A2 A3 A4 A5 A6].
-    destruct A6 as [B1].
-    assert (pb (pbk (x0 :> C') (x1 :> C') Csp1)).
-    { inversion HeqC'; subst.
-      eapply B1; eauto. }
-    econstructor; eauto.
-  }
-
-  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
-  { remember C as C'.
-    destruct C as [C class].
-    destruct class as [A1 A2 A3 A4 A5 A6].
-    destruct A6 as [B1].
-    assert (pb (pbk (x2 :> C') (x3 :> C') Csp2)).
-    { inversion HeqC'; subst.
-      eapply B1; eauto. }
-    econstructor; eauto.
-  }
-  
-(*  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
-  admit.
-*)  
-  assert ((x0 *_ C0 x1) = bot Sp1) as E01.
-  { subst Sp1.
-    unfold iprod.
-    unfold iprod_pb. 
-    rewrite HeqCsp1; auto.
-  }  
-
-  assert ((x2 *_ C0 x3) = bot Sp2) as E23.
-  { subst Sp2.
-    unfold iprod.
-    unfold iprod_pb.
-    rewrite HeqCsp2; auto.
-  }  
-  
-  set (prj11 := @iprodl C C0 x0 x1). 
-  set (prj12 := @iprodr C C0 x0 x1). 
-
-  set (prj21 := @iprodl C C0 x2 x3). 
-  set (prj22 := @iprodr C C0 x2 x3). 
-
-  set (ff := prj11 \; f).
-  set (gg := prj12 \; g).
-  
-  assert ((f : (x0 :> C) ~>_C (x2 :> C)) \; tgt2 = tgt0) as E20.
-  { remember f as f1.
-    destruct f as [fsort fclass].
-    destruct fclass as [fIM].
-    destruct fIM.
-    inversion Heqf1; subst.
-    simpl in *; simpl; auto.
-  }  
-    
-  assert ((g : (x1 :> C) ~>_C (x3 :> C)) \; src3 = src1) as E31.
-  { remember g as g1.
-    destruct g as [gsort gclass].
-    destruct gclass as [gIM].
-    destruct gIM.
-    inversion Heqg1; subst.
-    simpl in *; simpl; auto.
-  }  
-
-  assert (prj11 \; tgt0 = prj12 \; src1) as E11.
-  { destruct PBa1 as [C1 C2].
-    destruct C1 as [C3].
-    inversion HeqCsp1; subst.
-    simpl in *; auto.
-   }
-  
-  assert (ff \; tgt2 = gg \; src3) as E1.
-  { subst ff gg.
-    setoid_rewrite <- compoA.
-    rewrite E20.
-    rewrite E31.
-    exact E11.
-  }  
-    
-  (* basically, follows from pbquare_universal and E1.
-     sordid eta-conversion issue fixed by pbsquare_is_pullback *)
-  assert (sigma m: ((x0 *_ C0 x1) ~>_C (x2 *_ C0 x3) :> C),
-             ff = m \; prj21 /\ gg = m \; prj22) as EM.
-  { eapply (@pbsquare_universal C) ; eauto.
-
-    remember C as C'.
-    destruct C as [C class].
-    destruct class as [A1 A2 A3 A4 A5 A6].
-    destruct A6 as [B1].
-    subst prj21 prj22.
-
-    (* surprisingly, this does not work with pbsquare_is_pulback_sym *)
-    (* rewrite - pbsquare_is_pullback_sym. 
-       Set Printing All. 
-    *)
-
-    rewrite pbsquare_is_pullback.
-    inversion HeqCsp2; subst.
-    subst Sp2.
-    exact PBa2.
-  }  
-   
-  destruct EM as [mm [EM1 EM2]].
-  exact mm.
-Defined.   
-*)
-
+(* we define pairing of preserving morphisms as a morphism *)
 Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   sigma mr: (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C),
@@ -717,11 +572,6 @@ Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   set (Sp1 := pbk (x0 :> C) (x1 :> C) Csp1).
   set (Sp2 := pbk (x2 :> C) (x3 :> C) Csp2).
 
-(*  
-  set lside := iprodl x0 x1 \; f.
-  set rside := iprodr x0 x1 \; g.
-*)  
-
   assert (@Pullback C (x0 :> C) (x1 :> C) Csp1 Sp1) as PBa1.
   { remember C as C'.
     destruct C as [C class].
@@ -744,9 +594,6 @@ Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
     econstructor; eauto.
   }
   
-(*  assert (@Pullback C (x2 :> C) (x3 :> C) Csp2 Sp2) as PBa2.
-  admit.
-*)  
   assert ((x0 *_ C0 x1) = bot Sp1) as E01.
   { subst Sp1.
     unfold iprod.
@@ -767,7 +614,6 @@ Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   set (prj21 := @iprodl C C0 x2 x3). 
   set (prj22 := @iprodr C C0 x2 x3). 
 
-  (**)
   set (ff := prj11 \; f).
   set (gg := prj12 \; g).
   
@@ -820,7 +666,6 @@ Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
     (* rewrite - pbsquare_is_pullback_sym. 
        Set Printing All. 
     *)
-
     rewrite pbsquare_is_pullback.
     inversion HeqCsp2; subst.
     subst Sp2.
@@ -829,6 +674,7 @@ Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   exact EM.
 Defined.   
 
+(* pairing of preserving morphisms as non-preserving morphism *)
 Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C).
@@ -837,6 +683,7 @@ Program Definition ipairC {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   exact mm.
 Defined.   
 
+(* pairing of preserving morphisms as preserving morphism *)
 Program Definition ipairI {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
   (x0 *_C0 x1 : iHom C0) ~>_(iHom C0) (x2 *_C0 x3 : iHom C0).
@@ -876,293 +723,8 @@ Notation "<( f , g )>" := (ipairC f g).
 
 Notation "<<( f , g )>>" := (ipairI f g).
 
-(*
-Lemma iprod_src {C : pbcat} {C0 : C} (x0 x1 : iHom C0) :
-  @src C C0 (x0 *_C0 x1) = iprodl x0 x1 \; @src C C0 x0.
-  auto.
-Defined.
-
-Lemma iprod_tgt {C : pbcat} {C0 : C} (x0 x1 : iHom C0) :
-  @tgt C C0 (x0 *_C0 x1) = iprodr x0 x1 \; @tgt C C0 x1.
-  auto.
-Defined.
-
-Lemma ipair_left {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}
-  (f : x0 ~>_(iHom C0) x2) (g : x1 ~>_(iHom C0) x3) :
-  <(  f, g )> \; iprodl x2 x3 = iprodl x0 x1 \; f.
-destruct f as [f [[cf1 cf2]]].
-destruct g as [g [[cg1 cg2]]].
-simpl; simpl in *.
-unfold ipairC; simpl.
-unfold iprodl, iprodr.
-simpl.
-destruct x0 as [x0 [[src0 tgt0]]]; simpl; simpl in *.
-destruct x1 as [x1 [[src1 tgt1]]]; simpl; simpl in *.
-destruct x2 as [x2 [[src2 tgt2]]]; simpl; simpl in *.
-destruct x3 as [x3 [[src3 tgt3]]]; simpl; simpl in *.
-unfold iprod_pb; simpl.
-move: (pbk x0 x1 _).
-unfold pbk; simpl.
-
-destruct (pbsquare_universal _ _).
-destruct a; simpl; simpl in *.
-
-  
-  @src C C0 (x0 *_C0 x1) = iprodl x0 x1 \; @src C C0 x0.
-  auto.
-Defined.
-
-Lemma iprod_tgt {C : pbcat} {C0 : C} (x0 x1 : iHom C0) :
-  @tgt C C0 (x0 *_C0 x1) = iprodr x0 x1 \; @tgt C C0 x1.
-  auto.
-Defined.
-*)
-
-(* nested product: there exists a morphism (here, a non-preserving
-one) that corresponds to the associativity of product *)
-(*
-Program Definition iprodCAsc' {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
-  (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
-    ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C).
-
-set (src1 := @src C C0 c1).
-set (src2 := @src C C0 c2).
-set (src3 := @src C C0 c3).
-set (tgt1 := @tgt C C0 c1).
-set (tgt2 := @tgt C C0 c2).
-set (tgt3 := @tgt C C0 c3).
-
-set (Pb12 := c1 *_ C0 c2 : iHom C0).
-set (Pb23 := c2 *_ C0 c3 : iHom C0).
-set (Pb15 := c1 *_ C0 Pb23 : iHom C0).
-set (Pb33 := Pb12 *_ C0 c3 : iHom C0).
-
-set (j12L := iprodl c1 c2).
-set (j12R := iprodr c1 c2).
-set (j23L := iprodl c2 c3).
-set (j23R := iprodr c2 c3).
-set (j15L := iprodl c1 Pb23).
-set (j15R := iprodr c1 Pb23).
-set (j33L := iprodl Pb12 c3).
-set (j33R := iprodr Pb12 c3).
-
-set (src23 := @src C C0 Pb23).
-set (tgt23 := @tgt C C0 Pb23).
-set (src12 := @src C C0 Pb12).
-set (tgt12 := @tgt C C0 Pb12).
-simpl.
-
-assert (src23 = j23L \; src2) as srcPb23.
-{ subst src23 j23L src2.
-  auto.
-}
-
-assert (tgt23 = j23R \; tgt3) as tgtPb23.
-{ subst tgt23 j23R tgt3.
-  auto.
-}
-
-assert (src12 = j12L \; src1) as srcPb12.
-{ subst src12 j12L src1.
-  auto.
-}
-
-assert (tgt12 = j12R \; tgt2) as tgtPb12.
-{ subst tgt12 j12R tgt2.
-  auto.
-}
-
-assert (j12L \; tgt1 = j12R \; src2) as sqPb12.
-{ set (X := @is_ppbk C).
-  specialize (X (c1 :> C) (c2 :> C)).
-  specialize (X (Cospan tgt1 src2)).
-  destruct X as [X].
-  simpl in X; auto.
-}
-
-assert (j23L \; tgt2 = j23R \; src3) as sqPb23.
-{ set (X := @is_ppbk C).
-  specialize (X (c2 :> C) (c3 :> C)).
-  specialize (X (Cospan tgt2 src3)).
-  destruct X as [X].
-  simpl in X; auto.
-}
-
-assert ((j33L \; j12R) \; tgt2 = j33R \; src3) as sqPb33.
-{ assert (j33L \; tgt12 = j33R \; src3) as H.
-  { subst j33L j33R.
-    set (X := @is_ppbk C).  
-    specialize (X (Pb12 :> C) (c3 :> C)).
-    specialize (X (Cospan tgt12 src3)).
-    destruct X as [X].
-    simpl in X.
-    auto.
-  }
-  setoid_rewrite <- compoA.
-  rewrite tgtPb12 in H; auto. 
-} 
-
-assert (pbsquare j23L j23R tgt2 src3) as pbsq23.
-{ subst j23L j23R.
-  rewrite pbsquare_is_pullback.
-
-  set (Csp23 := @Cospan C (c2 :> C) (c3 :> C) _ tgt2 src3).
-
-  remember C as C'.
-  destruct C as [C class].
-  destruct class as [A1 A2 A3 A4 A5 A6].
-  destruct A6 as [B1].
-    
-  assert (pb (pbk (c2 :> C') (c3 :> C') Csp23)) as X.
-  { inversion HeqC'; subst.
-    eapply B1; eauto.
-  }
-  econstructor; eauto.
-}
-
-assert (j15L \; tgt1 = (j15R \; j23L) \; src2) as sqPb15.
-{ assert (j15L \; tgt1 = j15R \; src23) as H.
-  { subst j15L j15R.
-    set (X := @is_ppbk C).  
-    specialize (X (c1 :> C) (Pb23 :> C)).
-    specialize (X (Cospan tgt1 src23)).
-    destruct X as [X].
-    simpl in X; auto.
-  }
-  setoid_rewrite <- compoA.
-  rewrite srcPb23 in H; auto. 
-} 
-
-
-assert (forall (e1: ((c2 *_C0 c3) :> C) = (Pb23 :> C)),
-    sigma (m23: (Pb33 :> C) ~> (Pb23 :> C)),
-          (j33L \; j12R = m23 \;;_e1 j23L) /\ (j33R = m23 \;;_e1 j23R))
-  as M23.
-{ intro e1.
-  subst Pb33.
-
-  eapply (@jm_pbsquare_universal C (c2 :> C) (c3 :> C) C0
-            (c2 *_ C0 c3 :> C) (Pb12 *_ C0 c3 :> C) (Pb23 :> C)
-            tgt2 src3 j23L j23R (j33L \; j12R) j33R pbsq23 sqPb33 e1); eauto.
-}
-
-assert (pbsquare j12L j12R tgt1 src2) as pbsq12.
-{ subst j12L j12R.
-  rewrite pbsquare_is_pullback.
-
-  set (Csp12 := @Cospan C (c1 :> C) (c2 :> C) _ tgt1 src2).
-
-  remember C as C'.
-  destruct C as [C class].
-  destruct class as [A1 A2 A3 A4 A5 A6].
-  destruct A6 as [B1].
-    
-  assert (pb (pbk (c1 :> C') (c2 :> C') Csp12)) as X.
-  { inversion HeqC'; subst.
-    eapply B1; eauto.
-  }
-  econstructor; eauto.
-}
-
-assert (forall (e1: ((c1 *_C0 c2) :> C) = (Pb12 :> C)),
-    sigma (m12: (Pb15 :> C) ~> (Pb12 :> C)),
-          (j15L = m12 \;;_e1 j12L) /\ (j15R \; j23L = m12 \;;_e1 j12R))
-  as M12. 
-{ intro e1.
-  subst Pb15.
-
-  eapply (@jm_pbsquare_universal C (c1 :> C) (c2 :> C) C0
-            (c1 *_ C0 c2 :> C) (c1 *_ C0 Pb23 :> C) (Pb12 :> C)
-            tgt1 src2 j12L j12R j15L (j15R \; j23L) pbsq12 sqPb15 e1); eauto.  
-}
-
-assert (((c1 *_C0 c2) :> C) = Pb12) as E12.
-{ auto. }
-destruct (M12 E12) as [m12 [m12_E m12_U]].
-
-assert (((c2 *_C0 c3) :> C) = Pb23) as E23.
-{ auto. }
-destruct (M23 E23) as [m23 [m23_E m23_U]].
-
-assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
-    j33L \; (j12R \; src2) = m23 \;;_e2 j23L \; src2) as M23_E1.
-{ intros e2.
-  unfold jmcomp.
-  destruct e2.
-(*  dependent destruction e2. *)
-  rewrite compoA.
-  rewrite m23_E.
-  unfold jmcomp.
-(*  clear -E23.
-  rewrite -compoA.
-  congr (_ \; _ \; _).
-  Set Printing All.
-  case: _ / E23.
-  do [destruct E23] in j23L m23 *. *)
-  dependent destruction E23.
-  rewrite compoA; auto.
-}  
-
-assert (forall (e3: ((c2 *_C0 c3) :> C) = Pb23),
-    (j33L \; j12L) \; tgt1 = m23 \;;_e3 j23L \; src2) as M23_E2.
-{ intros e3.
-  specialize (M23_E1 E23).
-  unfold jmcomp in M23_E1.
-  destruct E23.
-(*  dependent destruction E23. *)
-  unfold jmcomp.
-  dependent destruction e3.
-  setoid_rewrite <- compoA.
-  rewrite sqPb12.
-  rewrite M23_E1; auto.
-}
-
-assert (pbsquare j15L j15R tgt1 src23) as pbsq15.
-{ set (Csp15 :=
-        @Cospan C (c1 :> C) (Pb23 :> C) _ tgt1 (j23L \; src2)).
-  
-  subst j15L j15R.
-  rewrite pbsquare_is_pullback.
-
-  remember C as C'.
-  destruct C as [C class].
-  destruct class as [A1 A2 A3 A4 A5 A6].
-  destruct A6 as [B1].
-  assert (pb (pbk (c1 :> C') (Pb23 :> C') Csp15)) as X.
-  { inversion HeqC'; subst.
-    eapply B1; eauto. }
-  econstructor; eauto.
-}
-
-assert ((j33L \; j12L) \; tgt1 = m23 \; src23) as sqM23.
-{ specialize (M23_E2 E23).  
-  dependent destruction E23.
-  exact M23_E2.
-}
-
-assert ((((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33) as E33.
-{ auto. }
-
-assert (
-      forall (e1: (((c1 *_ C0 c2) *_ C0 c3) :> C) = Pb33),
-        sigma mm: ((c1 *_ C0 c2) *_ C0 c3) ~> (c1 *_ C0 (c2 *_ C0 c3)),
-        (j33L \; j12L = mm \; j15L) /\ (idmap \;;_e1 m23 = mm \; j15R)) as X.
-{ intro e1.
-  unfold jmcomp.
-  dependent destruction e1.
-  rewrite comp1o.
-  subst Pb12.
-  eapply (@pbsquare_universal C _ _ _ _ _ _ _ _ _ (j33L \; j12L) m23).
-  exact pbsq15.
-  exact sqM23.
-}  
-destruct (X E33) as [mm R].
-exact mm.
-Qed. 
-*)
-
-(* nested product: there exists a morphism (here, a non-preserving
-one) that corresponds to the associativity of product *)
+(* nested product: there exists a morphism that corresponds to the
+associativity of product *)
 Program Definition iprodPAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   sigma mr: (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
                ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C),
@@ -1334,7 +896,6 @@ assert (forall (e2: ((c2 *_C0 c3) :> C) = Pb23),
 { intros e2.
   unfold jmcomp.
   destruct e2.
-(*  dependent destruction e2. *)
   rewrite compoA.
   rewrite m23_E.
   unfold jmcomp.
@@ -1354,7 +915,6 @@ assert (forall (e3: ((c2 *_C0 c3) :> C) = Pb23),
   specialize (M23_E1 E23).
   unfold jmcomp in M23_E1.
   destruct E23.
-(*  dependent destruction E23. *)
   unfold jmcomp.
   dependent destruction e3.
   setoid_rewrite <- compoA.
@@ -1417,6 +977,7 @@ dependent destruction E23.
 unfold jmcomp; simpl; auto.
 Defined.
 
+(* associativity morphism (non-preserving) *)
 Program Definition iprodCAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   (((c1 *_C0 c2 : iHom C0) *_C0 c3) :> C) ~>_C
     ((c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0) :> C).
@@ -1425,6 +986,7 @@ Program Definition iprodCAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   exact mm.
 Defined.
 
+(* associativity morphism (preserving) *)
 Program Definition iprodIAsc {C : pbcat} {C0 : C} (c1 c2 c3 : iHom C0) :
   (((c1 *_C0 c2 : iHom C0) *_C0 c3) : iHom C0) ~>_(iHom C0)
     (c1 *_C0 (c2 *_C0 c3 : iHom C0) : iHom C0). 
@@ -1506,8 +1068,6 @@ Defined.
 (* Check (iquiver Type <~> quiver). *) 
 (* Check (iprecat Type <~> precat). *)
 
-
-
 (* An internal category moreover must satisfy additional properies on
 iid and icomp (associativity and unit laws) *)
 #[key="C0"]
@@ -1529,7 +1089,6 @@ iid and icomp (associativity and unit laws) *)
 HB.structure Definition InternalCatW (C : pbcat) :=
   {C0 of @IsInternalCatW C C0}.
 (* Check (icat Type <~> cat). *)
-
 
 (* An internal category moreover must satisfy additional properies on
 iid and icomp (associativity and unit laws) *)
