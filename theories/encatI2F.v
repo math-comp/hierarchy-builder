@@ -393,7 +393,7 @@ Qed.
 (*********************************************************************)
 
 (* lift to internal morphisms for D1 *)
-Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
+Definition iHom_lift (T: doublecat) : iHom (D0_cat T).
   unfold D0_cat, D1_cat in *; simpl in *; simpl.
   destruct T.
   destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
@@ -412,7 +412,7 @@ Definition iHom_lift (T: doublecat) (x: D1_cat T) : iHom (D0_cat T).
 Defined.  
 
 (* lift to internal morphisms for D0 *)
-Definition iHom0_lift (T: doublecat) (x: D0_cat T) : iHom (D0_cat T).
+Definition iHom0_lift (T: doublecat) : iHom (D0_cat T).
   unfold D0_cat, D1_cat in *; simpl in *; simpl.
   destruct T.
   destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
@@ -433,14 +433,13 @@ Defined.
 
 (********************************************************************)
 
-Definition mk_prod_span (T: doublecat) (x y: D1_cat T) :
-  span ((@iHom_lift T x) :> cat) ((@iHom_lift T y) :> cat) :=
-  iprod_pb (@iHom_lift T x) (@iHom_lift T y).
+Definition mk_prod_span (T: doublecat) :
+  span ((@iHom_lift T) :> cat) ((@iHom_lift T) :> cat) :=
+  iprod_pb (@iHom_lift T) (@iHom_lift T).
 
-Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
-  iHom (D0_cat T).
-  set x1 := iHom_lift x.
-  set y1 := iHom_lift y.
+Definition iHom_prod_lift (T: doublecat) : iHom (D0_cat T).
+  set x1 := iHom_lift T.
+  set y1 := iHom_lift T.
   set pp := iprod_pb x1 y1.
   set il := iprodl x1 y1.
   set ir := iprodr x1 y1.
@@ -460,45 +459,6 @@ Definition iHom_prod_lift (T: doublecat) (x y: D1_cat T) :
   }  
 Defined.  
 
-Definition iHom_prod_liftB (T: doublecat) (x y: iHom (D0_cat T)) :
-  iHom (D0_cat T).
-  set pp := iprod x y.
-  set il := iprodl x y.
-  set ir := iprodr x y.
-  econstructor.
-  instantiate (1 := pp).
-  econstructor; eauto.
-  econstructor; eauto.
-  { destruct x.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (il \; src).
-  }  
-  { destruct y.
-    destruct class as [K]; simpl in *; simpl.
-    destruct K.
-    exact (ir \; tgt).
-  }  
-Defined.  
-
-Definition iHom_prod_liftC (T: doublecat) (x y: iHom (D0_cat T))
-  (s: span x y) : iHom (D0_cat T).
-  set src1 := @src _ _ x.
-  set tgt2 := @tgt _ _ y.
-  simpl in *.
-  destruct T; simpl in *.
-  destruct s; simpl in *.
-  destruct bot; simpl in *.
-  exists sort0. 
-  econstructor; eauto.
-  destruct bot2left; simpl in *.
-  destruct bot2right; simpl in *.
-  econstructor; eauto.
-  exact (sort1 \; src1).
-  exact (sort2 \; tgt2).
-Defined.
-
-(** good *)
 Definition iHom_prod_liftE (T: doublecat) (x y: iHom (D0_cat T))
   (s: span (x :> cat) (y :> cat)) : iHom (D0_cat T).
   set src1 := @src _ _ x.
@@ -513,7 +473,6 @@ Definition iHom_prod_liftE (T: doublecat) (x y: iHom (D0_cat T))
   exact (bot2right \; tgt2).
 Defined.
 
-(** good *)
 Definition iHom_prod_liftD (T: doublecat) (x y: iHom (D0_cat T)) :
   iHom (D0_cat T).
   set bb := @iprod_pb cat (D0_cat T) x y.
@@ -636,15 +595,12 @@ Definition D1_morph_liftA (T: doublecat) (a b: transpose (D0_cat T))
   exact h1.
 Defined.
 
-Definition iHom_morph_liftA  (T: doublecat) (a b: transpose (D0_cat T)) 
-  (h1: dcHhom a b) : iHom (D0_cat T) := iHom_lift (D1_morph_liftA h1). 
-
 Definition mk_ptype_auxA (T: doublecat) (a b c: transpose (D0_cat T))
                    (h1: dcHhom a b) (h2: dcHhom b c) :
-  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_liftA h1))
-               (@src cat (D0_cat T) (iHom_morph_liftA h2)).
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_lift T)) 
+               (@src cat (D0_cat T) (iHom_lift T)). 
   unfold commaE.ptype.
-
+  
   have @hh1: D1_cat T := D1_morph_liftA h1.
   have @hh2: D1_cat T := D1_morph_liftA h2.
   
@@ -671,8 +627,8 @@ Defined.
 
 Definition mk_prod_auxA (T: doublecat) (a b c: transpose (D0_cat T))
                    (h1: dcHhom a b) (h2: dcHhom b c) :
-  (iHom_morph_liftA h1) *_(D0_cat T) (iHom_morph_liftA h2).
-  eapply mk_ptype_auxA; eauto.
+  (iHom_lift T) *_(D0_cat T) (iHom_lift T).
+  eapply (@mk_ptype_auxA T a b c); eauto.
 Defined.  
 
 
@@ -735,13 +691,10 @@ Definition D1_morph_lift (T: doublecat) (a b: dcHD0Quiver T)
   eapply D1_morph_liftA; eauto.
 Defined.
 
-Definition iHom_morph_lift  (T: doublecat) (a b: dcHD0Quiver T) 
-  (h1: a +> b) : iHom (D0_cat T) := iHom_lift (D1_morph_lift h1). 
-
 Definition mk_ptype_aux (T: doublecat) (a b c: dcHD0Quiver T)
                    (h1: a +> b) (h2: b +> c) :
-  commaE.ptype (@tgt cat (D0_cat T) (iHom_morph_lift h1))
-               (@src cat (D0_cat T) (iHom_morph_lift h2)).
+  commaE.ptype (@tgt cat (D0_cat T) (iHom_lift T))
+               (@src cat (D0_cat T) (iHom_lift T)).
   unfold commaE.ptype. 
 
   have @hh1: D1_cat T := D1_morph_lift h1.
@@ -770,62 +723,68 @@ Defined.
 
 Definition mk_prod_aux (T: doublecat) (a b c: dcHD0Quiver T)
   (h1: a +> b) (h2: b +> c) :
-  (iHom_morph_lift h1) *_(D0_cat T) (iHom_morph_lift h2).
-  eapply mk_ptype_aux; eauto.
+  (iHom_lift T) *_(D0_cat T) (iHom_lift T).
+  eapply (@mk_ptype_aux T a b c h1 h2); eauto.
 Defined.  
-
-Definition iHom_prod_liftA (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) : iHom (D0_cat T).
-  set hh1 := iHom_morph_lift h1. 
-  set hh2 := iHom_morph_lift h2.
-  eapply (iHom_prod_liftB hh1 hh2).
-Defined.  
-
-(* good: based on iHom_prod_liftE or iHom_prod_liftD *)
-Definition iHom_prod_liftH (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  iHom (D0_cat T).
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-
-  eapply (iHom_prod_liftD hhh1 hhh2).
-Defined.
-  
-Definition iHom_prod_liftG (T: doublecat) (a b c: dcHD0Quiver T)
-  (h1: a +> b) (h2: b +> c) :
-  iHom (D0_cat T).
-  set hh1 := D1_morph_lift h1.
-  set hhh1 := iHom_lift hh1.
-  set hh2 := D1_morph_lift h2.
-  set hhh2 := iHom_lift hh2.
-  
-  set pp := iprod_pb hhh1 hhh2.
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
-  simpl in *.
-
-  eapply (iHom_prod_liftE pp).
-Defined.  
-
 
 (**********************************************************************)
 
+(*
 (*** definition of horizontal homset (corresponds to hhom) *)
 (* HB.tag *)
 Definition dcHcomp1 (T: icat cat) :
   D1_cat T -> D1_cat T -> U :=
   fun h1 h2 => dcHsource T h1 = dcHtarget T h2.      
 
-
-
-
 Program Definition ipairCC (T: icat cat) (C0: cat) {x0 x1 x2 x3 : iHom C0}
   (f : x0 ~>_(iHom C0) x2) (g : x1 ~> x3) : (x0 *_C0 x1) ~> (x2 *_C0 x3).
   set em := ipairC f g.
   exact em.
 Defined.
+
+
+(* lift to internal morphisms for D1 *)
+Definition iHom_lift' (T: doublecat) : iHom (D0_cat T).
+  unfold D0_cat, D1_cat in *; simpl in *; simpl.
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  econstructor; eauto.
+  instantiate (1:= C2).
+  econstructor; eauto.
+  econstructor.
+  exact src.
+  exact tgt.
+Defined.  
+
+
+(* make type difference more explicit *)
+Definition dcHcompI (T: doublecat) :
+  ((D1_iHom T) *_(D0_cat T) (D1_iHom T)) ~>_(iHom_lift T) (D1_iHom T).
+  
+  destruct T.    
+  destruct class as [K1 K2 K3 K4].
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  simpl in *; simpl.
+  exact icompI.
+Defined.
+ 
+Program Definition ipairCCC (C: cat) {x0 x1 x2 x3 : C}
+  (f : x0 ~> x2) (g : x1 ~>_(iHom C0) x3) :
+  sigma mr: (x0 *_C0 x1 :> C) ~>_C (x2 *_C0 x3 :> C),
+      @iprodl C C0 x0 x1 \; f = mr \; @iprodl C C0 x2 x3 /\
+      @iprodr C C0 x0 x1 \; g = mr \; @iprodr C C0 x2 x3. 
+
 
 Definition icompA1_def (T: icat cat) :=    
  ( <( dcHcomp T,
@@ -834,10 +793,6 @@ Definition icompA1_def (T: icat cat) :=
        <<( (@idmap  (D0_iHom T) (D1_cat: D1_iHom T)), dcHcomp T )>> \;
        dcHcomp T.
 
-
-
-
-
 Definition icompA1_def (T: icat cat) :=    
  (<( (dcHcomp T : ((D1_iHom T *_ (D0_cat T) D1_iHom T :> iHom (D0_cat T)) ~> (D0_cat T)) (D1_cat T)),
      (@idmap (D0_iHom T) (D1_cat: D1_iHom T)) )> \; dcHcomp T) =
@@ -845,7 +800,7 @@ Definition icompA1_def (T: icat cat) :=
        <<( (@idmap  (D0_iHom T) (D1_cat: D1_iHom T)), dcHcomp T )>> \;
        dcHcomp T.
 
-
+*)
 
 (********************************************************************)
 
@@ -855,14 +810,8 @@ Fail Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : a +> a.
 
 (* H0 horizontal identity *)
 Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : dcHhom a a.
-  have @a1: D0_cat T.
-  { unfold D0_cat. destruct T; simpl in *. exact a. }
-  
-  have @a2 : iHom (D0_cat T).
-  { eapply (iHom0_lift a1). }
-
-  pose src1 := @src cat (D0_cat T) a2.
-  pose tgt1 := @tgt cat (D0_cat T) a2.
+  pose src1 := @src cat (D0_cat T) T.
+  pose tgt1 := @tgt cat (D0_cat T) T.
   simpl in *.
 
   unfold hhom.
@@ -885,7 +834,6 @@ Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : dcHhom a a.
   destruct Q as [p1 p2]; simpl in *.
   
   unfold dcHhom; simpl.
-  set mm := m a.
 
   assert (m \; src = src1) as Es1.
   { auto. }
@@ -932,18 +880,19 @@ Definition H0_cat_comp (T: icat cat) (a b c: transpose (D0_cat T))
    (h1: dcHhom a b) (h2: dcHhom b c) : dcHhom a c.
   (*** lifting of h1 and h2 to D1 objects and iHoms *)
   set hh1 := D1_morph_liftA h1.
-  set hhh1 := iHom_lift hh1.
   set hh2 := D1_morph_liftA h2.
-  set hhh2 := iHom_lift hh2.
 
-  (* source of h1 (from the iHom object) *)
-  pose h1_src := @src cat (D0_cat T) hhh1.
-  (* target of h2 (from the iHom object) *)
-  pose h2_tgt := @tgt cat (D0_cat T) hhh2.
+  (* C1 typed as iHom *)
+  set CC := iHom_lift T.
+
+  (* source of h1 (from iHom C1) *)
+  pose h1_src := @src cat (D0_cat T) CC.
+  (* target of h2 (from iHom C1) *)
+  pose h2_tgt := @tgt cat (D0_cat T) CC.
 
   (* projections of the product as span *)
-  set il := iprodl hhh1 hhh2.
-  set ir := iprodr hhh1 hhh2.
+  set il := iprodl CC CC.
+  set ir := iprodr CC CC.
   
   (* source and target of the product as span *)
   set prod_src_f := il \; h1_src.
@@ -978,7 +927,7 @@ Definition H0_cat_comp (T: icat cat) (a b c: transpose (D0_cat T))
     exact xxx.
   }
   (* product as a span, from xxx *)
-  have @Y : (hhh1 *_ (D0_cat T) hhh2).
+  have @Y : (CC *_ (D0_cat T) CC).
   { unfold iprod.
     unfold iprod_pb.
     simpl.
