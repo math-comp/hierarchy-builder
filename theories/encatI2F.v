@@ -778,8 +778,23 @@ Definition dcHcompI (T: doublecat) :
 Defined.
 *)
 
-Definition dcHcompI (T: doublecat) :
+Definition dcHcompI' (T: doublecat) :
   pbC0 (@C1 cat T) (@C1 cat T) ~>_(iHom T) (iHom_lift T).
+  destruct T.
+  destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
+  destruct K1 as [C2]; simpl in *; simpl.
+  destruct K2 as [H1]; simpl in *; simpl.
+  destruct H1 as [H1]; simpl in *; simpl.
+  destruct H1; simpl in *; simpl.
+  destruct K3; simpl in *; simpl.
+  destruct K4; simpl in *; simpl.
+  eapply icompI.
+Defined.  
+
+Definition dcHcompI (T: doublecat) :
+(*  pbC0 (iHom_lift T) (iHom_lift T) ~>_(iHom T) (iHom_lift T). *)
+  ((iHom_lift T) *_(D0_cat T) (iHom_lift T) : iHom T) ~>_(iHom T)
+    (iHom_lift T).
   destruct T.
   destruct class as [K1 K2 K3 K4]; simpl in *; simpl.
   destruct K1 as [C2]; simpl in *; simpl.
@@ -804,27 +819,42 @@ Definition dcHunitI (T: doublecat) :
   eapply iidI.  
 Defined.
 
+Definition Cmorph {C: prepbcat} (C0 : C)
+     (x y : @iHom C C0) (m: x ~>_(@iHom C C0) y) : (x :> C) ~>_C (y :> C).
+  destruct m as [m P].
+  exact m.
+Defined.  
+
 Definition dcIpairI (T: icat cat) {x0 x1 x2 x3 : iHom T}  
   (f : x0 ~>_(iHom T) x2) (g : x1 ~>_(iHom T) x3) : 
-    (pbC0 x0 x1) ~>_(iHom T) (pbC0 x2 x3).
+(*    (pbC0 x0 x1) ~>_(iHom T) (pbC0 x2 x3). *)
+    (x0 *_(D0_cat T) x1 : iHom T) ~>_(iHom T) (x2 *_(D0_cat T) x3 : iHom T).
 eapply (@ipairI cat); eauto.
 Defined.
 
 Definition dcIprodIAsc (T: icat cat) (c1 c2 c3 : iHom T) :   
-(*   ((pbC0 (pbC0 c1 c2) c3)) ~>_(iHom T) (pbC0 c1 (pbC0 c2 c3)). *)
-  (((c1 *_T c2 : iHom T) *_T c3) : iHom T) ~>_(iHom T)
-    (c1 *_T (c2 *_T c3 : iHom T) : iHom T).  
+(*   ((pbC0 (pbC0 c1 c2) c3)) ~>_(iHom T) (pbC0 c1 (pbC0 c2 c3)).  *)
+  (((c1 *_(D0_cat T) c2 : iHom T) *_(D0_cat T) c3) : iHom T) ~>_(iHom T)
+    (c1 *_(D0_cat T) (c2 *_(D0_cat T) c3 : iHom T) : iHom T).  
 eapply (@iprodIAsc cat).             
 Defined.
 
-(*
 Definition icompA1_def (T: icat cat) :=    
   (dcIpairI (dcHcompI T) (@idmap (iHom T) (iHom_lift T))
-     \; dcHcompI T). =
-     ((@iprodIAsc cat (D0_cat T) (D1_cat: D1_iHom T)) _ _) \;
-       <<( (@idmap  (D0_iHom T) (D1_cat: D1_iHom T)), dcHcomp T )>> \;
-       dcHcomp T.
-*)
+     \; dcHcompI T) = 
+    dcIprodIAsc _ _ _
+      \; (dcIpairI (@idmap (iHom T) (iHom_lift T)) (dcHcompI T))
+      \; dcHcompI T.
+
+Definition icomp1l_def (T: icat cat) :=          
+  Cmorph (dcIpairI (@idmap (iHom T) (iHom_lift T)) (dcHunitI T) \;
+            (dcHcompI T))
+  = @iprodl cat (D0_cat T) (iHom_lift T) (iHom0_lift T). 
+
+Definition icomp1r_def (T: icat cat) :=          
+  Cmorph (dcIpairI (dcHunitI T) (@idmap (iHom T) (iHom_lift T)) \;
+            (dcHcompI T))
+  = @iprodr cat (D0_cat T) (iHom0_lift T) (iHom_lift T). 
 
 
 (**********************************************************************)
@@ -873,7 +903,6 @@ Defined.
 Program Definition ihom2cat (T: icat cat) (C: iHom T) : cat :=
   InternalHom.sort T.
 *)
-
 (*
 Definition icompA1_def (T: icat cat) :=    
  ( <( dcHcomp T,
