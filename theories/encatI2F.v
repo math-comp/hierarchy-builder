@@ -859,6 +859,27 @@ Definition icomp1r_def (T: icat cat) :=
 
 (**********************************************************************)
 
+Definition CCpair := (cat * cat)%type.
+
+Definition mkIHom (c0 c1: cat) (s t: c1 ~> c0) : @isInternalHom cat c0 c1 :=
+  @isInternalHom.Build cat c0 c1 s t.
+
+Print pbC0.
+
+HB.instance Definition mkIHomI (c0 c1: cat) (s t: c1 ~> c0) :=
+  mkIHom s t. 
+
+Record IsDDCC (CC: CCpair) := {
+  ddC0 := fst CC ;
+  ddC1 := snd CC ;  
+  ddHSource : ddC1 ~> ddC0 ;  
+  ddHTarget : ddC1 ~> ddC0 ; 
+  ddIHC0 := @mkIHomI ddC0 ddC0 idmap idmap ;  
+  ddIHC1 := mkIHomI ddHSource ddHTarget ;  
+}.
+
+(**********************************************************************)
+
 Definition dcHsourceF (T: doublecat) (C: iHom T) :
   Functor.type (C :> cat) (D0_cat T) := @src cat T C.
 
