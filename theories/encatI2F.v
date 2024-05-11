@@ -869,14 +869,135 @@ Print pbC0.
 HB.instance Definition mkIHomI (c0 c1: cat) (s t: c1 ~> c0) :=
   mkIHom s t. 
 
-Record IsDDCC (CC: CCpair) := {
+Record DDCC' (CC: CCpair) := {
+  ddC0' := fst CC ;
+  ddC1' := snd CC ;  
+  ddHSource' : ddC1' ~> ddC0' ;  
+  ddHTarget' : ddC1' ~> ddC0' ; 
+}.
+
+Record DDCC := {
+  ddC0 : cat ;
+  ddC1 : cat ;  
+  ddHSource : ddC1 ~> ddC0 ;  
+  ddHTarget : ddC1 ~> ddC0 ; 
+}.
+
+Record DDIHom (CC: DDCC) := {
+  IH := iHom (ddC0 CC) ;  
+  ddIH0 : IH ; 
+  ddIH1 : IH ;
+  ddProd (X Y: IH) : IH                         
+}.
+
+Record DDIC (CC: DDCC) (DH : DDIHom CC) := {
+  DIH2cat : IH DH -> cat ;
+  DIH2catM (X Y: IH DH) (f: X ~> Y) : (DIH2cat X) ~> (DIH2cat Y) ;
+  
+  ddIprodl (X Y: IH DH) : DIH2cat (ddProd X Y) ~> DIH2cat X;    
+  ddIprodr (X Y: IH DH) : DIH2cat (ddProd X Y) ~> DIH2cat Y;    
+
+  ddIid : ddIH0 DH ~> ddIH1 DH ; 
+  ddIcomp : ddProd (ddIH1 DH) (ddIH1 DH) ~> ddIH1 DH ; 
+
+  ddPair (X0 X1 X2 X3: IH DH) (f: X0 ~> X2) (g: X1 ~> X3) :
+    (ddProd X0 X1) ~> (ddProd X2 X3) ; 
+
+  ddIAsc (C1 C2 C3: IH DH) :
+    (ddProd (ddProd C1 C2) C3) ~> (ddProd C1 (ddProd C2 C3)) ; 
+    
+  dd_icompA :
+    (ddPair ddIcomp (@idmap (IH DH) (ddIH1 DH))) \; ddIcomp =
+      ddIAsc _ _ _ \;
+        (ddPair (@idmap (IH DH) (ddIH1 DH)) ddIcomp) \; ddIcomp ;
+
+  dd_compL :
+    DIH2catM (ddPair (@idmap (IH DH) (ddIH1 DH)) ddIid \; ddIcomp) =
+      ddIprodl (ddIH1 DH) (ddIH0 DH) ;    
+    (* ~= @iprodl cat (ddC0 CC) (ddIH1 DH) (ddIH0 DH) *)
+
+  dd_compR :
+    DIH2catM (ddPair ddIid (@idmap (IH DH) (ddIH1 DH)) \; ddIcomp) =
+      ddIprodr (ddIH0 DH) (ddIH1 DH)                    
+}.
+
+(*************************************************************************)
+
+(*
+HB.mixin Record isDCC := {
+  dC0 : cat ;
+  dC1 : cat ;  
+  dHSource : dC1 ~> dC0 ;  
+  dHTarget : dC1 ~> dC0 ; 
+}.
+
+Record DIHom := {
+    
+  iH := iHom dC0 ;  
+  dIH0 : iH ; 
+  dIH1 : iH ;
+  dProd (X Y: iH) : iH                         
+}.
+*)
+
+Record DIHom := {
+  dC0 : cat ;
+  dC1 : cat ;  
+  dHSource : dC1 ~> dC0 ;  
+  dHTarget : dC1 ~> dC0 ; 
+  iH := iHom dC0 ;  
+  dIH0 : iH ; 
+  dIH1 : iH ;
+  dProd (X Y: iH) : iH                         
+}.
+
+HB.mixin Record isDIC (DH : DIHom) := {
+  IH2cat : iH DH -> cat ;
+  IH2catM (X Y: iH DH) (f: X ~> Y) : (IH2cat X) ~> (IH2cat Y) ;
+  
+  dIprodl (X Y: iH DH) : IH2cat (dProd X Y) ~> IH2cat X;    
+  dIprodr (X Y: iH DH) : IH2cat (dProd X Y) ~> IH2cat Y;    
+  
+  dIid : dIH0 DH ~> dIH1 DH ; 
+  dIcomp : dProd (dIH1 DH) (dIH1 DH) ~> dIH1 DH ; 
+
+  dPair (X0 X1 X2 X3: iH DH) (f: X0 ~> X2) (g: X1 ~> X3) :
+    (dProd X0 X1) ~> (dProd X2 X3) ; 
+
+  dIAsc (C1 C2 C3: iH DH) :
+    (dProd (dProd C1 C2) C3) ~> (dProd C1 (dProd C2 C3)) ; 
+    
+  d_icompA :
+    (dPair _ _ _ _ dIcomp (@idmap (iH DH) (dIH1 DH))) \; dIcomp =
+      dIAsc _ _ _ \;
+        (dPair _ _ _ _ (@idmap (iH DH) (dIH1 DH)) dIcomp) \; dIcomp ;
+
+  d_compL :
+    IH2catM _ _
+      (dPair _ _ _ _ (@idmap (iH DH) (dIH1 DH)) dIid \; dIcomp) =
+        dIprodl (dIH1 DH) (dIH0 DH) ;    
+    (* ~= @iprodl cat (dC0 DH) (dIH1 DH) (dIH0 DH) *)
+
+  d_compR :
+    IH2catM _ _
+      (dPair _ _ _ _ dIid (@idmap (iH DH) (dIH1 DH)) \; dIcomp) =
+      dIprodr (dIH0 DH) (dIH1 DH)                    
+}.
+
+HB.structure Definition DIC := { C of isDIC C }.
+
+
+(*
+Record IsDDCC (CC: DDCC) := {
   ddC0 := fst CC ;
   ddC1 := snd CC ;  
   ddHSource : ddC1 ~> ddC0 ;  
   ddHTarget : ddC1 ~> ddC0 ; 
   ddIHC0 := @mkIHomI ddC0 ddC0 idmap idmap ;  
-  ddIHC1 := mkIHomI ddHSource ddHTarget ;  
+  ddIHC1 := mkIHomI ddHSource ddHTarget ; 
 }.
+*)
+
 
 (**********************************************************************)
 
