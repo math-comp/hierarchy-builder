@@ -857,94 +857,40 @@ Definition icomp1r_def (T: icat cat) :=
   = @iprodr cat (D0_cat T) (iHom0_lift T) (iHom_lift T). 
 
 
-(**********************************************************************)
-
-Definition mkIHom (c0 c1: cat) (s t: c1 ~> c0) : @isInternalHom cat c0 c1 :=
-  @isInternalHom.Build cat c0 c1 s t.
-
-HB.instance Definition mkIHomI (c0 c1: cat) (s t: c1 ~> c0) :=
-  mkIHom s t. 
-
-Record DDCC := {
-  ddC0 : cat ;
-  ddC1 : cat ;  
-  ddHSource : ddC1 ~> ddC0 ;  
-  ddHTarget : ddC1 ~> ddC0 ; 
-}.
-
-Record DDIHom (CC: DDCC) := {
-  IH := iHom (ddC0 CC) ;  
-  ddIH0 : IH ; 
-  ddIH1 : IH ;
-  ddProd (X Y: IH) : IH                         
-}.
-
-Record DDIC (CC: DDCC) (DH : DDIHom CC) := {
-  DIH2cat : IH DH -> cat ;
-  DIH2catM (X Y: IH DH) (f: X ~> Y) : (DIH2cat X) ~> (DIH2cat Y) ;
-  
-  ddIprodl (X Y: IH DH) : DIH2cat (ddProd X Y) ~> DIH2cat X;    
-  ddIprodr (X Y: IH DH) : DIH2cat (ddProd X Y) ~> DIH2cat Y;    
-
-  ddIid : ddIH0 DH ~> ddIH1 DH ; 
-  ddIcomp : ddProd (ddIH1 DH) (ddIH1 DH) ~> ddIH1 DH ; 
-
-  ddPair (X0 X1 X2 X3: IH DH) (f: X0 ~> X2) (g: X1 ~> X3) :
-    (ddProd X0 X1) ~> (ddProd X2 X3) ; 
-
-  ddIAsc (C1 C2 C3: IH DH) :
-    (ddProd (ddProd C1 C2) C3) ~> (ddProd C1 (ddProd C2 C3)) ; 
-    
-  dd_icompA :
-    (ddPair ddIcomp (@idmap (IH DH) (ddIH1 DH))) \; ddIcomp =
-      ddIAsc _ _ _ \;
-        (ddPair (@idmap (IH DH) (ddIH1 DH)) ddIcomp) \; ddIcomp ;
-
-  dd_compL :
-    DIH2catM (ddPair (@idmap (IH DH) (ddIH1 DH)) ddIid \; ddIcomp) =
-      ddIprodl (ddIH1 DH) (ddIH0 DH) ;    
-    (* ~= @iprodl cat (ddC0 CC) (ddIH1 DH) (ddIH0 DH) *)
-
-  dd_compR :
-    DIH2catM (ddPair ddIid (@idmap (IH DH) (ddIH1 DH)) \; ddIcomp) =
-      ddIprodr (ddIH0 DH) (ddIH1 DH)                    
-}.
-
-
 (*************************************************************************)
+(* flatter def of internal cat (for cat), consistently using HB *)
 
-Definition CCpair : Type := (cat * cat)%type.
+Definition Cat_pair : Type := (cat * cat)%type.
 
-(*
-HB.mixin Record isDIHom (T: CCpair) := {  
-  CCProd (X Y: cat) : cat ;                         
-}.
-
-HB.structure Definition DIHom :=
-  { C of isDIHom C }.
-*)
-
-HB.mixin Record isDCC (T: CCpair) := { 
-  CCProd (X Y: cat) : cat ;
-  dprodl (X Y: cat) : CCProd X Y ~> X ;    
-  dprodr (X Y: cat) : CCProd X Y ~> Y ;  
-    
+HB.mixin Record isIBase (T: Cat_pair) := { 
   dHSource (X: cat) : X ~> (fst T) ;  
   dHTarget (X: cat) : X ~> (fst T) ; 
 
   dHSource0 : dHSource (fst T) = @idmap cat (fst T) ;
   dHTarget0 : dHTarget (fst T) = @idmap cat (fst T) ; 
+}.
+HB.structure Definition IBase :=
+  { C of isIBase C }.
+
+HB.mixin Record isPBase T of IBase T := { 
+  CCProd (X Y: cat) : cat ;
+  dprodl (X Y: cat) : CCProd X Y ~> X ;    
+  dprodr (X Y: cat) : CCProd X Y ~> Y ;  
+
+  mkprod (X Y: cat) : X -> Y -> CCProd X Y ; 
+
+  mkprod1 (X Y: cat) (h: X) (k: Y) : @dprodl X Y (@mkprod X Y h k) = h ;   
+  mkprod2 (X Y: cat) (h: X) (k: Y) : @dprodr X Y (@mkprod X Y h k) = k ;   
     
   dHSourceP (X Y: cat) :
-    dHSource (CCProd X Y) = dprodl X Y \; dHSource X ; 
+    dHSource (CCProd X Y) = dprodl X Y \; @dHSource T X ; 
   dHTargetP (X Y: cat) :
-    dHTarget (CCProd X Y) = dprodr X Y \; dHTarget Y ;    
+    dHTarget (CCProd X Y) = dprodr X Y \; @dHTarget T Y ;    
 }.
+HB.structure Definition PBase :=
+  { C of isPBase C }.
 
-HB.structure Definition DCC :=
-  { C of isDCC C }.
-
-HB.mixin Record isDIC T of DCC T := {   
+HB.mixin Record isICC T of PBase T := {   
   dIid : (fst T) ~> (snd T) ;  
   dIcomp : @CCProd T (snd T) (snd T) ~> snd T ;  
 
@@ -979,46 +925,30 @@ HB.mixin Record isDIC T of DCC T := {
   d_compL :
      dPair _ _ _ _ (@idmap cat (snd T)) dIid \; dIcomp =
         dprodl (snd T) (fst T) ; 
-     (* ~= @iprodl cat (fst T) (@dIH1 T) (@dIH0 T) *)
 
   d_compR :
      dPair _ _ _ _ dIid (@idmap cat (snd T)) \; dIcomp =
       dprodr (fst T) (snd T)                    
 }.
-
-HB.structure Definition DIC := { C of isDIC C }.
-
-(*
-Definition DIHom_cat : isDIHom cat.
-Admitted.
-HB.instance Definition DIHom_cat' := DIHom_cat.
-
-Definition DCC_cat : isDCC cat.
-Admitted.
-HB.instance Definition DCC_cat' := DCC_cat.
-
-Definition DIC_cat : isDIC cat.
-Admitted.
-HB.instance Definition DIC_cat' := DIC_cat.
-*)
+HB.structure Definition ICC := { C of isICC C }.
 
 (********************************************************************)
 
-Definition dHhom (T: DIC.type) :
-  transpose (fst (DIC.sort T)) -> transpose (fst (DIC.sort T)) -> U :=
+Definition dHhom (T: ICC.type) :
+  transpose (fst (ICC.sort T)) -> transpose (fst (ICC.sort T)) -> U :=
   fun x y =>
-    sigma (h: snd (DIC.sort T)),
-          @dHSource T (snd (DIC.sort T)) h = x
-          /\ @dHTarget T (snd (DIC.sort T)) h = y.      
+    sigma (h: snd (ICC.sort T)),
+          @dHSource T (snd (ICC.sort T)) h = x
+          /\ @dHTarget T (snd (ICC.sort T)) h = y.      
 
 Unset Universe Checking.
-Definition dH0QuiverD (T: DIC.type) :
-  IsQuiver (transpose (fst (DIC.sort T))) :=
+Definition dH0QuiverD (T: ICC.type) :
+  IsQuiver (transpose (fst (ICC.sort T))) :=
   IsQuiver.Build _ (@dHhom T).  
 Set Universe Checking.
 
-Definition DH0_cat_id (T: DIC.type)
-  (a: transpose (fst (DIC.sort T))) : dHhom a a.
+Definition DH0_cat_id (T: ICC.type)
+  (a: transpose (fst (ICC.sort T))) : dHhom a a.
   pose src1 := @dHSource T.
   pose tgt1 := @dHTarget T.
   pose iid := @dIid T.
@@ -1027,8 +957,8 @@ Definition DH0_cat_id (T: DIC.type)
   exists (iid a).
 
   split.
-  { assert (@dHSource T (snd (DIC.sort T)) (iid a) =
-            (iid \; dHSource (snd (DIC.sort T))) a) as H.
+  { assert (@dHSource T (snd (ICC.sort T)) (iid a) =
+            (iid \; dHSource (snd (ICC.sort T))) a) as H.
     { auto. }
 
     rewrite H.
@@ -1037,8 +967,8 @@ Definition DH0_cat_id (T: DIC.type)
     simpl; auto.
   }
     
-  { assert (@dHTarget T (snd (DIC.sort T)) (iid a) =
-            (iid \; dHTarget (snd (DIC.sort T))) a) as H.
+  { assert (@dHTarget T (snd (ICC.sort T)) (iid a) =
+            (iid \; dHTarget (snd (ICC.sort T))) a) as H.
     { auto. }
   
     rewrite H.
@@ -1048,10 +978,51 @@ Definition DH0_cat_id (T: DIC.type)
   }
 Defined.
 
-Definition DH0_cat_comp (T: DIC.type)
-  (a b c: transpose (transpose (fst (DIC.sort T)))) 
-   (h1: dHhom a b) (h2: dHhom b c) : dHhom a c.
-Admitted.  
+Definition DH0_cat_comp (T: ICC.type)
+  (a b c: (transpose (fst (ICC.sort T)))) 
+  (h1: dHhom a b) (h2: dHhom b c) : dHhom a c.
+  unfold dHhom in *.
+  simpl in *.
+  destruct h1 as [h1 [hs1 ht1]].
+  destruct h2 as [h2 [hs2 ht2]].
+  pose prd := @mkprod T _ _ h1 h2.
+  pose cmp := @dIcomp T.
+  pose mm := cmp prd.
+  exists mm.
+
+  split.
+  { subst mm. 
+
+    assert (@dHSource T (snd (ICC.sort T)) (cmp prd) =
+            (cmp \; @dHSource T (snd (ICC.sort T))) prd) as H. 
+    { auto. }
+
+    rewrite H.
+    subst cmp.
+    rewrite dIcompS.
+    rewrite dHSourceP.
+    simpl.
+    subst prd.
+    rewrite mkprod1.
+    rewrite hs1; auto.
+  }.  
+    
+  { subst mm. 
+
+    assert (@dHTarget T (snd (ICC.sort T)) (cmp prd) =
+            (cmp \; @dHTarget T (snd (ICC.sort T))) prd) as H. 
+    { auto. }
+
+    rewrite H.
+    subst cmp.
+    rewrite dIcompT.
+    rewrite dHTargetP.
+    simpl.
+    subst prd.
+    rewrite mkprod2.
+    rewrite ht2; auto.
+  }.  
+Defined.     
 
 
 (*************************************************************************)
@@ -1672,8 +1643,61 @@ Lemma doublecat2stufunctor (T: doublecat) : STUFunctor.type.
 *)
 Admitted.   
 
-(**************************************************************************)
 
+(**********************************************************************)
+(* trying to flatten the def of internal categories, using just records *)
+
+Definition mkIHom (c0 c1: cat) (s t: c1 ~> c0) : @isInternalHom cat c0 c1 :=
+  @isInternalHom.Build cat c0 c1 s t.
+HB.instance Definition mkIHomI (c0 c1: cat) (s t: c1 ~> c0) :=
+  mkIHom s t. 
+
+Record DDCC := {
+  ddC0 : cat ;
+  ddC1 : cat ;  
+  ddHSource : ddC1 ~> ddC0 ;  
+  ddHTarget : ddC1 ~> ddC0 ; 
+}.
+
+Record DDIHom (CC: DDCC) := {
+  IH := iHom (ddC0 CC) ;  
+  ddIH0 : IH ; 
+  ddIH1 : IH ;
+  ddProd (X Y: IH) : IH                         
+}.
+
+Record DDIC (CC: DDCC) (DH : DDIHom CC) := {
+  DIH2cat : IH DH -> cat ;
+  DIH2catM (X Y: IH DH) (f: X ~> Y) : (DIH2cat X) ~> (DIH2cat Y) ;
+  
+  ddIprodl (X Y: IH DH) : DIH2cat (ddProd X Y) ~> DIH2cat X;    
+  ddIprodr (X Y: IH DH) : DIH2cat (ddProd X Y) ~> DIH2cat Y;    
+
+  ddIid : ddIH0 DH ~> ddIH1 DH ; 
+  ddIcomp : ddProd (ddIH1 DH) (ddIH1 DH) ~> ddIH1 DH ; 
+
+  ddPair (X0 X1 X2 X3: IH DH) (f: X0 ~> X2) (g: X1 ~> X3) :
+    (ddProd X0 X1) ~> (ddProd X2 X3) ; 
+
+  ddIAsc (C1 C2 C3: IH DH) :
+    (ddProd (ddProd C1 C2) C3) ~> (ddProd C1 (ddProd C2 C3)) ; 
+    
+  dd_icompA :
+    (ddPair ddIcomp (@idmap (IH DH) (ddIH1 DH))) \; ddIcomp =
+      ddIAsc _ _ _ \;
+        (ddPair (@idmap (IH DH) (ddIH1 DH)) ddIcomp) \; ddIcomp ;
+
+  dd_compL :
+    DIH2catM (ddPair (@idmap (IH DH) (ddIH1 DH)) ddIid \; ddIcomp) =
+      ddIprodl (ddIH1 DH) (ddIH0 DH) ;    
+    (* ~= @iprodl cat (ddC0 CC) (ddIH1 DH) (ddIH0 DH) *)
+
+  dd_compR :
+    DIH2catM (ddPair ddIid (@idmap (IH DH) (ddIH1 DH)) \; ddIcomp) =
+      ddIprodr (ddIH0 DH) (ddIH1 DH)                    
+}.
+
+(**************************************************************************)
 
 (*
 Definition mk_prod_span (T: doublecat) (x y: D1_cat T) :
