@@ -450,44 +450,6 @@ Defined.
 
 (*************************************************************************)
 
-(*
-Definition splitter (A: cat) : A -> ((A * A)%type : cat) := fun x => (x, x).
-
-Program Definition splitter_Fhom (A: cat) :
-  forall (a b : A), (a ~> b) -> (splitter a ~> splitter b).
-intros.
-unfold splitter.
-unfold hom; simpl.
-unfold prod_hom_subdef; simpl.
-exact (X, X).
-Defined.
-
-Lemma splitter_IsPreFunctor_lemma (A: cat) :
-  IsPreFunctor A ((A * A)%type : cat) (@splitter A).
-  econstructor; eauto.
-  intros.
-  unfold splitter, hom; simpl.
-  unfold prod_hom_subdef; simpl.
-  exact (H, H).
-Defined.  
-  
-HB.instance Definition splitter_IsPreFunctor (A: cat) :=
-  splitter_IsPreFunctor_lemma A.
-
-Lemma splitter_IsFunctor_lemma (A: cat) :
-  PreFunctor_IsFunctor A ((A * A)%type : cat) (@splitter A).
-  econstructor; eauto.
-Defined.
-
-HB.instance Definition splitter_IsFunctor (A: cat) :=
-  splitter_IsFunctor_lemma A.
-
-Program Definition splitter_morph (A: cat) : A ~> ((A * A)%type : cat).
-unfold hom; simpl.
-exact (@splitter A). 
-Defined.
-*)
-
 (** joins together two functors; some analogy with pushouts *)
 Definition fsplitter (A B C: cat) (F: A ~> B) (G: A ~> C) :
   A -> ((B * C)%type : cat) := fun x: A => (F x, G x).
@@ -1389,6 +1351,7 @@ Qed.
 (* Cat has all pullbacks *)
 HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_pb a b c.
 
+
 (*
 Fail HB.instance Definition fsplitter_IsMono (bot0 A B topK : cat)
     (left2topK : A ~> topK) (right2topK : B ~> topK)
@@ -1403,6 +1366,44 @@ Fail HB.instance Definition fsplitter_IsMono (bot0 A B topK : cat)
 *)
 
 (************************************************************************)
+(*
+Definition splitter (A: cat) : A -> ((A * A)%type : cat) := fun x => (x, x).
+
+Program Definition splitter_Fhom (A: cat) :
+  forall (a b : A), (a ~> b) -> (splitter a ~> splitter b).
+intros.
+unfold splitter.
+unfold hom; simpl.
+unfold prod_hom_subdef; simpl.
+exact (X, X).
+Defined.
+
+Lemma splitter_IsPreFunctor_lemma (A: cat) :
+  IsPreFunctor A ((A * A)%type : cat) (@splitter A).
+  econstructor; eauto.
+  intros.
+  unfold splitter, hom; simpl.
+  unfold prod_hom_subdef; simpl.
+  exact (H, H).
+Defined.  
+  
+HB.instance Definition splitter_IsPreFunctor (A: cat) :=
+  splitter_IsPreFunctor_lemma A.
+
+Lemma splitter_IsFunctor_lemma (A: cat) :
+  PreFunctor_IsFunctor A ((A * A)%type : cat) (@splitter A).
+  econstructor; eauto.
+Defined.
+
+HB.instance Definition splitter_IsFunctor (A: cat) :=
+  splitter_IsFunctor_lemma A.
+
+Program Definition splitter_morph (A: cat) : A ~> ((A * A)%type : cat).
+unfold hom; simpl.
+exact (@splitter A). 
+Defined.
+*)
+
 (*
 Definition joiner (A B C: cat) (F: A ~> C) (G: B ~> C) 
   (e: forall x: A * B, F (x.1) = G (x.2)) :

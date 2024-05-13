@@ -173,30 +173,6 @@ HB.tag Definition HSource C := fun (X: D1obj C) => @source C (@hhom C) X.
 HB.tag Definition HTarget C := fun (X: D1obj C) => @target C (@hhom C) X.
 
 
-(** Auxiliary notions for the product category *)
-
-(* composable pairs of morphisms as a set *)
-Record GenComp T (h: T -> T -> U) := GC {
-   h_one : T;
-   h_two : T ;
-   h_three : T;
-   h_first : h h_one h_two ;
-   h_second : h h_two h_three }.
-
-(* composable pairs of horizontal morphisms as a set *)
-HB.tag Definition DPobj (C: hd0quiver) := GenComp (@hhom C).
-
-
-(** Product projections *)
-
-(* smart projections:
-   used to define functors for first and second projection of a product *)
-HB.tag Definition H2First (C: hd0quiver) : DPobj C -> D1obj C :=
-  fun (X: DPobj C) => @TT2 C _ (h_one X) (h_two X) (h_first X).
-HB.tag Definition H2Second (C: hd0quiver) : DPobj C -> D1obj C :=
-  fun (X: @DPobj C) => @TT2 C _ (h_two X) (h_three X) (h_second X).
-
-
 (** Source and target functors *)
 
 (* source prefunctor. 
@@ -326,7 +302,32 @@ Definition H2Unit (T: UFunctor.type) (a b: T) (m: @hom T a b) :
   (H1Unit a) ~> (H1Unit b) := (@H1Unit T) <$> m.
 
 
-(*****************************************************************)
+(********************************************************************)
+(********************************************************************)
+
+(** Auxiliary notions for the product category *)
+
+(* composable pairs of morphisms as a set *)
+Record GenComp T (h: T -> T -> U) := GC {
+   h_one : T;
+   h_two : T ;
+   h_three : T;
+   h_first : h h_one h_two ;
+   h_second : h h_two h_three }.
+
+(* composable pairs of horizontal morphisms as a set *)
+HB.tag Definition DPobj (C: hd0quiver) := GenComp (@hhom C).
+
+
+(** Product projections *)
+
+(* smart projections:
+   used to define functors for first and second projection of a product *)
+HB.tag Definition H2First (C: hd0quiver) : DPobj C -> D1obj C :=
+  fun (X: DPobj C) => @TT2 C _ (h_one X) (h_two X) (h_first X).
+HB.tag Definition H2Second (C: hd0quiver) : DPobj C -> D1obj C :=
+  fun (X: @DPobj C) => @TT2 C _ (h_two X) (h_three X) (h_second X).
+
 
 (***** Definition of the Horizontal product category (D1 *d0 D1) *)
 (* DPobj T is the pseudo-pullback category used to deal with
@@ -744,9 +745,9 @@ Qed.
 (* DPobj is a category *)
 HB.instance Definition DPCat (T: STFunctor.type) := DPCatP T.
 
+(********************************************************************)
 
 (**** Projection functors  ***)
-
 
 Lemma H2First_PreFunctor_lemma (T: STFunctor.type) :
   IsPreFunctor (DPobj T) (D1obj T) (@H2First T).
@@ -803,16 +804,6 @@ Definition HH2Second (T: STFunctor.type) (a b: DPobj T)
   (m: DP_hom a b) : H2Second a ~> H2Second b := (@H2Second T) <$> m.
 
 (********************************************************************)
-
-
-(*
-(**** HF and HS functors (all functors so far) *)
-Unset Universe Checking.
-  HB.structure Definition QCFunctor : Set :=
-  {C of HFFunctor C & HSFunctor C}.
-Set Universe Checking.
-*)
-
 
 (** 2-cell Horizontal Composition functor operator *)
 
@@ -937,7 +928,7 @@ Set Universe Checking.
 
 (*********************************************************************)
 
-(*** fibered version (D) *)
+(*** fibred version (D) *)
 
 (* alternative definition of strict double category,
    adding a display-style form of distribution to UHDDCat  *)
@@ -982,33 +973,6 @@ Definition runit_comp_type (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
 
 
 (********************************************************************)
-
-(*
-Unset Universe Checking.
-HB.mixin Record IsACUHPreDDCatD T of CUHPreDDCatD T := {
-
-  hassoc : forall (a0 a1 a2 a3: T) 
-                  (h1: hhom a0 a1) (h2: hhom a1 a2) (h3: hhom a2 a3),
-      (h1 \; h2) \; h3 = h1 \; (h2 \; h3) ;
-}.
-#[short(type="acuhpreddcatd")]
-HB.structure Definition ACUHPreDDCatD : Set :=
-  { C of IsACUHPreDDCatD C }.
-Set Universe Checking.
-*)
-(*
-Definition hassoc_comp_type (T: ACUHPreDDCatD.type)
-  (a0 a1 a2 a3 b0 b1 b2 b3: T)
-  (h1: hhom a0 a1) (h2: hhom a1 a2) (h3: hhom a2 a3)  
-  (k1: hhom b0 b1) (k2: hhom b1 b2) (k3: hhom b2 b3)
-  (hk1: D1hom h1 k1) (hk2: D1hom h2 k2) (hk3: D1hom h3 k3 )
-  (K1: H1Target hk1 = H1Source hk2)
-  (K2: H1Target hk2 = H1Source hk3) : Prop :=
-  let hk12 := HC2Comp_flat K1
-  in let hk23 := HC2Comp_flat K2
-  in forall (K12 : H1Target hk12 = H1Source hk3)
-            (K23 : H1Target hk1 = H1Source hk23),
-  TT2 (HC2Comp_flat K12) = TT2 (HC2Comp_flat K23).                              *)  
  
 Lemma target_comp_dist_app (T: CUHPreDDCatD.type)
   (a0 a1 a2 a3 b0 b1 b2 b3: T)
@@ -1200,7 +1164,7 @@ End H0S.
 
 Module H0D.
 
-(* Fibered version (D). *)
+(* Fibred version (D). *)
   
 Unset Universe Checking.
 #[short(type="strictdoublecat")]
@@ -1294,24 +1258,10 @@ Definition comp_hassoc_type2 (T: CUHPreDDCatD.type)
   in let K23 : (H1Target hk1 = H1Source hk23) := source_comp_dist_app K1 K2
   in HC2Comp_flat K23 =
       ecast2 x0 y0 (D1hom x0 y0) (eq_sym eh) (eq_sym ek) (HC2Comp_flat K12).                           
-(*
-Definition lunit_comp_type2 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
-  (h: hhom a1 a2)
-  (k: hhom b1 b2)
-  (hk: D1hom h k)
-  (eh: hunit a1 \; h = h)
-  (ek: hunit b1 \; k = k) : Prop := 
-  let K := @unit_target T _ _ (H1Source hk)
-  in let hk1 := HC2Comp_flat K
-(*  in HC2Comp_flat (H2Unit (H1Source hk) hk = hk *)
- (* in TT2 (HC2Comp_flat K) = TT2 hk ; *) 
-(*  in (ecast2 x0 y0 (fun x0 y0 => D1hom x0 y0) eh ek hk1) = hk ;  *)   
-  in hk1 = ecast2 x0 y0 (D1hom x0 y0) (eq_sym eh) (eq_sym ek) hk.     
-*)
 
 (***********************************************************)
 
-(* fibered definition of strict double category, depending on H0,
+(* fibred definition of strict double category, depending on H0,
    adding a display-style form of distribution to UHDDCat *)
 Unset Universe Checking.
 HB.mixin Record IsSStrictDoubleCat T of StrictDoubleCat T := {
@@ -1349,6 +1299,56 @@ HB.reexport.
 End Exports.
 
 End H0.
+
+
+(*
+(**** HF and HS functors (all functors so far) *)
+Unset Universe Checking.
+  HB.structure Definition QCFunctor : Set :=
+  {C of HFFunctor C & HSFunctor C}.
+Set Universe Checking.
+*)
+(*
+Unset Universe Checking.
+HB.mixin Record IsACUHPreDDCatD T of CUHPreDDCatD T := {
+
+  hassoc : forall (a0 a1 a2 a3: T) 
+                  (h1: hhom a0 a1) (h2: hhom a1 a2) (h3: hhom a2 a3),
+      (h1 \; h2) \; h3 = h1 \; (h2 \; h3) ;
+}.
+#[short(type="acuhpreddcatd")]
+HB.structure Definition ACUHPreDDCatD : Set :=
+  { C of IsACUHPreDDCatD C }.
+Set Universe Checking.
+*)
+(*
+Definition hassoc_comp_type (T: ACUHPreDDCatD.type)
+  (a0 a1 a2 a3 b0 b1 b2 b3: T)
+  (h1: hhom a0 a1) (h2: hhom a1 a2) (h3: hhom a2 a3)  
+  (k1: hhom b0 b1) (k2: hhom b1 b2) (k3: hhom b2 b3)
+  (hk1: D1hom h1 k1) (hk2: D1hom h2 k2) (hk3: D1hom h3 k3 )
+  (K1: H1Target hk1 = H1Source hk2)
+  (K2: H1Target hk2 = H1Source hk3) : Prop :=
+  let hk12 := HC2Comp_flat K1
+  in let hk23 := HC2Comp_flat K2
+  in forall (K12 : H1Target hk12 = H1Source hk3)
+            (K23 : H1Target hk1 = H1Source hk23),
+  TT2 (HC2Comp_flat K12) = TT2 (HC2Comp_flat K23).                              *)  
+
+(*
+Definition lunit_comp_type2 (T: UHPreDDCat.type) (a1 a2 b1 b2: T)
+  (h: hhom a1 a2)
+  (k: hhom b1 b2)
+  (hk: D1hom h k)
+  (eh: hunit a1 \; h = h)
+  (ek: hunit b1 \; k = k) : Prop := 
+  let K := @unit_target T _ _ (H1Source hk)
+  in let hk1 := HC2Comp_flat K
+(*  in HC2Comp_flat (H2Unit (H1Source hk) hk = hk *)
+ (* in TT2 (HC2Comp_flat K) = TT2 hk ; *) 
+(*  in (ecast2 x0 y0 (fun x0 y0 => D1hom x0 y0) eh ek hk1) = hk ;  *)   
+  in hk1 = ecast2 x0 y0 (D1hom x0 y0) (eq_sym eh) (eq_sym ek) hk.     
+*)
 
 (*
 (* strict double category, adding
