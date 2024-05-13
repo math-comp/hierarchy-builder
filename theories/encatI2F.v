@@ -60,8 +60,7 @@ About congr1_funext.
 *)
 
 (* XXX HB.tag requires 'icat cat' instead of 'doublecat' *)
-Fail HB.tag
-Definition D0_cat (T: doublecat) : cat := @InternalCat.sort cat T.
+Fail HB.tag Definition D0_cat (T: doublecat) : cat := @InternalCat.sort cat T.
 
 (* probably this tag is not needed, anyway *)
 HB.tag Definition D0_cat (T: icat cat) : cat := @InternalCat.sort cat T.
@@ -941,11 +940,38 @@ Definition dHhom (T: ICC.type) :
           @dHSource T (snd (ICC.sort T)) h = x
           /\ @dHTarget T (snd (ICC.sort T)) h = y.      
 
+HB.tag Definition h_D0 (T: ICC.type) : cat :=
+  transpose (fst (ICC.sort T)).
+#[wrapper] HB.mixin Record IsDH0Quiver C of ICC C := {
+    is_hquiver : IsQuiver (h_D0 C)
+}.
+(* vertical and horizontal quivers, defining cells.
+   non-forgetful inheritace warning  *)
 Unset Universe Checking.
-Definition dH0QuiverD (T: ICC.type) :
-  IsQuiver (transpose (fst (ICC.sort T))) :=
-  IsQuiver.Build _ (@dHhom T).  
+#[short(type="dh0quiver")]
+HB.structure Definition DH0Quiver : Set :=
+  { C of IsDH0Quiver C }.
 Set Universe Checking.
+
+Definition ddHhom (T: ICC.type) :
+  h_D0 T -> h_D0 T -> U :=
+  fun x y =>
+    sigma (h: snd (ICC.sort T)),
+          @dHSource T (snd (ICC.sort T)) h = x
+          /\ @dHTarget T (snd (ICC.sort T)) h = y.      
+
+(* non-forgetful inheritace warning  *)
+Unset Universe Checking.
+HB.instance Definition DH0Quiver_inst (T: ICC.type) :
+  IsQuiver (h_D0 T) := @IsQuiver.Build (h_D0 T) (@ddHhom T).
+Set Universe Checking.
+
+Unset Universe Checking.
+HB.tag Definition dhhom (T : ICC.type) : h_D0 T -> h_D0 T -> U :=
+  @hom (h_D0 T).
+Set Universe Checking.
+Notation "a h> b" := (dhhom a b)
+   (at level 99, b at level 200, format "a  h>  b") : cat_scope.
 
 Definition DH0_cat_id (T: ICC.type)
   (a: transpose (fst (ICC.sort T))) : dHhom a a.
@@ -1023,6 +1049,12 @@ Definition DH0_cat_comp (T: ICC.type)
     rewrite ht2; auto.
   }.  
 Defined.     
+
+(* non-forgetful inheritace warning  *)
+Unset Universe Checking.
+HB.instance Definition DH0PreCatD (T: ICC.type) : IsPreCat (h_D0 T) :=
+  @IsPreCat.Build (h_D0 T) (@dHhom T) (@DH0_cat_id T) (@DH0_cat_comp T).
+Set Universe Checking.
 
 
 (*************************************************************************)
