@@ -23,7 +23,8 @@ Notation "'sigma' x .. y , p" :=
 
 (********************************************************************)
 
-(*** DOUBLE CATEGORIES (without internal categories, assuming
+(*** STAND-ALONE definition of 
+     DOUBLE CATEGORIES (without internal categories, assuming
      horizontal category H0) *)
 
 (* Strict double categories, from

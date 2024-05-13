@@ -1,6 +1,6 @@
 Require Import ssreflect ssrfun.
 Unset Universe Checking.
-From HB Require Import structures cat encatP encatD encatI.
+From HB Require Import structures cat CatPullbacks InternalCat SADoubleCat.
 Set Universe Checking.
 Require Import Coq.Program.Equality FunctionalExtensionality.
 

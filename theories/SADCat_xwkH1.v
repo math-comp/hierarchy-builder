@@ -1,6 +1,6 @@
 Require Import ssreflect ssrfun.
 Unset Universe Checking.
-From HB Require Import structures cat encatD.
+From HB Require Import structures cat SADoubleCat.
 Set Universe Checking.
 Require Import Coq.Program.Equality.
 
@@ -22,8 +22,8 @@ Notation "'psigma' x .. y , p" :=
 
 (********************************************************************)
 
-(*** DOUBLE CATEGORIES (without internal categories, assuming
-     horizontal category H1) *)
+(*** Stand-alone DOUBLE CATEGORIES (without internal categories,
+     assuming EXTRA-WEAK horizontal category H1, implied by H0) *)
 
 (* Strict double categories, from
    https://ncatlab.org/nlab/show/double+category

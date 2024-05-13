@@ -1,6 +1,6 @@
 Require Import ssreflect ssrfun.
 Unset Universe Checking.
-From HB Require Import structures cat encatP encatD encatI.
+From HB Require Import structures cat CatPullbacks InternalCat SADoubleCat.
 Set Universe Checking.
 Require Import Coq.Program.Equality FunctionalExtensionality.
 
@@ -25,7 +25,8 @@ Notation "'sigma' x .. y , p" :=
 
 (************************************************************************)
 
-(** DEFINITION OF DOUBLE CATEGORY (based on internal category) *)
+(** DEFINITION OF DOUBLE CATEGORY (based on AXIOMATIC version of
+internal category) *)
 
 (* A double category is an internal category in cat
    - The objects are the objects of C0
@@ -234,7 +235,7 @@ Definition DH0_cat_comp (T: ICC.type)
     subst prd.
     rewrite mkprod1.
     rewrite hs1; auto.
-  }.  
+  }  
     
   { subst mm. 
 
@@ -250,7 +251,7 @@ Definition DH0_cat_comp (T: ICC.type)
     subst prd.
     rewrite mkprod2.
     rewrite ht2; auto.
-  }.  
+  }  
 Defined.     
 
 (* non-forgetful inheritace warning  *)
