@@ -636,6 +636,16 @@ Defined.
 (* tag probably not need, but definition is *)
 HB.tag Definition transpose_D0 (T: icat cat) : cat :=
   transpose (D0_cat T).
+#[wrapper] HB.mixin Record IsDCH0Quiver (T: icat cat) := {
+    is_hquiver : IsQuiver (transpose_D0 T)
+}.
+(* vertical and horizontal quivers, defining cells.
+   non-forgetful inheritace warning  *)
+Unset Universe Checking.
+#[short(type="dch0quiver")]
+HB.structure Definition DCH0Quiver : Set :=
+  { C of IsDCH0Quiver C }.
+Set Universe Checking.
 
 Unset Universe Checking. 
 Definition dcH0QuiverD (T: icat cat) :
