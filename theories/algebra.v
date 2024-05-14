@@ -67,7 +67,7 @@ HB.instance Definition _ A := id_IsRingHom A.
 
 Lemma comp_IsRingHom (A B C : ring)
     (f : RingHom.type A B) (g : RingHom.type B C) :
-  IsRingHom A C (f \; g :> U).
+  IsRingHom A C (f \; g)%FUN.
 Proof.
 by constructor => [|x y|x y];
 rewrite /comp/= ?hom1_subproof ?homB_subproof ?homM_subproof.
@@ -76,7 +76,8 @@ HB.instance Definition _ A B C f g := @comp_IsRingHom A B C f g.
 
 HB.instance Definition _ := IsQuiver.Build ring RingHom.type.
 HB.instance Definition _ :=
-  Quiver_IsPreCat.Build ring (fun _ => idfun) (fun _ _ _ f g => f \; g :> U).
+  Quiver_IsPreCat.Build ring (fun A => idfun : RingHom.type A A)
+     (fun A B C f g => (f \; g)%FUN : RingHom.type A C).
 HB.instance Definition _ := Quiver_IsPreConcrete.Build ring (fun _ _ => id).
 Lemma ring_precat : PreConcrete_IsConcrete ring.
 Proof.

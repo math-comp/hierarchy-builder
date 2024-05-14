@@ -48,7 +48,7 @@ Arguments hom {C} : rename.
 Notation homs T := (@hom T _ _).
 Notation "a ~> b" := (hom a b)
    (at level 99, b at level 200, format "a  ~>  b") : cat_scope.
-Notation "a ~>_ C b" := (@hom C a b)
+Notation "a ~>_ C b" := (@hom C (a : C) (b : C))
   (at level 99, C at level 0, only parsing) : cat_scope.
 
 (* precategories are quivers + id and comp *)
@@ -80,6 +80,10 @@ Notation "f \; g :> T" := (@comp T _ _ _ f g)
   (at level 60, g, T at level 60, format "f  \;  g  :>  T", only parsing) : cat_scope.
 Notation "f \; g" := (comp f g) : cat_scope.
 Notation "\idmap_ a" := (@idmap _ a) (only parsing, at level 0) : cat_scope.
+
+(* Breaks downstream *)
+(* Coercion idtomap (C : precat) (a b : C) (e : a = b) : a ~> b := *)
+(*   ecast _ _ e (\idmap_a). *)
 
 (* categories are precategories + laws *)
 HB.mixin Record PreCat_IsCat C of PreCat C := {
@@ -241,7 +245,7 @@ End comp_functor.
 
 (* precat and cat have a precategory structure *)
 HB.instance Definition cat_id := Quiver_IsPreCat.Build precat
-  (fun=> idfun) (fun C D E (F : C ~> D) (G : D ~> E) => (G \o F)%FUN).
+  (fun A => idfun : PreFunctor.type A A) (fun C D E (F : C ~> D) (G : D ~> E) => (G \o F)%FUN).
 HB.instance Definition cat_comp := Quiver_IsPreCat.Build cat
   (fun=> idfun) (fun C D E (F : C ~> D) (G : D ~> E) => (G \o F)%FUN).
 
@@ -485,11 +489,11 @@ congr IsNatural.Axioms_.
 exact: Prop_irrelevance.
 Qed.
 
-Notation "F ~~> G" := (F ~>_(homs quiver) G)
+Notation "F ~~> G" := (@hom (homs quiver) F G)
   (at level 99, G at level 200, format "F  ~~>  G").
-Notation "F ~~> G :> C ~> D" := (F ~> G :> (C ~>_quiver D))
+Notation "F ~~>_( C , D ) G" := (@hom (C ~>_quiver D) F G)
   (at level 99, G at level 200, C, D at level 0,
-   format "F  ~~>  G  :>  C  ~>  D").
+   format "F  ~~>_( C  , D )  G").
 
 Definition natural_id {C D : precat} (F : C ~>_quiver D) (a : C) := \idmap_(F a).
 Definition natural_id_natural (C D : cat) (F : C ~>_quiver D) :
@@ -807,6 +811,7 @@ HB.mixin Record IsInitial {C : quiver} (i : obj C) := {
 }.
 #[short(type="initial")]
 HB.structure Definition Initial {C : quiver} := {i of IsInitial C i}.
+Arguments to {C}.
 
 HB.mixin Record IsTerminal {C : quiver} (t : obj C) := {
   from : forall c, c ~> t;
@@ -814,6 +819,7 @@ HB.mixin Record IsTerminal {C : quiver} (t : obj C) := {
 }.
 #[short(type="terminal")]
 HB.structure Definition Terminal {C : quiver} := {t of IsTerminal C t}.
+Arguments from {C}.
 
 HB.mixin Record IsMono {C : precat} (b c : C) (f : hom b c) := {
   monoP : forall (a : C) (g1 g2 : a ~> b), g1 \; f = g2 \; f -> g1 = g2
@@ -1144,6 +1150,22 @@ HB.structure Definition Pullback (Q : precat)
     (A B : Q) (c : cospan A B) :=
   {s of isPrePullback Q A B c s
       & IsTerminal (prepullback c) (pb_terminal s) }.
+
+
+Lemma pb_universal {C: cat} {A B T P : C}
+  (t: A ~> T) (s: B ~> T) (p : pullback (Cospan t s))
+  (f: P ~> A) (g: P ~> B) :
+  f \; t = g \; s ->
+  {m: P ~> bot p & f = m \; bot2left p /\ g = m \; bot2right p}.
+Proof.
+case: p => [[P0 p1 p2] p1p2ts_pb] ftgs; pose c := Cospan t s.
+pose p12 : pullback c := HB.pack (Span p1 p2) p1p2ts_pb.
+have fg_sq : isPrePullback _ _ _ c (Span f g) by constructor; exact: ftgs.
+pose fg : prepullback c := HB.pack (Span f g) fg_sq.
+pose m := @from _ (pb_terminal p12) fg.
+by exists (bot_map m); split; rewrite (bot2left_map m, bot2right_map m).
+Qed.
+Arguments pb_universal {C A B T P}.
 
 Inductive walking_cospan := Top | Left | Right.
 Definition walking_cospan_hom (x y : walking_cospan) := match x, y with

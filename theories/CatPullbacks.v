@@ -291,13 +291,14 @@ HB.mixin Record HasPBop C of Cat C := {
 #[short(type="pbop")]
 HB.structure Definition PBop :=
   {C of HasPBop C }. 
+Arguments pbk {_ _ _}.
 
 (* category with all prepullbacks *)
 (* Problematic: wrapping a class (PBop) instead of a mixin *)
 #[wrapper]
 HB.mixin Record HasPreBCat C of PBop C : Type := {
   is_ppbk : forall (a b : C) (c : cospan a b),
-      isPrePullback C a b c (@pbk C a b c)
+      isPrePullback C a b c (pbk c)
   }.
 #[short(type="prepbcat")]
 HB.structure Definition PreBCat :=
@@ -307,7 +308,7 @@ HB.structure Definition PreBCat :=
 #[wrapper]
 HB.mixin Record HasPBCat C of PBop C & HasPreBCat C : Type := {
   is_tpbk : forall (a b : C) (c : cospan a b),
-     prepullback_isTerminal C a b c (@pbk C a b c)
+     prepullback_isTerminal C a b c (pbk c)
   }.
 #[short(type="pbcat")]
 HB.structure Definition PBCat :=
@@ -344,7 +345,7 @@ HB.instance Definition cat_HasPBop := cat_pbop.
 
 (** Cat has all prepullbacks *)
 Lemma cat_preb (a b: cat) (c: cospan a b) :
-   isPrePullback cat a b c (pbk a b c).
+   isPrePullback cat a b c (pbk c).
 Proof.
 constructor; case: c => /= c l r.
 pose p1 := @pcat_prj1 _ _ _ l r.
@@ -359,10 +360,10 @@ HB.instance Definition _ (a b: cat) (c: cospan a b) := @cat_preb a b c.
 (* alternate proof of cat_preb - for comparison *)
 Lemma cat_preb' :
   forall (a b: cat) (c: cospan a b),
-    isPrePullback cat a b c (@pbk cat a b c).
+    isPrePullback cat a b c (pbk c).
   intros.
 
-  remember (pbk a b c) as K.
+  remember (pbk c) as K.
 
   destruct c; simpl in *; simpl.  
   econstructor; simpl.
@@ -825,7 +826,7 @@ Defined.
 
 Lemma mediating_prepullback_morph (A B : cat)
   (csp0 : cospan A B)
-  (pp : prepullback csp0) : pp ~> pbk A B csp0.  
+  (pp : prepullback csp0) : pp ~> pbk csp0.  
   destruct pp as [sp1 class].
   destruct class as [X].
   destruct X.
@@ -1273,7 +1274,7 @@ Qed.
 (** unicity of the mediating morphism (generic) *)
 Lemma cat_unique_med (A B: cat)
     (csp: cospan A B) (ppb : prepullback csp) :
-  forall (ppbM0 ppbM1 : ppb ~> pbk A B csp),
+  forall (ppbM0 ppbM1 : ppb ~> pbk csp),
     ppbM0 = ppbM1.
   intros.
   
@@ -1282,9 +1283,9 @@ Lemma cat_unique_med (A B: cat)
   destruct X0.
   simpl in *; simpl.
 
-  set botK := bot (pbk A B csp).
-  set bot2leftK := bot2left (pbk A B csp).
-  set bot2rightK := bot2right (pbk A B csp).
+  set botK := bot (pbk csp).
+  set bot2leftK := bot2left (pbk csp).
+  set bot2rightK := bot2right (pbk csp).
   
   destruct sp0 as [bot0 bot2left0 bot2right0].
   simpl; simpl in *.
@@ -1336,7 +1337,7 @@ Qed.
    
 Lemma cat_pb :
    forall (a b: cat) (c: cospan a b),
-     prepullback_isTerminal cat a b c (@pbk cat a b c).
+     prepullback_isTerminal cat a b c (pbk c).
   intros.
   econstructor; eauto.
   set abs_med_funX := @mediating_prepullback_morph a b c.  
