@@ -108,7 +108,19 @@ HB.mixin Record isPBase T of IBase T := {
   mkprod1 (X Y: IObj) (h: OInt X) (k: OInt Y) :
     @dprodl X Y (@mkprod X Y h k) = h ; 
   mkprod2 (X Y: IObj) (h: OInt X) (k: OInt Y) :
-    @dprodr X Y (@mkprod X Y h k) = k ;      
+    @dprodr X Y (@mkprod X Y h k) = k ;
+
+  mkprod_morph (X Y: IObj) (h1 h2: OInt X) (k1 k2: OInt Y)
+    (vv1 : h1 ~> h2) (vv2: k1 ~> k2) :
+    mkprod X Y h1 k1 ~> mkprod X Y h2 k2 ;    
+
+(*
+  mkprod1_morph (X Y: IObj) (h1 h2: OInt X) (k1 k2: OInt Y)
+    (vv1 : h1 ~> h2) (vv2: k1 ~> k2) :
+    @dprodl X Y (@mkprod X Y h k) = h ; 
+  mkprod2 (X Y: IObj) (h: OInt X) (k: OInt Y) :
+    @dprodr X Y (@mkprod X Y h k) = k ;
+*)
 }.
 HB.structure Definition PBase := { C of isPBase C }.
 
@@ -411,7 +423,62 @@ Definition DH1_cat_id (T: ICC.type)
   }  
 Defined.
 
+Definition DH1_cat_comp (T: ICC.type)
+  (v0 v1 v2: Total2 (@hom (@OInt T CC0)))
+  (hh1: H1hom v0 v1) (hh2: H1hom v1 v2) : H1hom v0 v2.
+  unfold H1hom in *; unfold H1Hom in *.
+  simpl in *.
+  destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s hb1t]]]]]].
+  destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s hb2t]]]]]].
+  pose prd_a := @mkprod T _ _ ha1 ha2.
+  pose prd_b := @mkprod T _ _ hb1 hb2.
+  pose cmp_a := @dIcomp T prd_a.
+  pose cmp_b := @dIcomp T prd_b.
+(*  pose vv3 := @dPair T _ _ _ _ vv1 vv2. *)
+  (* check iHom_comp *)
+(*  pose prd_vv := @mkprod T _ _ vv1 vv2. *)
+  
+  exists cmp_a.
+  exists cmp_b.
 
+  subst cmp_a cmp_b; simpl in *.
+Admitted.
+
+(*  
+  split.
+  { subst mm. 
+
+    assert (@HInt T _ (SrcH CC1) (cmp prd) =
+            (cmp \; @HInt T _ (SrcH CC1)) prd) as H. 
+    { auto. }
+
+    rewrite H.
+    subst cmp.
+    rewrite dIcompS.
+    rewrite PSrc_def.
+    simpl.
+    subst prd.
+    rewrite mkprod1.
+    rewrite hs1; auto.
+  }  
+    
+  { subst mm. 
+
+    assert (@HInt T _ (TrgH CC1) (cmp prd) =
+            (cmp \; @HInt T _ (TrgH CC1)) prd) as H. 
+    { auto. }
+
+    rewrite H.
+    subst cmp.
+    rewrite dIcompT.
+    rewrite PTrg_def.
+    simpl.
+    subst prd.
+    rewrite mkprod2.
+    rewrite ht2; auto.
+  }  
+Defined.     
+*)
 
 End IInter.
 
