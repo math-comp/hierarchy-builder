@@ -22,6 +22,95 @@ Notation "'sigma' x .. y , p" :=
    format "'[' 'sigma'  '/ ' x .. y ,  '/ ' p ']'")
   : type_scope.
 *)
+(*
+Set Debug "unification".
+Lemma ...
+Proof.   
+  Fail ... 
+*)
+
+(** Auxiliary definitions *)
+
+Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
+  f \; match e with eq_refl => g end.  
+Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
+  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
+                             only parsing) : cat_scope.
+
+Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
+  (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
+  (f: P1 ~> A) (g: P1 ~> B) :
+  pbsquare p1 p2 t s ->  
+  f \; t = g \; s ->
+  sigma m: P1 ~> P0, f = m \; p1 /\ g = m \; p2. 
+  intros sq E.  
+  destruct sq as [IM1 IM2].
+
+  remember (Span p1 p2) as Spn0.  
+  remember (@Cospan C A B T t s) as Csp. 
+  remember (@Span C A B P1 f g) as Spn1. 
+
+  destruct IM1 as [IM3].
+  destruct IM2 as [IM4].
+
+  assert (bot2left Spn1 \; left2top Csp = bot2right Spn1 \; right2top Csp)
+    as K1.
+  { unfold bot2left, bot2right.
+    rewrite HeqCsp.
+    rewrite HeqSpn1.
+    simpl; auto.
+  }   
+  remember ( @isPrePullback.Build C A B Csp Spn1 K1) as Pb1.
+  assert (PrePullback.axioms_ Csp Spn1) as Pb2.
+  { econstructor.
+    exact Pb1. }
+  remember ( @PrePullback.Pack C A B Csp Spn1 Pb2) as PB.
+
+  destruct IM4 as [IM5 IM6].  
+  clear IM6.
+  specialize (IM5 PB).
+
+  inversion HeqSpn1; subst.
+  simpl in *.
+  clear H K1.
+  
+  unfold pb_terminal in *.
+  destruct Pb2 as [IM].
+  destruct IM.
+  simpl in *.
+
+  destruct IM5.
+  simpl in *.
+
+  econstructor.
+  instantiate (1:= bot_map).
+  split; auto.
+Defined.
+
+Lemma jm_pbsquare_universal {C: cat} (A B T P0 P1 P2 : C)
+  (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
+  (f: P1 ~> A) (g: P1 ~> B) 
+  (sq: pbsquare p1 p2 t s)  
+  (E0: f \; t = g \; s) 
+  (e: P0 = P2) :
+  sigma m: P1 ~> P2, f = m \;;_e p1 /\ g = m \;;_e p2. 
+  unfold jmcomp.
+  destruct e.
+(*  dependent destruction e. *)
+  eapply pbsquare_universal; eauto.
+Defined.  
+  
+Lemma pbquare_universal_aux1 {C: cat} (A0 A1 B0 B1 P0 P1 T : C)
+  (t: A0 ~> T) (s: B0 ~> T) (p01: P0 ~> A0) (p02: P0 ~> B0)
+  (f: A1 ~> A0) (g: B1 ~> B0) (p11: P1 ~> A1) (p12: P1 ~> B1) :
+  pbsquare p01 p02 t s ->   
+  p11 \; f \; t = p12 \; g \; s ->
+  sigma m: P1 ~> P0, p11 \; f = m \; p01 /\ p12 \; g = m \; p02. 
+  intros.
+  eapply pbsquare_universal; eauto.
+  setoid_rewrite <- compoA; auto.
+Defined.  
+
 
 (************************************************************************)
 
@@ -128,8 +217,9 @@ Definition trivial_iprod_iHom {C: prepbcat} {C0: C} :
 
 Definition trivial_iprod_iHom' {C: prepbcat} {C0: C} : @iHom C C0 :=
   InternalHom.Pack (InternalHom.Class (@trivial_iprod_iHom C C0)).
-  
-(**)
+
+
+(*********************************************************************)
 
 (* we need internal hom morphisms: the ones that preserve sources and
 targets.  basically, we recast morphisms in (obj C) into some in
@@ -392,6 +482,8 @@ move=> C C0 ab c0 d f g h.
 eapply iHom_Assoc_lemma; eauto.
 Qed.
 
+(***********************************************************************)
+
 (* Now we define an internal quiver as an object C0,
    which has a C1 : iHom C0 attached to it *)
 HB.mixin Record IsPreInternalQuiver (C : quiver) (C0 : obj C) :=
@@ -413,94 +505,8 @@ Coercion iquiver_quiver (C : quiver) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_precat (C : precat) (C0 : iquiver C) : C := C0 :> C.
 Coercion iquiver_cat (C : cat) (C0 : iquiver C) : C := C0 :> C.
 
-Definition jmcomp {C: cat} {a b c d: C} (e: c = b) (f: a ~> b) (g: c ~> d) :=
-  f \; match e with eq_refl => g end.  
-Notation "f \;;_ e g" := (@jmcomp _ _ _ _ _ e f g) 
-  (at level 60, g at level 60, e at level 0, format "f  \;;_ e  g",
-                             only parsing) : cat_scope.
 
-Lemma pbsquare_universal {C: cat} (A B T P0 P1 : C)
-  (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
-  (f: P1 ~> A) (g: P1 ~> B) :
-  pbsquare p1 p2 t s ->  
-  f \; t = g \; s ->
-  sigma m: P1 ~> P0, f = m \; p1 /\ g = m \; p2. 
-  intros sq E.  
-  destruct sq as [IM1 IM2].
-
-  remember (Span p1 p2) as Spn0.  
-  remember (@Cospan C A B T t s) as Csp. 
-  remember (@Span C A B P1 f g) as Spn1. 
-
-  destruct IM1 as [IM3].
-  destruct IM2 as [IM4].
-
-  assert (bot2left Spn1 \; left2top Csp = bot2right Spn1 \; right2top Csp)
-    as K1.
-  { unfold bot2left, bot2right.
-    rewrite HeqCsp.
-    rewrite HeqSpn1.
-    simpl; auto.
-  }   
-  remember ( @isPrePullback.Build C A B Csp Spn1 K1) as Pb1.
-  assert (PrePullback.axioms_ Csp Spn1) as Pb2.
-  { econstructor.
-    exact Pb1. }
-  remember ( @PrePullback.Pack C A B Csp Spn1 Pb2) as PB.
-
-  destruct IM4 as [IM5 IM6].  
-  clear IM6.
-  specialize (IM5 PB).
-
-  inversion HeqSpn1; subst.
-  simpl in *.
-  clear H K1.
-  
-  unfold pb_terminal in *.
-  destruct Pb2 as [IM].
-  destruct IM.
-  simpl in *.
-
-  destruct IM5.
-  simpl in *.
-
-  econstructor.
-  instantiate (1:= bot_map).
-  split; auto.
-Defined.
-
-Lemma jm_pbsquare_universal {C: cat} (A B T P0 P1 P2 : C)
-  (t: A ~> T) (s: B ~> T) (p1: P0 ~> A) (p2: P0 ~> B)
-  (f: P1 ~> A) (g: P1 ~> B) 
-  (sq: pbsquare p1 p2 t s)  
-  (E0: f \; t = g \; s) 
-  (e: P0 = P2) :
-  sigma m: P1 ~> P2, f = m \;;_e p1 /\ g = m \;;_e p2. 
-  unfold jmcomp.
-  destruct e.
-(*  dependent destruction e. *)
-  eapply pbsquare_universal; eauto.
-Defined.  
-  
-Lemma pbquare_universal_aux1 {C: cat} (A0 A1 B0 B1 P0 P1 T : C)
-  (t: A0 ~> T) (s: B0 ~> T) (p01: P0 ~> A0) (p02: P0 ~> B0)
-  (f: A1 ~> A0) (g: B1 ~> B0) (p11: P1 ~> A1) (p12: P1 ~> B1) :
-  pbsquare p01 p02 t s ->   
-  p11 \; f \; t = p12 \; g \; s ->
-  sigma m: P1 ~> P0, p11 \; f = m \; p01 /\ p12 \; g = m \; p02. 
-  intros.
-  eapply pbsquare_universal; eauto.
-  setoid_rewrite <- compoA; auto.
-Defined.  
-
-(* Lemma is_pullback_in_pbcat {C: pbcat}  *)
-
-(*
-Set Debug "unification".
-Lemma ...
-Proof.   
-  Fail ... 
-*)
+(*********************************************************************)
 
 Lemma pbk_eta {C: prepbcat} {C0} (X Y: iHom C0) :
     (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))) =
@@ -536,6 +542,7 @@ Lemma pbsquare_is_pullback {C: prepbcat} {C0} (X Y: iHom C0) :
         (pbk (X :> C) (Y :> C) (Cospan (@tgt C C0 X) (@src C C0 Y))).
   rewrite pbk_pullback_is_pullback; auto.
 Qed.
+
 
 (* we define pairing of preserving morphisms as a morphism *)
 Program Definition ipairP {C : pbcat} {C0 : C} {x0 x1 x2 x3 : iHom C0}

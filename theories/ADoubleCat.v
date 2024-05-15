@@ -60,8 +60,278 @@ Print Assumptions doublecat.
 About congr1_funext.
 *)
 
+Module IInter.
+
 (*************************************************************************)
 (* flatter def of internal cat (for cat), consistently using HB *)
+
+Definition Cat_pair : Type := (cat * cat)%type.
+
+Inductive IObj : Type := CC0 | CC1 | CProd (x y: IObj).
+Inductive IHook (x: IObj) : Type := SrcH | TrgH.
+
+HB.mixin Record isIBase (T: Cat_pair) := { 
+  HSrc : (snd T) ~> (fst T) ;  
+  HTrg : (snd T) ~> (fst T) ; 
+  }.
+HB.structure Definition IBase := { C of isIBase C }.
+
+(*
+Definition morph_heq1 (X Y Z: cat) (m2: Z ~> Y) (m1: X ~> Y) (e: X = Z) :
+  Prop := m2 = ecast x (x ~> Y) e m1.
+*)
+
+HB.mixin Record isPBase T of IBase T := {
+  OInt : IObj -> cat ;
+  HInt : forall {x: IObj}, IHook x -> (OInt x ~> OInt CC0) ;
+
+  dprodl (X Y: IObj) : OInt (CProd X Y) ~> OInt X ;    
+  dprodr (X Y: IObj) : OInt (CProd X Y) ~> OInt Y ;  
+     
+  CC0_def : OInt CC0 = fst T ;
+  CC1_def : OInt CC1 = snd T ;
+
+  C1Src_def : (HInt (SrcH CC1)) ~= @HSrc T ; 
+    (* morph_heq1 (HInt (SrcH CC1)) (@HSrc T) (esym CC1_def) ; *)
+  C1Trg_def : HInt (TrgH CC1) ~= @HTrg T ;
+
+  C0Src_def : HInt (SrcH CC0) = @idmap cat (OInt CC0) ; 
+  C0Trg_def : HInt (TrgH CC0) = @idmap cat (OInt CC0) ; 
+
+  PSrc_def (X Y: IObj) :
+    HInt (SrcH (CProd X Y)) = dprodl X Y \; HInt (SrcH X) ; 
+  PTrg_def (X Y: IObj) :
+    HInt (TrgH (CProd X Y)) = dprodr X Y \; HInt (TrgH Y) ; 
+
+  mkprod (X Y: IObj) : (OInt X) -> (OInt Y) -> OInt (CProd X Y) ; 
+
+  mkprod1 (X Y: IObj) (h: OInt X) (k: OInt Y) :
+    @dprodl X Y (@mkprod X Y h k) = h ; 
+  mkprod2 (X Y: IObj) (h: OInt X) (k: OInt Y) :
+    @dprodr X Y (@mkprod X Y h k) = k ;      
+}.
+HB.structure Definition PBase := { C of isPBase C }.
+
+HB.mixin Record isICC T of PBase T := {   
+  dIid : @OInt T CC0 ~> @OInt T CC1 ;  
+  dIcomp : @OInt T (CProd CC1 CC1) ~> @OInt T CC1 ;  
+
+  dPair (X0 X1 X2 X3: IObj)
+        (f: (@OInt T X0) ~> (@OInt T X2))
+        (g: (@OInt T X1) ~> (@OInt T X3)) :
+    @OInt T (CProd X0 X1) ~> @OInt T (CProd X2 X3) ; 
+
+  dIAsc (C1 C2 C3: IObj) :
+    @OInt T (CProd (CProd C1 C2) C3) ~>
+      @OInt T (CProd C1 (CProd C2 C3)) ;  
+
+  dIidS : dIid \; (@HInt T _ (SrcH CC1)) = @idmap cat (@OInt T CC0) ; 
+  dIidT : dIid \; (@HInt T _ (TrgH CC1)) = @idmap cat (@OInt T CC0) ; 
+
+  dIcompS : dIcomp \; (@HInt T _ (SrcH CC1)) = 
+              @HInt T _ (SrcH (CProd CC1 CC1)) ; 
+  dIcompT : dIcomp \; (@HInt T _ (TrgH CC1)) =
+              @HInt T _ (TrgH (CProd CC1 CC1)) ; 
+  
+  dPairS (X0 X1 X2 X3: IObj)
+    (f: (@OInt T X0) ~> (@OInt T X2))
+    (g: (@OInt T X1) ~> (@OInt T X3)) :
+    dPair _ _ _ _ f g \; @HInt T _ (SrcH (CProd X2 X3)) =
+         dprodl X0 X1 \; @HInt T _ (SrcH X0) ;  
+
+  dPairT (X0 X1 X2 X3: IObj)
+    (f: (@OInt T X0) ~> (@OInt T X2))
+    (g: (@OInt T X1) ~> (@OInt T X3)) :
+    dPair _ _ _ _ f g \; @HInt T _ (TrgH (CProd X2 X3)) =
+         dprodr X0 X1 \; @HInt T _ (TrgH X1) ;  
+   
+  d_icompA :
+    (dPair _ _ _ _ dIcomp (@idmap cat (@OInt T CC1))) \; dIcomp =
+      dIAsc _ _ _ \;
+        (dPair _ _ _ _ (@idmap cat (@OInt T CC1)) dIcomp) \; dIcomp ; 
+
+  d_compL :
+     dPair _ _ _ _ (@idmap cat (@OInt T CC1)) dIid \; dIcomp =
+        dprodl CC1 CC0 ;  
+
+  d_compR :
+     dPair _ _ _ _ dIid (@idmap cat (@OInt T CC1)) \; dIcomp =
+      dprodr CC0 CC1 ;                    
+}.
+HB.structure Definition ICC := { C of isICC C }.
+
+Fixpoint IHom_def (T: IBase.type) (x: IObj) :
+  sigma c: cat, ((c ~> fst (IBase.sort T)) * (c ~> fst (IBase.sort T)))%type.
+  induction x.
+  { exists (fst (IBase.sort T)).
+    exact (idmap, idmap).
+  }
+  { exists (snd (IBase.sort T)).
+    exact (@HSrc T, @HTrg T).
+  }
+  { set x1_ihom := IHom_def T x1.
+    set x2_ihom := IHom_def T x2.
+    destruct x1_ihom as [m1 [s1 t1]].
+    destruct x2_ihom as [m2 [s2 t2]].
+    set pb := pbk _ _ (Cospan t1 s2).
+    set ps := bot2left pb \; s1.
+    set pt := bot2right pb \; t2.
+    exists (bot pb).
+    subst pb; simpl; simpl in *.
+    exact (ps, pt).
+  }
+Defined.  
+    
+Definition OInt_def (T: IBase.type) (x: IObj) : cat.
+  set o := IHom_def T x.
+  destruct o as [c _].
+  exact c.
+Defined.  
+
+Definition HInt_def (T: IBase.type) (x: IObj) (h: IHook x) :
+  OInt_def T x ~> OInt_def T CC0. 
+  set o := IHom_def T x.
+  destruct o as [c [s t]] eqn:X.
+
+  assert (OInt_def T CC0 = fst (IBase.sort T)) as B.
+  {  unfold OInt_def; simpl; auto. }
+  rewrite B.
+  assert (OInt_def T x = c) as A.
+  { unfold OInt_def.
+    subst o.
+    rewrite X; auto.
+  }  
+  rewrite A.
+  destruct h.
+  { exact s. }
+  { exact t. }
+Defined.  
+
+
+(********************************************************************)
+
+Definition HHom (T: ICC.type) :
+  transpose (@OInt T CC0) -> transpose (@OInt T CC0) -> U :=
+  fun x y =>
+    sigma (h: @OInt T CC1),
+          @HInt T _ (SrcH CC1) h = x
+          /\ @HInt T _ (TrgH CC1) h = y.      
+
+HB.tag Definition hD0 (T: ICC.type) : cat :=
+  transpose (@OInt T CC0).
+#[wrapper] HB.mixin Record IsDH0Quiver C of ICC C := {
+    is_hquiver : IsQuiver (hD0 C)
+}.
+(* vertical and horizontal quivers, defining cells.
+   non-forgetful inheritace warning  *)
+Unset Universe Checking.
+#[short(type="dh0quiver")]
+HB.structure Definition DH0Quiver : Set :=
+  { C of IsDH0Quiver C }.
+Set Universe Checking.
+
+Definition H0hom (T: ICC.type) : hD0 T -> hD0 T -> U := @HHom T.
+Unset Universe Checking.
+HB.instance Definition H0Quiver_inst (T: ICC.type) :
+  IsQuiver (hD0 T) := @IsQuiver.Build (hD0 T) (@H0hom T).
+Set Universe Checking.
+
+Unset Universe Checking.
+HB.tag Definition h0hom (T : ICC.type) : hD0 T -> hD0 T -> U :=
+  @hom (hD0 T).
+Set Universe Checking.
+Notation "a h> b" := (h0hom a b)
+   (at level 99, b at level 200, format "a  h>  b") : cat_scope.
+
+Definition DH0_cat_id (T: ICC.type)
+  (a: transpose (@OInt T CC0)) : H0hom a a.
+  pose src1 := fun x => @HInt T x (SrcH x).
+  pose trg1 := fun x => @HInt T x (TrgH x).
+  pose iid := @dIid T.
+  simpl in *.  
+  unfold H0hom; unfold HHom; simpl.
+  exists (iid a).
+
+  split.
+  { assert (@HInt T _ (SrcH CC1) (iid a) = (iid \; src1 CC1) a) as H.
+    { auto. }
+
+    rewrite H.
+    rewrite dIidS.
+    simpl; auto.
+  }
+    
+  { assert (@HInt T _ (TrgH CC1) (iid a) = (iid \; trg1 CC1) a) as H.
+    { auto. }
+  
+    rewrite H.
+    rewrite dIidT.
+    simpl; auto.
+  }
+Defined.
+
+Definition DH0_cat_comp (T: ICC.type)
+  (a b c: transpose (@OInt T CC0))
+  (h1: H0hom a b) (h2: H0hom b c) : H0hom a c.
+  unfold H0hom in *; unfold HHom in *.
+  simpl in *.
+  destruct h1 as [h1 [hs1 ht1]].
+  destruct h2 as [h2 [hs2 ht2]].
+  pose prd := @mkprod T _ _ h1 h2.
+  pose cmp := @dIcomp T.
+  pose mm := cmp prd.
+  exists mm.
+
+  split.
+  { subst mm. 
+
+    assert (@HInt T _ (SrcH CC1) (cmp prd) =
+            (cmp \; @HInt T _ (SrcH CC1)) prd) as H. 
+    { auto. }
+
+    rewrite H.
+    subst cmp.
+    rewrite dIcompS.
+    rewrite PSrc_def.
+    simpl.
+    subst prd.
+    rewrite mkprod1.
+    rewrite hs1; auto.
+  }  
+    
+  { subst mm. 
+
+    assert (@HInt T _ (TrgH CC1) (cmp prd) =
+            (cmp \; @HInt T _ (TrgH CC1)) prd) as H. 
+    { auto. }
+
+    rewrite H.
+    subst cmp.
+    rewrite dIcompT.
+    rewrite PTrg_def.
+    simpl.
+    subst prd.
+    rewrite mkprod2.
+    rewrite ht2; auto.
+  }  
+Defined.     
+
+(* non-forgetful inheritace warning  *)
+Unset Universe Checking.
+HB.instance Definition DH0PreCatD (T: ICC.type) : IsPreCat (hD0 T) :=
+  @IsPreCat.Build (hD0 T) (@H0hom T) (@DH0_cat_id T) (@DH0_cat_comp T).
+Set Universe Checking.
+
+
+(*******************************************************************)
+
+End IInter.
+
+
+(********************************************************************)
+(** OLD *)
+
+Module IOld.
 
 Definition Cat_pair : Type := (cat * cat)%type.
 
@@ -259,6 +529,8 @@ Unset Universe Checking.
 HB.instance Definition DH0PreCatD (T: ICC.type) : IsPreCat (h_D0 T) :=
   @IsPreCat.Build (h_D0 T) (@dHhom T) (@DH0_cat_id T) (@DH0_cat_comp T).
 Set Universe Checking.
+
+End IOld.
 
 
 (*************************************************************************)
