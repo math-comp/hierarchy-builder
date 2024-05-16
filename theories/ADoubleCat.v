@@ -236,13 +236,16 @@ HB.tag Definition H0obj (T: ICC.type) : cat :=
     is_hquiver : IsQuiver (H0obj C)
 }.
 (* vertical and horizontal quivers, defining cells.
-   non-forgetful inheritace warning  *)
+   XXX non-forgetful inheritace warning, 
+   suggesting to make cat_IsQuiver depend on cat_Cat  *)
 Unset Universe Checking.
 #[short(type="dh0quiver")]
 HB.structure Definition DH0Quiver : Set :=
   { C of IsDH0Quiver C }.
 Set Universe Checking.
 
+(* XXX non-forgetful inheritace warning, 
+   suggesting to make cat_IsQuiver depend on cat_Cat  *)
 Definition H0hom (T: ICC.type) : H0obj T -> H0obj T -> U := @H0Hom T.
 Unset Universe Checking.
 HB.instance Definition H0Quiver_inst (T: ICC.type) :
@@ -329,7 +332,7 @@ Definition DH0_cat_comp (T: ICC.type)
   }  
 Defined.     
 
-(* non-forgetful inheritace warning  *)
+(* XXX non-forgetful inheritace warning  *)
 Unset Universe Checking.
 HB.instance Definition DH0PreCatD (T: ICC.type) : IsPreCat (H0obj T) :=
   @IsPreCat.Build (H0obj T) (@H0hom T) (@DH0_cat_id T) (@DH0_cat_comp T).
