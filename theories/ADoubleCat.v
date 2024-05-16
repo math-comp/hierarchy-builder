@@ -354,7 +354,7 @@ Definition H1HomDS (T: ICC.type) (v0 v1: H1objS T) :=
     @HSrc T ha = source v0 /\ @HTrg T ha = source v1
     /\ @HSrc T hb = target v0 /\ @HTrg T hb = target v1.                        
 
-(*******)
+(********************************************************************)
 
 Definition H1Hom (T: ICC.type) (v0 v1: Total2 (@hom (@OInt T CC0))) : U :=
   sigma (ha hb: @OInt T CC1) (vv: ha ~> hb),
@@ -434,10 +434,6 @@ Definition DH1_cat_comp (T: ICC.type)
   pose prd_b := @mkprod T _ _ hb1 hb2.
   pose cmp_a := @dIcomp T prd_a.
   pose cmp_b := @dIcomp T prd_b.
-(*  pose vv3 := @dPair T _ _ _ _ vv1 vv2. *)
-  (* check iHom_comp *)
-(*  pose prd_vv := @mkprod T _ _ vv1 vv2. *)
-
   pose prd_m := @mkprod_morph T _ _ _ _ _ _ vv1 vv2.
   pose cmp_m := @dIcomp T <$> prd_m.
   
@@ -486,6 +482,55 @@ Definition DH1_cat_comp (T: ICC.type)
   }
 Defined.
   
+(********************************************************************)
+
+Definition DH0_comp1o (T: ICC.type)
+  (a b: transpose (@OInt T CC0)) (f: H0hom a b) :
+  @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f.
+  unfold DH0_cat_id; simpl.
+  unfold DH0_cat_comp; simpl.
+  destruct f; simpl.
+  destruct a0; simpl.
+  dependent destruction e.
+  dependent destruction e0.
+  simpl.
+
+  set X := (conj (eq_ind_r (eq^~ (HInt CC1 (SrcH CC1) x)) _ _)).
+  set Y := (eq_ind_r (eq^~ (HInt CC1 (TrgH CC1) x)) _ _).
+
+(*  vx: OInt CC1, vy: OInt CC1 |- dIcomp (mkprod vx vy) : OInt CC1   *)
+
+  set dd := (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x).
+Admitted. 
+  
+(*
+  assert ((dIcomp (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x)) = x) as A.
+  admit.
+  
+  eapply (eq_existT_curried A); simpl.
+  destruct (X Y).
+  rewrite A in e.
+  move: e.
+  rewrite e0.
+  dependent destruction A.
+*)  
+
+Definition DH0_comp1o' (T: ICC.type)
+  (a b: @H0obj T) (f: a h> b) : idmap \; f = f.
+  unfold idmap; simpl.
+  unfold comp; simpl.
+  unfold h0hom in f.
+  unfold hom in f.
+  simpl in *.
+  unfold IsQuiver.hom in f.
+  simpl in *.
+Admitted. 
+  
+Definition DH0_comp1o'' (T: ICC.type)
+  (a b: transpose (@OInt T CC0)) (f: a ~> b) : idmap \; f = f.
+  destruct T.
+  unfold idmap; simpl.
+Admitted.   
 
 End IInter.
 
