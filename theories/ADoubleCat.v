@@ -246,21 +246,25 @@ Set Universe Checking.
 
 (* XXX non-forgetful inheritace warning, 
    suggesting to make cat_IsQuiver depend on cat_Cat  *)
-Definition H0hom (T: ICC.type) : H0obj T -> H0obj T -> U := @H0Hom T.
+HB.tag Definition H0hom (T: ICC.type) : H0obj T -> H0obj T -> U := @H0Hom T.
 Unset Universe Checking.
 HB.instance Definition H0Quiver_inst (T: ICC.type) :
   IsQuiver (H0obj T) := @IsQuiver.Build (H0obj T) (@H0hom T).
 Set Universe Checking.
 
+(*
 Unset Universe Checking.
 HB.tag Definition h0hom (T : ICC.type) : H0obj T -> H0obj T -> U :=
   @hom (H0obj T).
 Set Universe Checking.
-Notation "a h> b" := (h0hom a b)
-   (at level 99, b at level 200, format "a  h>  b") : cat_scope.
+*)
+Notation "a h0> b" := (H0hom a b)
+   (at level 99, b at level 200, format "a  h0>  b") : cat_scope.
 
 Definition DH0_cat_id (T: ICC.type)
-  (a: transpose (@OInt T CC0)) : H0hom a a.
+  (a: H0obj T) : a h0> a.
+(* Definition DH0_cat_id (T: ICC.type)
+  (a: transpose (@OInt T CC0)) : H0hom a a. *)
   pose src1 := fun x => @HInt T x (SrcH x).
   pose trg1 := fun x => @HInt T x (TrgH x).
   pose iid := @dIid T.
@@ -287,8 +291,10 @@ Definition DH0_cat_id (T: ICC.type)
 Defined.
 
 Definition DH0_cat_comp (T: ICC.type)
-  (a b c: transpose (@OInt T CC0))
-  (h1: H0hom a b) (h2: H0hom b c) : H0hom a c.
+  (a b c: H0obj T)
+  (h1: a h0> b) (h2: b h0> c) : a h0> c.
+(*  (a b c: transpose (@OInt T CC0))
+  (h1: H0hom a b) (h2: H0hom b c) : H0hom a c. *)
   unfold H0hom in *; unfold H0Hom in *.
   simpl in *.
   destruct h1 as [h1 [hs1 ht1]].
@@ -385,8 +391,12 @@ Definition H1Quiver_inst (T: ICC.type) :
 Fail HB.instance Definition H1Quiver_inst' (T: ICC.type) := H1Quiver_inst T.
 Set Universe Checking.
 
+Notation "a h1> b" := (H1hom a b)
+   (at level 99, b at level 200, format "a  h1>  b") : cat_scope.
+
 Definition DH1_cat_id (T: ICC.type)
-  (v: Total2 (@hom (@OInt T CC0))) : H1hom v v.
+  (v: H1obj T) : v h1> v.
+(*  (v: Total2 (@hom (@OInt T CC0))) : H1hom v v. *)
   unfold H1hom; unfold H1Hom; simpl.
   destruct v as [a b v].
   exists (@dIid T a).
@@ -427,8 +437,10 @@ Definition DH1_cat_id (T: ICC.type)
 Defined.
 
 Definition DH1_cat_comp (T: ICC.type)
-  (v0 v1 v2: Total2 (@hom (@OInt T CC0)))
-  (hh1: H1hom v0 v1) (hh2: H1hom v1 v2) : H1hom v0 v2.
+(v0 v1 v2: H1obj T)
+  (hh1: v0 h1> v1) (hh2: v1 h1> v2) : v0 h1> v2.                        
+(*  (v0 v1 v2: Total2 (@hom (@OInt T CC0)))
+  (hh1: H1hom v0 v1) (hh2: H1hom v1 v2) : H1hom v0 v2. *)
   unfold H1hom in *; unfold H1Hom in *.
   simpl in *.
   destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s hb1t]]]]]].
@@ -484,12 +496,24 @@ Definition DH1_cat_comp (T: ICC.type)
     rewrite mkprod2; auto.
   }
 Defined.
-  
+
+Unset Universe Checking.
+Fail HB.instance Definition DH1PreCatD (T: ICC.type) : IsPreCat (H1obj T) :=
+  @IsPreCat.Build (H1obj T) (@H1hom T) (@DH1_cat_id T) (@DH1_cat_comp T).
+Set Universe Checking.
+
+
 (********************************************************************)
 
+Fail Definition DH0_comp1o (T: ICC.type)
+  (a b: H0obj T) (f: a h0> b) :
+      idmap \; f = f.
+
 Definition DH0_comp1o (T: ICC.type)
-  (a b: transpose (@OInt T CC0)) (f: H0hom a b) :
+  (a b: H0obj T) (f: a h0> b) :
   @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f.
+(*  (a b: transpose (@OInt T CC0)) (f: H0hom a b) :
+  @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f. *)
   unfold DH0_cat_id; simpl.
   unfold DH0_cat_comp; simpl.
   destruct f; simpl.
