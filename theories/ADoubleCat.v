@@ -437,48 +437,55 @@ Definition DH1_cat_comp (T: ICC.type)
 (*  pose vv3 := @dPair T _ _ _ _ vv1 vv2. *)
   (* check iHom_comp *)
 (*  pose prd_vv := @mkprod T _ _ vv1 vv2. *)
+
+  pose prd_m := @mkprod_morph T _ _ _ _ _ _ vv1 vv2.
+  pose cmp_m := @dIcomp T <$> prd_m.
   
   exists cmp_a.
   exists cmp_b.
+  exists cmp_m.
 
-  subst cmp_a cmp_b; simpl in *.
-Admitted.
+  unfold cmp_a, cmp_b.
+  repeat split.
 
-(*  
-  split.
-  { subst mm. 
-
-    assert (@HInt T _ (SrcH CC1) (cmp prd) =
-            (cmp \; @HInt T _ (SrcH CC1)) prd) as H. 
-    { auto. }
-
+  { assert (HInt CC1 (SrcH CC1) (dIcomp prd_a) =
+            (dIcomp \; HInt _ (SrcH CC1)) prd_a) as H.
+    { auto. }.
     rewrite H.
-    subst cmp.
     rewrite dIcompS.
     rewrite PSrc_def.
     simpl.
-    subst prd.
-    rewrite mkprod1.
-    rewrite hs1; auto.
-  }  
-    
-  { subst mm. 
-
-    assert (@HInt T _ (TrgH CC1) (cmp prd) =
-            (cmp \; @HInt T _ (TrgH CC1)) prd) as H. 
-    { auto. }
-
+    rewrite mkprod1; auto.
+  }
+  { assert (HInt CC1 (TrgH CC1) (dIcomp prd_a) =
+            (dIcomp \; HInt _ (TrgH CC1)) prd_a) as H.
+    { auto. }.
     rewrite H.
-    subst cmp.
     rewrite dIcompT.
     rewrite PTrg_def.
     simpl.
-    subst prd.
-    rewrite mkprod2.
-    rewrite ht2; auto.
-  }  
-Defined.     
-*)
+    rewrite mkprod2; auto.
+  }
+ { assert (HInt CC1 (SrcH CC1) (dIcomp prd_b) =
+            (dIcomp \; HInt _ (SrcH CC1)) prd_b) as H.
+    { auto. }.
+    rewrite H.
+    rewrite dIcompS.
+    rewrite PSrc_def.
+    simpl.
+    rewrite mkprod1; auto.
+  }
+  { assert (HInt CC1 (TrgH CC1) (dIcomp prd_b) =
+            (dIcomp \; HInt _ (TrgH CC1)) prd_b) as H.
+    { auto. }.
+    rewrite H.
+    rewrite dIcompT.
+    rewrite PTrg_def.
+    simpl.
+    rewrite mkprod2; auto.
+  }
+Defined.
+  
 
 End IInter.
 
