@@ -64,18 +64,41 @@ Module IInter.
 
 (*************************************************************************)
 (* flatter def of internal cat (for cat), consistently using HB *)
-
+(*
 Definition Cat_pair : Type := (cat * cat)%type.
 
 Inductive IObj : Type := CC0 | CC1 | CProd (x y: IObj).
 Inductive IHook (x: IObj) : Type := SrcH | TrgH.
 
-HB.mixin Record isIBase (T: Cat_pair) := { 
+Print obj.
+*)
+  
+HB.mixin Record isIBase (T : cat) S of Cat S := { 
+  HSrc : T ~>_cat (S: cat) ;  
+  HTrg : T ~>_cat (S: cat) ; 
+  }.
+HB.structure Definition IBase T := { C of isIBase T C }.
+
+(*
+Set Printing All. Print isIBase.axioms_.
+Print Canonical Projections sort__canonical__cat_Quiver.
+*)
+
+HB.mixin Record isIIBase T of Cat T := {
+  C0_cat : IBase.type T ;
+  }.
+HB.structure Definition IIBase := { C of isIIBase C }.
+
+Inductive IObj : Type := CC0 | CC1 | CProd (x y: IObj).
+Inductive IHook (x: IObj) : Type := SrcH | TrgH.
+
+(*
+HB.mixin Record isIBase T of IIBase T := { 
   HSrc : (snd T) ~> (fst T) ;  
   HTrg : (snd T) ~> (fst T) ; 
   }.
 HB.structure Definition IBase := { C of isIBase C }.
-
+*)
 (*
 Definition morph_heq1 (X Y Z: cat) (m2: Z ~> Y) (m1: X ~> Y) (e: X = Z) :
   Prop := m2 = ecast x (x ~> Y) e m1.
@@ -89,15 +112,15 @@ Definition ECast2_ah (A B C: cat) (F: A ~> C) (G: B ~> C)
       (e1: F x1 = G y1) :=
       ecast2 a b (a ~> b) e0 e1 (F <$> mx) = G <$> my.
 
-HB.mixin Record isPBase T of IBase T := {
+HB.mixin Record isPBase T of IIBase T := {
   OInt : IObj -> cat ;
-  HInt : forall {x: IObj}, IHook x -> (OInt x ~> OInt CC0) ;
+  HInt : forall {x: IObj}, IHook x -> (OInt x ~> OInt CC0) ; 
 
   dprodl (X Y: IObj) : OInt (CProd X Y) ~> OInt X ;    
   dprodr (X Y: IObj) : OInt (CProd X Y) ~> OInt Y ;  
      
-  CC0_def : OInt CC0 = fst T ;
-  CC1_def : OInt CC1 = snd T ;
+  CC0_def : OInt CC0 = @C0_cat T ; 
+  CC1_def : OInt CC1 = T ; 
 
   C1Src_def : (HInt (SrcH CC1)) ~= @HSrc T ; 
     (* morph_heq1 (HInt (SrcH CC1)) (@HSrc T) (esym CC1_def) ; *)
@@ -195,13 +218,20 @@ HB.mixin Record isICC T of PBase T := {
 }.
 HB.structure Definition ICC := { C of isICC C }.
 
-Fixpoint IHom_def (T: IBase.type) (x: IObj) :
-  sigma c: cat, ((c ~> fst (IBase.sort T)) * (c ~> fst (IBase.sort T)))%type.
+(*
+Fixpoint IHom_def (T: IIBase.type) (x: IObj) :
+  sigma c: cat, ((c ~> T) * (c ~> T))%type.
   induction x.
-  { exists (fst (IBase.sort T)).
+  { exists (@C0_cat T).
+    destruct T.
+    simpl.
+    destruct class as [K1 K2 K3 K4].
+    destruct K4.
+    simpl.
     exact (idmap, idmap).
   }
-  { exists (snd (IBase.sort T)).
+  { exists (@C1_cat T).
+    destruct T as [sort [ K1 K2 K3 [C1]]].
     exact (@HSrc T, @HTrg T).
   }
   { set x1_ihom := IHom_def T x1.
@@ -241,6 +271,7 @@ Definition HInt_def (T: IBase.type) (x: IObj) (h: IHook x) :
   { exact s. }
   { exact t. }
 Defined.  
+*)
 
 (* defines an horizontal morphism in terms of a CC1 object *)
 Definition H0Hom (T: ICC.type) :
@@ -279,26 +310,33 @@ Defined.
 (********************************************************************)
 
 
-HB.tag Definition H0obj (T: ICC.type) : cat :=
+HB.tag Definition H0obj (T: ICC.type) : Cat.type :=
   transpose (@OInt T CC0).
-#[wrapper] HB.mixin Record IsDH0Quiver C of ICC C := {
+Fail #[wrapper] HB.mixin Record IsDH0Quiver C of ICC C := {
     is_hquiver : IsQuiver (H0obj C)
-}.
+  }.
+
+
 (* vertical and horizontal quivers, defining cells.
    XXX non-forgetful inheritace warning, 
    suggesting to make cat_IsQuiver depend on cat_Cat  *)
 Unset Universe Checking.
 #[short(type="dh0quiver")]
 HB.structure Definition DH0Quiver : Set :=
-  { C of IsDH0Quiver C }.
+  { C of ICC C & IsDH0Quiver C }.
 Set Universe Checking.
 
 (* XXX non-forgetful inheritace warning, 
    suggesting to make cat_IsQuiver depend on cat_Cat  *)
 HB.tag Definition H0hom (T: ICC.type) : H0obj T -> H0obj T -> U := @H0Hom T.
+Set Printing All. Print H0hom.
 Unset Universe Checking.
+(*HB.instance*)
 HB.instance Definition H0Quiver_inst (T: ICC.type) :
-  IsQuiver (H0obj T) := @IsQuiver.Build (H0obj T) (@H0hom T).
+   IsQuiver (H0obj T) := @IsQuiver.Build (H0obj T) (@H0hom T).
+
+ Print H0Quiver_inst.
+ HB.instance Definition _ (T: ICC.type) := IsDH0Quiver.Build T (H0Quiver_inst T).
 Set Universe Checking.
 
 (*
@@ -396,12 +434,6 @@ Unset Universe Checking.
 HB.instance Definition DH0PreCatD (T: ICC.type) : IsPreCat (H0obj T) :=
   @IsPreCat.Build (H0obj T) (@H0hom T) (@DH0_cat_id T) (@DH0_cat_comp T).
 Set Universe Checking.
-
-HB.about isIBase.
-HB.about IsDH0Quiver.
-HB.about DH0Quiver.
-
-
 
 (********************************************************************)
 
