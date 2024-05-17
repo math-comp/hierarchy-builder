@@ -81,6 +81,14 @@ Definition morph_heq1 (X Y Z: cat) (m2: Z ~> Y) (m1: X ~> Y) (e: X = Z) :
   Prop := m2 = ecast x (x ~> Y) e m1.
 *)
 
+
+Definition ECast2_ah (A B C: cat) (F: A ~> C) (G: B ~> C)
+      (x0 x1: A) (y0 y1: B)
+      (mx: x0 ~> x1) (my: y0 ~> y1)
+      (e0: F x0 = G y0) 
+      (e1: F x1 = G y1) :=
+      ecast2 a b (a ~> b) e0 e1 (F <$> mx) = G <$> my.
+
 HB.mixin Record isPBase T of IBase T := {
   OInt : IObj -> cat ;
   HInt : forall {x: IObj}, IHook x -> (OInt x ~> OInt CC0) ;
@@ -103,17 +111,32 @@ HB.mixin Record isPBase T of IBase T := {
   PTrg_def (X Y: IObj) :
     HInt (TrgH (CProd X Y)) = dprodr X Y \; HInt (TrgH Y) ; 
 
-  mkprod (X Y: IObj) : (OInt X) -> (OInt Y) -> OInt (CProd X Y) ; 
+  mkprod (X Y: IObj) 
+      (x: OInt X) (y: OInt Y)
+      (e: HInt (TrgH X) x = HInt (SrcH Y) y) : 
+      OInt (CProd X Y) ; 
 
-  mkprod1 (X Y: IObj) (h: OInt X) (k: OInt Y) :
-    @dprodl X Y (@mkprod X Y h k) = h ; 
-  mkprod2 (X Y: IObj) (h: OInt X) (k: OInt Y) :
-    @dprodr X Y (@mkprod X Y h k) = k ;
+  mkprod1 (X Y: IObj) (h: OInt X) (k: OInt Y)
+    (e: HInt (TrgH X) h = HInt (SrcH Y) k) :
+    @dprodl X Y (@mkprod X Y h k e) = h ; 
+  mkprod2 (X Y: IObj) (h: OInt X) (k: OInt Y)
+    (e: HInt (TrgH X) h = HInt (SrcH Y) k) :
+    @dprodr X Y (@mkprod X Y h k e) = k ;
 
+  mk_prod_morph (X Y: IObj)
+      (x0 x1: OInt X) (y0 y1: OInt Y)
+      (mx: x0 ~> x1) (my: y0 ~> y1)
+      (e0: HInt (TrgH X) x0 = HInt (SrcH Y) y0) 
+      (e1: HInt (TrgH X) x1 = HInt (SrcH Y) y1) 
+      (em: @ECast2_ah _ _ _ _ _ x0 x1 y0 y1 mx my e0 e1) :
+     mkprod X Y x0 y0 e0 ~> mkprod X Y x1 y1 e1 ; 
+    
+(*    
   mkprod_morph (X Y: IObj) (h1 h2: OInt X) (k1 k2: OInt Y)
-    (vv1 : h1 ~> h2) (vv2: k1 ~> k2) :
-    mkprod X Y h1 k1 ~> mkprod X Y h2 k2 ;    
-
+    (vv1 : h1 ~> h2) (vv2: k1 ~> k2)
+    (e: HInt (TrgH X) <$> vv1 = HInt (SrcH Y) <$> vv2) : 
+  mkprod X Y h1 k1 ~> mkprod X Y h2 k2 ;  
+*)  
 (*
   mkprod1_morph (X Y: IObj) (h1 h2: OInt X) (k1 k2: OInt Y)
     (vv1 : h1 ~> h2) (vv2: k1 ~> k2) :
@@ -227,34 +250,72 @@ Definition H0Hom (T: ICC.type) :
           @HInt T _ (SrcH CC1) h = x
           /\ @HInt T _ (TrgH CC1) h = y.      
 
-Definition mkprod_def (T: ICC.type) (X Y: IObj)
-  (x: @OInt T X) (y: @OInt T Y) : @OInt T (CProd X Y).
-Admitted.
-
 Definition mk_ptype (T: ICC.type) (X Y: IObj)
-  (x: @OInt T X) (y: @OInt T Y) :
+  (x: @OInt T X) (y: @OInt T Y)
+  (e: HInt X (TrgH X) x = HInt Y (SrcH Y) y) :
   commaE.ptype (@HInt T _ (TrgH X)) (@HInt T _ (SrcH Y)).
   unfold commaE.ptype.
   exists (x,y); simpl.
+  exact e.
+Defined.   
+
+(*
+Require Import Eqdep.
+
+Definition mk_ptype_morph (T: ICC.type) (X Y: IObj)
+  (x0 x1: @OInt T X) (y0 y1: @OInt T Y)
+  (mx: x0 ~> x1) (my: y0 ~> y1)
+  (e0: HInt X (TrgH X) x0 = HInt Y (SrcH Y) y0) 
+  (e1: HInt X (TrgH X) x1 = HInt Y (SrcH Y) y1) 
+  (em: (HInt X (TrgH X) <$> mx) ~=
+                                 (HInt Y (SrcH Y) <$> my)) :
+  @commaE.hom_psubdef (@OInt T X) (@OInt T Y) (@OInt T CC0)
+    (@HInt T _ (TrgH X)) (@HInt T _ (SrcH Y)) 
+       (mk_ptype e0) (mk_ptype e1). 
+  unfold commaE.hom_psubdef.
+  exists (mx, my).
+
+Locate "~=".
+
+  eapply JMeq_eq_dep_id in em.
+  simpl in *.
+  inversion em; subst.
+  clear H0.
+  clear em.
+  clear H.
+  move: e0.
+  move: e1.
+  dependent destruction H2.
   
+  clear H2.
+   
+  unfold eq_dep in *.
+  move: em.
+  move: e1.
   
-
+  dependent destruction e0.
   
+  unfold jmeq in em.
+  exact em.
+Defined.  
+*) 
 
-  (a b c: transpose (@OInt T CC0))
-                   (h1: H0Hom a b) (h2: H0Hom b c) :
-  commaE.ptype (@HInt T _ (TrgH CC1)) 
-               (@HInt T _ (SrcH CC1)). 
-  unfold commaE.ptype.
-
-
-
-Definition mk_ptype (T: ICC.type) (a b c: transpose (@OInt T CC0))
-                   (h1: H0Hom a b) (h2: H0Hom b c) :
-  commaE.ptype (@HInt T _ (TrgH X)) 
-               (@HInt T _ (SrcH Y)). 
-  unfold commaE.ptype.
-Admitted.   
+Definition mk_ptype_morph (T: ICC.type) (X Y: IObj)
+  (x0 x1: @OInt T X) (y0 y1: @OInt T Y)
+  (mx: x0 ~> x1) (my: y0 ~> y1)
+  (e0: HInt X (TrgH X) x0 = HInt Y (SrcH Y) y0) 
+  (e1: HInt X (TrgH X) x1 = HInt Y (SrcH Y) y1) 
+  (em: ECast2_ah mx my e0 e1) : 
+(* (em: ecast2 a b (a ~> b) e0 e1 (HInt X (TrgH X) <$> mx) =
+                                 (HInt Y (SrcH Y) <$> my)) : *)
+  @commaE.hom_psubdef (@OInt T X) (@OInt T Y) (@OInt T CC0)
+    (@HInt T _ (TrgH X)) (@HInt T _ (SrcH Y)) 
+       (mk_ptype e0) (mk_ptype e1). 
+  unfold commaE.hom_psubdef.
+  exists (mx, my).
+  exact em.
+Defined.  
+  
 
 (********************************************************************)
 
@@ -328,7 +389,11 @@ Definition DH0_cat_comp (T: ICC.type)
   simpl in *.
   destruct h1 as [h1 [hs1 ht1]].
   destruct h2 as [h2 [hs2 ht2]].
-  pose prd := @mkprod T _ _ h1 h2.
+  assert (HInt CC1 (TrgH CC1) h1 = HInt CC1 (SrcH CC1) h2) as A.
+  { rewrite ht1.
+    rewrite hs2; auto. }
+  
+  pose prd := @mkprod T _ _ h1 h2 A.
   pose cmp := @dIcomp T.
   pose mm := cmp prd.
   exists mm.
@@ -373,6 +438,62 @@ HB.instance Definition DH0PreCatD (T: ICC.type) : IsPreCat (H0obj T) :=
   @IsPreCat.Build (H0obj T) (@H0hom T) (@DH0_cat_id T) (@DH0_cat_comp T).
 Set Universe Checking.
 
+(********************************************************************)
+
+Fail Definition DH0_comp1o (T: ICC.type)
+  (a b: H0obj T) (f: a h0> b) : idmap \; f = f.
+
+Definition DH0_comp1o (T: ICC.type)
+  (a b: H0obj T) (f: a h0> b) :
+  @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f.
+(*  (a b: transpose (@OInt T CC0)) (f: H0hom a b) :
+  @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f. *)
+  unfold DH0_cat_id; simpl.
+  unfold DH0_cat_comp; simpl.
+  destruct f; simpl.
+  destruct a0; simpl.
+  dependent destruction e.
+  dependent destruction e0.
+  simpl.
+
+  set X := (conj (eq_ind_r (eq^~ (HInt CC1 (SrcH CC1) x)) _ _)).
+  set Y := (eq_ind_r (eq^~ (HInt CC1 (TrgH CC1) x)) _ _).
+
+(*  vx: OInt CC1, vy: OInt CC1 |- dIcomp (mkprod vx vy) : OInt CC1   *)
+
+  set dd := (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x).
+Admitted. 
+  
+(*
+  assert ((dIcomp (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x)) = x) as A.
+  admit.
+  
+  eapply (eq_existT_curried A); simpl.
+  destruct (X Y).
+  rewrite A in e.
+  move: e.
+  rewrite e0.
+  dependent destruction A.
+*)  
+
+Fail Definition DH0_comp1o' (T: ICC.type)
+  (a b: H0obj T) (f: a h0> b) : idmap \; f = f.
+(*  unfold idmap; simpl.
+  unfold comp; simpl.
+  unfold h0hom in f.
+  unfold hom in f.
+  simpl in *.
+  unfold IsQuiver.hom in f.
+  simpl in *.
+Admitted. 
+*) 
+ 
+Definition DH0_comp1o'' (T: ICC.type)
+  (a b: transpose (@OInt T CC0)) (f: a ~> b) : idmap \; f = f.
+  unfold idmap; simpl.
+Admitted.   
+
+
 (*******************************************************************)
 
 Definition H1HomFS (T: ICC.type) (a0 a1 b0 b1: fst (IBase.sort T)) :
@@ -394,8 +515,25 @@ Definition H1HomDS (T: ICC.type) (v0 v1: H1objS T) :=
 
 (********************************************************************)
 
+Definition H1HomDS' (T: ICC.type) (v0 v1: H1objS T) :=
+  let a0 := source v0
+  in let a1 := source v1
+  in let b0 := target v0
+  in let b1 := target v1
+  in sigma (ha: a0 ~> a1) (hb: b0 ~> b1) (vv: ha ~> hb),
+    (@HSrc T <$> vv) = ha.
+    
+    @HSrc T ha = source v0 /\ @HTrg T ha = source v1
+    /\ @HSrc T hb = target v0 /\ @HTrg T hb = target v1.                        
+
+
 Definition H1Hom (T: ICC.type) (v0 v1: Total2 (@hom (@OInt T CC0))) : U :=
   sigma (ha hb: @OInt T CC1) (vv: ha ~> hb),
+   @HSrc T <$> vv = ha.
+   
+    
+    @HInt T _ (SrcH CC1) <$> vv = ha. /\
+    
     @HInt T _ (SrcH CC1) ha = source v0 /\
     @HInt T _ (TrgH CC1) ha = source v1 /\
     @HInt T _ (SrcH CC1) hb = target v0 /\
@@ -474,11 +612,22 @@ Definition DH1_cat_comp (T: ICC.type)
   simpl in *.
   destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s hb1t]]]]]].
   destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s hb2t]]]]]].
-  pose prd_a := @mkprod T _ _ ha1 ha2.
-  pose prd_b := @mkprod T _ _ hb1 hb2.
+  assert (HInt CC1 (TrgH CC1) ha1 = HInt CC1 (SrcH CC1) ha2) as e0.
+  { rewrite ha1t.
+    rewrite ha2s; auto. }
+  pose prd_a := @mkprod T _ _ ha1 ha2 e0.
+  assert (HInt CC1 (TrgH CC1) hb1 = HInt CC1 (SrcH CC1) hb2) as e1.
+  { rewrite hb1t.
+    rewrite hb2s; auto. }
+  pose prd_b := @mkprod T _ _ hb1 hb2 e1.
   pose cmp_a := @dIcomp T prd_a.
   pose cmp_b := @dIcomp T prd_b.
-  pose prd_m := @mkprod_morph T _ _ _ _ _ _ vv1 vv2.
+
+  assert (ECast2_ah vv1 vv2 e0 e1) as em.
+  { unfold ECast2_ah.
+     
+    
+  pose prd_m := @mk_prod_morph T _ _ _ _ _ _ vv1 vv2.
   pose cmp_m := @dIcomp T <$> prd_m.
   
   exists cmp_a.
@@ -531,64 +680,8 @@ Fail HB.instance Definition DH1PreCatD (T: ICC.type) : IsPreCat (H1obj T) :=
   @IsPreCat.Build (H1obj T) (@H1hom T) (@DH1_cat_id T) (@DH1_cat_comp T).
 Set Universe Checking.
 
-
-(********************************************************************)
-
-Fail Definition DH0_comp1o (T: ICC.type)
-  (a b: H0obj T) (f: a h0> b) :
-      idmap \; f = f.
-
-Definition DH0_comp1o (T: ICC.type)
-  (a b: H0obj T) (f: a h0> b) :
-  @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f.
-(*  (a b: transpose (@OInt T CC0)) (f: H0hom a b) :
-  @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f. *)
-  unfold DH0_cat_id; simpl.
-  unfold DH0_cat_comp; simpl.
-  destruct f; simpl.
-  destruct a0; simpl.
-  dependent destruction e.
-  dependent destruction e0.
-  simpl.
-
-  set X := (conj (eq_ind_r (eq^~ (HInt CC1 (SrcH CC1) x)) _ _)).
-  set Y := (eq_ind_r (eq^~ (HInt CC1 (TrgH CC1) x)) _ _).
-
-(*  vx: OInt CC1, vy: OInt CC1 |- dIcomp (mkprod vx vy) : OInt CC1   *)
-
-  set dd := (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x).
-Admitted. 
-  
-(*
-  assert ((dIcomp (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x)) = x) as A.
-  admit.
-  
-  eapply (eq_existT_curried A); simpl.
-  destruct (X Y).
-  rewrite A in e.
-  move: e.
-  rewrite e0.
-  dependent destruction A.
-*)  
-
-Fail Definition DH0_comp1o' (T: ICC.type)
-  (a b: H0obj T) (f: a h0> b) : idmap \; f = f.
-(*  unfold idmap; simpl.
-  unfold comp; simpl.
-  unfold h0hom in f.
-  unfold hom in f.
-  simpl in *.
-  unfold IsQuiver.hom in f.
-  simpl in *.
-Admitted. 
-*) 
- 
-Definition DH0_comp1o'' (T: ICC.type)
-  (a b: transpose (@OInt T CC0)) (f: a ~> b) : idmap \; f = f.
-  unfold idmap; simpl.
-Admitted.   
-
 End IInter.
+
 
 
 (********************************************************************)
