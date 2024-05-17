@@ -259,47 +259,6 @@ Definition mk_ptype (T: ICC.type) (X Y: IObj)
   exact e.
 Defined.   
 
-(*
-Require Import Eqdep.
-
-Definition mk_ptype_morph (T: ICC.type) (X Y: IObj)
-  (x0 x1: @OInt T X) (y0 y1: @OInt T Y)
-  (mx: x0 ~> x1) (my: y0 ~> y1)
-  (e0: HInt X (TrgH X) x0 = HInt Y (SrcH Y) y0) 
-  (e1: HInt X (TrgH X) x1 = HInt Y (SrcH Y) y1) 
-  (em: (HInt X (TrgH X) <$> mx) ~=
-                                 (HInt Y (SrcH Y) <$> my)) :
-  @commaE.hom_psubdef (@OInt T X) (@OInt T Y) (@OInt T CC0)
-    (@HInt T _ (TrgH X)) (@HInt T _ (SrcH Y)) 
-       (mk_ptype e0) (mk_ptype e1). 
-  unfold commaE.hom_psubdef.
-  exists (mx, my).
-
-Locate "~=".
-
-  eapply JMeq_eq_dep_id in em.
-  simpl in *.
-  inversion em; subst.
-  clear H0.
-  clear em.
-  clear H.
-  move: e0.
-  move: e1.
-  dependent destruction H2.
-  
-  clear H2.
-   
-  unfold eq_dep in *.
-  move: em.
-  move: e1.
-  
-  dependent destruction e0.
-  
-  unfold jmeq in em.
-  exact em.
-Defined.  
-*) 
-
 Definition mk_ptype_morph (T: ICC.type) (X Y: IObj)
   (x0 x1: @OInt T X) (y0 y1: @OInt T Y)
   (mx: x0 ~> x1) (my: y0 ~> y1)
@@ -443,6 +402,7 @@ Set Universe Checking.
 Fail Definition DH0_comp1o (T: ICC.type)
   (a b: H0obj T) (f: a h0> b) : idmap \; f = f.
 
+(* should use d_compR *)
 Definition DH0_comp1o (T: ICC.type)
   (a b: H0obj T) (f: a h0> b) :
   @DH0_cat_comp T _ _ _ (@DH0_cat_id T a) f = f.
@@ -460,11 +420,11 @@ Definition DH0_comp1o (T: ICC.type)
   set Y := (eq_ind_r (eq^~ (HInt CC1 (TrgH CC1) x)) _ _).
 
 (*  vx: OInt CC1, vy: OInt CC1 |- dIcomp (mkprod vx vy) : OInt CC1   *)
-
-  set dd := (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x).
 Admitted. 
   
 (*
+  set dd := (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x).
+
   assert ((dIcomp (mkprod CC1 CC1 (dIid (HInt CC1 (SrcH CC1) x)) x)) = x) as A.
   admit.
   
