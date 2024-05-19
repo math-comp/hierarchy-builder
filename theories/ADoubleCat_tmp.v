@@ -479,31 +479,15 @@ Definition H1HomDS (T: ICC.type) (v0 v1: H1objS T) :=
     @HSrc T ha = source v0 /\ @HTrg T ha = source v1
     /\ @HSrc T hb = target v0 /\ @HTrg T hb = target v1.                        
 
+(*
+Definition H1HomS (T: ICC.type) (v0 v1: H1objS T) : U :=
+  sigma (ha hb: snd (IBase.sort T)) (vv: ha ~> hb),
+   @HSrc T <$> vv = this_morph v0.
+*)
+
+Definition H1objD (T: ICC.type) := Total2 (@hom (@OInt T CC0)).
+
 (********************************************************************)
-
-Definition H1HomDS' (T: ICC.type) (v0 v1: H1objS T) :=
-  let a0 := source v0
-  in let a1 := source v1
-  in let b0 := target v0
-  in let b1 := target v1
-  in sigma (ha: a0 ~> a1) (hb: b0 ~> b1) (vv: ha ~> hb),
-    (@HSrc T <$> vv) = ha.
-    
-    @HSrc T ha = source v0 /\ @HTrg T ha = source v1
-    /\ @HSrc T hb = target v0 /\ @HTrg T hb = target v1.                        
-
-
-Definition H1Hom (T: ICC.type) (v0 v1: Total2 (@hom (@OInt T CC0))) : U :=
-  sigma (ha hb: @OInt T CC1) (vv: ha ~> hb),
-   @HSrc T <$> vv = ha.
-   
-    
-    @HInt T _ (SrcH CC1) <$> vv = ha. /\
-    
-    @HInt T _ (SrcH CC1) ha = source v0 /\
-    @HInt T _ (TrgH CC1) ha = source v1 /\
-    @HInt T _ (SrcH CC1) hb = target v0 /\
-    @HInt T _ (TrgH CC1) hb = target v1.                                        
 
 HB.tag Definition H1obj (T: ICC.type) :=
   Total2 (@hom (@OInt T CC0)).
@@ -515,6 +499,18 @@ Unset Universe Checking.
 HB.structure Definition DH1Quiver : Set :=
   { C of IsDH1Quiver C }.
 Set Universe Checking.
+
+Definition H1Hom (T: ICC.type) (v0 v1: H1obj T) : U :=
+  sigma (ha hb: @OInt T CC1) (vv: ha ~> hb)
+    (es0: source v0 = @HInt T _ (SrcH CC1) ha)
+    (es1: source v1 = @HInt T _ (TrgH CC1) ha)
+    (et0: target v0 = @HInt T _ (SrcH CC1) hb)
+    (et1: target v1 = @HInt T _ (TrgH CC1) hb),    
+    HInt _ (SrcH CC1) <$> vv =
+      ecast2 x y (x ~> y) es0 et0 (this_morph v0) /\
+    HInt _ (TrgH CC1) <$> vv =
+      ecast2 x y (x ~> y) es1 et1 (this_morph v1).
+      
 
 HB.tag Definition H1hom (T: ICC.type) : H1obj T -> H1obj T -> U := @H1Hom T.
 Unset Universe Checking.
@@ -537,8 +533,8 @@ Definition DH1_cat_id (T: ICC.type)
   set vv := @dIid T <$> v.
   exists vv.
   simpl.
-  repeat split.
-  
+
+  assert (a = HInt CC1 (SrcH CC1) (dIid a)) as es0.
   { assert (HInt CC1 (SrcH CC1) (dIid a) =
               (dIid \; HInt CC1 (SrcH CC1)) a) as H.
     { auto. }
@@ -546,13 +542,17 @@ Definition DH1_cat_id (T: ICC.type)
     rewrite dIidS.
     simpl; auto.
   }
+  exists es0.
+  assert (a = HInt CC1 (TrgH CC1) (dIid a)) as es1.
   { assert (HInt CC1 (TrgH CC1) (dIid a) =
               (dIid \; HInt CC1 (TrgH CC1)) a) as H.
     { auto. }
     rewrite H.
     rewrite dIidT.
     simpl; auto.
-  }  
+  }
+  exists es1.
+  assert (b = HInt CC1 (SrcH CC1) (dIid b)) as et0.
   { assert (HInt CC1 (SrcH CC1) (dIid b) =
               (dIid \; HInt CC1 (SrcH CC1)) b) as H.
     { auto. }
@@ -560,15 +560,22 @@ Definition DH1_cat_id (T: ICC.type)
     rewrite dIidS.
     simpl; auto.
   }
+  exists et0.
+  assert (b = HInt CC1 (TrgH CC1) (dIid b)) as et1.
   { assert (HInt CC1 (TrgH CC1) (dIid b) =
               (dIid \; HInt CC1 (TrgH CC1)) b) as H.
     { auto. }
     rewrite H.
     rewrite dIidT.
     simpl; auto.
-  }  
-Defined.
-
+  }
+  exists et1.
+  split.
+  clear es1 et1.
+  admit.
+  admit.
+Admitted.
+  
 Definition DH1_cat_comp (T: ICC.type)
 (v0 v1 v2: H1obj T)
   (hh1: v0 h1> v1) (hh2: v1 h1> v2) : v0 h1> v2.                        
@@ -576,8 +583,10 @@ Definition DH1_cat_comp (T: ICC.type)
   (hh1: H1hom v0 v1) (hh2: H1hom v1 v2) : H1hom v0 v2. *)
   unfold H1hom in *; unfold H1Hom in *.
   simpl in *.
-  destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s hb1t]]]]]].
-  destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s hb2t]]]]]].
+  destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s [hb1t [hs1 ht1]]]]]]]].
+  destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s [hb2t [hs2 ht2]]]]]]]].
+Admitted.
+(*  
   assert (HInt CC1 (TrgH CC1) ha1 = HInt CC1 (SrcH CC1) ha2) as e0.
   { rewrite ha1t.
     rewrite ha2s; auto. }
@@ -641,10 +650,12 @@ Definition DH1_cat_comp (T: ICC.type)
   }
 Defined.
 
+
 Unset Universe Checking.
 Fail HB.instance Definition DH1PreCatD (T: ICC.type) : IsPreCat (H1obj T) :=
   @IsPreCat.Build (H1obj T) (@H1hom T) (@DH1_cat_id T) (@DH1_cat_comp T).
 Set Universe Checking.
+*)
 
 End IInter.
 
