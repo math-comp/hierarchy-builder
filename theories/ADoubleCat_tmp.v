@@ -585,33 +585,32 @@ Definition DH1_cat_comp (T: ICC.type)
   simpl in *.
   destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s [hb1t [hs1 ht1]]]]]]]].
   destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s [hb2t [hs2 ht2]]]]]]]].
-Admitted.
-(*  
+
   assert (HInt CC1 (TrgH CC1) ha1 = HInt CC1 (SrcH CC1) ha2) as e0.
-  { rewrite ha1t.
-    rewrite ha2s; auto. }
+  { rewrite -ha1t.
+    rewrite -ha2s; auto. }
   pose prd_a := @mkprod T _ _ ha1 ha2 e0.
   assert (HInt CC1 (TrgH CC1) hb1 = HInt CC1 (SrcH CC1) hb2) as e1.
-  { rewrite hb1t.
-    rewrite hb2s; auto. }
+  { rewrite -hb1t.
+    rewrite -hb2s; auto. }
   pose prd_b := @mkprod T _ _ hb1 hb2 e1.
   pose cmp_a := @dIcomp T prd_a.
   pose cmp_b := @dIcomp T prd_b.
 
   assert (ECast2_ah vv1 vv2 e0 e1) as em.
-  { unfold ECast2_ah.
-     
-    
-  pose prd_m := @mk_prod_morph T _ _ _ _ _ _ vv1 vv2.
+  admit.
+         
+  pose prd_m := @mk_prod_morph T _ _ _ _ _ _ vv1 vv2 e0 e1 em.
   pose cmp_m := @dIcomp T <$> prd_m.
   
   exists cmp_a.
   exists cmp_b.
   exists cmp_m.
 
-  unfold cmp_a, cmp_b.
+  (* unfold cmp_a, cmp_b. *)
   repeat split.
 
+  assert (source v0 = HInt CC1 (SrcH CC1) cmp_a) as es0.
   { assert (HInt CC1 (SrcH CC1) (dIcomp prd_a) =
             (dIcomp \; HInt _ (SrcH CC1)) prd_a) as H.
     { auto. }.
@@ -621,6 +620,8 @@ Admitted.
     simpl.
     rewrite mkprod1; auto.
   }
+  exists es0.
+  assert (source v2 = HInt CC1 (TrgH CC1) cmp_a) as es1.
   { assert (HInt CC1 (TrgH CC1) (dIcomp prd_a) =
             (dIcomp \; HInt _ (TrgH CC1)) prd_a) as H.
     { auto. }.
@@ -630,7 +631,9 @@ Admitted.
     simpl.
     rewrite mkprod2; auto.
   }
- { assert (HInt CC1 (SrcH CC1) (dIcomp prd_b) =
+  exists es1.
+  assert (target v0 = HInt CC1 (SrcH CC1) cmp_b) as et0.
+  { assert (HInt CC1 (SrcH CC1) (dIcomp prd_b) =
             (dIcomp \; HInt _ (SrcH CC1)) prd_b) as H.
     { auto. }.
     rewrite H.
@@ -639,6 +642,8 @@ Admitted.
     simpl.
     rewrite mkprod1; auto.
   }
+  exists et0.
+  assert (target v2 = HInt CC1 (TrgH CC1) cmp_b) as et1.
   { assert (HInt CC1 (TrgH CC1) (dIcomp prd_b) =
             (dIcomp \; HInt _ (TrgH CC1)) prd_b) as H.
     { auto. }.
@@ -648,14 +653,18 @@ Admitted.
     simpl.
     rewrite mkprod2; auto.
   }
-Defined.
+  exists et1.
+  split; simpl.
+  admit.
+  admit.
+Admitted.
 
 
 Unset Universe Checking.
 Fail HB.instance Definition DH1PreCatD (T: ICC.type) : IsPreCat (H1obj T) :=
   @IsPreCat.Build (H1obj T) (@H1hom T) (@DH1_cat_id T) (@DH1_cat_comp T).
 Set Universe Checking.
-*)
+
 
 End IInter.
 
