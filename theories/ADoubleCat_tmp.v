@@ -613,7 +613,7 @@ Definition DH1_cat_comp (T: ICC.type)
   assert (source v0 = HInt CC1 (SrcH CC1) cmp_a) as es0.
   { assert (HInt CC1 (SrcH CC1) (dIcomp prd_a) =
             (dIcomp \; HInt _ (SrcH CC1)) prd_a) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompS.
     rewrite PSrc_def.
@@ -624,7 +624,7 @@ Definition DH1_cat_comp (T: ICC.type)
   assert (source v2 = HInt CC1 (TrgH CC1) cmp_a) as es1.
   { assert (HInt CC1 (TrgH CC1) (dIcomp prd_a) =
             (dIcomp \; HInt _ (TrgH CC1)) prd_a) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompT.
     rewrite PTrg_def.
@@ -635,7 +635,7 @@ Definition DH1_cat_comp (T: ICC.type)
   assert (target v0 = HInt CC1 (SrcH CC1) cmp_b) as et0.
   { assert (HInt CC1 (SrcH CC1) (dIcomp prd_b) =
             (dIcomp \; HInt _ (SrcH CC1)) prd_b) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompS.
     rewrite PSrc_def.
@@ -646,7 +646,7 @@ Definition DH1_cat_comp (T: ICC.type)
   assert (target v2 = HInt CC1 (TrgH CC1) cmp_b) as et1.
   { assert (HInt CC1 (TrgH CC1) (dIcomp prd_b) =
             (dIcomp \; HInt _ (TrgH CC1)) prd_b) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompT.
     rewrite PTrg_def.
