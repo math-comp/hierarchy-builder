@@ -62,12 +62,12 @@ About congr1_funext.
 (* XXX HB.tag requires 'icat cat' instead of 'doublecat' *)
 
 (* probably this tag is not needed, anyway *)
-HB.tag Definition D0_cat (T: icat cat) : cat := T : obj cat.
+HB.tag Definition D0_cat (T: icat cat) : U := T : obj cat.
 
-HB.tag Definition D1_cat (T: icat cat) : cat := @C1 cat T.
+HB.tag Definition D1_cat (T: icat cat) : U := @C1 cat T.
 
-Definition D0_iHom (T: icat cat) : iHom (D0_cat T) := [iHom _].
-Definition D1_iHom (T: icat cat) : iHom (D0_cat T) := [iHoms _].
+Definition D0_iHom (T: icat cat) : iHom (D0_cat T : cat) := [iHom _].
+Definition D1_iHom (T: icat cat) : iHom (D0_cat T : cat) := [iHoms _].
 
 Definition dcHsource (T : doublecat) :
   Functor.type (D1_cat T) (D0_cat T) := [src D1_iHom T].
@@ -78,25 +78,13 @@ Definition dcHtarget (T : doublecat) :
 Definition dcHunit (T: doublecat) :
   Functor.type (D0_cat T) (D1_cat T) := InternalHomHom.sort (iidI T).
 
-
 (*********************************************************************)
-
-(* lift to internal morphisms for D1 *)
-Definition iHom_lift (T: doublecat) : iHom (D0_cat T) := D1_iHom T.
-
-(* lift to internal morphisms for D0 *)
-Definition iHom0_lift (T: doublecat) : iHom (D0_cat T) := D0_iHom T.
 
 (********************************************************************)
 
 Definition mk_prod_span (T: doublecat) :
-  span ((@iHom_lift T) : obj cat) ((@iHom_lift T) : obj cat) :=
-  iprod_pb (@iHom_lift T) (@iHom_lift T).
-
-Definition iHom_prod_liftD (T: doublecat) (x y: iHom (D0_cat T)) := x *_(D0_cat T) y.
-
-Definition iHom_prod_liftF (T: doublecat) (x y: iHom (D0_cat T)) := x *_(D0_cat T) y.
-
+  span ((@D1_iHom T) : obj cat) ((@D1_iHom T) : obj cat) :=
+  iprod_pb (@D1_iHom T) (@D1_iHom T).
 
 (**********************************************************************)
 
@@ -126,69 +114,29 @@ Definition D1_morph_liftA (T: doublecat) (a b: transpose (D0_cat T))
 
 Definition mk_prod_auxA (T: doublecat) (a b c: transpose (D0_cat T))
                    (h1: dcHhom a b) (h2: dcHhom b c) :
-  (iHom_lift T) *_(D0_cat T) (iHom_lift T) :=
+  (D1_iHom T) *_(D0_cat T : cat) (D1_iHom T) :=
   (existT _ (projT1 h1, projT1 h2) (eq_trans (proj2 (projT2 h1)) (esym (proj1 (projT2 h2))))).
 
-
-(*********************************************************************)
-
-(* (* alternative definition of H0Quiver  *) *)
-Definition transpose_D0 (T: icat cat) : Type :=
-  transpose (D0_cat T).
-#[wrapper] HB.mixin Record IsDCH0Quiver T of InternalCat cat T := {
-    is_hquiver : IsQuiver (transpose T)
-}.
-(* vertical and horizontal quivers, defining cells.
-   XXX non-forgetful inheritace warning: 
-   suggests to make cat_IsQuiver depend on cat_Cat (!!!).
-   Probably confused by the dependency. *)
-Unset Universe Checking.
-(* XXX however, the sort of T is a cat, hence a quiver *)
-#[short(type="dch0quiver")]
-HB.structure Definition DCH0Quiver : Set :=
-  { C of IsQuiver C & IsQuiver (transpose_D0 C) }.
-#[short(type="dch0quiver")]
-HB.structure Definition DCH0Quiver : Set :=
-  { C of IsDCH0Quiver C }.
-Set Universe Checking.
-
-(* used by the instance *)
-Unset Universe Checking. 
-Definition dcH0QuiverD (T: icat cat) :
-  IsQuiver (transpose_D0 T) :=
-  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
-Set Universe Checking.
-
-(* XXX does not like the composed lifter *)
-Fail HB.instance Definition dcH0Quiver (T: icat cat) :
-  IsQuiver (transpose (D0_cat T)) := dcH0QuiverD T.
-
-(* XXX non-forgetful inheritance warning, unclear.
-    IsH0Quiver (D0_cat T) should follow by wrapping.
-    Again, suggests to make Quiver depend on Cat *)
-HB.instance Definition dcH0Quiver (T: icat cat) :
-  IsQuiver (transpose_D0 T) := dcH0QuiverD T.
-
-Unset Universe Checking.
-HB.tag Definition dchhom (T : icat cat) :
-  transpose_D0 T -> transpose_D0 T -> U := @hom (transpose_D0 T).
-Set Universe Checking.
-Notation "a hh> b" := (dcHhom a b)
-   (at level 99, b at level 200, format "a  hh>  b") : cat_scope.
-
-(* sanity check *)
-Definition dcDCH0QuiverD (T: doublecat) : DCH0Quiver (D0_cat T).
-  set X := dcH0QuiverD T.
-  destruct T.
-  econstructor; eauto.
-  econstructor; eauto.
-Defined.
 
 (**********************************************************************)
 
 (** H0 precat *)
-Definition H0_cat_idobj (T: icat cat) (a: transpose (D0_cat T)) : D1_cat T :=
+Definition H0_cat_idobj (T: icat cat) (a: D0_cat T) : D1_cat T :=
   InternalHomHom.sort (iidI T) a.
+
+HB.instance Definition dcH0Quiver (T: icat cat) :=
+  IsQuiver.Build (D0_cat T) hom.
+
+Unset Universe Checking. 
+Fail HB.instance Definition _ (T: icat cat) :=
+  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
+HB.about IsH0Quiver.Build.
+Definition xxx (T : icat cat) :=
+  IsH0Quiver.Build (D0_cat T).
+  (* (IsQuiver.Build _ (@dcHhom T)). *)
+Set Printing All.
+Print xxx.
+Set Universe Checking.
 
 Lemma dhSource_iidI (T : icat cat) (a: transpose (D0_cat T)) :
    dcHsource T (H0_cat_idobj a) = a.
@@ -202,7 +150,7 @@ Proof.
 by have [+ _] := @hom_tgt _ _ _ _ (iidI T) => /(congr1 (fun f => f a)); apply.
 Qed.
 
-Definition H0_cat_id (T: icat cat) (a: transpose (D0_cat T)) : a hh> a :=
+Definition H0_cat_id (T: icat cat) (a: D0_cat T) : a +> a :=
   existT _ (H0_cat_idobj a) (conj (dhSource_iidI a) (dhTarget_iidI a)).
 
 (** H0 precat *)
