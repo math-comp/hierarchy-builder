@@ -78,10 +78,6 @@ Definition dcHtarget (T : doublecat) :
 Definition dcHunit (T: doublecat) :
   Functor.type (D0_cat T) (D1_cat T) := InternalHomHom.sort (iidI T).
 
-(*********************************************************************)
-
-(********************************************************************)
-
 Definition mk_prod_span (T: doublecat) :
   span ((@D1_iHom T) : obj cat) ((@D1_iHom T) : obj cat) :=
   iprod_pb (@D1_iHom T) (@D1_iHom T).
@@ -95,10 +91,11 @@ Definition dcHhom (T: icat cat) :
   fun x y =>
     sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
 
-Definition dcHhom_impl1 (T : doublecat) (h : sigma x y, dcHhom x y) : D1_cat T :=
-  projT1 (projT2 (projT2 h)).
+Definition dcHhom_impl1 (T : doublecat) (h : sigma x y, dcHhom x y) :
+  D1_cat T := projT1 (projT2 (projT2 h)).
 
-Definition dcHhom_impl2 (T : doublecat) (h : D1_cat T) : sigma x y, dcHhom x y :=
+Definition dcHhom_impl2 (T : doublecat) (h : D1_cat T) :
+  sigma x y, dcHhom x y :=
   existT _ (dcHsource T h) (existT _ (dcHtarget T h)
     (existT _ h (conj erefl erefl))). 
   
@@ -108,6 +105,15 @@ Proof. by []. Qed.
 Lemma dcHhom_iso2 (T: doublecat) : cancel (@dcHhom_impl1 T) (@dcHhom_impl2 T).
 Proof. by move=> [? [? [? []]]]; case: _ /; case: _ /. Qed.
 
+(*
+Lemma dcHhom_iso2' (T: doublecat) : cancel (@dcHhom_impl1 T) (@dcHhom_impl2 T).
+Proof. unfold cancel.
+       move=> [? [? [? []]]]; simpl.
+       move=> a b.
+       case a; case b; simpl; auto.
+Qed.
+*)
+
 Definition D1_morph_liftA (T: doublecat) (a b: transpose (D0_cat T)) 
    (h1: dcHhom a b) : D1_cat T := projT1 h1.
 
@@ -115,10 +121,13 @@ Definition D1_morph_liftA (T: doublecat) (a b: transpose (D0_cat T))
 Definition mk_prod_auxA (T: doublecat) (a b c: transpose (D0_cat T))
                    (h1: dcHhom a b) (h2: dcHhom b c) :
   (D1_iHom T) *_(D0_cat T : cat) (D1_iHom T) :=
-  (existT _ (projT1 h1, projT1 h2) (eq_trans (proj2 (projT2 h1)) (esym (proj1 (projT2 h2))))).
+  (existT _ (projT1 h1, projT1 h2) (eq_trans (proj2 (projT2 h1))
+                                      (esym (proj1 (projT2 h2))))).
 
 
 (**********************************************************************)
+
+(** H0 and D0 quivers (HD0Quiver) *)
 
 Definition dcQuiver (T: icat cat) : IsQuiver (D0_cat T) :=
   IsQuiver.Build (D0_cat T) hom.
@@ -176,6 +185,22 @@ Definition dchd0quiver (T : icat cat) : HD0Quiver (D0_cat T).
   exact (dcH0Quiver T).
 Defined.  
 
+(***********************************************************************)
+
+(** D0 category *)
+
+HB.instance Definition dcD0Precat (T: icat cat) : Quiver_IsPreCat (D0_cat T)
+  := Quiver_IsPreCat.Build (D0_cat T) (@idmap (D0_cat T)) (@comp (D0_cat T)).
+
+HB.instance Definition dcD0Cat (T: icat cat) : PreCat_IsCat (D0_cat T)
+  := PreCat_IsCat.Build (D0_cat T) (@comp1o (D0_cat T)) (@compo1 (D0_cat T))
+      (@compoA (D0_cat T)).
+
+
+(***********************************************************************)
+
+(** H0 precat *)
+
 (** Horizontal identity *)
 Definition H0_cat_idobj (T: icat cat) (a: D0_cat T) : D1_cat T :=
   InternalHomHom.sort (iidI T) a.
@@ -231,9 +256,6 @@ Definition H0_cat_comp (T : icat cat) (a b c : transpose (D0_cat T))
   existT _ (H0_cat_compobj h1 h2)
     (conj (dhSource_icompI h1 h2) (dhTarget_icompI h1 h2)).
 
-
-(** H0 precat definition *)
-
 (* with PreCat: this is wrong! why does it typecheck? *)
 Unset Universe Checking.
 Definition dcH0PreCat' (T: icat cat) : IsPreCat (D0_cat T) :=
@@ -272,7 +294,8 @@ Fail HB.instance Definition dcH0QuiverIsPreCatI (T: icat cat) :=
   dcH0QuiverIsPreCat T.
 Set Universe Checking.
 
-(* H0 precat. this works! *)
+(* H0 precat. manual instantiation of the wrapper works (but it should
+have been derived from dcH0QuiverIsPreCatI) *)
 Unset Universe Checking.
 HB.instance Definition dcIsH0PreCat (T: icat cat) :
   IsH0PreCat (D0_cat T) :=
@@ -280,9 +303,142 @@ HB.instance Definition dcIsH0PreCat (T: icat cat) :
 Set Universe Checking.
 
 
+(********************************************************************)
+
+(** D1 category *)
+
+Definition C1obj (T: icat cat) := Total2 (@dcHhom T).
+
+Definition C1obj_impl1 (T : doublecat) (h : C1obj T) :
+  D1_cat T := projT1 (this_morph h).
+
+Definition C1obj_impl2 (T : doublecat) (h : D1_cat T) :
+  C1obj T := @TT2 _ _ (dcHsource T h) (dcHtarget T h)
+                  (existT _ h (conj erefl erefl)). 
+
+Lemma C1obj_iso1 (T: doublecat) : cancel (@C1obj_impl2 T) (@C1obj_impl1 T).
+Proof. by []. Qed.
+
+Lemma C1obj_iso2 (T: doublecat) : cancel (@C1obj_impl1 T) (@C1obj_impl2 T).
+Proof. unfold cancel.
+       move=> x.
+       destruct x as [s t m].
+       destruct m as [d [l r]].
+       case l; case r; simpl; auto.
+Qed.       
+       
+Definition C1hom (T: doublecat) : C1obj T -> C1obj T -> U.
+  set h := @hom (D1_cat T).
+  intros.
+  eapply C1obj_impl1 in X.
+  eapply C1obj_impl1 in X0.
+  eapply (h X X0).
+Defined.
+
+(* this would seem natural *)
+HB.instance Definition dcD1QuiverA (T: icat cat) : IsQuiver (D1_cat T) :=
+  IsQuiver.Build (D1_cat T) hom.
+
+HB.instance Definition dcD1PrecatA (T: icat cat) : Quiver_IsPreCat (D1_cat T)
+  := Quiver_IsPreCat.Build (D1_cat T) (@idmap (D1_cat T)) (@comp (D1_cat T)).
+
+HB.instance Definition dcD1CatA (T: icat cat) : PreCat_IsCat (D1_cat T)
+  := PreCat_IsCat.Build (D1_cat T) (@comp1o (D1_cat T)) (@compo1 (D1_cat T))
+      (@compoA (D1_cat T)).
+
+(* however, if we want to fit in with the definitions in SADoubleCat,
+   we need C1obj as subject, not D1_cat.  Indeed, this should give a
+   wrapper instance for D1Quiver (does it? it should, anyway) *)
+HB.instance Definition dcD1Quiver (T: icat cat) : IsQuiver (C1obj T) :=
+  IsQuiver.Build (@C1obj T) (@C1hom T).
+
+Definition C1_idmap (T: icat cat) : forall a: C1obj T, a ~> a.
+  set h := @idmap (D1_cat T).
+  intros.
+  have @b : D1_cat T.
+  { eapply C1obj_impl1; eauto. }
+  specialize (h b).
+  auto.
+Defined.  
+   
+Definition C1_comp (T: icat cat) :
+  forall (a b c: C1obj T), (a ~> b) -> (b ~> c) -> (a ~> c).
+  set h := @comp (D1_cat T).
+  intros.
+  have @a1 : D1_cat T.
+  { eapply (C1obj_impl1 a). }
+  have @b1 : D1_cat T.
+  { eapply (C1obj_impl1 b). }
+  have @c1 : D1_cat T.
+  { eapply (C1obj_impl1 c). }
+  specialize (h a1 b1 c1).
+  auto.
+Defined.  
+
+HB.instance Definition dcD1Precat (T: icat cat) : Quiver_IsPreCat (C1obj T)
+  := Quiver_IsPreCat.Build (C1obj T) (@C1_idmap T) (@C1_comp T).
+
+Definition C1_comp1o (T: icat cat) :
+  forall (a b : C1obj T) (f : a ~> b), idmap \; f = f.
+  set h := @comp1o (D1_cat T).
+  intros.
+  have @a1 : D1_cat T.
+  { eapply (C1obj_impl1 a). }
+  have @b1 : D1_cat T.
+  { eapply (C1obj_impl1 b). }
+  have @f1 : a1 ~> b1.
+  { auto. }
+  specialize (h a1 b1 f1).
+  auto.
+Defined.  
+
+Definition C1_compo1 (T: icat cat) :
+  forall (a b : C1obj T) (f : a ~> b), f \; idmap = f.
+  set h := @compo1 (D1_cat T).
+  intros.
+  have @a1 : D1_cat T.
+  { eapply (C1obj_impl1 a). }
+  have @b1 : D1_cat T.
+  { eapply (C1obj_impl1 b). }
+  have @f1 : a1 ~> b1.
+  { auto. }
+  specialize (h a1 b1 f1).
+  auto.
+Defined.  
+
+Definition C1_compoA (T: icat cat) :
+  forall (a b c d : C1obj T) (f : a ~> b) (g : b ~> c) (h : c ~> d),
+    f \; (g \; h) = (f \; g) \; h.
+  set h := @compoA (D1_cat T).
+  intros.
+  have @a1 : D1_cat T.
+  { eapply (C1obj_impl1 a). }
+  have @b1 : D1_cat T.
+  { eapply (C1obj_impl1 b). }
+  have @c1 : D1_cat T.
+  { eapply (C1obj_impl1 c). }
+  have @d1 : D1_cat T.
+  { eapply (C1obj_impl1 d). }
+  have @f1 : a1 ~> b1.
+  { auto. }
+  have @g1 : b1 ~> c1.
+  { auto. }
+  have @h1 : c1 ~> d1.
+  { auto. }
+  specialize (h a1 b1 c1 d1 f1 g1 h1).
+  auto.
+Defined.  
+
+HB.instance Definition dcD1Cat (T: icat cat) : PreCat_IsCat (C1obj T)
+  := PreCat_IsCat.Build (C1obj T) (@C1_comp1o T) (@C1_compo1 T)
+      (@C1_compoA T).
 
 
+(* it should now be possible to derive automatically a DDCat (which
+includes D0 cat, D1 cat and H0 quiver) *)
 
+
+(********************************************************************)
 (********************************************************************)
 
 (* we can derive HD0Quiver (part of the STUFunctor def) *)
