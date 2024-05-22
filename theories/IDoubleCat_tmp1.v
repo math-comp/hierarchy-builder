@@ -120,44 +120,48 @@ Definition mk_prod_auxA (T: doublecat) (a b c: transpose (D0_cat T))
 
 (**********************************************************************)
 
-(* do we really need this instance? 
-   the sort of T should coincide with the sort of C0, which should 
-   coincide with D0_cat, and this is already a category. 
-   I DO NOT UNDERSTAND. *)
-HB.instance Definition dcQuiver' (T: icat cat) : IsQuiver (D0_cat T) :=
-  IsQuiver.Build (D0_cat T) hom.
-
 Definition dcQuiver (T: icat cat) : IsQuiver (D0_cat T) :=
   IsQuiver.Build (D0_cat T) hom.
- 
+
+(* do we really need this instance? 
+   the sort of T should coincide with the sort of C0, which should 
+   coincide with D0_cat, and this is already a category. *)
+HB.instance Definition dcQuiverI (T: icat cat) : IsQuiver (D0_cat T) :=
+  dcQuiver T.
+
+(* given D0_cat as base subject and the following def, wrapping should
+give us 'IsH0Quiver (D0_cat T)', and thus build an instance of
+HD0Quiver for D0_cat *)
 Unset Universe Checking.
-(* ERROR IsH0Quiver.Build is wrong *)
-HB.instance Definition xxx (T : icat cat): IsH0Quiver ( (D0_cat T)) :=
-  @IsH0Quiver.Axioms_ (D0_cat T) (dcQuiver' T)
-(IsQuiver.Build (transpose (D0_cat T))
-                                 (@dcHhom T)).
+Definition dcHQuiver (T: icat cat) : IsQuiver (transpose (D0_cat T)) := 
+  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
 Set Universe Checking.
 
-(* XXX WRAPPING PROBLEM *)
-Unset Universe Checking. 
+(* However ... *)
+Unset Universe Checking.
+(* XXX WRAPPING ERROR: IsH0Quiver.Build is wrong *)
+Fail HB.instance Definition dcHQuiverI (T: icat cat) :
+   IsQuiver (transpose (D0_cat T)) := dcHQuiver T.
+
 Fail HB.instance Definition dcH0Quiver (T: icat cat) :=
   IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
 
 Fail HB.instance Definition dcH0Quiver (T: icat cat) :=
   IsQuiver.Build (transpose (@InternalCat.sort cat T)) (@dcHhom T).
-
-(* in principle, this should be right. Assuming the base subject is
-D0_cat, wrapping should then give us 'IsH0Quiver (D0_cat T)', and thus
-build an instance of HD0Quiver for D0_cat *)
-Definition dcH0Quiver (T: icat cat) : IsQuiver (transpose (D0_cat T)) :=
-  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
 Set Universe Checking.
 
-Definition dcQuiver_d (T: icat cat) : HD0Quiver.type.
-Proof. 
+(* Threfore ... *) 
+Unset Universe Checking.
+(* as a patch, we manually define the wrapper instance *)
+HB.instance Definition dcH0Quiver (T : icat cat) : IsH0Quiver (D0_cat T) :=
+  @IsH0Quiver.Axioms_ (D0_cat T) (dcQuiver T) (dcHQuiver T).
+Set Universe Checking.
+
+(* just to check *)
+Definition dcquiver_d (T: icat cat) : HD0Quiver.type.
   Fail pose xx : Quiver.type := HB.pack T.
   pose xx : IsQuiver (D0_cat T) := dcQuiver T.
-  pose yy : IsQuiver (transpose (D0_cat T)) := dcH0Quiver T.
+  pose yy : IsQuiver (transpose (D0_cat T)) := dcHQuiver T.
   
   econstructor; eauto.
   instantiate (1:= D0_cat T).
@@ -166,64 +170,11 @@ Proof.
   econstructor; eauto.
 Defined.
 
-(***)
-
-(* ALTERNATIVE definition of H0Quiver (I added as an EXPERIMENT in the
-   old branch). However, I was assuming the base subject to be T (an
-   icat cat, not a type). The new lifter integrates transpose and
-   D0_cat *)
-HB.tag Definition transpose_D0 (T: icat cat) : cat :=
-  transpose (D0_cat T).
-#[wrapper] HB.mixin Record IsDCH0Quiver T of InternalCat cat T := {
-    is_hquiver : IsQuiver (transpose_D0 T)
-}.
-(* vertical and horizontal quivers, defining cells.
-   XXX non-forgetful inheritace warning: 
-   suggests to make cat_IsQuiver depend on cat_Cat *)
-Unset Universe Checking.
-(* XXX however, the sort of T is a cat, hence a quiver *)
-Fail #[short(type="dch0quiver")]
-HB.structure Definition DCH0Quiver : Set :=
-  { C of IsDCH0Quiver C & IsQuiver C }.
-#[short(type="dch0quiver")]
-HB.structure Definition DCH0Quiver : Set :=
-  { C of IsDCH0Quiver C }.
-Set Universe Checking.
-
-(* used by the instance *)
-Unset Universe Checking. 
-Definition dcH0QuiverD (T: icat cat) :
-  IsQuiver (transpose_D0 T) :=
-  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).  
-Set Universe Checking.
-
-(* XXX does not like the composed lifter *)
-Fail HB.instance Definition dcH0Quiver (T: icat cat) :
-  IsQuiver (transpose (D0_cat T)) := dcH0QuiverD T.
-
-(* XXX non-forgetful inheritance warning.
-    IsH0Quiver (D0_cat T) should follow by wrapping.
-    Again, suggests to make Quiver depend on Cat *)
-HB.instance Definition dcH0Quiver' (T: icat cat) :
-  IsQuiver (transpose_D0 T) := dcH0QuiverD T.
-
-Unset Universe Checking.
-HB.tag Definition dchhom (T : icat cat) :
-  transpose_D0 T -> transpose_D0 T -> U := @hom (transpose_D0 T).
-Set Universe Checking.
-Notation "a hh> b" := (dcHhom a b)
-   (at level 99, b at level 200, format "a  hh>  b") : cat_scope.
-
-(* check: this is bizarre of course *)
-Definition yyy (T: doublecat) : DCH0Quiver (D0_cat T :> cat).
-  set X := dcH0QuiverD T.
-  destruct T.
+(* just to check *)
+Definition dchd0quiver (T : icat cat) : HD0Quiver (D0_cat T).
   econstructor; eauto.
-  econstructor; eauto.
-Defined.
-
-
-(***)
+  exact (dcH0Quiver T).
+Defined.  
 
 (** Horizontal identity *)
 Definition H0_cat_idobj (T: icat cat) (a: D0_cat T) : D1_cat T :=
@@ -241,51 +192,95 @@ Proof.
 by have [+ _] := @hom_tgt _ _ _ _ (iidI T) => /(congr1 (fun f => f a)); apply.
 Qed.
 
+(* H0 identity *)
 Definition H0_cat_id (T: icat cat) (a: D0_cat T) : a +> a :=
   existT _ (H0_cat_idobj a) (conj (dhSource_iidI a) (dhTarget_iidI a)).
 
 (** Horizontal composition *)
-Definition H0_cat_compobj {T : icat cat} {a b c : transpose_D0 T}
-   (h1 : a hh> b) (h2 : b hh> c) : D1_cat T :=
+Definition H0_cat_compobj {T : icat cat} {a b c : transpose (D0_cat T)}
+   (h1 : a +> b) (h2 : b +> c) : D1_cat T :=
  InternalHomHom.sort (icompI T) (mk_prod_auxA h1 h2).
 
-Lemma src_hh (T : icat cat) (a b : transpose (D0_cat T)) (h : a hh> b) :
+Lemma src_hh (T : icat cat) (a b : transpose (D0_cat T)) (h : a +> b) :
   [src D1_iHom T] (projT1 h) = a.
 Proof. by case: h => h [/= ->]. Qed.
 
-Lemma tgt_hh (T : icat cat) (a b : transpose (D0_cat T)) (h : a hh> b) :
+Lemma tgt_hh (T : icat cat) (a b : transpose (D0_cat T)) (h : a +> b) :
   [tgt D1_iHom T] (projT1 h) = b.
 Proof. by case: h => h [/= _ ->]. Qed.
  
-Lemma dhSource_icompI (T : icat cat) (a b c : transpose_D0 T) 
-   (h1 : a hh> b) (h2 : b hh> c) :
+Lemma dhSource_icompI (T : icat cat) (a b c : transpose (D0_cat T)) 
+   (h1 : a +> b) (h2 : b +> c) :
    dcHsource T (H0_cat_compobj h1 h2) = a.
 Proof.
 have [+ _] := @hom_src _ _ _ _ (icompI T).
 by move => /(congr1 (fun f => f _)) /= -> /=; rewrite src_hh.
 Qed.
 
-Lemma dhTarget_icompI (T : icat cat) (a b c : transpose_D0 T) 
-   (h1 : a hh> b) (h2 : b hh> c) :
+Lemma dhTarget_icompI (T : icat cat) (a b c : transpose (D0_cat T)) 
+   (h1 : a +> b) (h2 : b +> c) :
    dcHtarget T (H0_cat_compobj h1 h2) = c.
 Proof.
 have [+ _] := @hom_tgt _ _ _ _ (icompI T).
 by move => /(congr1 (fun f => f _)) /= -> /=; rewrite tgt_hh.
 Qed.
 
-(* H0 horizontal composition.  
-   XXX problematic, very slow execution, takes even longer time to compile *)
-Definition H0_cat_comp (T : icat cat) (a b c : transpose_D0 T) 
-    (h1 : a hh> b) (h2 : b hh> c) : a hh> c :=
-  existT _ (H0_cat_compobj h1 h2) (conj (dhSource_icompI h1 h2) (dhTarget_icompI h1 h2)).
+(* H0 composition (this WAS problematic, now it's fine). *)
+Definition H0_cat_comp (T : icat cat) (a b c : transpose (D0_cat T)) 
+    (h1 : a +> b) (h2 : b +> c) : a +> c :=
+  existT _ (H0_cat_compobj h1 h2)
+    (conj (dhSource_icompI h1 h2) (dhTarget_icompI h1 h2)).
 
-(* XXX non-forgetful inheritace warning:
-  suggests to make cat_IsPreCat depend on cat_Cat (!!!) *)
+
+(** H0 precat definition *)
+
+(* with PreCat: this is wrong! why does it typecheck? *)
 Unset Universe Checking.
-HB.instance Definition H0PreCatD (T: icat cat) : IsPreCat (transpose_D0 T) :=
-  @IsPreCat.Build (transpose_D0 T) (@dcHhom T)
+Definition dcH0PreCat' (T: icat cat) : IsPreCat (D0_cat T) :=
+  @IsPreCat.Build (D0_cat T) (@dcHhom T)
     (@H0_cat_id T) (@H0_cat_comp T).
 Set Universe Checking.
+
+(* with PreCat: this is right *)
+Unset Universe Checking.
+Definition dcH0PreCat (T: icat cat) : IsPreCat (transpose (D0_cat T)) :=
+  @IsPreCat.Build (transpose (D0_cat T)) (@dcHhom T)
+    (@H0_cat_id T) (@H0_cat_comp T).
+Set Universe Checking.
+
+(* with quiver_is_precat: this is wrong *)
+Unset Universe Checking.
+Fail Definition dcH0QuiverIsPreCat' (T: icat cat) :
+  Quiver_IsPreCat (D0_cat T) :=
+  @Quiver_IsPreCat.Build (D0_cat T) 
+    (@H0_cat_id T) (@H0_cat_comp T).
+Set Universe Checking.
+
+(* with quiver_is_precat: this is right *)
+Unset Universe Checking.
+Definition dcH0QuiverIsPreCat (T: icat cat) :
+  Quiver_IsPreCat (transpose (D0_cat T)) :=
+  @Quiver_IsPreCat.Build (transpose (D0_cat T)) 
+    (@H0_cat_id T) (@H0_cat_comp T).
+Set Universe Checking.
+
+(* However... XXX ERROR *)
+Unset Universe Checking.
+Fail HB.instance Definition dcH0PreCatI (T: icat cat) :=
+  dcH0PreCat T.
+Fail HB.instance Definition dcH0QuiverIsPreCatI (T: icat cat) :=
+  dcH0QuiverIsPreCat T.
+Set Universe Checking.
+
+(* H0 precat. this works! *)
+Unset Universe Checking.
+HB.instance Definition dcIsH0PreCat (T: icat cat) :
+  IsH0PreCat (D0_cat T) :=
+  @IsH0PreCat.Build (D0_cat T) (dcH0QuiverIsPreCat T).
+Set Universe Checking.
+
+
+
 
 
 (********************************************************************)
