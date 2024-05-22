@@ -130,18 +130,12 @@ HB.instance Definition dcQuiver' (T: icat cat) : IsQuiver (D0_cat T) :=
 Definition dcQuiver (T: icat cat) : IsQuiver (D0_cat T) :=
   IsQuiver.Build (D0_cat T) hom.
  
-Unset Universe Checking. 
-Fail HB.instance Definition _ (T: icat cat) :=
-  IsQuiver.Build (transpose (D0_cat T)) (@dcHhom T).
-HB.about IsH0Quiver.Build.
-(* this can't be right semantically. 
-   IsH0Quiver is a wrapper and should take a quiver with subject 
-   transpose _. *)
-HB.instance Definition xxx (T : icat cat) :=
-  IsH0Quiver.Build (D0_cat T).
-  (* (IsQuiver.Build _ (@dcHhom T)). *)
-(* Set Printing All.
-   Print xxx. *)
+Unset Universe Checking.
+(* ERROR IsH0Quiver.Build is wrong *)
+HB.instance Definition xxx (T : icat cat): IsH0Quiver ( (D0_cat T)) :=
+  @IsH0Quiver.Axioms_ (D0_cat T) (dcQuiver' T)
+(IsQuiver.Build (transpose (D0_cat T))
+                                 (@dcHhom T)).
 Set Universe Checking.
 
 (* XXX WRAPPING PROBLEM *)
