@@ -321,6 +321,34 @@ Elpi Export HB.about.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+(** This prints know wrappers *)
+
+#[arguments(raw)] Elpi Command HB.print_wrappers.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/about.elpi".
+Elpi Accumulate lp:{{
+
+:name "start"
+main [] :- !,
+  std.findall (wrapper-mixin W_ GR_ M_) WL, !,
+  coq.say WL.
+
+main _ :- coq.error "Usage: HB.print_wrappers.".
+}}.
+Elpi Typecheck.
+Elpi Export HB.about.
+
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** [HB.howto (T) Foo.type d] prints possible sequences of factories
     to equip a type [T] with a structure [Foo.type], taking into account
     structures already instantiated on [T]. The search depth [d]
