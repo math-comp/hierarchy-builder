@@ -61,13 +61,16 @@ About congr1_funext.
 
 (* XXX HB.tag requires 'icat cat' instead of 'doublecat' *)
 
-(* break the definition of dcH0Quiver *)
+(* experimented with different definitions of D0_cat (our main
+subject). Notice that 'obj cat : U' *)
+
+(* breaks the definition of dcH0Quiver *)
 HB.tag Definition D0_catA (T: icat cat) : obj cat :=
   InternalCat.sort T. 
 (* behaves as D0_catA *)
 HB.tag Definition D0_catB (T: icat cat) : obj cat := T : obj cat. 
 
-(* give problems further on *)
+(* gives problems further on *)
 HB.tag Definition D0_catC (T: icat cat) : U := T : obj cat. 
 (* behaves as D0_catC *)
 HB.tag Definition D0_cat (T: icat cat) : U :=
@@ -486,20 +489,23 @@ Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 (** Functors *)
 
 (* this works, even if it is not what we want *)
-Definition dcHSource_exp1 (T: icat cat) :
+Definition dcHS_exp1 (T: icat cat) :
              @C1 cat T ~>_cat InternalCat.sort T.  
   set h := @src cat _ (D1_iHom T).
   exact h.
 Defined.  
 
-(* this doesn't work, even if unfold D0_cat gives the same *)
-Definition dcHSource_exp2 (T: icat cat) :
+(* PROBLEM this doesn't work, even if unfold D0_cat gives the same *)
+Definition dcHS_exp2 (T: icat cat) :
              @C1 cat T ~>_cat (D0_cat T: cat).  
   set h := @src cat _ (D1_iHom T).
   unfold D0_cat in *.
   Fail exact h.  
 Abort.
 
+(* I cannot understand why dcHS_exp1 succeeds and dcHS_exp2 fails,
+given that unfolding D0_cat gives the same. Notice that we get the
+same result if we use D0_catC *)
 
 (*********************************************************************)
 
