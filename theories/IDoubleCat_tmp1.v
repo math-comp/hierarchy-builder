@@ -441,8 +441,6 @@ includes D0 cat, D1 cat and H0 quiver) *)
 Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 *)
 
-Fail Definition dcHSource (T: icat cat) : (D1_iHom T: cat) ~> D0_cat T.
-
 Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~> D0_cat T.
   set h := @src cat _ (D1_iHom T).
 Admitted.   
@@ -450,6 +448,8 @@ Admitted.
 Definition dcHSourceB (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
   set h := @src cat _ (D1_iHom T).
 Admitted.
+
+Fail Definition dcHSource (T: icat cat) : (D1_iHom T: cat) ~> D0_cat T.
 
 Definition C1_iHom (T: icat cat) : iHom (C1obj T : cat).
 Admitted. 
