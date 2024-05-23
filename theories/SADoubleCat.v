@@ -114,6 +114,7 @@ HB.tag Definition D1obj (C: hd0quiver) := Total2 (@hhom C).
 #[wrapper]
 HB.mixin Record IsD1Quiver T of HD0Quiver T :=
   { is_dquiver : Quiver (D1obj T) }.
+(* PROBLEM: here it should be IsQuiver *)
 Unset Universe Checking.
 #[short(type="d1quiver")]
 HB.structure Definition D1Quiver : Set := { C of IsD1Quiver C }.

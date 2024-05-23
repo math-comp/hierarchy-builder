@@ -1,14 +1,10 @@
 theories/structures.v
 theories/cat.v
 theories/SADoubleCat.v
-theories/SADCat_wkeqH1.v
-theories/SADCat_xwkH1.v
-theories/SADCat_stH1.v
-theories/SADCat_xeqH1.v
 theories/CatPullbacks.v
 theories/InternalCat.v
 theories/ADoubleCat.v
-theories/algebra.v
+ttheories/algebra.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
 -Q . HB

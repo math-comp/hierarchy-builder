@@ -61,8 +61,20 @@ About congr1_funext.
 
 (* XXX HB.tag requires 'icat cat' instead of 'doublecat' *)
 
-(* probably this tag is not needed, anyway *)
-HB.tag Definition D0_cat (T: icat cat) : U := T : obj cat.
+(* break the definition of dcH0Quiver *)
+HB.tag Definition D0_catA (T: icat cat) : obj cat :=
+  InternalCat.sort T. 
+(* behaves as D0_catA *)
+HB.tag Definition D0_catB (T: icat cat) : obj cat := T : obj cat. 
+
+(* give problems further on *)
+HB.tag Definition D0_catC (T: icat cat) : U := T : obj cat. 
+(* behaves as D0_catC *)
+HB.tag Definition D0_cat (T: icat cat) : U :=
+  InternalCat.sort T. 
+
+
+(************************************************************************)
 
 HB.tag Definition D1_cat (T: icat cat) : U := @C1 cat T.
 
@@ -185,7 +197,7 @@ Definition dchd0quiver (T : icat cat) : HD0Quiver (D0_cat T).
   exact (dcH0Quiver T).
 Defined.  
 
-HB.about D0_cat.
+(* HB.about D0_cat. *)
 
 (***********************************************************************)
 
@@ -309,9 +321,11 @@ Set Universe Checking.
 
 (** D1 category *)
 
-(* Definition C1obj (T: icat cat) := D1obj (D0_cat T). *)
-Notation C1obj T := (D1obj (D0_cat T)).
-(*  Total2 (@dcHhom T). *)
+(* temporarily reverted to definition to avoid bug-related failure of
+dcD1Quiver *)
+Definition C1obj (T: icat cat) := D1obj (D0_cat T). 
+(* Notation C1obj T := (D1obj (D0_cat T)). *)
+(* C1obj (T: icat cat) := Total2 (@dcHhom T). *)
 
 Definition C1obj_impl1 (T : doublecat) (h : C1obj T) :
   D1_cat T := projT1 (this_morph h).
@@ -350,16 +364,17 @@ HB.instance Definition dcD1CatA (T: icat cat) : PreCat_IsCat (D1_cat T)
   := PreCat_IsCat.Build (D1_cat T) (@comp1o (D1_cat T)) (@compo1 (D1_cat T))
       (@compoA (D1_cat T)).
 
+(* 
+About C1obj.
+About D1obj.
+HB.about D1obj. *)
+(* new command to print out wrappers *)
+(* HB.print_wrappers. *)
+
 (* however, if we want to fit in with the definitions in SADoubleCat,
    we need C1obj as subject, not D1_cat.  Indeed, this should give a
    wrapper instance for D1Quiver (does it? it should, anyway) *)
-
-(* add command to print out wrappers *)
-
-About C1obj.
-About D1obj.
-HB.about D1obj.
-
+(* PROBLEM: this fails when we switch to C1obj as notation *)
 HB.instance Definition dcD1Quiver (T: icat cat) : IsQuiver (C1obj T) :=
   IsQuiver.Build (@C1obj T) (@C1hom T). 
 
@@ -444,18 +459,100 @@ HB.instance Definition dcD1Cat (T: icat cat) : PreCat_IsCat (C1obj T)
   := PreCat_IsCat.Build (C1obj T) (@C1_comp1o T) (@C1_compo1 T)
       (@C1_compoA T).
 
-
 (* it should now be possible to derive automatically a DDCat (which
 includes D0 cat, D1 cat and H0 quiver) *)
+(* HB.about D0_cat. 
+
+HB: D0_cat is canonically equipped with structures:
+    - Cat
+      (from "(stdin)", line 673)
+    - PreCat
+      (from "(stdin)", line 672)
+    - Quiver
+      (from "(stdin)", line 44)
+    - HD0Quiver
+      (from "(stdin)", line 54)
+    - H0PreCat
+      (from "(stdin)", line 721)
+*)
+(* However, D1quiver, D1PreCat and D1Cat are missing *)
 
 (*
 Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 *)
 
-Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~> D0_cat T.
+(*********************************************************************)
+
+(** Functors *)
+
+(* this works, even if it is not what we want *)
+Definition dcHSource_exp1 (T: icat cat) :
+             @C1 cat T ~>_cat InternalCat.sort T.  
+  set h := @src cat _ (D1_iHom T).
+  exact h.
+Defined.  
+
+(* this doesn't work, even if unfold D0_cat gives the same *)
+Definition dcHSource_exp2 (T: icat cat) :
+             @C1 cat T ~>_cat (D0_cat T: cat).  
+  set h := @src cat _ (D1_iHom T).
+  unfold D0_cat in *.
+  Fail exact h.  
+Abort.
+
+
+(*********************************************************************)
+
+Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~>_cat (D0_cat T: cat).  
+  set h := @src cat _ (D1_iHom T).
+  simpl in h.
+  unfold D1_cat.
+  unfold D0_cat in *.
 
   
-  set h := @src cat _ (D1_iHom T).
+  unfold src in *.
+  simpl in *.
+  
+(*  destruct h as [ff class].
+  econstructor.
+  instantiate (1:=ff).
+  destruct class as [K1 K2].
+  econstructor; eauto.
+  destruct K1 as [Fhom0].
+  destruct K2.
+  econstructor; eauto.
+  intros.
+  specialize (F1 a).
+*)
+
+  destruct T.
+  destruct class as [K1 K2 K3 K4].
+  destruct K1 as [C2]; simpl in *; simpl.   
+  destruct K2 as [[[ src0 tgt0 ]]].
+  destruct K3.
+  destruct K4.
+  simpl in *; simpl.   
+
+  unfold D0_cat in *.
+  simpl in *.
+
+  unfold C1.
+  simpl.
+  unfold C1 in *.
+  simpl in *.
+  
+  exact h.
+  
+  unfold Fhom in *.
+  simpl in *.
+  simpl.
+
+  assert (@C1 cat _ _ = C2).
+  exact F1.
+  
+  instantiate (1:=K1).
+  exact h.
+  
   Check (D1_iHom T: obj cat).
 Admitted.   
 
