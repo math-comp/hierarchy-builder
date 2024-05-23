@@ -185,6 +185,8 @@ Definition dchd0quiver (T : icat cat) : HD0Quiver (D0_cat T).
   exact (dcH0Quiver T).
 Defined.  
 
+HB.about D0_cat.
+
 (***********************************************************************)
 
 (** D0 category *)
@@ -307,7 +309,9 @@ Set Universe Checking.
 
 (** D1 category *)
 
-Definition C1obj (T: icat cat) := Total2 (@dcHhom T).
+(* Definition C1obj (T: icat cat) := D1obj (D0_cat T). *)
+Notation C1obj T := (D1obj (D0_cat T)).
+(*  Total2 (@dcHhom T). *)
 
 Definition C1obj_impl1 (T : doublecat) (h : C1obj T) :
   D1_cat T := projT1 (this_morph h).
@@ -349,8 +353,15 @@ HB.instance Definition dcD1CatA (T: icat cat) : PreCat_IsCat (D1_cat T)
 (* however, if we want to fit in with the definitions in SADoubleCat,
    we need C1obj as subject, not D1_cat.  Indeed, this should give a
    wrapper instance for D1Quiver (does it? it should, anyway) *)
+
+(* add command to print out wrappers *)
+
+About C1obj.
+About D1obj.
+HB.about D1obj.
+
 HB.instance Definition dcD1Quiver (T: icat cat) : IsQuiver (C1obj T) :=
-  IsQuiver.Build (@C1obj T) (@C1hom T).
+  IsQuiver.Build (@C1obj T) (@C1hom T). 
 
 Definition C1_idmap (T: icat cat) : forall a: C1obj T, a ~> a.
   set h := @idmap (D1_cat T).
@@ -442,14 +453,17 @@ Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 *)
 
 Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~> D0_cat T.
+
+  
   set h := @src cat _ (D1_iHom T).
+  Check (D1_iHom T: obj cat).
 Admitted.   
 
 Definition dcHSourceB (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
   set h := @src cat _ (D1_iHom T).
 Admitted.
 
-Fail Definition dcHSource (T: icat cat) : (D1_iHom T: cat) ~> D0_cat T.
+Definition dcHSource (T: icat cat) : D1_iHom T ~>_(obj cat) (D0_cat T : cat).
 
 Definition C1_iHom (T: icat cat) : iHom (C1obj T : cat).
 Admitted. 
