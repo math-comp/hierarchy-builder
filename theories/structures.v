@@ -342,7 +342,7 @@ main [] :- !,
 main _ :- coq.error "Usage: HB.print_wrappers.".
 }}.
 Elpi Typecheck.
-Elpi Export HB.about.
+Elpi Export HB.print_wrappers.
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
