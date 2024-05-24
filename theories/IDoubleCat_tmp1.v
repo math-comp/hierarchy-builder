@@ -71,9 +71,9 @@ HB.tag Definition D0_catA (T: icat cat) : obj cat :=
 HB.tag Definition D0_catB (T: icat cat) : obj cat := T : obj cat. 
 
 (* gives problems further on *)
-HB.tag Definition D0_catC (T: icat cat) : U := T : obj cat. 
+HB.tag Definition D0_cat (T: icat cat) : U := T : obj cat. 
 (* behaves as D0_catC *)
-HB.tag Definition D0_cat (T: icat cat) : U :=
+HB.tag Definition D0_catC (T: icat cat) : U :=
   InternalCat.sort T. 
 
 
@@ -319,6 +319,47 @@ HB.instance Definition dcIsH0PreCat (T: icat cat) :
   @IsH0PreCat.Build (D0_cat T) (dcH0QuiverIsPreCat T).
 Set Universe Checking.
 
+(*******************************************************************)
+
+Definition DH0_comp1o (T: icat cat)
+  (a b: transpose (D0_cat T)) (f: a +> b) : idmap \; f = f.
+ set hh := @icompo1 cat T.
+ simpl in *.
+ unfold canonical_iHom in *.
+ unfold ipair in hh; simpl in *.
+ unfold comp in hh; simpl in *.
+ unfold icompI in hh; simpl in *.
+ unfold comp; simpl.
+ unfold iprodr in *.
+ simpl in *. 
+ 
+  (* basically, apply the two sides of hh to (target f, f) and try to
+     simplify and invert. on the left handside one should get the
+     composition of id and f, on the right handside one should get f
+     as second projection.
+
+    PROBLEM: we haven't instantiated icompI and iidI yet *)
+Admitted. 
+
+Definition DH0_compo1 (T: icat cat)
+  (a b: transpose (D0_cat T)) (f: a +> b) : f \; idmap = f.
+ set hh := @icomp1o cat T.
+Admitted.
+
+Definition DH0_compoA (T: icat cat)
+  (a b c d: transpose (D0_cat T)) (f: a +> b) (g : b +> c) (h : c +> d) :
+    f \; (g \; h) = (f \; g) \; h.
+  set hh := @icompoA cat T.
+Admitted. 
+
+(* HB instance does not work, as above *)
+Unset Universe Checking.
+Definition dcIsH0Cat (T: icat cat) :
+  PreCat_IsCat (transpose (D0_cat T)) :=
+  @PreCat_IsCat.Build (transpose (D0_cat T))  
+    (@DH0_comp1o T) (@DH0_compo1 T) (@DH0_compoA T).
+Set Universe Checking.
+
 
 (********************************************************************)
 
@@ -528,13 +569,13 @@ Definition dcHTargetA (T: icat cat) :
   instantiate (1:= hh); auto.
 Defined.  
 
-
-(*
 Definition dcHUnitA (T: icat cat) :
  D0_cat T ~>_cat @C1 _ T. 
-  set h := @src cat _ (D1_iHom T). 
+  set h := @iidI cat T. 
   unfold D0_cat in *.
-  unfold D1_iHom in h; simpl in *. 
+  unfold canonical_iHom in *.
+  simpl in *.
+  unfold trivial_iHom in *.
   destruct h as [hh class0].
   destruct T as [TT class].
   destruct TT as [sortT classT]; simpl in *.
@@ -543,11 +584,56 @@ Definition dcHUnitA (T: icat cat) :
   destruct TT2.
   destruct TT3.
   simpl in *.
+
+  destruct class as [K1 K2 K3 K4].
+  destruct K1 as [C2]; simpl in *; simpl.   
+  destruct K2 as [[[ src0 tgt0 ]]].
+  destruct K3.
+  destruct K4.
+  simpl in *; simpl.   
+   
+  destruct class0 as [[E1 E2]]; simpl in *.
   econstructor.
   instantiate (1:= hh); auto.
+  destruct hh.
+  simpl in *.
+  eapply class.
 Defined.  
 
-*)
+Definition dcHCompA (T: icat cat) :
+ (@C1 _ T) *_(D0_catC T : cat) (@C1 _ T) ~>_cat @C1 _ T. 
+  unfold D0_catC.
+  eapply (@icompI cat T). 
+Defined.
+  
+Fail Definition dcHCompA (T: icat cat) :
+ (@C1 _ T) *_(D0_cat T : cat) (@C1 _ T) ~>_cat @C1 _ T. 
+
+Definition dcHSourceB (T: icat cat) : D1_iHom T ~>_(obj cat) (D0_cat T : cat).
+  eapply (dcHSourceA T).
+Defined.  
+
+(* what we actually need *)
+
+Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
+Admitted.
+
+Definition dcHTargetC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
+Admitted.
+
+Definition dcHUnitC (T: icat cat) : D0_cat T ~>_cat C1obj T. 
+Admitted. 
+
+(*
+Definition C1_iHom (T: icat cat) : iHom (D0_cat T : cat).
+Admitted. 
+ *)
+
+Fail Definition dcHCompC (T: icat cat) :
+ (D1_iHom T) *_(D0_cat T: cat) (D1_iHom T) ~>_cat C1obj T. 
+
+  
+
 
 (*********************************************************************)
 
@@ -605,19 +691,6 @@ Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~>_cat (D0_cat T: cat).
   Check (D1_iHom T: obj cat).
 Admitted.   
 *)
-
-Definition dcHSourceB (T: icat cat) : D1_iHom T ~>_(obj cat) (D0_cat T : cat).
-  eapply (dcHSourceA T).
-Defined.  
-
-Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
-  set h := @src cat _ (D1_iHom T).
-Admitted.
-
-Definition C1_iHom (T: icat cat) : iHom (C1obj T : cat).
-Admitted. 
-
-
 
 (********************************************************************)
 (*
