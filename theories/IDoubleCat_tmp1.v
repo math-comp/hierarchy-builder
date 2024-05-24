@@ -500,7 +500,20 @@ Definition dcHS_exp2 (T: icat cat) :
              @C1 cat T ~>_cat (D0_cat T: cat).  
   set h := @src cat _ (D1_iHom T).
   unfold D0_cat in *.
-  Fail exact h.  
+  Fail exact h.
+  unfold D1_iHom in h; simpl in *.
+  Set Printing All.  
+  destruct T as [TT class].
+  destruct class as [K1 K2 K3 K4].
+  destruct K1 as [C2]; simpl in *; simpl.   
+  destruct K2 as [[[ src0 tgt0 ]]].
+  simpl in *.
+  Fail exact h.
+  Fail exact src0.
+  destruct h as [hh class0].
+  econstructor; eauto.
+  instantiate (1:=hh).
+  Fail exact class0.
 Abort.
 
 (* I cannot understand why dcHS_exp1 succeeds and dcHS_exp2 fails,
