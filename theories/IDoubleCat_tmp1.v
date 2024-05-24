@@ -488,48 +488,70 @@ Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 
 (** Functors *)
 
-(* this works, even if it is not what we want *)
-               
+(* this works, but with a dodgy typing *)
 Definition dcHS_exp1 (T: icat cat) :
              @C1 cat T ~>_cat _   :=
   @src cat _ (D1_iHom T).
+(* Check dcHS_exp1. *)
+
+Definition dcHSourceA (T: icat cat) :
+  @C1 _ T ~>_cat D0_cat T.
+  set h := @src cat _ (D1_iHom T). 
+  unfold D0_cat in *.
+  unfold D1_iHom in h; simpl in *. 
+  destruct h as [hh class0].
+  destruct T as [TT class].
+  destruct TT as [sortT classT]; simpl in *.
+  destruct classT as [TT1 TT2 TT3]; simpl in *.
+  destruct TT1.
+  destruct TT2.
+  destruct TT3.
+  simpl in *.
+  econstructor.
+  instantiate (1:= hh); auto.
+Defined.  
+
+Definition dcHTargetA (T: icat cat) :
+  @C1 _ T ~>_cat D0_cat T.
+  set h := @tgt cat _ (D1_iHom T). 
+  unfold D0_cat in *.
+  unfold D1_iHom in h; simpl in *. 
+  destruct h as [hh class0].
+  destruct T as [TT class].
+  destruct TT as [sortT classT]; simpl in *.
+  destruct classT as [TT1 TT2 TT3]; simpl in *.
+  destruct TT1.
+  destruct TT2.
+  destruct TT3.
+  simpl in *.
+  econstructor.
+  instantiate (1:= hh); auto.
+Defined.  
+
 
 (*
-About dcHS_exp1.
-About D1_iHom.
-exact h.
-Definition dcHS_exp1 (T: icat cat) :
-             @C1 cat T ~>_cat InternalCat.sort T.  
-  set h := @src cat _ (D1_iHom T).
-  exact h.
-Defined.  
-*)
-(* PROBLEM this doesn't work, even if unfold D0_cat gives the same *)
-Definition dcHS_exp2 (T: icat cat) :
-             @C1 cat T ~>_cat (D0_cat T: cat).  
-  set h := @src cat _ (D1_iHom T).
+Definition dcHUnitA (T: icat cat) :
+ D0_cat T ~>_cat @C1 _ T. 
+  set h := @src cat _ (D1_iHom T). 
   unfold D0_cat in *.
-  Fail exact h.
-  unfold D1_iHom in h; simpl in *.
-  destruct T as [TT class].
-  destruct class as [K1 K2 K3 K4].
-  destruct K1 as [C2]; simpl in *; simpl.   
-  destruct K2 as [[[ src0 tgt0 ]]].
-  simpl in *.
-  Fail exact h.
-  Fail exact src0.
+  unfold D1_iHom in h; simpl in *. 
   destruct h as [hh class0].
-  econstructor; eauto.
-  instantiate (1:=hh).
-  Fail exact class0.
-Abort.
+  destruct T as [TT class].
+  destruct TT as [sortT classT]; simpl in *.
+  destruct classT as [TT1 TT2 TT3]; simpl in *.
+  destruct TT1.
+  destruct TT2.
+  destruct TT3.
+  simpl in *.
+  econstructor.
+  instantiate (1:= hh); auto.
+Defined.  
+
 *)
-(* I cannot understand why dcHS_exp1 succeeds and dcHS_exp2 fails,
-given that unfolding D0_cat gives the same. Notice that we get the
-same result if we use D0_catC *)
 
 (*********************************************************************)
 
+(*
 Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~>_cat (D0_cat T: cat).  
   set h := @src cat _ (D1_iHom T).
   simpl in h.
@@ -582,12 +604,15 @@ Definition dcHSourceA (T: icat cat) : (D1_cat T: cat) ~>_cat (D0_cat T: cat).
   
   Check (D1_iHom T: obj cat).
 Admitted.   
+*)
 
-Definition dcHSourceB (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
+Definition dcHSourceB (T: icat cat) : D1_iHom T ~>_(obj cat) (D0_cat T : cat).
+  eapply (dcHSourceA T).
+Defined.  
+
+Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
   set h := @src cat _ (D1_iHom T).
 Admitted.
-
-Definition dcHSource (T: icat cat) : D1_iHom T ~>_(obj cat) (D0_cat T : cat).
 
 Definition C1_iHom (T: icat cat) : iHom (C1obj T : cat).
 Admitted. 
