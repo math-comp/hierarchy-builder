@@ -88,7 +88,7 @@ HB.tag Definition transpose (C : quiver) : U := C.
 Unset Universe Checking.
 #[short(type="hd0quiver")]
 HB.structure Definition HD0Quiver : Set :=
-  { C of IsQuiver C & IsH0Quiver C }.
+  { C of IsQuiver C & IsQuiver (transpose C) }.
 Set Universe Checking.
 (*
 HB.structure Definition HD0Quiver : Set :=
@@ -111,6 +111,18 @@ Record Total2 T (h: T -> T -> U) : Type := TT2 {
 HB.tag Definition D1obj (C: hd0quiver) := Total2 (@hhom C).
 
 (* D1 quiver requirement (includes D0 quiver and its transpose). *)
+(*
+HB.mixin Record IsD1Quiver T of IsQuiver T & IsQuiver (transpose T) :=
+  { is_dquiver : IsQuiver (D1obj T) }.
+*)
+(*
+Section test.
+  Fail HB.declare Context T (_ : IsQuiver T) (_ : IsQuiver (transpose T)).
+  HB.declare Context T (_ : IsQuiver T).
+  HB.declare Context (_ : IsQuiver (transpose T)).
+  HB.declare  Context T (_ : HD0Quiver T).
+Goal IsQuiver (D1obj T).
+*)
 #[wrapper]
 HB.mixin Record IsD1Quiver T of HD0Quiver T :=
   { is_dquiver : Quiver (D1obj T) }.

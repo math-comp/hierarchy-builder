@@ -4,7 +4,7 @@ theories/SADoubleCat.v
 theories/CatPullbacks.v
 theories/InternalCat.v
 theories/ADoubleCat.v
-ttheories/algebra.v
+theories/algebra.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
 -Q . HB

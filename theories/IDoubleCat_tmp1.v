@@ -489,12 +489,21 @@ Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 (** Functors *)
 
 (* this works, even if it is not what we want *)
+               
+Definition dcHS_exp1 (T: icat cat) :
+             @C1 cat T ~>_cat _   :=
+  @src cat _ (D1_iHom T).
+
+(*
+About dcHS_exp1.
+About D1_iHom.
+exact h.
 Definition dcHS_exp1 (T: icat cat) :
              @C1 cat T ~>_cat InternalCat.sort T.  
   set h := @src cat _ (D1_iHom T).
   exact h.
 Defined.  
-
+*)
 (* PROBLEM this doesn't work, even if unfold D0_cat gives the same *)
 Definition dcHS_exp2 (T: icat cat) :
              @C1 cat T ~>_cat (D0_cat T: cat).  
@@ -502,7 +511,6 @@ Definition dcHS_exp2 (T: icat cat) :
   unfold D0_cat in *.
   Fail exact h.
   unfold D1_iHom in h; simpl in *.
-  Set Printing All.  
   destruct T as [TT class].
   destruct class as [K1 K2 K3 K4].
   destruct K1 as [C2]; simpl in *; simpl.   
@@ -515,7 +523,7 @@ Definition dcHS_exp2 (T: icat cat) :
   instantiate (1:=hh).
   Fail exact class0.
 Abort.
-
+*)
 (* I cannot understand why dcHS_exp1 succeeds and dcHS_exp2 fails,
 given that unfolding D0_cat gives the same. Notice that we get the
 same result if we use D0_catC *)
