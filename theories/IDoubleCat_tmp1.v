@@ -174,7 +174,7 @@ Fail HB.instance Definition dcH0Quiver (T: icat cat) :=
   IsQuiver.Build (transpose (@InternalCat.sort cat T)) (@dcHhom T).
 Set Universe Checking.
 
-(* Threfore ... *) 
+(* Therefore ... *) 
 Unset Universe Checking.
 (* as a patch, we manually define the wrapper instance *)
 HB.instance Definition dcH0Quiver (T : icat cat) : IsH0Quiver (D0_cat T) :=
@@ -529,11 +529,16 @@ Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 
 (** Functors *)
 
-(* this works, but with a dodgy typing *)
-Definition dcHS_exp1 (T: icat cat) :
-             @C1 cat T ~>_cat _   :=
+(* this works, and is the same as dcHsource, but the type is unclear *)
+Definition dcHS_exp1 (T: icat cat) : @C1 cat T ~>_cat _   :=
   @src cat _ (D1_iHom T).
 (* Check dcHS_exp1. *)
+Lemma xxx (T: icat cat) : dcHS_exp1 T = dcHsource T.
+  auto.
+Qed.  
+Fail Definition dcHS_exp2 (T: icat cat) : @C1 cat T ~>_cat D0_cat T :=
+  (* dcHsource T. *)
+  @src cat _ (D1_iHom T).
 
 Definition dcHSourceA (T: icat cat) :
   @C1 _ T ~>_cat D0_cat T.
@@ -615,9 +620,42 @@ Defined.
 
 (* what we actually need *)
 
-Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
+Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~>_cat D0_cat T.
+  unfold C1obj.
+  unfold D1obj.
+
+  (* PROBLEM: HSource should be recognized as a functor, 
+     given D0_cat is an HD0quiver *)
+  Fail set h := (@HSource (D0_cat T) : (C1obj T : cat) ~>_cat D0_cat T).
+  set h1 := (@HSource (D0_cat T)).
+
+  (* alternative course *)
+  set h2 := @src cat _ (D1_iHom T). 
+  unfold D0_cat in *.
+  unfold D1_iHom in h2; simpl in *. 
+
+  unfold D0_cat in *; simpl.
+  unfold D1obj in *; simpl.
+  unfold hhom in *; simpl in *.
+  (* PROBLEM: Toal2 hom and C1 should be equated *)
 Admitted.
 
+
+(* PROBLEM: if wrapping is automatic, in order to get SFuncton and
+TFunctor we'd just need to give the lifted instances of Functor. The
+problem is, how does HB know which one to wrap as SFunctor and which
+one as TFunctor? ANSWER: the subject is different for the two mixins.
+But this depends on the Total2 structure. *)
+
+(*
+Definition dcInternalHom (T: icat cat) :
+  isInternalHom cat (D0_cat T: cat) (C1obj T : cat).
+  
+  
+Lemma yyy (T: icat cat) : @IsInternalQuiver cat (D0_cat T) =
+                          D1obj (D0_cat T).  
+*)
+  
 Definition dcHTargetC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
 Admitted.
 
@@ -632,8 +670,136 @@ Admitted.
 Fail Definition dcHCompC (T: icat cat) :
  (D1_iHom T) *_(D0_cat T: cat) (D1_iHom T) ~>_cat C1obj T. 
 
-  
 
+(********************************************************************)
+
+(** USELESS *)
+(*
+Lemma ext_functor (A B: cat) (f: A ~> B) : @Functor A B (Functor.sort f).
+  destruct f; simpl.
+  auto.
+Defined.  
+  
+Lemma ext_prefunctor (A B: cat) (f: A ~> B) :
+  @PreFunctor A B (Functor.sort f).
+  destruct f; simpl.
+  destruct class.
+  econstructor; eauto.
+Defined.  
+
+Lemma ext_prefunctor_isfunctor (A B: cat) (f: A ~> B) :
+  @PreFunctor_IsFunctor A B (Functor.sort f).
+  destruct f; simpl.
+  destruct class.
+  eauto.  
+Defined.  
+
+Definition dcSPreFunctor (T: icat cat) :
+  IsPreFunctor (C1obj T : cat) (D0_cat T) (dcHSourceC T).
+  eapply ext_prefunctor.
+Defined.
+
+HB.instance Definition dcSPreFunctor' (T: icat cat) :
+  IsPreFunctor (C1obj T : cat) (D0_cat T) (dcHSourceC T) :=
+  dcSPreFunctor T.
+*)
+
+(*********************************************************************)
+(*
+Lemma hsource_eq (T: icat cat) : @HSource (D0_cat T) = dcHSourceC T.
+  unfold HSource. dcHSourceC.
+*)
+(** deriving a STUFunctor *)
+Definition dc2stuf (T: icat cat) : STUFunctor (D0_cat T).
+  have @D0 : cat := D0_cat T.
+
+  have @D1 : cat := C1obj T. 
+
+  econstructor.
+  econstructor; eauto.
+Admitted.
+
+Fail HB.instance Definition dc2stuf' (T: icat cat) :
+  STUFunctor (D0_cat T) := dc2stuf T.
+
+
+(*  
+  { 
+    set HH := (ext_prefunctor_isfunctor (dcHTargetC T)).
+    econstructor; eauto.
+    destruct HH.
+    econstructor; eauto.
+    unfold C1obj in *.
+    exact F1.
+    auto.
+  }
+    
+  Set Printing All.
+  exact HH.
+  
+  
+  have @SR : Functor.type (D0_cat T) (C1obj T).
+  { exact (ext_functor (dcHSourceC T)).
+  
+  { destruct T.    
+    destruct class as [K1 K2 K3 K4].
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct K1; simpl in *; simpl.
+   
+    destruct K2 as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply src0.
+  }
+
+  have @TG : Functor.type D1 D0.
+  { destruct T.    
+    destruct class as [K1 K2 K3 K4].
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct K1; simpl in *; simpl.
+   
+    destruct K2 as [[[src0 tgt0]]];
+      simpl in *; simpl.
+    
+    eapply tgt0.
+  }
+
+  have @UN : Functor.type D0 D1.
+  { destruct T.    
+    destruct class as [K1 K2 K3 K4].
+    subst D0 D1.
+    simpl; simpl in *.
+    
+    destruct K1; simpl in *; simpl.
+
+    destruct K3.
+
+    eapply iidI.
+  }  
+
+  have @H0PC : IsPreCat (transpose (D0_cat T)).
+  { eapply (H0PreCatD T). }
+
+  have DD : DDCat (D0_cat T).
+  econstructor; eauto.
+  econstructor; eauto.
+  admit.    
+  admit.
+ 
+  unfold D0_cat in *.
+  simpl in *.
+  unfold D1_cat in *.
+  subst D0 D1.
+  simpl in *.
+
+  set C := @InternalCat.sort cat T.
+  econstructor; eauto.
+  instantiate (1:= C).
+*)
 
 (*********************************************************************)
 
