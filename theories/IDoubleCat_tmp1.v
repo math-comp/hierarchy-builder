@@ -625,13 +625,25 @@ Defined.
 Definition dcHSourceC (T: icat cat) :
   Functor.type (C1obj T) (D0_cat T).
 Proof.
+have @ff := (@dcHsource T : Functor.type _ _).
+set qq :=  fun x => @C1obj_impl1 T x.
+set hh := fun x => ff (qq x).
+econstructor.
+instantiate (1:= hh).
+destruct ff.
+destruct class.
+econstructor; eauto.
+(*
+Definition dcHSourceC (T: icat cat) :
+  Functor.type (C1obj T) (D0_cat T).
+Proof.
 have := (@dcHsource T : Functor.type _ _).
 case: T => [? [? ? ? ?]] /=.
 rewrite /D1_cat/= /C1obj /D0_cat/= /D1obj/=.
+*)
 Admitted.
 Fail HB.instance Definition _ (T : icat cat) :=
   Functor.copy (@HSource (D0_cat T)) (@dcHSourceC T).
-
 
 (* exact. *)
 (*   unfold C1obj. *)
@@ -650,7 +662,7 @@ Fail HB.instance Definition _ (T : icat cat) :=
 (*   unfold D0_cat in *; simpl. *)
 (*   unfold D1obj in *; simpl. *)
 (*   unfold hhom in *; simpl in *. *)
-(*   (* PROBLEM: Toal2 hom and C1 should be equated *) *)
+(*   (* PROBLEM: Total2 hom and C1 should be equated *) *)
 (* Admitted. *)
 
 Definition dcHTargetC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
