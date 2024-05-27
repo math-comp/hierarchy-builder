@@ -622,25 +622,36 @@ Defined.
 
 (* what we actually need *)
 
-Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~>_cat D0_cat T.
-  unfold C1obj.
-  unfold D1obj.
-
-  (* PROBLEM: HSource should be recognized as a functor, 
-     given D0_cat is an HD0quiver *)
-  Fail set h := (@HSource (D0_cat T) : (C1obj T : cat) ~>_cat D0_cat T).
-  set h1 := (@HSource (D0_cat T)).
-
-  (* alternative course *)
-  set h2 := @src cat _ (D1_iHom T). 
-  unfold D0_cat in *.
-  unfold D1_iHom in h2; simpl in *. 
-
-  unfold D0_cat in *; simpl.
-  unfold D1obj in *; simpl.
-  unfold hhom in *; simpl in *.
-  (* PROBLEM: Toal2 hom and C1 should be equated *)
+Definition dcHSourceC (T: icat cat) :
+  Functor.type (C1obj T) (D0_cat T).
+Proof.
+have := (@dcHsource T : Functor.type _ _).
+case: T => [? [? ? ? ?]] /=.
+rewrite /D1_cat/= /C1obj /D0_cat/= /D1obj/=.
 Admitted.
+Fail HB.instance Definition _ (T : icat cat) :=
+  Functor.copy (@HSource (D0_cat T)) (@dcHSourceC T).
+
+
+(* exact. *)
+(*   unfold C1obj. *)
+(*   unfold D1obj. *)
+
+(*   (* PROBLEM: HSource should be recognized as a functor,  *)
+(*      given D0_cat is an HD0quiver *) *)
+(*   Fail set h := (@HSource (D0_cat T) : (C1obj T : cat) ~>_cat D0_cat T). *)
+(*   set h1 := (@HSource (D0_cat T)). *)
+
+(*   (* alternative course *) *)
+(*   set h2 := @src cat _ (D1_iHom T).  *)
+(*   unfold D0_cat in *. *)
+(*   unfold D1_iHom in h2; simpl in *.  *)
+
+(*   unfold D0_cat in *; simpl. *)
+(*   unfold D1obj in *; simpl. *)
+(*   unfold hhom in *; simpl in *. *)
+(*   (* PROBLEM: Toal2 hom and C1 should be equated *) *)
+(* Admitted. *)
 
 Definition dcHTargetC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
 Admitted.
