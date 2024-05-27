@@ -671,6 +671,35 @@ Fail Definition dcHCompC (T: icat cat) :
  (D1_iHom T) *_(D0_cat T: cat) (D1_iHom T) ~>_cat C1obj T. 
 
 
+(*********************************************************************)
+(*
+Lemma hsource_eq (T: icat cat) : @HSource (D0_cat T) = dcHSourceC T.
+  unfold HSource. dcHSourceC.
+*)
+(** deriving a STUFunctor *)
+Definition dc2stuf (T: icat cat) : STUFunctor (D0_cat T).
+  have @D0 : cat := D0_cat T.
+
+  have @D1 : cat := C1obj T. 
+
+  econstructor.
+  econstructor; eauto.
+Admitted.
+
+Fail HB.instance Definition dc2stuf' (T: icat cat) :
+  STUFunctor (D0_cat T) := dc2stuf T.
+
+
+(********************************************************************)
+
+Require Import SADCat_xeqH1.
+
+HB.tag Definition dcH1obj (T: icat cat) : U := Total2 (@hom (D0_cat T)).
+(* := H1obj (D0_cat T) *)
+
+Fail Definition dcH1hom (T: icat cat) (a b: dcH1obj T) := @H1hom (D0_cat T) a b.
+
+
 (********************************************************************)
 
 (** USELESS *)
@@ -703,25 +732,6 @@ HB.instance Definition dcSPreFunctor' (T: icat cat) :
   IsPreFunctor (C1obj T : cat) (D0_cat T) (dcHSourceC T) :=
   dcSPreFunctor T.
 *)
-
-(*********************************************************************)
-(*
-Lemma hsource_eq (T: icat cat) : @HSource (D0_cat T) = dcHSourceC T.
-  unfold HSource. dcHSourceC.
-*)
-(** deriving a STUFunctor *)
-Definition dc2stuf (T: icat cat) : STUFunctor (D0_cat T).
-  have @D0 : cat := D0_cat T.
-
-  have @D1 : cat := C1obj T. 
-
-  econstructor.
-  econstructor; eauto.
-Admitted.
-
-Fail HB.instance Definition dc2stuf' (T: icat cat) :
-  STUFunctor (D0_cat T) := dc2stuf T.
-
 
 (*  
   { 
