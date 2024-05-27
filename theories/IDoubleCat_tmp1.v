@@ -273,25 +273,10 @@ Definition H0_cat_comp (T : icat cat) (a b c : transpose (D0_cat T))
   existT _ (H0_cat_compobj h1 h2)
     (conj (dhSource_icompI h1 h2) (dhTarget_icompI h1 h2)).
 
-(* with PreCat: this is wrong! why does it typecheck? *)
-Unset Universe Checking.
-Definition dcH0PreCat' (T: icat cat) : IsPreCat (D0_cat T) :=
-  @IsPreCat.Build (D0_cat T) (@dcHhom T)
-    (@H0_cat_id T) (@H0_cat_comp T).
-Set Universe Checking.
-
 (* with PreCat: this is right *)
 Unset Universe Checking.
 Definition dcH0PreCat (T: icat cat) : IsPreCat (transpose (D0_cat T)) :=
   @IsPreCat.Build (transpose (D0_cat T)) (@dcHhom T)
-    (@H0_cat_id T) (@H0_cat_comp T).
-Set Universe Checking.
-
-(* with quiver_is_precat: this is wrong *)
-Unset Universe Checking.
-Fail Definition dcH0QuiverIsPreCat' (T: icat cat) :
-  Quiver_IsPreCat (D0_cat T) :=
-  @Quiver_IsPreCat.Build (D0_cat T) 
     (@H0_cat_id T) (@H0_cat_comp T).
 Set Universe Checking.
 
@@ -318,6 +303,23 @@ HB.instance Definition dcIsH0PreCat (T: icat cat) :
   IsH0PreCat (D0_cat T) :=
   @IsH0PreCat.Build (D0_cat T) (dcH0QuiverIsPreCat T).
 Set Universe Checking.
+
+
+(* with PreCat: this is WRONG! why does it typecheck? *)
+Unset Universe Checking.
+Definition dcH0PreCat' (T: icat cat) : IsPreCat (D0_cat T) :=
+  @IsPreCat.Build (D0_cat T) (@dcHhom T)
+    (@H0_cat_id T) (@H0_cat_comp T).
+Set Universe Checking.
+
+(* with quiver_is_precat: this is WRONG *)
+Unset Universe Checking.
+Fail Definition dcH0QuiverIsPreCat' (T: icat cat) :
+  Quiver_IsPreCat (D0_cat T) :=
+  @Quiver_IsPreCat.Build (D0_cat T) 
+    (@H0_cat_id T) (@H0_cat_comp T).
+Set Universe Checking.
+
 
 (*******************************************************************)
 
@@ -640,36 +642,34 @@ Definition dcHSourceC (T: icat cat) : (C1obj T : cat) ~>_cat D0_cat T.
   (* PROBLEM: Toal2 hom and C1 should be equated *)
 Admitted.
 
-
-(* PROBLEM: if wrapping is automatic, in order to get SFuncton and
-TFunctor we'd just need to give the lifted instances of Functor. The
-problem is, how does HB know which one to wrap as SFunctor and which
-one as TFunctor? ANSWER: the subject is different for the two mixins.
-But this depends on the Total2 structure. *)
-
-(*
-Definition dcInternalHom (T: icat cat) :
-  isInternalHom cat (D0_cat T: cat) (C1obj T : cat).
-  
-  
-Lemma yyy (T: icat cat) : @IsInternalQuiver cat (D0_cat T) =
-                          D1obj (D0_cat T).  
-*)
-  
 Definition dcHTargetC (T: icat cat) : (C1obj T : cat) ~> D0_cat T.
 Admitted.
 
 Definition dcHUnitC (T: icat cat) : D0_cat T ~>_cat C1obj T. 
 Admitted. 
 
+(* if wrapping is automatic, in order to get SFuncton and TFunctor we
+just need to give the lifted instances of Functor. HB knows which one
+to wrap as SFunctor and TFunctor because the subject is different for
+the two mixins. But both depend on the Total2 structure. *)
+
+(* one possibility is to prove C1obj to be an InternalHom. It seems
+rather problematic thought, as T already contains C1 as internal hom.
+*)
 (*
-Definition C1_iHom (T: icat cat) : iHom (D0_cat T : cat).
-Admitted. 
- *)
+Definition dcInternalHom (T: icat cat) :
+  isInternalHom cat (D0_cat T: cat) (C1obj T : cat).
+*)
 
 Fail Definition dcHCompC (T: icat cat) :
  (D1_iHom T) *_(D0_cat T: cat) (D1_iHom T) ~>_cat C1obj T. 
 
+(* alternatively, we can define the product on C1obj. However, this is
+too restrictive *)
+Definition dcProd (T: icat cat) :
+  span (C1obj T: cat) (C1obj T) :=
+  pbk (Cospan (dcHTargetC T) (dcHSourceC T)). 
+  
 
 (*********************************************************************)
 (*
@@ -697,8 +697,29 @@ Require Import SADCat_xeqH1.
 HB.tag Definition dcH1obj (T: icat cat) : U := Total2 (@hom (D0_cat T)).
 (* := H1obj (D0_cat T) *)
 
+(* the typing needs to be fixed, but first of all we need the STUFunctor instance *)
 Fail Definition dcH1hom (T: icat cat) (a b: dcH1obj T) := @H1hom (D0_cat T) a b.
 
+Program Definition dcH1hom (T: icat cat) (a b: dcH1obj T) : U :=
+  sigma (h1: dcHhom (source a) (source b)) (h2: dcHhom (target a) (target b)) 
+    (hh: C1hom (TT2 h1) (TT2 h2)), 
+    (@dcHSourceC T) <$> hh = this_morph a /\
+    (@dcHTargetC T) <$> hh = this_morph b. 
+Obligation 1.
+intros.
+(* PROBLEM: we haven't properly defined dcHSourceC and dcHTargetC yet *)
+Fail unfold dcHSourceC.
+Admitted. 
+Obligation 2.
+intros.
+Admitted.
+Obligation 3.
+intros.
+Admitted.
+Obligation 4.
+Admitted.
+
+(* Lemma Unit_source (T: icat cat) : *)
 
 (********************************************************************)
 

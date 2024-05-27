@@ -65,16 +65,17 @@ Module IInter.
 (*************************************************************************)
 (* flatter def of internal cat (for cat), consistently using HB *)
 
-Definition Cat_pair : Type := (cat * cat)%type.
+(* Definition Cat_pair : Type := (cat * cat)%type. *)
 
 Inductive IObj : Type := CC0 | CC1 | CProd (x y: IObj).
 Inductive IHook (x: IObj) : Type := SrcH | TrgH.
 
-HB.mixin Record isIBase (T: Cat_pair) := { 
-  HSrc : (snd T) ~> (fst T) ;  
-  HTrg : (snd T) ~> (fst T) ; 
+HB.mixin Record isIBase T of Cat T := {
+  C1_cat : cat ;  
+  HSrc : C1_cat ~> (T: cat) ;  
+  HTrg : C1_cat ~> (T: cat) ; 
   }.
-HB.structure Definition IBase := { C of isIBase C }.
+HB.structure Definition IBase := { C of isIBase C }. 
 
 (*
 Definition morph_heq1 (X Y Z: cat) (m2: Z ~> Y) (m1: X ~> Y) (e: X = Z) :
@@ -95,11 +96,11 @@ HB.mixin Record isPBase T of IBase T := {
 
   dprodl (X Y: IObj) : OInt (CProd X Y) ~> OInt X ;    
   dprodr (X Y: IObj) : OInt (CProd X Y) ~> OInt Y ;  
-     
-  CC0_def : OInt CC0 = fst T ;
-  CC1_def : OInt CC1 = snd T ;
 
-  C1Src_def : (HInt (SrcH CC1)) ~= @HSrc T ; 
+  CC0_def : OInt CC0 = (T: cat)  ;
+  CC1_def : OInt CC1 = @C1_cat T ; 
+     
+  C1Src_def : (HInt (SrcH CC0)) ~= @HSrc T ; 
     (* morph_heq1 (HInt (SrcH CC1)) (@HSrc T) (esym CC1_def) ; *)
   C1Trg_def : HInt (TrgH CC1) ~= @HTrg T ;
 
@@ -196,19 +197,19 @@ HB.mixin Record isICC T of PBase T := {
 HB.structure Definition ICC := { C of isICC C }.
 
 Fixpoint IHom_def (T: IBase.type) (x: IObj) :
-  sigma c: cat, ((c ~> fst (IBase.sort T)) * (c ~> fst (IBase.sort T)))%type.
+  sigma c: cat, ((c ~> IBase.sort T) * (c ~> IBase.sort T))%type.
   induction x.
-  { exists (fst (IBase.sort T)).
+  { exists (IBase.sort T).
     exact (idmap, idmap).
   }
-  { exists (snd (IBase.sort T)).
+  { exists (@C1_cat T).
     exact (@HSrc T, @HTrg T).
   }
   { set x1_ihom := IHom_def T x1.
     set x2_ihom := IHom_def T x2.
     destruct x1_ihom as [m1 [s1 t1]].
     destruct x2_ihom as [m2 [s2 t2]].
-    set pb := pbk _ _ (Cospan t1 s2).
+    set pb := pbk (Cospan t1 s2).
     set ps := bot2left pb \; s1.
     set pt := bot2right pb \; t2.
     exists (bot pb).
@@ -228,7 +229,7 @@ Definition HInt_def (T: IBase.type) (x: IObj) (h: IHook x) :
   set o := IHom_def T x.
   destruct o as [c [s t]] eqn:X.
 
-  assert (OInt_def T CC0 = fst (IBase.sort T)) as B.
+  assert (OInt_def T CC0 = IBase.sort T) as B.
   {  unfold OInt_def; simpl; auto. }
   rewrite B.
   assert (OInt_def T x = c) as A.
@@ -278,11 +279,19 @@ Defined.
 
 (********************************************************************)
 
+(* wrapping PROBLEM (note: this is not really needed, @OInt T CC0 is a
+cat) *)
+HB.tag Definition H00obj (T: PBase.type) : U :=
+  @OInt T CC0.
+#[wrapper] HB.mixin Record IsDH00Quiver C of PBase C := {
+    is_hquiver : Quiver (H00obj C) ;
+}.
 
-HB.tag Definition H0obj (T: ICC.type) : cat :=
+(* wrapping PROBLEM (this mixin is needed of course) *)
+HB.tag Definition H0obj (T: PBase.type) : cat :=
   transpose (@OInt T CC0).
-#[wrapper] HB.mixin Record IsDH0Quiver C of ICC C := {
-    is_hquiver : IsQuiver (H0obj C)
+#[wrapper] HB.mixin Record IsDH0Quiver C of PBase C := {
+    is_hquiver : Quiver (H0obj C) ;
 }.
 (* vertical and horizontal quivers, defining cells.
    XXX non-forgetful inheritace warning, 
@@ -462,9 +471,9 @@ Admitted.
 
 (*******************************************************************)
 
-Definition H1HomFS (T: ICC.type) (a0 a1 b0 b1: fst (IBase.sort T)) :
+Definition H1HomFS (T: ICC.type) (a0 a1 b0 b1: IBase.sort T) :
   (a0 ~> b0) -> (a1 ~> b1) -> U :=
-  fun v0 v1 => sigma (ha hb: snd (IBase.sort T)) (vv: ha ~> hb),
+  fun v0 v1 => sigma (ha hb: @C1_cat T) (vv: ha ~> hb),
     @HSrc T ha = a0 /\ @HTrg T ha = a1 /\ @HSrc T hb = b0 /\ @HTrg T hb = b1. 
 
 Definition H1HomFI (T: ICC.type) (a0 a1 b0 b1: @OInt T CC0) :
@@ -472,49 +481,46 @@ Definition H1HomFI (T: ICC.type) (a0 a1 b0 b1: @OInt T CC0) :
   fun v0 v1 => sigma (ha: H0Hom a0 a1) (hb: H0Hom b0 b1), 
       projT1 ha ~> projT1 hb.
 
-Definition H1objS (T: IBase.type) := Total2 (@hom (fst (IBase.sort T))).
+Definition H1objS (T: IBase.type) := Total2 (@hom (IBase.sort T)).
 
 Definition H1HomDS (T: ICC.type) (v0 v1: H1objS T) :=
-  sigma (ha hb: snd (IBase.sort T)) (vv: ha ~> hb),
+  sigma (ha hb: @C1_cat T) (vv: ha ~> hb),
     @HSrc T ha = source v0 /\ @HTrg T ha = source v1
     /\ @HSrc T hb = target v0 /\ @HTrg T hb = target v1.                        
+
+(*
+Definition H1HomS (T: ICC.type) (v0 v1: H1objS T) : U :=
+  sigma (ha hb: snd (IBase.sort T)) (vv: ha ~> hb),
+   @HSrc T <$> vv = this_morph v0.
+*)
+
+Definition H1objD (T: ICC.type) := Total2 (@hom (@OInt T CC0)).
 
 (********************************************************************)
 
-Definition H1HomDS' (T: ICC.type) (v0 v1: H1objS T) :=
-  let a0 := source v0
-  in let a1 := source v1
-  in let b0 := target v0
-  in let b1 := target v1
-  in sigma (ha: a0 ~> a1) (hb: b0 ~> b1) (vv: ha ~> hb),
-    (@HSrc T <$> vv) = ha.
-    
-    @HSrc T ha = source v0 /\ @HTrg T ha = source v1
-    /\ @HSrc T hb = target v0 /\ @HTrg T hb = target v1.                        
-
-
-Definition H1Hom (T: ICC.type) (v0 v1: Total2 (@hom (@OInt T CC0))) : U :=
-  sigma (ha hb: @OInt T CC1) (vv: ha ~> hb),
-   @HSrc T <$> vv = ha.
-   
-    
-    @HInt T _ (SrcH CC1) <$> vv = ha. /\
-    
-    @HInt T _ (SrcH CC1) ha = source v0 /\
-    @HInt T _ (TrgH CC1) ha = source v1 /\
-    @HInt T _ (SrcH CC1) hb = target v0 /\
-    @HInt T _ (TrgH CC1) hb = target v1.                                        
-
+(* wrapping PROBLEM *)
 HB.tag Definition H1obj (T: ICC.type) :=
   Total2 (@hom (@OInt T CC0)).
 #[wrapper] HB.mixin Record IsDH1Quiver C of ICC C := {
-    is_h1quiver : IsQuiver (H1obj C)
+    is_h1quiver : Quiver (H1obj C)
 }.
 Unset Universe Checking.
 #[short(type="dh1quiver")]
 HB.structure Definition DH1Quiver : Set :=
   { C of IsDH1Quiver C }.
 Set Universe Checking.
+
+Definition H1Hom (T: ICC.type) (v0 v1: H1obj T) : U :=
+  sigma (ha hb: @OInt T CC1) (vv: ha ~> hb)
+    (es0: source v0 = @HInt T _ (SrcH CC1) ha)
+    (es1: source v1 = @HInt T _ (TrgH CC1) ha)
+    (et0: target v0 = @HInt T _ (SrcH CC1) hb)
+    (et1: target v1 = @HInt T _ (TrgH CC1) hb),    
+    HInt _ (SrcH CC1) <$> vv =
+      ecast2 x y (x ~> y) es0 et0 (this_morph v0) /\
+    HInt _ (TrgH CC1) <$> vv =
+      ecast2 x y (x ~> y) es1 et1 (this_morph v1).
+      
 
 HB.tag Definition H1hom (T: ICC.type) : H1obj T -> H1obj T -> U := @H1Hom T.
 Unset Universe Checking.
@@ -537,8 +543,8 @@ Definition DH1_cat_id (T: ICC.type)
   set vv := @dIid T <$> v.
   exists vv.
   simpl.
-  repeat split.
-  
+
+  assert (a = HInt CC1 (SrcH CC1) (dIid a)) as es0.
   { assert (HInt CC1 (SrcH CC1) (dIid a) =
               (dIid \; HInt CC1 (SrcH CC1)) a) as H.
     { auto. }
@@ -546,13 +552,17 @@ Definition DH1_cat_id (T: ICC.type)
     rewrite dIidS.
     simpl; auto.
   }
+  exists es0.
+  assert (a = HInt CC1 (TrgH CC1) (dIid a)) as es1.
   { assert (HInt CC1 (TrgH CC1) (dIid a) =
               (dIid \; HInt CC1 (TrgH CC1)) a) as H.
     { auto. }
     rewrite H.
     rewrite dIidT.
     simpl; auto.
-  }  
+  }
+  exists es1.
+  assert (b = HInt CC1 (SrcH CC1) (dIid b)) as et0.
   { assert (HInt CC1 (SrcH CC1) (dIid b) =
               (dIid \; HInt CC1 (SrcH CC1)) b) as H.
     { auto. }
@@ -560,15 +570,22 @@ Definition DH1_cat_id (T: ICC.type)
     rewrite dIidS.
     simpl; auto.
   }
+  exists et0.
+  assert (b = HInt CC1 (TrgH CC1) (dIid b)) as et1.
   { assert (HInt CC1 (TrgH CC1) (dIid b) =
               (dIid \; HInt CC1 (TrgH CC1)) b) as H.
     { auto. }
     rewrite H.
     rewrite dIidT.
     simpl; auto.
-  }  
-Defined.
-
+  }
+  exists et1.
+  split.
+  clear es1 et1.
+  admit.
+  admit.
+Admitted.
+  
 Definition DH1_cat_comp (T: ICC.type)
 (v0 v1 v2: H1obj T)
   (hh1: v0 h1> v1) (hh2: v1 h1> v2) : v0 h1> v2.                        
@@ -576,75 +593,88 @@ Definition DH1_cat_comp (T: ICC.type)
   (hh1: H1hom v0 v1) (hh2: H1hom v1 v2) : H1hom v0 v2. *)
   unfold H1hom in *; unfold H1Hom in *.
   simpl in *.
-  destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s hb1t]]]]]].
-  destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s hb2t]]]]]].
+  destruct hh1 as [ha1 [hb1 [vv1 [ha1s [ha1t [hb1s [hb1t [hs1 ht1]]]]]]]].
+  destruct hh2 as [ha2 [hb2 [vv2 [ha2s [ha2t [hb2s [hb2t [hs2 ht2]]]]]]]].
+
   assert (HInt CC1 (TrgH CC1) ha1 = HInt CC1 (SrcH CC1) ha2) as e0.
-  { rewrite ha1t.
-    rewrite ha2s; auto. }
+  { rewrite -ha1t.
+    rewrite -ha2s; auto. }
   pose prd_a := @mkprod T _ _ ha1 ha2 e0.
   assert (HInt CC1 (TrgH CC1) hb1 = HInt CC1 (SrcH CC1) hb2) as e1.
-  { rewrite hb1t.
-    rewrite hb2s; auto. }
+  { rewrite -hb1t.
+    rewrite -hb2s; auto. }
   pose prd_b := @mkprod T _ _ hb1 hb2 e1.
   pose cmp_a := @dIcomp T prd_a.
   pose cmp_b := @dIcomp T prd_b.
 
   assert (ECast2_ah vv1 vv2 e0 e1) as em.
-  { unfold ECast2_ah.
-     
-    
-  pose prd_m := @mk_prod_morph T _ _ _ _ _ _ vv1 vv2.
+  admit.
+         
+  pose prd_m := @mk_prod_morph T _ _ _ _ _ _ vv1 vv2 e0 e1 em.
   pose cmp_m := @dIcomp T <$> prd_m.
   
   exists cmp_a.
   exists cmp_b.
   exists cmp_m.
 
-  unfold cmp_a, cmp_b.
+  (* unfold cmp_a, cmp_b. *)
   repeat split.
 
+  assert (source v0 = HInt CC1 (SrcH CC1) cmp_a) as es0.
   { assert (HInt CC1 (SrcH CC1) (dIcomp prd_a) =
             (dIcomp \; HInt _ (SrcH CC1)) prd_a) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompS.
     rewrite PSrc_def.
     simpl.
     rewrite mkprod1; auto.
   }
+  exists es0.
+  assert (source v2 = HInt CC1 (TrgH CC1) cmp_a) as es1.
   { assert (HInt CC1 (TrgH CC1) (dIcomp prd_a) =
             (dIcomp \; HInt _ (TrgH CC1)) prd_a) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompT.
     rewrite PTrg_def.
     simpl.
     rewrite mkprod2; auto.
   }
- { assert (HInt CC1 (SrcH CC1) (dIcomp prd_b) =
+  exists es1.
+  assert (target v0 = HInt CC1 (SrcH CC1) cmp_b) as et0.
+  { assert (HInt CC1 (SrcH CC1) (dIcomp prd_b) =
             (dIcomp \; HInt _ (SrcH CC1)) prd_b) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompS.
     rewrite PSrc_def.
     simpl.
     rewrite mkprod1; auto.
   }
+  exists et0.
+  assert (target v2 = HInt CC1 (TrgH CC1) cmp_b) as et1.
   { assert (HInt CC1 (TrgH CC1) (dIcomp prd_b) =
             (dIcomp \; HInt _ (TrgH CC1)) prd_b) as H.
-    { auto. }.
+    { auto. }
     rewrite H.
     rewrite dIcompT.
     rewrite PTrg_def.
     simpl.
     rewrite mkprod2; auto.
   }
-Defined.
+  exists et1.
+  split; simpl.
+  admit.
+  admit.
+Admitted.
+
 
 Unset Universe Checking.
 Fail HB.instance Definition DH1PreCatD (T: ICC.type) : IsPreCat (H1obj T) :=
   @IsPreCat.Build (H1obj T) (@H1hom T) (@DH1_cat_id T) (@DH1_cat_comp T).
 Set Universe Checking.
+
 
 End IInter.
 
