@@ -107,7 +107,12 @@ Definition dcHhom (T: icat cat) :
     sigma (h: D1_cat T), dcHsource T h = x /\ dcHtarget T h = y.      
 
 Definition dcHhom_impl1 (T : doublecat) (h : sigma x y, dcHhom x y) :
-  D1_cat T := projT1 (projT2 (projT2 h)).
+  D1_cat T := projT1 (projT2 (projT2 h)). 
+
+(*
+Definition dcHhom_implF1 (T : doublecat) :
+  ((sigma x y, dcHhom x y) : cat) ~> D1_cat T. := projT1 (projT2 (projT2 h)).
+*)
 
 Definition dcHhom_impl2 (T : doublecat) (h : D1_cat T) :
   sigma x y, dcHhom x y :=
@@ -504,6 +509,20 @@ Defined.
 HB.instance Definition dcD1Cat (T: icat cat) : PreCat_IsCat (C1obj T)
   := PreCat_IsCat.Build (C1obj T) (@C1_comp1o T) (@C1_compo1 T)
       (@C1_compoA T).
+
+
+(*
+Definition 
+
+Definition C1obj_impl1F (T : doublecat) : (C1obj T : cat) ~> D1_cat T.
+  econstructor; eauto.
+  instantiate (1:= @C1obj_impl1 T).
+  econstructor; eauto.
+*)  
+
+
+
+
 
 (* it should now be possible to derive automatically a DDCat (which
 includes D0 cat, D1 cat and H0 quiver) *)

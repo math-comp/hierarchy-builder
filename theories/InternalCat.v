@@ -271,9 +271,9 @@ iid and icomp (associativity and unit laws) *)
     icompoA :  <( icompI C0, idmap )> \; icompI C0 =
       iprodA [iHoms C0] [iHoms C0] [iHoms C0]  \; <( idmap, icompI C0 )> \; icompI C0;
 
-    icomp1o : <( idmap, iidI C0 )> \; icompI C0 = iprodl [iHoms C0] [iHom C0];
+    icompo1 : <( idmap, iidI C0 )> \; icompI C0 = iprodl [iHoms C0] [iHom C0];
 
-    icompo1 : <( iidI C0, idmap )> \; icompI C0 = iprodr [iHom C0] [iHoms C0];
+    icomp1o : <( iidI C0, idmap )> \; icompI C0 = iprodr [iHom C0] [iHoms C0];
   }.
 
 #[short(type="icat")]
