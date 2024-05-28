@@ -220,7 +220,7 @@ HB.instance Definition dcD0Cat (T: icat cat) : PreCat_IsCat (D0cat T)
 (** Horizontal identity *)
 
 (* XXX same definition as H0_cat_idobjA, 
-   but now it doesn't type check *)
+   but now it doesn't type check any more *)
 Fail Definition H0_cat_idobjB (T: doublecat) :
   Functor.type (D0cat T) (D1cat T) := InternalHomHom.sort (iidI T).
 Definition H0_cat_idobjB (T: doublecat) := InternalHomHom.sort (iidI T).
@@ -228,8 +228,8 @@ Definition H0_cat_idobjB (T: doublecat) := InternalHomHom.sort (iidI T).
 (* same definition, different type *)
 Definition H0_cat_idobj (T: icat cat) (a: D0cat T) : D1cat T :=
   InternalHomHom.sort (iidI T) a.
-(* though they are top-level equal *)
-Lemma idobj_eq (T: icat cat) : @H0_cat_idobj T = @H0_cat_idobjA T.
+(* In fact, they are top-level equal in the strongest possible sense *)
+Lemma idobj_eq : H0_cat_idobj = H0_cat_idobjA .
   auto.
 Qed.  
   
@@ -535,9 +535,23 @@ Defined.
 HB.instance Definition C12D1_functor' (T: icat cat) :
   PreFunctor_IsFunctor _ _ (@C12D1 T) := C12D1_functor T. 
 
+(* Not needed *)
 Definition C12D1_ff (T: icat cat) : (C1obj T: cat) ~> (D1cat T: cat).
 eapply (@C12D1 T : Functor.type _ _).
 Defined.
+
+Definition D12C1_prefunctor (T: icat cat) : IsPreFunctor _ _ (@D12C1 T).
+  econstructor; eauto.
+Defined.  
+HB.instance Definition D12C1_prefunctor' (T: icat cat) :
+  IsPreFunctor _ _ (@D12C1 T) := D12C1_prefunctor T. 
+
+Definition D12C1_functor (T: icat cat) : PreFunctor_IsFunctor _ _ (@D12C1 T).
+  econstructor; eauto.
+Defined.  
+HB.instance Definition D12C1_functor' (T: icat cat) :
+  PreFunctor_IsFunctor _ _ (@D12C1 T) := D12C1_functor T. 
+
 
 (* it should now be possible to derive automatically a DDCat (which
 includes D0 cat, D1 cat and H0 quiver) *)
@@ -565,7 +579,7 @@ Definition HC1obj_impl1 (T : doublecat) : (C1obj T : cat) ~> (D1_iHom T : cat).
 
 (** Functor-related *)
 
-(* this works, and is the same as icHsrc, but is not what we need *)
+(* this works, and is the same as icHsrc, but is not what we want *)
 Definition dcHS_exp1 (T: icat cat) : @C1 cat T ~>_cat _   :=
   @src cat _ (D1_iHom T).
 (* Check dcHS_exp1. *)
@@ -576,6 +590,8 @@ Fail Definition dcHS_exp2 (T: icat cat) : @C1 cat T ~>_cat D0_cat T :=
   (* icHsrc T. *)
   @src cat _ (D1_iHom T).
 
+(* this is not enough, as C1 is the 'abstract' category (as internal
+object), while we need the concrete one *)
 Definition dcHSourceA (T: icat cat) :
   @C1 _ T ~>_cat D0cat T.
   set h := @src cat _ (D1_iHom T). 
@@ -593,6 +609,30 @@ Definition dcHSourceA (T: icat cat) :
   instantiate (1:= hh); auto.
 Defined.  
 
+(* this abstracts the generic C1 into D1cat (for doublecat).
+   Surprisingly, without this we can't do much *)
+Definition dcHSourceB (T: icat cat) :
+  D1cat T ~>_cat D0cat T.
+  set hh := (@dcHSourceA T).
+  unfold D1cat; simpl in *.
+  destruct hh.
+  econstructor; eauto.
+  instantiate (1:=sort).
+  destruct T.
+  destruct class0 as [K1 [[[ss1 tt1]]] K3 K4].
+  destruct K1.
+  destruct C1.
+  destruct class0 as [[U1] [U2 U3] U4].
+  simpl in *.
+  destruct sort0.
+  destruct class0 as [[V1] [V2 V3] V4].
+  
+  simpl in *.
+  destruct class.
+  simpl in *.
+  econstructor; eauto.
+Defined.  
+  
 Definition dcHTargetA (T: icat cat) :
   @C1 _ T ~>_cat D0cat T.
   set h := @tgt cat _ (D1_iHom T). 
@@ -608,6 +648,28 @@ Definition dcHTargetA (T: icat cat) :
   simpl in *.
   econstructor.
   instantiate (1:= hh); auto.
+Defined.  
+
+Definition dcHTargetB (T: icat cat) :
+  D1cat T ~>_cat D0cat T.
+  set hh := (@dcHTargetA T).
+  unfold D1cat; simpl in *.
+  destruct hh.
+  econstructor; eauto.
+  instantiate (1:=sort).
+  destruct T.
+  destruct class0 as [K1 [[[ss1 tt1]]] K3 K4].
+  destruct K1.
+  destruct C1.
+  destruct class0 as [[U1] [U2 U3] U4].
+  simpl in *.
+  destruct sort0.
+  destruct class0 as [[V1] [V2 V3] V4].
+  
+  simpl in *.
+  destruct class.
+  simpl in *.
+  econstructor; eauto.
 Defined.  
 
 Definition dcHUnitA (T: icat cat) :
@@ -641,6 +703,29 @@ Definition dcHUnitA (T: icat cat) :
   eapply class.
 Defined.  
 
+Definition dcHUnitB (T: icat cat) :
+ D0cat T ~>_cat D1cat T. 
+  set hh := (@dcHUnitA T).
+  unfold D1cat; simpl in *.
+  destruct hh.
+  econstructor; eauto.
+  instantiate (1:=sort).
+  destruct T.
+  destruct class0 as [K1 [[[ss1 tt1]]] K3 K4].
+  destruct K1.
+  destruct C1.
+  destruct class0 as [[U1] [U2 U3] U4].
+  simpl in *.
+  destruct sort0.
+  destruct class0 as [[V1] [V2 V3] V4].
+  
+  simpl in *.
+  destruct class.
+  simpl in *.
+  econstructor; eauto.
+Defined.  
+
+
 (* PROBLEM: fails to type, though D0Cat and D0CatC are basically the
 same *)
 Fail Definition dcHCompA (T: icat cat) :
@@ -650,24 +735,73 @@ Definition dcHCompA (T: icat cat) :
   unfold D0catC.
   eapply (@icompI cat T). 
 Defined.
-  
-Definition dcHSourceB (T: icat cat) : D1_iHom T ~>_(obj cat) (D0cat T : cat).
+
+Definition dcHSourceD (T: icat cat) : D1_iHom T ~>_(obj cat) (D0cat T : cat).
   eapply (dcHSourceA T).
 Defined.  
 
 (** Functors *)
-(* what we actually need *)
+(* Here are the functors that we really need *)
 
+(* Source *)
 Definition dcHSourceC (T: icat cat) :
   Functor.type (C1obj T: cat) (D0cat T: cat).
+(*  (C1obj T: cat) ~> (D0cat T: cat). *)
+Proof.
+  have @gg0 := (@dcHSourceB T : Functor.type _ _). 
+  set qq := (@C12D1 T : Functor.type _ _).
+  unfold D1cat in *; simpl in *.
+  have @hh := qq \; gg0.
+  exact hh.
+Defined.
+
+Definition dcHSourceC_eq (T: icat cat) (X: C1obj T) :
+  @dcHSourceC T X = @HSource (D0cat T) X.
+Admitted. 
+  (*
+  unfold dcHSourceC.
+  unfold dcHSourceB.
+  simpl.
+  destruct X; simpl.
+  unfold C12D1; simpl.
+  unfold dcHSourceA; simpl.
+  unfold D0cat in *; simpl.
+  destruct this_morph; simpl.
+
+  destruct T.
+  destruct class as [[K1] [[[ss1 tt1]]] [K31 K32] [K4 K5 K6]].
+  destruct K1.
+  destruct class as [[U1] [U2 U3] U4].
+  simpl in *.
+  destruct sort.
+  destruct class as [[V1] [V2 V3] V4].
+  simpl in *.
+  unfold D1_iHom; simpl.
+*)
+  
+(*  (C1obj T: cat) ~> (D0cat T: cat). *)
+(*
 Proof.
   have @ff0 := (@icHsrc T : Functor.type _ _).
   set qq := (@C12D1_ff T : Functor.type _ _).
-  simpl in *.
-  (* does not work *)
+  simpl in *.  
+  (* here things look fine: we have two functors that look composable,
+  the composition is a functor, so we're done... except, we aren't :(
+  *)
+
+  (* surprise, this does not type check *)
   Fail have @hh := qq \; ff0.
 
-  (* let's try a workaround *)
+  (* let's try something else *)
+  have @gg0 := (@dcHSourceA T : Functor.type _ _). 
+  unfold D1cat in *; simpl in *.
+
+  Fail assert (ff0 = gg0).
+  
+  Fail have @hh := qq \; gg0.
+  
+  (* let's try a workaround, forcing the right type.
+     first we try using ff0. *)
   have @ff1 : ((D1cat T: cat) ~>_cat (D0cat T: cat)).
   { destruct ff0 as [ff0 class0].
     destruct T as [TT class].
@@ -695,13 +829,49 @@ Proof.
     Fail eapply A1. 
     admit. *)
 
-    (* PROBLEM proving it *)
+    (* giving up, in despair :O *)
     admit.
   }  
-    
+
+ (* using gg0 get us more of the same *) 
+ (*  
+  have @gg1 : ((D1cat T: cat) ~>_cat (D0cat T: cat)).
+  { destruct gg0 as [gg0 class0].
+    destruct T as [TT class].
+    destruct TT as [sortT classT]; simpl in *.
+    destruct classT as [TT1 TT2 TT3]; simpl in *.
+    destruct TT1.
+    destruct TT2.
+    destruct TT3.
+    simpl in *.
+    econstructor.
+    instantiate (1:= gg0); auto.
+
+    destruct class as [K1 K2 K3 K4].
+    destruct K1 as [C2]; simpl in *; simpl.   
+    destruct K2 as [[[ src0 tgt0 ]]].
+    destruct K3.
+    destruct K4.
+    simpl in *; simpl.   
+    destruct class0 as [J1 J2]; simpl in *.
+    econstructor; eauto.
+    econstructor; eauto.
+    intros; eauto.
+    destruct J2 as [A1 A2].
+    simpl in *.
+    Fail eapply A1.
+    unfold D0cat; simpl in *.
+    unfold C1 in *; simpl in *.
+    unfold D1cat in *; simpl in *.
+    admit.
+  }  
+  *)
+  
+  (* anyway, see how nice life could (should) be? *)
   have @hh := qq \; ff1.
   exact hh.
 Admitted.
+*)
 (*
 Definition dcHSourceC (T: icat cat) :
   Functor.type (C1obj T) (D0_cat T).
@@ -713,9 +883,35 @@ rewrite /D1_cat/= /C1obj /D0_cat/= /D1obj/=.
 Fail HB.instance Definition _ (T : icat cat) :=
   Functor.copy (@HSource (D0cat T)) (@dcHSourceC T).
 
-(* exact. *)
-(*   unfold C1obj. *)
-(*   unfold D1obj. *)
+Fail HB.instance Definition _ (T : icat cat) :
+  @IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) := _.
+  (* @dcHSourceC T. *)
+Fail HB.instance Definition _ (T : icat cat) :
+  @PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) := _.
+  
+(* Target *)
+Definition dcHTargetC (T: icat cat) :
+  Functor.type (C1obj T: cat) (D0cat T: cat).
+(*  (C1obj T: cat) ~> (D0cat T: cat). *)
+Proof.
+  have @gg0 := (@dcHTargetB T : Functor.type _ _). 
+  set qq := (@C12D1 T : Functor.type _ _).
+  unfold D1cat in *; simpl in *.
+  have @hh := qq \; gg0.
+  exact hh.
+Defined.
+
+(* Unit *)
+Definition dcHUnitC (T: icat cat) :
+  Functor.type (D0cat T: cat) (C1obj T: cat).
+(* D0cat T ~>_cat C1obj T. *)
+Proof.
+  have @gg0 := (@dcHUnitB T : Functor.type _ _). 
+  set qq := (@D12C1 T : Functor.type _ _).
+  unfold D1cat in *; simpl in *.
+  have @hh := gg0 \; qq.
+  exact hh.
+Defined.
 
 (*   (* PROBLEM: HSource should be recognized as a functor,  *)
 (*      given D0_cat is an HD0quiver *) *)
@@ -732,12 +928,6 @@ Fail HB.instance Definition _ (T : icat cat) :=
 (*   unfold hhom in *; simpl in *. *)
 (*   (* PROBLEM: Total2 hom and C1 should be equated *) *)
 (* Admitted. *)
-
-Definition dcHTargetC (T: icat cat) : (C1obj T : cat) ~> D0cat T.
-Admitted.
-
-Definition dcHUnitC (T: icat cat) : D0cat T ~>_cat C1obj T. 
-Admitted. 
 
 (* if wrapping is automatic, in order to get SFuncton and TFunctor we
 just need to give the lifted instances of Functor. HB knows which one
