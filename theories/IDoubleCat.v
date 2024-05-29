@@ -125,6 +125,7 @@ Proof. by move=> [? [? [? []]]]; case: _ /; case: _ /. Qed.
 Definition dchh2D1 (T: doublecat) (a b: transpose (D0cat T)) 
    (h1: dcHhom a b) : D1cat T := projT1 h1.
 
+(* this was mk_prod_auxA *)
 Definition dchh_prod (T: doublecat) (a b c: transpose (D0cat T))
                    (h1: dcHhom a b) (h2: dcHhom b c) :
   (D1_iHom T) *_(D0cat T : cat) (D1_iHom T) :=
@@ -132,18 +133,64 @@ Definition dchh_prod (T: doublecat) (a b c: transpose (D0cat T))
                                    (esym (proj1 (projT2 h2))))).
 
 
+Definition mk_ptype_auxA (T: doublecat) (a b c: transpose (D0cat T))
+                   (h1: dcHhom a b) (h2: dcHhom b c) :
+  commaE.ptype (@tgt cat (D0cat T) (D1_iHom T)) 
+               (@src cat (D0cat T) (D1_iHom T)). 
+  unfold commaE.ptype.
+  destruct h1 as [h1 [es1 et1]].
+  destruct h2 as [h2 [es2 et2]].
+  simpl in *.  
+  unfold icHsrc in *.
+  unfold icHtgt in *.
+  
+  unfold D1cat in *; simpl in *.
+  exists (h1,h2).
+  simpl; eauto.
+  rewrite et1.
+  rewrite es2; auto.
+Defined.  
+  
+Definition mk_prod_auxA (T: doublecat) (a b c: transpose (D0cat T))
+                   (h1: dcHhom a b) (h2: dcHhom b c) :
+  (D1_iHom T) *_(D0cat T: cat) (D1_iHom T).
+  eapply (@mk_ptype_auxA T a b c); eauto.
+Defined.  
+
+Lemma dchh_prod_eq (T: doublecat) (a b c: transpose (D0cat T))
+  (h1: dcHhom a b) (h2: dcHhom b c) :
+  dchh_prod h1 h2 = mk_prod_auxA h1 h2.
+  unfold dchh_prod.
+  unfold mk_prod_auxA.
+  unfold mk_ptype_auxA.
+  simpl.
+  destruct h1 as [h1 [es1 et1]].
+  destruct h2 as [h2 [es2 et2]].
+  simpl in *.
+  f_equal.
+  eapply Prop_irrelevance.
+Defined.  
+  
+  
 (**********************************************************************)
 
 (** H0 and D0 quivers (HD0Quiver) *)
 
-Definition dcQuiver (T: icat cat) : IsQuiver (D0cat T) :=
+
+HB.instance Definition dcQuiver (T: icat cat) : IsQuiver (D0cat T) :=
   IsQuiver.Build (D0cat T) hom.
+
+(*
+HB.instance Definition dcQuiver (T: icat cat) : IsQuiver (D0cat T) :=
+  Quiver.copy _ (D0cat T).
+*)
 
 (* do we really need this instance? 
    the sort of T should coincide with the sort of C0, which should 
    coincide with D0_cat, and this is already a category. *)
-HB.instance Definition dcQuiverI (T: icat cat) : IsQuiver (D0cat T) :=
+(* HB.instance Definition dcQuiverI (T: icat cat) : IsQuiver (D0cat T) :=
   dcQuiver T.
+*)
 
 (* given D0_cat as base subject and the following def, wrapping should
 give us 'IsH0Quiver (D0_cat T)', and thus build an instance of
@@ -529,11 +576,15 @@ Defined.
 HB.instance Definition C12D1_prefunctor' (T: icat cat) :
   IsPreFunctor _ _ (@C12D1 T) := C12D1_prefunctor T. 
 
+HB.about C12D1.
+
 Definition C12D1_functor (T: icat cat) : PreFunctor_IsFunctor _ _ (@C12D1 T).
   econstructor; eauto.
 Defined.  
-HB.instance Definition C12D1_functor' (T: icat cat) :
+HB.instance Definition C12D1_functor' _ (T: icat cat) :
   PreFunctor_IsFunctor _ _ (@C12D1 T) := C12D1_functor T. 
+
+HB.about C12D1.
 
 (* Not needed *)
 Definition C12D1_ff (T: icat cat) : (C1obj T: cat) ~> (D1cat T: cat).
@@ -546,18 +597,23 @@ Defined.
 HB.instance Definition D12C1_prefunctor' (T: icat cat) :
   IsPreFunctor _ _ (@D12C1 T) := D12C1_prefunctor T. 
 
+HB.about D12C1.
+
 Definition D12C1_functor (T: icat cat) : PreFunctor_IsFunctor _ _ (@D12C1 T).
   econstructor; eauto.
 Defined.  
 HB.instance Definition D12C1_functor' (T: icat cat) :
   PreFunctor_IsFunctor _ _ (@D12C1 T) := D12C1_functor T. 
 
+HB.about D12C1.
+
+HB.about D0cat.
 
 (* it should now be possible to derive automatically a DDCat (which
 includes D0 cat, D1 cat and H0 quiver) *)
-(* HB.about D0_cat. 
+(* HB.about D0cat. 
 
-HB: D0_cat is canonically equipped with structures:
+HB: D0cat is canonically equipped with structures:
     - Cat
       (from "(stdin)", line 673)
     - PreCat
@@ -594,9 +650,9 @@ Fail Definition dcHS_exp2 (T: icat cat) : @C1 cat T ~>_cat D0_cat T :=
 object), while we need the concrete one *)
 Definition dcHSourceA (T: icat cat) :
   @C1 _ T ~>_cat D0cat T.
-  set h := @src cat _ (D1_iHom T). 
+  set h := @src cat _ (D1_iHom T).
   unfold D0cat in *.
-  unfold D1_iHom in h; simpl in *. 
+  unfold D1_iHom in h; simpl in *.
   destruct h as [hh class0].
   destruct T as [TT class].
   destruct TT as [sortT classT]; simpl in *.
@@ -743,6 +799,9 @@ Defined.
 (** Functors *)
 (* Here are the functors that we really need *)
 
+Print HSource.
+Print D1obj.
+
 (* Source *)
 Definition dcHSourceC (T: icat cat) :
   Functor.type (C1obj T: cat) (D0cat T: cat).
@@ -755,8 +814,241 @@ Proof.
   exact hh.
 Defined.
 
+HB.about D0cat.
+
+Definition dcHSourceC_sort (T: icat cat) :
+  C1obj T -> D0cat T.
+(*  obj (C1obj T: cat) -> obj (D0cat T: cat). *)
+  have @gg := (@dcHSourceB T).
+  set qq := (@C12D1 T).
+  have @hh := fun x => gg (qq x).
+  exact hh.
+Defined.
+
+Definition dcIsSPreFunctor_s (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
+  econstructor; eauto.
+  intros.
+  unfold dcHSourceC_sort.
+  simpl.
+  set hh := ((@C12D1 T) <$> H).
+  simpl in *.
+  exact ((@dcHSourceB T) <$> hh).
+Defined.
+
+HB.instance Definition dcIsSPreFunctor_s' (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T) :=
+  dcIsSPreFunctor_s T.
+
+Definition dcIsSFunctor_s (T: icat cat) :
+  PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
+  econstructor; eauto.
+  unfold dcHSourceC_sort; simpl.
+  intros.
+  rewrite comp_Fun.
+  rewrite F1; auto.
+
+  unfold dcHSourceC_sort; simpl.
+  intros.
+  rewrite comp_Fun.
+  rewrite comp_Fun.
+  rewrite comp_Fun.
+  rewrite Fcomp.
+  f_equal.
+Defined.
+HB.instance Definition dcIsSFunctor_s' (T: icat cat) :
+  PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T) :=
+  dcIsSFunctor_s T.
+
+(* hard *)
+Definition dcHSourceC_sort_eq (T: icat cat) (x: C1obj T) :
+  @dcHSourceC_sort T x = @HSource (D0cat T) x.
+  unfold dcHSourceC_sort.
+  unfold HSource.
+  simpl.
+  destruct x.
+  simpl.
+  unfold dcHSourceB.
+
+  set hh := (dcHSourceA T).
+  unfold D1cat; simpl in *.
+(*  unfold dcHSourceA in hh. *)
+(*  destruct hh. *)
+  destruct T as [sortT classT].
+  destruct classT as [[C1] [[[ss1 tt1]]] K3 K4].
+  destruct C1 as [sortC1 classC1].
+  destruct classC1 as [[U1] [U2 U3] U4].
+  simpl in *.
+  destruct sortT as [sortC0 classC0].
+  destruct classC0 as [[V1] [V2 V3] V4].
+  
+  simpl in *.
+  unfold D0cat in *; simpl in *.
+  destruct V4.
+  destruct U4.
+  simpl in *.
+  destruct K3.
+  destruct K4.
+  simpl in *.
+
+  unfold dcHSourceA in hh; simpl in *.
+  unfold src in hh; simpl in *.
+  subst hh; simpl.
+(*  destruct ss1; simpl in *. *)
+  destruct this_morph as [A1 [A2 A3]]; simpl in *.
+  unfold icHsrc, icHtgt in *; simpl in *.
+  unfold src, tgt in *; simpl in *.
+
+  move: A2.
+  move: A3.
+  destruct ss1.
+  destruct tt1.
+  unfold D1cat in *; simpl in *.
+  unfold C12D1.
+  simpl.
+  intros.
+  rewrite A2.
+  auto.
+Qed.
+
+Definition dcHSourceC_sort_eq1 (T: icat cat) :
+  @dcHSourceC_sort T = @HSource (D0cat T).
+  eapply functional_extensionality.
+  intros.
+  eapply dcHSourceC_sort_eq; eauto.
+Qed.  
+
+Definition dcIsSPreFunctor (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
+rewrite -dcHSourceC_sort_eq1.
+eapply dcIsSPreFunctor_s.
+Defined.
+Fail HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T))  :=
+  @dcIsSPreFunctor T.
+
+Fail Definition dcIsSFunctor (T: icat cat) :
+  PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
+(* rewrite -dcHSourceC_sort_eq1.
+   eapply dcIsSFunctor_s.
+*)
+Fail HB.instance Definition dcIsSFunctor' (T: icat cat) :
+  PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T))  :=
+  @dcIsSFunctor T.
+
+
+(*
+Definition dcIsSPreFunctor (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@source (D0cat T) (@dcHhom T)).
+(*   (@HSource (D0cat T)). 
+  unfold HSource. *)
+  econstructor; eauto.
+  intros.
+  set hh := @dcHSourceC_sort T <$> H.
+  unfold dcHSourceC_sort in *.
+  
+  unfold C1obj in *.
+  unfold D1obj in *.
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  simpl in *.
+  
+Check icHsrc.
+
+  have @h1 : D1cat T.
+  { unfold D1cat; simpl.
+    exact (C12D1 {| source := sa; target := ta; this_morph := ma |}).
+  }
+  have @h2 : D1cat T.
+  { unfold D1cat; simpl.
+    exact (C12D1 {| source := sb; target := tb; this_morph := mb |}).
+  }
+  have @ff : h1 ~> h2.
+  { exact ((@C12D1 T) <$> H). }
+  set gg := (@icHsrc T <$> ff).
+
+  have @k1 : C1obj T.
+  { exact (D12C1 h1). }
+  have @k2 : C1obj T.
+  { exact (D12C1 h2). }
+  have @fff : k1 ~> k2.
+  { exact ((@D12C1 T) <$> ff). }
+  
+  set gg := (@icHsrc T <$> ff).
+
+  unfold icHsrc in *; simpl.
+  unfold src in *; simpl.
+  
+  destruct a.
+  destruct b.
+  simpl in *.
+  unfold hom in H.
+  simpl in *.
+  unfold C1hom in *.
+  simpl in *.
+  unfold hom in H.
+  simpl in *.
+  unfold hom in H.
+  simpl in *.
+  destruct T.
+  destruct class as [[C1] K2 K3 K4].
+  destruct C1.
+  simpl in *.
+  destruct class; simpl in *.
+  unfold C12D1 in *; simpl in *.
+  destruct this_morph.
+  simpl in *.
+  simpl in *.
+*)
+
+  
+Lemma h0cat_hhom_eq (T: icat cat) :
+  @hhom (D0cat T: hd0quiver) = @dcHhom T. 
+  auto.
+Qed.
+
+(* PROBLEMATIC *)
 Definition dcHSourceC_eq (T: icat cat) (X: C1obj T) :
+  @dcHSourceC T X = @source (D0cat T) (@dcHhom T) X.
+  destruct X as [ss tt mm]; simpl.
+  unfold dcHSourceB.
+  unfold dcHSourceA; simpl.
+  unfold D1_iHom; simpl.
+  unfold canonical_iHom; simpl.
+  unfold C1; simpl.
+  destruct T; simpl.
+  destruct class as [K1 K2 K3 K4]; simpl.
+  destruct K1; simpl.
+  destruct C1; simpl.
+  destruct class; simpl.
+  unfold src; simpl.
+  destruct K2; simpl.
+  destruct K3; simpl.
+  destruct K4; simpl.
+  destruct sort; simpl.
+  destruct class; simpl in *.
+  unfold D0cat in *; simpl.
+  destruct mm; simpl.
+Admitted.   
+Definition dcHSourceC_eq' (T: icat cat) (X: C1obj T) :
   @dcHSourceC T X = @HSource (D0cat T) X.
+  unfold HSource.
+
+  assert (source X = @source (D0cat T) (@dcHhom T) X) as E1.
+  auto.
+
+  assert (C1obj T = @Total2 (D0cat T) (@dcHhom T)) as E2.
+  auto.
+  
+  unfold C1obj in *.
+  unfold D1obj in *.
+  simpl in *.
+
+  unfold source.
+  
+  
+  unfold hhom in *.
+  simpl in *.
 Admitted. 
   (*
   unfold dcHSourceC.
