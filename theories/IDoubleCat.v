@@ -1239,7 +1239,7 @@ Fail Definition dcHCompC (T: icat cat) :
 
 (* alternatively, we can define the product on C1obj. However, this is
 too restrictive *)
-Definition dcProd (T: icat cat) :
+Fail Definition dcProd (T: icat cat) :
   span (C1obj T: cat) (C1obj T) :=
   pbk (Cospan (dcHTargetC T) (dcHSourceC T)). 
   
@@ -1280,8 +1280,7 @@ Program Definition dcH1hom (T: icat cat) (a b: dcH1obj T) : U :=
     (@dcHTargetC T) <$> hh = this_morph b. 
 Obligation 1.
 intros.
-(* PROBLEM: we haven't properly defined dcHSourceC and dcHTargetC yet *)
-Fail unfold dcHSourceC.
+unfold dcHSourceC.
 Admitted. 
 Obligation 2.
 intros.
