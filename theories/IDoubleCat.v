@@ -488,6 +488,14 @@ HB.about D1obj. *)
 (* PROBLEM: this fails when we switch to C1obj as notation *)
 HB.instance Definition dcD1Quiver (T: icat cat) : IsQuiver (C1obj T) :=
   IsQuiver.Build (@C1obj T) (@C1hom T). 
+Definition dcD1Quiver_w (T: icat cat) : Quiver (D1obj (D0cat T)).
+  have @X : IsQuiver (C1obj T).
+  { eapply dcD1Quiver. }
+  unfold C1obj in *.
+  econstructor; eauto.
+Defined.  
+HB.instance Definition dcD1Quiver_w' (T: icat cat) : IsD1Quiver (D0cat T) :=
+  IsD1Quiver.Build (D0cat T) (dcD1Quiver_w T).
 
 Definition C1_idmap (T: icat cat) : forall a: C1obj T, a ~> a.
   set h := @idmap (D1cat T).
@@ -514,6 +522,14 @@ Defined.
 
 HB.instance Definition dcD1Precat (T: icat cat) : Quiver_IsPreCat (C1obj T)
   := Quiver_IsPreCat.Build (C1obj T) (@C1_idmap T) (@C1_comp T).
+Definition dcD1Precat_w (T: icat cat) : Quiver_IsPreCat (D1obj (D0cat T)).
+  have @X : Quiver_IsPreCat (C1obj T).
+  { eapply dcD1Precat. }
+  unfold C1obj in *.
+  eauto.
+Defined.  
+HB.instance Definition dcD1Precat_w' (T: icat cat) : IsD1PreCat (D0cat T) :=
+  IsD1PreCat.Build (D0cat T) (dcD1Precat_w T).
 
 Definition C1_comp1o (T: icat cat) :
   forall (a b : C1obj T) (f : a ~> b), idmap \; f = f.
@@ -569,6 +585,14 @@ Defined.
 HB.instance Definition dcD1Cat (T: icat cat) : PreCat_IsCat (C1obj T)
   := PreCat_IsCat.Build (C1obj T) (@C1_comp1o T) (@C1_compo1 T)
       (@C1_compoA T).
+Definition dcD1Cat_w (T: icat cat) : PreCat_IsCat (D1obj (D0cat T)).
+  have @X : PreCat_IsCat (C1obj T).
+  { eapply dcD1Cat. }
+  unfold C1obj in *.
+  eauto.
+Defined.  
+HB.instance Definition dcD1Cat_w' (T: icat cat) : IsD1Cat (D0cat T) :=
+  IsD1Cat.Build (D0cat T) (dcD1Cat_w T).
 
 Definition C12D1_prefunctor (T: icat cat) : IsPreFunctor _ _ (@C12D1 T).
   econstructor; eauto.
@@ -904,17 +928,54 @@ Definition dcIsSPreFunctor (T: icat cat) :
 rewrite -dcHSourceC_eq1.
 eapply dcIsPreFunctor.
 Defined.
+(* not needed, as expected *)
+Definition dcIsSPreFunctorA (T: icat cat) :
+  IsPreFunctor (D1obj (D0cat T)) (D0cat T) (@HSource (D0cat T)).
+eapply dcIsSPreFunctor.
+Defined.
+
+Print C1obj.
+HB.about D0cat.
+HB.about D1obj.
+
+Print Canonical Projections D1obj.
+About SADoubleCat_D1obj__canonical__cat_Quiver.
+Print Canonical Projections D0cat.
+Check fun T : icat cat => D0cat T : d1quiver.
+Check fun T : icat cat =>
+          SADoubleCat_D1obj__canonical__cat_Quiver (D0cat T).
+Check fun T : icat cat => (D1obj (D0cat T)) : precat.
+Check fun T : icat cat => (D1obj (D0cat T)) : cat.
+Check fun T : icat cat => (D0cat T) : d1cat.
+
+(*
+Definition dcIsSPreFunctor2 (T: icat cat) :
+  IsPreFunctor (D1obj (D0cat T) : cat) (D0cat T) (@HSource (D0cat T)).
+Check HSource.
+HB.about D0cat.
+*)
+
+Check IsSPreFunctor.phant_axioms.
+
 (* but then this fails XXX PROBLEM *)
 Fail HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
-  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
-  @dcIsSPreFunctor T.
+  IsPreFunctor (D1obj (D0cat T)) (D0cat T) (@HSource (D0cat T)) :=  
+  @dcIsSPreFunctorA T.
 Fail HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
   PreFunctor.copy _ (@HSource (D0cat T)).
-(* although this works *)
+Check fun T : icat cat =>
+        @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T).
+HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
+   IsSPreFunctor (D0cat T) :=
+    @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T).
+  
+(* on the other hand, this works straight away (it does not involve
+wrappers, though) *)
 HB.instance Definition dcIsPreFunctor' (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T) :=
   dcIsPreFunctor T.
+(*
 (* let's retry it from scratches *)
 Definition dcIsSPreFunctor1 (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
@@ -933,7 +994,7 @@ Admitted.
 Fail HB.instance Definition dcIsSPreFunctor1' (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
   @dcIsSPreFunctor1 T.
-
+*)
 
 Definition dcIsFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
@@ -951,22 +1012,28 @@ Definition dcIsFunctor (T: icat cat) :
   rewrite Fcomp.
   f_equal.
 Defined.
+(* this works without problems *)
 HB.instance Definition dcIsFunctor' (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T) :=
   dcIsFunctor T.
-(* now this fails too, because there is no prefunctor instance XXX *)
-Fail Definition dcIsSFunctor (T: icat cat) :
+Definition dcIsSFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
-(* rewrite -dcHSourceC_sort_eq1.
-   eapply dcIsFunctor.
-Defined.
-*)
+  (* now this needs to be functor-level equality *)
+  Fail rewrite -dcHSourceC_eq1.
+  Fail eapply dcIsFunctor.
+Admitted.
+Definition dcIsSFunctorA (T: icat cat) :
+  PreFunctor_IsFunctor (D1obj (D0cat T)) (D0cat T) (@HSource (D0cat T)).
+Admitted. 
 Fail HB.instance Definition dcIsSFunctor' (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T))  :=
   @dcIsSFunctor T.
-
 Fail HB.instance Definition _ (T : icat cat) :=
   Functor.copy (@HSource (D0cat T)) (@dcHSourceC T).
+HB.instance Definition dcIsSFunctor' (T: icat cat) :
+   SPreFunctor_IsFunctor (D0cat T) :=
+    @SPreFunctor_IsFunctor.Axioms_ _ _ _ _ _ _ _ _ _ (@dcIsSFunctorA T).
+
 
 (*  (C1obj T: cat) ~> (D0cat T: cat). *)
 (*
