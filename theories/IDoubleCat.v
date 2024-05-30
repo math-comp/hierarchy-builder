@@ -1080,9 +1080,9 @@ Definition dcHSourceC_eqA (T: icat cat) :
         |}
     |}).
 
-  unfold IDoubleCat_tmp4_dcHSourceC_sort__canonical__cat_PreFunctor.
+  unfold IDoubleCat_dcHSourceC_sort__canonical__cat_PreFunctor.
   unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
-  unfold IDoubleCat_tmp4_D0cat__canonical__SADoubleCat_SPreFunctor.
+  unfold IDoubleCat_D0cat__canonical__SADoubleCat_SPreFunctor.
   simpl.
   unfold Op_isMx__48__ELIM; simpl.
 
@@ -1107,19 +1107,19 @@ Definition dcHSourceC_eqA (T: icat cat) :
   revert Fhom0.
   unfold dcHSourceC_sort.
   simpl in *.
-  unfold HSource.
+(*  unfold HSource. *)
   simpl in *.
   unfold C12D1; simpl.
   unfold D0cat; simpl.
 
   unfold eq_rect; simpl.
   unfold C1obj; simpl.
-  unfold source; simpl.
+(*  unfold source; simpl. *)
   unfold D1obj; simpl.
   unfold hhom; simpl.
   unfold D0cat; simpl.
-  unfold this_morph; simpl.
-  unfold projT1; simpl.
+(*  unfold this_morph; simpl.
+  unfold projT1; simpl. *)
 
   intros Fhom0 E2.
 
@@ -1154,7 +1154,43 @@ Definition dcHSourceC_eqA (T: icat cat) :
   revert fa fb.
   revert Fhom0.
 
-                    
+  have @dd1 := (fun X : Total2 (@dcHhom (@InternalCat.sort cat TT)) =>
+               Spf (projT1 
+        (@this_morph (D0cat (@InternalCat.sort cat TT)) _ X))).
+  
+  have @dd2 := (fun X : Total2 (@dcHhom (@InternalCat.sort cat TT)) =>
+           @source (D0cat (@InternalCat.sort cat TT)) _ X).
+
+  have E3 : (dd1 = dd2).
+  { subst dd1 dd2.
+    rewrite E2.
+    auto.
+  }
+  
+(*  
+ rewrite E3 in E2. 
+  
+  
+  move : ((fun x : Total2 hom => Spf (projT1 (this_morph x))) =
+          HSource (C:=sortC0)). 
+  
+  move: (fun X : Total2 hom =>
+           Spf (@this_morph (D0cat (@InternalCat.sort cat TT)) hom X).
+
+  
+    (fun x : Total2 hom =>
+           Spf
+             (let (a, _) :=
+                let
+                  (source, target, this_morph) as t
+                   return (source t ~> target t) := x in
+                this_morph in
+              a)).
+*)  
+
+  replace E2 with E3.
+  
+  
   (* dependent destruction E2. *)
    
   Fail move: ({|
