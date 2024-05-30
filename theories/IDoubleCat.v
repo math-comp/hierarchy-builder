@@ -903,10 +903,10 @@ Qed.
 (* here just functional equality *)
 Definition dcHSourceC_eq1 (T: icat cat) :
   @dcHSourceC_sort T = @HSource (D0cat T).
-  eapply functional_extensionality.
+  eapply funext.
   intros.
   eapply dcHSourceC_sort_eq; eauto.
-Qed.  
+Defined.  
 
 (* PROBLEMATIC - HSource is not a functor yet *)
 Fail Definition dcHSourceC_eq (T: icat cat) (X: C1obj T) :
@@ -1000,7 +1000,8 @@ Fail HB.instance Definition dcIsSPreFunctor1' (T: icat cat) :
 HB.about dcHSourceC_sort.
 Check fun T : icat cat => (@dcHSourceC_sort T) : PreFunctor.type _ _.
 
-Definition dcHSourceC_eq (T: icat cat) :
+
+Definition dcHSourceC_eqA (T: icat cat) :
   (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
   eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)); eauto.
   intros.
@@ -1046,42 +1047,167 @@ Definition dcHSourceC_eq (T: icat cat) :
   clear H.
   unfold dcHSourceC_sort in *; simpl in *.
   unfold C12D1 in *; simpl in *.
-  destruct T.
-  destruct class as [[C1] K2 K3 K4].
-  destruct K2.
+  destruct T as [sortT classT].
+  destruct classT as [[C1] K2 K3 K4].
+  destruct K2 as [[[Sr Tg]]].
+(*  destruct K3.
+  destruct K4.
+  simpl in *. *)
+  destruct C1 as [sortC1 classC1].
+  destruct classC1 as [[V1] [V2 V3] [V4 V5 V6]]. 
+  simpl in *.
+  destruct Sr as [Spf Sclass]. 
+ (* destruct Tg. *)
+  simpl in *.
+  destruct sortT as [sortC0 classC0].
+  destruct classC0 as [[U1] [U2 U3] [U4 U5 U6]].  
+  simpl in *.
+  
+  dependent destruction ee1.
+  dependent destruction ee2.
+
+  set TT := ({|
+      InternalCat.sort :=
+        _ ;
+      InternalCat.class :=
+        {|
+          InternalCat.InternalCat_IsPreInternalQuiver_mixin :=
+            _ ;
+          InternalCat.InternalCat_IsInternalQuiver_mixin :=
+            _ ;
+          InternalCat.InternalCat_IsInternalPreCat_mixin := K3;
+          InternalCat.InternalCat_IsInternalCat_mixin := K4
+        |}
+    |}).
+
+  unfold IDoubleCat_tmp4_dcHSourceC_sort__canonical__cat_PreFunctor.
+  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
+  unfold IDoubleCat_tmp4_D0cat__canonical__SADoubleCat_SPreFunctor.
+  simpl.
+  unfold Op_isMx__48__ELIM; simpl.
+
+  unfold is_sprefunctor; simpl.
+  unfold dcIsPreFunctor'; simpl.
+
+  unfold dcIsSPreFunctor; simpl.
+  unfold dcIsPreFunctor; simpl.
+  move: (dcHSourceC_eq1 TT).
+  intro E2.
+  move: ({|
+            IsPreFunctor.Fhom :=
+              fun (a b : C1obj TT) (H : a ~> b) =>
+              dcHSourceB TT <$> C12D1 (T:=TT) <$> H
+          |}).
+  intros Fhom0.
+  destruct Fhom0 as [Fhom0].
+  simpl in *.
+  unfold D0cat; simpl.
+
+  revert E2.
+  revert Fhom0.
+  unfold dcHSourceC_sort.
+  simpl in *.
+  unfold HSource.
+  simpl in *.
+  unfold C12D1; simpl.
+  unfold D0cat; simpl.
+
+  unfold eq_rect; simpl.
+  unfold C1obj; simpl.
+  unfold source; simpl.
+  unfold D1obj; simpl.
+  unfold hhom; simpl.
+  unfold D0cat; simpl.
+  unfold this_morph; simpl.
+  unfold projT1; simpl.
+
+  intros Fhom0 E2.
+
+  revert Fhom0.
+  revert f.
+  revert fa.
+  revert fb.
+  revert E2.
+
+  destruct Sclass as [[L1] [L2 L3]].
+  destruct Tg as [R1 [[R2] [R3 R4]]].
   destruct K3.
   destruct K4.
   simpl in *.
-  destruct C1.
-  destruct class as [[V1] [V2 V3] [V4 V5 V6]].
-  destruct sort.
-  destruct class as [[U1] [U2 U3] [U4 U5 U6]].
-  simpl in *.
-  destruct priv as [[X1 X2]].
-  simpl in *.
-  destruct X1.
-  destruct X2.
-  simpl in *.
-  dependent destruction ee1.
-  dependent destruction ee2.
-  simpl in *.
-  destruct class as [[A1] [A2 A3]].
-  destruct class0 as [[B1] [B2 B3]].
-  simpl in *.
-  eauto.
+  
+  intro E2.
 
-  unfold IDoubleCat_tmp4_dcHSourceC_sort__canonical__cat_PreFunctor.
-  simpl.
-  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
-  simpl.
+  unfold Fhom; simpl.
+  unfold IsPreFunctor.Fhom; simpl.
+
+  intros.
+
+  f_equal.
+  intros Q1 Q2 Q3.
+  dependent destruction Q1.  
+  dependent destruction Q2.
+  dependent destruction Q3.
+
+  unfold IsPreFunctor.phant_axioms; simpl.
+
+  revert f.
+  revert fa fb.
+  revert Fhom0.
+
+                    
+  (* dependent destruction E2. *)
+   
+  Fail move: ({|
+      source := Spf fa;
+      target := R1 fa;
+      this_morph :=
+        existT (fun h : sortC1 => Spf h = Spf fa /\ R1 h = R1 fa) fa
+          (conj (erefl (Spf fa)) (erefl (R1 fa)))
+    |}).
+    Fail move: ({|
+      source := Spf fb;
+      target := R1 fb;
+      this_morph :=
+        existT (fun h : sortC1 => Spf h = Spf fb /\ R1 h = R1 fb) fb
+          (conj (erefl (Spf fb)) (erefl (R1 fb)))
+    |}).
+
+(*  
+  dependent destruction E2.
   
-  unfold IDoubleCat_tmp4_D0cat__canonical__SADoubleCat_SPreFunctor.
-  simpl.
-  unfold Op_isMx__48__ELIM.
-  simpl.
-Admitted. 
+  unfold dcHSourceC_sort in *.
+  simpl in *.
+  unfold HSource in *.
+  simpl in *.
+  unfold D0cat in *; simpl in *.
+  unfold C12D1 in *; simpl in *.
+  unfold source in E2; simpl in *.
+  unfold C1obj in E2; simpl in *.
+  unfold D0cat in E2; simpl in *.
+
+  destruct Sclass as [[SC1] [SC2 SC3]].
+  destruct K3 as [II1 II2].
+  simpl in *.
   
-  
+  assert ({|
+    PreFunctor.sort := dcHSourceC_sort (T:=TT);
+    PreFunctor.class :=
+      {| PreFunctor.cat_IsPreFunctor_mixin := dcIsPreFunctor TT |}
+  |} =
+  {|
+    PreFunctor.sort := HSource (C:=D0cat TT);
+    PreFunctor.class :=
+      {| PreFunctor.cat_IsPreFunctor_mixin := dcIsSPreFunctor TT |}
+  |}) as V.
+  eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq _)); eauto.
+  intros.
+  simpl.
+    
+  unfold IDoubleCat_tmp4_C1obj__canonical__cat_Quiver in *.
+Admitted.
+*)
+Admitted.
+    
 Definition dcIsFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
   econstructor; eauto.
