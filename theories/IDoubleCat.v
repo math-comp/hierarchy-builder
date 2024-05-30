@@ -825,7 +825,7 @@ Definition dcHSourceC_sort (T: icat cat) :
   exact hh.
 Defined.
 
-(* hard *)
+(* XXX surprisingly hard *)
 Definition dcHSourceC_sort_eq1a (T: icat cat) (x: C1obj T) :
   @dcHSourceC_sort T x = @HSource (D0cat T) x.
   unfold dcHSourceC_sort.
@@ -965,6 +965,9 @@ Fail HB.instance Definition dcIsSFunctor' (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T))  :=
   @dcIsSFunctor T.
 
+Fail HB.instance Definition _ (T : icat cat) :=
+  Functor.copy (@HSource (D0cat T)) (@dcHSourceC T).
+
 (*  (C1obj T: cat) ~> (D0cat T: cat). *)
 (*
 Proof.
@@ -1066,15 +1069,8 @@ have := (@icHsrc T : Functor.type _ _).
 case: T => [? [? ? ? ?]] /=.
 rewrite /D1_cat/= /C1obj /D0_cat/= /D1obj/=.
 *)
-Fail HB.instance Definition _ (T : icat cat) :=
-  Functor.copy (@HSource (D0cat T)) (@dcHSourceC T).
 
-Fail HB.instance Definition _ (T : icat cat) :
-  @IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) := _.
-  (* @dcHSourceC T. *)
-Fail HB.instance Definition _ (T : icat cat) :
-  @PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) := _.
-  
+
 (* Target *)
 Definition dcHTargetC (T: icat cat) :
   Functor.type (C1obj T: cat) (D0cat T: cat).
