@@ -915,6 +915,25 @@ Fail HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
 HB.instance Definition dcIsPreFunctor' (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T) :=
   dcIsPreFunctor T.
+(* let's retry it from scratches *)
+Definition dcIsSPreFunctor1 (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
+  unfold HSource; simpl.
+  econstructor; eauto.
+  intros.
+  set hh := ((@C12D1 T) <$> H).
+  set jj := ((@dcHSourceB T) <$> hh).
+  simpl in *.
+
+  (* but this is essentially the same as dcHSourceC_sort_eq1a *)
+  have ee := ((fun x => dcHSourceB T (C12D1 x)) = fun x => source x).
+  { admit. }
+Admitted.
+(* no way *)
+Fail HB.instance Definition dcIsSPreFunctor1' (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
+  @dcIsSPreFunctor1 T.
+
 
 Definition dcIsFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
