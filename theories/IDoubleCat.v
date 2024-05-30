@@ -826,7 +826,7 @@ Definition dcHSourceC_sort (T: icat cat) :
 Defined.
 
 (* XXX surprisingly hard *)
-Definition dcHSourceC_sort_eq1a (T: icat cat) (x: C1obj T) :
+Definition dcHSourceC_sort_eq (T: icat cat) (x: C1obj T) :
   @dcHSourceC_sort T x = @HSource (D0cat T) x.
   unfold dcHSourceC_sort.
   unfold HSource.
@@ -877,11 +877,11 @@ Definition dcHSourceC_sort_eq1a (T: icat cat) (x: C1obj T) :
 Qed.
 
 (* here just functional equality *)
-Definition dcHSourceC_sort_eq1 (T: icat cat) :
+Definition dcHSourceC_eq1 (T: icat cat) :
   @dcHSourceC_sort T = @HSource (D0cat T).
   eapply functional_extensionality.
   intros.
-  eapply dcHSourceC_sort_eq1a; eauto.
+  eapply dcHSourceC_sort_eq; eauto.
 Qed.  
 
 (* PROBLEMATIC - HSource is not a functor yet *)
@@ -901,7 +901,7 @@ Defined.
 (* this seems OK *)
 Definition dcIsSPreFunctor (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
-rewrite -dcHSourceC_sort_eq1.
+rewrite -dcHSourceC_eq1.
 eapply dcIsPreFunctor.
 Defined.
 (* but then this fails XXX PROBLEM *)
@@ -929,7 +929,7 @@ Definition dcIsSPreFunctor1 (T: icat cat) :
   have ee := ((fun x => dcHSourceB T (C12D1 x)) = fun x => source x).
   { admit. }
 Admitted.
-(* no way *)
+(* still fails *)
 Fail HB.instance Definition dcIsSPreFunctor1' (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
   @dcIsSPreFunctor1 T.
