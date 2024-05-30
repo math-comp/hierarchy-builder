@@ -956,6 +956,7 @@ HB.about D0cat.
 *)
 
 Check IsSPreFunctor.phant_axioms.
+Check IsSPreFunctor.Axioms_.
 
 (* but then this fails XXX PROBLEM *)
 Fail HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
@@ -996,6 +997,91 @@ Fail HB.instance Definition dcIsSPreFunctor1' (T: icat cat) :
   @dcIsSPreFunctor1 T.
 *)
 
+HB.about dcHSourceC_sort.
+Check fun T : icat cat => (@dcHSourceC_sort T) : PreFunctor.type _ _.
+
+Definition dcHSourceC_eq (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+  eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)); eauto.
+  intros.
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  simpl in *.
+  unfold dcHSourceC_sort in *.
+  unfold C12D1 in *; simpl.
+  destruct ma as [fa [ea1 ea2]].
+  destruct mb as [fb [eb1 eb2]].
+  simpl in *. 
+
+  move: (dcHSourceC_sort_eq
+      {|
+         source := sa;
+         target := ta;
+         this_morph :=
+           existT (fun h : D1cat T => icHsrc T h = sa /\ icHtgt T h = ta) fa
+             (conj ea1 ea2)
+       |}).
+  intro ee1.
+  move: (dcHSourceC_sort_eq
+          {|
+            source := sb;
+            target := tb;
+            this_morph :=
+              existT (fun h : D1cat T => icHsrc T h = sb /\ icHtgt T h = tb)
+                fb (conj eb1 eb2)
+          |}).
+  intro ee2.
+
+  simpl in *.
+  unfold icHsrc in *.
+  unfold icHtgt in *.
+  unfold src in *.
+  unfold tgt in *.
+  simpl in *.
+  unfold D0cat in *.
+  unfold D1cat in *.
+  simpl in *.
+  inversion ea1; subst.
+  simpl in *.
+  clear H.
+  unfold dcHSourceC_sort in *; simpl in *.
+  unfold C12D1 in *; simpl in *.
+  destruct T.
+  destruct class as [[C1] K2 K3 K4].
+  destruct K2.
+  destruct K3.
+  destruct K4.
+  simpl in *.
+  destruct C1.
+  destruct class as [[V1] [V2 V3] [V4 V5 V6]].
+  destruct sort.
+  destruct class as [[U1] [U2 U3] [U4 U5 U6]].
+  simpl in *.
+  destruct priv as [[X1 X2]].
+  simpl in *.
+  destruct X1.
+  destruct X2.
+  simpl in *.
+  dependent destruction ee1.
+  dependent destruction ee2.
+  simpl in *.
+  destruct class as [[A1] [A2 A3]].
+  destruct class0 as [[B1] [B2 B3]].
+  simpl in *.
+  eauto.
+
+  unfold IDoubleCat_tmp4_dcHSourceC_sort__canonical__cat_PreFunctor.
+  simpl.
+  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
+  simpl.
+  
+  unfold IDoubleCat_tmp4_D0cat__canonical__SADoubleCat_SPreFunctor.
+  simpl.
+  unfold Op_isMx__48__ELIM.
+  simpl.
+Admitted. 
+  
+  
 Definition dcIsFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
   econstructor; eauto.
