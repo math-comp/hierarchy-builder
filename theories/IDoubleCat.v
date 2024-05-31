@@ -902,11 +902,7 @@ Qed.
 
 (* here just functional equality *)
 Definition dcHSourceC_eq1 (T: icat cat) :
-  @dcHSourceC_sort T = @HSource (D0cat T).
-  eapply funext.
-  intros.
-  eapply dcHSourceC_sort_eq; eauto.
-Defined.  
+  @dcHSourceC_sort T = @HSource (D0cat T) := funext (@dcHSourceC_sort_eq T).
 
 (* PROBLEMATIC - HSource is not a functor yet *)
 Fail Definition dcHSourceC_eq (T: icat cat) (X: C1obj T) :
@@ -923,11 +919,25 @@ Definition dcIsPreFunctor (T: icat cat) :
   exact ((@dcHSourceB T) <$> hh).
 Defined.
 (* this seems OK *)
-Definition dcIsSPreFunctor (T: icat cat) :
+Definition dcIsSPreFunctorP (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
 rewrite -dcHSourceC_eq1.
 eapply dcIsPreFunctor.
 Defined.
+Definition dcIsSPreFunctorP' (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
+ (fun evar_0_ : IsPreFunctor.phant_axioms (dcHSourceC_sort (T:=T)) =>
+  eq_rect (dcHSourceC_sort (T:=T))
+    [eta IsPreFunctor.phant_axioms (D:=D0cat T)] evar_0_
+    (HSource (C:=D0cat T)) (dcHSourceC_eq1 T)) (dcIsPreFunctor T).
+Definition dcIsSPreFunctor (T: icat cat) :
+  IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
+ (fun evar_0_ : IsPreFunctor.phant_axioms (dcHSourceC_sort (T:=T)) =>
+  eq_rect (dcHSourceC_sort (T:=T))
+    (IsPreFunctor.phant_axioms (D:=D0cat T)) evar_0_ 
+    (HSource (C:=D0cat T)) (dcHSourceC_eq1 T)) (dcIsPreFunctor T).
+
+
 (* not needed, as expected *)
 Definition dcIsSPreFunctorA (T: icat cat) :
   IsPreFunctor (D1obj (D0cat T)) (D0cat T) (@HSource (D0cat T)).
@@ -1000,16 +1010,187 @@ Fail HB.instance Definition dcIsSPreFunctor1' (T: icat cat) :
 HB.about dcHSourceC_sort.
 Check fun T : icat cat => (@dcHSourceC_sort T) : PreFunctor.type _ _.
 
-
+(*
 Definition dcHSourceC_eqA (T: icat cat) :
   (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
-  eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)); eauto.
+  remember T as TT.
+  remember (@dcHSourceC_sort TT : PreFunctor.type _ _) as cdHS.
+  have E0 := (@dcHSourceC_sort_eq T).
+  have E1 := (@dcHSourceC_eq1 T).
+
+  
+  simpl in *.
+  eapply (@prefunctorPcast _ _ _ _ E0); eauto.
   intros.
   destruct a as [sa ta ma].
   destruct b as [sb tb mb].
   simpl in *.
   unfold dcHSourceC_sort in *.
   unfold C12D1 in *; simpl.
+  destruct ma as [fa [ea1 ea2]].
+  destruct mb as [fb [eb1 eb2]].
+  simpl in *. 
+ *)
+(*
+Definition dcHSourceC_eqA (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+    eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)); eauto.
+  move=> /= a b f.
+*) 
+
+Definition dcHSourceC_eqA (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+  move=> /=. rewrite /reverse_coercion.
+
+  apply: @prefunctorP _ _ _ _ (@dcHSourceC_sort_eq T) _.  
+  move=> /= a b f.
+  
+  rewrite /IDoubleCat_D0cat__canonical__SADoubleCat_SPreFunctor.
+  rewrite /SADoubleCat_HSource__canonical__cat_PreFunctor.
+  rewrite /Op_isMx__48__ELIM/=/is_sprefunctor/IsSPreFunctor.is_sprefunctor/=.
+  rewrite /dcIsSPreFunctor.
+
+  rewrite /IDoubleCat_dcHSourceC_sort__canonical__cat_PreFunctor.
+  rewrite /dcIsPreFunctor'.
+  rewrite /dcIsPreFunctor.
+
+  unfold dcHSourceC_eq1.
+
+  move: (funext (dcHSourceC_sort_eq (T:=T))).
+  intro E1.
+  unfold eq_rect.
+
+  (*
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  simpl in *.
+  destruct ma as [fa [ea1 ea2]].
+  destruct mb as [fb [eb1 eb2]].
+  simpl in *.
+  inversion ea1; subst.
+  clear H.
+  *)
+
+  remember T as TT.
+  destruct T as [sortT classT].
+  destruct classT as [[C1] K2 K3 K4].
+  destruct K2 as [[[Sr Tg]]].
+
+  destruct K3.
+  destruct K4.
+
+  destruct C1 as [sortC1 classC1].
+  destruct classC1 as [[V1] [V2 V3] [V4 V5 V6]]. 
+  simpl in *.
+  destruct Sr as [Spf Sclass].
+  
+  destruct Tg. 
+  
+  simpl in *.
+  destruct sortT as [sortC0 classC0].
+  destruct classC0 as [[U1] [U2 U3] [U4 U5 U6]].  
+  simpl in *.
+
+  revert E1.
+
+  move: ({| IsPreFunctor.Fhom :=
+                  fun (a0 b0 : C1obj TT) (H : a0 ~> b0) =>
+                  dcHSourceB TT <$> C12D1 (T:=TT) <$> H
+         |}).
+  intro AA.
+  simpl in *.
+
+  destruct AA as [Fhom0].
+  simpl in *.
+  unfold dcHSourceC_sort; simpl.
+  intro E1. 
+  revert Fhom0.
+
+(*  (* no use *)
+  dependent destruction E1. 
+*)
+  
+  revert E1.
+  revert f.
+  revert a b.
+  
+  unfold Fhom; simpl.
+  unfold C12D1; simpl.
+  unfold HSource; simpl.
+  unfold source; simpl.
+  unfold C1obj; simpl.
+  unfold D0cat; simpl.
+  unfold IsPreFunctor.Fhom; simpl.
+  unfold this_morph; simpl.
+  unfold D1obj; simpl.
+  unfold hhom; simpl.
+  unfold projT1; simpl.
+  intros a b f E1.
+
+(*  (* no use *)
+  dependent destruction E1. 
+*)
+
+(* (* commented out because very slow *)
+  
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  simpl in *.
+  destruct ma as [fa [ea1 ea2]].
+  destruct mb as [fb [eb1 eb2]].
+  simpl in *.
+  unfold icHsrc in *; simpl in *.
+  unfold icHtgt in *; simpl in *.  
+  unfold D1cat in *; simpl in *.
+  unfold D0cat in *; simpl in *.
+  unfold src in *; simpl in *.
+  unfold tgt in *; simpl in *.
+  (* very costly, at this point *)
+  inversion ea1; subst.
+  clear H.
+  simpl in *.
+  unfold D1cat in *; simpl in *.
+  
+  revert f.
+  
+  destruct Sclass as [[SC1] [SC2 SC3]].
+  destruct class as [[TC1] [TC2 TC3]].
+  simpl in *.
+  revert fa fb.
+  
+  (* no use *)
+  dependent destruction E1. 
+*)
+
+(* Morally, we are are replacing 'source' (a field of Total2) with
+   the composition of fst projection and the src functor from the
+   internnal cat (Spf). It is not clear what is blocking, because
+   indeed all the occurrences of source are gone. 
+ 
+   assert (Spf o projT1 = source). *)
+Admitted. 
+ 
+Definition dcHSourceC_eqB (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+  apply: (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)).
+  move=> /=.
+  eauto.
+Admitted. 
+  
+Definition dcHSourceC_eqC (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+  
+  have E0 := (@dcHSourceC_sort_eq T).
+  eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)); eauto.
+  intros.
+  
+  destruct a as [sa ta ma].
+  destruct b as [sb tb mb].
+  simpl in *.
+  unfold dcHSourceC_sort in *.
+  unfold C12D1 in *; simpl.
+(*  have := @prefunctorP _ _ _ _ (@dcHSourceC_sort_eq T). *)
+
   destruct ma as [fa [ea1 ea2]].
   destruct mb as [fb [eb1 eb2]].
   simpl in *. 
@@ -1047,6 +1228,8 @@ Definition dcHSourceC_eqA (T: icat cat) :
   clear H.
   unfold dcHSourceC_sort in *; simpl in *.
   unfold C12D1 in *; simpl in *.
+
+(*  remember T as TT. *)
   destruct T as [sortT classT].
   destruct classT as [[C1] K2 K3 K4].
   destruct K2 as [[[Sr Tg]]].
@@ -1066,6 +1249,7 @@ Definition dcHSourceC_eqA (T: icat cat) :
   dependent destruction ee1.
   dependent destruction ee2.
 
+  revert E0.
   set TT := ({|
       InternalCat.sort :=
         _ ;
@@ -1079,171 +1263,89 @@ Definition dcHSourceC_eqA (T: icat cat) :
           InternalCat.InternalCat_IsInternalCat_mixin := K4
         |}
     |}).
-
-  unfold IDoubleCat_dcHSourceC_sort__canonical__cat_PreFunctor.
-  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
-  unfold IDoubleCat_D0cat__canonical__SADoubleCat_SPreFunctor.
+  intro E0.
   simpl.
-  unfold Op_isMx__48__ELIM; simpl.
-
-  unfold is_sprefunctor; simpl.
-  unfold dcIsPreFunctor'; simpl.
-
-  unfold dcIsSPreFunctor; simpl.
-  unfold dcIsPreFunctor; simpl.
-  move: (dcHSourceC_eq1 TT).
-  intro E2.
-  move: ({|
-            IsPreFunctor.Fhom :=
-              fun (a b : C1obj TT) (H : a ~> b) =>
-              dcHSourceB TT <$> C12D1 (T:=TT) <$> H
-          |}).
-  intros Fhom0.
-  destruct Fhom0 as [Fhom0].
-  simpl in *.
-  unfold D0cat; simpl.
-
-  revert E2.
-  revert Fhom0.
-  unfold dcHSourceC_sort.
-  simpl in *.
-(*  unfold HSource. *)
-  simpl in *.
-  unfold C12D1; simpl.
-  unfold D0cat; simpl.
-
-  unfold eq_rect; simpl.
-  unfold C1obj; simpl.
-(*  unfold source; simpl. *)
-  unfold D1obj; simpl.
-  unfold hhom; simpl.
-  unfold D0cat; simpl.
-(*  unfold this_morph; simpl.
-  unfold projT1; simpl. *)
-
-  intros Fhom0 E2.
-
-  revert Fhom0.
-  revert f.
-  revert fa.
-  revert fb.
-  revert E2.
-
-  destruct Sclass as [[L1] [L2 L3]].
-  destruct Tg as [R1 [[R2] [R3 R4]]].
-  destruct K3.
-  destruct K4.
-  simpl in *.
-  
-  intro E2.
-
-  unfold Fhom; simpl.
-  unfold IsPreFunctor.Fhom; simpl.
-
-  intros.
-
-  f_equal.
-  intros Q1 Q2 Q3.
-  dependent destruction Q1.  
-  dependent destruction Q2.
-  dependent destruction Q3.
-
-  unfold IsPreFunctor.phant_axioms; simpl.
-
-  revert f.
-  revert fa fb.
-  revert Fhom0.
-
-  have @dd1 := (fun X : Total2 (@dcHhom (@InternalCat.sort cat TT)) =>
-               Spf (projT1 
-        (@this_morph (D0cat (@InternalCat.sort cat TT)) _ X))).
-  
-  have @dd2 := (fun X : Total2 (@dcHhom (@InternalCat.sort cat TT)) =>
-           @source (D0cat (@InternalCat.sort cat TT)) _ X).
-
-  have E3 : (dd1 = dd2).
-  { subst dd1 dd2.
-    rewrite E2.
-    auto.
-  }
-  
-(*  
- rewrite E3 in E2. 
-  
-  
-  move : ((fun x : Total2 hom => Spf (projT1 (this_morph x))) =
-          HSource (C:=sortC0)). 
-  
-  move: (fun X : Total2 hom =>
-           Spf (@this_morph (D0cat (@InternalCat.sort cat TT)) hom X).
 
   
-    (fun x : Total2 hom =>
-           Spf
-             (let (a, _) :=
-                let
-                  (source, target, this_morph) as t
-                   return (source t ~> target t) := x in
-                this_morph in
-              a)).
-*)  
-
-  replace E2 with E3.
+  have @gg := (@dcHSourceB TT).
+  set qq := (@C12D1 TT).
+  Print dcIsPreFunctor.
+  have @my_dcHSourceC_sort x := gg <$> (qq <$> x).
   
-  
-  (* dependent destruction E2. *)
-   
-  Fail move: ({|
-      source := Spf fa;
-      target := R1 fa;
-      this_morph :=
-        existT (fun h : sortC1 => Spf h = Spf fa /\ R1 h = R1 fa) fa
-          (conj (erefl (Spf fa)) (erefl (R1 fa)))
-    |}).
-    Fail move: ({|
-      source := Spf fb;
-      target := R1 fb;
-      this_morph :=
-        existT (fun h : sortC1 => Spf h = Spf fb /\ R1 h = R1 fb) fb
-          (conj (erefl (Spf fb)) (erefl (R1 fb)))
-    |}).
-
-(*  
-  dependent destruction E2.
-  
-  unfold dcHSourceC_sort in *.
-  simpl in *.
-  unfold HSource in *.
-  simpl in *.
-  unfold D0cat in *; simpl in *.
-  unfold C12D1 in *; simpl in *.
-  unfold source in E2; simpl in *.
-  unfold C1obj in E2; simpl in *.
-  unfold D0cat in E2; simpl in *.
-
-  destruct Sclass as [[SC1] [SC2 SC3]].
-  destruct K3 as [II1 II2].
-  simpl in *.
-  
-  assert ({|
-    PreFunctor.sort := dcHSourceC_sort (T:=TT);
-    PreFunctor.class :=
-      {| PreFunctor.cat_IsPreFunctor_mixin := dcIsPreFunctor TT |}
-  |} =
-  {|
-    PreFunctor.sort := HSource (C:=D0cat TT);
-    PreFunctor.class :=
-      {| PreFunctor.cat_IsPreFunctor_mixin := dcIsSPreFunctor TT |}
-  |}) as V.
-  eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq _)); eauto.
-  intros.
-  simpl.
-    
-  unfold IDoubleCat_tmp4_C1obj__canonical__cat_Quiver in *.
-Admitted.
+  rewrite -[@Fhom _ _ _ _ _ f]/(my_dcHSourceC_sort _ _ f).
+  rewrite {}/my_dcHSourceC_sort {}/gg {}/qq.
+(*
+  symmetry.      rewrite /reverse_coercion/=.
 *)
-Admitted.
+  rewrite /IDoubleCat_D0cat__canonical__SADoubleCat_SPreFunctor.
+  rewrite /SADoubleCat_HSource__canonical__cat_PreFunctor.
+  rewrite /Op_isMx__48__ELIM/=/is_sprefunctor/IsSPreFunctor.is_sprefunctor/=.
+  rewrite /dcIsSPreFunctor.
+
+  rewrite -comp_Fun /ssrfun.comp/=.
+
+  rewrite -[@Fhom _ _ _ _ _ f in RHS]/(@HSource (D0cat TT) <$> f).
+
+  assert ((fun x : C1obj TT => Spf (C12D1 x)) = HSource (C:=D0cat TT)).
+  eapply funext.
+  eapply E0.
+
+  rewrite H.
+
+  (* looks like an identity, but it isn't *)
+  Fail reflexivity.
+  
+  unfold Fhom.
+  unfold HSource.
+  unfold source.
+  unfold IsPreFunctor.Fhom.
+  simpl.
+Admitted. 
+  
+(* rewrite -dcHSourceC_eq1/dcHSourceC_sort. 
+
+  rewrite /HSource/source.
     
+  rewrite /reverse_coercion.
+ 
+  rewrite -dcHSourceC_eq1/dcHSourceC_sort.
+  
+ (* case: _ / (dcHSourceC_eq1 TT). *)
+
+  simpl.
+  rewrite {1}/Fhom /= /IsPreFunctor.Fhom.  
+ 
+  rewrite /HSource/source.
+ 
+Set Printing All.
+    
+HB.about HSource.
+    
+    rewrite /reverse_coercion.
+  
+    rewrite -dcHSourceC_eq1/dcHSourceC_sort.
+
+    rewrite -comp_Fun /ssrfun.comp/=.
+
+    rewrite /reverse_coercion.
+Set Printing All.
+       
+    Locate "_ \o _".
+    set xxx := comp.
+    Print ssrfun.comp.
+
+      rewrite /HSource/=.
+
+  Set Printi(@dcHSourceB T).
+  set qq := (@C12D1 T).ng All.
+*)  
+  
+  (*
+    IDoubleCat_dcHSourceC_sort__canonical__cat_PreFunctor TT <$> f =
+  SADoubleCat_HSource__canonical__cat_PreFunctor
+    (IDoubleCat_D0cat__canonical__SADoubleCat_SPreFunctor TT) <$> f
+*)
+
 Definition dcIsFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@dcHSourceC_sort T).
   econstructor; eauto.
@@ -1267,9 +1369,13 @@ HB.instance Definition dcIsFunctor' (T: icat cat) :
 Definition dcIsSFunctor (T: icat cat) :
   PreFunctor_IsFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
   (* now this needs to be functor-level equality *)
-  Fail rewrite -dcHSourceC_eq1.
-  Fail eapply dcIsFunctor.
-Admitted.
+  econstructor.
+  rewrite -dcHSourceC_eqB.
+  eapply dcIsFunctor.
+  rewrite -dcHSourceC_eqB. 
+  eapply dcIsFunctor.
+Defined.
+(* not needed *)
 Definition dcIsSFunctorA (T: icat cat) :
   PreFunctor_IsFunctor (D1obj (D0cat T)) (D0cat T) (@HSource (D0cat T)).
 Admitted. 
@@ -1280,7 +1386,7 @@ Fail HB.instance Definition _ (T : icat cat) :=
   Functor.copy (@HSource (D0cat T)) (@dcHSourceC T).
 HB.instance Definition dcIsSFunctor' (T: icat cat) :
    SPreFunctor_IsFunctor (D0cat T) :=
-    @SPreFunctor_IsFunctor.Axioms_ _ _ _ _ _ _ _ _ _ (@dcIsSFunctorA T).
+    @SPreFunctor_IsFunctor.Axioms_ _ _ _ _ _ _ _ _ _ (@dcIsSFunctor T).
 
 
 (*  (C1obj T: cat) ~> (D0cat T: cat). *)
