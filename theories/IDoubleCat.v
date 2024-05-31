@@ -1131,8 +1131,8 @@ Definition dcHSourceC_eqA (T: icat cat) :
   dependent destruction E1. 
 *)
 
-(* (* commented out because very slow *)
-  
+ (* commented out because too slow *)
+(*  
   destruct a as [sa ta ma].
   destruct b as [sb tb mb].
   simpl in *.
