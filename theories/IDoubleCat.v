@@ -1084,7 +1084,7 @@ Definition dcHSourceC_eqA (T: icat cat) :
   simpl in *.
   destruct Sr as [Spf Sclass].
   
-  destruct Tg. 
+  destruct Tg as [Tpf Tclass]. 
   
   simpl in *.
   destruct sortT as [sortC0 classC0].
@@ -1154,7 +1154,7 @@ Definition dcHSourceC_eqA (T: icat cat) :
   revert f.
   
   destruct Sclass as [[SC1] [SC2 SC3]].
-  destruct class as [[TC1] [TC2 TC3]].
+  destruct Tclass as [[TC1] [TC2 TC3]].
   simpl in *.
   revert fa fb.
   
@@ -1162,12 +1162,14 @@ Definition dcHSourceC_eqA (T: icat cat) :
   dependent destruction E1. 
 *)
 
-(* Morally, we are are replacing 'source' (a field of Total2) with
-   the composition of fst projection and the src functor from the
-   internnal cat (Spf). It is not clear what is blocking, because
-   indeed all the occurrences of source are gone. 
+(* Morally, we are trying to equate 'source' (field of Total2) with
+   the composition of fst of a dcHhom (where dcHhom is the concrete
+   interpretation of internal homsets and is the 'this_morph' field of
+   Total2) and the src functor from the internal cat (here Spf). It is
+   not clear what is blocking, because indeed all the meaningful
+   occurrences of source seem to be gone.
  
-   assert (Spf o projT1 = source). *)
+   assert (src o projT1 o this_morph = source). *)
 Admitted. 
  
 Definition dcHSourceC_eqB (T: icat cat) :
