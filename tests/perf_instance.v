@@ -1,4 +1,105 @@
 From HB Require Import structures.
+From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable all_field.
+
+Elpi Accumulate HB.instance lp:{{
+
+
+pred topovisit i: coq.gref.map coq.gref.set, i: classname,      i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
+topovisit _ X VS PS PSS VS PS PSS :- coq.gref.set.mem X PSS, !.
+topovisit _ X VS _ _ _ _ _ :- coq.gref.set.mem X VS, !, halt "cycle detected.".
+topovisit ES X VS PS PSS VS' [X|PS'] PSS'' :-
+  (coq.gref.map.find X ES M ; coq.gref.set.empty M),
+  toporec ES {coq.gref.set.elements M} {coq.gref.set.add X VS} PS PSS VS' PS' PSS',
+  coq.gref.set.add X PSS' PSS''.
+pred toporec   i: coq.gref.map coq.gref.set, i: list classname, i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
+toporec _ [] VS PS PSS VS PS PSS.
+toporec ES [X|XS] VS PS PSS VS'' PS'' PSS'' :-
+  topovisit ES X VS PS PSS VS' PS' PSS', toporec ES XS VS' PS' PSS' VS'' PS'' PSS''.
+
+pred add-to-neighbours i:coq.gref.set, i:pair gref gref, i:coq.gref.map coq.gref.set, o:coq.gref.map coq.gref.set.
+add-to-neighbours VS (pr _ V) A A :- not(coq.gref.set.mem V VS), !.
+add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.find K A L, !, coq.gref.map.add K {coq.gref.set.add V L} A A1.
+add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.add K {coq.gref.set.add V {coq.gref.set.empty} } A A1.
+
+:before "stop:begin"
+std.toposort ES XS XS'' :- !, std.do! [
+  std.fold XS {coq.gref.set.empty} coq.gref.set.add VS,
+  std.fold ES {coq.gref.map.empty} (add-to-neighbours VS) EM,
+  toporec EM XS {coq.gref.set.empty} [] {coq.gref.set.empty} _ XS'' _
+].
+
+
+% :before "stop:begin"
+% classname ML CLSortedDef :- !, std.do! [
+%   classname.unsorted ML [] CL,
+%   std.map CL classname->def CLSortedDef,
+% ].
+
+% :before "stop:begin"
+% std.toposort ES XS XS'' :- !, XS'' = XS.
+/*
+pred smaller i:classname, i:classname.
+
+:before "stop:begin"
+toposort-classes In Out :- !, std.do! [
+  std.findall (sub-class C1_ C2_ _ _) SubClasses,
+  std.map SubClasses (x\r\ sigma C1 C2 A B\ x = (sub-class C1 C2 A B), r = smaller C1 C2) ES,
+  ES => std.time (toposort smaller {std.rev In} [] Out) Time, coq.say "topo" Time
+].
+
+pred partition i:list A, i:(A -> prop), o:list A, o:list A.
+partition []    _ [] [].
+partition [X|L] P R S :- if (P X) (R = X :: L1, S = S1) (R = L1, S = X :: S1), partition L P L1 S1.
+
+:index (_ 1)
+pred toposort i:(A -> A -> prop), i:list A, i:list A, o:list A.
+toposort _  [] A A.
+toposort R [X|Rest] Acc Out :-
+  partition Rest (R X) LeX GtX,
+  toposort R GtX Acc Right,
+  toposort R LeX [X|Right] Out.
+/*
+pred reversed-kahn i:list (pair A (list A)), i:list A, o:option (list A).
+reversed-kahn Bindings Stack SortedNodes :-
+  std.map-filter Bindings (p\ n\ p = pr n []) ExitNodes,
+  if (ExitNodes = []) (
+    if (Bindings = [])
+      (SortedNodes = some Stack)
+      (SortedNodes = none)
+  ) (
+    std.map-filter Bindings (p\ p'\ sigma Node Successors Successors'\
+      p = pr Node Successors,
+      not (std.mem! ExitNodes Node),
+      std.filter Successors (s\ not (std.mem! ExitNodes s)) Successors',
+      p' = pr Node Successors'
+    ) Bindings',
+    reversed-kahn Bindings' {std.append ExitNodes Stack} SortedNodes
+  ).
+*/
+*/
+}}.
+Elpi Typecheck HB.instance.
+
+
+
+Axiom T : Type.
+Axiom f : T -> T -> bool.
+Axiom p : forall x y : T, reflect (x = y) (f x y).
+
+Time HB.instance Definition _ := hasDecEq.Build T p.
+Time HB.instance Definition _ := hasDecEq.Build T p.
+
+(*
+Finished transaction in 0.816 secs (0.81u,0.s) (successful)
+
+
+Finished transaction in 0.188 secs (0.188u,0.s) (successful)
+time sort 0.014739
+time map 0.012572
+time set 0.000554
+*)
+
+
 
 HB.mixin Record M0 T := { f0 : T }.
 HB.structure Definition S0 := { T of M0 T }.
@@ -116,6 +217,21 @@ Time HB.instance Definition _ : M9 bool := M9.Build bool true.
 Time HB.instance Definition _ : N9 bool := N9.Build bool true.
 Time HB.instance Definition _ : M10 bool := M10.Build bool true.
 Time HB.instance Definition _ : N10 bool := N10.Build bool true.
+
+Elpi Accumulate HB.instance lp:{{
+
+:before "stop:begin"
+instance.infer-class _T  _Class _Struct _MLwP _S _Name _STy _Clauses :- !, fail.
+/*
+  list-w-params_list MLwP XX,
+  not (std.forall XX (x\synthesis.private.mixin-for T x _ )),
+  !,
+  fail.
+*/
+}}.
+Elpi Typecheck HB.instance.
+
+Elpi Print HB.instance.
 
 (*
 #[verbose] HB.mixin Record M13 T of S12 T := { f13 : T }.
