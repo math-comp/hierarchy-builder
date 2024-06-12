@@ -78,9 +78,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   acc-clauses current Clauses
 ].
 
-% [subclass-of X C] holds if C inherits from X
-pred subclass-of i:classname, i:class.
-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _).
+% [not-subclass-of X C] holds if C does not inherit from X
+pred not-subclass-of i:classname, i:class.
+not-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _).
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
@@ -104,7 +104,7 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
 declare-all T [class HasNoInstance _ _|Rest] L :-
   % filter out classes we can't build for sure
-  std.filter Rest (subclass-of HasNoInstance) Rest1,
+  std.filter Rest (not-subclass-of HasNoInstance) Rest1,
   declare-all T Rest1 L.
 
 % for generic types, we need first to instantiate them by giving them holes,
@@ -132,7 +132,7 @@ declare-all-on-type-constructor TK [class Class Struct MLwP|Rest] [pr Name CS|L]
 
 declare-all-on-type-constructor TK [class HasNoInstance _ _|Rest] L :-
   % filter out classes we can't build for sure
-  std.filter Rest (subclass-of HasNoInstance) Rest1,
+  std.filter Rest (not-subclass-of HasNoInstance) Rest1,
   declare-all-on-type-constructor TK Rest1 L.
 
 pred has-instance i:term, i:structure.
