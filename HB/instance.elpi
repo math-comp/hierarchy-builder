@@ -78,6 +78,10 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   acc-clauses current Clauses
 ].
 
+% [subclass-of X C] holds if C inherits from X
+pred subclass-of i:classname, i:class.
+subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _).
+
 % [declare-all T CL MCSTL] given a type T and a list of class definition
 % CL in topological order (from least dep to most) looks for classes
 % for which all the dependencies (mixins) were postulated so far and skips the
@@ -85,6 +89,9 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
 pred declare-all i:term, i:list class, o:list (pair id constant).
+declare-all _ [] [].
+declare-all T [class _ Struct _|Rest] L :- has-instance T Struct, !,
+  declare-all T Rest L.
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
   infer-class T Class Struct MLwP S Name STy Clauses,
@@ -95,19 +102,24 @@ declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
   Clauses => declare-all T Rest L.
 
-declare-all T [_|Rest] L :- declare-all T Rest L.
-declare-all _ [] [].
+declare-all T [class HasNoInstance _ _|Rest] L :-
+  % filter out classes we can't build for sure
+  std.filter Rest (subclass-of HasNoInstance) Rest1,
+  declare-all T Rest1 L.
 
 % for generic types, we need first to instantiate them by giving them holes,
 % so they can be used to instantiate the classes
 pred declare-all-on-type-constructor i:term, i:list class, o:list (pair id constant).
-declare-all-on-type-constructor T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
+declare-all-on-type-constructor _ [] [].
+declare-all-on-type-constructor TK [class _ Struct _|Rest] L :- saturate-type-constructor TK T, has-instance T Struct, !,
+  declare-all-on-type-constructor TK Rest L.
+declare-all-on-type-constructor TK [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
   %TODO: compute the arity of the Class subject and saturate up to that point
   %      there may even be more than one possibility
-  saturate-type-constructor T Ty,
+  saturate-type-constructor TK T,
 
-  infer-class Ty Class Struct MLwP S Name _STy Clauses,
+  infer-class T Class Struct MLwP S Name _STy Clauses,
 
   !,
 
@@ -116,20 +128,23 @@ declare-all-on-type-constructor T [class Class Struct MLwP|Rest] [pr Name CS|L] 
   
   decl-const-in-struct Name SC SCTy CS,
 
-  Clauses => declare-all-on-type-constructor T Rest L.
+  Clauses => declare-all-on-type-constructor TK Rest L.
 
-declare-all-on-type-constructor T [_|Rest] L :- declare-all-on-type-constructor T Rest L.
-declare-all-on-type-constructor _ [] [].
+declare-all-on-type-constructor TK [class HasNoInstance _ _|Rest] L :-
+  % filter out classes we can't build for sure
+  std.filter Rest (subclass-of HasNoInstance) Rest1,
+  declare-all-on-type-constructor TK Rest1 L.
+
+pred has-instance i:term, i:structure.
+has-instance T Struct :-
+  if (has-CS-instance? T Struct)
+     (if-verbose (coq.say {header} "skipping already existing"
+                    {nice-gref->string Struct} "instance on"
+                    {coq.term->string T}))
+     fail. % we build it
 
 pred infer-class i:term, i:classname, i:gref, i:factories, o:term, o:string, o:term, o:list prop.
 infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
-
-  if (not(has-CS-instance? T Struct))
-     true % we build it
-     (if-verbose (coq.say {header} "skipping already existing"
-                    {nice-gref->string Struct} "instance on"
-                    {coq.term->string T}),
-      fail),
 
   params->holes MLwP Params,
   get-constructor Class KC,
