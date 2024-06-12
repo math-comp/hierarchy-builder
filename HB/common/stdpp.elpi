@@ -90,6 +90,32 @@ toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
   std.filter XS' (std.mem XS) XS''.
 
+namespace gref {
+pred topovisit i: coq.gref.map coq.gref.set, i: classname,      i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
+topovisit _ X VS PS PSS VS PS PSS :- coq.gref.set.mem X PSS, !.
+topovisit _ X VS _ _ _ _ _ :- coq.gref.set.mem X VS, !, halt "cycle detected.".
+topovisit ES X VS PS PSS VS' [X|PS'] PSS'' :-
+  (coq.gref.map.find X ES M ; coq.gref.set.empty M),
+  toporec ES {coq.gref.set.elements M} {coq.gref.set.add X VS} PS PSS VS' PS' PSS',
+  coq.gref.set.add X PSS' PSS''.
+pred toporec   i: coq.gref.map coq.gref.set, i: list classname, i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
+toporec _ [] VS PS PSS VS PS PSS.
+toporec ES [X|XS] VS PS PSS VS'' PS'' PSS'' :-
+  topovisit ES X VS PS PSS VS' PS' PSS', toporec ES XS VS' PS' PSS' VS'' PS'' PSS''.
+
+pred add-to-neighbours i:coq.gref.set, i:pair gref gref, i:coq.gref.map coq.gref.set, o:coq.gref.map coq.gref.set.
+add-to-neighbours VS (pr _ V) A A :- not(coq.gref.set.mem V VS), !.
+add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.find K A L, !, coq.gref.map.add K {coq.gref.set.add V L} A A1.
+add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.add K {coq.gref.set.add V {coq.gref.set.empty} } A A1.
+
+pred toposort i:list (pair gref gref), i:list gref, o:list gref.
+toposort ES XS XS'' :- !, std.do! [
+  std.fold XS {coq.gref.set.empty} coq.gref.set.add VS,
+  std.fold ES {coq.gref.map.empty} (add-to-neighbours VS) EM,
+  toporec EM XS {coq.gref.set.empty} [] {coq.gref.set.empty} _ XS'' _
+].  
+}
+
 pred time-do! i:list prop.
 time-do! [].
 time-do! [P|PS] :-
