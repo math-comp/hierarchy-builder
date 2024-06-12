@@ -112,7 +112,7 @@ pred toposort i:list (pair gref gref), i:list gref, o:list gref.
 toposort ES XS XS'' :- !, std.do! [
   std.fold XS {coq.gref.set.empty} coq.gref.set.add VS,
   std.fold ES {coq.gref.map.empty} (add-to-neighbours VS) EM,
-  toporec EM XS {coq.gref.set.empty} [] {coq.gref.set.empty} _ XS'' _
+  toporec EM {coq.gref.set.elements VS} {coq.gref.set.empty} [] {coq.gref.set.empty} _ XS'' _
 ].  
 }
 
