@@ -95,8 +95,6 @@ tests/unit/close_hole_term.v
 tests/unit/struct.v
 tests/factory_when_notation.v
 
-tests/perf_instance.v
-
 -R tests HB.tests
 -R examples HB.examples
 
