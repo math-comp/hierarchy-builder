@@ -178,8 +178,8 @@ pred mixin-mem i:term, o:gref.
 % that contains the mixin M
 pred mixin-first-class o:mixinname, o:classname.
 
-% memory of exported operations (TODO: document fiels)
-pred exported-op o:mixinname, o:constant, o:constant.
+% memory of exported operations [exported-op Mixin MixinProj PrimitiveMixinProj StructureProj]
+pred exported-op o:mixinname, o:constant, o:option (pair projection int), o:constant.
 
 % memory of factory sort coercion
 pred factory-sort o:coercion.
