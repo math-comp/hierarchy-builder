@@ -292,6 +292,16 @@ term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
 % this one is in utils, maybe cs-pattern->name is not stdpp material
 type gref->modname-label gref -> int -> string -> string -> prop.
 
+%hack/missing API
+:before "stop:begin"
+coq.term->gref (app [primitive (proj N J),T|_]) GR :- !, std.do! [
+  coq.typecheck T Ty ok,
+  coq.term->gref Ty (indt I),
+  coq.env.projections I Ps,
+  coq.env.primitive-projections I PPs,
+  std.map2-filter Ps PPs (x\y\gr\sigma c\x = some c, y = some (pr N J), gr = const c) [GR],
+].
+
 pred cs-pattern->name i:cs-pattern, o:string.
 cs-pattern->name cs-prod "prod".
 cs-pattern->name (cs-sort _) "sort".
