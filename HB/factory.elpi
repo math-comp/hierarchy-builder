@@ -231,8 +231,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
-
-  if (get-option "primitive" tt ; not(Fields = end-record))
+  % TODO cleanup
+  if (get-option "primitive" tt ; (not(get-option "primitive" ff) , not(Fields = end-record)))
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
     (log.coq.env.add-indt RDeclClosed R),
 
