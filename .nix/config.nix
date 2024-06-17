@@ -11,7 +11,8 @@
       fourcolor.override.version = "master";
       odd-order.override.version = "master";
       mathcomp-finmap.override.version = "master";
-      mathcomp.analyis.override.version = "hierarchy-builder";
+      mathcomp-classical.override.version = "master";
+      mathcomp-analysis.override.version = "master";
       reglang.override.version = "master";
       coq-bits.override.version = "master";
       deriving.override.version = "master";

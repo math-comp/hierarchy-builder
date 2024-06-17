@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### General
+ - **Speedup** `HB.instance` does not try to infer classes that inherit from
+   a class that is known to have no instance (for the given type)
+ - **Speedup** `toposort` on `gref` uses OCaml's maps and sets rather than lists
+
 ## [1.7.0] - 2024-01-10
 
 Compatible with
