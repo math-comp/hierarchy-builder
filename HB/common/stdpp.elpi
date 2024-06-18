@@ -302,6 +302,11 @@ coq.term->gref (app [primitive (proj N J),T|_]) GR :- !, std.do! [
   std.map2-filter Ps PPs (x\y\gr\sigma c\x = some c, y = some (pr N J), gr = const c) [GR],
 ].
 
+%hack/ fixup API
+:before "subst-fun:fail"
+coq.subst-fun L (primitive (proj _ _) as F) (app[F|L]).
+
+
 pred cs-pattern->name i:cs-pattern, o:string.
 cs-pattern->name cs-prod "prod".
 cs-pattern->name (cs-sort _) "sort".

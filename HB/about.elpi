@@ -41,7 +41,7 @@ main-located S (loc-abbreviation A) :-
   coq.safe-dest-app T (global GR) _, !,
   main-located S (loc-gref GR).
 
-main-located S (loc-gref GR) :- from Factory Mixin GR, !,
+main-located S (loc-gref GR) :- from Factory Mixin (gref GR), !,
   private.main-builder S Factory Mixin.
 
 main-located S (loc-gref GR) :-

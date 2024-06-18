@@ -11,8 +11,8 @@ from_factory (from X _ _) X.
 pred from_mixin i:prop, o:mixinname.
 from_mixin (from _ X _) X.
 
-pred from_builder i:prop, o:term.
-from_builder (from _ _ X) (global X).
+pred from_builder i:prop, o:gref-or-primitive.
+from_builder (from _ _ X) X.
 
 pred mixin-src_mixin i:prop, o:mixinname.
 mixin-src_mixin (mixin-src _ M _) M.
@@ -97,11 +97,17 @@ factory-provides.base Factory Params T _RMLwP MLwP :- std.do! [
   std.map2 BL ML (factory-provides.one Params T) MLwP,
 ].
 
-pred factory-provides.one i:list term, i:term, i:term, i:mixinname, o:w-args mixinname.
-factory-provides.one Params T B M (triple M PL T) :- std.do! [
-  std.assert-ok! (coq.typecheck B Ty) "Builder illtyped",
+pred factory-provides.one i:list term, i:term, i:gref-or-primitive, i:mixinname, o:w-args mixinname.
+factory-provides.one Params T (gref B) M (triple M PL T) :- std.do! [
+  coq.env.typeof B Ty,
   subst-prod [T] {subst-prod Params Ty} TyParams,
   std.assert! (extract-conclusion-params T TyParams PL) "The conclusion of a builder is a mixin whose parameters depend on other mixins",
+].
+factory-provides.one Params T (primitive (pr P N)) M (triple M PL T) :- std.do! [
+  coq.mk-app {coq.mk-app (global M) Params} [T] TyM, % fine since M is the class hence no extra arg needed
+  std.assert-ok! (d\@pi-decl `m` TyM m\coq.typecheck (app[primitive(proj P N),m]) (TyParams m) d) "Builder illtyped",
+  @pi-decl `m` TyM m\
+    std.assert! (extract-conclusion-params T (TyParams m) PL) "The conclusion of a primitive projection is a mixin whose parameters depend on other mixins"
 ].
 
 pred extract-conclusion-params i:term, i:term, o:list term.

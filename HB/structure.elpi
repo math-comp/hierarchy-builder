@@ -308,6 +308,11 @@ export-operations Structure ProjSort ProjClass MLwP EX1 EX2 MLToExport :- std.do
   std.map LMwPToExport w-params_1 MLToExport,
 ].
 
+pred mk-app-builder i:list term, i:term, i:gref-or-primitive, o:term.
+mk-app-builder Params TheType (gref B) T :-
+  coq.mk-app {coq.env.global B} {std.append Params [TheType]} T.
+mk-app-builder _ _ (primitive (pr P N)) (primitive(proj P N)).
+
 pred mk-coe-class-body
   i:factoryname, % From class
   i:factoryname, % To class
@@ -320,14 +325,14 @@ mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
 
   list-w-params_list TMLwP TML,
   std.map TML (from FC) Builders,
-  std.map Builders (x\r\mk-app (global x) Params r) BuildersP,
+  std.map Builders (mk-app-builder Params T) BuildersP,
 
   factory-nparams TC TCNP,
   mk-app (global {get-constructor TC})
     {coq.mk-n-holes TCNP} KCHoles,
 
   (pi c\ sigma Mixes\
-    std.map BuildersP (builder\r\ r = app[builder, T, c]) Mixes,
+    std.map BuildersP (builder\r\ r = app[builder, c]) Mixes,
     mk-app KCHoles [T | Mixes] (ClassCoercion c)),
 
   CoeBody = {{ fun (c : lp:Class) => lp:(ClassCoercion c) }}
@@ -494,12 +499,12 @@ declare-class+structure MLwP Sort
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
   (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd),
 
-  coq.env.projections ClassInd Projs,
+  coq.env.primitive-projections ClassInd Projs,
   % TODO: put this code in a named clause
   w-params.nparams MLwP NParams,
   std.map2 {list-w-params_list MLwP} Projs (m\ p\ r\ sigma P\
     std.assert! (p = some P) "BUG: we build a class with an anonymous field",
-    r = from (indt ClassInd) m (const P)) Factories,
+    r = from (indt ClassInd) m (primitive P)) Factories,
   AllFactories = [factory-nparams (indt ClassInd) NParams | Factories],
 
   if-verbose (coq.say {header} "declare type record"),

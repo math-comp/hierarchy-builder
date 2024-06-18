@@ -109,13 +109,19 @@ pred class-def o:class.
 
 %%%%% Builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [from FN MN F] invariant:
-% "F : forall p1 .. pn T LMN, FN p1 .. pn T LMN1 -> MN c1 .. cm T LMN2" where
-%  - LMN1 and LMN2 are sub lists of LMN
-%  - c1 .. cm are terms built using p1 .. pn and T
+% [from FN MN B] invariant:
+% - B = gref F
+%   "F : forall p1 .. pn T LMN, FN p1 .. pn T LMN1 -> MN c1 .. cm T LMN2" where
+%    - LMN1 and LMN2 are sub lists of LMN
+%    - c1 .. cm are terms built using p1 .. pn and T
+% - B = primitive (pr P N)
+%    - as above but no parameters
 % - [factory-requires FN LMN]
 % [from _ M _] tests whether M is a declared mixin.
-pred from o:factoryname, o:mixinname, o:gref.
+kind gref-or-primitive type.
+type gref gref -> gref-or-primitive.
+type primitive pair projection int -> gref-or-primitive.
+pred from o:factoryname, o:mixinname, o:gref-or-primitive.
 
 %%%%% Abbreviations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
