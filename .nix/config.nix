@@ -22,7 +22,7 @@
     };
   in {
     "coq-master".coqPackages = mcHBcommon // {
-      coq.override.version = "master";
+      coq.override.version = "proux01:ssrmatching_primitive_proj";
       coq-elpi.override.version = "coq-master";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
