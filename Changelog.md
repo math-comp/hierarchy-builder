@@ -12,6 +12,9 @@
 	`T` to `S.type` whenever `T` is not a global type (e.g. a variable). Note
 	that `S.pack` can cast a `t : T` to `S.type` only if an instance of the
 	class `S` on `t` is found by type class inference
+- **New** Attribute `#[typeclass]` to declare the class of a
+	structure (`axioms_`) as a type class on the subject with all arguments in
+	output mode but for the subject that is in input mode.
 
 ## [1.7.0] - 2024-01-10
 

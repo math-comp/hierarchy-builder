@@ -5,7 +5,7 @@ HB.mixin Record isSigma (T : Type) (P : T -> Prop) (x : T) := {
   _ : P x
 }.
 
-#[short(type="sigType")]
+#[short(type="sigType"), typeclass]
 HB.structure Definition Sig (T : Type) (P : T -> Prop) := {x of isSigma T P x}.
 
 Section Sigma.
@@ -45,7 +45,7 @@ Fail Check x : sigType A P.
 End Sigma.
 
 HB.mixin Record isSigmaT (P : Type -> Prop) (x : Type) := { _ : P x }.
-#[short(type="sigTType")]
+#[short(type="sigTType"), typeclass]
 HB.structure Definition SigT (P : Type -> Prop) := {x of isSigmaT P x}.
 
 Section SigmaT.

@@ -127,6 +127,11 @@ declare Module BSkel Sort :- std.do! [
     ])
     (coq.say "declare:" ClassName "should be an inductive", fail),
 
+  if (get-option "typeclass" tt) (
+	 coq.TC.declare-class ClassName,
+	 coq.hints.add-mode ClassName "typeclass_instances" {std.append {std.map {std.iota {w-params.nparams MLwP}} (_\ r\ r = mode-output)} [mode-input]})
+	 (true),
+
   if-verbose (coq.say {header} "accumulating various props"),
   std.flatten [
       Factories, [ClassAlias], [is-structure Structure],
