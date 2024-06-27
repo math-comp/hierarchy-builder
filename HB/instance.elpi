@@ -241,9 +241,10 @@ mk-factory-sort-factory AliasGR CSL :- std.do! [
 ].
 
 % create instances for all possible combinations of types and structure compatible 
-pred saturate-instances.
-saturate-instances :- std.do! [
-  findall-has-mixin-instance ClausesHas,
+pred saturate-instances i:cs-pattern.
+saturate-instances Filter :- std.do! [
+
+  findall-has-mixin-instance Filter ClausesHas,
 
   std.map ClausesHas has-mixin-instance_key KL,
   undup-cs-patterns KL UKL,
