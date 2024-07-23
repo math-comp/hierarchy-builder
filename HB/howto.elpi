@@ -148,7 +148,8 @@ pp-solutions LLF :-
     str "HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):",
     {about.bulletize SLLF pp-solution}],
   % print
-  coq.say {coq.pp->string PpSolutions},  
+  coq.say {coq.pp->string PpSolutions},
+  coq.say "For a guide on declaring MathComp instances please refer to the following link: https://github.com/math-comp/math-comp/wiki/How-to-declare-MathComp-instances",
   coq.say.
 
 pred pp-solution i:list factoryname, o:coq.pp.
