@@ -446,15 +446,34 @@ HB.instance Definition dcD1CatA (T: icat cat) : PreCat_IsCat (D1cat T)
 Note: we will use C0 and C1 for the D0 and D1 instances in doublecat
 *)
 
-(* this was meant to be notation, but we have temporarily reverted to
-definition to avoid bug-related failure of dcD1Quiver *)
+(* C1obj is the 'flat' representation of the objects of C1 (relying on
+the flat theory in SADoubleCat, i.e. using Total2). Basically, this is
+th same as 'Total2 (@dcHhom T)'. NOTE: this was meant to be notation,
+but we have temporarily reverted to definition to avoid bug-related
+failure of dcD1Quiver *)
 Definition C1obj (T: icat cat) := D1obj (D0cat T). 
 (* Notation C1obj T := (D1obj (D0_cat T)). *)
 (* C1obj (T: icat cat) := Total2 (@dcHhom T). *)
 
-Definition C12D1 (T : doublecat) (h : C1obj T) :
-  D1cat T := projT1 (this_morph h).
+Definition C12D1 (T : doublecat) (h : C1obj T) : D1cat T
+  := projT1 (this_morph h).
 
+(* just to show explicitly the connection with dcHhom *)
+(* XXX strange failure *)
+Definition C12D1_show_details (T : doublecat) (h : C1obj T) :
+  D1cat T.
+  unfold C1obj in h.
+  unfold D1obj in h.
+  set tm := this_morph h.
+  simpl in *.
+  unfold hhom in tm.
+  unfold hom in *.
+  simpl in *.
+  unfold dcHhom in *.
+  unfold D1cat in *.
+  exact (projT1 tm).
+Abort.
+  
 Definition D12C1 (T : doublecat) (h : D1cat T) :
   C1obj T := @TT2 _ _ (icHsrc T h) (icHtgt T h)
                   (existT _ h (conj erefl erefl)). 
@@ -470,11 +489,11 @@ Proof. unfold cancel.
        case l; case r; simpl; auto.
 Qed.       
 
-(* PROBLEMATIC: does nothing do discriminate between distinct D1cat
-morphisms that have same source and target. This means we can lose the
-connection between D1 morphism and the D0 ones that are source and
-target. Basically, '@hom (D1cat T)' in a sense seems too
-abstract. Nonethelss, it is just meant to be the type of morphisms *)
+(* defines the type of the morphism in the flat representation of C1.
+The type depends on two objects of C1, thus on two horiziontal C0
+morphisms. Notice that this type does not distinguish between distinct
+C1 morphisms that have same source and target, but differ either for
+hsource or htarget. *)
 Definition C1hom (T: doublecat) : C1obj T -> C1obj T -> U.
   set h := @hom (D1cat T).
   intros.
@@ -602,21 +621,81 @@ Defined.
 HB.instance Definition dcD1Cat_w' (T: icat cat) : IsD1Cat (D0cat T) :=
   IsD1Cat.Build (D0cat T) (dcD1Cat_w T).
 
-Definition C12D1_prefunctor (T: icat cat) : IsPreFunctor _ _ (@C12D1 T).
+Definition C12D1_prefunctor (T: icat cat) :
+  IsPreFunctor (C1obj T) (D1cat T) (@C12D1 T).
   econstructor; eauto.
-Defined.  
+Defined.
 HB.instance Definition C12D1_prefunctor' (T: icat cat) :
-  IsPreFunctor _ _ (@C12D1 T) := C12D1_prefunctor T. 
+  IsPreFunctor (C1obj T) (D1cat T) (@C12D1 T) := C12D1_prefunctor T. 
 
-HB.about C12D1.
+(* just to show the details, and the way C1hom is used.  basically, by
+   the definition of C1hom, the fact that there is a morphism between
+   two objects in C1obj implies that there is a morphism between the
+   corresponding objects of D1cat *)
+Definition C12D1_prefunctor_Test (T: icat cat) :
+  IsPreFunctor (C1obj T) (D1cat T) (@C12D1 T).
+  econstructor.
+  unfold C12D1.
+  unfold C1obj.
+  unfold D1obj.
+  intros.
+  destruct a.
+  destruct b.
+  simpl in *.
+  unfold hom.
+  simpl.
+  unfold hom in H.
+  simpl in H.
+  unfold C1hom in H.
+  unfold C12D1 in H.
+  simpl in H.
+  unfold hom in H.
+  simpl in H.
+  exact H.
+Defined.  
 
-Definition C12D1_functor (T: icat cat) : PreFunctor_IsFunctor _ _ (@C12D1 T).
+Definition C12D1_functor (T: icat cat) :
+  PreFunctor_IsFunctor (C1obj T) (D1cat T) (@C12D1 T).
   econstructor; eauto.
 Defined.  
 HB.instance Definition C12D1_functor' _ (T: icat cat) :
   PreFunctor_IsFunctor _ _ (@C12D1 T) := C12D1_functor T. 
 
-HB.about C12D1.
+(*
+Definition C12D1_functor_Test (T: icat cat) :
+  PreFunctor_IsFunctor (C1obj T) (D1cat T) (@C12D1 T).
+  econstructor.
+*)  
+
+Definition dcHSourceX_Test (T: icat cat) 
+  (x: C1obj T) : D0cat T := source x.
+(* XXX C1hom is too weak to do this, i.e. to prove directly the
+functoriality of source (and thus HSource). What we do, further on, is
+define such functoriality in terms of that of dcHsourceC, which is
+given by functor composition.  *)
+Lemma qqq_Test (T: icat cat) : @PreFunctor (C1obj T) (D0cat T)
+                            (@source (transpose (D0cat T)) (@dcHhom T)).
+  econstructor.
+  econstructor.
+  intros.
+  destruct a.
+  destruct b.
+  simpl in *.
+  unfold hom in H.
+  simpl in H.
+  unfold C1hom in H.
+  unfold C12D1 in H; simpl in *.
+  unfold hom in H.
+  simpl in H.
+  unfold IsQuiver.hom in H.
+  simpl in *.
+Abort.
+                      
+ 
+(* We still cannot define this, but this is ultimately what we want *) 
+Fail Lemma xxx (T: icat cat) (a b: C1obj T) (h: C1hom a b) :
+  let k := (@C12D1 T) <$> h in
+  (@icHsrc T) <$> k = source <$> h.
 
 (* Not needed *)
 Definition C12D1_ff (T: icat cat) : (C1obj T: cat) ~> (D1cat T: cat).
@@ -895,15 +974,17 @@ Definition dcHSourceC_feq1 (T: icat cat) :
   (@dcHSourceC T :> C1obj T -> D0cat T) = @HSource (D0cat T) :=
   funext (@dcHSourceC_eq1 T).
 
-(* dcHSourceC is a prefunctor. 
-   This seems redundant, but can't find a way to do without it *)
+(* dcHSourceC is a prefunctor. This seems redundant, because we
+   already know that dcHSourceC is a functor, by dcHSourceC. But I
+   can't find a way to do without it *)
 Definition dcIsPreFunctorS (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@dcHSourceC T) :=
   @IsPreFunctor.Build (C1obj T) (D0cat T) (@dcHSourceC T)
     (fun (a b : C1obj T) (h: a ~> b) =>
        (@dcHSourceC T : Functor.type _ _ ) <$> h).
-(* HSource is a prefunctor, by the equality dcHSourceC_feq1 (in proof
-mode) *)
+(* CRUCIAL BIT: HSource is a prefunctor, by the equality
+dcHSourceC_feq1 (in proof mode). So, the Fhom of HSource must be the
+same as the Fhom of dcHSourceC. *)
 Definition dcIsSPreFunctorP (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
   rewrite -dcHSourceC_feq1.
@@ -950,8 +1031,9 @@ Fail HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
 Check fun T : icat cat =>
         @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T).
 
-(* D0cat is an SPreFunctor (has a source prefunctor, which is HSource)
-*)
+(* D0cat is an SPreFunctor (has a source prefunctor, which is
+  HSource).  Notice that by the definition in dcIsSPreFunctor, HSource
+  = dcHSourceC *)
 HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
    IsSPreFunctor (D0cat T) :=
     @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T).
@@ -959,6 +1041,85 @@ HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
 Fail HB.about dcHSourceC.
 Check fun T : icat cat => (@dcHSourceC T) : PreFunctor.type _ _.
 
+
+(* We have an internal category T in cat with
+
+%%% C1: cat -- src: Functor C1 C0 --> C0: cat
+
+We then define the internal model as a merely syntactic variant
+
+%%% D1cat: cat -- icHsrc: Functor D1cat D0cat --> D0cat: cat
+
+where D0cat is just the sort of T and D1cat boils down to C1.
+
+We then define the semantic, 'flat' model. We still use D0cat as
+representation of C0. The representation of C1 must be built on the
+horizontal morphisms of D0cat.
+ 
+First we define 'hhom D0cat', i.e. 'hom (transpose D0cat)' as dcHhom,
+and we request D0cat to be an HD0Quiver.
+
+Then we define the representation of C1 by taking
+
+%%% C1obj := Total2 dcHhom
+
+as the objects, reminding that
+
+%%% Total2 C (h: C -> C -> U) := { source: C; target: C; this_morph: h
+       source target }
+
+We define a map
+
+%%% C12D1 : C1obj -> D1cat
+
+and we use it to define
+
+%%% C1hom : C1obj -> C1obj -> U
+
+so that the morphisms in C1hom correspond to morphisms in D1cat. We
+can prove that C1obj is a category (in fact, the D1 category)
+w.r.t. C1hom. We can also prove that C12D1 is a functor from C1obj to
+D1cat. Therefore, by functor compositionality, we can define a functor
+
+%%% dcHSourceC := icHsrc o C12D1 : C1obj ~> D0cat.
+
+In the stand-alone flat model (ASDoubleCat.v), we defined
+
+%%% HSource C : Total2 (hhom C) := source C
+
+and we required 'HSource D0' to be a functor from D1 to D0. So we want
+
+%%% C1obj: cat -- HSource D0cat: Functor C1obj D0cat --> D0cat: cat
+
+In order to obtain this, we first prove
+
+%%% dcHSourceC_eq1: forall x, dcHSourceC x = HSource D0cat x
+
+i.e. equivalence at the functional level. Then, given this
+equivalence, and given that dcHSourceC is already a functor, we simply
+try to endow HSource with the prefunctor map of dcHSourceC. We do this
+in dcIsSPreFunctor. Notice however that HSource requires wrapping, as
+the subject is 'D0cat T' instead of T.
+
+In this way, we can show that both dcHSource and HSource are both
+(pre-)functors, and we know that morally they must be equal. However,
+when I haven't been able to prove
+
+%%% Fhom (dcHSourceC T) ~= Fhom (HSource (D0cat T)
+
+or anything similar with ecast, or simply more generally that the two
+(pre-)functors are equivalent.
+
+I tried two slightly different approaches, in this file
+(IDoubleCat_tmp1.v) using directly the functoriality of dcHSource, in
+IDoubleCat.v relying on dcHSourceC_sort as the underlying function,
+where the failing proof is dcHSourceC_eqA.
+
+*)
+
+Lemma xxx (T: icat cat) : (@Fhom (C1obj T) (D0cat T) (@dcHSourceC T)) ~=
+                          (@Fhom (C1obj T) (D0cat T) (@HSource (D0cat T))).
+  
 
 (**************************************************************)
 

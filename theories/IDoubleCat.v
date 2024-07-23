@@ -1037,6 +1037,20 @@ Definition dcHSourceC_eqA (T: icat cat) :
     eapply (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)); eauto.
   move=> /= a b f.
 *) 
+(*
+Definition dcHSourceC_eqA (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) =
+    (@HSource (D0cat T) : PreFunctor.type _ _).
+  simpl.
+  apply: @prefunctorP _ _ _ _ (@dcHSourceC_sort_eq T) _.  
+  simpl.
+  
+  eapply dcHSourceC_eq1.    
+
+  
+  unfold dcHSourceC_sort.
+  unfold HSource.
+*)
 
 Definition dcHSourceC_eqA (T: icat cat) :
   (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
@@ -1162,6 +1176,10 @@ Definition dcHSourceC_eqA (T: icat cat) :
   dependent destruction E1. 
 *)
 
+  About HSource.
+  Check C1obj.
+  Check obj.
+  
 (* Morally, we are trying to equate 'source' (field of Total2) with
    the composition of fst of a dcHhom (where dcHhom is the concrete
    interpretation of internal homsets and is the 'this_morph' field of
@@ -1171,7 +1189,9 @@ Definition dcHSourceC_eqA (T: icat cat) :
  
    assert (src o projT1 o this_morph = source). *)
 Admitted. 
- 
+
+(***********************************************************************)
+
 Definition dcHSourceC_eqB (T: icat cat) :
   (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
   apply: (@prefunctorPcast _ _ _ _ (@dcHSourceC_sort_eq T)).
