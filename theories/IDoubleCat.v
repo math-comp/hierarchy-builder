@@ -901,7 +901,7 @@ Definition dcHSourceC_sort_eq (T: icat cat) (x: C1obj T) :
 Qed.
 
 (* here just functional equality *)
-Definition dcHSourceC_eq1 (T: icat cat) :
+Definition dcHSourceC_feq1 (T: icat cat) :
   @dcHSourceC_sort T = @HSource (D0cat T) := funext (@dcHSourceC_sort_eq T).
 
 (* PROBLEMATIC - HSource is not a functor yet *)
@@ -921,7 +921,7 @@ Defined.
 (* this seems OK *)
 Definition dcIsSPreFunctorP (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)).
-rewrite -dcHSourceC_eq1.
+rewrite -dcHSourceC_feq1.
 eapply dcIsPreFunctor.
 Defined.
 Definition dcIsSPreFunctorP' (T: icat cat) :
@@ -929,13 +929,13 @@ Definition dcIsSPreFunctorP' (T: icat cat) :
  (fun evar_0_ : IsPreFunctor.phant_axioms (dcHSourceC_sort (T:=T)) =>
   eq_rect (dcHSourceC_sort (T:=T))
     [eta IsPreFunctor.phant_axioms (D:=D0cat T)] evar_0_
-    (HSource (C:=D0cat T)) (dcHSourceC_eq1 T)) (dcIsPreFunctor T).
+    (HSource (C:=D0cat T)) (dcHSourceC_feq1 T)) (dcIsPreFunctor T).
 Definition dcIsSPreFunctor (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
  (fun evar_0_ : IsPreFunctor.phant_axioms (dcHSourceC_sort (T:=T)) =>
   eq_rect (dcHSourceC_sort (T:=T))
     (IsPreFunctor.phant_axioms (D:=D0cat T)) evar_0_ 
-    (HSource (C:=D0cat T)) (dcHSourceC_eq1 T)) (dcIsPreFunctor T).
+    (HSource (C:=D0cat T)) (dcHSourceC_feq1 T)) (dcIsPreFunctor T).
 
 
 (* not needed, as expected *)
@@ -1016,7 +1016,7 @@ Definition dcHSourceC_eqA (T: icat cat) :
   remember T as TT.
   remember (@dcHSourceC_sort TT : PreFunctor.type _ _) as cdHS.
   have E0 := (@dcHSourceC_sort_eq T).
-  have E1 := (@dcHSourceC_eq1 T).
+  have E1 := (@dcHSourceC_feq1 T).
 
   
   simpl in *.
@@ -1045,7 +1045,7 @@ Definition dcHSourceC_eqA (T: icat cat) :
   apply: @prefunctorP _ _ _ _ (@dcHSourceC_sort_eq T) _.  
   simpl.
   
-  eapply dcHSourceC_eq1.    
+  eapply dcHSourceC_feq1.    
 
   
   unfold dcHSourceC_sort.
@@ -1068,7 +1068,7 @@ Definition dcHSourceC_eqA (T: icat cat) :
   rewrite /dcIsPreFunctor'.
   rewrite /dcIsPreFunctor.
 
-  unfold dcHSourceC_eq1.
+  unfold dcHSourceC_feq1.
 
   move: (funext (dcHSourceC_sort_eq (T:=T))).
   intro E1.
@@ -1324,15 +1324,15 @@ Definition dcHSourceC_eqC (T: icat cat) :
   simpl.
 Admitted. 
   
-(* rewrite -dcHSourceC_eq1/dcHSourceC_sort. 
+(* rewrite -dcHSourceC_feq1/dcHSourceC_sort. 
 
   rewrite /HSource/source.
     
   rewrite /reverse_coercion.
  
-  rewrite -dcHSourceC_eq1/dcHSourceC_sort.
+  rewrite -dcHSourceC_feq1/dcHSourceC_sort.
   
- (* case: _ / (dcHSourceC_eq1 TT). *)
+ (* case: _ / (dcHSourceC_feq1 TT). *)
 
   simpl.
   rewrite {1}/Fhom /= /IsPreFunctor.Fhom.  
@@ -1345,7 +1345,7 @@ HB.about HSource.
     
     rewrite /reverse_coercion.
   
-    rewrite -dcHSourceC_eq1/dcHSourceC_sort.
+    rewrite -dcHSourceC_feq1/dcHSourceC_sort.
 
     rewrite -comp_Fun /ssrfun.comp/=.
 

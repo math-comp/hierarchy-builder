@@ -1044,26 +1044,26 @@ Check fun T : icat cat => (@dcHSourceC T) : PreFunctor.type _ _.
 
 (* We have an internal category T in cat with
 
-%%% C1: cat -- src: Functor C1 C0 --> C0: cat
+%%% C1: cat --- src: Functor C1 C0 ---> C0: cat
 
-We then define the internal model as a merely syntactic variant
+We define the internal model as a merely syntactic variant
 
-%%% D1cat: cat -- icHsrc: Functor D1cat D0cat --> D0cat: cat
+%%% D1cat: cat --- icHsrc: Functor D1cat D0cat ---> D0cat: cat
 
 where D0cat is just the sort of T and D1cat boils down to C1.
 
-We then define the semantic, 'flat' model. We still use D0cat as
+We then define the semantic 'flat' model. We still use D0cat as
 representation of C0. The representation of C1 must be built on the
 horizontal morphisms of D0cat.
  
 First we define 'hhom D0cat', i.e. 'hom (transpose D0cat)' as dcHhom,
 and we request D0cat to be an HD0Quiver.
 
-Then we define the representation of C1 by taking
+Then we define the representation of C1 by taking objects
 
 %%% C1obj := Total2 dcHhom
 
-as the objects, reminding that
+where
 
 %%% Total2 C (h: C -> C -> U) := { source: C; target: C; this_morph: h
        source target }
@@ -1076,9 +1076,9 @@ and we use it to define
 
 %%% C1hom : C1obj -> C1obj -> U
 
-so that the morphisms in C1hom correspond to morphisms in D1cat. We
-can prove that C1obj is a category (in fact, the D1 category)
-w.r.t. C1hom. We can also prove that C12D1 is a functor from C1obj to
+so that morphisms in C1hom correspond to morphisms in D1cat. We prove
+that C1obj is a category wrt C1hom (the D1 category in the flat
+model). We also prove that C12D1 is a functor from C1obj to
 D1cat. Therefore, by functor compositionality, we can define a functor
 
 %%% dcHSourceC := icHsrc o C12D1 : C1obj ~> D0cat.
@@ -1089,11 +1089,11 @@ In the stand-alone flat model (ASDoubleCat.v), we defined
 
 and we required 'HSource D0' to be a functor from D1 to D0. So we want
 
-%%% C1obj: cat -- HSource D0cat: Functor C1obj D0cat --> D0cat: cat
+%%% C1obj: cat --- HSource D0cat: Functor C1obj D0cat ---> D0cat: cat
 
 In order to obtain this, we first prove
 
-%%% dcHSourceC_eq1: forall x, dcHSourceC x = HSource D0cat x
+%%% dcHSourceC_feq1: (dcHSourceC: C1obj->D0cat) = HSource D0cat
 
 i.e. equivalence at the functional level. Then, given this
 equivalence, and given that dcHSourceC is already a functor, we simply
@@ -1103,12 +1103,14 @@ the subject is 'D0cat T' instead of T.
 
 In this way, we can show that both dcHSource and HSource are both
 (pre-)functors, and we know that morally they must be equal. However,
-when I haven't been able to prove
+I haven't been able to prove yet anything like
 
-%%% Fhom (dcHSourceC T) ~= Fhom (HSource (D0cat T)
+%%% Fhom (dcHSourceC T) ~= Fhom (HSource (D0cat T))
 
-or anything similar with ecast, or simply more generally that the two
-(pre-)functors are equivalent.
+or similar with ecast, or more generally that the two (pre-)functors
+are equivalent. In a sense it appears this should be trivial. In
+another sense it is not, because the subjects of the two structures
+(the underlying functions) are provably equal but not the same.
 
 I tried two slightly different approaches, in this file
 (IDoubleCat_tmp1.v) using directly the functoriality of dcHSource, in
