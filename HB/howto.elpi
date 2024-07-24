@@ -149,6 +149,7 @@ pp-solutions LLF :-
     {about.bulletize SLLF pp-solution}],
   % print
   coq.say {coq.pp->string PpSolutions},
+  coq.say,
   coq.say "For a guide on declaring MathComp instances please refer to the following link: https://github.com/math-comp/math-comp/wiki/How-to-declare-MathComp-instances",
   coq.say.
 
