@@ -1181,6 +1181,17 @@ Lemma source_Fhom_eq (T: icat cat) :
 
 Abort.  
 
+(* analogous problem *)
+Definition dcHSourceC_eqA (T: icat cat) :
+  (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+  move=> /=. rewrite /reverse_coercion.
+
+  apply: @prefunctorP _ _ _ _ (@dcHSourceC_sort_eq T) _.  
+  move=> /= a b f.
+  
+Abort.
+
+
 (*  
   destruct class as [K1 K2 K3 K4]. simpl.
   destruct K1 as [[ C2sort [[C2a] [C2b C2c] [C2d C2e C2f]]]];
