@@ -1121,8 +1121,135 @@ where the failing proof is dcHSourceC_eqA.
 
 Lemma xxx (T: icat cat) : (@Fhom (C1obj T) (D0cat T) (@dcHSourceC T)) ~=
                           (@Fhom (C1obj T) (D0cat T) (@HSource (D0cat T))).
-  
+Abort.
 
+(* PROBLEM. This should be easy. *)
+Lemma source_Fhom_eq (T: icat cat) : 
+  let G1 := @dcHSourceC T in
+  let G2 := @HSource (D0cat T) in
+  let homF := fun (a b: C1obj T) (F0 : C1obj T -> D0cat T) => F0 a ~> F0 b in
+  forall (a b: C1obj T) (f: @C1hom T a b), 
+    @eq_rect (@C1obj T -> D0cat T) G1 (homF a b) (G1 <$> f) G2
+      (dcHSourceC_feq1 T) = G2 <$> f.
+  intros.
+  subst G1 G2 homF; simpl.
+  destruct a as [source target this_morph].
+  destruct b as [source0 target0 this_morph0].
+  unfold C1hom in f.
+  unfold C12D1 in *.
+  simpl in *. 
+  move: (dcHSourceC_feq1 T).
+  unfold dcHSourceC; simpl.
+  move: (dcHSourceB T).
+  unfold C12D1; simpl.
+  
+  Fail intros SB eq1; destruct eq1.  
+    
+  unfold HSource.
+  unfold hhom in *.
+  unfold hom in this_morph, this_morph0.
+  simpl in *.
+  destruct this_morph as [x1 [l1 r1]].
+  destruct this_morph0 as [x2 [l2 r2]].
+  simpl in *.
+  inversion l1; subst.
+  clear H.
+  unfold D1cat in *; simpl.  
+  unfold icHsrc, icHtgt.
+  unfold D1_iHom, D1cat.
+  unfold canonical_iHom.
+  simpl.
+
+  Fail intros SB eq1; destruct eq1.
+  (* no use *)
+  (* intros SB eq1; dependent destruction eq1. *)
+
+  destruct T as [TT class].
+  destruct TT as [sortT classT]; simpl in *.
+  destruct classT as [TT1 TT2 TT3]; simpl in *.
+  destruct TT1.
+  destruct TT2.
+  destruct TT3.
+  simpl in *.
+
+  unfold C1, D0cat, C1obj.
+  unfold D1obj, D0cat.
+  simpl.
+  unfold hhom; simpl.
+
+  Fail intros SB eq1; destruct eq1.
+
+Abort.  
+
+(*  
+  destruct class as [K1 K2 K3 K4]. simpl.
+  destruct K1 as [[ C2sort [[C2a] [C2b C2c] [C2d C2e C2f]]]];
+    simpl in *; simpl.   
+  destruct K2 as [[[ src0 tgt0 ]]]; simpl.
+  destruct K3.
+  destruct K4.
+  simpl in *; simpl.   
+
+  destruct src0 as [sort [[A1] [A2 A3]]].
+  destruct tgt0 as [sort0 [[B1] [B2 B3]]]; simpl in *.
+  
+  Fail intros SB eq1; destruct eq1.
+
+                                         
+  intro eq1.
+  unfold C12D1 in eq1.
+  simpl in *.
+
+  move: eq1.
+  unfold C1obj.
+  unfold D1obj.
+  unfold D0cat.
+  unfold hhom.
+  simpl.
+  unfold canonical_iHom.
+
+  destruct T as [TT class].
+  destruct class as [K1 [[[ss1 tt1]]] K3 K4].
+  destruct K1.
+  destruct C1.
+  destruct class as [[U1] [U2 U3] U4].
+  destruct K3.
+  destruct K4.
+  destruct TT.
+  destruct U4.
+  simpl in *.
+  intro eq1.
+  unfold canonical_iHom in *.
+  simpl in *.
+  destruct class.
+  simpl in *.
+  unfold dcHSourceB in *.
+  simpl.
+  unfold icHsrc, icHtgt in *.
+  unfold D1_iHom in *.
+  unfold canonical_iHom in *.
+  unfold src in *.
+  unfold C1 in *.
+  simpl in *.
+  destruct ss1 as [sort1 class1].
+  destruct class1 as [A1 A2].
+  destruct A1.
+  destruct A2.
+  destruct tt1 as [sort2 class2].
+  destruct class2 as [B1 B2].
+  destruct B1.
+  destruct B2.
+  destruct cat_IsQuiver_mixin.
+  destruct cat_Quiver_IsPreCat_mixin.
+  destruct cat_PreCat_IsCat_mixin.
+  simpl in *.
+
+  Fail destruct eq1.
+*)  
+
+
+(**************************************************************)
+(**************************************************************)
 (**************************************************************)
 
 (* TO BE REVISED *)
