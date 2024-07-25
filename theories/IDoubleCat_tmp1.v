@@ -1112,18 +1112,73 @@ are equivalent. In a sense it appears this should be trivial. In
 another sense it is not, because the subjects of the two structures
 (the underlying functions) are provably equal but not the same.
 
-I tried two slightly different approaches, in this file
-(IDoubleCat_tmp1.v) using directly the functoriality of dcHSource, in
-IDoubleCat.v relying on dcHSourceC_sort as the underlying function,
-where the failing proof is dcHSourceC_eqA.
-
+I tried two slightly different approaches, either using directly the
+functoriality of dcHSource (dcHSourceC_eqA), or relying on
+dcHSourceC_sort as the underlying function (dcHSourceC_sort_eqA).
 *)
 
+
+(* XXX. this should be easy, because of dcHSourceC_eq1 (the two
+functions are equal) and dcIsSPreFunctor (HSource is proved prefunctor
+using the prefunctoriality of dcHSourceC) *)
+Definition dcHSourceC_eqA (T: icat cat) :
+  (@dcHSourceC T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+  
+  move=> /=. rewrite /reverse_coercion.
+
+(*  set A := (@prefunctorP _ _ _ _ (@dcHSourceC_eq1 T) _). *)
+
+  eapply (@prefunctorP _ _ _ _ (@dcHSourceC_eq1 T) _).
+
+  Unshelve.
+  simpl.
+  intros.
+
+  move: (funext (dcHSourceC_eq1 (T:=T))).
+  
+  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
+  unfold IDoubleCat_tmp1_D0cat__canonical__SADoubleCat_SPreFunctor.
+  simpl.
+  unfold dcHSourceC.
+  
+  destruct a as [source target this_morph].
+  destruct b as [source0 target0 this_morph0]; simpl in *.
+  destruct this_morph as [x1 [l1 r1]].
+  destruct this_morph0 as [x2 [l2 r2]].
+  inversion l1; subst.
+  clear H.
+  simpl in *.
+
+  unfold C12D1, HSource; simpl.
+
+  move: (dcHSourceB T).
+
+  unfold C1obj, D1obj in *.
+  unfold D1cat, D0cat in *; simpl in *.
+  unfold hom in *; simpl in *.
+  unfold C1hom in *; simpl in *.
+  unfold C12D1 in *; simpl in *.
+  unfold hhom; simpl.
+  unfold hom; simpl.
+  unfold dcHhom; simpl.
+  unfold icHsrc, icHtgt in *.
+  unfold D1_iHom in *.
+  unfold canonical_iHom in *.
+  unfold D1cat, D0cat in *; simpl in *.
+  
+  intros SB feq1. 
+
+  Fail destruct feq1.
+
+  (* dependent destruction feq1. *)
+Abort.  
+
+(* XXX. basically, the problem boils down to proving this *)
 Lemma xxx (T: icat cat) : (@Fhom (C1obj T) (D0cat T) (@dcHSourceC T)) ~=
                           (@Fhom (C1obj T) (D0cat T) (@HSource (D0cat T))).
 Abort.
 
-(* PROBLEM. This should be easy. *)
+(* XXX. or similarly *)
 Lemma source_Fhom_eq (T: icat cat) : 
   let G1 := @dcHSourceC T in
   let G2 := @HSource (D0cat T) in
@@ -1181,13 +1236,40 @@ Lemma source_Fhom_eq (T: icat cat) :
 
 Abort.  
 
-(* analogous problem *)
-Definition dcHSourceC_eqA (T: icat cat) :
+
+(* XXX. similar problem, using dcHSourceC_sort instead *)
+Definition dcHSourceC_sort_eqA (T: icat cat) :
   (@dcHSourceC_sort T : PreFunctor.type _ _) = (@HSource (D0cat T)).
   move=> /=. rewrite /reverse_coercion.
 
+  unfold IDoubleCat_tmp1_D0cat__canonical__SADoubleCat_SPreFunctor.
+  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
+  simpl.
+  unfold ssrfun_comp__canonical__cat_PreFunctor.
+  simpl.
+  
   apply: @prefunctorP _ _ _ _ (@dcHSourceC_sort_eq T) _.  
   move=> /= a b f.
+  unfold ssrfun_comp__canonical__cat_PreFunctor.
+  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
+  unfold IDoubleCat_tmp1_D0cat__canonical__SADoubleCat_SPreFunctor.
+  simpl.
+
+  move: (funext (@dcHSourceC_sort_eq T)).
+  intro feq1.
+
+  unfold C12D1; simpl.
+  destruct a as [source target this_morph].
+  destruct b as [source0 target0 this_morph0]; simpl in *.
+  destruct this_morph as [x1 [l1 r1]].
+  destruct this_morph0 as [x2 [l2 r2]].
+  inversion l1; subst.
+  clear H.
+  simpl in *.
+  
+  unfold dcHSourceC_sort in feq1.
+    
+  dependent destruction feq1.
   
 Abort.
 
