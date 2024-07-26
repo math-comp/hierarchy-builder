@@ -995,12 +995,33 @@ Print eq_rect.
 (* same as above, as a term *)
 Definition dcIsSPreFunctor (T: icat cat) :
   IsPreFunctor (C1obj T) (D0cat T) (@HSource (D0cat T)) :=
-  (fun X : @IsPreFunctor (C1obj T) (D0cat T)
-                   (dcHSourceC T :> C1obj T -> D0cat T) =>
-     eq_rect (dcHSourceC T :> C1obj T -> D0cat T)
-             (fun x => @IsPreFunctor (C1obj T) (D0cat T) x)
-             X (HSource (C:=D0cat T)) (dcHSourceC_feq1 T)) 
-             (dcIsPreFunctorS T).
+  IsPreFunctor.Build (C1obj T) (D0cat T) (@HSource (D0cat T))
+    (ecast X (forall a b, (a ~> b) -> (X a ~> X b)) (dcHSourceC_feq1 T)
+      (@Fhom _ _ (dcHSourceC T))).
+
+HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
+   IsSPreFunctor (D0cat T) :=
+  @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T).
+
+
+Lemma Fhom_HSource (T: icat cat) :
+  @Fhom _ _ (@HSource (D0cat T)) =
+    ecast X (forall a b, (a ~> b) -> (X a ~> X b)) (dcHSourceC_feq1 T)
+      (@Fhom _ _ (dcHSourceC T)).
+Proof. by []. Qed.
+
+
+                     
+  (*    (eq_rect (dcHSourceC T :> C1obj T -> D0cat T) *)
+  (*            (fun x => @IsPreFunctor (C1obj T) (D0cat T) x) *)
+  (*            X (HSource (C:=D0cat T)) (dcHSourceC_feq1 T)), *)
+  
+  (* (fun X : @IsPreFunctor (C1obj T) (D0cat T) *)
+  (*                  (dcHSourceC T :> C1obj T -> D0cat T) => *)
+  (*    eq_rect (dcHSourceC T :> C1obj T -> D0cat T) *)
+  (*            (fun x => @IsPreFunctor (C1obj T) (D0cat T) x) *)
+  (*            X (HSource (C:=D0cat T)) (dcHSourceC_feq1 T))  *)
+  (*            (dcIsPreFunctorS T). *)
 
 (*
 Print C1obj.
@@ -1034,9 +1055,9 @@ Check fun T : icat cat =>
 (* D0cat is an SPreFunctor (has a source prefunctor, which is
   HSource).  Notice that by the definition in dcIsSPreFunctor, HSource
   = dcHSourceC *)
-HB.instance Definition dcIsSPreFunctor' (T: icat cat) :
-   IsSPreFunctor (D0cat T) :=
-    @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T).
+(* HB.instance Definition dcIsSPreFunctor' (T: icat cat) : *)
+(*    IsSPreFunctor (D0cat T) := *)
+(*     @IsSPreFunctor.Axioms_ _ _ _ _ _ _ _ _ (@dcIsSPreFunctor T). *)
   
 Fail HB.about dcHSourceC.
 Check fun T : icat cat => (@dcHSourceC T) : PreFunctor.type _ _.
@@ -1123,18 +1144,30 @@ functions are equal) and dcIsSPreFunctor (HSource is proved prefunctor
 using the prefunctoriality of dcHSourceC) *)
 Definition dcHSourceC_eqA (T: icat cat) :
   (@dcHSourceC T : PreFunctor.type _ _) = (@HSource (D0cat T)).
+Proof.  
+  apply/(@prefunctorP _ _ _ _ (@dcHSourceC_eq1 T) _).
+  move=> /= a b f.
+  rewrite Fhom_HSource /dcHSourceC_feq1.
+  by case: _ / funext.
+Qed.
   
-  move=> /=. rewrite /reverse_coercion.
-
-(*  set A := (@prefunctorP _ _ _ _ (@dcHSourceC_eq1 T) _). *)
-
-  eapply (@prefunctorP _ _ _ _ (@dcHSourceC_eq1 T) _).
-
-  Unshelve.
+    
+  unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
+  unfold IDoubleCat_tmp1_D0cat__canonical__SADoubleCat_SPreFunctor.
   simpl.
-  intros.
-
+  unfold dcIsSPreFunctor'.
+  unfold dcIsSPreFunctor.
+  unfold dcHSourceC_feq1.
+  
+  (* Unshelve. *)
+  (* simpl. *)
+  (* intros. *)
   move: (funext (dcHSourceC_eq1 (T:=T))).
+  rewrite /=.
+  (* unfold SADoubleCat.HSource. *)
+  (* simpl. *)
+  move: (HSource).
+  case: _ /.
   
   unfold SADoubleCat_HSource__canonical__cat_PreFunctor.
   unfold IDoubleCat_tmp1_D0cat__canonical__SADoubleCat_SPreFunctor.
@@ -1170,7 +1203,44 @@ Definition dcHSourceC_eqA (T: icat cat) :
 
   Fail destruct feq1.
 
+  destruct T as [TT class].
+  destruct TT as [sortT classT]; simpl in *.
+  destruct classT as [TT1 TT2 TT3]; simpl in *.
+  destruct TT1.
+  destruct TT2.
+  destruct TT3.
+  simpl in *.
+
+  destruct class as [K1 K2 K3 K4]. simpl.
+  destruct K1 as [[ C2sort [[C2a] [C2b C2c] [C2d C2e C2f]]]];
+    simpl in *; simpl.   
+  destruct K2 as [[[ src0 tgt0 ]]]; simpl.
+  destruct K3.
+  destruct K4.
+  simpl in *; simpl.   
+
+  destruct src0 as [sort [[A1] [A2 A3]]].
+  destruct tgt0 as [sort0 [[B1] [B2 B3]]]; simpl in *.
+
+  unfold canonical_iHom in *; simpl in *.
+  Fail rewrite feq1.
+
+  destruct SB as [Bsort Bclass].
+  simpl in *.
+  destruct Bclass as [[D1] [D2 D3]].
+  unfold D0cat in *.
+  simpl in *.
+
+  Fail rewrite feq1. 
   (* dependent destruction feq1. *)
+
+  unfold C1 in *.
+  simpl in *.
+  rename hom into hom1.
+  unfold hom in *.
+  simpl in *.
+  unfold source, target.
+  simpl.
 Abort.  
 
 (* XXX. basically, the problem boils down to proving this *)
