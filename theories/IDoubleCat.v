@@ -818,35 +818,20 @@ Defined.
 
 Definition dcHUnitA (T: icat cat) :
  D0cat T ~>_cat @C1 _ T. 
-  set h := @iidI cat T. 
-  unfold D0cat in *.
+  set h := @iidI cat T; simpl in *.
   unfold canonical_iHom in *.
-  simpl in *.
   unfold trivial_iHom in *.
+  unfold D0cat in *; simpl in *.
+ 
   destruct h as [hh class0].
   destruct T as [TT class].
   destruct TT as [sortT classT]; simpl in *.
   destruct classT as [TT1 TT2 TT3]; simpl in *.
-  destruct TT1.
+  destruct TT1. 
   destruct TT2.
-  destruct TT3.
-  simpl in *.
-
-  destruct class as [K1 K2 K3 K4].
-  destruct K1 as [C2]; simpl in *; simpl.   
-  destruct K2 as [[[ src0 tgt0 ]]].
-  destruct K3.
-  destruct K4.
-  simpl in *; simpl.   
-   
-  destruct class0 as [[E1 E2]]; simpl in *.
-  econstructor.
-  instantiate (1:= hh); auto.
-  destruct hh.
-  simpl in *.
-  eapply class.
-Defined.  
-
+  simpl in *; auto.
+Defined.
+  
 (* PROBLEM: fails to type, though D0Cat and D0CatC are basically the
 same *)
 Fail Definition dcHCompA (T: icat cat) :
@@ -1246,6 +1231,11 @@ Defined.
 HB.instance Definition dcIsTFunctor' (T: icat cat) :
    TPreFunctor_IsFunctor (D0cat T) :=
     @TPreFunctor_IsFunctor.Axioms_ _ _ _ _ _ _ _ _ _ (@dcIsTFunctor T).
+
+(*********************************************************************)
+
+Fail Definition dcHUnitA_eq1 (T: icat cat) (x: D0cat T) :
+  @dcHUnitA T x = (@H1Unit (D0cat T) x : C1obj T).
 
 
 (*********************************************************************)
