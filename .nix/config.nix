@@ -1,7 +1,7 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.18";
+  default-bundle = "coq-8.20";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "master";
@@ -24,9 +24,14 @@
   in {
     "coq-master".coqPackages = mcHBcommon // {
       coq.override.version = "master";
-      coq-elpi.override.version = "coq-master";
+      coq-elpi.override.version = "master";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
+    };
+    "coq-master".ocamlPackages = { elpi.override.version = "1.19.2"; };
+
+    "coq-8.20".coqPackages = mcHBcommon // {
+      coq.override.version = "8.20";
     };
 
     "coq-8.19".coqPackages = mcHBcommon // {
