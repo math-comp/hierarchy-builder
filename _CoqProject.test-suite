@@ -100,4 +100,4 @@ tests/saturate_on.v
 -R tests HB.tests
 -R examples HB.examples
 
--Q . HB
+-Q HB HB
