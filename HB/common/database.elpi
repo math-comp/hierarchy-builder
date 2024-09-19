@@ -67,13 +67,6 @@ extract-builder (builder-decl B) B.
 pred leq-builder i:builder, i:builder.
 leq-builder (builder N _ _ _) (builder M _ _ _) :- N =< M.
 
-% [factory-alias->gref X GR] when X is already a factory X = GR
-% however, when X is a phantom abbreviated gref, we find the underlying
-% factory gref GR associated to it.
-pred factory-alias->gref i:gref, o:gref.
-factory-alias->gref PhGR GR :- phant-abbrev GR PhGR _, !.
-factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
-
 pred sub-class? i:class, i:class.
 sub-class? (class C1 _ ML1P) (class C2 _ ML2P) :-
   not (C1 = C2),
