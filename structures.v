@@ -126,6 +126,13 @@ pred from o:factoryname, o:mixinname, o:gref.
 %      Notation   Abbrev t1 := (AbbrevCst t1 _ idfun).
 pred phant-abbrev o:gref, o:gref, o:abbreviation.
 
+% [factory-alias->gref X GR] when X is already a factory X = GR
+% however, when X is a phantom abbreviated gref, we find the underlying
+% factory gref GR associated to it.
+pred factory-alias->gref i:gref, o:gref.
+factory-alias->gref PhGR GR :- phant-abbrev GR PhGR _, !.
+factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
+
 %%%%% Cache of known facts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [factory-constructor F K] means K is a constructor for
