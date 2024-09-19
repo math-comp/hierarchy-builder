@@ -105,10 +105,14 @@ declare Module BSkel Sort :- std.do! [
   %]),
 
   if-verbose (coq.say {header} "making coercion from type to target"),
-  synthesis.infer-coercion-tgt MLwP CoeClass,
-  if-arg-sort (private.declare-sort-coercion CoeClass Structure
-    (global (const ArgSortCst))),
-  private.declare-sort-coercion CoeClass Structure SortProjection,
+  if (synthesis.infer-coercion-tgt MLwP CoeClass)
+    (if-arg-sort (private.declare-sort-coercion CoeClass Structure
+      (global (const ArgSortCst))),
+    private.declare-sort-coercion CoeClass Structure SortProjection)
+    (if-arg-sort (private.declare-sort-coercion-elpi (global Structure) (global (const ArgSortCst))),
+    private.declare-sort-coercion-elpi (global Structure) SortProjection),
+
+  private.declare-reverse-coercion-elpi Structure,
 
   if-verbose (coq.say {header} "exporting unification hints"),
   ClassAlias => Factories => GRDepsClauses =>
@@ -122,6 +126,11 @@ declare Module BSkel Sort :- std.do! [
       (private.export-mixin-coercion ClassName)
     ])
     (coq.say "declare:" ClassName "should be an inductive", fail),
+
+  if (get-option "typeclass" tt) (
+	 coq.TC.declare-class ClassName,
+	 coq.hints.add-mode ClassName "typeclass_instances" {std.append {std.map {std.iota {w-params.nparams MLwP}} (_\ r\ r = mode-output)} [mode-input]})
+	 (true),
 
   if-verbose (coq.say {header} "accumulating various props"),
   std.flatten [
@@ -137,24 +146,26 @@ declare Module BSkel Sort :- std.do! [
 
   log.coq.env.import-module "Exports" Exports,
 
-  if-verbose (coq.say {header} "declaring on_ abbreviation"),
+  if (var CoeClass)
+    (if-verbose (coq.say {header} "could not declare the `on_`, `copy` and `on` abbreviations because the target of sort is not a coercion class"))
+    (if-verbose (coq.say {header} "declaring on_ abbreviation"),
 
-  private.mk-infer-key CoeClass ClassProjection NilwP (global Structure) PhClass,
+		private.mk-infer-key CoeClass ClassProjection NilwP (global Structure) PhClass,
 
-  phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
-  (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
+		phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
+		(pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
 
-  if-verbose (coq.say {header} "declaring `copy` abbreviation"),
+		if-verbose (coq.say {header} "declaring `copy` abbreviation"),
 
-  coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
-  @global! => log.coq.notation.add-abbreviation "copy" 2
-    {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T)) }} tt _,
+		coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
+		@global! => log.coq.notation.add-abbreviation "copy" 2
+			{{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T)) }} tt _,
 
-  if-verbose (coq.say {header} "declaring on abbreviation"),
+		if-verbose (coq.say {header} "declaring on abbreviation"),
 
-  @global! => log.coq.notation.add-abbreviation "on" 1
-    {{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt
-    _OnAbbrev,
+		@global! => log.coq.notation.add-abbreviation "on" 1
+			{{fun T => (lp:{{ ClassOfAbbrev_ {{_}} }} : (lp:AppClassHoles T)) }} tt
+			_OnAbbrev),
 
   log.coq.env.end-module-name Module ModulePath,
 
@@ -275,6 +286,47 @@ export-operations Structure ProjSort ProjClass MLwP EX1 EX2 MLToExport :- std.do
   std.fold LMwPToExport EX1 (export-operations.aux Structure ProjSort ProjClass) EX2,
   std.map LMwPToExport w-params_1 MLToExport,
 ].
+
+pred mk-sort-coercion-aux i:term, i:term, i:term, i:list term, o:prop.
+mk-sort-coercion-aux (prod _N _T Body) Structure P Args Clause :-
+  Clause = (pi x\ C x),
+  pi x\ mk-sort-coercion-aux (Body x) Structure P [x | Args] (C x).
+
+mk-sort-coercion-aux _ Structure P Args Clause :-
+  std.rev Args ArgsRev,
+  Clause =
+    (pi ctx v t e r argsAll w\ (coercion ctx v (app [Structure | ArgsRev]) e r :-
+		coq.say "try sort coercion",
+      std.append ArgsRev [v] argsAll,
+      coq.mk-app P argsAll w,
+		coq.say "find coercion from sort",
+      coq.elaborate-skeleton w e r ok,
+      coq.ltac.collect-goals r [] [],
+		coq.say "sort coercion succeeds")).
+
+pred mk-sort-coercion i:term, i:term, o:prop.
+mk-sort-coercion Structure P Clause :-
+  std.assert-ok! (coq.typecheck Structure T) "anomaly: mk-sort-coercion",
+  mk-sort-coercion-aux T Structure P [] Clause.
+
+pred mk-reverse-coercion-aux i:term, i:term, i:term, i:list term, o:prop.
+mk-reverse-coercion-aux (prod _N _T Body) Structure G Args (pi x\ C x) :-
+  pi x\ mk-reverse-coercion-aux (Body x) Structure G [x | Args] (C x).
+
+mk-reverse-coercion-aux _ Structure G Args Clause :-
+  std.rev Args ArgsRev,
+  Clause =
+    (pi ctx v t e r c argsAll w\ (coercion ctx v t (app [Structure | ArgsRev]) r :-
+      std.append ArgsRev [v, c] argsAll,
+      coq.mk-app G argsAll w,
+      coq.elaborate-skeleton w e r ok,
+      coq.ltac.collect-goals r [] [])).
+
+pred mk-reverse-coercion i:gref, o:prop.
+mk-reverse-coercion Structure Clause :-
+  coq.env.typeof Structure T,
+  get-constructor Structure G,
+  mk-reverse-coercion-aux T (global Structure) (global G) [] Clause.
 
 pred mk-coe-class-body
   i:factoryname, % From class
@@ -428,18 +480,23 @@ declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
 
 % For each mixin we declare a field and apply the mixin to its dependencies
 % (that are previously declared fields recorded via field-for-mixin)
-pred synthesize-fields i:term, i:list (w-args mixinname), o:record-decl.
-synthesize-fields _T []     end-record.
-synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
+% Keeps track of whether every field is in Prop
+pred synthesize-fields i:term, i:list (w-args mixinname), o:record-decl, o:bool.
+synthesize-fields _T []     end-record tt.
+synthesize-fields T  [triple M Args V|ML] (field _ Name MTy Fields) B :- std.do! [
+  if (coq.typecheck {mk-app (global M) {std.append Args [V]} } {{ Prop }} ok)
+    (B = B2)
+    (B = ff),
   Name is {gref->modname M 2 "_"} ^ "_mixin",
   if-verbose (coq.say {header} "typing class field" M),
   std.assert! (synthesis.infer-all-gref-deps Args T M MTy) "anomaly: a field type cannot be solved",
-  @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
+  @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m) B2
 ].
 
 pred synthesize-fields.body i:list term, i:term, i:list (w-args mixinname), o:indt-decl.
-synthesize-fields.body _Params T ML (record "axioms_" {{ Type }} "Class" FS) :-
-  synthesize-fields T ML FS.
+synthesize-fields.body _Params T ML (record "axioms_" Ty "Class" FS) :-
+  synthesize-fields T ML FS B,
+  if (B = tt) (Ty = {{ Prop }}) (Ty = {{ Type }}).
 
 pred mk-record+sort-field i:sort, i:name, i:term, i:(term -> record-decl), o:indt-decl.
 pred mk-record+sort-field i:universe, i:name, i:term, i:(term -> record-decl), o:indt-decl.
@@ -494,6 +551,27 @@ declare-sort-coercion CoeClass StructureName (global Proj) :-
   if-verbose (coq.say {header} "declare sort coercion"),
 
   log.coq.coercion.declare (coercion Proj 0 StructureName CoeClass).
+
+% Declares "sort" as a Coercion in elpi's coercion db Proj : Structurename >-> CoeClass.
+pred declare-sort-coercion-elpi i:term, i:term.
+declare-sort-coercion-elpi Structure Proj :-
+
+  if-verbose (coq.say {header} "declare sort coercion in elpi"),
+
+  %TODO: log.coq.coercion-elpi.declare 
+  mk-sort-coercion Structure Proj Clause,
+  coq.elpi.accumulate _ "coercion.db" (clause _ _ Clause).
+
+% Declares a reverse coercion for the sort projection in elpi's coercion db
+pred declare-reverse-coercion-elpi i:gref.
+declare-reverse-coercion-elpi Structure :-
+
+  if-verbose (coq.say {header} "declare reverse coercion in elpi"),
+
+  %TODO: log.coq.coercion-elpi.declare 
+  mk-reverse-coercion Structure Clause,
+  coq.elpi.accumulate _ "coercion.db" (clause _ _ Clause).
+
 
 pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
 if-class-already-exists-error _ [] _.

@@ -154,7 +154,7 @@ infer-coercion-tgt (w-params.cons ID Ty F) CoeClass :-
   @pi-parameter ID Ty x\ infer-coercion-tgt (F x) CoeClass.
 infer-coercion-tgt (w-params.nil _ {{ Type }} _) sortclass.
 infer-coercion-tgt (w-params.nil _ {{ _ -> _ }} _) funclass.
-infer-coercion-tgt (w-params.nil _ T _) (grefclass GR) :- coq.term->gref T GR.
+infer-coercion-tgt (w-params.nil _ T _) (grefclass GR) :- coq.term-is-gref? T GR.
 
 pred w-args.check-key i:list term, i:term, i:list (w-args A), o:prop.
 w-args.check-key _PS _T [] true :- !.
