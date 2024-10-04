@@ -1,0 +1,149 @@
+HB: AddMonoid_of_TYPE is a factory
+    (from "./examples/demo1/hierarchy_5.v", line 10)
+HB: AddMonoid_of_TYPE operations and axioms are:
+    - zero
+    - add
+    - addrA
+    - add0r
+    - addr0
+HB: AddMonoid_of_TYPE requires the following mixins:
+HB: AddMonoid_of_TYPE provides the following mixins:
+    - AddMonoid_of_TYPE
+
+HB: AddMonoid_of_TYPE.Build is a factory constructor
+    (from "./examples/demo1/hierarchy_5.v", line 10)
+HB: AddMonoid_of_TYPE.Build requires its subject to be already equipped with:
+HB: AddMonoid_of_TYPE.Build provides the following mixins:
+    - AddMonoid_of_TYPE
+HB: arguments: AddMonoid_of_TYPE.Build S zero add addrA add0r addr0
+    - S : Type
+    - zero : AddMonoid.sort S
+    - add : S -> S -> S
+    - addrA : associative add
+    - add0r : left_id 0%G add
+    - addr0 : right_id 0%G add
+
+HB: AddAG.type is a structure (from "./examples/demo1/hierarchy_5.v", line 73)
+HB: AddAG.type characterizing operations and axioms are:
+    - addNr
+    - opp
+HB: AddAG is a factory for the following mixins:
+    - AddMonoid_of_TYPE
+    - AddComoid_of_AddMonoid
+    - AddAG_of_AddComoid (* new, not from inheritance *)
+HB: AddAG inherits from:
+    - AddMonoid
+    - AddComoid
+HB: AddAG is inherited by:
+    - Ring
+
+HB: AddMonoid.type is a structure
+    (from "./examples/demo1/hierarchy_5.v", line 17)
+HB: AddMonoid.type characterizing operations and axioms are:
+    - addr0
+    - add0r
+    - addrA
+    - add
+    - zero
+HB: AddMonoid is a factory for the following mixins:
+    - AddMonoid_of_TYPE (* new, not from inheritance *)
+HB: AddMonoid inherits from:
+HB: AddMonoid is inherited by:
+    - AddComoid
+    - AddAG
+    - BiNearRing
+    - SemiRing
+    - Ring
+
+HB: Ring_of_AddAG is a factory
+    (from "./examples/demo1/hierarchy_5.v", line 108)
+HB: Ring_of_AddAG operations and axioms are:
+    - one
+    - mul
+    - mulrA
+    - mulr1
+    - mul1r
+    - mulrDl
+    - mulrDr
+HB: Ring_of_AddAG requires the following mixins:
+    - AddMonoid_of_TYPE
+    - AddComoid_of_AddMonoid
+    - AddAG_of_AddComoid
+HB: Ring_of_AddAG provides the following mixins:
+    - BiNearRing_of_AddMonoid
+Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
+     mul0r are derived from addrC and the other ring axioms, following a proof
+     of Hankel (Gerhard Betsch. On the beginnings and development of near-ring
+     theory. In Near-rings and near-fields. Proceedings of the conference held
+     in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics
+     and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht,
+     1995).
+
+HB: Ring_of_AddAG.Build is a factory constructor
+    (from "./examples/demo1/hierarchy_5.v", line 108)
+HB: Ring_of_AddAG.Build requires its subject to be already equipped with:
+    - AddMonoid_of_TYPE
+    - AddComoid_of_AddMonoid
+    - AddAG_of_AddComoid
+HB: Ring_of_AddAG.Build provides the following mixins:
+    - BiNearRing_of_AddMonoid
+HB: arguments: Ring_of_AddAG.Build A [one] [mul] mulrA mulr1 mul1r mulrDl mulrDr
+    - A : Type
+    - one : A
+    - mul : A -> A -> A
+    - mulrA : associative mul
+    - mulr1 : left_id one mul
+    - mul1r : right_id one mul
+    - mulrDl : left_distributive mul add
+    - mulrDr : right_distributive mul add
+Doc: Builds a Ring from an Abelian Group: the absorbing properties mul0r and
+     mul0r are derived from addrC and the other ring axioms, following a proof
+     of Hankel (Gerhard Betsch. On the beginnings and development of near-ring
+     theory. In Near-rings and near-fields. Proceedings of the conference held
+     in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics
+     and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht,
+     1995).
+
+HB: add is an operation of structure AddMonoid
+    (from "./examples/demo1/hierarchy_5.v", line 17)
+HB: add comes from mixin AddMonoid_of_TYPE
+    (from "./examples/demo1/hierarchy_5.v", line 10)
+
+HB: AddAG.sort is a canonical projection
+    (from "./examples/demo1/hierarchy_5.v", line 73)
+HB: AddAG.sort has the following canonical values:
+    - Ring.sort (from "./examples/demo1/hierarchy_5.v", line 196)
+    - Z 
+
+HB: AddAG.sort is a coercion from AddAG to Sortclass
+    (from "./examples/demo1/hierarchy_5.v", line 73)
+
+HB: Z is canonically equipped with structures:
+    - AddMonoid
+      AddComoid
+      AddAG
+      (from "(stdin)", line 5)
+    - BiNearRing
+      SemiRing
+      Ring
+      (from "(stdin)", line 10)
+
+HB: hierarchy_5_Ring_class__to__hierarchy_5_SemiRing_class is a coercion from
+    Ring to SemiRing (from "./examples/demo1/hierarchy_5.v", line 196)
+
+HB: hierarchy_5_Ring__to__hierarchy_5_SemiRing is a coercion from
+    Ring to SemiRing (from "./examples/demo1/hierarchy_5.v", line 196)
+
+HB: synthesized in file File "(stdin)", line 5, column 0, character 127-249:
+Interactive Module hierarchy_5 started
+Interactive Module AddComoid started
+HB: Z is canonically equipped with structures:
+    - AddMonoid
+      demo1.hierarchy_5.AddComoid
+      AddAG
+      (from "(stdin)", line 5)
+    - BiNearRing
+      SemiRing
+      Ring
+      (from "(stdin)", line 10)
+
