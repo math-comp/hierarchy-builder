@@ -7,6 +7,7 @@
       mathcomp.override.version = "master";
       mathcomp.job = true;
       mathcomp-single.job = true;
+      hierarchy-builder-test.job = true;
       graph-theory.job = false;
       fourcolor.override.version = "master";
       odd-order.override.version = "master";
@@ -28,7 +29,7 @@
       bignums.override.version = "master";
       paramcoq.override.version = "master";
     };
-    "coq-master".ocamlPackages = { elpi.override.version = "1.19.2"; };
+    "coq-master".ocamlPackages = { elpi.override.version = "v1.19.5"; };
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
