@@ -7,6 +7,7 @@
       mathcomp.override.version = "master";
       mathcomp.job = true;
       mathcomp-single.job = true;
+      hierarchy-builder-test.job = true;
       graph-theory.job = false;
       fourcolor.override.version = "master";
       odd-order.override.version = "master";
