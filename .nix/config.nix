@@ -23,13 +23,13 @@
       coqeal.override.version = "master";
     };
   in {
-    "coq-master".coqPackages = mcHBcommon // {
+    "coq-master" = { coqPackages = mcHBcommon // {
       coq.override.version = "master";
       coq-elpi.override.version = "master";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
+    }; ocamlPackages = { elpi.override.version = "1.19.2"; };
     };
-    "coq-master".ocamlPackages = { elpi.override.version = "1.19.2"; };
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
@@ -41,6 +41,8 @@
 
     "coq-8.18".coqPackages = mcHBcommon // {
       coq.override.version = "8.18";
+      mathcomp-classical.job = false;  # Analysis no longer supports 8.18
+      mathcomp-analysis.job = false;
     };
 
   };
