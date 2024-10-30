@@ -27,6 +27,7 @@
       coq-elpi.override.version = "master";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
+      coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
     };
     "coq-master".ocamlPackages = { elpi.override.version = "1.19.2"; };
 
