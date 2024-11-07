@@ -42,11 +42,7 @@
     "coq-8.18".coqPackages = mcHBcommon // {
       coq.override.version = "8.18";
       mathcomp-classical.job = false;  # Analysis master dropped suppor for 8.18
-      mathcomp-reals.job = false;
       mathcomp-analysis.job = false;
-      mathcomp-altreals.job = false;
-      mathcomp-reals-stdlib.job = false;
-      mathcomp-analysis-stdlib.job = false;
     };
 
   };
