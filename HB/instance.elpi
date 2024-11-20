@@ -201,6 +201,8 @@ declare-factory-sort-factory GR :- std.do! [
   std.forall CSL (x\ sigma CS\ x = pr _ CS, log.coq.CS.declare-instance CS)
 ].
 
+pred context.declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:list constant.
+
 pred mk-factory-sort-deps i:gref, o:list (pair id constant).
 mk-factory-sort-deps AliasGR CSL :- std.do! [
   factory-alias->gref AliasGR GR,

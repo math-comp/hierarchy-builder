@@ -124,11 +124,11 @@ pred mk0 i:A, o:A.
 mk0 F R :- constant R F [].
 pred mk1 i:(A -> B), i:A, o:B.
 mk1 F X1 R :- constant R F [X1].
-pred mk2 i:(A -> B -> C), i:A, i:B, o:C.
+pred mk2 i:(A -> A -> C), i:A, i:A, o:C.
 mk2 F X1 X2 R :- constant R F [X1, X2].
-pred mk3 i:(A -> B -> C -> D), i:A, i:B, i:C, o:D.
+pred mk3 i:(A -> A -> A -> D), i:A, i:A, i:A, o:D.
 mk3 F X1 X2 X3 R :- constant R F [X1, X2, X3].
-pred mk4 i:(A -> B -> C -> D -> E), i:A, i:B, i:C, i:D, o:E.
+pred mk4 i:(A -> A -> A -> A -> E), i:A, i:A, i:A, i:A, o:E.
 mk4 F X1 X2 X3 X4 R :- constant R F [X1, X2, X3,X4].
 
 pred mk-fun i:name, i:term, i:(term -> term), o:term.
@@ -233,6 +233,7 @@ list-w-params.append (w-params.cons N Ty ML1) (w-params.cons N Ty ML2) (w-params
 
 pred list-w-params.rcons i:list-w-params A, i:(list term -> term -> w-args A -> prop), o:list-w-params A.
 list-w-params.rcons LwP F R :- list-w-params.rcons.aux LwP F [] R.
+pred list-w-params.rcons.aux i:list-w-params A, i:(list term -> term -> w-args A -> prop), i:list term, o:list-w-params A.
 list-w-params.rcons.aux (w-params.nil N T ML1) F Acc (w-params.nil N T ML2) :-
   pi x\ sigma Last\ F {std.rev Acc} x Last, std.append (ML1 x) [Last] (ML2 x).
 list-w-params.rcons.aux (w-params.cons N Ty ML1) F Acc (w-params.cons N Ty ML2) :-

@@ -66,7 +66,7 @@ typeabbrev structure   gref.
 
 typeabbrev (w-args A) (triple A (list term) term).
 
-kind w-params type -> type -> type.
+kind w-params type -> type.
 type w-params.cons id -> term -> (term -> w-params A) -> w-params A.
 type w-params.nil id -> term -> (term -> A) -> w-params A.
 
@@ -292,10 +292,10 @@ Elpi Export HB.locate.
 #[arguments(raw)] Elpi Command HB.about.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 #[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
-Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/about.elpi".
 Elpi Accumulate lp:{{

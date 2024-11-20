@@ -265,7 +265,7 @@ with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.l
   std.string.concat "\n" ["","HIERARCHY BUILDER PATCH v1",LocStr,""] PATCH1,
   output OC1 PATCH1,
   close_out OC1,
-  log.private.logger L NICE => P,
+  (log.private.logger L NICE => P),
   log.private.logger-close L,
   std.intersperse coq.pp.spc L PP,
   coq.pp->string (coq.pp.box (coq.pp.v 0) PP) S,
@@ -273,7 +273,7 @@ with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.l
   output OC2 S,
   close_out OC2.
 with-logging P :- (get-option "log" tt, NICE = tt ; get-option "log.raw" tt, NICE = ff), !,
-  log.private.logger L NICE => P,
+  (log.private.logger L NICE => P),
   log.private.logger-close L,
   std.intersperse coq.pp.spc L PP,
   coq.pp->string (coq.pp.box (coq.pp.v 0) PP) S,
@@ -371,7 +371,7 @@ coq.vernac->pp1 (vernac.implicit Local Name [L]) (box h [Locality, str "Argument
 coq.vernac->pp1 (comment A) (box (hov 2) [str"(*", str S, str"*)"]) :-
   std.any->string A S.
 coq.vernac->pp1 (check T Fail) (box (hov 2) [Failure, str"Check", spc, PPT, str"."]) :-
-  @holes! => coq.term->pp T PPT,
+  (@holes! => coq.term->pp T PPT),
   fail->failure Fail Failure.
 coq.vernac->pp1 (strategy L opaque) (box (hov 2) [str"Strategy opaque [", glue PPL , str"]."]) :-
   std.map L (c\r\sigma id\coq.gref->id (const c) id, r = str id) LID, std.intersperse spc LID PPL.
