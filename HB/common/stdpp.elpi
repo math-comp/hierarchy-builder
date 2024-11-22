@@ -5,17 +5,19 @@
 % This file contains additions to elpi or coq-elpi standard library
 
 
-kind triple type -> type -> type -> type.
-type triple A -> B -> C -> triple A B C.
+% elpi:if version < 2.0.0
+  kind triple type -> type -> type -> type.
+  type triple A -> B -> C -> triple A B C.
 
-pred triple_1 i:triple A B C, o:A.
-triple_1 (triple A _ _) A.
+  pred triple_1 i:triple A B C, o:A.
+  triple_1 (triple A _ _) A.
 
-pred triple_2 i:triple A B C, o:B.
-triple_2 (triple _ B _) B.
+  pred triple_2 i:triple A B C, o:B.
+  triple_2 (triple _ B _) B.
 
-pred triple_3 i:triple A B C, o:C.
-triple_3 (triple _ _ C) C.
+  pred triple_3 i:triple A B C, o:C.
+  triple_3 (triple _ _ C) C.
+% elpi:endif
 
 namespace std {
 
@@ -42,7 +44,7 @@ partition [] _ [] [].
 partition [X|XS] P [X|YS] ZS :- P X, !, partition XS P YS ZS.
 partition [X|XS] P YS [X|ZS] :- partition XS P YS ZS.
 
-pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
+pred under.do! i:((A -> prop) -> A -> prop), i:list prop.
 under.do! Then LP :- Then (_\ std.do! LP) _.
 
 pred map-triple i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:(C -> C1 -> prop), i:triple A B C, o:triple A1 B1 C1.
@@ -285,6 +287,10 @@ term->cs-pattern (prod _ _ _) cs-prod.
 term->cs-pattern (sort U) (cs-sort U).
 term->cs-pattern T (cs-gref GR) :- coq.term->gref T GR.
 term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
+
+
+% this one is in utils, maybe cs-pattern->name is not stdpp material
+type gref->modname-label gref -> int -> string -> string -> prop.
 
 pred cs-pattern->name i:cs-pattern, o:string.
 cs-pattern->name cs-prod "prod".

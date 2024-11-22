@@ -276,7 +276,7 @@ compute-arg-type.fields [C|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :- exported-op
   coq.env.typeof (const OP) Ty,
   coq.gref->id (const OP) ID,
   coq.subst-prod Args Ty TyArgs,
-  @pplevel! 200 => coq.term->pp TyArgs PPTy,
+  (@pplevel! 200 => coq.term->pp TyArgs PPTy),
   compute-arg-type.fields Cs NDeps Args Xs FN.
 compute-arg-type.fields [OP|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :-
   % factories don't get exported ops, so we hack their types :-/
@@ -288,7 +288,7 @@ compute-arg-type.fields [OP|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :-
   coq.subst-prod Deps TyArgs TyArgsDeps,
   coq.subst-prod [_] TyArgsDeps TyArgsDepsRecord,
   ToDrop is NDeps + 2,
-  @pplevel! 200 => coq.term->pp TyArgsDepsRecord PPTy,
+  (@pplevel! 200 => coq.term->pp TyArgsDepsRecord PPTy),
   @pi-parameter ID TyArgsDepsRecord op\
   (pi L L1 X\
     copy (app[global(const OP)|L]) X :- std.drop ToDrop L L1, coq.mk-app op L1 X) =>

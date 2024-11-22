@@ -263,8 +263,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "declare notation axioms"),
 
   if (D = asset-mixin)
-     (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) FRClauses FactAbbrev,
-      GRDepsClauses => FRClauses => declare-id-builder (indt R) IdBuilderClause,
+     ((GRDepsClauses => mk-factory-abbrev "axioms" (indt R) FRClauses FactAbbrev),
+      (GRDepsClauses => FRClauses => declare-id-builder (indt R) IdBuilderClause),
       Clauses = [IdBuilderClause|FRClauses])
      (GRDepsClauses => mk-factory-abbrev "axioms" (indt R) Clauses FactAbbrev),
 
@@ -404,7 +404,7 @@ mk-factory-sort MLwP GR (const FactorySortCst) Coe :-
   log.coq.env.add-const-noimplicits "sort" FactorySort FactorySortTy ff FactorySortCst,
   synthesis.mixins-w-params.length MLwP MLwPLength,
   std.nlist {calc (MLwPLength + 1)} implicit MLwPImplicits,
-  @global! => log.coq.arguments.set-implicit (const FactorySortCst) [MLwPImplicits],
+  (@global! => log.coq.arguments.set-implicit (const FactorySortCst) [MLwPImplicits]),
   synthesis.infer-coercion-tgt MLwP CoeClass,
   Coe = coercion (const FactorySortCst) MLwPLength GR CoeClass.
 pred mk-factory-sort.term i:gref, i:list term, i:term, o:term.
