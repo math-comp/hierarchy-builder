@@ -8,7 +8,7 @@ HB.structure Definition foo1 := { A of is_foo (option nat) A & m1 A}.
 
 
 Elpi Query HB.structure lp:{{
-std.findall (has-mixin-instance _ _ _) H
+std.findall (has-mixin-instance _ _ _) H_
 }}.
 
 (* here we don't have any declared instances but a clause is still created by the system  : 

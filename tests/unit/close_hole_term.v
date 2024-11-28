@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 From Coq Require Export Setoid.
 
 Elpi Query HB.instance lp:{{
-    X = app [{{list}}, Y],
+    X = app [{{list}}, Y_],
     % X needs to be typechecked here to get rid of the hole for the type of Y
     coq.typecheck X _ ok,
     abstract-holes.main X Z,
