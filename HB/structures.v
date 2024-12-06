@@ -1208,15 +1208,5 @@ Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
 Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
   (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
   form_scope.
-
-Notation "[find v | t1 ∼ t2 ] rest" :=
-  (fun v (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
-  form_scope.
-Notation "[find v1, .., vn | t1 ∼ t2 ] rest" :=
-  (fun v1 .. vn => fun (_ : unify t1 t2 None) => rest) (at level 0, only parsing) :
-  form_scope.
-Notation "[find v | t1 ∼ t2 | msg ] rest" :=
-  (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 0, only parsing) :
-  form_scope.
-
+  
 Global Open Scope string_scope.
