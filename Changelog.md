@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## [1.7.1] - 2024-12-06
+
+Compatible with
+- Coq 8.18 with Coq-Elpi 2.0.0
+- Coq 8.19 with Coq-Elpi 2.0.1
+- Coq 8.20 with Coq-Elpi 2.2.x and 2.3.x
 
 ### General
  - **Speedup** `HB.instance` does not try to infer classes that inherit from
