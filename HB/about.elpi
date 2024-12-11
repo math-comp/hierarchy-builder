@@ -26,7 +26,7 @@ main-located S (loc-gref (indt I)) :- factory-constructor (indt I) _, !,
 main-located S (loc-gref (const C)) :- factory-constructor (const C) _, !,
   private.main-factory-alias S C.
 
-main-located S (loc-gref (const C)) :- exported-op M _ C, !,
+main-located S (loc-gref (const C)) :- exported-op M _ _ C, !,
   private.main-operation S M C.
 
 main-located S (loc-gref GR) :- factory-alias->gref GR F, not (F = GR), !,
@@ -41,7 +41,7 @@ main-located S (loc-abbreviation A) :-
   coq.safe-dest-app T (global GR) _, !,
   main-located S (loc-gref GR).
 
-main-located S (loc-gref GR) :- from Factory Mixin GR, !,
+main-located S (loc-gref GR) :- from Factory Mixin (gref GR), !,
   private.main-builder S Factory Mixin.
 
 main-located S (loc-gref GR) :-
@@ -189,8 +189,8 @@ main-structure S Class Structure MLwP :-
   list-w-params_list MLwP ML,
   std.map-filter ML (m\r\ sigma P O OPS\
     mixin-first-class m Class,
-    std.findall (exported-op m P O) OPS,
-    std.map OPS (c\out\ sigma p\ c = exported-op m p out) r) OPLL,
+    std.findall (exported-op m P _ O) OPS,
+    std.map OPS (c\out\ sigma p\ c = exported-op m p _ out) r) OPLL,
   std.flatten OPLL Operations,
   std.map {std.findall (sub-class Class CS_ CoeS_ NS_)}
     (x\r\ x = sub-class Class r _ _) SubClasses,
@@ -272,7 +272,7 @@ compute-arg-type (w-params.nil ID Ty Rest) F Acc [] ID FN [pr ID PPTy|Xs] :-
   @pi-parameter ID Ty x\ compute-arg-type.fields F {std.length (Rest x)} {std.rev [x|Acc]} Xs FN.
 pred compute-arg-type.fields i:list constant, i:int, i:list term, o:list (pair id coq.pp), o:list id.
 compute-arg-type.fields [] _ _ [] [].
-compute-arg-type.fields [C|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :- exported-op _ C OP, !,
+compute-arg-type.fields [C|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :- exported-op _ C _ OP, !,
   coq.env.typeof (const OP) Ty,
   coq.gref->id (const OP) ID,
   coq.subst-prod Args Ty TyArgs,

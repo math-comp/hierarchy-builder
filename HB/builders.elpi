@@ -79,7 +79,7 @@ pred declare-1-builder i:builder, i:list prop, o:list prop.
 declare-1-builder (builder _ SrcFactory TgtMixin _) FromClauses FromClauses :- (FromClauses => from SrcFactory TgtMixin _), !,
   if-verbose (coq.say {header} "skipping duplicate builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
-declare-1-builder (builder _ SrcFactory TgtMixin B) FromClauses [from SrcFactory TgtMixin B|FromClauses] :-
+declare-1-builder (builder _ SrcFactory TgtMixin B) FromClauses [from SrcFactory TgtMixin (gref B)|FromClauses] :-
   if-verbose (coq.say {header} "declare builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
 

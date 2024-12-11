@@ -96,6 +96,7 @@ tests/unit/struct.v
 tests/factory_when_notation.v
 
 tests/saturate_on.v
+tests/test_primproj_ty.v
 
 -R tests HB.tests
 -R examples HB.examples
