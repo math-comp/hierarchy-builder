@@ -18,6 +18,7 @@ DIFF=\
 	fi
 
 post-all::
+	$(call DIFF, tests/err_missin_subject.v)
 	$(call DIFF, tests/compress_coe.v)
 	$(call DIFF, tests/about.v)
 	$(call DIFF, tests/howto.v)
