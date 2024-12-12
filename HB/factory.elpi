@@ -100,7 +100,7 @@ pred check-key-attribute-consistency i:id.
 check-key-attribute-consistency _ :- not(get-option "key" _), !.
 check-key-attribute-consistency ID :- get-option "key" ID, !.
 check-key-attribute-consistency ID :- get-option "key" ID1,
-  coq.error {calc ("The #[key=\"" ^ ID1 ^ "\"] attribute")}
+  coq.error "HB:" {calc ("The #[key=\"" ^ ID1 ^ "\"] attribute")}
     "does not match the selected subject" ID.
 
 pred is-key i:indt-decl.
