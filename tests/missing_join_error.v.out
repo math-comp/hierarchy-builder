@@ -1,3 +1,10 @@
+Toplevel input, character 0:
+> HB.structure Definition B2 :=  {M of isB2 M & isA2 M }.
+> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning:
+pulling in dependencies: [missing_join_error_isTop] 
+Please list them or end the declaration with '&'
+[HB.implicit-structure-dependency,HB,elpi,default]
 The command has indeed failed with message:
 You must declare the hierarchy bottom-up or add a missing join. 
 There are two ways out: 
