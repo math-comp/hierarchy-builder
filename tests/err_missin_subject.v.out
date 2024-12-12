@@ -1,5 +1,5 @@
-HB: The command has indeed failed with message:
-The instance subject must be explicitly given.
+The command has indeed failed with message:
+HB: The instance subject must be explicitly given.
 Use:
   HB.instance Definition _ : M <subject> := ...
   HB.instance Definition _ := M.Build <subject> ...
