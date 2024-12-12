@@ -27,3 +27,4 @@ post-all::
 	$(call DIFF, tests/not_same_key.v)
 	$(call DIFF, tests/hnf.v)
 	$(call DIFF, tests/err_miss_dep.v)
+	$(call DIFF, tests/err_bad_mix.v)
