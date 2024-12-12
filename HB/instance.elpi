@@ -61,7 +61,7 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
   std.drop NParams Args [TheType|_],
 
   if (var TheType)
-    (coq.error "The instance subject must be explicitly given.\nUse:\n  HB.instance Definition _ : M <subject> := ...\n  HB.instance Definition _ := M.Build <subject> ...")
+    (coq.error "HB: The instance subject must be explicitly given.\nUse:\n  HB.instance Definition _ : M <subject> := ...\n  HB.instance Definition _ := M.Build <subject> ...")
     true,
 
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
