@@ -172,7 +172,11 @@ infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
 pred decl-const-in-struct i:string, i:term, i:term, i:constant.
 decl-const-in-struct Name S STy CS:- std.do![
 
-  log.coq.env.add-const-noimplicits Name S STy @transparent! CS, % Bug coq/coq#11155, could be a Let
+  if (ground_term S) (S1 = S, STy1 = STy)
+    (abstract-holes.main S S1,
+     std.assert-ok! (coq.typecheck S1 STy1) "HB: structure instance illtyped after generalizing over holes"),
+
+  log.coq.env.add-const-noimplicits Name S1 STy1 @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
   acc-clause current (local-canonical CS),
   if-verbose (coq.say {header} "structure instance" Name "declared"),
