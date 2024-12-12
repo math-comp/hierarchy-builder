@@ -15,7 +15,7 @@ HB.structure Definition B2 (X : Type) := {T of A2 X T}.
 Module should_work_but_fails.
 HB.structure Definition B (X : S.type) := {T of A1 X T & A2 X T}.
 #[verbose] HB.instance Definition _ (X : Type) := A2.Build X unit true.
-HB.saturate unit.
+(*HB.saturate unit.*)
 Check unit : B.type _.
 End should_work_but_fails.
 

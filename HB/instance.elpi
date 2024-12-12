@@ -66,14 +66,18 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   private.check-non-forgetful-inheritance TheType Factory,
 
-  private.declare-instance Factory TheType TheFactory Clauses CSL,
+  private.declare-instance Factory TheType TheFactory Clauses CSL1,
 
   % handle parameters via a section -- end
   if (TyWP = arity _) true (
     if-verbose (coq.say {header} "closing instance section"),
     log.coq.env.end-section-name SectionName
   ),
-
+coq.say "HERE",
+  (Clauses => saturate-instances2 {term->cs-pattern TheType} CSL2),
+  
+  std.append CSL1 CSL2 CSL,
+  
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses
 ].
@@ -117,9 +121,10 @@ declare-all-on-type-constructor TK [class Class Struct MLwP|Rest] [pr Name CS|L]
 
   %TODO: compute the arity of the Class subject and saturate up to that point
   %      there may even be more than one possibility
-  saturate-type-constructor TK T,
+  std.spy(coq.env.typeof Class ClassTy),
+  std.spy (saturate-type-constructor TK T),
 
-  infer-class T Class Struct MLwP S Name _STy Clauses,
+  std.spy (infer-class T Class Struct MLwP S Name _STy Clauses),
 
   !,
 
@@ -267,6 +272,26 @@ saturate-instances Filter :- std.do! [
     declare-all-on-type-constructor t Classes _),
 ].
 
+pred saturate-instances2 i:cs-pattern o:list (pair id constant).
+saturate-instances2 Filter CSL :- std.spy-do! [
+
+  findall-has-mixin-instance Filter ClausesHas,
+
+  std.map ClausesHas has-mixin-instance_key KL,
+  undup-cs-patterns KL UKL,
+  std.map UKL cs-pattern->term TL,
+
+  findall-classes AllClasses,
+
+  std.map ClausesHas has-mixin-instance->mixin-src Clauses,
+  
+  Clauses => std.map2 TL UKL (t\k\r\sigma Classes\
+    std.filter AllClasses (no-instance-for k) Classes,
+    std.spy(declare-all-on-type-constructor t Classes r)) CSLL,
+
+  std.flatten CSLL CSL,
+].
+
 pred no-instance-for i:cs-pattern, i:class.
 no-instance-for K (class _ S _) :-
   get-structure-sort-projection S (global Proj),
@@ -388,10 +413,10 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CSL :- std.do! [
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML tt Clauses MCSL,
       std.map-filter Clauses (mixin-src->has-mixin-instance ) ClausesHas,
-      ClausesHas => declare-all T {findall-classes-for ML} CCSL, % declare-all-on-type-constructor doesn't work here
+      % ClausesHas => declare-all T {findall-classes-for ML} CCSL, % declare-all-on-type-constructor doesn't work here
     ]
   ],
-  std.append MCSL CCSL CSL
+  std.append MCSL [] CSL
 ].
 
 % If you don't mention the factory in a builder, then Coq won't make
