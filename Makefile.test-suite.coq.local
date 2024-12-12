@@ -21,6 +21,7 @@ post-all::
 	$(call DIFF, tests/compress_coe.v)
 	$(call DIFF, tests/about.v)
 	$(call DIFF, tests/howto.v)
+	$(call DIFF, tests/err_miss_key.v)
 	$(call DIFF, tests/missing_join_error.v)
 	$(call DIFF, tests/not_same_key.v)
 	$(call DIFF, tests/hnf.v)
