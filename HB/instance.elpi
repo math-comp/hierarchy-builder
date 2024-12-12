@@ -42,7 +42,8 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
 
   % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
-  factory-alias->gref FactoryAlias Factory,
+  if (factory-alias->gref FactoryAlias Factory) true
+     (coq.error "HB:" {coq.term->string (global FactoryAlias)} "is not a factory or its library was not correctly imported"),
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
 
   % declare the constant for the factory instance
