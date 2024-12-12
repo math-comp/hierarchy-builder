@@ -96,19 +96,26 @@ kind asset type.
 type asset-mixin asset.
 type asset-factory asset.
 
+pred check-key-attribute-consistency i:id.
+check-key-attribute-consistency _ :- not(get-option "key" _), !.
+check-key-attribute-consistency ID :- get-option "key" ID, !.
+check-key-attribute-consistency ID :- get-option "key" ID1,
+  coq.error "HB:" {calc ("The #[key=\"" ^ ID1 ^ "\"] attribute")}
+    "does not match the selected subject" ID.
+
 pred is-key i:indt-decl.
 pred is-key i:arity.
 pred is-key i:context-decl.
-is-key (parameter _ _ _ _\ record _ _ _ _) :- !.
-is-key (parameter _ _ _ _\ inductive _ _ _ _) :- !.
-is-key (parameter _ _ _ _\ arity _) :- !.
-is-key (context-item _ _ _ _ _\ context-end) :- !.
+is-key (parameter ID _ _ _\ record _ _ _ _) :- !, check-key-attribute-consistency ID.
+is-key (parameter ID _ _ _\ inductive _ _ _ _) :- !, check-key-attribute-consistency ID.
+is-key (parameter ID _ _ _\ arity _) :- !, check-key-attribute-consistency ID.
+is-key (context-item ID _ _ _ _\ context-end) :- !, check-key-attribute-consistency ID.
 is-key (parameter ID _ _ _) :- get-option "key" ID, !.
 is-key (context-item ID _ _ _ _) :- get-option "key" ID, !.
-is-key (parameter _ _ _ p\ parameter _ _ (M p) _) :-
-  pi p\ factory? (M p) _, !.
-is-key (context-item _ _ _ _ p\ context-item _ _ (M p) _ _) :-
-  pi p\ factory? (M p) _, !.
+is-key (parameter ID _ _ p\ parameter _ _ (M p) _) :-
+  pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
+is-key (context-item ID _ _ _ p\ context-item _ _ (M p) _ _) :-
+  pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
 
 pred mixin-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
   i:(A -> pair (list (w-args mixinname)) A -> prop),
