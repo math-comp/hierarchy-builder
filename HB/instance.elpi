@@ -169,7 +169,9 @@ infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
   private.optimize-class-body THD {std.length Params} KCApp KCAppNames Clauses,
   coq.mk-app (global KS) {std.append Params [T, KCAppNames]} S,
   if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
-  std.assert-ok! (coq.typecheck S STy) "infer-class: S illtyped",
+
+  coq.typecheck S STy ok, % failure may be due to a parameter not rich enough see #435
+     
 ].
 
 pred decl-const-in-struct i:string, i:term, i:term, i:constant.
