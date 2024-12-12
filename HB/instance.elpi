@@ -57,12 +57,16 @@ declare-const Name BodySkel TyWPSkel CSL :- std.do! [
     UnfoldClauses => copy SectionTy SectionTyUnfolded,
   ]) (SectionTy = SectionTyUnfolded),
 
+  % call HB.instance TheType TheFactory
+  std.drop NParams Args [TheType|_],
+
+  if (var TheType)
+    (coq.error "The instance subject must be explicitly given.\nUse:\n  HB.instance Definition _ : M <subject> := ...\n  HB.instance Definition _ := M.Build <subject> ...")
+    true,
+
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
   TheFactory = (global (const C)),
-
-  % call HB.instance TheType TheFactory
-  std.drop NParams Args [TheType|_],
 
   private.check-non-forgetful-inheritance TheType Factory,
 
