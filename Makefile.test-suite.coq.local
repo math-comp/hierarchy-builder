@@ -24,3 +24,4 @@ post-all::
 	$(call DIFF, tests/missing_join_error.v)
 	$(call DIFF, tests/not_same_key.v)
 	$(call DIFF, tests/hnf.v)
+	$(call DIFF, tests/err_miss_dep.v)
