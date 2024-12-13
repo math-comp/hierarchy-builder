@@ -24,12 +24,13 @@
   in {
     "coq-master".coqPackages = mcHBcommon // {
       coq.override.version = "master";
+      stdlib.override.version = "master";
       coq-elpi.override.version = "master";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
       coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
     };
-    "coq-master".ocamlPackages = { elpi.override.version = "1.19.2"; };
+    "coq-master".ocamlPackages = { elpi.override.version = "2.0.6"; };
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";

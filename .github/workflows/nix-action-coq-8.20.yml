@@ -29,7 +29,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -53,9 +53,9 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "mathcomp-ssreflect"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq-ext-lib'
+      name: 'Building/fetching previous CI target: ExtLib'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
-        --argstr job "coq-ext-lib"
+        --argstr job "ExtLib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: simple-io'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -94,7 +94,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -149,7 +149,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -198,7 +198,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -257,7 +257,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -330,7 +330,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -387,7 +387,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -446,7 +446,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -510,7 +510,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -569,7 +569,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -648,7 +648,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -667,6 +667,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: mathcomp-ssreflect'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -731,7 +735,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -750,6 +754,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: mathcomp-ssreflect'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -799,7 +807,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -870,7 +878,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -935,7 +943,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -997,7 +1005,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1016,6 +1024,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: mathcomp-ssreflect'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -1076,7 +1088,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1143,7 +1155,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1212,7 +1224,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1231,6 +1243,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: mathcomp-ssreflect'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -1286,7 +1302,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1305,6 +1321,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: mathcomp-ssreflect'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -1347,7 +1367,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1409,7 +1429,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1487,7 +1507,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1549,7 +1569,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1610,7 +1630,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1629,6 +1649,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: hierarchy-builder'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -1670,7 +1694,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1689,6 +1713,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: mathcomp-ssreflect'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -1739,7 +1767,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1758,6 +1786,10 @@ jobs:
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
+        --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: hierarchy-builder'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
@@ -1800,7 +1832,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1879,7 +1911,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -1960,7 +1992,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp
@@ -2017,7 +2049,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.tested_commit }}
     - name: Cachix install
-      uses: cachix/install-nix-action@v27
+      uses: cachix/install-nix-action@v30
       with:
         nix_path: nixpkgs=channel:nixpkgs-unstable
     - name: Cachix setup math-comp

@@ -1,8 +1,3 @@
-Toplevel input, character 0:
-> From Coq Require Import ZArith ssrfun ssreflect.
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Warning: "From Coq" has been replaced by "From Stdlib".
-[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
 HB: AddMonoid_of_TYPE is a factory
     (from "./examples/demo1/hierarchy_5.v", line 10)
 HB: AddMonoid_of_TYPE operations and axioms are:
