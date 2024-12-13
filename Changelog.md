@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.8.0] - 2024-12-13
+## [1.8.0] - 2024-12-14
 
 Compatible with
 - Coq 8.18 with Coq-Elpi 2.0.0
