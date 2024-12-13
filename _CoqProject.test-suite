@@ -99,6 +99,9 @@ tests/saturate_on.v
 tests/bug_435.v
 tests/bug_447.v
 
+tests/unimported_relevant_class.v
+tests/unimported_irrelevant_class.v
+
 -R tests HB.tests
 -R examples HB.examples
 

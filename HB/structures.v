@@ -129,9 +129,14 @@ pred phant-abbrev o:gref, o:gref, o:abbreviation.
 % [factory-alias->gref X GR] when X is already a factory X = GR
 % however, when X is a phantom abbreviated gref, we find the underlying
 % factory gref GR associated to it.
-pred factory-alias->gref i:gref, o:gref.
-factory-alias->gref PhGR GR :- phant-abbrev GR PhGR _, !.
-factory-alias->gref GR GR :- phant-abbrev GR _ _, !.
+pred factory-alias->gref i:gref, o:gref, o: diagnostic.
+factory-alias->gref PhGR GR ok :- phant-abbrev GR PhGR _, !.
+factory-alias->gref GR GR ok :- phant-abbrev GR _ _, !.
+factory-alias->gref GR _ (error Msg) :- !,
+  Msg is {coq.term->string (global GR)} ^
+         " is not a factory or its library (" ^
+        { std.string.concat "." {std.drop-last 1 {coq.gref->path GR} } } ^
+        ") was not correctly imported".
 
 %%%%% Cache of known facts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -230,6 +235,7 @@ pred current-mode o:declaration.
 pred module-to-export   o:string, o:id, o:modpath.
 pred instance-to-export o:string, o:id, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
+pred clause-to-export   o:string, o:prop.
 
 %% database for HB.locate and HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -268,7 +274,7 @@ Elpi Accumulate lp:{{
 main [str S] :- !,
   if (decl-location {coq.locate S} Loc)
      (coq.say "HB: synthesized in file" Loc)
-     (coq.say "HB:" S "not synthesized by HB").
+     (coq.say "HB" S "not synthesized by HB").
 
 main _ :- coq.error "Usage: HB.locate <name>.".
 }}.
@@ -482,7 +488,7 @@ actions N :-
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)).
 
 main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
-  
+
 main _ :-
   coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
 }}.
@@ -495,7 +501,7 @@ Elpi Export HB.mixin.
 
 (** [HB.pack] and [HB.pack_for] are tactic-in-term synthesizing a structure
     instance.
-    
+
     In the middle of a term, in a context expecting a [Structure.type],
     you can write [HB.pack T F] to use factory [F] to equip type [T] with
     [Structure]. If [T] is already a rich type, eg [T : OtherStructure.type]
@@ -504,7 +510,7 @@ Elpi Export HB.mixin.
 
     If the context does not impose a [Structure.type] typing constraint, then
     you can use [HB.pack_for Structure.type T F].
-    
+
     You can pass zero or more factories like [F] but they must all typecheck
     in the current context (the type is not enriched progressively).
     Structure instances are projected to their class in order to obtain a
@@ -645,7 +651,7 @@ Elpi Accumulate lp:{{
 main [const-decl N (some B) Arity] :- std.do! [
   % compute the universe for the structure (default )
   prod-last {coq.arity->term Arity} Ty,
-  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort, 
+  if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
   with-attributes (with-logging (structure.declare N B Univ)),
 ].
 
@@ -686,7 +692,7 @@ actions-compat ModuleName :-
   true.
 
 main [const-decl N _ _] :- !, with-attributes (actions N).
-  
+
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
 Elpi Typecheck.
@@ -839,7 +845,7 @@ actions N :-
 
 main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
 main [const-decl N _ _] :- with-attributes (actions N).
-  
+
 main _ :-
   coq.error "Usage: HB.factory Record <FactoryName> T of F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
 }}.
@@ -916,7 +922,7 @@ actions N :-
     begin-section N.
 
 main [ctx-decl _] :- !, with-attributes (actions {calc ("Builders_" ^ {std.any->string {new_int} })}).
-  
+
 main _ :- coq.error "Usage: HB.builders Context A (f : F1 A).".
 }}.
 Elpi Typecheck.
@@ -1208,5 +1214,5 @@ Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
 Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
   (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
   form_scope.
-  
+
 Global Open Scope string_scope.

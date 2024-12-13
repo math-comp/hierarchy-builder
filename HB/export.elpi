@@ -25,6 +25,11 @@ export.abbrev NiceName GR :- !,
   coq.env.current-library File,
   acc-clause current (abbrev-to-export File NiceName GR).
 
+pred export.clause i:prop.
+export.clause Clause :- !,
+  coq.env.current-library File,
+  acc-clauses current [Clause, clause-to-export File Clause].
+
 pred export.reexport-all-modules-and-CS i:option string.
 export.reexport-all-modules-and-CS Filter :- std.do! [
   coq.env.current-library File,
@@ -56,6 +61,11 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 
   if-verbose (coq.say {header} "exporting Abbreviations" AbbNames),
   std.forall2 AbbNames AbbBodies (n\b\@global! => log.coq.notation.add-abbreviation n 0 b ff _),
+
+  std.findall (clause-to-export File Clause_) ClausesL,
+  if-verbose (coq.say {header} "exporting Clauses" Clauses),
+  std.map ClausesL clause-to-export_clause Clauses,
+  acc-clauses current Clauses
 
 ].
 
