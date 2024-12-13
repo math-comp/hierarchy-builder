@@ -1,5 +1,4 @@
 Interactive Module Test started
 Interactive Module Exports started
 The command has indeed failed with message:
-HB: Test.Mixin.axioms_ 
-is not a factory or its library was not correctly imported
+HB: Test.Mixin.axioms_ is not a factory or its library (HB.tests.err_bad_mix.Test) was not correctly imported

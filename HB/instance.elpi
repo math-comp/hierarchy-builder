@@ -13,7 +13,7 @@ declare-existing T0 F0 :- std.do! [
     "HB: declare-existing illtyped factory instance",
   std.assert! (coq.safe-dest-app FTy (global FactoryAlias) _)
      "The type of the instance is not a factory",
-  factory-alias->gref FactoryAlias Factory,
+  std.assert-ok! (factory-alias->gref FactoryAlias Factory) "HB: ",
   private.declare-instance Factory T F Clauses _ _,
   acc-clauses current Clauses,
 ].
@@ -43,8 +43,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
 
   % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
-  if (factory-alias->gref FactoryAlias Factory) true
-     (coq.error "HB:" {coq.term->string (global FactoryAlias)} "is not a factory or its library was not correctly imported"),
+  std.assert-ok! (factory-alias->gref FactoryAlias Factory) "HB",
   std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
 
   % declare the constant for the factory instance
@@ -221,7 +220,7 @@ pred context.declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:
 
 pred mk-factory-sort-deps i:gref, o:list (pair id constant).
 mk-factory-sort-deps AliasGR CSL :- std.do! [
-  factory-alias->gref AliasGR GR,
+  std.assert-ok! (factory-alias->gref AliasGR GR) "HB: mk-factory-sort-deps",
   gref-deps GR MLwPRaw,
   context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
@@ -246,7 +245,7 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
 
 pred mk-factory-sort-factory i:gref, o:list (pair id constant), o:list (pair id constant).
 mk-factory-sort-factory AliasGR CFL CSL :- std.do! [
-  factory-alias->gref AliasGR GR,
+  std.assert-ok! (factory-alias->gref AliasGR GR) "HB",
   gref-deps GR MLwPRaw,
   context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
   SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
@@ -321,7 +320,7 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
 
   std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
   safe-dest-app Ty (global MixinNameAlias) _,
-  factory-alias->gref MixinNameAlias MixinName,
+  std.assert-ok! (factory-alias->gref MixinNameAlias MixinName) "HB",
 
   std.assert! (MissingMixin = MixinName) "HB: anomaly: we built the wrong mixin",
 
