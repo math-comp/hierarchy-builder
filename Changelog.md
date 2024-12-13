@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.8.0] - 2024-12-13
+
+Compatible with
+- Coq 8.18 with Coq-Elpi 2.0.0
+- Coq 8.19 with Coq-Elpi 2.0.1
+- Coq 8.20 with Coq-Elpi 2.2.x and 2.3.x
+
+### General
+- **Bugfixes** several error messages have been fixed to display more
+  faithful error messages.
+- **New warning** in case no instance is created.
+- **Bugfixes** the regression which forbad dependent functions to be
+  instances has been fixed.
+
 ## [1.7.1] - 2024-12-06
 
 Compatible with
