@@ -1,3 +1,5 @@
-Toplevel input, character 155:
+Toplevel input, character 0:
+> HB.instance Definition _ : M nat := M.Build nat.
+> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Warning: HB: no new instance is generated
 [HB.no-new-instance,HB,elpi,default]

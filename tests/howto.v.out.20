@@ -1,8 +1,3 @@
-Toplevel input, character 0:
-> From Coq Require Import ZArith ssrfun ssreflect.
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Warning: "From Coq" has been replaced by "From Stdlib".
-[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
 HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):
     - Ring_of_TYPE
     - AddAG_of_TYPE; BiNearRing_of_AddMonoid
