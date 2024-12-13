@@ -1,2 +1,9 @@
+Toplevel input, character 0:
+> HB.structure Definition AbelianGrp := { A of IsAbelianGrp A }.
+> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning:
+pulling in dependencies: [err_miss_dep_IsAddComoid] 
+Please list them or end the declaration with '&'
+[HB.implicit-structure-dependency,HB,elpi,default]
 The command has indeed failed with message:
 HB: Unable to find mixin err_miss_dep_IsAddComoid on subject K

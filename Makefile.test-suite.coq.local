@@ -10,7 +10,9 @@ DIFF=\
 	@if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	echo OUTPUT DIFF $(1);\
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile $(1) \
-	  < $(1) 2>/dev/null \
+	  < $(1) 2>&1 \
+	  | sed 's/Coq < *//g' \
+	  | grep -v '^$$' \
 	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
 	  | sed 's/characters \([0-9]\+\)-[0-9]\+/character \1/' \
 	  > $(1).out.aux;\
@@ -28,3 +30,4 @@ post-all::
 	$(call DIFF, tests/hnf.v)
 	$(call DIFF, tests/err_miss_dep.v)
 	$(call DIFF, tests/err_bad_mix.v)
+	$(call DIFF, tests/err_instance_nop.v)
