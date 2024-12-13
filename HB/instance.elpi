@@ -429,7 +429,7 @@ optimize-class-body _ _ (app L) (app L) [].
 pred declare-mixin-name i:term, o:term, o:list prop.
 declare-mixin-name (global _ as T) T [].
 declare-mixin-name T (global GR) [] :- mixin-mem T GR.
-declare-mixin-name T T [] :- coq.safe-dest-app T (global GR) _, not (from _ _ GR), not (get-option "hnf" tt).
+declare-mixin-name T T [] :- coq.safe-dest-app T (global GR) _, not (from _ _ (gref GR)), not (get-option "hnf" tt).
 declare-mixin-name T (global (const C)) [mixin-mem T (const C)] :- std.do! [
   Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
   if-verbose (coq.say {header} "Giving name" Name "to mixin instance" {coq.term->string T}),

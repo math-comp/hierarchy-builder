@@ -172,7 +172,7 @@ cdecl->w-mixins.mixins (context-item ID _ TySkel none Rest) Out :- !,
 
 % The identity builder
 pred declare-id-builder i:factoryname, o:prop.
-declare-id-builder GR (from GR GR (const C)) :- std.do! [
+declare-id-builder GR (from GR GR (gref (const C))) :- std.do! [
   gref-deps GR GRD,
   synthesis.mixins-w-params.fun GRD (declare-id-builder.aux GR) IDBodySkel,
   std.assert-ok! (coq.elaborate-skeleton IDBodySkel IDType IDBody) "identity builder illtyped",
@@ -238,8 +238,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
-
-  if (get-option "primitive" tt)
+  % TODO cleanup
+  if (get-option "primitive" tt ; (not(get-option "primitive" ff) , not(Fields = end-record)))
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
     (log.coq.env.add-indt RDeclClosed R),
 

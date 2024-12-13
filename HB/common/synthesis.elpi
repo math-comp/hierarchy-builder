@@ -223,13 +223,15 @@ mixin-for_mixin-builder (mixin-for _ _ B) B.
 % and fills in all the mixins required by the builder using mixin-src, obtaining
 % a function (MF = Builder Params TheType InferredStuff : Src -> Tgt)
 pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
-builder->term Ps T Src Tgt B :- !, std.do! [
-  from Src Tgt FGR,
+builder->term Ps T Src Tgt B :- from Src Tgt (gref FGR), !, std.do! [
   F = global FGR,
   gref-deps Src MLwP,
   list-w-params_list MLwP ML,
   infer-all-these-mixin-args Ps T ML F B,
 ].
+builder->term _ _ Src Tgt (primitive (proj P N)) :-
+  % no deps, Src is a class
+  from Src Tgt (primitive (pr P N)).
 
 % [instantiate-all-these-mixin-args T F M_i TFX] where mixin-for T M_i X_i states that
 % if    F  ~  fun xs (m_0 : M_0 T) .. (m_n : M_n T ..) ys
