@@ -100,7 +100,7 @@ declare-shadowed-located Id (loc-abbreviation Abbrev) :-
 
 pred postulate-factory-abbrev i:term, i:list term, i:id, i:factoryname, o:term.
 postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
-  factory-alias->gref Falias F,
+  std.assert-ok! (factory-alias->gref Falias F) "HB",
   phant-abbrev F _ Fabv,
   coq.notation.abbreviation Fabv {std.append Params [TheType]} Package,
   Msg is "Unable to declare factory " ^ Name,

@@ -13,13 +13,13 @@ kind factory-abbrev type.
 type by-classname gref -> factory-abbrev.
 type by-phantabbrev abbreviation -> factory-abbrev.
 
-pred declare-abbrev i:id, i:factory-abbrev.
-declare-abbrev Name (by-classname GR) :-
+pred declare-abbrev i:id, i:factory-abbrev, o:abbreviation.
+declare-abbrev Name (by-classname GR) Abbrev :-
   % looks fishy (the parameters are not taken into account)
-  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt _.
-declare-abbrev Name (by-phantabbrev Abbr) :- std.do! [
+  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt Abbrev.
+declare-abbrev Name (by-phantabbrev Abbr) Abbrev :- std.do! [
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
-  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt _,
+  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt Abbrev,
 ].
 
 pred argument->w-mixins i:argument, o:w-mixins argument.
@@ -186,7 +186,7 @@ declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
 % FactAbbrev is the short name for the factory (either an alias of the class record)
 pred mk-factory-abbrev i:string, i:gref, o:list prop, o:factory-abbrev.
 mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
-  if (factory-alias->gref GR _)
+  if (factory-alias->gref GR _ ok)
      (Aliases = [],
       FactAbbrev = by-classname GR)
      (phant.of-gref ff GR [] PhTerm,
@@ -303,7 +303,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
-  GRDepsClauses => declare-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-abbrev Module FactAbbrev _,
 ].
 
 
@@ -319,7 +319,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
 
   std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
-  std.assert! (factory-alias->gref PhF F) "BUG: Factory alias declaration missing",
+  std.assert-ok! (factory-alias->gref PhF F) "HB",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
   MixinSrcClauses => synthesis.infer-all-gref-deps TheParams TheType FK MFK,
@@ -375,7 +375,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
-  GRDepsClauses => declare-abbrev Module FactAbbrev,
+  GRDepsClauses => declare-abbrev Module FactAbbrev _,
 ].
 
 % [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P

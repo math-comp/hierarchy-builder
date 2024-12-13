@@ -41,7 +41,7 @@ declare Module BSkel Sort :- std.do! [
     ClassName Structure SortProjection ClassProjection Factories StructKeyClause,
 
   w-params.map MLwP (_\_\_\ mk-nil) NilwP,
-  ClassAlias = (factory-alias->gref ClassName ClassName),
+  ClassAlias = (factory-alias->gref ClassName ClassName ok),
   CurrentClass = (class ClassName Structure MLwP),
   ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
   GRDepsClauses =
@@ -122,9 +122,14 @@ declare Module BSkel Sort :- std.do! [
     ])
     (coq.say "declare:" ClassName "should be an inductive", fail),
 
+
+  ClassAlias => 
+    factory.declare-abbrev Module (factory.by-classname ClassName) ClassAbbrev,
+
   if-verbose (coq.say {header} "accumulating various props"),
   std.flatten [
-      Factories, [ClassAlias], [is-structure Structure],
+      Factories,
+      [phant-abbrev ClassName ClassName ClassAbbrev, is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
       [gref-deps GRPack MLwP], MixinMems, [StructKeyClause]
     ]
@@ -176,8 +181,6 @@ declare Module BSkel Sort :- std.do! [
   export.module ElpiOperationModName ElpiOperations,
 
   if-verbose (coq.say {header} "abbreviation factory-by-classname"),
-
-  NewClauses => factory.declare-abbrev Module (factory.by-classname ClassName),
 
   NewClauses => if-MC-compat (private.mc-compat-structure Module ModulePath MLToExport
     {w-params.nparams MLwP} ClassProjection GRPack),

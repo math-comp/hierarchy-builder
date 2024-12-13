@@ -29,7 +29,7 @@ main-located S (loc-gref (const C)) :- factory-constructor (const C) _, !,
 main-located S (loc-gref (const C)) :- exported-op M _ C, !,
   private.main-operation S M C.
 
-main-located S (loc-gref GR) :- factory-alias->gref GR F, not (F = GR), !,
+main-located S (loc-gref GR) :- factory-alias->gref GR F ok, not (F = GR), !,
   main-located S (loc-gref F).
 
 main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructor (indt F) GR, !,
