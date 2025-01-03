@@ -290,7 +290,7 @@ term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
 
 
 % this one is in utils, maybe cs-pattern->name is not stdpp material
-type gref->modname-label gref -> int -> string -> string -> prop.
+pred gref->modname-label i:gref, i:int, i:string, o:string.
 
 pred cs-pattern->name i:cs-pattern, o:string.
 cs-pattern->name cs-prod "prod".
