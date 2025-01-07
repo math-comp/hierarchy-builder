@@ -71,7 +71,7 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
 pred env.add-section-variable-noimplicits i:id, i:term, o:constant.
 env.add-section-variable-noimplicits Name Ty C :- std.do! [
   if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
-  @local! => coq.env.add-section-variable ID Ty C,
+  @local! => coq.env.add-section-variable ID _ Ty C,
   log.private.log-vernac (log.private.coq.vernac.variable ID Ty),
   @local! => arguments.set-implicit (const C) [[]],
 ].
