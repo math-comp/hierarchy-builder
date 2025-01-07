@@ -67,7 +67,7 @@ let
       {
         case = "8.20";
         out = {
-          version = "1.19.2";
+          version = "2.0.6";
         };
       }
     ] { }
@@ -81,7 +81,7 @@ in
   defaultVersion = lib.switch coq.coq-version [
     {
       case = "8.20";
-      out = "2.2.0";
+      out = "#737";
     }
     {
       case = "8.19";
