@@ -12,8 +12,9 @@ DIFF=\
 	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile $(1) \
 	  < $(1) 2>&1 \
 	  | sed 's/Coq < *//g' \
+	  | sed 's/Rocq < *//g' \
 	  | grep -v '^$$' \
-	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" \
+	  | grep -v -e "Skipping rcfile" -e "is declared" -e "is defined" -e "Loading ML file" -e "Welcome to Coq" -e "Welcome to Rocq" \
 	  | sed 's/characters \([0-9]\+\)-[0-9]\+/character \1/' \
 	  > $(1).out.aux;\
 	diff -u --strip-trailing-cr $(call output_for,$(1)) $(1).out.aux;\
