@@ -1,0 +1,8 @@
+pred log.coq.env.add-section-variable-noimplicits i:id, i:term, o:constant.
+log.coq.env.add-section-variable-noimplicits Name Ty C :- std.do! [
+  if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
+  @local! => coq.env.add-section-variable ID Ty C,
+  log.private.log-vernac (log.private.coq.vernac.variable ID Ty),
+  @local! => log.coq.arguments.set-implicit (const C) [[]],
+].
+
