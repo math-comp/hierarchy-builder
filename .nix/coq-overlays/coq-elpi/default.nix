@@ -67,7 +67,7 @@ let
       {
         case = "8.20";
         out = {
-          version = "1.19.2";
+          version = "2.0.7";
         };
       }
     ] { }
