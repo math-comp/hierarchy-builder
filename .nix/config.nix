@@ -34,7 +34,6 @@
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
-      ocamlPackages = { elpi.override.version = "2.0.7"; };
     };
 
     "coq-8.19".coqPackages = mcHBcommon // {
