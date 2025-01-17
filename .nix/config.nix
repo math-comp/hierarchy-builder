@@ -26,14 +26,16 @@
       coq.override.version = "master";
       stdlib.override.version = "master";
       coq-elpi.override.version = "master";
+      coq-elpi.override.elpi-version = "2.0.7";
       bignums.override.version = "master";
       paramcoq.override.version = "master";
       coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
     };
-    "coq-master".ocamlPackages = { elpi.override.version = "2.0.7"; };
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
+      coq-elpi.override.version = "2.4.0";
+      coq-elpi.override.elpi-version = "2.0.7";
     };
 
     "coq-8.19".coqPackages = mcHBcommon // {
