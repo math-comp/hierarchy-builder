@@ -28,7 +28,6 @@
       coq-elpi.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
       bignums.override.version = "master";
-      paramcoq.override.version = "master";
     };
 
     "coq-9.0".coqPackages = mcHBcommon // {
