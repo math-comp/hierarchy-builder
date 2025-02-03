@@ -19,8 +19,7 @@
       mathcomp-bigenough.override.version = "master";
       multinomials.override.version = "master";
       mathcomp-real-closed.override.version = "master";
-      # coqeal.override.version = "master";
-      coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
+      coqeal.override.version = "master";
     };
   in {
     "coq-master".coqPackages = mcHBcommon // {
@@ -34,24 +33,26 @@
 
     "coq-9.0".coqPackages = mcHBcommon // {
       coq.override.version = "9.0";
-      coq-elpi.override.version = "v2.4.0";
+      coq-elpi.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
     };
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
-      coq-elpi.override.version = "v2.4.0";
+      coq-elpi.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
     };
 
     "coq-8.19".coqPackages = mcHBcommon // {
       coq.override.version = "8.19";
+      coqeal.job = false;  # requries Coq >= 8.20 through coq-elpi master
     };
 
     "coq-8.18".coqPackages = mcHBcommon // {
       coq.override.version = "8.18";
       mathcomp-classical.job = false;  # Analysis master dropped suppor for 8.18
       mathcomp-analysis.job = false;
+      coqeal.job = false;  # requries Coq >= 8.20 through coq-elpi master
     };
 
   };
