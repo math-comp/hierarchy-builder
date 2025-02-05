@@ -158,7 +158,7 @@ opam install coq-hierarchy-builder
   - `HB.check` is similar to `Check` (testing purposes)
 
 The documentation of all commands can be found in the comments of
-[structures.v](structures.v), search for `Elpi Command` and you will
+[structures.v](HB/structures.v), search for `Elpi Command` and you will
 find them. All commands can be prefixed with the attribute `#[verbose]`
 to get an idea of what they are doing.
 
