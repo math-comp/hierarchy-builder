@@ -13,8 +13,9 @@
 #                                                                    #
 # Additionally, the following variables may be customized:           #
 SUBDIRS?=
-COQBIN?=$(dir $(shell which coqtop))
-COQMAKEFILE?=$(COQBIN)coq_makefile
+COQBIN?=$(dir $(shell command -v coqtop || command -v rocq))
+COQTOP=$(shell command -v coqtop || echo "$(COQBIN)rocq repl")
+COQMAKEFILE?=$(shell command -v coq_makefile || echo "$(COQBIN)rocq makefile")
 COQDEP?=$(COQBIN)coqdep
 COQPROJECT?=_CoqProject
 COQMAKEOPTIONS?=
@@ -32,14 +33,14 @@ H:= $(if $(VERBOSE),,@)  # not used yet
 TOP     = $(dir $(lastword $(MAKEFILE_LIST)))
 COQMAKE = $(MAKE) -f Makefile.coq $(COQMAKEOPTIONS)
 COQMAKE_TESTSUITE = $(MAKE) -f Makefile.test-suite.coq $(COQMAKEOPTIONS)
-BRANCH_coq:= $(shell $(COQBIN)coqtop -v | head -1 | grep -E '(trunk|master)' \
+BRANCH_coq:= $(shell $(COQTOP) -v | head -1 | grep -E '(trunk|master)' \
 	      | wc -l | sed 's/ *//g')
 
 # coq version:
 ifneq "$(BRANCH_coq)" "0"
 COQVVV:= dev
 else
-COQVVV:=$(shell $(COQBIN)coqtop --print-version | cut -d" " -f1)
+COQVVV:=$(shell $(COQTOP) --print-version | cut -d" " -f1)
 endif
 
 COQV:= $(shell echo $(COQVVV) | cut -d"." -f1)
@@ -48,7 +49,7 @@ COQVV:= $(shell echo $(COQVVV) | cut -d"." -f1-2)
 ifneq "$(DESTDIR)" ""
 HB_INSTALLDIR := $(DESTDIR)/bin
 else
-HB_INSTALLDIR := $(dir $(shell which $(COQBIN)coqc))
+HB_INSTALLDIR := $(dir $(shell command -v coqtop || command -v rocq))
 endif
 
 # export to sub- targets
