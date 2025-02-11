@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From Coq Require Import ssreflect ZArith.
+From Corelib Require Import ssreflect BinNums IntDef.
 
 #[verbose, log]
 HB.mixin Record AddComoid_of_Type A := {
@@ -28,8 +28,13 @@ Notation "- x" := (opp x).
 Lemma example (G : AbelianGrp.type) (x : G) : x + (- x) = - 0.
 Proof. by rewrite addrC addNr -[LHS](addNr zero) addrC add0r. Qed.
 
-HB.instance Definition Z_CoMoid := AddComoid_of_Type.Build Z 0%Z Z.add Z.add_assoc Z.add_comm Z.add_0_l.
-HB.instance Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z.add_opp_diag_l.
+Axiom Z_add_assoc : forall x y z, Z.add x (Z.add y z) = Z.add (Z.add x y) z.
+Axiom Z_add_comm : forall x y, Z.add x y = Z.add y x.
+Axiom Z_add_0_l : forall x, Z.add Z0 x = x.
+Axiom Z_add_opp_diag_l : forall x, Z.add (Z.opp x) x = Z0.
+
+HB.instance Definition Z_CoMoid := AddComoid_of_Type.Build Z Z0 Z.add Z_add_assoc Z_add_comm Z_add_0_l.
+HB.instance Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z_add_opp_diag_l.
 
 Lemma example2 (x : Z) : x + (- x) = - 0.
 Proof. by rewrite example. Qed.

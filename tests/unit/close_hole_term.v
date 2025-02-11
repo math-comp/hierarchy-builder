@@ -1,6 +1,6 @@
 From HB Require Import structures.
 From elpi Require Import elpi.
-From Coq Require Export Setoid.
+From Corelib Require Export Setoid.
 
 Elpi Query HB.instance lp:{{
     X = app [{{list}}, Y_],

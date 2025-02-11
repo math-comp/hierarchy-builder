@@ -1,6 +1,6 @@
 From HB Require Import structures.
 From elpi Require Import elpi.
-From Coq Require Export Setoid.
+From Corelib Require Export Setoid.
 
 Elpi Query HB.structure lp:{{
     saturate-type-constructor {{nat}} X,

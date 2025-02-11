@@ -1,13 +1,12 @@
-From Coq Require Import ssreflect ssrfun.
+From Corelib Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
 (**************************************************************************)
-(* Stage 4: +AddMonoid+ -> AddComoid ---> AddAG ----> Ring                *)
-(*                                   \             /                      *)
-(*                                    -> SemiRing -                       *)
+(* Stage 5: AddMonoid ---> AddComoid ----> AddAG ----> Ring               *)
+(*                     \               \             /                    *)
+(*                      -> +BiNearRing+ -> SemiRing -                     *)
 (**************************************************************************)
 
-(* Begin change *)
 HB.mixin Record AddMonoid_of_TYPE S := {
   zero : S;
   add : S -> S -> S;
@@ -69,11 +68,13 @@ HB.builders Context A (a : AddAG_of_TYPE A).
   HB.instance
   Definition to_AddAG_of_AddComoid :=
     AddAG_of_AddComoid.Build A _ addNr.
-  
+
 HB.end.
 HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
-HB.mixin Record SemiRing_of_AddComoid A of AddComoid A := {
+(* Begin changes *)
+
+HB.mixin Record BiNearRing_of_AddMonoid A of AddMonoid A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -84,8 +85,27 @@ HB.mixin Record SemiRing_of_AddComoid A of AddComoid A := {
   mul0r : left_zero zero mul;
   mulr0 : right_zero zero mul;
 }.
+HB.structure Definition BiNearRing := { A of AddMonoid A & BiNearRing_of_AddMonoid A }.
+
+(* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
+(* we alias it for backward compatilibity and uniformity purposes *)
+HB.factory Definition SemiRing_of_AddComoid A of AddComoid A :=
+    BiNearRing_of_AddMonoid A.
+
+HB.builders Context A (a : SemiRing_of_AddComoid A).
+
+  HB.instance
+  Definition to_BiNearRing_of_AddMonoid : BiNearRing_of_AddMonoid A := a.
+
+HB.end.
+
+(* End changes *)
+
 HB.structure Definition SemiRing := { A of AddComoid A & SemiRing_of_AddComoid A }.
 
+Set Implicit Arguments. (* The factory builder will have implicit arguments *)
+
+#[doc="Builds a Ring from an Abelian Group: the absorbing properties mul0r and mul0r are derived from addrC and the other ring axioms, following a proof of Hankel (Gerhard Betsch. On the beginnings and development of near-ring theory. In Near-rings and near-fields. Proceedings of the conference held in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht, 1995)."]
 HB.factory Record Ring_of_AddAG A of AddAG A := {
   one : A;
   mul : A -> A -> A;
@@ -95,6 +115,8 @@ HB.factory Record Ring_of_AddAG A of AddAG A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
+
+Unset Implicit Arguments.
 
 HB.builders Context A (a : Ring_of_AddAG A).
 
@@ -112,15 +134,13 @@ HB.builders Context A (a : Ring_of_AddAG A).
   by rewrite -mulrDr add0r addrC addNr.
   Qed.
 
-
   HB.instance
-  Definition to_SemiRing_of_AddComoid :=
-    SemiRing_of_AddComoid.Build A _ mul mulrA mulr1 mul1r
-      mulrDl mulrDr (mul0r) (mulr0).
-  
+  Definition to_SemiRing_of_AddComoid := SemiRing_of_AddComoid.Build A
+    _ mul mulrA mulr1 mul1r mulrDl mulrDr mul0r mulr0.
+
+
 HB.end.
 
-(* End change *)
 HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   opp : A -> A;
   one : A;
@@ -133,18 +153,16 @@ HB.factory Record Ring_of_AddComoid A of AddComoid A := {
   mulrDr : right_distributive mul add;
 }.
 
-HB.builders Context A (a : Ring_of_AddComoid A).
+HB.builders Context A (a :Ring_of_AddComoid A).
 
   HB.instance
   Definition to_AddAG_of_AddComoid := AddAG_of_AddComoid.Build A _ addNr.
 
   HB.instance
   Definition to_Ring_of_AddAG := Ring_of_AddAG.Build A
-    _ _ mulrA mul1r mulr1 mulrDl mulrDr.
+    mulrA mul1r mulr1 mulrDl mulrDr.
 
 HB.end.
-
-(* End change *)
 
 HB.factory Record Ring_of_TYPE A := {
   zero : A;
@@ -209,3 +227,8 @@ Lemma addrNK x y : x + y - y = x.
 Proof. by rewrite -addrA subrr addr0. Qed.
 
 End Theory.
+
+HB.graph "hierarchy_5.dot".
+
+(* we check the alias factory is abstracted over the whole section *)
+HB.check (SemiRing_of_AddComoid.axioms_ : forall A, forall m : AddMonoid_of_TYPE.axioms_ A, AddComoid_of_AddMonoid.axioms_ A m -> Type).

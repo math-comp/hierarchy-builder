@@ -1,2 +1,0 @@
-pred acc-clauses i:scope, i:list prop.
-acc-clauses Scope CL :- std.forall CL (acc-clause Scope).

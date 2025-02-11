@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From Coq Require Import ssreflect ssrfun.
+From Corelib Require Import ssreflect ssrfun.
 
 HB.mixin Record MulMonoid_of_Type A := {
   one : A;
@@ -23,4 +23,3 @@ HB.mixin Record Ring_of_MulMonoid A of MulMonoid A := {
   mulrDr : right_distributive mul add;
 }.
 HB.structure Definition Ring := { A of MulMonoid A & Ring_of_MulMonoid A }.
-

@@ -26,13 +26,14 @@ TGTS?=
 ######################################################################
 
 # local context: -----------------------------------------------------
-.PHONY: all config build only test-suite clean distclean __always__
+.PHONY: all config build only test-suite test-suite-stdlib clean distclean __always__
 .SUFFIXES:
 
 H:= $(if $(VERBOSE),,@)  # not used yet
 TOP     = $(dir $(lastword $(MAKEFILE_LIST)))
 COQMAKE = $(MAKE) -f Makefile.coq $(COQMAKEOPTIONS)
 COQMAKE_TESTSUITE = $(MAKE) -f Makefile.test-suite.coq $(COQMAKEOPTIONS)
+COQMAKE_TESTSUITE_STDLIB = $(MAKE) -f Makefile.test-suite-stdlib.coq $(COQMAKEOPTIONS)
 BRANCH_coq:= $(shell $(COQTOP) -v | head -1 | grep -E '(trunk|master)' \
 	      | wc -l | sed 's/ *//g')
 
@@ -75,6 +76,11 @@ Makefile.coq: $(COQPROJECT) Makefile
 Makefile.test-suite.coq: $(COQPROJECT).test-suite Makefile
 	$(COQMAKEFILE) $(COQMAKEFILEOPTIONS) -f $(COQPROJECT).test-suite -o Makefile.test-suite.coq
 
+# Test suite Stdlib --------------------------------------------------
+
+Makefile.test-suite-stdlib.coq: $(COQPROJECT).test-suite-stdlib Makefile
+	$(COQMAKEFILE) $(COQMAKEFILEOPTIONS) -f $(COQPROJECT).test-suite-stdlib -o Makefile.test-suite-stdlib.coq
+
 # Global config, build, clean and distclean --------------------------
 config: sub-config this-config
 
@@ -84,14 +90,19 @@ only: sub-only this-only
 
 test-suite: sub-test-suite this-test-suite
 
+test-suite-stdlib: sub-test-suite-stdlib this-test-suite-stdlib
+
 clean: sub-clean this-clean
 
 distclean: sub-distclean this-distclean
 
 # Local config, build, clean and distclean ---------------------------
-.PHONY: this-config this-build this-only this-test-suite this-distclean this-clean
+.PHONY: this-config this-build this-only this-test-suite this-test-suite-stdlib this-distclean this-clean
 
 this-config:: __always__
+	if command -v coqc > /dev/null && (coqc --version | grep -q '8.18\|8.19\|8.20') ; then \
+	  sed -i.bak HB/structures.v -e 's/From Corelib/From Coq/' ; \
+	fi
 
 this-build:: this-config Makefile.coq
 	+$(COQMAKE)
@@ -102,13 +113,18 @@ this-only:: this-config Makefile.coq
 this-test-suite:: build Makefile.test-suite.coq
 	+$(COQMAKE_TESTSUITE)
 
+this-test-suite-stdlib:: build Makefile.test-suite-stdlib.coq
+	+$(COQMAKE_TESTSUITE_STDLIB)
+
 this-distclean:: this-clean
 	rm -f Makefile.coq Makefile.coq.conf
 	rm -f Makefile.test-suite.coq Makefile.test-suite.coq.conf
+	rm -f Makefile.test-suite-stdlib.coq Makefile.test-suite-stdlib.coq.conf
 
 this-clean:: __always__
 	@if [ -f Makefile.coq ]; then $(COQMAKE) cleanall; fi
 	@if [ -f Makefile.test-suite.coq ]; then $(COQMAKE_TESTSUITE) cleanall; fi
+	@if [ -f Makefile.test-suite-stdlib.coq ]; then $(COQMAKE_TESTSUITE_STDLIB) cleanall; fi
 
 # Install target -----------------------------------------------------
 .PHONY: install
@@ -142,5 +158,6 @@ endif
 structures.vo : %.vo: __always__ Makefile.coq
 	+$(COQMAKE) $@
 
-$(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v tests/unit/*.v)): __always__ config build Makefile.test-suite.coq
+$(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v tests/unit/*.v)): __always__ config build Makefile.test-suite.coq Makefile.test-suite-stdlib.coq
 	+$(COQMAKE_TESTSUITE) $@
+	+$(COQMAKE_TESTSUITE_stdlib) $@

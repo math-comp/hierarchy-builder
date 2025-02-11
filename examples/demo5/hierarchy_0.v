@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect ssrfun.
+From Corelib Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
 HB.mixin Record AddComoid_of_TYPE A := {
@@ -156,13 +156,26 @@ HB.instance Definition regular_LModule (R : Ring.type) :=
   LModule_of_AG.Build R (regular (Ring.sort R)) mul
     (fun _ _ _ => mulrDl _ _ _) mulrDr mulrA mul1r.
 
-Require Import ZArith.
+From Corelib Require Import BinNums IntDef.
+
+Axiom Z_add_assoc : forall x y z, Z.add x (Z.add y z) = Z.add (Z.add x y) z.
+Axiom Z_add_comm : forall x y, Z.add x y = Z.add y x.
+Axiom Z_add_0_l : forall x, Z.add Z0 x = x.
+Axiom Z_add_0_r : forall x, Z.add x Z0 = x.
+Axiom Z_add_opp_diag_l : forall x, Z.add (Z.opp x) x = Z0.
+Axiom Z_mul_add_distr_l :
+  forall x y z, Z.mul x (Z.add y z) = Z.add (Z.mul x y) (Z.mul x z).
+Axiom Z_mul_add_distr_r :
+  forall x y z, Z.mul (Z.add x y) z = Z.add (Z.mul x z) (Z.mul y z).
+Axiom Z_mul_assoc : forall x y z, Z.mul x (Z.mul y z) = Z.mul (Z.mul x y) z.
+Axiom Z_mul_1_l : forall x, Z.mul (Zpos xH) x = x.
+Axiom Z_mul_1_r : forall x, Z.mul x (Zpos xH) = x.
 
 HB.instance Definition Z_ring_axioms :=
-  Ring_of_TYPE.Build Z 0%Z 1%Z Z.add Z.opp Z.mul
-  Z.add_assoc Z.add_comm Z.add_0_l Z.add_opp_diag_l
-  Z.mul_assoc Z.mul_1_l Z.mul_1_r
-  Z.mul_add_distr_r Z.mul_add_distr_l.
+  Ring_of_TYPE.Build Z Z0 (Zpos xH) Z.add Z.opp Z.mul
+  Z_add_assoc Z_add_comm Z_add_0_l Z_add_opp_diag_l
+  Z_mul_assoc Z_mul_1_l Z_mul_1_r
+  Z_mul_add_distr_r Z_mul_add_distr_l.
 
 Lemma test (m : Z) (n : regular Z) : m *: n = m * n.
 Proof. by []. Qed.
