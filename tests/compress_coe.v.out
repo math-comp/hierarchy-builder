@@ -1,8 +1,3 @@
-Toplevel input, character 0:
-> From Coq Require Import ssreflect ssrfun.
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Warning: "From Coq" has been replaced by "From Stdlib".
-[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
 Datatypes_prod__canonical__compress_coe_D =
 fun D D' : D.type =>
 {|

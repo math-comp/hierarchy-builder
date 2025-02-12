@@ -223,7 +223,7 @@ End Feather.
 (* ********************** Abstraction barriers *********************** *)
 (* ******************************************************************* *)
 
-Require Import Arith.
+Notation "n ^ m" := (Nat.pow n m) : nat_scope.
 
 Module SlowFailure.
 

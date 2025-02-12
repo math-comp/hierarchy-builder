@@ -1,6 +1,5 @@
 (* Support constants, to be kept in sync with shim/structures.v *)
-From Coq Require Import String ssreflect ssrfun.
-Export String.StringSyntax.
+From Corelib Require Import ssreflect ssrfun.
 
 Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
 Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
@@ -300,8 +299,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
@@ -335,8 +333,7 @@ Elpi Export HB.about.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -379,8 +376,7 @@ Elpi Export HB.howto.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
@@ -411,8 +407,7 @@ tred file.dot | xdot -
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -462,8 +457,7 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -546,8 +540,7 @@ Elpi Tactic HB.pack_for.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -571,8 +564,7 @@ Elpi Tactic HB.pack.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -649,8 +641,7 @@ HB.structure Definition StructureName params :=
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -734,8 +725,7 @@ Elpi Export HB.structure.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -786,8 +776,7 @@ HB.instance Definition N Params := Factory.Build Params T …
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -830,8 +819,7 @@ Elpi Export HB.instance.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -915,8 +903,7 @@ HB.end.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -958,8 +945,7 @@ Elpi Export HB.builders.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -1034,8 +1020,7 @@ Export Algebra.Exports.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -1082,8 +1067,7 @@ Elpi Export HB.export.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -1167,8 +1151,7 @@ HB.instance Definition _ : Ml ... T := ml.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -1205,8 +1188,7 @@ Elpi Export HB.declare.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
-#[skip="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[only="8.1[56].*"] Elpi Accumulate File "HB/common/compat_acc_clauses_816.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 #[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 #[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
@@ -1246,8 +1228,3 @@ Notation "`Error_cannot_unify: t1 'with' t2" := (unify t1 t2 None)
   Notation "`Error: t `is_not_canonically_a T" := (unify t _ (Some (is_not_canonically_a, T)))
   (at level 0, T at level 0, format "`Error:  t  `is_not_canonically_a  T", only printing) :
   form_scope.
-Notation "`Error: t msg T" := (unify t _ (Some (msg%string, T)))
-  (at level 0, msg, T at level 0, format "`Error:  t  msg  T", only printing) :
-  form_scope.
-
-Global Open Scope string_scope.

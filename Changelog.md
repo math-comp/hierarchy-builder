@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+Compile without coqc compatibility shim on Rocq 9.0
+Compile without Stdlb on Rocq 9.0
+
 ## [1.8.1] - 2025-01-25
 
 Compatible with

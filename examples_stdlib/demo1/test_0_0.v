@@ -1,4 +1,5 @@
-From Coq Require Import ZArith ssreflect.
+From Corelib Require Import ssreflect.
+From Stdlib Require Import ZArith.
 From HB Require Import structures.
 From HB Require Import demo1.hierarchy_0.
 
