@@ -38,7 +38,7 @@
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
-      coq-elpi.override.version = "master";
+      coq-elpi.override.version = "2.4.0";
       coq-elpi.override.elpi-version = "2.0.7";
     };
 
