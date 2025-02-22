@@ -20,20 +20,30 @@
       multinomials.override.version = "master";
       mathcomp-real-closed.override.version = "master";
       coqeal.override.version = "master";
+      mathcomp-zify.override.version = "master";
+      mathcomp-algebra-tactics.override.version = "master";
     };
   in {
-    "coq-master".coqPackages = mcHBcommon // {
+    "coq-master" = { rocqPackages = {
+      rocq-core.override.version = "master";
+      stdlib.override.version = "master";
+      rocq-elpi.override.version = "master";
+      rocq-elpi.override.elpi-version = "2.0.7";
+      bignums.override.version = "master";
+    }; coqPackages = mcHBcommon // {
       coq.override.version = "master";
       stdlib.override.version = "master";
       coq-elpi.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
       bignums.override.version = "master";
-    };
+      deriving.override.version = "proux01:mc1343";
+    }; };
 
     "coq-9.0".coqPackages = mcHBcommon // {
       coq.override.version = "9.0";
       coq-elpi.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
+      deriving.override.version = "proux01:mc1343";
     };
 
     "coq-8.20".coqPackages = mcHBcommon // {
