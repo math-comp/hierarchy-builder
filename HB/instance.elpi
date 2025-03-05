@@ -391,8 +391,9 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.d
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
   % hence we add these clauses last.
+	synthesis.local-canonical-mixins-of T MLCano,
   synthesis.under-mixin-src-from-factory.do! T F [
-    synthesis.under-local-canonical-mixins-of.do! T [
+    MLCano => std.do! [
       list-w-params_list {factory-provides Factory} ML,
       add-all-mixins T Factory ML tt Clauses CFL,
       std.map-filter Clauses (mixin-src->has-mixin-instance ) ClausesHas,
