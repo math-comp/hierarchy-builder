@@ -12,15 +12,17 @@ Check list_foo.
 Elpi Query HB.structure lp:{{
 
 has-mixin-instance->mixin-src (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo}}) MS,
+  coq.env.typeof {{:gref list_foo}} (prod _ T _),
     MS = (pi a b \ 
         mixin-src (app [{{list}}, b]) ({{:gref is_foo.axioms_}}) (app [{{list_foo}}, a]) 
-            :- [coq.unify-eq a b ok])
+            :- std.do! [coq.typecheck a T ok, coq.unify-eq a b ok])
 }}.
 
 Elpi Query HB.structure lp:{{
 
 has-mixin-instance->mixin-src (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo'}}) MS',
+  coq.env.typeof {{:gref list_foo'}} (prod _ T (p\ prod _ T' _)),
 MS' = (pi p a b \ 
     mixin-src (app [{{list}}, b]) {{:gref is_foo.axioms_}} (app [{{list_foo'}}, p,a])
-        :- [coq.unify-eq  a b ok]).
+        :- std.do! [coq.typecheck p T ok, coq.typecheck a T' ok, coq.unify-eq a b ok]).
 }}.
