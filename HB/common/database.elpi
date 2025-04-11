@@ -170,10 +170,10 @@ toposort-mixins In Out :- std.do! [
   toposort-proj triple_1 ES In Out,
 ].
 
-pred toposort-proj i:(A -> gref -> prop), i:list (pair gref gref), i:list A, o:list A.
+func toposort-proj (func A -> gref), list (pair gref gref), list A -> list A.
 toposort-proj Proj ES In Out :- !, toposort-proj.acc Proj ES [] In Out.
-pred topo-find i:B, o:A.
-pred toposort-proj.acc i:(A -> gref -> prop), i:list (pair gref gref), i:list gref, i:list A, o:list A.
+func topo-find B -> A.
+func toposort-proj.acc (func A -> gref), list (pair gref gref), list gref, list A -> list A.
 toposort-proj.acc _ ES Acc [] Out :- !,
   std.map {std.gref.toposort ES Acc} topo-find Out.
 toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
