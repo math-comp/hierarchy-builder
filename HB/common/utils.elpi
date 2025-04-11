@@ -143,8 +143,10 @@ pred mk-fun-prod i:name, i:term, o:(term -> pair term term), o:pair term term.
 mk-fun-prod N Ty (x\ pr (Body x) (Type x)) (pr (fun N Ty Body) (prod N Ty Type)).
 
 pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> indt-decl), o:indt-decl.
+mk-parameter IK Name X F (Decl : indt-decl) :- !, Decl = parameter {coq.name->id Name} IK X F.
+
 pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> arity), o:arity.
-mk-parameter IK Name X F Decl :- !, Decl = parameter {coq.name->id Name} IK X F.
+mk-parameter IK Name X F (Decl : arity) :- !, Decl = parameter {coq.name->id Name} IK X F.
 
 pred params->holes i:list-w-params A, o:list term.
 params->holes (w-params.nil _ _ _) [].
@@ -159,7 +161,7 @@ fresh-type Ty :-
 % w-params interface %
 %%%%%%%%%%%%%%%%%%%%%%
 
-pred apply-w-params i:w-params A, i:list term, i:term, o:A.
+func apply-w-params w-params A, list term, term -> A.
 apply-w-params (w-params.cons _ _ PL) [P|PS] T R :- !, apply-w-params (PL P) PS T R.
 apply-w-params (w-params.nil _ _ L) [] T R :- !, R = L T.
 apply-w-params _ _ _ _ :- coq.error "apply-w-params".
@@ -171,15 +173,16 @@ w-params.nparams (w-params.nil _ _ _) 0.
 % [w-params.fold AwP Cons Nil Out] states that Out has shape
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty F
 %   where AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
-pred w-params.fold i:w-params A, i:(name -> term -> (term -> B) -> B -> prop),
-   i:(list term -> name -> term -> (term -> A) -> B -> prop), o:B.
+func w-params.fold w-params A,
+   (func name, term, (term -> B) -> B),
+   (func list term, name, term, (term -> A) -> B) -> B.
 w-params.fold L Cons Nil Out :- w-params.fold.params L Cons Nil [] Out.
 
-pred w-params.fold.params i:w-params A,
-   i:(name -> term -> (term -> B) -> B -> prop),
-   i:(list term -> name -> term -> (term -> A) -> B -> prop),
-   i:list term, % accumulator
-   o:B.
+func w-params.fold.params w-params A,
+   (func name, term, (term -> B) -> B),
+   (func list term, name, term, (term -> A) -> B),
+   list term % accumulator
+   -> B.
 w-params.fold.params (w-params.cons ID PTy F) Cons Nil RevPs Out :- !, std.do! [
   coq.id->name ID N,
   (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
@@ -194,23 +197,23 @@ w-params.fold.params (w-params.nil ID TTy F) _ Nil RevParams Out :- !, std.do! [
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty t \ Body
 %   where Pred [p_1 .. p_n] T Body
 %   and AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
-pred w-params.then i:w-params A,
-   i:(name -> term -> (term -> C) -> C -> prop),
-   i:(name -> term -> (term -> B) -> C -> prop),
-   i:(list term -> term -> A -> B -> prop),
-   o:C.
+func w-params.then w-params A,
+   (func name, term, (term -> C) -> C),
+   (func name, term, (term -> B) -> C),
+   (func list term, term, A -> B)
+   -> C.
 w-params.then L Cons Nil Pred Out :-
   w-params.fold L Cons (ps\ n\ ty\ f\ out\ sigma Body\
     (@pi-decl n ty t\ Pred ps t (f t) (Body t)),
     Nil n ty Body out) Out.
 
-pred w-params.map i:w-params A, i:(list term -> term -> A -> B -> prop), o:w-params B.
+func w-params.map w-params A, (func list term, term, A -> B) -> w-params B.
 w-params.map AL F BL :-
   w-params.then AL mk-w-params.cons-name mk-w-params.nil-name F BL.
 % TODO: make combinators pass id
-type mk-w-params.cons-name name -> term -> (term -> w-params A) -> w-params A -> prop.
+func mk-w-params.cons-name name, term, (term -> w-params A) -> w-params A.
 mk-w-params.cons-name N T F (w-params.cons ID T F):- coq.name->id N ID.
-type mk-w-params.nil-name name -> term -> (term -> A) -> w-params A -> prop.
+func mk-w-params.nil-name name, term, (term -> A) -> w-params A.
 mk-w-params.nil-name N T F (w-params.nil ID T F):- coq.name->id N ID.
 
 % on the fly abstraction
@@ -239,10 +242,10 @@ list-w-params.rcons.aux (w-params.nil N T ML1) F Acc (w-params.nil N T ML2) :-
 list-w-params.rcons.aux (w-params.cons N Ty ML1) F Acc (w-params.cons N Ty ML2) :-
   pi x\ list-w-params.rcons.aux (ML1 x) F [x|Acc] (ML2 x).
 
-pred list-w-params.flatten-map
-  i:list-w-params A,
-  i:(A -> list-w-params B -> prop),
-  o:list-w-params B.
+func list-w-params.flatten-map
+  list-w-params A,
+  (func A -> list-w-params B)
+  -> list-w-params B.
 list-w-params.flatten-map (w-params.cons N T L) F (w-params.cons N T L1) :-
   @pi-parameter N T p\
     list-w-params.flatten-map (L p) F (L1 p).
@@ -250,8 +253,8 @@ list-w-params.flatten-map (w-params.nil N TTy L) F (w-params.nil N TTy L1) :-
   @pi-parameter N TTy t\
     list-w-params.flatten-map.aux (L t) F (L1 t).
 
-pred list-w-params.flatten-map.aux
-  i:list (w-args A), i:(A -> list-w-params B -> prop), o:list (w-args B).
+func list-w-params.flatten-map.aux
+  list (w-args A), (func A -> list-w-params B) -> list (w-args B).
 list-w-params.flatten-map.aux [] _ [].
 list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
   F M MwP,

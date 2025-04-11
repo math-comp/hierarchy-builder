@@ -47,7 +47,7 @@ partition [X|XS] P YS [X|ZS] :- partition XS P YS ZS.
 pred under.do! i:((A -> prop) -> A -> prop), i:list prop.
 under.do! Then LP :- Then (_\ std.do! LP) _.
 
-pred map-triple i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:(C -> C1 -> prop), i:triple A B C, o:triple A1 B1 C1.
+func map-triple (func A -> A1), (func B -> B1), (func C -> C1), triple A B C -> triple A1 B1 C1.
 map-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
 
 pred sort.split i:list A, o:list A, o:list A.
