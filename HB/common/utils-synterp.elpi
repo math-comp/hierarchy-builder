@@ -49,7 +49,7 @@ save-docstring :-
      (coq.elpi.accumulate _ "hb.db" (clause _ _ (docstring Loc Txt)))
      true.
 
-pred compute-filter i:option string, o:list string.
+func compute-filter option string -> list string.
 compute-filter none [].
 compute-filter (some S) MFilter :- % S is a component of the current modpath
   coq.env.current-path P,
@@ -58,8 +58,10 @@ compute-filter (some S) MFilter :- % S is a component of the current modpath
 compute-filter (some S) MFilter :-
   coq.locate-module S M,
   coq.modpath->path M MFilter.
+
+func compute-filter.aux list string, list string -> list string.
 compute-filter.aux [S|_] [S] [S] :- !.
-compute-filter.aux [S|XS] [S|SS] [S|YS] :- compute-filter.aux XS SS YS.
+compute-filter.aux [S|XS] [S|SS] [S|YS] :- !, compute-filter.aux XS SS YS.
 compute-filter.aux [X|XS] L [X|YS] :- compute-filter.aux XS L YS.
 
 pred list-uniq i:list A, o:list A.
