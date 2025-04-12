@@ -59,15 +59,25 @@ argument-name (indt-decl (inductive Id _ _ _)) Id :- !.
 argument-name (ctx-decl _) "_" :- !.
 
 pred pdecl->w-mixins i:indt-decl, o:w-mixins indt-decl.
-pred pdecl->w-mixins i:arity, o:w-mixins arity.
-pdecl->w-mixins (parameter ID _ TySkel Rest as Decl) Out :-
+pdecl->w-mixins ((parameter ID _ TySkel Rest : indt-decl) as Decl) Out :-
   private.is-key Decl, !,
   private.key-decl-w-mixins "parameter"
     ID TySkel Rest private.pdecl->w-mixins.mixins Out.
-pdecl->w-mixins (parameter ID _ TySkel Rest) Out :- !,
+pdecl->w-mixins (parameter ID _ TySkel Rest : indt-decl) Out :- !,
   private.param-decl-w-mixins "parameter"
     ID TySkel Rest pdecl->w-mixins Out.
-pdecl->w-mixins _ _ :- !,
+pdecl->w-mixins (_ : indt-decl) _ :- !,
+  coq.error "HB: declaration must have at least one parameter".
+
+pred pdecl->w-mixins i:arity, o:w-mixins arity.
+pdecl->w-mixins ((parameter ID _ TySkel Rest : arity) as Decl) (Out:w-mixins arity) :-
+  private.is-key Decl, !,
+  private.key-decl-w-mixins "parameter"
+    ID TySkel Rest private.pdecl->w-mixins.mixins Out.
+pdecl->w-mixins (parameter ID _ TySkel Rest : arity) (Out:w-mixins arity) :- !,
+  private.param-decl-w-mixins "parameter"
+    ID TySkel Rest pdecl->w-mixins Out.
+pdecl->w-mixins (_ : arity) _ :- !,
   coq.error "HB: declaration must have at least one parameter".
 
 pred cdecl->w-mixins i:context-decl, o:w-mixins context-decl.
@@ -104,21 +114,26 @@ check-key-attribute-consistency ID :- get-option "key" ID1,
     "does not match the selected subject" ID.
 
 pred is-key i:indt-decl.
-pred is-key i:arity.
-pred is-key i:context-decl.
-is-key (parameter ID _ _ _\ record _ _ _ _) :- !, check-key-attribute-consistency ID.
-is-key (parameter ID _ _ _\ inductive _ _ _ _) :- !, check-key-attribute-consistency ID.
-is-key (parameter ID _ _ _\ arity _) :- !, check-key-attribute-consistency ID.
-is-key (context-item ID _ _ _ _\ context-end) :- !, check-key-attribute-consistency ID.
-is-key (parameter ID _ _ _) :- get-option "key" ID, !.
-is-key (context-item ID _ _ _ _) :- get-option "key" ID, !.
-is-key (parameter ID _ _ p\ parameter _ _ (M p) _) :-
+is-key (parameter ID _ _ _\ record _ _ _ _ : indt-decl) :- !, check-key-attribute-consistency ID.
+is-key (parameter ID _ _ _\ inductive _ _ _ _ : indt-decl) :- !, check-key-attribute-consistency ID.
+is-key (parameter ID _ _ _ : indt-decl) :- get-option "key" ID, !.
+is-key (parameter ID _ _ p\ parameter _ _ (M p) _ : indt-decl) :-
   pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
-is-key (context-item ID _ _ _ p\ context-item _ _ (M p) _ _) :-
+
+pred is-key i:arity.
+is-key (parameter ID _ _ _\ arity _ : arity) :- !, check-key-attribute-consistency ID.
+is-key (parameter ID _ _ _ : arity) :- get-option "key" ID, !.
+is-key (parameter ID _ _ p\ parameter _ _ (M p) _ : arity) :-
+  pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
+
+pred is-key i:context-decl.
+is-key ((context-item ID _ _ _ _\ context-end) : context-decl) :- !, check-key-attribute-consistency ID.
+is-key (context-item ID _ _ _ _ : context-decl) :- get-option "key" ID, !.
+is-key (context-item ID _ _ _ p\ context-item _ _ (M p) _ _ : context-decl) :-
   pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
 
 pred mixin-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
-  i:(A -> pair (list (w-args mixinname)) A -> prop),
+  i:(pred i:A, o:pair (list (w-args mixinname)) A),
   o:pair (list (w-args mixinname)) A.
 mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing mixin" DeclKind ID),
@@ -135,7 +150,7 @@ mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   Out = pr [triple F Ps T|MLwA] R
 ].
 pred key-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
-  i:(A -> pair (list (w-args mixinname)) A -> prop),
+  i:(pred i:A, o:pair (list (w-args mixinname)) A),
   o:pair mixins (w-params A).
 key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing key" DeclKind),
@@ -145,7 +160,7 @@ key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   Out = pr (w-params.nil ID Ty MLwA) (w-params.nil ID Ty R)
 ].
 pred param-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
-  i:(A -> pair mixins (w-params A) -> prop), o:pair mixins (w-params A).
+  i:(pred i:A, o:pair mixins (w-params A)), o:pair mixins (w-params A).
 param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing param" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "param illtyped",
@@ -156,11 +171,15 @@ param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
 
 pred pdecl->w-mixins.mixins i:indt-decl,
   o:pair (list (w-args mixinname)) indt-decl.
+pdecl->w-mixins.mixins (parameter ID _ TySkel Rest : indt-decl) Out :- !,
+  mixin-decl-w-mixins "parameter" ID TySkel Rest pdecl->w-mixins.mixins Out.
+pdecl->w-mixins.mixins (R : indt-decl) (pr [] R) :- !.
+
 pred pdecl->w-mixins.mixins i:arity,
   o:pair (list (w-args mixinname)) arity.
-pdecl->w-mixins.mixins (parameter ID _ TySkel Rest) Out :- !,
+pdecl->w-mixins.mixins (parameter ID _ TySkel Rest : arity) Out :- !,
   mixin-decl-w-mixins "parameter" ID TySkel Rest pdecl->w-mixins.mixins Out.
-pdecl->w-mixins.mixins R (pr [] R) :- !.
+pdecl->w-mixins.mixins (R : arity) (pr [] R) :- !.
 
 pred cdecl->w-mixins.mixins i:context-decl,
   o:pair (list (w-args mixinname)) context-decl.
@@ -388,7 +407,7 @@ build-deps-for-projections R MLwP CL :- std.do! [
 % variables that aoccur. We don't want that for mixin/factories, so we implement
 % our own discharging. Note that definitions (like canonical instance) have
 % to be abstracted too.
-pred abstract-over-section i:list term, i:term, i:list prop, i:list constant, i:(list constant -> A -> A -> prop), i:A, o:A, o:list term.
+pred abstract-over-section i:list term, i:term, i:list prop, i:list constant, i:(pred i:list constant, i:A, o:A), i:A, o:A, o:list term.
 abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance F X X1 Section :-
   % compute section variables to be used for discharging
   std.map MixinSrcClauses mixin-src_src Mixins,

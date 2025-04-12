@@ -456,7 +456,9 @@ declare-class+structure MLwP Sort
 
   if-verbose (coq.say {header} "declare axioms record"MLwP ),
 
-  w-params.then MLwP (mk-parameter explicit) (mk-parameter explicit)
+  % TODO: enhance elpi-typechecker to deduce the type of `mk-parameter explicit` from the argmuments
+  % passed to w-params.then
+  w-params.then MLwP (mk-parameter explicit : (pred i:name, i:term, i:(term -> indt-decl), o:indt-decl)) (mk-parameter explicit)
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
@@ -472,7 +474,7 @@ declare-class+structure MLwP Sort
 
   if-verbose (coq.say {header} "declare type record"),
 
-  w-params.then MLwP (mk-parameter explicit) (mk-record+sort-field Sort)
+  w-params.then MLwP (mk-parameter explicit : (pred i:name, i:term, i:(term -> indt-decl), o:indt-decl)) (mk-record+sort-field Sort)
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
