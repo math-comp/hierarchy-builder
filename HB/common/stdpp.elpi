@@ -55,7 +55,7 @@ sort.split [] [] [] :- !.
 sort.split [X] [X] [] :- !.
 sort.split [X,Y|TL] [X|L1] [Y|L2] :- sort.split TL L1 L2.
 
-pred sort.merge i:(A -> A -> prop), i:list A, i:list A, o:list A.
+pred sort.merge i:(func A, A ->), i:list A, i:list A, o:list A.
 sort.merge _ [] L L :- !.
 sort.merge _ L [] L :- !.
 sort.merge Rel [X1|L1] [X2|L2] [X1|M] :- Rel X1 X2, !,
@@ -63,13 +63,13 @@ sort.merge Rel [X1|L1] [X2|L2] [X1|M] :- Rel X1 X2, !,
 sort.merge Rel [X1|L1] [X2|L2] [X2|M] :-
   sort.merge Rel [X1|L1] L2 M.
 
-pred sort i:list A, i:(A -> A -> prop), o:list A.
+pred sort i:list A, i:(func A, A ->), o:list A.
 sort [] _ [] :- !.
 sort [X] _ [X] :- !.
 sort L Rel M :-
   sort.split L L1 L2, sort L1 Rel S1, sort L2 Rel S2, sort.merge Rel S1 S2 M.
 
-pred bubblesort i:list A, i:(A -> A -> prop), o:list A.
+pred bubblesort i:list A, i:(func A, A ->), o:list A.
 bubblesort [] _ [] :- !.
 bubblesort [X] _ [X] :- !.
 bubblesort [X,Y|TL] Rel [X|Rest1] :- Rel X Y, !, bubblesort [Y|TL] Rel Rest1.
@@ -78,19 +78,20 @@ bubblesort [X,Y|TL] Rel [Y|Rest1] :- bubblesort [X|TL] Rel Rest1.
 % TODO: pred toposort i:(A -> A -> prop), i:list A, o:list A.
 %       pred edge? i:int, i:int.
 %       toposort edge? [1,2,3,4] TopoList
-pred topovisit i: list (pair A A), i: A,      i: list A, i: list A, o: list A, o: list A.
+func topovisit list (pair A A), A, list A, list A -> list A, list A.
 topovisit _ X VS PS VS PS :- std.mem PS X, !.
 topovisit _ X VS _ _ _ :- std.mem VS X, !, halt "cycle detected.".
 topovisit ES X VS PS VS' [X|PS'] :-
   toporec ES {std.map {std.filter ES (e\ fst e X)} snd} [X|VS] PS VS' PS'.
-pred toporec   i: list (pair A A), i: list A, i: list A, i: list A, o: list A, o: list A.
+func toporec  list (pair A A), list A, list A, list A -> list A, list A.
 toporec _ [] VS PS VS PS.
 toporec ES [X|XS] VS PS VS'' PS'' :-
   topovisit ES X VS PS VS' PS', toporec ES XS VS' PS' VS'' PS''.
-pred toposort i: list (pair A A), i: list A, o: list A.
+func toposort list (pair A A), list A -> list A.
 toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
-  std.filter XS' (std.mem XS) XS''.
+  % @gares: meme!, instead of mem
+  std.filter XS' (std.mem! XS) XS''.
 
 namespace gref {
 pred topovisit i: coq.gref.map coq.gref.set, i: classname,      i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
@@ -110,7 +111,7 @@ add-to-neighbours VS (pr _ V) A A :- not(coq.gref.set.mem V VS), !.
 add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.find K A L, !, coq.gref.map.add K {coq.gref.set.add V L} A A1.
 add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.add K {coq.gref.set.add V {coq.gref.set.empty} } A A1.
 
-pred toposort i:list (pair gref gref), i:list gref, o:list gref.
+func toposort list (pair gref gref), list gref -> list gref.
 toposort ES XS XS'' :- !, std.do! [
   std.fold XS {coq.gref.set.empty} coq.gref.set.add VS,
   std.fold ES {coq.gref.map.empty} (add-to-neighbours VS) EM,

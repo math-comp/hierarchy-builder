@@ -23,6 +23,8 @@ main-from MLSrc STgt Depth :-
   private.mixins-in-structures [{coq.locate STgt}] MLTgt,
   private.list-diff MLTgt MLSrc ML,
   if (ML = []) (coq.say "HB: nothing to do.") (main-from.aux MLSrc ML Depth).
+
+pred main-from.aux i:list mixinname, i:list mixinname, o:option int.
 main-from.aux MLSrc ML (some Depth) :- main-increase-depth MLSrc ML Depth false.
 main-from.aux MLSrc ML none :- main-increase-depth MLSrc ML 3 true.
 
@@ -58,7 +60,7 @@ pred union i:list A, i:list A, o:list A.
 union L1 L2 R :-
   std.fold L2 L1 (x\l\l'\if (std.mem l x) (l' = l) (l' = [x|l])) R.
 
-pred insert-sorted i:(A -> A -> prop), i:A, i:list A, o:list A.
+func insert-sorted (func A, A ->), A, list A -> list A.
 insert-sorted _ X [] [X] :- !.
 insert-sorted Rel X [Y|T] [X,Y|T] :- Rel X Y, !.
 insert-sorted Rel X [Y|T] [Y|T'] :- insert-sorted Rel X T T', !.
@@ -67,7 +69,7 @@ pred lt-gref i:gref, i:gref.
 lt-gref X Y :-
   gref->modname_short X "." SX, gref->modname_short Y "." SY, !, SX s< SY.
 
-pred size-order i:(list A -> list A -> prop), i:list A, i:list A.
+pred size-order i:(func list A, list A), i:list A, i:list A.
 size-order Rel L1 L2 :-
   std.length L1 S1, std.length L2 S2, !, (S1 i< S2; (S1 = S2, !, Rel L1 L2)).
 
@@ -81,12 +83,16 @@ pred structures-on-gref i:gref, o:list structure.
 structures-on-gref GR SL :-
   std.filter {coq.CS.db-for _ (cs-gref GR)} (about.not1 about.unif-hint?) LV,
   std.map LV structures-on-gref.aux SL.
+
+pred structures-on-gref.aux i:cs-instance, o:structure.
 structures-on-gref.aux (cs-instance _ _ GR) F :-
   coq.prod-tgt->gref {coq.env.typeof GR} F, class-def (class _ F _).
 
 % [mixins-in-structures SL ML] list mixins in structures [SL]
 pred mixins-in-structures i:list structure, o:list mixinname.
 mixins-in-structures SL ML :- std.fold SL [] mixins-in-structures.aux ML.
+
+pred mixins-in-structures.aux i:structure, i:list mixinname, o:list mixinname.
 mixins-in-structures.aux F L L' :-
   class-def (class _ F MLWP), union L {list-w-params_list MLWP} L'.
 
@@ -99,6 +105,7 @@ type fdp factoryname -> list mixinname -> list mixinname -> factory_deps_prov.
 pred list_factories o:list factory_deps_prov.
 list_factories FL :-
   std.map-filter {std.findall (factory-constructor _ _)} list_factories.aux FL.
+pred list_factories.aux i:prop, o:howto.private.factory_deps_prov.
 list_factories.aux (factory-constructor F _) (fdp F DML PML) :-
   gref-deps F FD,
   list-w-params_list FD DML,
@@ -130,6 +137,11 @@ paths-from-for-step-using MLSrc ML K Pre KnownPre FL [Pre|KnownPre'] R :-
   std.fold FLdep (pr KnownPre [])
     (paths-from-for-step-using.aux MLSrc ML FL K' Pre)
     (pr KnownPre' R).
+
+pred paths-from-for-step-using.aux i:list mixinname, i:list mixinname, 
+    i:list factory_deps_prov,
+    o:int, o:list factoryname, o:factory_deps_prov, 
+    o:pair (list (list factoryname)) (list (list factoryname)), o:pair (list (list factoryname)) (list (list factoryname)).
 paths-from-for-step-using.aux MLSrc ML FL' K' Pre (fdp F _ MLF) (pr KnPre L)
     (pr KnPre' R) :-
   std.append MLSrc MLF MLSrc',

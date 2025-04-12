@@ -130,7 +130,7 @@ under-new-mixin-src-from-factory.do! TheType TheFactory LP :-
 %   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
 %   and  ..p.. is a list of terms built using p_1 .. p_k and T
 pred under-mixins.then i:list (w-args mixinname),
-    i:(name -> term -> (term -> A) -> A -> prop),
+    i:(pred i:name, i:term, i:(term -> A), o:A),
     i:(A -> prop), o:A.
 under-mixins.then [] _ Pred Body :- !, Pred Body.
 under-mixins.then [triple M Args T|ML] MkFun Pred Out :- std.do! [
@@ -147,7 +147,7 @@ under-mixins.then [triple M Args T|ML] MkFun Pred Out :- std.do! [
 % where  MLwP contains M_0, .., M_n (under p_1 .. p_k)
 %   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
 %   and  ..p.. is a list of terms built using p_1 .. p_k and T
-pred mixins-w-params.fun i:mixins, i:(list term -> term -> term -> prop), o:term.
+pred mixins-w-params.fun i:mixins, i:(pred i:list term, i:term, o:term), o:term.
 mixins-w-params.fun L P Out :- !,
   w-params.then L mk-fun mk-fun (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
 
@@ -305,6 +305,8 @@ structure-instance->mixin-srcs _ _ [].
 
 structure-instance->mixin-srcs.aux2 Params T Class (some P) M :-
   coq.mk-app (global (const P)) {std.append Params [T,Class]} M.
+
+pred structure-instance->mixin-srcs.aux i:term, i:term, o:list prop.
 structure-instance->mixin-srcs.aux T  F CL :-
   factory-instance->new-mixins [] F ML,
   std.map-filter ML (m\c\ not (mixin-src T m _), c = mixin-src T m F) CL.
