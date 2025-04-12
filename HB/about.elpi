@@ -61,10 +61,10 @@ main-located S (loc-abbreviation _) :- coq.error "HB: unknown abbreviation" S.
 
 shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
 
-pred bulletize1 i:(A -> coq.pp -> prop), i:A, o:coq.pp.
+func bulletize1 (func A -> coq.pp), A -> coq.pp.
 bulletize1 F X (glue [str "- ", M]) :- F X M.
 
-pred bulletize i:list A, i:(A -> coq.pp -> prop), o:coq.pp.
+pred bulletize i:list A, i:(func A -> coq.pp), o:coq.pp.
 bulletize [] _ empty.
 bulletize L F (glue [brk 0 0 | PLB]) :-
   std.map L (bulletize1 F) PL,
@@ -77,7 +77,7 @@ pp-module GR (str ID) :- gref->modname_short GR "." ID.
 pred unif-hint? i:cs-instance.
 unif-hint? (cs-instance _ (cs-gref GR) _) :- coq.CS.db-for GR _ [_|_].
 
-pred not1 i:(A -> prop), i:A.
+pred not1 i:(func A ->), i:A.
 not1 P X :- not (P X).
 
 

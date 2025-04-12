@@ -1,13 +1,14 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-pred export.any i:id.
+func export.any id ->.
 export.any S :-
   coq.locate-all S L,
   if (L = []) (coq.error "HB: cannot locate" S) true,
   if (L = [X]) (export.any.aux S X) (coq.error "HB:" S "is ambiguous:" L).
-export.any.aux S (loc-gref GR) :- export.abbrev S GR.
-export.any.aux S (loc-modpath MP) :- export.module S MP.
+func export.any.aux id, located ->.
+export.any.aux S (loc-gref GR) :- export.abbrev S GR, !.
+export.any.aux S (loc-modpath MP) :- export.module S MP, !.
 export.any.aux S X :- coq.error "HB:" S "denotes" X "which is not supported for exporting".
 
 % [export.module Module] exports a Module now adds it to the collection of
@@ -87,7 +88,7 @@ instance-in-module PM (instance-to-export _ _ C) :-
   coq.gref->path (const C) PC,
   std.appendR PM _ PC. % sublist
 
-pred compute-filter i:option string, o:list string.
+func compute-filter option string -> list string.
 compute-filter none [].
 compute-filter (some S) MFilter :- % S is a component of the current modpath
   coq.env.current-path P,
@@ -96,8 +97,11 @@ compute-filter (some S) MFilter :- % S is a component of the current modpath
 compute-filter (some S) MFilter :-
   coq.locate-module S M,
   coq.modpath->path M MFilter.
+
+% @gares: same predicate in synterp: code clone?
+func compute-filter.aux list string, list string -> list string.
 compute-filter.aux [S|_] [S] [S] :- !.
-compute-filter.aux [S|XS] [S|SS] [S|YS] :- compute-filter.aux XS SS YS.
+compute-filter.aux [S|XS] [S|SS] [S|YS] :- !, compute-filter.aux XS SS YS.
 compute-filter.aux [X|XS] L [X|YS] :- compute-filter.aux XS L YS.
 
 }
