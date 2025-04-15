@@ -92,11 +92,11 @@ env.add-indt Decl I :- std.do! [
     (p\ sigma c\ if (p = some c) (env.add-location (const c), log.private.log-implicits-of ff (const c)) true),
 ].
 
-pred env.begin-module i:id, i:option (pair modtypath id).
-env.begin-module Name none :- std.do! [
+:index (_ 1)
+func env.begin-module id, option (pair modtypath id) .
+env.begin-module Name none :-
   coq.env.begin-module Name none,
-  log.private.log-vernac (log.private.coq.vernac.begin-module Name none),
-].
+  log.private.log-vernac (log.private.coq.vernac.begin-module Name none).
 env.begin-module Name (some (pr Sig SigName)) :- std.do! [
   coq.env.begin-module Name (some Sig),
   log.private.log-vernac (log.private.coq.vernac.begin-module Name (some SigName)),
@@ -108,18 +108,18 @@ env.begin-module-type Name :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.begin-module-type Name),
 ].
 
-pred env.end-module-name i:id, o:modpath.
-env.end-module-name Name M :- std.do! [
+func env.end-module-name id -> modpath.
+env.end-module-name Name M :-
   coq.env.end-module M,
-  log.private.log-vernac (log.private.coq.vernac.end-module Name),
-].
+  log.private.log-vernac (log.private.coq.vernac.end-module Name).
+
 pred env.end-module-type-name i:id, o:modtypath.
 env.end-module-type-name Name M :- std.do! [
   coq.env.end-module-type M,
   log.private.log-vernac (log.private.coq.vernac.end-module-type Name),
 ].
 
-pred env.begin-section i:id.
+func env.begin-section id ->.
 env.begin-section Name :- std.do! [
   coq.env.begin-section Name,
   log.private.log-vernac (log.private.coq.vernac.begin-section Name),
@@ -131,11 +131,10 @@ env.end-section-name Name :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.end-section Name),
 ].
 
-pred notation.add-abbreviation i:id, i:int, i:term, i:bool, o:abbreviation.
-notation.add-abbreviation Name NArgs Body OnlyParsing O :- std.do! [
+func notation.add-abbreviation id, int, term, bool -> abbreviation.
+notation.add-abbreviation Name NArgs Body OnlyParsing O :-
   coq.notation.add-abbreviation Name NArgs Body OnlyParsing O,
-  log.private.log-vernac (log.private.coq.vernac.abbreviation Name NArgs Body),
-].
+  log.private.log-vernac (log.private.coq.vernac.abbreviation Name NArgs Body).
 
 pred env.export-module i:id, i:modpath.
 env.export-module MPNice M :- std.do! [
@@ -240,7 +239,7 @@ type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac
 }
 
 pred with-logging i:prop.
-pred log.private.log-vernac i:log.private.coq.vernac.
+func log.private.log-vernac log.private.coq.vernac ->.
 pred log.private.log-tactic i:term.
 
 /*        Hierarchy Builder: algebraic hierarchies made easy
@@ -297,7 +296,8 @@ namespace log.private {
 
 pred logger o:list coq.pp, o:bool.
 
-pred logger-extend i:list coq.pp, i:coq.pp.
+:index (1)
+func logger-extend list coq.pp, coq.pp ->.
 logger-extend [] _ :- coq.error "HB: logger was closed".
 logger-extend (uvar as X) V :- X = [V|FRESH_].
 logger-extend [_|XS] V :- logger-extend XS V.
@@ -306,12 +306,12 @@ pred logger-close i:list coq.pp.
 logger-close (uvar as X) :- X = [].
 logger-close [_|XS] :- logger-close XS.
 
-pred coq.vernac->pp i:list coq.vernac, o:coq.pp.
+func coq.vernac->pp list coq.vernac -> coq.pp.
 coq.vernac->pp L (box (v 0) L2) :-
   std.map L coq.vernac->pp1 L1,
   std.intersperse spc L1 L2.
 
-pred coq.vernac->pp1 i:coq.vernac, o:coq.pp.
+func coq.vernac->pp1 coq.vernac -> coq.pp.
 coq.vernac->pp1 (begin-module Name none) PP :-
   PP = box h [str "Module ", str Name, str "."].
 coq.vernac->pp1 (begin-module Name (some TyName)) PP :-
@@ -355,7 +355,7 @@ coq.vernac->pp1 (vernac.inductive I Primitive) (glue [str Start, PP, str Stop]) 
   if (Primitive = tt)
      (Start = "Set Primitive Projections. ", Stop = "Unset Primitive Projections. ")
      (Start = "", Stop = "").
-coq.vernac->pp1 (vernac.implicit Local Name [[]]) (box h [Locality, str "Arguments ", str Name, str " : clear implicits."]) :- local->locality Local Locality.
+coq.vernac->pp1 (vernac.implicit Local Name [[]]) (box h [Locality, str "Arguments ", str Name, str " : clear implicits."]) :- !, local->locality Local Locality.
 coq.vernac->pp1 (vernac.implicit Local Name [L]) (box h [Locality, str "Arguments ", str Name, spc, glue PP, str "."]) :-
   local->locality Local Locality,
   std.map L coq.vernac->ppimparg PP1,
@@ -373,20 +373,21 @@ coq.vernac->pp1 (strategy L (level N)) (box (hov 2) [str"Strategy ",str NPP,str"
   std.any->string N NPP,
   std.map L (c\r\sigma id\coq.gref->id (const c) id, r = str id) LID, std.intersperse spc LID PPL.
 
-pred local->locality i:bool, o:coq.pp.
+func local->locality bool -> coq.pp.
 local->locality tt (str "Local ").
 local->locality ff (str "Global ").
 
-pred fail->failure i:bool, o:coq.pp.
+func fail->failure bool -> coq.pp.
 fail->failure tt (str "Fail ").
 fail->failure ff (str "").
 
-pred coq.vernac->ppimparg i:implicit_kind, o:coq.pp.
+func coq.vernac->ppimparg implicit_kind -> coq.pp.
 coq.vernac->ppimparg explicit (str "_").
 coq.vernac->ppimparg maximal  (str "{_}").
 coq.vernac->ppimparg implicit (str "[_]").
 
-pred coq.vernac->ppinductive i:indt-decl, i:list (pair implicit_kind term), o:coq.pp.
+:index (3)
+func coq.vernac->ppinductive indt-decl, list (pair implicit_kind term) -> coq.pp.
 coq.vernac->ppinductive (parameter ID IMPL TY I) Acc R :-
   @pi-parameter ID TY p\ coq.vernac->ppinductive (I p) [pr IMPL p|Acc] R.
 coq.vernac->ppinductive (record ID SORT KID RD) ParamsRev (box (v 0) [Hack1, PP, Hack2]) :-
@@ -420,30 +421,31 @@ coq.vernac->ppinductive (inductive ID IsInd Arity Ks) ParamsRev PP :-
     coq.mk-app x ParamsAsArgs (X x),
     coq.vernac->ppinductiveconstructor (Ks (X x)) KsPp.
 
-pred coq.vernac->ppinductiveconstructor i:list indc-decl, o:list coq.pp.
+func coq.vernac->ppinductiveconstructor list indc-decl -> list coq.pp.
 coq.vernac->ppinductiveconstructor [] [].
 coq.vernac->ppinductiveconstructor [constructor ID Arity|Ks] PP :-
   PP = [str ID,{coq.arity->pp Arity},SEP|Rest],
   if (Ks = []) (SEP = str"") (SEP = glue [brk 1 0, str "| "]),
   coq.vernac->ppinductiveconstructor Ks Rest.
 
-pred coq.vernac->ppinductiveparams i:list (pair implicit_kind term), o:list coq.pp.
+func coq.vernac->ppinductiveparams list (pair implicit_kind term) -> list coq.pp.
 coq.vernac->ppinductiveparams [] [].
 coq.vernac->ppinductiveparams [pr Imp T|Rest] PP :-
   PP = [box (hov 2) [str A,ID,str " : ", TY,str B]|PPRest],
-  coq.term->pp T ID, decl T _ Ty, coq.term->pp Ty TY,
+  coq.term->pp T ID, std.once(decl T _ Ty), coq.term->pp Ty TY,
   if2 (Imp = explicit) (A = "(", B = ")")
       (Imp = maximal)  (A = "{", B = "}")
                        (A = "[", B = "]"),
   coq.vernac->ppinductiveparams Rest PPRest.
 
-pred coq.vernac->pprecordfields i:record-decl, o:list coq.pp. 
+func coq.vernac->pprecordfields record-decl -> list coq.pp. 
 coq.vernac->pprecordfields end-record [].
 coq.vernac->pprecordfields (field _ ID TY F) [ str ID, str " : ", TYPP, str ";", spc|FPP] :- % TODO attributes
   coq.term->pp TY TYPP,
   @pi-parameter ID TY p\ coq.vernac->pprecordfields (F p) FPP.
 
-pred coq.vernac->ppabbrterm i:int, i:term, o:list coq.pp, o:coq.pp.
+:index (1 1)
+func coq.vernac->ppabbrterm int, term -> list coq.pp, coq.pp.
 coq.vernac->ppabbrterm 0 T [] B :- !, @holes! => coq.term->pp T B.
 coq.vernac->ppabbrterm N (fun _ _ F) [spc,str ID|StrParams] B :-
   ID is "X" ^ {std.any->string N},

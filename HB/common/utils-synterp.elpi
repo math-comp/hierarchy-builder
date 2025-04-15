@@ -27,12 +27,12 @@ with-attributes P :-
   ] Opts, !,
   Opts => (save-docstring, P).
 
-pred if-verbose i:prop.
+func if-verbose fprop -> .
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
 
 % header of if-verbose messages
-pred header o:string.
+func header -> string.
 header Msg :- Msg is "[" ^ {std.any->string {gettimeofday}} ^ "] HB: ".
 
 % approximation, it should be logical path, not the file name

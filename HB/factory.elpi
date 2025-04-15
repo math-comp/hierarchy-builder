@@ -80,7 +80,7 @@ pdecl->w-mixins (parameter ID _ TySkel Rest : arity) (Out:w-mixins arity) :- !,
 pdecl->w-mixins (_ : arity) _ :- !,
   coq.error "HB: declaration must have at least one parameter".
 
-pred cdecl->w-mixins i:context-decl, o:w-mixins context-decl.
+func cdecl->w-mixins context-decl -> w-mixins context-decl.
 cdecl->w-mixins (context-item _ _ _ (some _) _) _ :- !,
   coq.error "HB: local definition is not supported in this context".
 cdecl->w-mixins (context-item ID _ TySkel none Rest as Decl) Out :-
@@ -149,9 +149,10 @@ mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   Dummy = sort prop, Conv (Rest Dummy) (pr MLwA R),
   Out = pr [triple F Ps T|MLwA] R
 ].
-pred key-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
-  i:(pred i:A, o:pair (list (w-args mixinname)) A),
-  o:pair mixins (w-params A).
+:index(1)
+func key-decl-w-mixins string, string, term, (term -> A),
+  (pred i:A, o:pair (list (w-args mixinname)) A) ->
+  pair mixins (w-params A).
 key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing key" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "key illtyped",
@@ -159,15 +160,15 @@ key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if (var Ty) (fresh-type Ty) true,
   Out = pr (w-params.nil ID Ty MLwA) (w-params.nil ID Ty R)
 ].
-pred param-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
-  i:(pred i:A, o:pair mixins (w-params A)), o:pair mixins (w-params A).
-param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
+:index (1)
+func param-decl-w-mixins string, string, term, (term -> A),
+  (func A -> pair mixins (w-params A)) -> pair mixins (w-params A).
+param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :-
   if-verbose (coq.say {header} "processing param" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "param illtyped",
   coq.string->name ID N, @pi-decl N Ty p\ Conv (Rest p) (pr (MLwP p) (R p)),
   if (var Ty) (fresh-type Ty) true,
-  Out = pr (w-params.cons ID Ty MLwP) (w-params.cons ID Ty R)
-].
+  Out = pr (w-params.cons ID Ty MLwP) (w-params.cons ID Ty R).
 
 pred pdecl->w-mixins.mixins i:indt-decl,
   o:pair (list (w-args mixinname)) indt-decl.

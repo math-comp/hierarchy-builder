@@ -359,7 +359,7 @@ func pp-arg-type pair id coq.pp -> coq.pp.
 pp-arg-type (pr ID PPTy) (box (hov 2) [str ID, str" :", spc, PPTy]).
 
 :functional
-pred pp-if-verbose o:coq.pp, i:(coq.pp -> prop).
+pred pp-if-verbose o:coq.pp, i:(func -> coq.pp).
 pp-if-verbose V P :- get-option "verbose" tt, !, P V.
 pp-if-verbose empty _.
 

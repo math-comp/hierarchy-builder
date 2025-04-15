@@ -3,8 +3,8 @@
 
 namespace builders {
 
-pred begin i:context-decl.
-begin CtxSkel :- std.do! [
+func begin context-decl ->.
+begin CtxSkel :-
   std.assert!(coq.next-synterp-action (begin-module Name)) "synterp code did not open module",
   if-verbose (coq.say {header} "begin module for builders"),
   log.coq.env.begin-module Name none,
@@ -23,8 +23,8 @@ begin CtxSkel :- std.do! [
 
   log.coq.env.begin-section Name,
   if-verbose (coq.say {header} "postulating factories"),
-  builders.private.postulate-factories Name IDF CtxSkel,
-].
+  builders.private.postulate-factories Name IDF CtxSkel
+.
 
 }
 
@@ -65,7 +65,7 @@ builders.end :- std.do! [
 /* ----------------------------- private code ------------------------------ */
 /* ------------------------------------------------------------------------- */
 
-pred factory.cdecl->w-mixins i:context-decl, o:w-mixins context-decl.
+func factory.cdecl->w-mixins context-decl -> w-mixins context-decl.
 
 namespace builders.private {
 
@@ -95,7 +95,7 @@ declare-shadowed-located Id (loc-abbreviation Abbrev) :-
   coq.notation.abbreviation-body Abbrev NArgs T,
   @global! => log.coq.notation.add-abbreviation Id NArgs T ff _.
 
-pred postulate-factory-abbrev i:term, i:list term, i:id, i:factoryname, o:term.
+func postulate-factory-abbrev term, list term, id, factoryname -> term.
 postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
   std.assert-ok! (factory-alias->gref Falias F) "HB",
   phant-abbrev F _ Fabv,
@@ -107,7 +107,8 @@ postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
 ].
 
 % Only record fields can be exported as operations.
-pred define-factory-operations i:term, i:list term, i:term, i:gref.
+:index (1)
+func define-factory-operations term, list term, term, gref.
 define-factory-operations TheType Params TheFactory (indt I) :- !,
   coq.env.indt I _ NIParams _ _ _ _,
   NHoles is NIParams - 1 - {std.length Params},
@@ -115,7 +116,8 @@ define-factory-operations TheType Params TheFactory (indt I) :- !,
   std.forall PL (define-factory-operation TheType Params TheFactory NHoles).
 define-factory-operations _ _ _ _.
 
-pred define-factory-operation i:term, i:list term, i:term, i:int, i:option constant.
+:index (_ _ _ _ 1)
+func define-factory-operation term, list term, term, int, option constant.
 define-factory-operation _ _ _ _ none.
 define-factory-operation TheType Params TheFactory NHoles (some P) :-
   coq.mk-n-holes NHoles Holes,
@@ -126,24 +128,23 @@ define-factory-operation TheType Params TheFactory NHoles (some P) :-
   coq.gref->id (const P) Name,
   @local! => log.coq.notation.add-abbreviation Name 0 T ff _.
 
-pred factory i:context-decl, o:string, o:gref.
+func factory context-decl -> string, gref.
 factory (context-item IDF _ T _ _\ context-end) IDF GR :- !,
   coq.safe-dest-app T (global GR) _.
 factory (context-item _ _ _ _ R) IDF GR :- !, pi x\ factory (R x) IDF GR.
 factory _ _ _ :- !, coq.error "the last context item is not a factory".
 
-pred postulate-factories i:id, i:string, i:context-decl.
-postulate-factories ModName IDF CDecl :- std.do! [
+func postulate-factories id, string, context-decl.
+postulate-factories ModName IDF CDecl :-
   factory.cdecl->w-mixins CDecl (pr FLwP _),
   context.declare.params-key FLwP ParamsSection FKey FLwA,
   std.assert! (FLwA = [triple GRF _ _])
     "HB: cannot declare builders for more than one factory at a time",
-  gref-deps GRF DepswPRaw,
+  std.once(gref-deps GRF DepswPRaw),
   context.declare.mixins FKey ParamsSection DepswPRaw _ _ _,
   std.map ParamsSection triple_2 FParams,
   postulate-factory-abbrev FKey FParams IDF GRF TheFactory,
   define-factory-operations FKey FParams TheFactory GRF,
-  acc-clause current (current-mode (builder-from FKey TheFactory GRF ModName)),
-].
+  acc-clause current (current-mode (builder-from FKey TheFactory GRF ModName)).
 
 }
