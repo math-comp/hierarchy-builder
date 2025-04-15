@@ -141,7 +141,7 @@ factory-alias->gref GR _ (error Msg) :- !,
 
 % [factory-constructor F K] means K is a constructor for
 % the factory F.
-pred factory-constructor o:factoryname, o:gref.
+func factory-constructor factoryname -> gref.
 
 % [factory-nparams F N] says that F has N parameters
 func factory-nparams factoryname -> int.

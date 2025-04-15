@@ -231,6 +231,15 @@ pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
   std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
 
+func findall-factory-constructor -> list prop.
+findall-factory-constructor L :-
+  std.map {std.findall (findall-factory-constructor.aux _)} findall-factory-constructor.make L.
+pred findall-factory-constructor.aux o:prop.
+findall-factory-constructor.aux (factory-constructor F C) :-
+  from F _ _, factory-constructor F C.
+func findall-factory-constructor.make prop -> prop.
+findall-factory-constructor.make (findall-factory-constructor.aux P) P.
+
 pred findall-local-canonical o:list constant.
 findall-local-canonical CL :-
   std.map {std.findall (local-canonical C_)} local-canonical-gref CL.
