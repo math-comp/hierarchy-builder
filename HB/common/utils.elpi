@@ -23,7 +23,7 @@ with-locality P :-
   if (get-option "local" tt) (A = @local!) (A = @global!),
   A => P.
 
-pred acc-clause i:scope, i:prop.
+func acc-clause scope, prop.
 acc-clause Scope C :- coq.elpi.accumulate Scope "hb.db" (clause _ _ C).
 
 /* Uncomment and remove HB/common/compat_acc_clauses_*.elpi once requiring coq-elpi >= 1.18.0,
@@ -152,7 +152,7 @@ pred params->holes i:list-w-params A, o:list term.
 params->holes (w-params.nil _ _ _) [].
 params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 
-pred fresh-type o:term.
+func fresh-type -> term.
 fresh-type Ty :-
   Ty = {{Type}},
   std.assert-ok! (coq.typecheck-ty Ty _) "impossible".

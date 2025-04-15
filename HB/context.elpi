@@ -11,7 +11,7 @@ declare FLwP MLwP Params TheKey MSL CL :- !, std.do! [
   declare.mixins TheKey ParamsSection MLwPRaw MLwP MSL CL
 ].
 
-pred declare.params-key i:w-params A, o:list (triple id term term), o:term, o:A.
+func declare.params-key w-params A -> list (triple id term term), term, A.
 declare.params-key MLwP Params TheKey Out :- !, std.do! [
   if-verbose (coq.say {header} "declaring parameters and key as section variables"),
   declare.params MLwP Params KId KTy F,
@@ -32,7 +32,8 @@ declare.params (w-params.nil KId KTy F) [] KId KTy F :- !.
 % (section) context with all the mixins provided by the factories and all
 % the structure instances we can derive on TheType from these. Clauses
 % contain mixin-src for each postulated mixin
-pred declare.mixins i:term, i:list (triple id term term), i:mixins, o:mixins, o:list prop, o:list constant.
+:index (1)
+func declare.mixins term, list (triple id term term), mixins -> mixins, list prop, list constant.
 declare.mixins TheType TheParamsSection MLwPRaw MLwP MSL CL :-  std.do! [
   if-verbose (coq.say "Here is the list of mixins to declare (the order matters): "
     {list-w-params_list MLwPRaw}),
