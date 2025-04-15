@@ -144,7 +144,7 @@ factory-alias->gref GR _ (error Msg) :- !,
 pred factory-constructor o:factoryname, o:gref.
 
 % [factory-nparams F N] says that F has N parameters
-pred factory-nparams o:factoryname, o:int.
+func factory-nparams factoryname -> int.
 
 % [is-structure GR] tests if GR is a known structure
 pred is-structure o:gref.
