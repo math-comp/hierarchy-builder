@@ -160,8 +160,7 @@ pred sub-class o:classname, o:classname, o:constant, o:int.
 
 % [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
-:index(2)
-pred gref-deps o:gref, o:mixins.
+func gref-deps gref -> mixins.
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:classname, o:classname, o:classname.
