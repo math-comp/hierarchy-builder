@@ -26,7 +26,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
       with:
-        opam_file: './coq-hierarchy-builder.opam'
+        opam_file: './rocq-hierarchy-builder.opam'
         coq_version: ${{ matrix.coq_version }}
         export: 'OPAMWITHTEST'  # space-separated list of variables
       env:
