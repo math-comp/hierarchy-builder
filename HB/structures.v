@@ -179,7 +179,7 @@ pred mixin-mem i:term, o:gref.
 % the minimal class that includes this mixin.
 % [mixin-first-class M C] states that C is the first/minimal class
 % that contains the mixin M
-pred mixin-first-class o:mixinname, o:classname.
+func mixin-first-class mixinname -> classname.
 
 % memory of exported operations (TODO: document fiels)
 pred exported-op o:mixinname, o:constant, o:constant.
