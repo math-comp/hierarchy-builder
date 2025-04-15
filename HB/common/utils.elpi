@@ -61,7 +61,7 @@ argument->ty X _ :- coq.error "Argument" X " is expected to be a type or a strin
 pred builder->string i:builder, o:string.
 builder->string (builder _ _ _ B) S :- coq.term->string (global B) S.
 
-pred nice-gref->string i:gref, o:string.
+func nice-gref->string gref -> string.
 nice-gref->string X Mod :-
   coq.gref->path X Path,
   std.rev Path [Mod1,Mod2|_], !,

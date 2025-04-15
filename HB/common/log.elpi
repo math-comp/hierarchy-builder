@@ -10,25 +10,26 @@
 
 namespace log.coq {
 
-pred arguments.set-implicit i:gref, i:list (list implicit_kind).
-arguments.set-implicit GR I :-  std.do! [
+:index (1)
+func arguments.set-implicit gref, list (list implicit_kind).
+arguments.set-implicit GR I :-
   coq.arguments.set-implicit GR I,
   if (@local!) (Local = tt) (Local = ff),
-  log.private.log-vernac (log.private.coq.vernac.implicit Local {coq.gref->id GR} I),
-].
+  log.private.log-vernac (log.private.coq.vernac.implicit Local {coq.gref->id GR} I).
 
-pred env.add-location i:gref.
+func env.add-location gref ->.
 env.add-location GR :-
   if (get-option "elpi.loc" Loc) % remove when coq-elpi > 1.9
      (acc-clause library (decl-location GR Loc))
      true.
 
-pred strategy.set i:list constant, i:conversion_strategy.
+func strategy.set list constant, conversion_strategy ->.
 strategy.set CL S :-
   coq.strategy.set CL S,
   log.private.log-vernac (log.private.coq.vernac.strategy CL S).
 
-pred env.add-const-noimplicits i:id, i:term, i:term, i:opaque?, o:constant.
+:index (1)
+func env.add-const-noimplicits id, term, term, opaque? -> constant.
 env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   if (not(ground_term Ty ; ground_term Bo))
     (coq.error "HB: cannot infer some information in" Name
@@ -42,7 +43,8 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
   @local! => arguments.set-implicit (const C) [[]],
 ].
 
-pred env.add-const i:id, i:term, i:term, i:opaque?, o:constant.
+:index (1)
+func env.add-const id, term, term, opaque? -> constant.
 env.add-const Name Bo Ty Opaque C :- std.do! [
   if (not(ground_term Ty ; ground_term Bo))
     (coq.error "HB: cannot infer some information in" Name
@@ -55,7 +57,7 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
 ].
 
-pred env.add-const-noimplicits-failondup i:id, i:term, i:term, i:opaque?, o:constant.
+func env.add-const-noimplicits-failondup id, term, term, opaque? -> constant.
 env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
   if (not(ground_term Ty ; ground_term Bo))
     (coq.error "HB: cannot infer some information in" Name
@@ -68,13 +70,13 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
   @local! => arguments.set-implicit (const C) [[]],
 ].
 
-pred env.add-parameter i:id, i:term, o:constant.
+func env.add-parameter id, term -> constant.
 env.add-parameter ID Ty C :- std.do! [
   @global! => coq.env.add-axiom ID Ty C,
   log.private.log-vernac (log.private.coq.vernac.parameter ID Ty),
 ].
 
-pred env.add-indt i:indt-decl, o:inductive.
+func env.add-indt indt-decl -> inductive.
 env.add-indt Decl I :- std.do! [
   if (not(coq.ground-indt-decl? Decl))
     (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
@@ -102,7 +104,7 @@ env.begin-module Name (some (pr Sig SigName)) :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.begin-module Name (some SigName)),
 ].
 
-pred env.begin-module-type i:id.
+func env.begin-module-type id ->.
 env.begin-module-type Name :- std.do! [
   coq.env.begin-module-type Name,
   log.private.log-vernac (log.private.coq.vernac.begin-module-type Name),
@@ -113,7 +115,7 @@ env.end-module-name Name M :-
   coq.env.end-module M,
   log.private.log-vernac (log.private.coq.vernac.end-module Name).
 
-pred env.end-module-type-name i:id, o:modtypath.
+func env.end-module-type-name id -> modtypath.
 env.end-module-type-name Name M :- std.do! [
   coq.env.end-module-type M,
   log.private.log-vernac (log.private.coq.vernac.end-module-type Name),
@@ -125,7 +127,7 @@ env.begin-section Name :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.begin-section Name),
 ].
 
-pred env.end-section-name i:id.
+func env.end-section-name id.
 env.end-section-name Name :- std.do! [
   coq.env.end-section,
   log.private.log-vernac (log.private.coq.vernac.end-section Name),
@@ -136,19 +138,19 @@ notation.add-abbreviation Name NArgs Body OnlyParsing O :-
   coq.notation.add-abbreviation Name NArgs Body OnlyParsing O,
   log.private.log-vernac (log.private.coq.vernac.abbreviation Name NArgs Body).
 
-pred env.export-module i:id, i:modpath.
+func env.export-module id, modpath ->.
 env.export-module MPNice M :- std.do! [
   coq.env.export-module M,
   log.private.log-vernac (log.private.coq.vernac.export-module MPNice),
 ].
 
-pred env.import-module i:id, i:modpath.
+func env.import-module id, modpath ->.
 env.import-module MPNice M :- std.do! [
   coq.env.import-module M,
   log.private.log-vernac (log.private.coq.vernac.import-module MPNice),
 ].
 
-pred coercion.declare i:coercion.
+func coercion.declare coercion -> .
 coercion.declare C :- std.do! [
   @global! => @reversible! => coq.coercion.declare C,
   C = coercion GR _ SRCGR TGTCL,
@@ -161,7 +163,7 @@ coercion.declare C :- std.do! [
 
 % Since CS.foo is not a valid predicate name we can't use it
 % in the namespace, so we just define it here with the full name
-pred log.coq.CS.declare-instance i:constant.
+func log.coq.CS.declare-instance constant ->.
 log.coq.CS.declare-instance C  :- std.do! [
   if (@local!) (Local = tt) (Local = ff),
   coq.CS.declare-instance (const C),
@@ -172,7 +174,7 @@ log.coq.CS.declare-instance C  :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.canonical Name Local),
 ].
 
-pred log.coq.check i:term, o:term, o:term, o:diagnostic.
+func log.coq.check term -> term, term, diagnostic.
 log.coq.check Skel Ty T D :- std.do! [
   coq.elaborate-skeleton Skel Ty T D,
   if (get-option "fail" tt) (Fail = tt) (Fail = ff),
@@ -199,7 +201,7 @@ namespace log.private {
 
 %%%%% Logging Utils %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred log-implicits-of i:bool, i:gref.
+func log-implicits-of bool, gref -> .
 log-implicits-of Local GR :-
   coq.arguments.implicit GR I,
   if (std.forall I (i\ std.forall i (x\ x = explicit))) (IMP = [[]]) (IMP = I),
@@ -238,9 +240,9 @@ type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac
 
 }
 
-pred with-logging i:prop.
+func with-logging fprop ->.
 func log.private.log-vernac log.private.coq.vernac ->.
-pred log.private.log-tactic i:term.
+func log.private.log-tactic term ->.
 
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
@@ -248,7 +250,7 @@ pred log.private.log-tactic i:term.
 % implementation of logging and vernac printing
 
 with-logging P :- (get-option "elpi.hb.log" _, NICE = tt ; get-option "elpi.hb.log.raw" _, NICE = ff), !,
-  get-option "elpi.loc" Loc,
+  get-option "elpi.loc" Loc, !,
   loc.fields Loc FILE Start Stop _ _,
   LocStr is "characters " ^ {std.any->string Start} ^ "-" ^ {std.any->string Stop},
   FILENAME is FILE ^ ".hb",
@@ -302,7 +304,7 @@ logger-extend [] _ :- coq.error "HB: logger was closed".
 logger-extend (uvar as X) V :- X = [V|FRESH_].
 logger-extend [_|XS] V :- logger-extend XS V.
 
-pred logger-close i:list coq.pp.
+func logger-close list coq.pp ->.
 logger-close (uvar as X) :- X = [].
 logger-close [_|XS] :- logger-close XS.
 

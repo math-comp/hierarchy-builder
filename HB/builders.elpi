@@ -29,7 +29,7 @@ begin CtxSkel :-
 }
 
 % "end" is a keyword, be put it in the namespace by hand
-pred builders.end.
+func builders.end.
 builders.end :- std.do! [
   current-mode (builder-from _ _ _ ModName),
 
@@ -72,7 +72,8 @@ namespace builders.private {
 % [declare-1-builder (builder _ F M B) From MoreFrom] Given B of type FB, it
 % declares all the new builders F to M via B.
 % From holds the (from F Mi Bi) new clauses during folding.
-pred declare-1-builder i:builder, i:list prop, o:list prop.
+:index (1)
+func declare-1-builder builder, list prop -> list prop.
 declare-1-builder (builder _ SrcFactory TgtMixin _) FromClauses FromClauses :- (FromClauses => from SrcFactory TgtMixin _), !,
   if-verbose (coq.say {header} "skipping duplicate builder from"
     {nice-gref->string SrcFactory} "to" {nice-gref->string TgtMixin}).
@@ -82,13 +83,15 @@ declare-1-builder (builder _ SrcFactory TgtMixin B) FromClauses [from SrcFactory
 
 % We add breviations for all constants what will be shadowed by projections
 % if the factory.
-pred declare-shadowed-constant i:option constant.
+:index (1)
+func declare-shadowed-constant option constant ->.
 declare-shadowed-constant none.
 declare-shadowed-constant (some C) :-
   coq.gref->id (const C) Id,
   std.forall {coq.locate-all Id} (declare-shadowed-located Id).
 
-pred declare-shadowed-located i:string, i:located.
+:index (_ 1)
+func declare-shadowed-located string, located.
 declare-shadowed-located Id (loc-gref GR) :-
   @global! => log.coq.notation.add-abbreviation Id 0 (global GR) ff _.
 declare-shadowed-located Id (loc-abbreviation Abbrev) :-
