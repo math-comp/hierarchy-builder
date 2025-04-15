@@ -2,8 +2,16 @@
 
 ## Unreleased
 
+## [1.9.0] - 2025-04-15
+
+Compatible with
+- Coq 8.18 with Coq-Elpi 2.0.0
+- Coq 8.19 with Coq-Elpi 2.0.1
+- Coq 8.20 with Coq-Elpi 2.4.x
+- Rocq 9.0 with Coq-Elpi 2.4.x
+
 Compile without coqc compatibility shim on Rocq 9.0
-Compile without Stdlb on Rocq 9.0
+Compile without Stdlib on Rocq 9.0
 
 ## [1.8.1] - 2025-01-25
 
