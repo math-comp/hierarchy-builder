@@ -23,11 +23,11 @@ infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
   private.instantiate-all-these-mixin-args FT T ML SFX,
 ].
 
-% [infer-all-gref-deps Ps T GR X] fills in all the arguments of GR
-% which are misxins in gref-deps GR, other arguments are abstracted
-pred infer-all-gref-deps i:list term, i:term, i:gref, o:term.
-infer-all-gref-deps Ps T GR X :- std.do! [
-  std.assert! (gref-deps GR MLwP) "BUG: gref-deps should never fail",
+% [infer-all-gref->deps Ps T GR X] fills in all the arguments of GR
+% which are misxins in gref->deps GR, other arguments are abstracted
+pred infer-all-gref->deps i:list term, i:term, i:gref, o:term.
+infer-all-gref->deps Ps T GR X :- std.do! [
+  std.assert! (gref->deps GR MLwP) "BUG: gref->deps should never fail",
   list-w-params_list MLwP ML,
   coq.env.typeof GR Ty,
   coq.mk-eta (-1) Ty (global GR) EtaF,
@@ -52,7 +52,7 @@ infer-holes-depending-on-pack T (app [global GR | Args]) S :-
   ((coq.gref->id GR GRS, rex.match "phant.*" GRS /*TODO: phant-clone? GR N*/);
     pack? GR _),
   coq.env.typeof GR Ty, class-of-phant Ty KC SC C,
-  factory-nparams C N,
+  factory->nparams C N,
   std.take N Args Params, !,
   std.do! [
     infer-all-args-let Params T KC ClassInstance ok,
@@ -134,7 +134,7 @@ pred under-mixins.then i:list (w-args mixinname),
     i:(A -> prop), o:A.
 under-mixins.then [] _ Pred Body :- !, Pred Body.
 under-mixins.then [triple M Args T|ML] MkFun Pred Out :- std.do! [
-  infer-all-gref-deps Args T M MTy,
+  infer-all-gref->deps Args T M MTy,
   (@pi-decl `m` MTy m\ mixin-src T M m =>
     under-mixins.then ML MkFun Pred (Body m)),
   MkFun `m` MTy Body Out,
@@ -235,7 +235,7 @@ pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
 builder->term Ps T Src Tgt B :- !, std.do! [
   from Src Tgt FGR,
   F = global FGR,
-  gref-deps Src MLwP,
+  gref->deps Src MLwP,
   list-w-params_list MLwP ML,
   infer-all-these-mixin-args Ps T ML F B,
 ].

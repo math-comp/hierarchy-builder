@@ -104,10 +104,10 @@ type fdp factoryname -> list mixinname -> list mixinname -> factory_deps_prov.
 % get all available factories in the above type
 pred list_factories o:list factory_deps_prov.
 list_factories FL :-
-  std.map-filter {findall-factory-constructor} list_factories.aux FL.
+  std.map-filter {findall-factory->constructor} list_factories.aux FL.
 pred list_factories.aux i:prop, o:howto.private.factory_deps_prov.
-list_factories.aux (factory-constructor F _) (fdp F DML PML) :-
-  gref-deps F FD,
+list_factories.aux (factory->constructor F _) (fdp F DML PML) :-
+  gref->deps F FD,
   list-w-params_list FD DML,
   list-w-params_list {factory-provides F} PML.
 

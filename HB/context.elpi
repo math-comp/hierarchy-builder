@@ -63,7 +63,7 @@ postulate-mixin TheType (triple M Ps T) (triple CL MSL MLwP) (triple OutCL [MC|M
 
   if-verbose (coq.say "HB: postulate" Name "on" {coq.term->string T}),
   
-  synthesis.infer-all-gref-deps Ps T M TySkel,
+  synthesis.infer-all-gref->deps Ps T M TySkel,
   % was synthesis.infer-all-mixin-args Ps T M TySkel,
   % if-verbose (coq.say "HB: postulate-mixin checking" TySkel),
   % std.assert-ok! (coq.typecheck Ty _) "postulate-mixin: Ty illtyped",

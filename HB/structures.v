@@ -139,12 +139,12 @@ factory-alias->gref GR _ (error Msg) :- !,
 
 %%%%% Cache of known facts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [factory-constructor F K] means K is a constructor for
+% [factory->constructor F K] means K is a constructor for
 % the factory F.
-func factory-constructor factoryname -> gref.
+func factory->constructor factoryname -> gref.
 
-% [factory-nparams F N] says that F has N parameters
-func factory-nparams factoryname -> int.
+% [factory->nparams F N] says that F has N parameters
+func factory->nparams factoryname -> int.
 
 % [is-structure GR] tests if GR is a known structure
 pred is-structure o:gref.
@@ -161,9 +161,9 @@ pred factory-builder-nparams o:constant, o:int.
 :index (2 2 1)
 pred sub-class o:classname, o:classname, o:constant, o:int.
 
-% [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
+% [gref->deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
-func gref-deps gref -> mixins.
+func gref->deps gref -> mixins.
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:classname, o:classname, o:classname.
@@ -180,9 +180,9 @@ pred mixin-mem i:term, o:gref.
 % Also we remember which is the first class/structure that includes
 % a given mixin, assuming the invariant that this first class is also
 % the minimal class that includes this mixin.
-% [mixin-first-class M C] states that C is the first/minimal class
+% [mixin->first-class M C] states that C is the first/minimal class
 % that contains the mixin M
-func mixin-first-class mixinname -> classname.
+func mixin->first-class mixinname -> classname.
 
 % memory of exported operations (TODO: document fiels)
 pred exported-op o:mixinname, o:constant, o:constant.

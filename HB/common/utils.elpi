@@ -69,7 +69,7 @@ nice-gref->string X Mod :-
 nice-gref->string X S :-
   coq.term->string (global X) S.
 
-pred gref->modname i:gref, i:int, i:string, o:string.
+func gref->modname gref, int, string -> string.
 gref->modname GR NComp Sep ModName :-
   coq.gref->path GR Path,
   std.rev Path Mods,
@@ -77,7 +77,7 @@ gref->modname GR NComp Sep ModName :-
   if (Len >= NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
   std.take NComp Mods L,
   std.string.concat Sep {std.rev L} ModName.
-pred gref->modname-label i:gref, i:int, i:string, o:string.
+func gref->modname-label gref, int, string -> string.
 gref->modname-label GR NComp Sep ModName :-
   coq.gref->path GR Path,
   std.rev Path PathRev,
@@ -86,15 +86,22 @@ gref->modname-label GR NComp Sep ModName :-
   std.take N PathRev L,
   std.string.concat Sep {std.rev [{coq.gref->id GR}|L]} ModName.
 
+pred cs-pattern->name i:cs-pattern, o:string.
+cs-pattern->name cs-prod "prod".
+cs-pattern->name (cs-sort _) "sort".
+cs-pattern->name cs-default "default".
+cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
+
+
 func string->modpath string -> modpath.
 string->modpath S MP :-
   std.filter {coq.locate-all S} (l\l = loc-modpath _) L,
   L = [loc-modpath MP].
 
-pred gref->modname_short1 i:modpath, i:string, i:list string, o:string.
-gref->modname_short1 _ S [] S.
-gref->modname_short1 MP "" [X|L] L' :- gref->modname_short1 MP X L L'.
-gref->modname_short1 MP S _ S :- string->modpath S MP.
+func gref->modname_short1 modpath, string, list string -> string.
+gref->modname_short1 _ S [] S :- !.
+gref->modname_short1 MP "" [X|L] L' :- !, gref->modname_short1 MP X L L'.
+gref->modname_short1 MP S _ S :- !, string->modpath S MP.
 gref->modname_short1 MP S [X|L] S' :-
   gref->modname_short1 MP {std.string.concat "." [X,S]} L S'.
 

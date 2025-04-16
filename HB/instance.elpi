@@ -44,7 +44,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
   std.assert-ok! (factory-alias->gref FactoryAlias Factory) "HB",
-  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
+  std.assert! (factory->nparams Factory NParams) "Not a factory synthesized by HB",
 
   % declare the constant for the factory instance
   private.hack-section-discharging SectionBody SectionBodyHack,
@@ -189,6 +189,72 @@ decl-const-in-struct Name S STy CS:- std.do![
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
   acc-clause current (local-canonical CS),
   if-verbose (coq.say {header} "structure instance" Name "declared"),
+].
+
+
+pred declare-factory-sort-deps i:gref.
+declare-factory-sort-deps  GR :- std.do! [
+  if-verbose (coq.say {header} "required instances on factory sort for" GR),
+  Name is "SortInstances" ^ {std.any->string {new_int}},
+  log.coq.env.begin-module Name none,
+  log.coq.env.begin-section Name,
+  mk-factory-sort-deps GR CSL,
+  log.coq.env.end-section-name Name,
+  log.coq.env.end-module-name Name _,
+  std.forall CSL (x\ sigma CS\ x = pr _ CS, log.coq.CS.declare-instance CS)
+].
+
+pred declare-factory-sort-factory i:gref.
+declare-factory-sort-factory GR :- std.do! [
+  if-verbose (coq.say {header} "required instances on factory sort for" GR),
+  Name is "SortInstances" ^ {std.any->string {new_int}},
+  log.coq.env.begin-module Name none,
+  log.coq.env.begin-section Name,
+  mk-factory-sort-factory GR CFL CSL,
+  log.coq.env.end-section-name Name,
+  log.coq.env.end-module-name Name _,
+  std.forall {std.append CFL CSL} (x\ sigma CS\ x = pr _ CS, log.coq.CS.declare-instance CS)
+].
+
+pred context.declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:list constant.
+
+pred mk-factory-sort-deps i:gref, o:list (pair id constant).
+mk-factory-sort-deps AliasGR CSL :- std.do! [
+  std.assert-ok! (factory-alias->gref AliasGR GR) "HB: mk-factory-sort-deps",
+  gref->deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GR FSort,
+  log.coq.env.add-section-variable-noimplicits "f" FSort CF,
+  GCF = global (const CF),
+  factory-sort (coercion GRFSort _ GR _),
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GRFSort KSort,
+  coq.mk-app KSort [GCF] KFSortEta,
+  list-w-params_list MLwP ML,
+  std.length ML NMLArgs,
+  coq.mk-n-holes NMLArgs SortMLHoles,
+  std.append {std.append SortParams [SortKey|SortMLHoles]} [GCF] KFSortArgs,
+  coq.mk-app (global GRFSort) KFSortArgs KFSort,
+  std.assert-ok! (coq.unify-eq KFSortEta KFSort) "HB: KRSort not an app",
+  std.map SortMSL
+    (c\ o\ sigma m t\ c = mixin-src _ m t, o = mixin-src KFSort m t)
+    KFSortMSL,
+  KFSortMSL =>
+    synthesis.under-mixin-src-from-factory.do! KFSort GCF
+      [declare-all KFSort {findall-classes-for ML} CSL]
+].
+
+pred mk-factory-sort-factory i:gref, o:list (pair id constant), o:list (pair id constant).
+mk-factory-sort-factory AliasGR CFL CSL :- std.do! [
+  std.assert-ok! (factory-alias->gref AliasGR GR) "HB",
+  gref->deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GR FSort,
+  log.coq.env.add-section-variable-noimplicits "f" FSort CF,
+  std.length {list-w-params_list MLwP} NMLArgs,
+  coq.mk-n-holes NMLArgs SortMLHoles,
+  GCF = global (const CF),
+  coq.mk-app (global GR) {std.append SortParams [GCF|SortMLHoles]} FGCF,
+  declare-const "_" GCF (arity FGCF) CFL CSL
 ].
 
 % create instances for all possible combinations of types and structure compatible 
