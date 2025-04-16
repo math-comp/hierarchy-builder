@@ -181,15 +181,15 @@ log.coq.check Skel Ty T D :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.check Skel Fail),
 ].
 
-pred refine i:term, i:goal, o:list sealed-goal. % to silence a warning, since this is only in tactics
-pred log.refine i:term, i:goal, o:list sealed-goal.
+func refine term, goal -> list sealed-goal. % to silence a warning, since this is only in tactics
+func log.refine term, goal -> list sealed-goal.
 log.refine T G GL :- std.do! [
   refine T G GL,
   G = goal _ _ _ Solution _,
   log.private.log-tactic Solution,
 ].
-pred refine.no_check i:term, i:goal, o:list sealed-goal. % to silence a warning, since this is only in tactics
-pred log.refine.no_check i:term, i:goal, o:list sealed-goal.
+func refine.no_check term, goal -> list sealed-goal. % to silence a warning, since this is only in tactics
+func log.refine.no_check term, goal -> list sealed-goal.
 log.refine.no_check T G GL :- std.do! [
   refine.no_check T G GL,
   G = goal _ _ _ Solution _,
