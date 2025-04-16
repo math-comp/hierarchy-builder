@@ -87,7 +87,7 @@ gref->modname-label GR NComp Sep ModName :-
   std.take N PathRev L,
   std.string.concat Sep {std.rev [{coq.gref->id GR}|L]} ModName.
 
-pred cs-pattern->name i:cs-pattern, o:string.
+func cs-pattern->name cs-pattern -> string.
 cs-pattern->name cs-prod "prod".
 cs-pattern->name (cs-sort _) "sort".
 cs-pattern->name cs-default "default".
