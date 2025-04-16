@@ -9,34 +9,35 @@
   kind triple type -> type -> type -> type.
   type triple A -> B -> C -> triple A B C.
 
-  pred triple_1 i:triple A B C, o:A.
+  func triple_1 triple A B C -> A.
   triple_1 (triple A _ _) A.
 
-  pred triple_2 i:triple A B C, o:B.
+  func triple_2 triple A B C -> B.
   triple_2 (triple _ B _) B.
 
-  pred triple_3 i:triple A B C, o:C.
+  func triple_3 triple A B C -> C.
   triple_3 (triple _ _ C) C.
 % elpi:endif
 
 namespace std {
 
-pred nlist i:int, i:A, o: list A.
+func nlist int, A -> list A.
 nlist N X L :- std.map {std.iota N} (_\ y\ y = X) L.
 
-pred list-diff i:list A, i:list A, o:list A.
+:index (_ 1)
+func list-diff list A, list A -> list A.
 list-diff X [] X.
 list-diff L [D|DS] R :-
   std.filter L (x\ not(x = D)) L1,
   list-diff L1 DS R.
 
-pred list-uniq i:list A, o:list A.
+func list-uniq list A -> list A.
 pred list-uniq.seen i:A.
 list-uniq [] [].
 list-uniq [X|XS] YS :- list-uniq.seen X, !, list-uniq XS YS.
 list-uniq [X|XS] [X|YS] :- list-uniq.seen X => list-uniq XS YS.
 
-pred list-eq-set i:list A, i:list A.
+func list-eq-set list A, list A.
 list-eq-set L1 L2 :- list-diff L1 L2 [], list-diff L2 L1 [].
 
 pred under.do! i:((A -> prop) -> A -> prop), i:list prop.
@@ -45,12 +46,14 @@ under.do! Then LP :- Then (_\ std.do! LP) _.
 func map-triple (func A -> A1), (func B -> B1), (func C -> C1), triple A B C -> triple A1 B1 C1.
 map-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
 
-pred sort.split i:list A, o:list A, o:list A.
+func sort.split list A -> list A, list A.
 sort.split [] [] [] :- !.
 sort.split [X] [X] [] :- !.
 sort.split [X,Y|TL] [X|L1] [Y|L2] :- sort.split TL L1 L2.
 
-pred sort.merge i:(func A, A ->), i:list A, i:list A, o:list A.
+% sort.merge can take a relation but keeps only the first solution returned.
+% There is a cut after the call to `Rel X1 X2`.
+func sort.merge (pred i:A, i:A), list A, list A -> list A.
 sort.merge _ [] L L :- !.
 sort.merge _ L [] L :- !.
 sort.merge Rel [X1|L1] [X2|L2] [X1|M] :- Rel X1 X2, !,
@@ -58,13 +61,14 @@ sort.merge Rel [X1|L1] [X2|L2] [X1|M] :- Rel X1 X2, !,
 sort.merge Rel [X1|L1] [X2|L2] [X2|M] :-
   sort.merge Rel [X1|L1] L2 M.
 
-pred sort i:list A, i:(func A, A ->), o:list A.
+:index(1)
+func sort list A, (pred i:A, i:A) -> list A.
 sort [] _ [] :- !.
 sort [X] _ [X] :- !.
 sort L Rel M :-
   sort.split L L1 L2, sort L1 Rel S1, sort L2 Rel S2, sort.merge Rel S1 S2 M.
 
-pred bubblesort i:list A, i:(func A, A ->), o:list A.
+func bubblesort list A, (pred i:A, i:A) -> list A.
 bubblesort [] _ [] :- !.
 bubblesort [X] _ [X] :- !.
 bubblesort [X,Y|TL] Rel [X|Rest1] :- Rel X Y, !, bubblesort [Y|TL] Rel Rest1.
@@ -89,32 +93,35 @@ toposort ES XS XS'' :-
   std.filter XS' (std.mem! XS) XS''.
 
 namespace gref {
-pred topovisit i: coq.gref.map coq.gref.set, i: classname,      i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
+func topovisit coq.gref.map coq.gref.set, classname,      coq.gref.set, list classname, coq.gref.set -> coq.gref.set, list classname, coq.gref.set.
 topovisit _ X VS PS PSS VS PS PSS :- coq.gref.set.mem X PSS, !.
 topovisit _ X VS _ _ _ _ _ :- coq.gref.set.mem X VS, !, halt "cycle detected.".
 topovisit ES X VS PS PSS VS' [X|PS'] PSS'' :-
-  (coq.gref.map.find X ES M ; coq.gref.set.empty M),
+  std.once (coq.gref.map.find X ES M ; coq.gref.set.empty M),
   toporec ES {coq.gref.set.elements M} {coq.gref.set.add X VS} PS PSS VS' PS' PSS',
   coq.gref.set.add X PSS' PSS''.
-pred toporec   i: coq.gref.map coq.gref.set, i: list classname, i: coq.gref.set, i: list classname, i: coq.gref.set, o: coq.gref.set, o: list classname, o: coq.gref.set.
+:index (_ 1)
+func toporec   coq.gref.map coq.gref.set, list classname, coq.gref.set, list classname, coq.gref.set -> coq.gref.set, list classname, coq.gref.set.
 toporec _ [] VS PS PSS VS PS PSS.
 toporec ES [X|XS] VS PS PSS VS'' PS'' PSS'' :-
   topovisit ES X VS PS PSS VS' PS' PSS', toporec ES XS VS' PS' PSS' VS'' PS'' PSS''.
 
-pred add-to-neighbours i:coq.gref.set, i:pair gref gref, i:coq.gref.map coq.gref.set, o:coq.gref.map coq.gref.set.
+:index (1)
+func add-to-neighbours coq.gref.set, pair gref gref, coq.gref.map coq.gref.set -> coq.gref.map coq.gref.set.
 add-to-neighbours VS (pr _ V) A A :- not(coq.gref.set.mem V VS), !.
 add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.find K A L, !, coq.gref.map.add K {coq.gref.set.add V L} A A1.
 add-to-neighbours _ (pr K V) A A1 :- coq.gref.map.add K {coq.gref.set.add V {coq.gref.set.empty} } A A1.
 
+:index(1)
 func toposort list (pair gref gref), list gref -> list gref.
-toposort ES XS XS'' :- !, std.do! [
+toposort ES XS XS'' :- !,
   std.fold XS {coq.gref.set.empty} coq.gref.set.add VS,
   std.fold ES {coq.gref.map.empty} (add-to-neighbours VS) EM,
   toporec EM XS {coq.gref.set.empty} [] {coq.gref.set.empty} _ XS'' _
-].  
+.  
 }
 
-pred time-do! i:list prop.
+func time-do! list prop ->.
 time-do! [].
 time-do! [P|PS] :-
   std.time P Time, !,
@@ -127,14 +134,15 @@ time-do! [P|PS] :-
 namespace compat {
 
 % TODO: replace with std.map-filter when coq-elpi > 1.9.2
-pred map-filter i:list A, i:(A -> B -> prop), o:list B.
+:index (1)
+func map-filter list A, (A -> B -> prop) -> list B.
 map-filter [] _ [].
 map-filter [X|XS] F [Y|YS] :- F X Y, !, map-filter XS F YS.
 map-filter [_|XS] F YS :- map-filter XS F YS.
 
 }
 
-pred print-ctx.
+func print-ctx.
 print-ctx :- declare_constraint print-ctx [].
 constraint print-ctx mixin-src {
   rule \ (G ?- print-ctx) | (coq.say "The context is:" G).
@@ -142,11 +150,11 @@ constraint print-ctx mixin-src {
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq.term-is-gref? i:term, o:gref.
-coq.term-is-gref? (global GR) GR :- !.
-coq.term-is-gref? (pglobal GR _) GR :- !.
-coq.term-is-gref? (app [Hd|_]) GR :- !, coq.term-is-gref? Hd GR.
-coq.term-is-gref? (let _ _ T x\x) GR :- !, coq.term-is-gref? T GR.
+func coq.term-is-gref? term -> gref.
+coq.term-is-gref? (global GR) GR.
+coq.term-is-gref? (pglobal GR _) GR.
+coq.term-is-gref? (app [Hd|_]) GR :- coq.term-is-gref? Hd GR.
+coq.term-is-gref? (let _ _ T x\x) GR :- coq.term-is-gref? T GR.
 
 func coq.prod-tgt->gref term -> gref.
 coq.prod-tgt->gref T GR :- whd1 T T1, !, coq.prod-tgt->gref T1 GR.
@@ -154,7 +162,8 @@ coq.prod-tgt->gref (prod N Src Tgt) GR :- !, @pi-decl N Src x\ coq.prod-tgt->gre
 coq.prod-tgt->gref End GR :- coq.term->gref End GR.
 
 % TODO: move to coq-elpi proper / move to coq.pp in coq-elpi >= 1.9
-pred coq.indt-decl->string i:indt-decl, o:string.
+:index(1)
+func coq.indt-decl->string indt-decl -> string.
 coq.indt-decl->string (parameter ID _ Ty D) S :-
   coq.id->name ID Name,
   (@pi-decl Name Ty x\ coq.indt-decl->string (D x) S1),
@@ -163,13 +172,17 @@ coq.indt-decl->string (inductive _ _ _ _) "NYI".
 coq.indt-decl->string (record ID Ty KID RD) S :-
   coq.record-decl->string RD S1,
   S is ID ^ " : " ^ {coq.term->string Ty} ^ " := " ^ KID ^ " {\n" ^ S1 ^ "}".
-pred coq.record-decl->string i:record-decl, o:string.
+
+:index(1)
+func coq.record-decl->string record-decl -> string.
 coq.record-decl->string end-record "".
 coq.record-decl->string (field _ ID Ty D) S :-
   coq.id->name ID Name,
   (@pi-decl Name Ty x\ coq.record-decl->string (D x) S1),
   S is "  " ^ ID ^ " : " ^ {coq.term->string Ty} ^ ";\n" ^ S1.
-pred coq.ground-indt-decl? i:indt-decl.
+
+:index(1)
+func coq.ground-indt-decl? indt-decl ->.
 coq.ground-indt-decl? (parameter ID _ Ty D) :-
   ground_term Ty,
   coq.id->name ID Name, (@pi-decl Name Ty x\ coq.ground-indt-decl? (D x)).
@@ -177,40 +190,43 @@ coq.ground-indt-decl? (inductive _ _ _ _).
 coq.ground-indt-decl? (record _ Ty _ RD) :-
   ground_term Ty,
   coq.ground-record-decl? RD.
-pred coq.ground-record-decl? i:record-decl.
+
+:index(1)
+func coq.ground-record-decl? record-decl ->.
 coq.ground-record-decl? end-record.
 coq.ground-record-decl? (field _ ID Ty D) :-
   ground_term Ty,
   coq.id->name ID Name, (@pi-decl Name Ty x\ coq.ground-record-decl? (D x)).
 
 % TODO: remove when coq-elpi > 1.9.3
-pred copy-indt-decl i:indt-decl, o:indt-decl.
-copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
-  copy Ty Ty1,
-  @pi-parameter ID Ty1 x\ copy-indt-decl (D x) (D1 x).
-copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
-  copy-arity A A1,
-  coq.id->name ID N, coq.arity->term A1 T, @pi-decl N T i\ std.map (D i) copy-constructor (D1 i).
-  % @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i). % requires Coq-Elpi 1.9.x
-copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
-  copy T T1,
-  copy-fields F F1.
-pred copy-fields i:record-decl, o:record-decl.
-copy-fields end-record end-record.
-copy-fields (field Att ID T F) (field Att ID T1 F1) :-
-  copy T T1,
-  @pi-parameter ID T1 x\ copy-fields (F x) (F1 x).
-pred copy-constructor i:indc-decl, o:indc-decl.
-copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
+% func copy-indt-decl indt-decl -> indt-decl.
+% copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
+%   copy Ty Ty1,
+%   @pi-parameter ID Ty1 x\ copy-indt-decl (D x) (D1 x).
+% copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
+%   copy-arity A A1,
+%   coq.id->name ID N, coq.arity->term A1 T, @pi-decl N T i\ std.map (D i) copy-constructor (D1 i).
+%   % @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i). % requires Coq-Elpi 1.9.x
+% copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
+%   copy T T1,
+%   copy-fields F F1.
+% func copy-fields record-decl -> record-decl.
+% copy-fields end-record end-record.
+% copy-fields (field Att ID T F) (field Att ID T1 F1) :-
+%   copy T T1,
+%   @pi-parameter ID T1 x\ copy-fields (F x) (F1 x).
+% func copy-constructor indc-decl -> indc-decl.
+% copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
 
 % TODO: move to coq-elpi proper
-pred coq.gref.list->set i:list gref, o:coq.gref.set.
+func coq.gref.list->set list gref -> coq.gref.set.
 coq.gref.list->set L S :-
   std.fold L {coq.gref.set.empty} coq.gref.set.add S.
 
 % [coq.abstract-indt-decl Section I AbsI] abstracts I over the Section variables
 % which becomes parameter nodes of the indt-decl type
-pred coq.abstract-indt-decl i:list constant, i:indt-decl, o:indt-decl.
+:index(1)
+func coq.abstract-indt-decl list constant, indt-decl -> indt-decl.
 coq.abstract-indt-decl [] X X1 :- copy-indt-decl X X1.
 coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
   coq.gref->id (const C) ID,
@@ -222,7 +238,8 @@ coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
 
 % [coq.abstract-const-decl Section I AbsI] abstracts I over the Section variables
 % which becomes fun nodes
-pred coq.abstract-const-decl i:list constant, i:pair term term, o:pair term term.
+:index (1)
+func coq.abstract-const-decl list constant, pair term term -> pair term term.
 coq.abstract-const-decl [] (pr X Y) (pr X1 Y1) :- copy X X1, copy Y Y1.
 coq.abstract-const-decl [C|CS] X (pr (fun Name Ty1 X1) (prod Name Ty1 X2)) :-
   coq.gref->id (const C) ID,
@@ -235,7 +252,8 @@ coq.abstract-const-decl [C|CS] X (pr (fun Name Ty1 X1) (prod Name Ty1 X2)) :-
 
 % [coq.copy-clauses-for-unfold CS CL] generates clauses for the copy predicate
 % to unfold all constants in CS
-pred coq.copy-clauses-for-unfold i:list constant, o:list prop.
+:index(1)
+func coq.copy-clauses-for-unfold list constant -> list prop.
 coq.copy-clauses-for-unfold [] [].
 coq.copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
   coq.env.const C (some B) _,
@@ -251,7 +269,7 @@ coq.copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
 
 % like fold-map, needed for coq-elpi < 1.9
 
-pred coq.fold-map i:term, i:A, o:term, o:A.
+func coq.fold-map term, A -> term, A.
 coq.fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "coq.fold-map x A x A" at binders
 coq.fold-map (global _ as C) A C A :- !.
 coq.fold-map (sort _ as C) A C A :- !.
@@ -271,19 +289,18 @@ coq.fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A coq.fold-map L
 % when used in CHR rules
 coq.fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A coq.fold-map L1 A1.
 
-pred cs-pattern->term i:cs-pattern, o:term.
+func cs-pattern->term cs-pattern -> term.
 cs-pattern->term (cs-gref GR) T :- coq.env.global GR T.
-cs-pattern->term (cs-sort prop) (sort prop).
-cs-pattern->term (cs-sort sprop) (sort sprop).
+cs-pattern->term (cs-sort prop) (sort prop) :- !.
+cs-pattern->term (cs-sort sprop) (sort sprop) :- !.
 cs-pattern->term (cs-sort _) T :- coq.elaborate-skeleton {{ Type }} _ T ok.
 cs-pattern->term cs-prod T :- coq.elaborate-skeleton (prod `x` Ty_ x\ Bo_ x) _ T ok.
 
-pred term->cs-pattern i:term, o:cs-pattern.
-term->cs-pattern (prod _ _ _) cs-prod.
-term->cs-pattern (sort U) (cs-sort U).
-term->cs-pattern T (cs-gref GR) :- coq.term->gref T GR.
+func term->cs-pattern term -> cs-pattern.
+term->cs-pattern (prod _ _ _) cs-prod :- !.
+term->cs-pattern (sort U) (cs-sort U) :- !.
+term->cs-pattern T (cs-gref GR) :- coq.term->gref T GR, !.
 term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
-
 
 % ---------------------------------------------------------------------
 % kit for closing a term by abstracting evars with lambdas
@@ -297,7 +314,7 @@ namespace abstract-holes {
 type abs int -> term.
 
 % bind back abstracted subterms
-pred bind i:int, i:int, i:term, o:term.
+func bind int, int, term -> term.
 bind I M T T1 :- M > I, !,
   T1 = {{ fun x => lp:(B x) }},   
   N is I + 1,
@@ -310,7 +327,7 @@ bind M M T T1 :- copy T T1.         % we perform all the replacements
 % the clause see is only generated for a term if it hasn't been seen before
 % the term might need to be typechecked first or main generates extra holes for the
 % type of the parameters
-pred main i:term, o:term.
+func main term -> term.
 main T1 T3 :- std.do! [
   % we put (abs N) in place of each occurrence of the same hole
   (pi T Ty N N' M \ fold-map T N (abs M) M :- var T, not (seen? T _), !, coq.typecheck T Ty ok, fold-map Ty N _ N', M is N' + 1, seen! T M) =>
@@ -327,15 +344,15 @@ main T1 T3 :- std.do! [
 
 % we query if the hole was seen before, and if so
 % we fetch its number
-pred seen? i:term, o:int.
+func seen? term -> int.
 seen? X Y :- declare_constraint (seen? X Y) [X,_].  
 
 % we declare it is now seen and label it with a number
-pred seen! i:term, i:int.
+func seen! term, int ->.
 seen! X Y :- declare_constraint (seen! X Y) [X,_].
 
 % to empty the store
-pred purge-seen!.
+func purge-seen!.
 purge-seen! :- declare_constraint purge-seen! [_].
 
 constraint seen? seen! purge-seen!  {
