@@ -85,14 +85,15 @@ factory-provides FactoryAlias MLwP :- std.do! [
   w-params.map RMLwP (factory-provides.base Factory) MLwP
 ].
 
-pred mixin->factories i:mixinname, o:list factoryname.
+func mixin->factories mixinname -> list factoryname.
 mixin->factories M FL :- std.do! [
   std.findall (from F_ M B_) AllF,
   std.map AllF from_factory FL
 ].
 
-pred factory-provides.base i:factoryname, i:list term, i: term,
-  i:list (w-args mixinname), o:list (w-args mixinname).
+:index(1)
+func factory-provides.base factoryname, list term, term,
+  list (w-args mixinname) -> list (w-args mixinname).
 factory-provides.base Factory Params T _RMLwP MLwP :- std.do! [
   std.findall (from Factory T_ F_) All,
   std.map All from_mixin ML,
@@ -100,14 +101,14 @@ factory-provides.base Factory Params T _RMLwP MLwP :- std.do! [
   std.map2 BL ML (factory-provides.one Params T) MLwP,
 ].
 
-pred factory-provides.one i:list term, i:term, i:term, i:mixinname, o:w-args mixinname.
+func factory-provides.one list term, term, term, mixinname -> w-args mixinname.
 factory-provides.one Params T B M (triple M PL T) :- std.do! [
   std.assert-ok! (coq.typecheck B Ty) "Builder illtyped",
   subst-prod [T] {subst-prod Params Ty} TyParams,
   std.assert! (extract-conclusion-params T TyParams PL) "The conclusion of a builder is a mixin whose parameters depend on other mixins",
 ].
 
-pred extract-conclusion-params i:term, i:term, o:list term.
+func extract-conclusion-params term, term -> list term.
 extract-conclusion-params TheType (prod _ S T) R :- !,
   @pi-decl _ S x\ extract-conclusion-params TheType (T x) R.
 extract-conclusion-params TheType (app [global GR|Args]) R :- !, std.do! [
@@ -123,17 +124,15 @@ extract-conclusion-params TheType T R :- whd1 T T1, !, extract-conclusion-params
 %  cons tp p\ nil t\ [pr f1 [p,t]]
 %    f1 p t = m1 t, m2 p t
 %  cons tp p\ nil t\ [pr m1 [t], pr m2 [p,t]]
-pred factories-provide i:list-w-params factoryname, o:mixins.
-factories-provide FLwP MLwP :- std.do! [
+func factories-provide list-w-params factoryname -> mixins.
+factories-provide FLwP MLwP :-
   list-w-params.flatten-map FLwP factory-provides UnsortedMLwP,
-  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
-].
+  w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP.
 
-pred undup-grefs  i:list gref, o:list gref.
-undup-grefs  L UL :- std.do! [
+func undup-grefs list gref -> list gref.
+undup-grefs  L UL :-
   coq.gref.list->set L S,
-  coq.gref.set.elements S UL,
-].
+  coq.gref.set.elements S UL.
 
 pred undup-sorts i:list sort, o:list sort.
 undup-sorts L R :- std.do! [
@@ -162,20 +161,19 @@ undup-cs-patterns L R :- std.do! [
 ].
 
 % Mixins can be topologically sorted according to their dependencies
-pred toposort-mixins i:list (w-args mixinname), o:list (w-args mixinname).
-toposort-mixins In Out :- std.do! [
+func toposort-mixins list (w-args mixinname) -> list (w-args mixinname).
+toposort-mixins In Out :-
   std.map In triple_1 ML,
   std.map ML (m\r\sigma D D1\ gref->deps m D1, list-w-params_list D1 D, std.map D (d\r\r = pr d m) r) ES2,
   std.flatten ES2 ES,
-  toposort-proj triple_1 ES In Out,
-].
+  toposort-proj triple_1 ES In Out.
 
 func toposort-proj (func A -> gref), list (pair gref gref), list A -> list A.
 toposort-proj Proj ES In Out :- !, toposort-proj.acc Proj ES [] In Out.
 func topo-find B -> A.
-func toposort-proj.acc (func A -> gref), list (pair gref gref), list gref, list A -> list A.
+func toposort-proj.acc (pred i:A, o:gref), list (pair gref gref), list gref, list A -> list A.
 toposort-proj.acc _ ES Acc [] Out :- !,
-  std.map {std.gref.toposort ES Acc} topo-find Out.
+  std.map {std.gref.toposort ES Acc} topo-find Out, !.
 toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
   Proj A B,
   topo-find B A => toposort-proj.acc Proj ES [B|Acc] In Out
