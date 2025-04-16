@@ -99,10 +99,10 @@ string->modpath S MP :-
   std.filter {coq.locate-all S} (l\l = loc-modpath _) L,
   L = [loc-modpath MP].
 
-pred gref->modname_short1 i:modpath, i:string, i:list string, o:string.
-gref->modname_short1 _ S [] S.
-gref->modname_short1 MP "" [X|L] L' :- gref->modname_short1 MP X L L'.
-gref->modname_short1 MP S _ S :- string->modpath S MP.
+func gref->modname_short1 modpath, string, list string -> string.
+gref->modname_short1 _ S [] S :- !.
+gref->modname_short1 MP "" [X|L] L' :- !, gref->modname_short1 MP X L L'.
+gref->modname_short1 MP S _ S :- !, string->modpath S MP.
 gref->modname_short1 MP S [X|L] S' :-
   gref->modname_short1 MP {std.string.concat "." [X,S]} L S'.
 
