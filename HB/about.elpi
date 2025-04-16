@@ -20,10 +20,10 @@ main-located _ (loc-gref Class) :- class-def (class Class GR MLwP), !,
   S is M ^ "." ^ St,
   private.main-structure S Class GR MLwP.
 
-main-located S (loc-gref (indt I)) :- factory-constructor (indt I) _, !,
+main-located S (loc-gref (indt I)) :- factory->constructor (indt I) _, !,
   private.main-factory S I.
 
-main-located S (loc-gref (const C)) :- factory-constructor (const C) _, !,
+main-located S (loc-gref (const C)) :- factory->constructor (const C) _, !,
   private.main-factory-alias S C.
 
 main-located S (loc-gref (const C)) :- exported-op M _ C, !,
@@ -32,8 +32,8 @@ main-located S (loc-gref (const C)) :- exported-op M _ C, !,
 main-located S (loc-gref GR) :- factory-alias->gref GR F ok, not (F = GR), !,
   main-located S (loc-gref F).
 
-main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructor (indt F) GR, !,
-  private.main-factory-constructor S F PhB GR.
+main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory->constructor (indt F) GR, !,
+  private.main-factory->constructor S F PhB GR.
 
 main-located S (loc-abbreviation A) :-
   coq.notation.abbreviation-body A NArgs _,
@@ -170,7 +170,7 @@ main-coercion S [coercion GR _ Src Tgt|_] :-
 func main-operation string, mixinname, constant -> .
 main-operation S MixinSource _ :-
   % fetch
-  mixin-first-class MixinSource Class,
+  mixin->first-class MixinSource Class,
   class-def (class Class Structure _), !,
   % format
   PpOriginStructure = box (hov 4) [
@@ -189,7 +189,7 @@ main-structure S Class Structure MLwP :-
   % fetch
   list-w-params_list MLwP ML,
   std.map-filter ML (m\r\ sigma P O OPS\
-    std.once (mixin-first-class m Class),
+    mixin->first-class m Class,
     std.findall (exported-op m P O) OPS,
     std.map OPS (c\out\ sigma p\ c = exported-op m p out) r) OPLL,
   std.flatten OPLL Operations,
@@ -207,7 +207,7 @@ main-structure S Class Structure MLwP :-
   PpClass = box (v 4) [
     str "HB: ", {pp-module Class}, str " is a factory for the following mixins:",
     {bulletize ML (m\r\ sigma tmp\
-      if (mixin-first-class m Class)
+      if (mixin->first-class m Class)
          (pp-module m tmp, r = glue [tmp, str " (* new, not from inheritance *)"])
          (pp-module m r))}],
   PpSubClasses = box (v 4) [
@@ -225,10 +225,10 @@ main-structure S Class Structure MLwP :-
   print-docstring Structure,
   coq.say.
 
-func main-factory-constructor string, inductive, gref, gref.
-main-factory-constructor S F PhBuild Build :-
+func main-factory->constructor string, inductive, gref, gref.
+main-factory->constructor S F PhBuild Build :-
   % fetch
-  std.once(gref-deps Build DMLwP),
+  gref->deps Build DMLwP,
   list-w-params_list DMLwP DML,
   factory-provides (indt F) PMLwP,
   list-w-params_list PMLwP PML,
@@ -302,7 +302,7 @@ main-factory S Factory :-
   % fetch
   coq.env.projections Factory Ps,
   std.map-filter Ps (x\r\ x = some r) Fields,
-  std.once (gref-deps (indt Factory) DMLwP),
+  gref->deps (indt Factory) DMLwP,
   list-w-params_list DMLwP DML,
   factory-provides (indt Factory) PMLwP,
   list-w-params_list PMLwP PML,

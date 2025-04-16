@@ -14,7 +14,7 @@ declare Module BSkel Sort :- std.do! [
   
   factories-provide GRFSwP PMLwP,
 
-  list-w-params.flatten-map GRFSwP gref-deps RMLwP, % TODO: extract code from factories-provide
+  list-w-params.flatten-map GRFSwP gref->deps RMLwP, % TODO: extract code from factories-provide
   list-w-params.append PMLwP RMLwP UnsortedMLwP,
   w-params.map UnsortedMLwP (p\t\ toposort-mixins) MLwP,
 
@@ -45,10 +45,10 @@ declare Module BSkel Sort :- std.do! [
   CurrentClass = (class ClassName Structure MLwP),
   ClassName = indt ClassInd, coq.env.indt ClassInd _ _ _ _ [ClassK] _,
   GRDepsClauses =
-    [gref-deps (indt ClassInd) NilwP, gref-deps (indc ClassK) MLwP],
+    [gref->deps (indt ClassInd) NilwP, gref->deps (indc ClassK) MLwP],
   std.map ML (m\ o\ o = mixin-class m ClassName) MixinMems,
-  std.filter ML (m\ not (mixin-first-class m _)) NewMixins,
-  std.map NewMixins (m\ r\ r = mixin-first-class m ClassName) MixinFirstClass,
+  std.filter ML (m\ not (mixin->first-class m _)) NewMixins,
+  std.map NewMixins (m\ r\ r = mixin->first-class m ClassName) MixinFirstClass,
 
 
   if-verbose (coq.say {header} "structure: new mixins" NewMixins),
@@ -79,7 +79,7 @@ declare Module BSkel Sort :- std.do! [
   log.coq.env.begin-module "Exports" none,
 
   %(ClassAlias => class-def CurrentClass =>
-  %  GRDepsClauses => MixinFirstClass => gref-deps GRPack MLwP =>
+  %  GRDepsClauses => MixinFirstClass => gref->deps GRPack MLwP =>
   %    phant.of-gref tt GRPack [] PhRepack),
   %if-verbose (coq.say {header} "declaring pack abbreviation =" PhRepack),
   % phant.add-abbreviation "pack" PhRepack _ PackAbbrev,
@@ -126,7 +126,7 @@ declare Module BSkel Sort :- std.do! [
   std.flatten [
       Factories, [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
-      [gref-deps GRPack MLwP], MixinMems, [StructKeyClause]
+      [gref->deps GRPack MLwP], MixinMems, [StructKeyClause]
     ]
     NewClauses,
   acc-clauses current NewClauses,
@@ -201,7 +201,7 @@ shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }
 pred clean-op-ty i:list prop, i:term, i:term, o:term.
 clean-op-ty [] _ T1 T2 :- copy T1 T2.
 clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
-  gref-deps (const Po) MLwP,
+  gref->deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
 
@@ -226,7 +226,7 @@ operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Par
       mk-app PclassP [s] Class,
       synthesis.under-mixin-src-from-factory.do! Carrier Class [
         % just in case..
-        synthesis.infer-all-gref-deps ParamsOp Carrier (const Poperation) (Body s),
+        synthesis.infer-all-gref->deps ParamsOp Carrier (const Poperation) (Body s),
         std.assert-ok! (coq.typecheck (Body s) (DirtyTy s)) "export-1-operation: Body illtyped",
         clean-op-ty EXI s (DirtyTy s) (BodyTy s),
       ],
@@ -266,7 +266,7 @@ export-operations.aux Struct ProjSort ProjClass MwP EX1 EX2 :- !, std.do! [
 
 pred mixin-not-already-declared i:one-w-params mixinname.
 mixin-not-already-declared MwP :-
-  w-params_1 MwP M, not(mixin-first-class M _), M = indt _.
+  w-params_1 MwP M, not(mixin->first-class M _), M = indt _.
 
 pred export-operations i:structure, i:term, i:term, i:mixins, i:list prop, o:list prop, o:list mixinname.
 export-operations Structure ProjSort ProjClass MLwP EX1 EX2 MLToExport :- std.do! [
@@ -290,7 +290,7 @@ mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
   std.map TML (from FC) Builders,
   std.map Builders (x\r\mk-app (global x) Params r) BuildersP,
 
-  factory-nparams TC TCNP,
+  factory->nparams TC TCNP,
   mk-app (global {get-constructor TC})
     {coq.mk-n-holes TCNP} KCHoles,
 
@@ -319,7 +319,7 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
   mk-app     ClassProjection Params ClassP,
   mk-app     Coercion        Params CoercionP,
 
-  factory-nparams TC TCNP,
+  factory->nparams TC TCNP,
   mk-app (global {get-constructor StructureT})
     {coq.mk-n-holes TCNP} PackPH,
 
@@ -397,8 +397,8 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
   get-structure-class-projection S2 S2_class,
   get-constructor S2 S2_Pack,
 
-  factory-nparams C1 N1,
-  factory-nparams C2 N2,
+  factory->nparams C1 N1,
+  factory->nparams C2 N2,
 
   if-verbose (coq.say {header} "declare unification hint" Name),
   w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
@@ -433,7 +433,7 @@ synthesize-fields _T []     end-record.
 synthesize-fields T  [triple M Args _|ML] (field _ Name MTy Fields) :- std.do! [
   Name is {gref->modname M 2 "_"} ^ "_mixin",
   if-verbose (coq.say {header} "typing class field" M),
-  std.assert! (synthesis.infer-all-gref-deps Args T M MTy) "anomaly: a field type cannot be solved",
+  std.assert! (synthesis.infer-all-gref->deps Args T M MTy) "anomaly: a field type cannot be solved",
   @pi-decl `m` MTy m\ mixin-src T M m => synthesize-fields T ML (Fields m)
 ].
 
@@ -470,7 +470,7 @@ declare-class+structure MLwP Sort
   std.map2 {list-w-params_list MLwP} Projs (m\ p\ r\ sigma P\
     std.assert! (p = some P) "BUG: we build a class with an anonymous field",
     r = from (indt ClassInd) m (const P)) Factories,
-  AllFactories = [factory-nparams (indt ClassInd) NParams | Factories],
+  AllFactories = [factory->nparams (indt ClassInd) NParams | Factories],
 
   if-verbose (coq.say {header} "declare type record"),
 
@@ -523,13 +523,13 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassProjection GRPack
 
   if (NewMixins = [NewMixin]) (std.do! [
     if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms', 'mixin_of' and 'Mixin'"),
-    factory-nparams NewMixin NewMixinNP,
+    factory->nparams NewMixin NewMixinNP,
     MArgs is NewMixinNP + 1,
     mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
     @global! => log.coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
     @deprecated! "mathcomp 2.0.0" "use the factory instead" =>
     @global! => log.coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
-    std.assert! (factory-constructor NewMixin FK) "BUG: Factory constructor missing",
+    std.assert! (factory->constructor NewMixin FK) "BUG: Factory constructor missing",
     std.assert! (phant-abbrev FK _ PhAbb) "BUG: missing phant-abbrev",
     @deprecated! "mathcomp 2.0.0" "use the F.Build instead" =>
       @global! => log.coq.notation.add-abbreviation "Mixin" 0
@@ -579,7 +579,7 @@ pack-body ClassName PL T MLwA F :- std.do! [
     (pack-body.aux PL T BuildC PackS) F,
 ].
 pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
-  synthesis.infer-all-gref-deps PL T BuildC Class,
+  synthesis.infer-all-gref->deps PL T BuildC Class,
   mk-app (global PackS) {std.append PL [T, Class]} Body
 ].
 
@@ -597,7 +597,7 @@ if-coverage-not-good-error ML :-
   std.forall ML (if-coverage-not-good-error.one MS).
 
 pred if-coverage-not-good-error.one i:coq.gref.set, i:mixinname.
-if-coverage-not-good-error.one MS M :- mixin-first-class M C, !,
+if-coverage-not-good-error.one MS M :- mixin->first-class M C, !,
   class-coverage [C] CMS,
   if (coq.gref.set.subset CMS MS)
      true

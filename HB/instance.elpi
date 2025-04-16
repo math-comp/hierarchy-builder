@@ -44,7 +44,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
   std.assert-ok! (factory-alias->gref FactoryAlias Factory) "HB",
-  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
+  std.assert! (factory->nparams Factory NParams) "Not a factory synthesized by HB",
 
   % declare the constant for the factory instance
   private.hack-section-discharging SectionBody SectionBodyHack,
@@ -221,13 +221,13 @@ pred context.declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:
 pred mk-factory-sort-deps i:gref, o:list (pair id constant).
 mk-factory-sort-deps AliasGR CSL :- std.do! [
   std.assert-ok! (factory-alias->gref AliasGR GR) "HB: mk-factory-sort-deps",
-  gref-deps GR MLwPRaw,
+  gref->deps GR MLwPRaw,
   context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
-  SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GR FSort,
   log.coq.env.add-section-variable-noimplicits "f" FSort CF,
   GCF = global (const CF),
   factory-sort (coercion GRFSort _ GR _),
-  SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GRFSort KSort,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GRFSort KSort,
   coq.mk-app KSort [GCF] KFSortEta,
   list-w-params_list MLwP ML,
   std.length ML NMLArgs,
@@ -246,9 +246,9 @@ mk-factory-sort-deps AliasGR CSL :- std.do! [
 pred mk-factory-sort-factory i:gref, o:list (pair id constant), o:list (pair id constant).
 mk-factory-sort-factory AliasGR CFL CSL :- std.do! [
   std.assert-ok! (factory-alias->gref AliasGR GR) "HB",
-  gref-deps GR MLwPRaw,
+  gref->deps GR MLwPRaw,
   context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
-  SortMSL => synthesis.infer-all-gref-deps SortParams SortKey GR FSort,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GR FSort,
   log.coq.env.add-section-variable-noimplicits "f" FSort CF,
   std.length {list-w-params_list MLwP} NMLArgs,
   coq.mk-n-holes NMLArgs SortMLHoles,

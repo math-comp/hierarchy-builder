@@ -285,15 +285,6 @@ term->cs-pattern T (cs-gref GR) :- coq.term->gref T GR.
 term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
 
 
-% this one is in utils, maybe cs-pattern->name is not stdpp material
-pred gref->modname-label i:gref, i:int, i:string, o:string.
-
-pred cs-pattern->name i:cs-pattern, o:string.
-cs-pattern->name cs-prod "prod".
-cs-pattern->name (cs-sort _) "sort".
-cs-pattern->name cs-default "default".
-cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
-
 % ---------------------------------------------------------------------
 % kit for closing a term by abstracting evars with lambdas
 % we use constraints to attach to holes a number

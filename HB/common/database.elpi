@@ -81,7 +81,7 @@ sub-class? (class C1 _ ML1P) (class C2 _ ML2P) :-
 func factory-provides factoryname -> mixins.
 factory-provides FactoryAlias MLwP :- std.do! [
   std.assert-ok! (factory-alias->gref FactoryAlias Factory) "HB",
-  gref-deps Factory RMLwP,
+  gref->deps Factory RMLwP,
   w-params.map RMLwP (factory-provides.base Factory) MLwP
 ].
 
@@ -112,7 +112,7 @@ extract-conclusion-params TheType (prod _ S T) R :- !,
   @pi-decl _ S x\ extract-conclusion-params TheType (T x) R.
 extract-conclusion-params TheType (app [global GR|Args]) R :- !, std.do! [
   std.assert-ok! (factory-alias->gref GR Factory) "HB",
-  factory-nparams Factory NP,
+  factory->nparams Factory NP,
   std.map Args (copy-pack-holes TheType TheType) NewArgs,
   std.take NP NewArgs R].
 extract-conclusion-params TheType T R :- whd1 T T1, !, extract-conclusion-params TheType T1 R.
@@ -165,7 +165,7 @@ undup-cs-patterns L R :- std.do! [
 pred toposort-mixins i:list (w-args mixinname), o:list (w-args mixinname).
 toposort-mixins In Out :- std.do! [
   std.map In triple_1 ML,
-  std.map ML (m\r\sigma D D1\ gref-deps m D1, list-w-params_list D1 D, std.map D (d\r\r = pr d m) r) ES2,
+  std.map ML (m\r\sigma D D1\ gref->deps m D1, list-w-params_list D1 D, std.map D (d\r\r = pr d m) r) ES2,
   std.flatten ES2 ES,
   toposort-proj triple_1 ES In Out,
 ].
@@ -231,14 +231,14 @@ pred findall-mixin-src i:term, o:list mixinname.
 findall-mixin-src T ML :-
   std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
 
-func findall-factory-constructor -> list prop.
-findall-factory-constructor L :-
-  std.map {std.findall (findall-factory-constructor.aux _)} findall-factory-constructor.make L.
-pred findall-factory-constructor.aux o:prop.
-findall-factory-constructor.aux (factory-constructor F C) :-
-  is-factory F, factory-constructor F C.
-func findall-factory-constructor.make prop -> prop.
-findall-factory-constructor.make (findall-factory-constructor.aux P) P.
+func findall-factory->constructor -> list prop.
+findall-factory->constructor L :-
+  std.map {std.findall (findall-factory->constructor.aux _)} findall-factory->constructor.make L.
+pred findall-factory->constructor.aux o:prop.
+findall-factory->constructor.aux (factory->constructor F C) :-
+  is-factory F, factory->constructor F C.
+func findall-factory->constructor.make prop -> prop.
+findall-factory->constructor.make (findall-factory->constructor.aux P) P.
 
 pred findall-local-canonical o:list constant.
 findall-local-canonical CL :-
@@ -441,14 +441,14 @@ has-CS-instance? TyTerm (indt Struct) :- std.do! [
 pred structure-nparams i:structure, o:int.
 structure-nparams Structure NParams :-
   class-def (class Class Structure _),
-  factory-nparams Class NParams.
+  factory->nparams Class NParams.
 
 pred factory? i:term, o:w-args factoryname.
 factory? S (triple F Params T) :-
   not (var S), !,
   safe-dest-app S (global GR) Args,
   factory-alias->gref GR F ok,
-  factory-nparams F NP, !,
+  factory->nparams F NP, !,
   std.split-at NP Args Params [T|_].
 
 % [find-max-classes Mixins Classes] states that Classes is a list of classes
@@ -460,7 +460,7 @@ factory? S (triple F Params T) :-
 pred find-max-classes i:list mixinname, o:list classname.
 find-max-classes [] [].
 find-max-classes [M|Mixins] [C|Classes] :-
-  mixin-first-class M C,
+  mixin->first-class M C,
   std.do! [
     class-def (class C _ MLwP),
     list-w-params_list MLwP ML,
