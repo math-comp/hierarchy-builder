@@ -152,10 +152,6 @@ pred is-structure o:gref.
 % [is-factory GR] tests if GR is a known factory
 pred is-factory o:gref.
 
-% [factory-builder-nparams Build N] states that when the user writes
-% the [F.Build T] abbreviation the term behind it has N arguments before T
-pred factory-builder-nparams o:constant, o:int.
-
 % [sub-class C1 C2 Coercion12 NparamsCoercion] C1 is a sub-class of C2,
 % see also sub-class? which computes it on the fly
 :index (2 2 1)
