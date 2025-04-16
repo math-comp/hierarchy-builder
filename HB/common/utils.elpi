@@ -111,7 +111,7 @@ func gref->modname_short gref, string -> string.
 gref->modname_short GR Sep IDS :-
   coq.gref->path GR Path,
   string->modpath {std.string.concat "." Path} MP,
-  std.once (gref->modname_short1 MP "" {std.rev Path} ID),
+  gref->modname_short1 MP "" {std.rev Path} ID,
   rex.replace "[.]" Sep ID IDS.
 
 pred avoid-name-collision i:string, o:string.
