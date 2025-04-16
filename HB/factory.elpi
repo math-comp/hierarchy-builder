@@ -302,7 +302,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     is-factory (indt R),
     factory->constructor (indt R) GRK,
     factory->nparams (indt R) NParams,
-    factory-builder-nparams BuildConst NParams,
     phant-abbrev GRK (const BuildConst) BuildAbbrev,
     % gref->deps GRFSort MLwP,
     % factory-sort FactorySortCoe,
@@ -364,7 +363,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   if (mixin->first-class F _) (PhGRK = PhGRK0)
     (phant.append-fun-unify PhGRK0 PhGRK),
-  GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst _,
+  GRDepsClauses => phant.add-abbreviation "Build" PhGRK _ _,
 
   GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 
@@ -377,7 +376,6 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
       [ is-factory (const C),
         factory->nparams (const C) NParams,
         factory->constructor (const C) GRK,
-        factory-builder-nparams BuildConst NParams,
         % gref->deps GRFSort MLwP,
         % factory-sort FactorySortCoe
       ]
