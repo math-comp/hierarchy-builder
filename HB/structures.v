@@ -149,6 +149,9 @@ func factory-nparams factoryname -> int.
 % [is-structure GR] tests if GR is a known structure
 pred is-structure o:gref.
 
+% [is-factory GR] tests if GR is a known factory
+pred is-factory o:gref.
+
 % [factory-builder-nparams Build N] states that when the user writes
 % the [F.Build T] abbreviation the term behind it has N arguments before T
 pred factory-builder-nparams o:constant, o:int.

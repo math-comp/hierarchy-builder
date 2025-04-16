@@ -299,6 +299,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   log.coq.env.begin-module "Exports" none,
   std.flatten [Clauses, GRDepsClauses, [
+    is-factory (indt R),
     factory-constructor (indt R) GRK,
     factory-nparams (indt R) NParams,
     factory-builder-nparams BuildConst NParams,
@@ -373,7 +374,8 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   w-params.nparams MLwP NParams,
   std.flatten [ Clauses, GRDepsClauses,
-      [ factory-nparams (const C) NParams,
+      [ is-factory (const C),
+        factory-nparams (const C) NParams,
         factory-constructor (const C) GRK,
         factory-builder-nparams BuildConst NParams,
         % gref-deps GRFSort MLwP,
