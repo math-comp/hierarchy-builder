@@ -134,19 +134,18 @@ undup-grefs  L UL :-
   coq.gref.list->set L S,
   coq.gref.set.elements S UL.
 
-pred undup-sorts i:list sort, o:list sort.
-undup-sorts L R :- std.do! [
+func undup-sorts list sort -> list sort.
+undup-sorts L R :-
 
   if (std.mem L prop) (R1 = [prop]) (R1 = []),
   if (std.mem L sprop) (R2 = [sprop]) (R2 = []),
   if (std.mem L (typ _)) (R3 = [typ _]) (R3 = []),
 
-  std.flatten [R1, R2, R3] R,
-].
+  std.flatten [R1, R2, R3] R.
 
 % also prunes cs-default
-pred undup-cs-patterns  i:list cs-pattern, o:list cs-pattern.
-undup-cs-patterns L R :- std.do! [
+func undup-cs-patterns  list cs-pattern -> list cs-pattern.
+undup-cs-patterns L R :-
   std.map-filter L (x\r\ x = cs-gref r) LGR,
   undup-grefs LGR ULGR,
   std.map ULGR (x\r\ r = cs-gref x) R1,
@@ -157,8 +156,7 @@ undup-cs-patterns L R :- std.do! [
 
   if (std.mem L cs-prod) (R3 = [cs-prod]) (R3 = []),
 
-  std.flatten [R1, R2, R3] R,
-].
+  std.flatten [R1, R2, R3] R.
 
 % Mixins can be topologically sorted according to their dependencies
 func toposort-mixins list (w-args mixinname) -> list (w-args mixinname).
@@ -180,16 +178,16 @@ toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
 ].
 
 % Classes can be topologically sorted according to the subclass relation
-pred toposort-classes.mk-class-edge i:prop, o:pair classname classname.
+func toposort-classes.mk-class-edge prop -> pair classname classname.
 toposort-classes.mk-class-edge (sub-class C1 C2 _ _) (pr C2 C1).
-pred toposort-classes i:list classname, o:list classname.
+func toposort-classes list classname -> list classname.
 toposort-classes In Out :- std.do! [
   std.findall (sub-class C1_ C2_ _ _) SubClasses,
   std.map SubClasses toposort-classes.mk-class-edge ES,
   std.gref.toposort ES In Out,
 ].
 
-pred findall-classes o:list class.
+func findall-classes -> list class.
 findall-classes CLSortedDef :- std.do! [
   std.findall (class-def C_) All,
   std.map All class-def_name CL,
@@ -197,8 +195,8 @@ findall-classes CLSortedDef :- std.do! [
   std.map CLSorted classname->def CLSortedDef,
 ].
 
-pred findall-classes-for.unsorted
-  i:list mixinname, i:list classname, o:list classname.
+func findall-classes-for.unsorted
+  list mixinname, list classname -> list classname.
 findall-classes-for.unsorted [] CL CL :- !.
 findall-classes-for.unsorted [M|ML] CLAcc Out :- std.do! [
   std.findall (mixin-class M C_) All,
@@ -206,39 +204,39 @@ findall-classes-for.unsorted [M|ML] CLAcc Out :- std.do! [
   findall-classes-for.unsorted ML {std.append CL CLAcc} Out
 ].
 
-pred findall-classes-for i:list mixinname, o:list class.
+func findall-classes-for list mixinname -> list class.
 findall-classes-for ML CLSortedDef :- std.do! [
   findall-classes-for.unsorted ML [] CL,
   toposort-classes CL CLSorted,
   std.map CLSorted classname->def CLSortedDef,
 ].
 
-pred findall-builders o:list builder.
+func findall-builders -> list builder.
 findall-builders LFIL :-
   std.map {std.findall (builder-decl B_)} extract-builder LFILunsorted,
   std.bubblesort LFILunsorted leq-builder LFIL.
 
-pred findall-has-mixin-instance i:cs-pattern,  o:list prop.
+func findall-has-mixin-instance cs-pattern -> list prop.
 findall-has-mixin-instance P CL :-
    std.findall (has-mixin-instance P _ _) CL.
 
-pred has-mixin-instance_key i:prop, o:cs-pattern.
+func has-mixin-instance_key prop -> cs-pattern.
 has-mixin-instance_key (has-mixin-instance P _ _) P.
 
-pred findall-mixin-src i:term, o:list mixinname.
+func findall-mixin-src term -> list mixinname.
 findall-mixin-src T ML :-
   std.map {std.findall (mixin-src T M_ V_)} mixin-src_mixin ML.
 
 func findall-factory->constructor -> list prop.
 findall-factory->constructor L :-
   std.map {std.findall (findall-factory->constructor.aux _)} findall-factory->constructor.make L.
-pred findall-factory->constructor.aux o:prop.
+func findall-factory->constructor.aux -> prop.
 findall-factory->constructor.aux (factory->constructor F C) :-
-  is-factory F, factory->constructor F C.
+  is-factory F, !, factory->constructor F C.
 func findall-factory->constructor.make prop -> prop.
 findall-factory->constructor.make (findall-factory->constructor.aux P) P.
 
-pred findall-local-canonical o:list constant.
+func findall-local-canonical -> list constant.
 findall-local-canonical CL :-
   std.map {std.findall (local-canonical C_)} local-canonical-gref CL.
 
@@ -286,21 +284,21 @@ assert-building-bottom-up CurrentClass C3n C1n C2n :-
        Msg2)
      true.
 
-pred distinct-pairs_pair i:prop, o:pair class class.
+func distinct-pairs_pair prop -> pair class class.
 distinct-pairs_pair (distinct-pairs-below _ _ X Y) (pr X Y).
 
-pred findall-newjoins i:class, i:list class, o:list (pair class class).
+func findall-newjoins class, list class -> list (pair class class).
 findall-newjoins CurrentClass AllSuper TodoJoins :-
   std.findall (distinct-pairs-below CurrentClass AllSuper C1_ C2_) JoinOf,
   std.map JoinOf distinct-pairs_pair TodoJoins.
 
-pred class-coverage i:list classname, o:coq.gref.set.
+func class-coverage list classname -> coq.gref.set.
 class-coverage CNL CSet :-
   std.map CNL classname->mixins CMLLwP,
   std.map CMLLwP list-w-params_list CMLL,
   coq.gref.list->set {std.flatten CMLL} CSet.
 
-pred assert-good-coverage! i:list mixinname, i:list classname.
+func assert-good-coverage! list mixinname, list classname ->.
 assert-good-coverage! MLSortedRev CNL :- std.do! [
   coq.gref.list->set MLSortedRev MLSet,
   class-coverage CNL CMLSet,
@@ -317,46 +315,46 @@ assert-good-coverage! MLSortedRev CNL :- std.do! [
 %%%%% Coq Database %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [get-structure-coercion S1 S2 F] finds the coecion F from the structure S1 to S2
-pred get-structure-coercion i:structure, i:structure, o:term.
+func get-structure-coercion structure, structure -> term.
 get-structure-coercion S T (global F) :-
   coq.coercion.db-for (grefclass S) (grefclass T) L,
   if (L = [pr F _]) true (coq.error "No one step coercion from" S "to" T).
 
-pred get-structure-sort-projection i:structure, o:term.
+func get-structure-sort-projection structure -> term.
 get-structure-sort-projection (indt S) Proj :- !,
   coq.env.projections S L,
   if (L = [some P, _]) true (coq.error "No canonical sort projection for" S),
   Proj = global (const P).
 get-structure-sort-projection S _ :- coq.error "get-structure-sort-projection: not a structure" S.
 
-pred get-structure-class-projection i:structure, o:term.
+func get-structure-class-projection structure -> term.
 get-structure-class-projection (indt S) T :- !,
   coq.env.projections S L,
   if (L = [_, some P]) true (coq.error "No canonical class projection for" S),
   T = global (const P).
 get-structure-class-projection S _ :- coq.error "get-structure-class-projection: not a structure" S.
 
-pred get-constructor i:gref, o:gref.
+func get-constructor gref -> gref.
 get-constructor (indt R) (indc K) :- !,
  if (coq.env.indt R _ _ _ _ [K] _) true (coq.error "Not a record" R).
 get-constructor I _ :- coq.error "get-constructor: not an inductive" I.
 
 % finding for locally defined structures
-pred get-cs-structure i:cs-instance, o:structure.
+func get-cs-structure cs-instance -> structure.
 get-cs-structure (cs-instance _ _ (const Inst)) Struct :- std.do! [
   coq.env.typeof (const Inst) InstTy,
   coq.prod-tgt->gref InstTy Struct,
   is-structure Struct,
 ].
 
-pred get-cs-instance i:cs-instance, o:constant.
+func get-cs-instance cs-instance -> constant.
 get-cs-instance (cs-instance _ _ (const Inst)) Inst.
 
-pred has-cs-instance i:gref, i:cs-instance.
+func has-cs-instance gref, cs-instance ->.
 has-cs-instance GTy (cs-instance _ (cs-gref GTy) _).
 
 
-pred mixin-src->has-mixin-instance i:prop, o:prop.
+func mixin-src->has-mixin-instance prop -> prop.
 mixin-src->has-mixin-instance  (mixin-src (global GR) M I) (has-mixin-instance (cs-gref GR) M IHd) :-
   term->gref I IHd.
 
@@ -372,13 +370,13 @@ mixin-src->has-mixin-instance (mixin-src (sort U) M I) (has-mixin-instance (cs-s
 % this auxiliary function iterates over the list of arguments of an application,
 % and create the necessary unify condition for each arguments
 % and at the end returns the mixin-src clause with all the conditions
-pred mixin-instance-type->mixin-src.aux
-  i:list term, % list of arguments
-  i:term, % head of the original application
-  i:mixinname, % name of mixin
-  i:term, % instance body
-  i:list prop, % Cond list
-  o:prop.
+func mixin-instance-type->mixin-src.aux
+  list term, % list of arguments
+  term, % head of the original application
+  mixinname, % name of mixin
+  term, % instance body
+  list prop % Cond list
+  -> prop.
 mixin-instance-type->mixin-src.aux [] T M I Cond (mixin-src T M I :- Cond).
 mixin-instance-type->mixin-src.aux [A|Args] T M I Cond  (pi a \ C a) :-
   pi a \
@@ -389,12 +387,13 @@ mixin-instance-type->mixin-src.aux [A|Args] T M I Cond  (pi a \ C a) :-
 
 % transforms the type of a mixin instance into a
 % mixin-src clause with eventual conditions regarding its parameters
-pred mixin-instance-type->mixin-src
-  i:term, % type of the instance Ty
-  i:mixinname, % name of mixin
-  i:term, % instance body I of type Ty
-  i:list prop, % Cond list
-  o:prop.
+:index (1)
+func mixin-instance-type->mixin-src
+  term, % type of the instance Ty
+  mixinname, % name of mixin
+  term, % instance body I of type Ty
+  list prop % Cond list
+  -> prop.
 
 mixin-instance-type->mixin-src (app _ as F) M I Cond C :-
   factory? F (triple _ _ Subject),
@@ -407,41 +406,39 @@ mixin-instance-type->mixin-src (prod N_ _ F) M I Cond (pi a \ C a) :-
   coq.mk-app I [a] Ia,
     mixin-instance-type->mixin-src (F a) M Ia Cond (C a).
 
-pred has-mixin-instance->mixin-src i:prop, o:prop.
+func has-mixin-instance->mixin-src prop -> prop.
 has-mixin-instance->mixin-src (has-mixin-instance _ M IHd) C :- std.do![
   T = global IHd,
   coq.env.typeof IHd Ty,
   mixin-instance-type->mixin-src Ty M T [] C,
 ].
 
-pred get-canonical-structures i:term, o:list structure.
+func get-canonical-structures term -> list structure.
 get-canonical-structures TyTrm StructL :- std.do! [
   term->cs-pattern TyTrm Pat, !,
   coq.CS.db-for _ Pat DBGTyL,
   std.map-filter DBGTyL get-cs-structure StructL,
 ].
 
-pred get-canonical-instances i:term, o:list constant.
-get-canonical-instances TyTrm StructL :- std.do! [
-  term->cs-pattern TyTrm Pat, !,
+func get-canonical-instances term -> list constant.
+get-canonical-instances TyTrm StructL :-
+  term->cs-pattern TyTrm Pat,
   coq.CS.db-for _ Pat DBGTyL,
-  std.map-filter DBGTyL get-cs-instance StructL,
-].
+  std.map-filter DBGTyL get-cs-instance StructL.
 
-pred has-CS-instance? i:term, i:structure.
-has-CS-instance? TyTerm (indt Struct) :- std.do! [
+func has-CS-instance? term, structure ->.
+has-CS-instance? TyTerm (indt Struct) :-
   term->cs-pattern TyTerm Pat,
   coq.env.projections Struct [some Proj, _],
   coq.CS.db-for (const Proj) Pat L,
-  not(L = [])
-].
+  not(L = []).
 
 pred structure-nparams i:structure, o:int.
 structure-nparams Structure NParams :-
   class-def (class Class Structure _),
   factory->nparams Class NParams.
 
-pred factory? i:term, o:w-args factoryname.
+func factory? term -> w-args factoryname.
 factory? S (triple F Params T) :-
   not (var S), !,
   safe-dest-app S (global GR) Args,
