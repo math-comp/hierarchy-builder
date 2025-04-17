@@ -15,7 +15,7 @@ namespace synthesis {
 
 % [infer-all-these-mixin-args Ps T ML F X] fills in all the arguments of F
 % which are misxins in ML, abstracts the others
-pred infer-all-these-mixin-args i:list term, i:term, i:list mixinname, i:term, o:term.
+func infer-all-these-mixin-args list term, term, list mixinname, term -> term.
 infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
   std.assert-ok! (coq.typecheck F Ty) "try-infer-these-mixin-args: F illtyped",
   coq.mk-eta (-1) Ty F EtaF,
@@ -25,7 +25,7 @@ infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
 
 % [infer-all-gref->deps Ps T GR X] fills in all the arguments of GR
 % which are misxins in gref->deps GR, other arguments are abstracted
-pred infer-all-gref->deps i:list term, i:term, i:gref, o:term.
+func infer-all-gref->deps list term, term, gref -> term.
 infer-all-gref->deps Ps T GR X :- std.do! [
   std.assert! (gref->deps GR MLwP) "BUG: gref->deps should never fail",
   list-w-params_list MLwP ML,
@@ -37,17 +37,17 @@ infer-all-gref->deps Ps T GR X :- std.do! [
 ].
 
 % [infer-holes-depending-on-params TheType T NewT]
-pred infer-holes-depending-on-params i:term, i:term, o:term.
+func infer-holes-depending-on-params term, term -> term.
 infer-holes-depending-on-params T (app [global GR|Args]) (app [global GR|Args1]) :- !,
   std.map Args (infer-holes-depending-on-pack T) Args1.
 infer-holes-depending-on-params _ X X.
 
-pred class-of-phant i:term, o:gref, o:gref, o:gref.
+func class-of-phant term -> gref, gref, gref.
 class-of-phant (prod N T F) X Y Z :- @pi-decl N T x\ class-of-phant (F x) X Y Z.
-class-of-phant (global GR) Y Z X :- class-def (class X GR _), get-constructor X Y, get-constructor GR Z.
-class-of-phant (app[global GR|_]) Y Z X :- class-def (class X GR _), get-constructor X Y, get-constructor GR Z.
+class-of-phant (global GR) Y Z X :- class-def (class X GR _), !, get-constructor X Y, get-constructor GR Z.
+class-of-phant (app[global GR|_]) Y Z X :- class-def (class X GR _), !, get-constructor X Y, get-constructor GR Z.
 
-pred infer-holes-depending-on-pack i:term, i:term, o:term.
+func infer-holes-depending-on-pack term, term -> term.
 infer-holes-depending-on-pack T (app [global GR | Args]) S :-
   ((coq.gref->id GR GRS, rex.match "phant.*" GRS /*TODO: phant-clone? GR N*/);
     pack? GR _),
