@@ -7,7 +7,7 @@ accumulate HB/common/utils-synterp.
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-func if-arg-sort fprop ->.
+func if-arg-sort (func) ->.
 if-arg-sort P :- get-option "arg_sort" tt, !, P.
 if-arg-sort _.
 
@@ -18,7 +18,7 @@ if-MC-compat P :- get-option "mathcomp.axiom" S, !,
   P (some GR).
 if-MC-compat _.
 
-func with-locality fprop ->.
+func with-locality (func) ->.
 with-locality P :-
   if (get-option "local" tt) (A = @local!) (A = @global!),
   A => P.
