@@ -15,13 +15,15 @@ install: [ make "install" ]
 depends: [
   ("coq" {>= "8.18" & < "8.20~"} & "coq-elpi" {>= "2.0"}
   | "coq" {>= "8.20" & < "8.21~"} & "coq-elpi" {>= "2.4" | = "dev"}
-  | "rocq-core" {(>= "9.0" & < "9.1~") | = "dev"} & "coq-elpi" {>= "2.4" | = "dev"})
+  | "rocq-core" {(>= "9.0" & < "9.1~") | = "dev"} & "rocq-elpi" {>= "2.4" | = "dev"})
 ]
-conflicts: [ "coq-hierarchy-builder" {< "1.9~"} ]
+conflicts: [
+  "coq-hierarchy-builder" {< "1.9~"}
+  "coq-hierarchy-builder-shim"
+]
 depexts: [
   [ "wdiff" ] {os-family = "debian" & with-test}
 ]
-conflicts: [ "coq-hierarchy-builder-shim" ]
 synopsis: "High level commands to declare and evolve a hierarchy based on packed classes"
 description: """
 Hierarchy Builder is a high level language to build hierarchies of algebraic structures and make these
