@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 % runs P in a context where Coq #[attributes] are parsed
-func with-attributes fprop.
+func with-attributes (func).
 with-attributes P :-
   attributes A,
   coq.parse-attributes A [
@@ -27,7 +27,7 @@ with-attributes P :-
   ] Opts, !,
   Opts => (save-docstring, P).
 
-func if-verbose fprop -> .
+func if-verbose (func) -> .
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
 

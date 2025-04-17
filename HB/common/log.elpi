@@ -240,7 +240,7 @@ type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac
 
 }
 
-func with-logging fprop ->.
+func with-logging (func) ->.
 func log.private.log-vernac log.private.coq.vernac ->.
 func log.private.log-tactic term ->.
 
