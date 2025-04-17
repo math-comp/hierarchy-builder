@@ -128,7 +128,7 @@ pred phant-abbrev o:gref, o:gref, o:abbreviation.
 % [factory-alias->gref X GR] when X is already a factory X = GR
 % however, when X is a phantom abbreviated gref, we find the underlying
 % factory gref GR associated to it.
-pred factory-alias->gref i:gref, o:gref, o: diagnostic.
+func factory-alias->gref gref -> gref, diagnostic.
 factory-alias->gref PhGR GR ok :- phant-abbrev GR PhGR _, !.
 factory-alias->gref GR GR ok :- phant-abbrev GR _ _, !.
 factory-alias->gref GR _ (error Msg) :- !,
