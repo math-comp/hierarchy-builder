@@ -101,7 +101,7 @@ distclean: sub-distclean this-distclean
 
 this-config:: __always__
 	if command -v coqc > /dev/null && (coqc --version | grep -q '8.18\|8.19\|8.20') ; then \
-	  sed -i.bak HB/structures.v -e 's/From Corelib/From Coq/' ; \
+	  sed -i.bak -e 's/From Corelib/From Coq/' HB/structures.v ; \
 	fi
 
 this-build:: this-config Makefile.coq
