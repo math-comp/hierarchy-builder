@@ -3,26 +3,26 @@
 
 namespace factory {
 
-pred declare i:argument.
+func declare argument ->.
 declare A :- private.declare-asset A private.asset-factory.
 
-pred declare-mixin i:argument.
+func declare-mixin argument ->.
 declare-mixin A :- private.declare-asset A private.asset-mixin.
 
 kind factory-abbrev type.
 type by-classname gref -> factory-abbrev.
 type by-phantabbrev abbreviation -> factory-abbrev.
 
-pred declare-abbrev i:id, i:factory-abbrev, o:abbreviation.
+:index (_ 1)
+func declare-abbrev id, factory-abbrev -> abbreviation.
 declare-abbrev Name (by-classname GR) Abbrev :-
   % looks fishy (the parameters are not taken into account)
   @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt Abbrev.
-declare-abbrev Name (by-phantabbrev Abbr) Abbrev :- std.do! [
+declare-abbrev Name (by-phantabbrev Abbr) Abbrev :-
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
-  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt Abbrev,
-].
+  @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt Abbrev.
 
-pred argument->w-mixins i:argument, o:w-mixins argument.
+func argument->w-mixins argument -> w-mixins argument.
 argument->w-mixins (indt-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = indt-decl x) ArgwP
@@ -50,15 +50,15 @@ argument->w-mixins (ctx-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   w-params.map DeclwP (_\ _\ x\ y\ y = ctx-decl x) ArgwP
 ].
 
-pred argument-name i:argument, o:string.
-argument-name (const-decl Id _ _) Id :- !.
-argument-name (indt-decl (parameter _ _ _ R)) Id :- !,
-argument-name (indt-decl (R (sort prop))) Id.
-argument-name (indt-decl (record Id _ _ _)) Id :- !.
-argument-name (indt-decl (inductive Id _ _ _)) Id :- !.
+func argument-name argument -> string.
+argument-name (const-decl Id _ _) Id.
+argument-name (indt-decl (parameter _ _ _ R)) Id :-
+  argument-name (indt-decl (R (sort prop))) Id.
+argument-name (indt-decl (record Id _ _ _)) Id.
+argument-name (indt-decl (inductive Id _ _ _)) Id.
 argument-name (ctx-decl _) "_" :- !.
 
-pred pdecl->w-mixins i:indt-decl, o:w-mixins indt-decl.
+func pdecl->w-mixins indt-decl -> w-mixins indt-decl.
 pdecl->w-mixins ((parameter ID _ TySkel Rest : indt-decl) as Decl) Out :-
   private.is-key Decl, !,
   private.key-decl-w-mixins "parameter"
@@ -69,7 +69,7 @@ pdecl->w-mixins (parameter ID _ TySkel Rest : indt-decl) Out :- !,
 pdecl->w-mixins (_ : indt-decl) _ :- !,
   coq.error "HB: declaration must have at least one parameter".
 
-pred pdecl->w-mixins i:arity, o:w-mixins arity.
+func pdecl->w-mixins arity -> w-mixins arity.
 pdecl->w-mixins ((parameter ID _ TySkel Rest : arity) as Decl) (Out:w-mixins arity) :-
   private.is-key Decl, !,
   private.key-decl-w-mixins "parameter"
@@ -106,35 +106,35 @@ kind asset type.
 type asset-mixin asset.
 type asset-factory asset.
 
-pred check-key-attribute-consistency i:id.
+func check-key-attribute-consistency id ->.
 check-key-attribute-consistency _ :- not(get-option "key" _), !.
 check-key-attribute-consistency ID :- get-option "key" ID, !.
-check-key-attribute-consistency ID :- get-option "key" ID1,
+check-key-attribute-consistency ID :- get-option "key" ID1, !,
   coq.error "HB:" {calc ("The #[key=\"" ^ ID1 ^ "\"] attribute")}
     "does not match the selected subject" ID.
 
-pred is-key i:indt-decl.
+func is-key indt-decl ->.
 is-key (parameter ID _ _ _\ record _ _ _ _ : indt-decl) :- !, check-key-attribute-consistency ID.
 is-key (parameter ID _ _ _\ inductive _ _ _ _ : indt-decl) :- !, check-key-attribute-consistency ID.
 is-key (parameter ID _ _ _ : indt-decl) :- get-option "key" ID, !.
 is-key (parameter ID _ _ p\ parameter _ _ (M p) _ : indt-decl) :-
   pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
 
-pred is-key i:arity.
+func is-key arity ->.
 is-key (parameter ID _ _ _\ arity _ : arity) :- !, check-key-attribute-consistency ID.
 is-key (parameter ID _ _ _ : arity) :- get-option "key" ID, !.
 is-key (parameter ID _ _ p\ parameter _ _ (M p) _ : arity) :-
   pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
 
-pred is-key i:context-decl.
+func is-key context-decl ->.
 is-key ((context-item ID _ _ _ _\ context-end) : context-decl) :- !, check-key-attribute-consistency ID.
 is-key (context-item ID _ _ _ _ : context-decl) :- get-option "key" ID, !.
 is-key (context-item ID _ _ _ p\ context-item _ _ (M p) _ _ : context-decl) :-
   pi p\ factory? (M p) _, !, check-key-attribute-consistency ID.
 
-pred mixin-decl-w-mixins i:string, i:string, i:term, i:(term -> A),
-  i:(pred i:A, o:pair (list (w-args mixinname)) A),
-  o:pair (list (w-args mixinname)) A.
+func mixin-decl-w-mixins string, string, term, (term -> A),
+  (pred i:A, o:pair (list (w-args mixinname)) A)
+  -> pair (list (w-args mixinname)) A.
 mixin-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing mixin" DeclKind ID),
   std.assert! (not (var TySkel)) "HB: no type provided for mixin",
@@ -170,20 +170,20 @@ param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :-
   if (var Ty) (fresh-type Ty) true,
   Out = pr (w-params.cons ID Ty MLwP) (w-params.cons ID Ty R).
 
-pred pdecl->w-mixins.mixins i:indt-decl,
-  o:pair (list (w-args mixinname)) indt-decl.
+func pdecl->w-mixins.mixins indt-decl
+  -> pair (list (w-args mixinname)) indt-decl.
 pdecl->w-mixins.mixins (parameter ID _ TySkel Rest : indt-decl) Out :- !,
   mixin-decl-w-mixins "parameter" ID TySkel Rest pdecl->w-mixins.mixins Out.
 pdecl->w-mixins.mixins (R : indt-decl) (pr [] R) :- !.
 
-pred pdecl->w-mixins.mixins i:arity,
-  o:pair (list (w-args mixinname)) arity.
+func pdecl->w-mixins.mixins arity
+  -> pair (list (w-args mixinname)) arity.
 pdecl->w-mixins.mixins (parameter ID _ TySkel Rest : arity) Out :- !,
   mixin-decl-w-mixins "parameter" ID TySkel Rest pdecl->w-mixins.mixins Out.
 pdecl->w-mixins.mixins (R : arity) (pr [] R) :- !.
 
-pred cdecl->w-mixins.mixins i:context-decl,
-  o:pair (list (w-args mixinname)) context-decl.
+func cdecl->w-mixins.mixins context-decl
+  -> pair (list (w-args mixinname)) context-decl.
 cdecl->w-mixins.mixins context-end (pr [] context-end) :- !.
 cdecl->w-mixins.mixins (context-item _ _ _ (some _) _) _ :- !,
   coq.error "HB: local definition is not supported in this context".
@@ -191,7 +191,7 @@ cdecl->w-mixins.mixins (context-item ID _ TySkel none Rest) Out :- !,
   mixin-decl-w-mixins "parameter" ID TySkel Rest cdecl->w-mixins.mixins Out.
 
 % The identity builder
-pred declare-id-builder i:factoryname, o:prop.
+func declare-id-builder factoryname -> prop.
 declare-id-builder GR (from GR GR (const C)) :- std.do! [
   gref->deps GR GRD,
   synthesis.mixins-w-params.fun GRD (declare-id-builder.aux GR) IDBodySkel,
@@ -204,20 +204,19 @@ declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
 % [mk-factory-abbrev Str GR CL FactAbbrev]
 % creates an abbreviation for GR names Str and creates a phant-abbrev clause in CL.
 % FactAbbrev is the short name for the factory (either an alias of the class record)
-pred mk-factory-abbrev i:string, i:gref, o:list prop, o:factory-abbrev.
-mk-factory-abbrev Str GR Aliases FactAbbrev :- !, std.do! [
+func mk-factory-abbrev string, gref -> list prop, factory-abbrev.
+mk-factory-abbrev Str GR Aliases FactAbbrev :-
   if (factory-alias->gref GR _ ok)
      (Aliases = [],
       FactAbbrev = by-classname GR)
      (phant.of-gref ff GR [] PhTerm,
       phant.add-abbreviation Str PhTerm PhC Abbrv,
       Aliases = [phant-abbrev GR (const PhC) Abbrv],
-      FactAbbrev = by-phantabbrev Abbrv),
-].
+      FactAbbrev = by-phantabbrev Abbrv).
 
 % [declare-asset Asset AssetKind] unifies the code paths for
 % mixins, factories (and alias factories)
-pred declare-asset i:argument, i:asset.
+func declare-asset argument, asset ->.
 declare-asset Arg AssetKind :- std.do! [
   argument-name Arg Module,
   if-verbose (coq.say {header} "start module and section" Module),
@@ -325,8 +324,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 ].
 
 
-pred declare-factory-alias  i:list prop, i:list constant, i:list term, i:term,
-  i:term, i:list-w-params factoryname, i:id.
+:index (1)
+func declare-factory-alias  list prop, list constant, list term, term,
+  term, list-w-params factoryname, id.
 declare-factory-alias MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Ty1Skel GRFSwP Module :- std.do! [
 
@@ -397,7 +397,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 % [build-deps-for-projections I ML CL] builds a [gref-dep] for each projection P
 % of I such that P depends on "ML @ [I]" (each operation depends on the the
 % deps of the record plus the record itself)
-pred build-deps-for-projections i:inductive, i:mixins, o:list prop.
+func build-deps-for-projections inductive, mixins -> list prop.
 build-deps-for-projections R MLwP CL :- std.do! [
   compat.map-filter {coq.env.projections R} (x\y\x = some y) MixinOps,
   list-w-params.rcons MLwP (pl\t\r\ r = triple (indt R) pl t) MLRwP,
@@ -408,7 +408,8 @@ build-deps-for-projections R MLwP CL :- std.do! [
 % variables that aoccur. We don't want that for mixin/factories, so we implement
 % our own discharging. Note that definitions (like canonical instance) have
 % to be abstracted too.
-pred abstract-over-section i:list term, i:term, i:list prop, i:list constant, i:(pred i:list constant, i:A, o:A), i:A, o:A, o:list term.
+:index (1)
+func abstract-over-section list term, term, list prop, list constant, (func list constant, A -> A), A -> A, list term.
 abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance F X X1 Section :-
   % compute section variables to be used for discharging
   std.map MixinSrcClauses mixin-src_src Mixins,
@@ -419,7 +420,7 @@ abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance
   coq.copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,
   CopyUnfold => F SectionVars X X1.
 
-pred mk-factory-sort i:mixins, i:gref, o:gref, o:coercion.
+func mk-factory-sort mixins, gref -> gref, coercion.
 mk-factory-sort MLwP GR (const FactorySortCst) Coe :-
   if-verbose (coq.say {header} "declaring tagged sort for GR=" GR),
   synthesis.mixins-w-params.fun MLwP (mk-factory-sort.term GR) FactorySort,
@@ -430,7 +431,7 @@ mk-factory-sort MLwP GR (const FactorySortCst) Coe :-
   (@global! => log.coq.arguments.set-implicit (const FactorySortCst) [MLwPImplicits]),
   synthesis.infer-coercion-tgt MLwP CoeClass,
   Coe = coercion (const FactorySortCst) MLwPLength GR CoeClass.
-pred mk-factory-sort.term i:gref, i:list term, i:term, o:term.
+func mk-factory-sort.term gref, list term, term -> term.
 mk-factory-sort.term GR P T (fun `_` Ty _\ T) :- synthesis.infer-all-gref->deps P T GR Ty.
 
 
