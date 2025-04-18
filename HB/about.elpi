@@ -90,10 +90,10 @@ namespace private {
 
 shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
 
-pred docstring-for-file i:string, o:prop.
+func docstring-for-file string -> prop.
 docstring-for-file Rex (docstring Loc Doc) :- docstring Loc Doc,
   loc.fields Loc File _ _ _ _,
-  rex.match {calc(".*" ^ Rex)} File.
+  rex.match {calc(".*" ^ Rex)} File, !.
 
 func main-canonical-value string, list cs-instance ->.
 main-canonical-value S CanonicalValues :-
@@ -373,7 +373,7 @@ pp-loc Loc (coq.pp.glue PP) :-
   QFile is "\"" ^ File ^ "\", line " ^ {std.any->string Line},
   PP = [str "(from ", str QFile, str")"].
 
-pred docstring->pp i:string, o:coq.pp.
+func docstring->pp string -> coq.pp.
 docstring->pp Txt (glue Doc) :-
   rex.replace "\n" " " Txt PlainTxt,
   rex.split " " PlainTxt Words,
@@ -381,11 +381,11 @@ docstring->pp Txt (glue Doc) :-
   std.map NEWords (w\r\ r = str w) PpWords,
   std.intersperse spc PpWords Doc.
 
-pred docstring-of i:gref, o:option coq.pp.
+func docstring-of gref -> option coq.pp.
 docstring-of GR (some Doc) :- decl-location GR Loc, docstring Loc Txt, !, docstring->pp Txt Doc.
 docstring-of _ none.
 
-pred pp-docstring-of i:gref, o:coq.pp.
+func pp-docstring-of gref -> coq.pp.
 pp-docstring-of GR D :- docstring-of GR (some D), !.
 pp-docstring-of _ coq.pp.empty.
 
