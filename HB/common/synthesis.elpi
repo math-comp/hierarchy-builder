@@ -66,7 +66,7 @@ infer-holes-depending-on-pack _ X X.
 % and generates a term
 %   let `a1` ty1 t1 a1\ .... app[global GR, p1, .. pn, T, a1, .. , an]
 % if Diagnostic is ok, else X is unassigned
-pred infer-all-args-let i:list term, i:term, i:gref, o:term, o:diagnostic.
+func infer-all-args-let list term, term, gref -> term, diagnostic.
 infer-all-args-let Ps T GR X Diag :- std.do! [
   coq.env.typeof GR Ty,
   coq.mk-eta (-1) Ty (global GR) EtaF,
@@ -77,7 +77,7 @@ infer-all-args-let Ps T GR X Diag :- std.do! [
 
 % [assert!-infer-mixin TheType M Out] infers one mixin M on TheType and
 % aborts with an error message if the mixin cannot be inferred
-pred assert!-infer-mixin i:term, i:mixinname, o:term.
+func assert!-infer-mixin term, mixinname -> term.
 assert!-infer-mixin T M B :-
   if (private.mixin-for T M B)
      true
@@ -86,7 +86,8 @@ assert!-infer-mixin T M B :-
 
 % Given TheType it looks all canonical structure instances on it and makes
 % all their mixins available for inference
-pred local-canonical-mixins-of.aux i:term, i:list structure, o:list prop.
+:index (_ 1)
+func local-canonical-mixins-of.aux term, list structure -> list prop.
 local-canonical-mixins-of.aux _ [] [].
 local-canonical-mixins-of.aux T [S|Ss] MSL'' :- std.do! [
   private.structure-instance->mixin-srcs T S MSL,
@@ -94,7 +95,7 @@ local-canonical-mixins-of.aux T [S|Ss] MSL'' :- std.do! [
 	std.append MSL MSL' MSL'',
 	].
 	
-pred local-canonical-mixins-of i:term, o:list prop.
+func local-canonical-mixins-of term -> list prop.
 local-canonical-mixins-of T MSL :- std.do! [
   get-canonical-structures T CS,
 	std.map CS (s\c\ sigma w\ class-def (class c s w)) Cl,
@@ -105,22 +106,21 @@ local-canonical-mixins-of T MSL :- std.do! [
 
 % Given TheType and a factory instance (on it), makes all the mixins provided by
 % the factory available for inference.
-pred under-mixin-src-from-factory.do! i:term, i:term, i:list prop.
-under-mixin-src-from-factory.do! TheType TheFactory LP :- std.do! [
+func under-mixin-src-from-factory.do! term, term, list prop.
+under-mixin-src-from-factory.do! TheType TheFactory LP :-
   private.factory-instance->new-mixins [] TheFactory ML,
   std.map ML (m\c\ c = mixin-src TheType m TheFactory) MLClauses,
-  MLClauses => std.do! LP
-].
+  MLClauses => std.do! LP.
 
 % Given TheType and a factory instance (on it), builds all the *new* mixins
 % provided by the factory available for and passes them to the given
 % continuation
-pred under-new-mixin-src-from-factory.do! i:term, i:term, i:(list mixinname -> prop).
+func under-new-mixin-src-from-factory.do! term, term, (list mixinname -> prop).
 under-new-mixin-src-from-factory.do! TheType TheFactory LP :-
   findall-mixin-src TheType OldMixins,
   private.factory-instance->new-mixins OldMixins TheFactory NewML,
   std.map NewML (m\c\ c = mixin-src TheType m TheFactory) NewMLClauses,
-  NewMLClauses => std.do! [ LP NewML ].
+  NewMLClauses => std.once (LP NewML).
 
 % [under-mixins.then MLwP Pred F] states that F has shape
 %   fun p_1 .. p_k T,
@@ -129,9 +129,9 @@ under-new-mixin-src-from-factory.do! TheType TheFactory LP :-
 % where  MLwP contains M_0, .., M_n (under p_1 .. p_k)
 %   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
 %   and  ..p.. is a list of terms built using p_1 .. p_k and T
-pred under-mixins.then i:list (w-args mixinname),
-    i:(pred i:name, i:term, i:(term -> A), o:A),
-    i:(A -> prop), o:A.
+func under-mixins.then list (w-args mixinname),
+    (pred i:name, i:term, i:(term -> A), o:A),
+    (func A -> ) -> A.
 under-mixins.then [] _ Pred Body :- !, Pred Body.
 under-mixins.then [triple M Args T|ML] MkFun Pred Out :- std.do! [
   infer-all-gref->deps Args T M MTy,
@@ -147,30 +147,31 @@ under-mixins.then [triple M Args T|ML] MkFun Pred Out :- std.do! [
 % where  MLwP contains M_0, .., M_n (under p_1 .. p_k)
 %   and  Body is such that [..,mixin-src T M_i m_i,..] => Pred Body
 %   and  ..p.. is a list of terms built using p_1 .. p_k and T
-pred mixins-w-params.fun i:mixins, i:(pred i:list term, i:term, o:term), o:term.
+func mixins-w-params.fun mixins, (func list term, term -> term) -> term.
 mixins-w-params.fun L P Out :- !,
   w-params.then L mk-fun mk-fun (p\ t\ ml\ under-mixins.then ml mk-fun (P p t)) Out.
 
 % [mixins-w-params.length LwP N] states N is Nmixins+Nparams
-pred mixins-w-params.length i:mixins, o:int.
+func mixins-w-params.length mixins -> int.
 mixins-w-params.length MLwP N :-
   w-params.nparams MLwP Nparams,
   std.length {list-w-params_list MLwP} Nmixins,
   N is Nparams + Nmixins.
 
-pred infer-coercion-tgt i:mixins, o:class.
+func infer-coercion-tgt mixins -> class.
 infer-coercion-tgt (w-params.cons ID Ty F) CoeClass :-
   @pi-parameter ID Ty x\ infer-coercion-tgt (F x) CoeClass.
-infer-coercion-tgt (w-params.nil _ {{ Type }} _) sortclass.
-infer-coercion-tgt (w-params.nil _ {{ forall x, _ }} _) funclass. % do not use {{ _ -> _ }} since Funclass can be a dependent function!
+infer-coercion-tgt (w-params.nil _ {{ Type }} _) sortclass :- !.
+infer-coercion-tgt (w-params.nil _ {{ forall x, _ }} _) funclass :- !. % do not use {{ _ -> _ }} since Funclass can be a dependent function!
 infer-coercion-tgt (w-params.nil _ T _) (grefclass GR) :- coq.term->gref T GR.
 
-pred w-args.check-key i:list term, i:term, i:list (w-args A), o:prop.
+:index (_ _ 2)
+func w-args.check-key list term, term, list (w-args A) -> prop.
 w-args.check-key _PS _T [] true :- !.
 w-args.check-key  PS  T [triple _ _ T|LwA] P :- !, w-args.check-key PS  T LwA P.
 w-args.check-key _PS _T _LwA false :- !, coq.error "HB: all mixins must have the same key".
 
-pred list-w-params.check-key i:list-w-params A.
+func list-w-params.check-key list-w-params A ->.
 list-w-params.check-key MLwP :- !,
   w-params.then MLwP ignore ignore w-args.check-key _.
 
@@ -182,8 +183,8 @@ namespace private {
 
 % [mixin-for T M MI] synthesizes an instance of mixin M on type T using
 % the databases [mixin-src] and [from]
-pred mixin-for i:term, i:mixinname, o:term.
-mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
+func mixin-for term, mixinname -> term.
+mixin-for T M MICompressed :- mixin-src T M Tm, !,
   %if-verbose (coq.say {header} "Trying to infer mixin for" M),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
@@ -197,14 +198,13 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
   ),
 
   %if-verbose (coq.say {header} "Trying to compress mixin for" {coq.term->string MI}),
-  compress-coercion-paths MI MICompressed,
-].
+  compress-coercion-paths MI MICompressed.
 
-pred drop i:int, i:list A, o:list A.
+func drop int, list A -> list A.
 drop 0 L L :- !.
 drop N [_|XS] L :- !, N1 is N - 1, drop N1 XS L.
 
-pred compress-copy o:term, o:term.
+func compress-copy -> term, term.
 compress-copy (app [global (const C) | L]) R :-
   sub-class C2 C3 C NparamsC,
   drop NparamsC L [app [global (const C') | L']],
@@ -219,19 +219,19 @@ compress-copy (app L) (app L1) :- !, std.map L compress-copy L1.
 compress-copy X X.
 
 
-pred compress-coercion-paths i:term, o:term.
+func compress-coercion-paths term -> term.
 compress-coercion-paths MI MICompressed :-
   if (get-option "compress_coercions" tt)
      (compress-copy MI MICompressed)
      (MI = MICompressed).
 
-pred mixin-for_mixin-builder i:prop, o:term.
+func mixin-for_mixin-builder prop -> term.
 mixin-for_mixin-builder (mixin-for _ _ B) B.
 
 % [builder->term Params TheType Src Tgt MF] finds a builder from Src to Tgt
 % and fills in all the mixins required by the builder using mixin-src, obtaining
 % a function (MF = Builder Params TheType InferredStuff : Src -> Tgt)
-pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
+func builder->term list term, term, factoryname, mixinname -> term.
 builder->term Ps T Src Tgt B :- !, std.do! [
   from Src Tgt FGR,
   F = global FGR,
@@ -246,7 +246,7 @@ builder->term Ps T Src Tgt B :- !, std.do! [
 % then TFX := fun xs m_0 .. m_{i-1}     m_{i+1} .. m_n ys
 %            => F xs m_0 .. m_{i-1} X_i m_{i+1} .. m_n ys
 % thus instanciating an abstraction on mixin M_i with X_i
-pred instantiate-all-these-mixin-args i:term, i:term, i:list mixinname, o:term.
+func instantiate-all-these-mixin-args term, term, list mixinname -> term.
 instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M ok,
@@ -258,7 +258,7 @@ instantiate-all-these-mixin-args (fun N Ty F) T ML (fun N Ty FX) :- !,
   @pi-decl N Ty m\ instantiate-all-these-mixin-args (F m) T ML (FX m).
 instantiate-all-these-mixin-args F _ _ F.
 
-pred instantiate-all-args-let i:term, i:term, o:term, o:diagnostic.
+func instantiate-all-args-let term, term -> term, diagnostic.
 instantiate-all-args-let (fun N Tm F) T (let N Tm X R) Diag :- !, std.do! [
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M ok,
@@ -306,7 +306,7 @@ structure-instance->mixin-srcs _ _ [].
 structure-instance->mixin-srcs.aux2 Params T Class (some P) M :-
   coq.mk-app (global (const P)) {std.append Params [T,Class]} M.
 
-pred structure-instance->mixin-srcs.aux i:term, i:term, o:list prop.
+func structure-instance->mixin-srcs.aux term, term -> list prop.
 structure-instance->mixin-srcs.aux T  F CL :-
   factory-instance->new-mixins [] F ML,
   std.map-filter ML (m\c\ not (mixin-src T m _), c = mixin-src T m F) CL.
@@ -314,8 +314,8 @@ structure-instance->mixin-srcs.aux T  F CL :-
 % [factory-instance->new-mixins OldMixins FI MSL] find all the mixins
 % which can be generated by the factory instance FI which are not part of
 % OldMixins (that is, the contribution of FI to the current context)
-pred factory-instance->new-mixins i:list mixinname, i:term, o:list mixinname.
-factory-instance->new-mixins OldMixins X NewML :- std.do! [
+func factory-instance->new-mixins list mixinname, term -> list mixinname.
+factory-instance->new-mixins OldMixins X NewML :-
   std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
   if (not (coq.safe-dest-app XTy (global _) _))
      (coq.error "Term:\n" {coq.term->string X}
@@ -325,7 +325,6 @@ factory-instance->new-mixins OldMixins X NewML :- std.do! [
   coq.term->gref XTy Src,
   factory-provides Src MLwP,
   list-w-params_list MLwP ML,
-  std.filter ML (m\ not(std.mem! OldMixins m)) NewML,
-].
+  std.filter ML (m\ not(std.mem! OldMixins m)) NewML.
 
 }}
