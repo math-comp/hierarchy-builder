@@ -2,6 +2,7 @@ HB/structures.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
 -arg -w -arg -elpi.typecheck-syntax
+-arg -w -arg -elpi.flex-clause
 -Q HB HB
 
 -R tests HB.tests

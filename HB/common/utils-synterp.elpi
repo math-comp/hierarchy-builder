@@ -2,7 +2,7 @@
     This software is released under the terms of the MIT license              */
 
 % runs P in a context where Coq #[attributes] are parsed
-pred with-attributes i:prop.
+func with-attributes (func).
 with-attributes P :-
   attributes A,
   coq.parse-attributes A [
@@ -27,29 +27,29 @@ with-attributes P :-
   ] Opts, !,
   Opts => (save-docstring, P).
 
-pred if-verbose i:prop.
+func if-verbose (func) -> .
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
 
 % header of if-verbose messages
-pred header o:string.
+func header -> string.
 header Msg :- Msg is "[" ^ {std.any->string {gettimeofday}} ^ "] HB: ".
 
 % approximation, it should be logical path, not the file name
-pred coq.env.current-library o:string.
-coq.env.current-library L :- loc.fields {get-option "elpi.loc"} L _ _ _ _.
+func coq.env.current-library -> string.
+coq.env.current-library L :- loc.fields {get-option "elpi.loc"} L _ _ _ _, !.
 coq.env.current-library "dummy.v".
 
 % this is only declared in hb.db, this declaration is only to avoid a warning
 pred docstring o:loc, o:string.
 
-pred save-docstring.
+func save-docstring.
 save-docstring :-
   if (get-option "elpi.loc" Loc, get-option "elpi.phase" "interp", get-option "doc" Txt)
      (coq.elpi.accumulate _ "hb.db" (clause _ _ (docstring Loc Txt)))
      true.
 
-pred compute-filter i:option string, o:list string.
+func compute-filter option string -> list string.
 compute-filter none [].
 compute-filter (some S) MFilter :- % S is a component of the current modpath
   coq.env.current-path P,
@@ -58,16 +58,18 @@ compute-filter (some S) MFilter :- % S is a component of the current modpath
 compute-filter (some S) MFilter :-
   coq.locate-module S M,
   coq.modpath->path M MFilter.
+
+func compute-filter.aux list string, list string -> list string.
 compute-filter.aux [S|_] [S] [S] :- !.
-compute-filter.aux [S|XS] [S|SS] [S|YS] :- compute-filter.aux XS SS YS.
+compute-filter.aux [S|XS] [S|SS] [S|YS] :- !, compute-filter.aux XS SS YS.
 compute-filter.aux [X|XS] L [X|YS] :- compute-filter.aux XS L YS.
 
-pred list-uniq i:list A, o:list A.
+func list-uniq list A -> list A.
 pred list-uniq.seen i:A.
 list-uniq [] [].
 list-uniq [X|XS] YS :- list-uniq.seen X, !, list-uniq XS YS.
 list-uniq [X|XS] [X|YS] :- list-uniq.seen X => list-uniq XS YS.
 
-pred record-decl->id i:indt-decl, o:id.
+func record-decl->id indt-decl -> id.
 record-decl->id (parameter _ _ _ D) N :- pi p\ record-decl->id (D p) N.
 record-decl->id (record N _ _ _) N.

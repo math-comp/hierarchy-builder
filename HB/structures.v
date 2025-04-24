@@ -1,5 +1,5 @@
 (* Support constants, to be kept in sync with shim/structures.v *)
-From Corelib Require Import ssreflect ssrfun.
+From Coq Require Import ssreflect ssrfun.
 
 Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
 Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
@@ -128,7 +128,7 @@ pred phant-abbrev o:gref, o:gref, o:abbreviation.
 % [factory-alias->gref X GR] when X is already a factory X = GR
 % however, when X is a phantom abbreviated gref, we find the underlying
 % factory gref GR associated to it.
-pred factory-alias->gref i:gref, o:gref, o: diagnostic.
+func factory-alias->gref gref -> gref, diagnostic.
 factory-alias->gref PhGR GR ok :- phant-abbrev GR PhGR _, !.
 factory-alias->gref GR GR ok :- phant-abbrev GR _ _, !.
 factory-alias->gref GR _ (error Msg) :- !,
@@ -139,29 +139,27 @@ factory-alias->gref GR _ (error Msg) :- !,
 
 %%%%% Cache of known facts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [factory-constructor F K] means K is a constructor for
+% [factory->constructor F K] means K is a constructor for
 % the factory F.
-pred factory-constructor o:factoryname, o:gref.
+func factory->constructor factoryname -> gref.
 
-% [factory-nparams F N] says that F has N parameters
-pred factory-nparams o:factoryname, o:int.
+% [factory->nparams F N] says that F has N parameters
+func factory->nparams factoryname -> int.
 
 % [is-structure GR] tests if GR is a known structure
 pred is-structure o:gref.
 
-% [factory-builder-nparams Build N] states that when the user writes
-% the [F.Build T] abbreviation the term behind it has N arguments before T
-pred factory-builder-nparams o:constant, o:int.
+% [is-factory GR] tests if GR is a known factory
+pred is-factory o:gref.
 
 % [sub-class C1 C2 Coercion12 NparamsCoercion] C1 is a sub-class of C2,
 % see also sub-class? which computes it on the fly
 :index (2 2 1)
 pred sub-class o:classname, o:classname, o:constant, o:int.
 
-% [gref-deps GR MLwP] is a (pre computed) list of dependencies of a know global
+% [gref->deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
-:index(2)
-pred gref-deps o:gref, o:mixins.
+func gref->deps gref -> mixins.
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
 pred join o:classname, o:classname, o:classname.
@@ -169,7 +167,7 @@ pred join o:classname, o:classname, o:classname.
 % Section local memory of names for mixins, so that we can reuse them
 % and build terms with simpler conversion problems (less unfolding
 % in order to discover two mixins are the same)
-pred mixin-mem i:term, o:gref.
+func mixin-mem term -> gref.
 
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
@@ -178,9 +176,9 @@ pred mixin-mem i:term, o:gref.
 % Also we remember which is the first class/structure that includes
 % a given mixin, assuming the invariant that this first class is also
 % the minimal class that includes this mixin.
-% [mixin-first-class M C] states that C is the first/minimal class
+% [mixin->first-class M C] states that C is the first/minimal class
 % that contains the mixin M
-pred mixin-first-class o:mixinname, o:classname.
+func mixin->first-class mixinname -> classname.
 
 % memory of exported operations (TODO: document fiels)
 pred exported-op o:mixinname, o:constant, o:constant.
@@ -480,7 +478,7 @@ main [A] :- with-attributes (with-logging (factory.declare-mixin A)).
 
 shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-section N,
@@ -670,7 +668,7 @@ main [const-decl N (some B) Arity] :- std.do! [
 
 shorten coq.env.{ begin-module, end-module, begin-section, end-section, import-module, export-module }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-module "Exports" none,
@@ -686,7 +684,7 @@ actions N :-
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
   if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (actions-compat N) true.
 
-pred actions-compat i:id.
+func actions-compat id ->.
 actions-compat ModuleName :-
   CompatModuleName is "MathCompCompat" ^ ModuleName,
   begin-module CompatModuleName none,
@@ -842,7 +840,7 @@ main [A] :- with-attributes (with-logging (factory.declare A)).
 
 shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-section N,
@@ -926,7 +924,7 @@ main [ctx-decl C] :- with-attributes (with-logging (builders.begin C)).
 
 shorten coq.env.{ begin-module, end-module, begin-section }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-module "Super" none,
@@ -967,7 +965,7 @@ main [] :- with-attributes (with-logging builders.end).
 
 shorten coq.env.{ end-module, end-section, begin-module, end-module, export-module }.
 
-pred actions.
+func actions.
 actions :-
     end-section,
     begin-module {calc ("Builders_Export_" ^ {std.any->string {new_int} })} none,
@@ -1039,8 +1037,9 @@ main _ :- coq.error "Usage: HB.export M.".
 
 shorten coq.env.{ export-module }.
 
-pred actions i:list located.
-actions [loc-modpath MP] :- !,
+:index (1)
+func actions list located ->.
+actions [loc-modpath MP] :-
   export-module MP,
   coq.env.current-library File,
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File MP)).
@@ -1087,12 +1086,18 @@ main _ :- coq.error "Usage: HB.reexport.".
 
 shorten coq.env.{ export-module }.
 
-pred module-in-module i:list string, i:prop.
+% TODO: should be in stdlib?
+:index (1)
+func prefixL list A, list A ->.
+prefixL [] _.
+prefixL [X|Xs] [X|Ys] :- prefixL Xs Ys.
+
+func module-in-module list string, prop.
 module-in-module PM (module-to-export _ M) :-
   coq.modpath->path M PC,
-  std.appendR PM _ PC. % sublist
+  prefixL PM PC. % sublist
 
-pred actions i:option id.
+func actions option id ->.
 actions Filter :-
   coq.env.current-library File,
   compute-filter Filter MFilter,
@@ -1199,11 +1204,11 @@ Elpi Accumulate lp:{{
 main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
 main _ :- coq.error "usage: HB.check (term).".
 
-pred check-or-not i:term.
+func check-or-not term ->.
 check-or-not Skel :-
   coq.version VersionString _ _ _,
   if (get-option "skip" R, rex_match R VersionString)
-     (coq.warning "HB" "HB.skip" {get-option "elpi.loc"} "Skipping test on Coq" VersionString "as requested")
+     (get-option "elpi.loc" Opt, !, coq.warning "HB" "HB.skip" Opt "Skipping test on Coq" VersionString "as requested")
      (log.coq.check Skel Ty T Result,
       if (Result = error Msg)
          (if (get-option "fail" tt)
