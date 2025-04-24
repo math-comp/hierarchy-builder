@@ -98,7 +98,6 @@ compute-filter (some S) MFilter :-
   coq.locate-module S M,
   coq.modpath->path M MFilter.
 
-% @gares: same predicate in synterp: code clone?
 func compute-filter.aux list string, list string -> list string.
 compute-filter.aux [S|_] [S] [S] :- !.
 compute-filter.aux [S|XS] [S|SS] [S|YS] :- !, compute-filter.aux XS SS YS.

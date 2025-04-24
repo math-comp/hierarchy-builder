@@ -94,7 +94,6 @@ toporec ES [X|XS] VS PS VS'' PS'' :-
 func toposort list (pair A A), list A -> list A.
 toposort ES XS XS'' :-
   toporec ES XS [] [] _ XS',
-  % @gares: meme!, instead of mem
   std.filter XS' (std.mem! XS) XS''.
 
 namespace gref {

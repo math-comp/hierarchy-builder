@@ -64,7 +64,6 @@ shorten coq.pp.{ v , h, hv, hov , spc , str , box , glue , brk , empty }.
 func bulletize1 (func A -> coq.pp), A -> coq.pp.
 bulletize1 F X (glue [str "- ", M]) :- F X M.
 
-% @gares
 func bulletize list A, (func A -> coq.pp) -> coq.pp.
 bulletize [] _ empty :- !.
 bulletize L F (glue [brk 0 0 | PLB]) :-

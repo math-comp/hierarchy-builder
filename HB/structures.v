@@ -167,8 +167,6 @@ pred join o:classname, o:classname, o:classname.
 % Section local memory of names for mixins, so that we can reuse them
 % and build terms with simpler conversion problems (less unfolding
 % in order to discover two mixins are the same)
-% @gares : is it really a func. Ideally I think so, bu we load mixin-mem via
-% `Clauses =>` in infer-class. Should perform a dynamic check?
 func mixin-mem term -> gref.
 
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
