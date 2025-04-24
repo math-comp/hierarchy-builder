@@ -54,9 +54,6 @@ builders.end :- std.do! [
   acc-clauses current Clauses,
   acc-clauses current ExportClausesFiltered,
   
-  % Clauses => ExportClausesFiltered => current-mode no-builder =>
-  %   instance.declare-factory-sort-factory GR,
-
   log.coq.env.end-module-name Name Exports,
   log.coq.env.end-module-name ModName _,
   export.module {calc (ModName ^ "." ^ Name)} Exports,
