@@ -4,7 +4,7 @@
 
 namespace pack {
 
-pred main i:term, i:list argument, o:term.
+func main term, list argument -> term.
 main Ty Args Instance :- std.do! [
   std.assert! (not(var Ty)) "HB.pack: the structure to pack cannot be unknown, use HB.pack_for",
   std.assert! (coq.safe-dest-app {unwind {whd Ty []}} (global Structure) Params) "HB.pack: not a structure",
@@ -39,7 +39,8 @@ main Ty Args Instance :- std.do! [
 
 namespace private {
 
-pred synth-instance.aux i:list term, i:gref, i:gref, i:term, i:term, i:list term, i:list prop, o:term.
+:index (_ _ _ _ _ 1)
+func synth-instance.aux list term, gref, gref, term, term, list term, list prop -> term.
 synth-instance.aux Params KC KS T Tkey [Factory|Factories] MLCano Instance :-
   synthesis.under-new-mixin-src-from-factory.do! Tkey Factory (_\
     synth-instance.aux Params KC KS T Tkey Factories MLCano Instance).
@@ -50,12 +51,13 @@ synth-instance.aux Params KC KS T Tkey [] MLCano Instance :-
       Instance = app[global KS | InstanceArgs]
 ].
 
-pred synth-instance i:list term, i:gref, i:gref, i:term, i:term, i:list term, o:term.
+func synth-instance list term, gref, gref, term, term, list term -> term.
 synth-instance Params KC KS T Tkey Factories Instance :-
 	if (coq.safe-dest-app Tkey (global _) _) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
 	synth-instance.aux Params KC KS T Tkey Factories MLCano Instance.
 
-pred elab-factories i:list argument, i:term, o:list term.
+:index (1)
+func elab-factories list argument, term -> list term.
 elab-factories [] _ [].
 elab-factories [trm FactorySkel|More] T [Factory|Factories] :-
   std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy MaybeFactory) "HB.pack: illtyped factory",

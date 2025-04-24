@@ -480,7 +480,7 @@ main [A] :- with-attributes (with-logging (factory.declare-mixin A)).
 
 shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-section N,
@@ -670,7 +670,7 @@ main [const-decl N (some B) Arity] :- std.do! [
 
 shorten coq.env.{ begin-module, end-module, begin-section, end-section, import-module, export-module }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-module "Exports" none,
@@ -686,7 +686,7 @@ actions N :-
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
   if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (actions-compat N) true.
 
-pred actions-compat i:id.
+func actions-compat id ->.
 actions-compat ModuleName :-
   CompatModuleName is "MathCompCompat" ^ ModuleName,
   begin-module CompatModuleName none,
@@ -842,7 +842,7 @@ main [A] :- with-attributes (with-logging (factory.declare A)).
 
 shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-section N,
@@ -926,7 +926,7 @@ main [ctx-decl C] :- with-attributes (with-logging (builders.begin C)).
 
 shorten coq.env.{ begin-module, end-module, begin-section }.
 
-pred actions i:id.
+func actions id ->.
 actions N :-
   begin-module N none,
     begin-module "Super" none,
@@ -967,7 +967,7 @@ main [] :- with-attributes (with-logging builders.end).
 
 shorten coq.env.{ end-module, end-section, begin-module, end-module, export-module }.
 
-pred actions.
+func actions.
 actions :-
     end-section,
     begin-module {calc ("Builders_Export_" ^ {std.any->string {new_int} })} none,
@@ -1039,8 +1039,9 @@ main _ :- coq.error "Usage: HB.export M.".
 
 shorten coq.env.{ export-module }.
 
-pred actions i:list located.
-actions [loc-modpath MP] :- !,
+:index (1)
+func actions list located ->.
+actions [loc-modpath MP] :-
   export-module MP,
   coq.env.current-library File,
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File MP)).
@@ -1087,12 +1088,18 @@ main _ :- coq.error "Usage: HB.reexport.".
 
 shorten coq.env.{ export-module }.
 
-pred module-in-module i:list string, i:prop.
+% TODO: should be in stdlib?
+:index (1)
+func prefixL list A, list A ->.
+prefixL [] _.
+prefixL [X|Xs] [X|Ys] :- prefixL Xs Ys.
+
+func module-in-module list string, prop.
 module-in-module PM (module-to-export _ M) :-
   coq.modpath->path M PC,
-  std.appendR PM _ PC. % sublist
+  prefixL PM PC. % sublist
 
-pred actions i:option id.
+func actions option id ->.
 actions Filter :-
   coq.env.current-library File,
   compute-filter Filter MFilter,
@@ -1199,11 +1206,11 @@ Elpi Accumulate lp:{{
 main [trm Skel] :- !, with-attributes (with-logging (check-or-not Skel)).
 main _ :- coq.error "usage: HB.check (term).".
 
-pred check-or-not i:term.
+func check-or-not term ->.
 check-or-not Skel :-
   coq.version VersionString _ _ _,
   if (get-option "skip" R, rex_match R VersionString)
-     (coq.warning "HB" "HB.skip" {get-option "elpi.loc"} "Skipping test on Coq" VersionString "as requested")
+     (get-option "elpi.loc" Opt, !, coq.warning "HB" "HB.skip" Opt "Skipping test on Coq" VersionString "as requested")
      (log.coq.check Skel Ty T Result,
       if (Result = error Msg)
          (if (get-option "fail" tt)

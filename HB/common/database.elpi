@@ -433,9 +433,9 @@ has-CS-instance? TyTerm (indt Struct) :-
   coq.CS.db-for (const Proj) Pat L,
   not(L = []).
 
-pred structure-nparams i:structure, o:int.
+func structure-nparams structure -> int.
 structure-nparams Structure NParams :-
-  class-def (class Class Structure _),
+  class-def (class Class Structure _), !,
   factory->nparams Class NParams.
 
 func factory? term -> w-args factoryname.

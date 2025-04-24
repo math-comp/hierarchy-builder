@@ -75,13 +75,18 @@ func lt-gref gref, gref.
 lt-gref X Y :-
   gref->modname_short X "." SX, gref->modname_short Y "." SY, !, SX s< SY.
 
-pred size-order i:(func list A, list A), i:list A, i:list A.
+func size-order (pred i:list A, i:list A), list A, list A.
 size-order Rel L1 L2 :-
-  std.length L1 S1, std.length L2 S2, !, (S1 i< S2; (S1 = S2, !, Rel L1 L2)).
+  std.length L1 S1, std.length L2 S2, size-order.aux Rel L1 S1 L2 S2.
 
-pred lexi-order i:list gref, i:list gref.
+func size-order.aux (pred i:list A, i:list A), list A, int, list A, int.
+size-order.aux _   _L1 S1 _L2 S2 :- S1 i< S2, !.
+size-order.aux Rel  L1 S1  L2 S2 :- S1 = S2, Rel L1 L2, !.
+
+:index (1 1)
+func lexi-order list gref, list gref.
 lexi-order [] [].
-lexi-order [X1|_] [X2|_] :- lt-gref X1 X2.
+lexi-order [X1|_] [X2|_] :- lt-gref X1 X2, !.
 lexi-order [X|T1] [X|T2] :- lexi-order T1 T2.
 
 % [structures-on-gref GR ML] list structures [GR] is equipped with

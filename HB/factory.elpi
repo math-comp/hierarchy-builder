@@ -245,8 +245,9 @@ declare-asset Arg AssetKind :- std.do! [
   )
 ].
 
-pred declare-mixin-or-factory i:list prop, i:list constant, i:list term, i:term,
-  i:term, i:record-decl, i:list-w-params factoryname, i:id, i:asset.
+:index(1)
+func declare-mixin-or-factory list prop, list constant, list term, term,
+  term, record-decl, list-w-params factoryname, id, asset.
 declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     TheParams TheType Sort1 Fields GRFSwP Module D :- std.do! [
 

@@ -3,7 +3,7 @@
 
 namespace context {
 
-pred declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:list constant.
+func declare factories -> mixins, list term, term, list prop, list constant.
 declare FLwP MLwP Params TheKey MSL CL :- !, std.do! [
   factories-provide FLwP MLwPRaw,
   declare.params-key MLwPRaw ParamsSection TheKey _MLwA,
@@ -20,7 +20,7 @@ declare.params-key MLwP Params TheKey Out :- !, std.do! [
   Out = F TheKey
 ].
 
-pred declare.params i:w-params A, o:list (triple id term term), o:id, o:term, o:(term -> A).
+func declare.params w-params A -> list (triple id term term), id, term, (term -> A).
 declare.params (w-params.cons PId PTy F) [triple PId P PTy|Params] KId KTy Out :- !, std.do! [
   log.coq.env.add-section-variable-noimplicits PId PTy C,
   P = global (const C),

@@ -73,25 +73,20 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 
 namespace export.private {
 
-:index (1)
-func prefixL list A, list A ->.
-prefixL [] _.
-prefixL [X|Xs] [X|Ys] :- prefixL Xs Ys.
-
 func abbrev-in-module list string, prop ->.
 abbrev-in-module PM (abbrev-to-export _ _ GR) :-
   coq.gref->path GR PC,
-  prefixL PM PC.
+  std.prefixL PM PC.
 
 func module-in-module list string, prop ->.
 module-in-module PM (module-to-export _ _ M) :-
   coq.modpath->path M PC,
-  prefixL PM PC.
+  std.prefixL PM PC.
 
 func instance-in-module list string, prop ->.
 instance-in-module PM (instance-to-export _ _ C) :-
   coq.gref->path (const C) PC,
-  prefixL PM PC.
+  std.prefixL PM PC.
 
 func compute-filter option string -> list string.
 compute-filter none [].

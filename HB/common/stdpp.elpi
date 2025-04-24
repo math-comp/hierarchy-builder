@@ -31,6 +31,11 @@ list-diff L [D|DS] R :-
   std.filter L (x\ not(x = D)) L1,
   list-diff L1 DS R.
 
+:index (1)
+func prefixL list A, list A ->.
+prefixL [] _.
+prefixL [X|Xs] [X|Ys] :- prefixL Xs Ys.
+
 func list-uniq list A -> list A.
 pred list-uniq.seen i:A.
 list-uniq [] [].

@@ -3,7 +3,7 @@
 
 namespace status {
 
-pred print-hierarchy.
+func print-hierarchy.
 print-hierarchy :- std.do! [
   coq.say "--------------------- Hierarchy -----------------------------------",
   std.findall (class-def CL_) CL,
@@ -42,15 +42,15 @@ print-hierarchy :- std.do! [
 
 namespace private {
 
-pred pp-from i:prop.
+func pp-from prop ->.
 pp-from (from F M T) :-
   coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
   coq.say "  " {coq.term->string (global T)},
   coq.say "".
 
-pred pp-list-w-params i:mixins, i:term.
-pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
-pred pp-list-w-params.triple i:w-args mixinname.
+func pp-list-w-params mixins, term ->.
+func pp-list-w-params.list-triple list (w-args mixinname), term ->.
+func pp-list-w-params.triple w-args mixinname ->.
 pp-list-w-params (w-params.cons N Ty LwP) T :-
   @pi-parameter N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
 pp-list-w-params (w-params.nil N TTy LwP) T :-
@@ -61,22 +61,22 @@ pp-list-w-params.list-triple L S :-
 pp-list-w-params.triple (triple M Params T) :-
   coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
 
-pred pp-class i:prop.
+func pp-class prop ->.
 pp-class (class-def (class _ S MLwP)) :-
   pp-list-w-params MLwP (global S).
 
-pred pp-mixin-src i:prop.
+func pp-mixin-src prop ->.
 pp-mixin-src (mixin-src T M C) :-
   coq.say {coq.term->string T} "is a"
           {nice-gref->string M} "thanks to"
           {coq.term->string C}.
 
-pred pp-builder-decl i:prop.
+func pp-builder-decl prop ->.
 pp-builder-decl (builder-decl (builder N F M GR)) :-
   coq.say "builder" GR "with serial number" N 
     "will build mixin" M "from factory" F.
 
-pred pp-current-mode i:prop.
+func pp-current-mode prop ->.
 pp-current-mode (current-mode (builder-from TheType TheFactory GRF Mod)) :-
   coq.say "The current key is" TheType "with factory" TheFactory
     "corresponding to Global Ref" GRF "in module" Mod.
