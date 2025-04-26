@@ -294,8 +294,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
   % @global! => log.coq.coercion.declare FactorySortCoe,
 
-  % NewClauses => instance.declare-factory-sort-deps (indt R),
-
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
 
@@ -365,8 +363,6 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   acc-clauses current NewClauses,
   %@global! => log.coq.coercion.declare FactorySortCoe,
-
-  % NewClauses => instance.declare-factory-sort-deps (const C),
 
   log.coq.env.end-module-name "Exports" Exports,
   log.coq.env.end-module-name Module _,
