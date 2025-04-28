@@ -76,7 +76,7 @@ gref->modname GR NComp Sep ModName :-
   std.length Path Len,
   if (Len >= NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
   std.take NComp Mods L,
-  std.string.concat Sep {std.rev L} ModName.
+  std.string.concat Sep {std.rev L} ModName. % TODO: check if the new_int is needed
 pred gref->modname-label i:gref, i:int, i:string, o:string.
 gref->modname-label GR NComp Sep ModName :-
   coq.gref->path GR Path,
@@ -294,7 +294,7 @@ pack? (indc K) C :-
   coq.env.indc K _ _ _ KTy, prod-last-gref KTy (indt I), % TODO: use new API
   class-def (class C (indt I) _).
 
-pred distribute-w-params i:list-w-params A, o:list (one-w-params A).
+pred distribute-w-params i:w-params (list A), o:list (w-params A).
 distribute-w-params (w-params.cons N T F) L :-
   pi x\ distribute-w-params (F x) (L1 x), std.map (L1 x) (bind-cons N T x) L.
 distribute-w-params (w-params.nil N T F) L :-
@@ -315,6 +315,18 @@ re-enable-id-phant T T1 :-
   (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
   (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
   copy T T1.
+
+pred disable-id-phant-indt-decl i:indt-decl, o:indt-decl.
+disable-id-phant-indt-decl D D1 :-
+  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  copy-indt-decl D D1.
+
+pred re-enable-id-phant-indt-decl i:indt-decl, o:indt-decl.
+re-enable-id-phant-indt-decl D D1 :-
+  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
+  (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
+  copy-indt-decl D D1.
 
 pred prod-last i:term, o:term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.

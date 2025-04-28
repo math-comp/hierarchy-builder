@@ -28,6 +28,13 @@ print-hierarchy :- std.do! [
     std.forall BDL private.pp-builder-decl
   ),
 
+  std.findall (wrapper-mixin _ _ _) WL,
+  if (WL = []) true (
+    coq.say "",
+    coq.say "--------------------- Wrappers ----------------------",
+    std.forall WL private.pp-wrapper
+  ),
+
   std.findall (current-mode BF_) BFL,
   if (BFL = []) true (
     coq.say "",
@@ -80,5 +87,9 @@ pred pp-current-mode i:prop.
 pp-current-mode (current-mode (builder-from TheType TheFactory GRF Mod)) :-
   coq.say "The current key is" TheType "with factory" TheFactory
     "corresponding to Global Ref" GRF "in module" Mod.
-  
+
+pred pp-wrapper i:prop.
+pp-wrapper (wrapper-mixin W O M) :-
+  coq.say "wrapper" W "for mixin" M "for lifter" O.
+
 }}

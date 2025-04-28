@@ -171,6 +171,18 @@ pred join o:classname, o:classname, o:classname.
 % in order to discover two mixins are the same)
 pred mixin-mem i:term, o:gref.
 
+% [wrapper-mixin Wrapper NewSubject WrappedMixin]
+%  #[wrapper] HB.mixin Record hom_isMon T of Quiver T :=
+%      { private : forall A B, isMon (@hom T A B) }.
+%  -->
+%  wrapper-mixin (indt "hom_isMon") (const "hom") (indt "isMon").
+pred wrapper-mixin o:mixinname, o:gref, o:mixinname.
+
+% designated identity function for wrapping (sometimes you don't have a
+% structure op for it).
+% [tag GR Class NParams]
+pred tag o:gref, o:classname, o:int.
+
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
@@ -182,7 +194,9 @@ pred mixin-mem i:term, o:gref.
 % that contains the mixin M
 pred mixin-first-class o:mixinname, o:classname.
 
-% memory of exported operations (TODO: document fiels)
+% memory of exported operations.
+% [exported-op Mixin MixinProjection Operation], where Operation is a
+% structure projection.
 pred exported-op o:mixinname, o:constant, o:constant.
 
 % memory of factory sort coercion
@@ -232,7 +246,7 @@ pred current-mode o:declaration.
 
 % library, nice-name, object
 pred module-to-export   o:string, o:id, o:modpath.
-pred instance-to-export o:string, o:id, o:constant.
+pred instance-to-export o:string, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
 pred clause-to-export   o:string, o:prop.
 
@@ -588,6 +602,34 @@ Elpi Export HB.pack.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+Elpi Tactic HB.from.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
+#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main-use-factories Ty Args Instance,
+  refine Instance G GLS,
+])).
+
+}}.
+Elpi Typecheck.
+
+Tactic Notation "HB.from" open_constr_list(L) :=
+  elpi HB.from ltac_term_list:(L).
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** [HB.structure] declares a packed structure.
 
   Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
@@ -684,6 +726,10 @@ actions N :-
   coq.env.current-library File,
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)),
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
+
+  % hack
+  std.forall {std.iota 20} (x\begin-section "x",end-section), 
+
   if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (actions-compat N) true.
 
 pred actions-compat i:id.
@@ -1216,6 +1262,70 @@ check-or-not Skel :-
 }}.
 Elpi Typecheck.
 Elpi Export HB.check.
+
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.tag] declares a tag for mixin subjects
+
+[[
+HB.tag Definition N Params (x : S.type) : Type := x
+]]
+
+*)
+
+#[arguments(raw)] Elpi Command HB.tag.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate lp:{{
+
+main [const-decl Name (some BodySkel) AritySkel] :- !, std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton AritySkel _ Arity) "HB: type illtyped",
+  coq.arity->nparams Arity N,
+  coq.arity->term Arity Ty,
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "HB: body illtyped",
+  with-attributes (with-logging (std.do! [
+    log.coq.env.add-const Name Body Ty @transparent! C,
+    coq.arity->implicits Arity CImpls,
+    if (coq.any-implicit? CImpls)
+     (@global! => coq.arguments.set-implicit (const C) [CImpls])
+     true,
+  ])),
+  M is N - 1,
+  class-of-nth-arg M Ty Class,
+  acc-clause current (tag (const C) Class M),
+].
+main [str G, str"|", int M] :- !,
+  coq.locate G GR,
+  coq.env.typeof GR Ty,
+  class-of-nth-arg M Ty Class,
+  acc-clause current (tag GR Class M).
+
+main _ :- coq.error "Usage: HB.tag Definition <Name> ... <subject> := T ...\nUsage: HB.tag <gref> | <nparams>".
+
+pred class-of-nth-arg i:int, i:term, o:classname.
+class-of-nth-arg 0 (prod _ (global S) _\_) Class :- class-def (class Class S _).
+class-of-nth-arg 0 (prod _ (app [global S|_]) _\_) Class :- class-def (class Class S _).
+class-of-nth-arg N (prod Name Ty Bo) Class :- N > 0, !, M is N - 1,
+  @pi-decl Name Ty x\ class-of-nth-arg M (Bo x) Class.
+class-of-nth-arg 0 T _ :- !,
+  coq.error "HB: the last parameter of a tag must be of a structure type:" {coq.term->string T}.
+class-of-nth-arg _ T _ :- !,
+  coq.error "HB: not enough argsuments:" {coq.term->string T}.
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.tag.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

@@ -51,10 +51,10 @@ pred module-to-export_module-nice i:prop, o:id.
 module-to-export_module-nice (module-to-export _ M _) M.
 
 pred instance-to-export_instance i:prop, o:constant.
-instance-to-export_instance (instance-to-export _ _ M) M.
+instance-to-export_instance (instance-to-export _ M) M.
 
 pred instance-to-export_instance-nice i:prop, o:id.
-instance-to-export_instance-nice (instance-to-export _ M _) M.
+instance-to-export_instance-nice (instance-to-export _ M) ID :- coq.gref->id (const M) ID.
 
 pred abbrev-to-export_name i:prop, o:id.
 abbrev-to-export_name (abbrev-to-export _ N _) N.
@@ -180,6 +180,8 @@ toposort-proj.acc Proj ES Acc [A|In] Out :- std.do![
   Proj A B,
   topo-find B A => toposort-proj.acc Proj ES [B|Acc] In Out
 ].
+
+% TODO: check if topo-find-all is really needed
 
 % Classes can be topologically sorted according to the subclass relation
 pred toposort-classes.mk-class-edge i:prop, o:pair classname classname.
@@ -435,12 +437,15 @@ structure-nparams Structure NParams :-
   factory-nparams Class NParams.
 
 pred factory? i:term, o:w-args factoryname.
-factory? S (triple F Params T) :-
+factory? S (triple F Params T) :- factory?-split S F [_|Params] T _.
+
+pred factory?-split i:term, o:factoryname, o:list term, o:term, o:list term.
+factory?-split S F [global GR|Params] T Rest :-
   not (var S), !,
   safe-dest-app S (global GR) Args,
   factory-alias->gref GR F ok,
   factory-nparams F NP, !,
-  std.split-at NP Args Params [T|_].
+  std.split-at NP Args Params [T|Rest].
 
 % [find-max-classes Mixins Classes] states that Classes is a list of classes
 %   which contain all the mixins in Mixins.
@@ -460,3 +465,8 @@ find-max-classes [M|Mixins] [C|Classes] :-
   ].
 find-max-classes [M|_] _ :- coq.error "HB: cannot find a class containing mixin" M.
 
+pred is-subject-lifter i:term, o:int, o:classname.
+is-subject-lifter (global (const C)) N  Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
+is-subject-lifter (app[global (const C)|_]) N Class :- exported-op M _ C, wrapper-mixin _ (const C) _, factory-nparams M N, mixin-first-class M Class.
+is-subject-lifter (global GR) N Class :- tag GR Class N, wrapper-mixin _ GR _.
+is-subject-lifter (app[global GR|_]) N Class :- tag GR Class N, wrapper-mixin _ GR _.
