@@ -100,8 +100,19 @@ distclean: sub-distclean this-distclean
 .PHONY: this-config this-build this-only this-test-suite this-test-suite-stdlib this-distclean this-clean
 
 this-config:: __always__
-	if command -v coqc > /dev/null && (coqc --version | grep -q '8.18\|8.19\|8.20') ; then \
-	  sed -i.bak -e 's/From Corelib/From Coq/' HB/structures.v ; \
+	@command -v coqc >/dev/null || exit 1
+	@if [ -e config.stamp -a "`coqc --print-version`" = "`cat config.stamp 2>/dev/null`" ] ; then \
+		echo 'already configured';\
+	else\
+		coqc --print-version > config.stamp;\
+		echo 'configuring for ' `coqc --print-version`;\
+		if (coqc --version | grep -q '8.18\|8.19\|8.20') ; then \
+			echo '*****************************************************************';\
+			echo 'old coq version detected, double check the diff before committing';\
+			echo '*****************************************************************';\
+			sed -i.bak -e 's/From Corelib/From Coq/' `find . -name \*.v` ; \
+			sed -i.bak -e 's/IntDef/ZArith/' `find . -name \*.v` ; \
+		fi;\
 	fi
 
 this-build:: this-config Makefile.coq
@@ -117,6 +128,7 @@ this-test-suite-stdlib:: build Makefile.test-suite-stdlib.coq
 	+$(COQMAKE_TESTSUITE_STDLIB)
 
 this-distclean:: this-clean
+	rm -f config.stamp
 	rm -f Makefile.coq Makefile.coq.conf
 	rm -f Makefile.test-suite.coq Makefile.test-suite.coq.conf
 	rm -f Makefile.test-suite-stdlib.coq Makefile.test-suite-stdlib.coq.conf

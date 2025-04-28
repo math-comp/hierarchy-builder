@@ -58,3 +58,4 @@ _minted-*
 *.vtc
 
 *.dot
+config.stamp
