@@ -110,8 +110,8 @@ this-config:: __always__
 			echo '*****************************************************************';\
 			echo 'old coq version detected, double check the diff before committing';\
 			echo '*****************************************************************';\
-			sed -i.bak `find . -name \*.v` -e 's/From Corelib/From Coq/' ; \
-			sed -i.bak `find . -name \*.v` -e 's/IntDef/ZArith/' ; \
+			sed -i.bak -e 's/From Corelib/From Coq/' `find . -name \*.v` ; \
+			sed -i.bak -e 's/IntDef/ZArith/' `find . -name \*.v` ; \
 		fi;\
 	fi
 

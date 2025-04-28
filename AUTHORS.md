@@ -1,6 +1,7 @@
 Copyright (C) 2020
 
 - Cyril Cohen (Inria)
+- Pierre Roux (Onera)
 - Kazuhiko Sakaguchi (University of Tsukuba)
 - Enrico Tassi (Inria)
 
