@@ -13,4 +13,4 @@ depends: [
   "rocq-hierarchy-builder" {= version}
 ]
 
-synopsis: "Compatibility package for coq-mathcomp-ssreflect"
+synopsis: "Compatibility package for rocq-hierarchy-builder"
