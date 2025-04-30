@@ -100,7 +100,7 @@ distclean: sub-distclean this-distclean
 .PHONY: this-config this-build this-only this-test-suite this-test-suite-stdlib this-distclean this-clean
 
 this-config:: __always__
-	@command -v coqc >/dev/null || exit 1
+	@command -v coqc >/dev/null || exit 0  # Maybe on Rocq (without coq shim), nothing to do anyway
 	@if [ -e config.stamp -a "`coqc --print-version`" = "`cat config.stamp 2>/dev/null`" ] ; then \
 		echo 'already configured';\
 	else\
@@ -114,6 +114,7 @@ this-config:: __always__
 			sed -i.bak -e 's/IntDef/ZArith/' `find . -name \*.v` ; \
 		fi;\
 	fi
+	# Remove all of the above when requiring Rocq >= 9.0
 
 this-build:: this-config Makefile.coq
 	+$(COQMAKE)
