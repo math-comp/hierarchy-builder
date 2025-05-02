@@ -301,8 +301,7 @@ Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/about.elpi".
 Elpi Accumulate lp:{{
 
@@ -334,8 +333,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/about.elpi".
@@ -378,8 +376,7 @@ Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/status.elpi".
 Elpi Accumulate lp:{{
@@ -408,8 +405,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/graph.elpi".
@@ -458,8 +454,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -541,8 +536,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -565,8 +559,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -642,8 +635,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -726,8 +718,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -777,8 +768,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -820,8 +810,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -904,8 +893,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -946,8 +934,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -1021,8 +1008,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
@@ -1068,8 +1054,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/export.elpi".
@@ -1152,8 +1137,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate File "HB/common/synthesis.elpi".
@@ -1189,8 +1173,7 @@ Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
-#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
-#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/log.elpi".
 Elpi Accumulate lp:{{

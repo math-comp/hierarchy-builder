@@ -106,7 +106,7 @@ this-config:: __always__
 	else\
 		coqc --print-version > config.stamp;\
 		echo 'configuring for ' `coqc --print-version`;\
-		if (coqc --version | grep -q '8.18\|8.19\|8.20') ; then \
+		if (coqc --version | grep -q '8.20') ; then \
 			echo '*****************************************************************';\
 			echo 'old coq version detected, double check the diff before committing';\
 			echo '*****************************************************************';\
