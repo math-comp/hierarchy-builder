@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Drop compatibility with 8.18 and 8.19
+
 ## [1.9.0] - 2025-04-15
 
 Compatible with

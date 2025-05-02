@@ -23,7 +23,8 @@
       mathcomp-zify.override.version = "master";
       mathcomp-algebra-tactics.override.version = "master";
       mathcomp-word.override.version = "master";
-      jasmin.override.version = "main";
+      # jasmin.override.version = "main";
+      jasmin.job = false;  # currently broken
     };
   in {
     "coq-master" = { rocqPackages = {
@@ -50,19 +51,6 @@
       coq.override.version = "8.20";
       coq-elpi.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
-    };
-
-    "coq-8.19".coqPackages = mcHBcommon // {
-      coq.override.version = "8.19";
-      coqeal.job = false;  # requries Coq >= 8.20 through coq-elpi master
-    };
-
-    "coq-8.18".coqPackages = mcHBcommon // {
-      coq.override.version = "8.18";
-      mathcomp-classical.job = false;  # Analysis master dropped suppor for 8.18
-      mathcomp-analysis.job = false;
-      coqeal.job = false;  # requries Coq >= 8.20 through coq-elpi master
-      jasmin.job = false;
     };
 
   };
