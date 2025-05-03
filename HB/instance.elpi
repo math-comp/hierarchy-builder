@@ -3,6 +3,7 @@
 
 namespace instance {
 
+% DEPRECATED 
 % [declare-existing T F] equips T with all the canonical structures that can be
 % built using factory instance F
 pred declare-existing i:argument, i:argument.
@@ -22,7 +23,7 @@ declare-existing T0 F0 :- std.do! [
 % and equips the type the factory is used on with all the canonical structures
 % that can be built using factory instance B. CFL contains the list of
 % factories being defined, CSL the list of canonical structures being defined.
-pred declare-const i:id, i:term, i:arity, o:list (pair id constant), o:list (pair id constant).
+pred declare-const i:id, i:term, i:arity, o:list constant, o:list constant.
 declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
@@ -71,17 +72,39 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
 
   private.check-non-forgetful-inheritance TheType Factory,
 
-  private.declare-instance Factory TheType TheFactory Clauses CFL CSL,
+  if (current-mode (builder-from TheType TheFactoryForBuilderSection FGR _))
+    % instance in a builder section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    (std.do![
+      if (get-option "local" tt)
+        (coq.error "HB: declare-instance: cannot make builders local. If you want temporary instances, make an alias, e.g. with let T' := T") true,
 
-  if (CSL = [])
-     (coq.warning "HB" "HB.no-new-instance" "HB: no new instance is generated")
-     true,
+      private.declare-canonical-instances-from-factory-and-local-builders
+        Factory TheType TheFactory TheFactoryForBuilderSection FGR Clauses CFL CSL,
 
-  % handle parameters via a section -- end
-  if (TyWP = arity _) true (
-    if-verbose (coq.say {header} "closing instance section"),
-    log.coq.env.end-section-name SectionName
-  ),
+      private.close-section-if-has-params TyWP SectionName,
+    ])
+    % instance in regular section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    (std.do![
+
+      % derive all mixins the factory provides
+      private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
+
+      % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
+        % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, CFL = CSL)  
+        % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, CFL = CSL)
+      ,
+
+      % shared to all branches
+      if (get-option "export" tt)
+         (coq.env.current-library File,
+              std.map CSL (c\r\ r = instance-to-export File c) ClausesExp)
+         (ClausesExp = []),
+         
+      std.append ClausesHas ClausesExp Clauses,
+  ]),
 
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses
@@ -97,11 +120,11 @@ not-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _
 % rest. For each fulfilled class it declares a local constant inhabiting the
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
-pred declare-all i:term, i:list class, o:list (pair id constant).
+pred declare-all i:term, i:list class, o:list constant.
 declare-all _ [] [].
 declare-all T [class _ Struct _|Rest] L :- has-instance T Struct, !,
   declare-all T Rest L.
-declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
+declare-all T [class Class Struct MLwP|Rest] [CS|L] :-
 
   infer-class T Class Struct MLwP S Name STy Clauses,
 
@@ -118,11 +141,11 @@ declare-all T [class HasNoInstance _ _|Rest] L :-
 
 % for generic types, we need first to instantiate them by giving them holes,
 % so they can be used to instantiate the classes
-pred declare-all-on-type-constructor i:term, i:list class, o:list (pair id constant).
+pred declare-all-on-type-constructor i:term, i:list class, o:list constant.
 declare-all-on-type-constructor _ [] [].
 declare-all-on-type-constructor TK [class _ Struct _|Rest] L :- saturate-type-constructor TK T, has-instance T Struct, !,
   declare-all-on-type-constructor TK Rest L.
-declare-all-on-type-constructor TK [class Class Struct MLwP|Rest] [pr Name CS|L] :-
+declare-all-on-type-constructor TK [class Class Struct MLwP|Rest] [CS|L] :-
 
   %TODO: compute the arity of the Class subject and saturate up to that point
   %      there may even be more than one possibility
@@ -224,7 +247,7 @@ namespace private {
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
 pred declare-instance i:factoryname, i:term, i:term,
-  o:list prop, o:list (pair id constant), o:list (pair id constant).
+  o:list prop, o:list constant, o:list constant.
 declare-instance Factory T F Clauses CFL CSL :-
   current-mode (builder-from T TheFactory FGR _), !,
   if (get-option "local" tt)
@@ -237,15 +260,17 @@ declare-instance Factory T F Clauses CFL CSL :-
   declare-canonical-instances-from-factory Factory T F Clauses1 CFL CSL,
   if (get-option "export" tt)
      (coq.env.current-library File,
-      std.map {std.append CFL CSL} (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses2)
+      std.map CSL (c\r\ r = instance-to-export File c) Clauses21,
+      std.map CFL (c\r\ r = instance-to-export File c) Clauses22,
+      std.append Clauses21 Clauses22 Clauses2)
      (Clauses2 = []),
      std.append Clauses1 Clauses2 Clauses.
 
-% [add-mixin T F _ M Cl] adds a constant being the mixin instance for M on type
+% [add-mixin T F M Cl] adds a constant being the mixin instance for M on type
 % T built from factory F
-pred add-mixin i:term, i:factoryname, i:bool, i:mixinname,
-  o:list prop, o:list (pair id constant).
-add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do! [
+pred add-mixin i:term, i:factoryname, i:mixinname,
+  o:prop, o:prop, o:constant.
+add-mixin T FGR MissingMixin MixinSrcCl BuilderDeclCl C :- std.do! [
   new_int N, % timestamp
 
   synthesis.assert!-infer-mixin T MissingMixin Bo,
@@ -264,23 +289,16 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
     (Name is {gref->modname FGR 2 "_"} ^"__to__" ^ {gref->modname MixinName 2 "_"},
      if-verbose (coq.say {header} "declare mixin instance" Name),
      log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
-  if (MakeCanon = tt, whd (global (const C)) [] (global (indc _)) _)
-     (std.do! [
-         if-verbose (coq.say {header} "declare canonical mixin instance" C),
-         with-locality (log.coq.CS.declare-instance C),
-         CSL = [pr "_" C]
-     ]) (CSL = []),
 ].
 
-pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
-  o:list prop, o:list (pair id constant).
-add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
-  std.map ML (m\ o\ sigma ClL CSL\
-    add-mixin T FGR MakeCanon m ClL CSL, o = pr ClL CSL) ClLxCSL_L,
-  std.unzip ClLxCSL_L ClLL CSLL,
-  std.flatten ClLL Clauses,
-  std.flatten CSLL CSL
-].
+
+pred add-all-mixins i:term, i:factoryname, i:list mixinname,
+  o:list prop, o:list constant.
+add-all-mixins _T _FGR [] [] [].
+add-all-mixins T FGR [M|ML] [MixinSrcCL,BuilderDeclCL | CL] [C|CC] :- std.do! [
+  add-mixin T FGR M MixinSrcCL BuilderDeclCL C,
+  add-all-mixins T FGR ML CL CC,
+].  
 
 % [postulate-arity A Acc T TS] postulates section variables
 % corresponding to parameters in arity A. TS is T applied
@@ -305,21 +323,28 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
 % can access their theory and notations
 pred declare-canonical-instances-from-factory-and-local-builders
    i:factoryname, i:term, i:term, i:term, i:factoryname,
-   o:list prop, o:list (pair id constant), o:list (pair id constant).
+   o:list prop, o:list constant, o:list constant.
 declare-canonical-instances-from-factory-and-local-builders
     Factory T F _TheFactory FGR Clauses CFL CSL :- std.do! [
   synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\ std.do! [
-      add-all-mixins T FGR NewMixins ff Clauses CFL,
+      add-all-mixins T FGR NewMixins Clauses CFL,
   ]),
   list-w-params_list {factory-provides Factory} ML,
   Clauses => declare-all T {findall-classes-for ML} CSL,
 ].
 
+pred make-mixin-canonical i:constant, o:option constant.
+make-mixin-canonical C (some C) :- whd (global (const C)) [] (global (indc _)) _, !, std.do! [
+  if-verbose (coq.say {header} "declare canonical mixin instance" C),
+  with-locality (log.coq.CS.declare-instance C),
+].
+make-mixin-canonical _ none.
+
 % [declare-canonical-instances-from-factory T F] given a factory F
 % it uses all known builders to declare canonical instances of structures
 % on T
 pred declare-canonical-instances-from-factory
-  i:factoryname, i:term, i:term, o: list prop, o:list (pair id constant), o:list (pair id constant).
+  i:factoryname, i:term, i:term, o: list prop, o:list constant, o:list constant.
 declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
@@ -329,12 +354,136 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.d
   synthesis.under-mixin-src-from-factory.do! T F [
     MLCano => std.do! [
       list-w-params_list {factory-provides Factory} ML,
-      add-all-mixins T Factory ML tt Clauses CFL,
+      add-all-mixins T Factory ML Clauses CFL,
       std.map-filter Clauses (mixin-src->has-mixin-instance ) ClausesHas,
       ClausesHas => declare-all T {findall-classes-for ML} CSL, % declare-all-on-type-constructor doesn't work here
     ]
   ],
 ].
+
+% [declare-mixins-from-factory T F] given a factory F
+% it uses all known builders to declare canonical instances of structures
+% on T
+pred declare-mixins-from-factory
+  i:factoryname, i:term, i:term, o:list mixinname, o:list constant.
+declare-mixins-from-factory Factory T F ML TheMixins :- std.do! [
+  % The order of the following two "under...do!"  is crucial,
+  % priority must be given to canonical mixins
+  % as they are the ones which guarantee forgetful inheritance
+  % hence we add these clauses last.
+	synthesis.local-canonical-mixins-of T MLCano,
+  synthesis.under-mixin-src-from-factory.do! T F [
+    MLCano => std.do! [
+      list-w-params_list {factory-provides Factory} ML,
+      add-all-mixins T Factory ML _ TheMixins,
+    ]
+  ],
+].
+
+% [declare-structure-instance-from-mixins T ML MLI] given mixins ML and
+% their implementation MLI declares all structure instances for T
+pred declare-structure-instance-from-mixins i:term, i:list mixinname, i:list constant, o:list prop, o:list constant.
+declare-structure-instance-from-mixins T ML TheMixins ClausesHas CL :- std.do! [
+  % The order of the following two "under...do!"  is crucial,
+  % priority must be given to canonical mixins
+  % as they are the ones which guarantee forgetful inheritance
+  % hence we add these clauses last.
+	synthesis.local-canonical-mixins-of T MLCano,
+  synthesis.under-these-mixin-src.do! T ML TheMixins ClausesHas [
+     MLCano => std.do! [
+      instance.declare-all T {findall-classes-for ML} CL,
+    ]
+  ],
+].
+
+pred close-section-if-has-params i:arity, i:id.
+close-section-if-has-params (arity _) _ :- !.
+close-section-if-has-params _ SectionName :-
+  if-verbose (coq.say {header} "closing instance section"),
+  log.coq.env.end-section-name SectionName.
+
+pred declare-regular-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
+  o:list prop, o:list constant. 
+declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.do![
+  private.declare-structure-instance-from-mixins TheType ML TheMixins ClausesHas CCSL,
+
+  % TODO: share between the two cases and put just after declare-mixins-from-factory
+  % since it talks about the unwrapped mixins
+  std.map TheMixins private.make-mixin-canonical TheCanonicalMixins,
+  std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
+  std.append MCSL CCSL CSL,
+ 
+  private.close-section-if-has-params TyWP SectionName,
+].
+
+pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
+  o:list prop, o:list constant. 
+declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.do![
+  coq.safe-dest-app TheType TheTypeKey _,
+  std.assert! (TheTypeKey = global TheTypeKeyGR) "The subject to be wrapped has no key",
+  private.close-section-if-has-params TyWP SectionName,
+  private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins,
+  private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins ClausesHas CSL,
+].
+
+pred derive-wrapper-instances i:term, i:mixinname, o:term, o:constant.
+derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
+
+    % K is the mixin constructor (Build) for WrapperMixin 
+     factory-constructor WrapperMixin K,
+     factory-nparams WrapperMixin NParams,
+       
+    % We are only interested in the last parameter of the constructor
+    % type, which is the current instance 
+    % (which is a Mixin instance on the new Subject).  
+    % In monoid_enriched_cat.v, we are targeting the code 
+    %
+    % HB.instance Definition funQ_hom_isMon :=
+    %             hom_isMon.Axioms_ _ _ funQ_isMon.
+    % which Coq can compute to stand for 
+    %              hom_isMon.Axioms_ Type funQ funQ_isMon.
+    %
+    % We compute the number of the underscores and we pass 
+    % them as arguments followed by Instance.
+     coq.env.typeof K KTy, 
+     coq.count-prods KTy KN, 
+     KN0 is KN - 1,
+     coq.mk-n-holes KN0 Holes,
+
+     std.append Holes [Instance] Args,
+
+     % the body of the new wrapper instance
+     NewInstance = app[global K| Args],
+
+     std.assert-ok! (coq.typecheck NewInstance Ty) "cannot wrap",
+
+     coq.safe-dest-app Ty _Factory FArgs,
+     std.nth NParams FArgs WrapperSubject,
+
+    Name is "wrapped__" ^ {std.any->string {new_int}},
+
+    log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C,
+  ].
+
+pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
+wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType WM TheWrappedMixin :- std.do! [
+  std.findall (wrapper-mixin _ TheTypeKeyGR M) Wrappers,
+  std.assert! (not(Wrappers = [])) "wrap-a-mixin: no wrapper found",
+  if (Wrappers = [wrapper-mixin WM TheTypeKeyGR M])
+     (TM = global (const TheMixin),
+      private.derive-wrapper-instances TM WM TheNewType TheWrappedMixin)
+     (coq.error "wrap-a-mixin: more than one way to wrap" TheTypeKeyGR "for" M),
+].        
+
+pred wrap-mixins i:gref, i:list mixinname, i:list constant,
+                 o:term, o:list mixinname, o:list constant.
+wrap-mixins TheTypeKeyGR [ M  | ML  ] [ TheMixinInstance | TheMixins ]
+            TheNewType   [ WM | WML ] [ TheWrappedMixin  | TheWrappedMixins ] :-
+  wrap-a-mixin TheTypeKeyGR M TheMixinInstance TheNewType1 WM TheWrappedMixin,
+  std.assert! (TheNewType = TheNewType1) "wrapping leads to different subjects",
+  wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins.
+wrap-mixins _ [] [] _ [] [].
+
 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
