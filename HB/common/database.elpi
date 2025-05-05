@@ -370,14 +370,16 @@ pred mixin-instance-type->mixin-src.aux
   i:term, % head of the original application
   i:mixinname, % name of mixin
   i:term, % instance body
+  i:list prop, % decl list
   i:list prop, % Cond list
   o:prop.
-mixin-instance-type->mixin-src.aux [] T M I Cond (mixin-src T M I :- Cond).
-mixin-instance-type->mixin-src.aux [A|Args] T M I Cond  (pi a \ C a) :-
+mixin-instance-type->mixin-src.aux [] T M I Decls Cond (mixin-src T M I :- std.do! DeclsCond) :-
+	std.append Decls Cond DeclsCond.
+mixin-instance-type->mixin-src.aux [A|Args] T M I Decls Cond  (pi a \ C a) :-
   pi a \
   sigma Ta\
     coq.mk-app T [a] Ta,
-    mixin-instance-type->mixin-src.aux Args Ta M I [coq.unify-eq A a ok|Cond] (C a).
+    mixin-instance-type->mixin-src.aux Args Ta M I Decls [coq.unify-eq A a ok|Cond] (C a).
 
 
 % transforms the type of a mixin instance into a
@@ -386,25 +388,27 @@ pred mixin-instance-type->mixin-src
   i:term, % type of the instance Ty
   i:mixinname, % name of mixin
   i:term, % instance body I of type Ty
+	i:list prop,
   i:list prop, % Cond list
   o:prop.
 
-mixin-instance-type->mixin-src (app _ as F) M I Cond C :-
+mixin-instance-type->mixin-src (app _ as F) M I Decls' Cond C :-
   factory? F (triple _ _ Subject),
   safe-dest-app Subject Hd Args,
-  mixin-instance-type->mixin-src.aux Args Hd M I Cond C.
+	std.rev Decls' Decls,
+  mixin-instance-type->mixin-src.aux Args Hd M I Decls Cond C.
 
-mixin-instance-type->mixin-src (prod N_ _ F) M I Cond (pi a \ C a) :-
+mixin-instance-type->mixin-src (prod N_ T F) M I Decls Cond (pi a \ C a) :-
   pi a\
   sigma  Ia \
   coq.mk-app I [a] Ia,
-    mixin-instance-type->mixin-src (F a) M Ia Cond (C a).
+    mixin-instance-type->mixin-src (F a) M Ia [coq.typecheck a T ok|Decls] Cond (C a).
 
 pred has-mixin-instance->mixin-src i:prop, o:prop.
 has-mixin-instance->mixin-src (has-mixin-instance _ M IHd) C :- std.do![
   T = global IHd,
   coq.env.typeof IHd Ty,
-  mixin-instance-type->mixin-src Ty M T [] C,
+  mixin-instance-type->mixin-src Ty M T [] [] C,
 ].
 
 pred get-canonical-structures i:term, o:list structure.
