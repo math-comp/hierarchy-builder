@@ -27,7 +27,3 @@ HB.structure Definition Semigroup := {T of hasOp T & isAssoc _ (@op' T) }.
 (* BUG: HB.about fails on structure defined relying on autowrap *)
 HB.about Semigroup.
 HB.about Semigroup.type.
-(* Anomaly "Uncaught exception Failure("split_dirpath")."
-   Please report at http://coq.inria.fr/bugs/. *)
-
-Print wrapper_xx_op'_mwb_isAssoc.
