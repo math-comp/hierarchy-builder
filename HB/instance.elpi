@@ -278,8 +278,6 @@ add-mixin T FGR MissingMixin MixinSrcCl BuilderDeclCl C :- std.do! [
   new_int N, % timestamp
 
   synthesis.assert!-infer-mixin T MissingMixin Bo,
-  MixinSrcCl = mixin-src T MixinName (global (const C)),
-  BuilderDeclCl = builder-decl (builder N FGR MixinName (const C)),
 
   std.assert-ok! (coq.typecheck Bo Ty) "declare-instances: mixin illtyped",
   safe-dest-app Ty (global MixinNameAlias) _,
@@ -293,6 +291,9 @@ add-mixin T FGR MissingMixin MixinSrcCl BuilderDeclCl C :- std.do! [
     (Name is {gref->modname FGR 2 "_"} ^"__to__" ^ {gref->modname MixinName 2 "_"},
      if-verbose (coq.say {header} "declare mixin instance" Name),
      log.coq.env.add-const-noimplicits Name Bo Ty @transparent! C),
+
+  MixinSrcCl = mixin-src T MixinName (global (const C)),
+  BuilderDeclCl = builder-decl (builder N FGR MixinName (const C)),
 ].
 
 
