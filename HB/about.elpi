@@ -72,6 +72,10 @@ bulletize L F (glue [brk 0 0 | PLB]) :-
 
 % Print shortest qualified identifier of the module containing a gref
 pred pp-module i:gref, o:coq.pp.
+pp-module GR (str ID) :- wrapper-mixin GR Op WrappedMixin, !,
+  gref->modname_short WrappedMixin "." ID_W,
+  coq.gref->id Op ID_Op,
+  ID is ID_W ^ " " ^ ID_Op ^ " (* wrapped via " ^ {coq.gref->id GR} ^ " *)".
 pp-module GR (str ID) :- gref->modname_short GR "." ID.
 
 pred unif-hint? i:cs-instance.
