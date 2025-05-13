@@ -39,7 +39,7 @@ HB.builders Context T of isQPointed T.
 
 HB.instance Definition _ := hasPoint.Build T y.
 
-HB.instance Definition _ := Q.Build T y qy.
+HB.instance Definition _ := Q.Build T x qy.
 
 HB.end.
 
