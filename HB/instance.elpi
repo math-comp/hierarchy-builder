@@ -81,6 +81,10 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
       private.declare-canonical-instances-from-factory-and-local-builders
         Factory TheType TheFactory TheFactoryForBuilderSection FGR Clauses CFL CSL,
 
+    % NON SI PASSA DI QUI PERCHE: (lifter TheType) <> builder-from TheType
+    % nel ramo else però non si generano le clausole builder-decl, MA si
+    % fa il wrapping dei mixin, cosa che in questa branch non si fa 
+
       private.close-section-if-has-params TyWP SectionName,
     ])
     % instance in regular section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
