@@ -79,11 +79,13 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
         (coq.error "HB: declare-instance: cannot make builders local. If you want temporary instances, make an alias, e.g. with let T' := T") true,
 
       private.declare-canonical-instances-from-factory-and-local-builders
-        Factory TheType TheFactory TheFactoryForBuilderSection FGR NM_CFL CSL,
+        Factory TheType TheFactory TheFactoryForBuilderSection FGR NM_CFL MsClauses CSL,
 
       std.map NM_CFL snd CFL,
 
-      std.map NM_CFL (x\c\sigma N MixinName C\ new_int N, x = pr MixinName C, c = builder-decl (builder N FGR MixinName (const C))) Clauses,
+      std.map NM_CFL (x\c\sigma N MixinName C\ new_int N, x = pr MixinName C, c = builder-decl (builder N FGR MixinName (const C))) BdClauses,
+
+      std.append MsClauses BdClauses Clauses,
 
       private.close-section-if-has-params TyWP SectionName,
     ])
@@ -96,12 +98,15 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
       % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, WBdClauses = [])  
+          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, WMsClauses = [], WBdClauses = [])  
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WM WMC,
-           if (current-mode (builder-from _ _ FGR _)) % we are in a builder section
-             (std.map2 WM WMC (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) WBdClauses)
-             (WBdClauses = []))
+           if (current-mode (builder-from TheLiftedType _ FGR _)) % we are in a builder section
+             (
+              std.map2 WM WMC (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) WBdClauses,
+              std.map2 WM WMC (MixinName\C\c\c = mixin-src TheLiftedType MixinName (global (const C))) WMsClauses
+             )
+             (WMsClauses = [], WBdClauses = []))
       ,
       CFL = CSL,
       
@@ -111,8 +116,8 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
               std.map CSL (c\r\ r = instance-to-export File c) ClausesExp)
          (ClausesExp = []),
          
-      std.flatten [ClausesHas, ClausesExp, WBdClauses] Clauses,
-  ]),
+      std.flatten [ClausesHas, ClausesExp, WMsClauses, WBdClauses] Clauses,
+    ]),
 
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses
@@ -263,7 +268,7 @@ declare-instance Factory T F [] CFL CSL :-
     If you want temporary instances, make an alias, e.g. with let T' := T") true,
   !,
   declare-canonical-instances-from-factory-and-local-builders Factory
-    T F TheFactory FGR NM_CFL CSL,
+    T F TheFactory FGR NM_CFL _ CSL,
   std.map NM_CFL snd CFL.
 declare-instance Factory T F Clauses CFL CSL :-
   declare-canonical-instances-from-factory Factory T F Clauses1 CFL CSL,
@@ -333,9 +338,9 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
 % can access their theory and notations
 pred declare-canonical-instances-from-factory-and-local-builders
    i:factoryname, i:term, i:term, i:term, i:factoryname,
-   o:list (pair mixinname constant), o:list constant.
+   o:list (pair mixinname constant), o:list prop, o:list constant.
 declare-canonical-instances-from-factory-and-local-builders
-    Factory T F _TheFactory FGR NM_CFL CSL :- std.do! [
+    Factory T F _TheFactory FGR NM_CFL MsClauses CSL :- std.do! [
   synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\ std.do! [
       add-all-mixins T FGR NewMixins MsClauses CFL,
       std.zip NewMixins CFL NM_CFL,
