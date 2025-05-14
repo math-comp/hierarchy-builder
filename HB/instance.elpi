@@ -73,7 +73,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   private.check-non-forgetful-inheritance TheType Factory,
 
   if (current-mode (builder-from TheType TheFactoryForBuilderSection FGR _))
-    % instance in a builder section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % instance in a builder section for this subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     (std.do![
       if (get-option "local" tt)
         (coq.error "HB: declare-instance: cannot make builders local. If you want temporary instances, make an alias, e.g. with let T' := T") true,
@@ -92,29 +92,26 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
 
       % derive all mixins the factory provides
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
-      if (current-mode (builder-from _ _ FGR _), (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _)))
-         (std.map2 ML TheMixins (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) BdClauses)
-         (BdClauses = []),
 
       % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, WM = [], WMC = [], CFL = CSL)  
+          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, WBdClauses = [])  
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WM WMC, CFL = CSL)
+          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WM WMC,
+           if (current-mode (builder-from _ _ FGR _)) % we are in a builder section
+             (std.map2 WM WMC (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) WBdClauses)
+             (WBdClauses = []))
       ,
-
-      if (current-mode (builder-from _ _ FGR _))
-         (std.map2 WM WMC (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) WBdClauses)
-         (WBdClauses = []),
-
+      CFL = CSL,
+      
       % shared to all branches
       if (get-option "export" tt)
          (coq.env.current-library File,
               std.map CSL (c\r\ r = instance-to-export File c) ClausesExp)
          (ClausesExp = []),
          
-      std.flatten [ClausesHas, ClausesExp, BdClauses, WBdClauses] Clauses,
+      std.flatten [ClausesHas, ClausesExp, WBdClauses] Clauses,
   ]),
 
   % we accumulate clauses now that the section is over
