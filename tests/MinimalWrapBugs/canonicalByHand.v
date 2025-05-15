@@ -57,10 +57,14 @@ HB.builders Context T of isQ12PSM T.
 HB.instance Definition _ := hasPoint.Build T point.
 HB.instance Definition _ := hasSelfMap.Build T selfmap.
 
-HB.instance Definition temp1 := Q1.Build T point selfmap q1term.
-HB.instance Definition _ := Q1__on__PointedSelfMapped_t.Build T temp1.
-HB.instance Definition temp2 := Q2.Build T point selfmap q2term.
-HB.instance Definition _ := Q2__on__PointedSelfMapped_t.Build T temp2.
+HB.instance Definition temp1 := Q1.Build T t l q1term.
+(* HB.instance Definition _ := Q1__on__PointedSelfMapped_t.Build T temp1. *)
+HB.instance Definition temp2 := Q2.Build T t l q2term.
+(* HB.instance Definition _ := Q2__on__PointedSelfMapped_t.Build T temp2. *)
+
+Check l : QPSMLaw1.type T (@t T).
+Check l : QPSMLaw2.type T (@t T).
+Fail Check l : QPSMLaw12.type T (@t T).
 
 HB.end.
 
@@ -69,6 +73,10 @@ HB.status.
 HB.about Q12PSM.
 
 Print Canonical Projections l.
+
+Section test.
+
+End test.
 Check fun (R : Q12PSM.type) => @l R : QPSMLaw1.type R (@t R).
 Check fun (R : Q12PSM.type) => @l R : QPSMLaw2.type R (@t R).
 
