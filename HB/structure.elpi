@@ -646,7 +646,7 @@ pred factory-on-some-structure-op? i:term, i:list term, o:gref, o:gref.
 factory-on-some-structure-op? (prod N Ty Bo) VS F OP :-
   @pi-decl N Ty x\
      factory-on-some-structure-op? (Bo x) [x|VS] F OP.
-factory-on-some-structure-op? T VS F (const OP) :- std.spy-do! [ 
+factory-on-some-structure-op? T VS F (const OP) :- std.do! [ 
   factory? T (triple F _ Subject),
   hd-beta-zeta Subject [] (global (const OP)) Args,
   exported-op _ _ OP,
@@ -758,7 +758,7 @@ declare-wrapper F C0 C :- C0 => std.do! [
   %coq.say "Record wrapper" RDecl,
   gref-deps M MDeps,
   wrap-deps OP MDeps WrappedDeps,
-  ((pi X Y L\ copy X Y :- var X _ L, prune Y L) => copy-indt-decl RSkel RSkel'), std.spy(expand-structures RSkel' WrappedDeps W'),
+  ((pi X Y L\ copy X Y :- var X _ L, prune Y L) => copy-indt-decl RSkel RSkel'), expand-structures RSkel' WrappedDeps W',
   %coq.say "Expanded record wrapper" W',
   %std.assert-ok! (coq.typecheck-indt-decl W) "illtyped wrapper record",
   coq.say "Wrapper for" OP "and" M "is" W',
@@ -835,7 +835,7 @@ wrapper-deps.aux (parameter ID explicit T F1) X [triple M Params X|ML] :-
 wrapper-deps.aux (record _ _ _ _) _ [].
 
 pred expand-structures i:indt-decl, i:mixins, o:indt-decl.
-expand-structures (parameter ID I T ((s\record _ _ _ (field _ _ (X s) _\end-record)) as R)) Deps (parameter ID I _ R1) :- !, std.spy-do! [
+expand-structures (parameter ID I T ((s\record _ _ _ (field _ _ (X s) _\end-record)) as R)) Deps (parameter ID I _ R1) :- !, std.do! [
   (@pi-decl `TheType` T x\ coq.typecheck-ty T _ ok, std.assert-ok! (coq.typecheck (X x) (Ty_ x)) "illtyped subject"),
   coq.safe-dest-app T (global GR) Args, is-structure GR, class-def (class C GR ML),
   coq.mk-n-holes {w-params.nparams Deps} Holes,

@@ -783,10 +783,10 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (with-logging (instance.saturate-instances _)).
-main [str "Type"] :- !, with-attributes (with-logging (instance.saturate-instances (cs-sort _))).
-main [str K] :- !, coq.locate K GR, with-attributes (with-logging (instance.saturate-instances (cs-gref GR))).
-main [trm T] :- !, term->cs-pattern T P, with-attributes (with-logging (instance.saturate-instances P)).
+main [] :- !, with-attributes (with-logging (instance.saturate-instances 0 _)).
+main [str "Type"] :- !, with-attributes (with-logging (instance.saturate-instances 0 (cs-sort _))).
+main [str K] :- !, coq.locate K GR, with-attributes (with-logging (instance.saturate-instances 0 (cs-gref GR))).
+main [trm T] :- !, term->cs-pattern T P, coq.safe-dest-app T _ L, std.length L N, with-attributes (with-logging (instance.saturate-instances N P)).
 main _ :- coq.error "Usage: HB.saturate [key]".
 }}.
 Elpi Typecheck.
