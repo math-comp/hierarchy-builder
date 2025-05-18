@@ -54,9 +54,10 @@ HB.instance Definition _ := hasRight.Build T r.
 Check eq_refl : l = sx.
 Check eq_refl : r = dx.
 
+
 HB.instance Definition temp
 (* : Q.axioms_ T l dx *)
 := Q.Build T l dx qlr.
 
-HB.instance Definition _ := Q__on__Ambidextrous_dx.Build T temp.
+(* HB.instance Definition _ := Q__on__Ambidextrous_dx.Build T temp. *)
 HB.end.

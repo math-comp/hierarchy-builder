@@ -447,38 +447,27 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
 
     % K is the mixin constructor (Build) for WrapperMixin 
      factory-constructor WrapperMixin K,
-     factory-nparams WrapperMixin NParams,
-       
-    % We are only interested in the last parameter of the constructor
-    % type, which is the current instance 
-    % (which is a Mixin instance on the new Subject).  
-    % In monoid_enriched_cat.v, we are targeting the code 
-    %
-    % HB.instance Definition funQ_hom_isMon :=
-    %             hom_isMon.Axioms_ _ _ funQ_isMon.
-    % which Coq can compute to stand for 
-    %              hom_isMon.Axioms_ Type funQ funQ_isMon.
-    %
-    % We compute the number of the underscores and we pass 
-    % them as arguments followed by Instance.
-     coq.env.typeof K KTy, 
+
+     % the constructor of the new wrapper instance
+     phant-abbrev K _ Abb,
+     coq.notation.abbreviation-body Abb NArgs _,
+     coq.notation.abbreviation Abb {coq.mk-n-holes NArgs} AbbBo,
+     std.assert-ok! (coq.typecheck AbbBo KTy) "canno type wrap constructor",
+ 
+     % the arguments
      coq.count-prods KTy KN, 
      KN0 is KN - 1,
-     coq.mk-n-holes KN0 Holes,
+     std.append {coq.mk-n-holes KN0} [Instance] Args,
 
-     std.append Holes [Instance] Args,
-
-     % the body of the new wrapper instance
-     NewInstance = app[global K| Args],
-
+     coq.mk-app AbbBo Args NewInstance,
      std.assert-ok! (coq.typecheck NewInstance Ty) "cannot wrap",
 
+     Name is "wrapped__" ^ {std.any->string {new_int}},
+     log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C,
+
      coq.safe-dest-app Ty _Factory FArgs,
+     factory-nparams WrapperMixin NParams,
      std.nth NParams FArgs WrapperSubject,
-
-    Name is "wrapped__" ^ {std.any->string {new_int}},
-
-    log.coq.env.add-const-noimplicits Name NewInstance Ty @transparent! C,
   ].
 
 pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
