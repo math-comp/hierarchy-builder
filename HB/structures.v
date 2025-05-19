@@ -728,7 +728,7 @@ actions N :-
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
 
   % hack
-  std.forall {std.iota 20} (x\begin-section "x",end-section), 
+  std.forall {std.iota 30} (x\begin-section "x",end-section), 
 
   if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (actions-compat N) true.
 
