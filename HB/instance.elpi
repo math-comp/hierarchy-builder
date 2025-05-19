@@ -452,11 +452,13 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
      phant-abbrev K _ Abb,
      coq.notation.abbreviation-body Abb NArgs _,
      coq.notation.abbreviation Abb {coq.mk-n-holes NArgs} AbbBo,
-     std.assert-ok! (coq.typecheck AbbBo KTy) "canno type wrap constructor",
+
+     coq.safe-dest-app AbbBo Hd ActualArgs,
+     std.assert-ok! (coq.typecheck Hd KTy) "wrap: cannot type constructor",
  
      % the arguments
      coq.count-prods KTy KN, 
-     KN0 is KN - 1,
+     KN0 is KN - 1 - {std.length ActualArgs},
      std.append {coq.mk-n-holes KN0} [Instance] Args,
 
      coq.mk-app AbbBo Args NewInstance,
@@ -467,7 +469,14 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
 
      coq.safe-dest-app Ty _Factory FArgs,
      factory-nparams WrapperMixin NParams,
-     std.nth NParams FArgs WrapperSubject,
+     std.nth NParams FArgs WrapperSubjectAsInferred,
+
+     % we may have inferred as the subject the sort projection of an instance
+     
+     if (coq.safe-dest-app WrapperSubjectAsInferred (global (const P)) [_],structure-key P _ _)
+        (unwind {whd WrapperSubjectAsInferred []} WrapperSubject) % TODO: do 1 step
+        (WrapperSubject = WrapperSubjectAsInferred)
+
   ].
 
 pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
