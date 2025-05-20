@@ -139,7 +139,7 @@ HB.instance Definition temp
 := isUnital.Build T one op' op1m'' opm1''. *)
 
 
-HB.instance Definition _ := isMonoidLaw__on__BaseUMagma_MulOne.Build G pippo.
+(* HB.instance Definition _ := isMonoidLaw__on__BaseUMagma_MulOne.Build G pippo. *)
 Check isUnital.phant_axioms T one' op'.
 Check isUnital.phant_axioms T one op'.
                                         

@@ -199,7 +199,7 @@ pred mixin-first-class o:mixinname, o:classname.
 % structure projection.
 pred exported-op o:mixinname, o:constant, o:constant.
 
-% memory of factory sort coercion
+% memory of factory sort coercion (Unused?)
 pred factory-sort o:coercion.
 
 % memory of canonical projections for a structure (X.sort, X.class, X.type)

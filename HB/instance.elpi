@@ -60,11 +60,14 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   ]) (SectionTy = SectionTyUnfolded),
 
   % call HB.instance TheType TheFactory
-  std.drop NParams Args [TheType|_],
+  std.drop NParams Args [TheTypeAsInferred|_],
 
-  if (var TheType)
+
+  if (var TheTypeAsInferred)
     (coq.error "HB: The instance subject must be explicitly given.\nUse:\n  HB.instance Definition _ : M <subject> := ...\n  HB.instance Definition _ := M.Build <subject> ...")
     true,
+
+  private.expose-real-subject TheTypeAsInferred TheType,
 
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
@@ -88,20 +91,22 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
       std.append MsClauses BdClauses Clauses,
 
       private.close-section-if-has-params TyWP SectionName,
+      CSL2 = [],
     ])
     % instance in regular section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     (std.do![
 
       % derive all mixins the factory provides
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
+      private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, 
 
       % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      % TODO: we may do both here?
-      if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
+      if (get-option "wrapper" ff ; not(is-subject-lifter TheTypeAsInferred _ _))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, WMsClauses = [], WBdClauses = [])  
+          ( if-verbose (coq.say {header} "Not a lifted subject" {coq.term->string TheTypeAsInferred}),
+            WMsClauses = [], WBdClauses = [], ClausesHas2 = [], CSL2 = [])  
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          (private.declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WM WMC,
+          (private.declare-wrapper-inst TheTypeAsInferred ML TheMixins TyWP SectionName ClausesHas2 CSL2 WM WMC,
            if (current-mode (builder-from TheLiftedType _ FGR _)) % we are in a builder section
              (
               std.map2 WM WMC (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) WBdClauses,
@@ -109,15 +114,15 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
              )
              (WMsClauses = [], WBdClauses = []))
       ,
-      CFL = CSL,
+      CFL = CSL, % ???
       
       % shared to all branches
       if (get-option "export" tt)
          (coq.env.current-library File,
-              std.map CSL (c\r\ r = instance-to-export File c) ClausesExp)
+              std.map {std.append CSL CSL2} (c\r\ r = instance-to-export File c) ClausesExp)
          (ClausesExp = []),
          
-      std.flatten [ClausesHas, ClausesExp, WMsClauses, WBdClauses] Clauses,
+      std.flatten [ClausesHas, ClausesHas2, ClausesExp, WMsClauses, WBdClauses] Clauses,
     ]),
 
   % we accumulate clauses now that the section is over
@@ -436,6 +441,7 @@ declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std
 pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
   o:list prop, o:list constant,  o:list mixinname, o:list constant.
 declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WML TheWrappedMixins :- std.do![
+  if-verbose (coq.say {header} "Wrapping" ML "for" TheType),
   coq.safe-dest-app TheType TheTypeKey _,
   std.assert! (TheTypeKey = global TheTypeKeyGR) "The subject to be wrapped has no key",
   private.close-section-if-has-params TyWP SectionName,
@@ -473,12 +479,34 @@ derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
      std.nth NParams FArgs WrapperSubjectAsInferred,
 
      % we may have inferred as the subject the sort projection of an instance
-     
-     if (coq.safe-dest-app WrapperSubjectAsInferred (global (const P)) [_],structure-key P _ _)
-        (unwind {whd WrapperSubjectAsInferred []} WrapperSubject) % TODO: do 1 step
-        (WrapperSubject = WrapperSubjectAsInferred)
+     expose-real-subject WrapperSubjectAsInferred WrapperSubject,
 
   ].
+
+pred expose-real-subject i:term, o:term.
+expose-real-subject X Y :-
+  expose-real-subject.aux X X1,
+  if (X1 = global _ ; X1 = app[global _|_]) (Y = X1) (Y = X).
+
+pred expose-real-subject.aux i:term, o:term.
+expose-real-subject.aux T T1 :-
+  std.findall (decl-location (const _) _) LC,
+  std.map LC (x\r\sigma c\x = decl-location (const c) _, r = coq.redflags.const c) CL,
+  std.findall (structure-key _ _ _) LP,
+  std.map LP (x\r\sigma c\x = structure-key c _ _, r = coq.redflags.const c) PSL,
+  std.map LP (x\r\sigma c\x = structure-key _ c _, r = coq.redflags.const c) PCL,
+  coq.redflags.add coq.redflags.nored
+    {std.append [coq.redflags.beta, coq.redflags.cofix, coq.redflags.fix, coq.redflags.zeta, coq.redflags.match, coq.redflags.delta]
+                {std.append CL {std.append PSL PCL}}} F,
+  @redflags! F => coq.reduction.lazy.whd T TN,
+  coq.reduction.eta-contract TN TE,
+  hack-primproj TE TX,
+  if (same_term T TX) (T1 = TX) (expose-real-subject.aux TX T1).
+
+% BUG in coq-elpi: coq.reflags.proj not bound !!!!
+pred hack-primproj i:term, o:term.
+hack-primproj T T1 :- 
+  (pi N A Rest X\ copy (app[primitive (proj _ N),A]) X :- whd A [] (global (indc _)) Rest, std.nth N Rest X) => copy T T1.
 
 pred wrap-a-mixin i:gref, i:mixinname, i:constant, o:term, o:mixinname, o:constant.
 wrap-a-mixin TheTypeKeyGR M TheMixin TheNewType WM TheWrappedMixin :- std.do! [
