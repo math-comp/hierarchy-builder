@@ -20,6 +20,7 @@ infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
   std.assert-ok! (coq.typecheck F Ty) "try-infer-these-mixin-args: F illtyped",
   coq.mk-eta (-1) Ty F EtaF,
   coq.subst-fun {std.append Ps [T]} EtaF FT,
+  % coq.say "instantiate-all-these-mixin-args on" {coq.term->string FT}, 
   private.instantiate-all-these-mixin-args FT T ML SFX,
 ].
 
@@ -203,16 +204,24 @@ namespace private {
 % the databases [mixin-src] and [from]
 pred mixin-for i:term, i:mixinname, o:term.
 mixin-for T M MICompressed :- mixin-src T M Tm, !, std.do! [
-  %if-verbose (coq.say {header} "Trying to infer mixin for" M),
+  if-verbose (coq.say {header} "Inferring mixin" M "on" T),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
 %%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  factory? Ty (triple Factory Params _),
+  factory? Ty (triple Factory Params Subj),
 
-  if (M = Factory) (MI = Tm) (
-      private.builder->term Params T Factory M B,
-      coq.subst-fun [Tm] B MI
+  if (M = Factory)
+  (
+      if-verbose (coq.say {header} "Found mixin has type" Factory "on" Subj "no need to apply a builder"),
+      MI = Tm
+  )
+  (
+      if-verbose (coq.say {header} "Found mixin has type" Factory "on" Subj "hence we apply a builder"),
+
+      private.builder->term Params T Factory Tm M MI
+      % private.builder->term Params T Factory M B,
+      % coq.subst-fun [Tm] B MI
   ),
 
   %if-verbose (coq.say {header} "Trying to compress mixin for" {coq.term->string MI}),
@@ -250,13 +259,20 @@ mixin-for_mixin-builder (mixin-for _ _ B) B.
 % [builder->term Params TheType Src Tgt MF] finds a builder from Src to Tgt
 % and fills in all the mixins required by the builder using mixin-src, obtaining
 % a function (MF = Builder Params TheType InferredStuff : Src -> Tgt)
-pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
-builder->term Ps T Src Tgt B :- !, std.do! [
+pred builder->term i:list term, i:term, i:factoryname, i:term, i:mixinname, o:term.
+% pred builder->term i:list term, i:term, i:factoryname, i:mixinname, o:term.
+builder->term Ps T Src HasSrc Tgt B :- !, std.do! [
   from Src Tgt FGR,
   F = global FGR,
   gref-deps Src MLwP,
   list-w-params_list MLwP ML,
-  infer-all-these-mixin-args Ps T ML F B,
+  if-verbose (coq.say {header} "Found builder" FGR "from" Src "to" Tgt),
+  if-verbose (coq.say {header} "Found builder" FGR "depends on" ML),
+  % infer-all-these-mixin-args Ps T ML F B,
+  coq.mk-n-holes {std.length ML} Holes,
+  coq.mk-app F {std.flatten [Ps,[T],Holes,[HasSrc]]} B,
+  std.assert-ok! (coq.typecheck B _) "builder illtyped",
+
 ].
 
 % [instantiate-all-these-mixin-args T F M_i TFX] where mixin-for T M_i X_i states that
@@ -269,9 +285,11 @@ pred instantiate-all-these-mixin-args i:term, i:term, i:list mixinname, o:term.
 instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M ok,
+  if-verbose (coq.say {header} "Looking at argument" M),
   std.mem! ML M,
-  factory? Tm (triple _ _ Subj), Subj = T, % check the subject is T (do not pass T to factory?)
+  % factory? Tm (triple _ _ Subj), Subj = T, % check the subject is T (do not pass T to factory?)
   !,
+  if-verbose (coq.say {header} "We have to inhabit it on" T),
   if (mixin-for T M X) true (coq.error "HB: Unable to find mixin" {nice-gref->string M} "on subject" {coq.term->string T}), !,
   instantiate-all-these-mixin-args (F X) T ML R.
 instantiate-all-these-mixin-args (fun N Ty F) T ML (fun N Ty FX) :- !,

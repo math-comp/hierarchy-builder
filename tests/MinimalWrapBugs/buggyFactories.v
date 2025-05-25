@@ -52,12 +52,24 @@ HB.factory Record PointedA_isPointedAB V of PointedA V := {
 
 HB.builders Context V of PointedA_isPointedAB V.
 
-HB.instance Definition _ := isB.Build V point b.
+HB.instance Definition foo := isB.Build V point b.
 
 HB.end.
 
-HB.instance Definition _ := hasPoint.Build nat 0.
-HB.instance Definition _ := isA.Build nat point tt.
+HB.status.
+
+HB.instance Definition lui := hasPoint.Build nat 0.
+HB.instance Definition dove_finisce := isA.Build nat point tt.
+(* HB.instance Definition xxx := isB.Build nat point tt. *)
+
+Check nat : PointedA.type.
+
+About Builders_3.local_mixin_buggyFactories_isA__on__Pointed_point.
+
+HB.status.
 
 #[verbose]
-HB.instance Definition _ := PointedA_isPointedAB.Build nat tt.
+HB.instance
+Definition yy := PointedA_isPointedAB.Build nat tt.
+
+Check nat : PointedAB.type.
