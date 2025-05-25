@@ -22,3 +22,4 @@ HB.instance Definition _ : hasOp nat := hasOp.Build nat plus.
 HB.instance Definition _ : isAssoc nat op := isAssoc.Build nat plus plus_ass.
 
 Check nat : Monoid.type.
+Check plus : Assop.type _.
