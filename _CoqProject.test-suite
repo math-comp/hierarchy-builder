@@ -79,6 +79,7 @@ tests/MinimalWrapBugs/canonicalByHand.v
 tests/MinimalWrapBugs/mwb.v
 tests/MinimalWrapBugs/noglobref.v
 tests/MinimalWrapBugs/typeNotInfered.v
+tests/MinimalWrapBugs/unwrappedSubject.v
 
 -R tests HB.tests
 -R examples HB.examples

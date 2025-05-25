@@ -35,6 +35,7 @@ HB.mixin Record hasLaw T (x: T->T) := {
 HB.structure Definition Law T := {x of hasLaw T x}.
 
 (*BUG: this should work*)
-Fail HB.instance Definition _ := hasLaw.Build nat (@selfmap nat) tt.
+#[verbose,wrapper=off] HB.instance Definition _ := hasLaw.Build nat (@selfmap nat) tt.
 
 Check @law nat _.
+Check @selfmap nat : Law.type nat.

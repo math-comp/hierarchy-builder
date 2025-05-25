@@ -96,6 +96,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
       private.declare-mixins-from-factory Factory TheType TheFactory ML TheMixins,
 
       % regular instance %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      % TODO: we may do both here?
       if (get-option "wrapper" ff ; not(is-subject-lifter TheType _ _))
         % regular subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           (private.declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL, WMsClauses = [], WBdClauses = [])  
