@@ -47,12 +47,6 @@ endif
 COQV:= $(shell echo $(COQVVV) | cut -d"." -f1)
 COQVV:= $(shell echo $(COQVVV) | cut -d"." -f1-2)
 
-ifneq "$(DESTDIR)" ""
-HB_INSTALLDIR := $(DESTDIR)/bin
-else
-HB_INSTALLDIR := $(dir $(shell command -v coqtop || command -v rocq))
-endif
-
 # export to sub- targets
 export COQBIN
 export COQMAKEFILE
@@ -144,7 +138,6 @@ this-clean:: __always__
 
 install: __always__ Makefile.coq
 	$(COQMAKE) install
-	install -d $(HB_INSTALLDIR)
 
 # counting lines of Coq code -----------------------------------------
 .PHONY: count
