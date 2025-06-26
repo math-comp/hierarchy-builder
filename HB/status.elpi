@@ -44,8 +44,8 @@ namespace private {
 
 pred pp-from i:prop.
 pp-from (from F M T) :-
-  coq.say "From" {coq.term->string (global F)} "to" {coq.term->string (global M)},
-  coq.say "  " {coq.term->string (global T)},
+  coq.say "From" {coq.term->string {coq.env.global F}} "to" {coq.term->string {coq.env.global M}},
+  coq.say "  " {coq.term->string {coq.env.global T}},
   coq.say "".
 
 pred pp-list-w-params i:mixins, i:term.
@@ -59,11 +59,11 @@ pp-list-w-params.list-triple L S :-
   coq.say {coq.term->string S} ":=",
   std.forall L pp-list-w-params.triple.
 pp-list-w-params.triple (triple M Params T) :-
-  coq.say "  " {coq.term->string (app [global M|{std.append Params [T]}])}.
+  coq.say "  " {coq.term->string (app [{coq.env.global M}|{std.append Params [T]}])}.
 
 pred pp-class i:prop.
 pp-class (class-def (class _ S MLwP)) :-
-  pp-list-w-params MLwP (global S).
+  pp-list-w-params MLwP {coq.env.global S}.
 
 pred pp-mixin-src i:prop.
 pp-mixin-src (mixin-src T M C) :-
