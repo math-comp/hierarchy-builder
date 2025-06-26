@@ -7,7 +7,7 @@ namespace pack {
 pred main i:term, i:list argument, o:term.
 main Ty Args Instance :- std.do! [
   std.assert! (not(var Ty)) "HB.pack: the structure to pack cannot be unknown, use HB.pack_for",
-  std.assert! (coq.safe-dest-app {unwind {whd Ty []}} (global Structure) Params) "HB.pack: not a structure",
+  std.assert! (coq.safe-dest-global-app {unwind {whd Ty []}} Structure Params) "HB.pack: not a structure",
   std.assert! (class-def (class Class Structure _)) "HB.pack: not a structure",
   std.assert! (Args = [trm TSkel|FactoriesSkel]) "HB.pack: not enough arguments",
 
@@ -52,7 +52,7 @@ synth-instance.aux Params KC KS T Tkey [] MLCano Instance :-
 
 pred synth-instance i:list term, i:gref, i:gref, i:term, i:term, i:list term, o:term.
 synth-instance Params KC KS T Tkey Factories Instance :-
-	if (coq.safe-dest-app Tkey TkeyHead _, coq.env.global _ TkeyHead) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
+	if (coq.safe-dest-global-app Tkey _ _) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
 	synth-instance.aux Params KC KS T Tkey Factories MLCano Instance.
 
 pred elab-factories i:list argument, i:term, o:list term.

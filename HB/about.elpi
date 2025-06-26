@@ -38,7 +38,7 @@ main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructo
 main-located S (loc-abbreviation A) :-
   coq.notation.abbreviation-body A NArgs _,
   coq.notation.abbreviation A {coq.mk-n-holes NArgs} T,
-  coq.safe-dest-app T THead _, coq.env.global GR THead, !,
+  coq.safe-dest-global-app T GR _, !,
   main-located S (loc-gref GR).
 
 main-located S (loc-gref GR) :- from Factory Mixin GR, !,
@@ -143,7 +143,7 @@ main-canonical-projection S Proj CanonicalProjectionValues :-
 
 pred pp-canonical-value i:cs-instance, o:coq.pp.
 pp-canonical-value (cs-instance _Proj (cs-gref GR) _Sol) Pp :-
-  coq.term->pp (global GR) V,
+  coq.term->pp {coq.env.global GR} V,
   Pp = box (hov 2) [ V , spc, {pp-loc-of GR} ].
 
 pred main-coercion i:string, i:list coercion.
@@ -151,11 +151,11 @@ main-coercion S [coercion GR _ Src Tgt|_] :-
   % format
   if (class-def (class _ Src _) ; class-def (class Src _ _))
      (Source = str {gref->modname_short Src "."})
-     (coq.term->pp (global Src) Source),
+     (coq.term->pp {coq.env.global Src} Source),
   if2 (Tgt = grefclass TGR)
         (if (class-def (class _ TGR _) ; class-def (class TGR _ _))
           (Target = str {gref->modname_short TGR "."})
-          (coq.term->pp (global TGR) Target))
+          (coq.term->pp {coq.env.global TGR} Target))
       (Tgt = sortclass)
         (Target = str "Sortclass")
       (Target = str "Funclass"),
