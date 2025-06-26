@@ -291,7 +291,7 @@ compute-arg-type.fields [OP|Cs] NDeps Args [pr ID PPTy|Xs] [ID|FN] :-
   (@pplevel! 200 => coq.term->pp TyArgsDepsRecord PPTy),
   @pi-parameter ID TyArgsDepsRecord op\
   (pi L L1 X\
-    copy (app[global(const OP)|L]) X :- std.drop ToDrop L L1, coq.mk-app op L1 X) =>
+    copy (app[{coq.env.global (const OP)}|L]) X :- std.drop ToDrop L L1, coq.mk-app op L1 X) =>
     compute-arg-type.fields Cs NDeps Args Xs FN.
 
 pred main-factory i:string, i:inductive.
