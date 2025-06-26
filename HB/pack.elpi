@@ -23,8 +23,8 @@ main Ty Args Instance :- std.do! [
 
   if (var T) (coq.error "HB.pack: you must pass a type or at least one factory") true,
 
-  if2 (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
-        (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories], Tkey = T) % already existing class on T
+    if2 (T = app[SortProjHead|ProjParams], coq.env.global (const SortProj) SortProjHead, structure-key SortProj ClassProj _)
+        (AllFactories = [app[ClassProjHead|ProjParams] | Factories], coq.env.global (const ClassProj) ClassProjHead, Tkey = T) % already existing class on T
       (def T _ _ Tkey) % we unfold letins if we can, they may hide constants with CS instances
         (AllFactories = Factories)
       (AllFactories = Factories, Tkey = T), % it's a factory, won't add anything
@@ -47,12 +47,12 @@ synth-instance.aux Params KC KS T Tkey [] MLCano Instance :-
 	MLCano => std.do! [
     std.assert-ok! (synthesis.infer-all-args-let Params Tkey KC ClassInstance) "HB.pack: cannot infer the instance",
     std.append Params [T, ClassInstance] InstanceArgs,
-      Instance = app[global KS | InstanceArgs]
+      Instance = app[Head | InstanceArgs], coq.env.global KS Head
 ].
 
 pred synth-instance i:list term, i:gref, i:gref, i:term, i:term, i:list term, o:term.
 synth-instance Params KC KS T Tkey Factories Instance :-
-	if (coq.safe-dest-app Tkey (global _) _) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
+	if (coq.safe-dest-app Tkey TkeyHead _, coq.env.global _ TkeyHead) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
 	synth-instance.aux Params KC KS T Tkey Factories MLCano Instance.
 
 pred elab-factories i:list argument, i:term, o:list term.
@@ -61,11 +61,11 @@ elab-factories [trm FactorySkel|More] T [Factory|Factories] :-
   std.assert-ok! (coq.elaborate-skeleton FactorySkel FTy MaybeFactory) "HB.pack: illtyped factory",
   if2 (factory? {unwind {whd FTy []}} (triple _ _ T1)) % a factory
         (Factory = MaybeFactory)
-      (coq.safe-dest-app {unwind {whd FTy []}}  (global GR) _, structure-key SortP ClassP GR) % a structure instance
+      (coq.safe-dest-app {unwind {whd FTy []}}  TyHead _, coq.env.global GR TyHead, structure-key SortP ClassP GR) % a structure instance
         (coq.mk-n-holes {structure-nparams GR} Params,
          std.append Params [MaybeFactory] ParamsF,
-         coq.mk-app (global (const SortP)) ParamsF T1,
-         coq.mk-app (global (const ClassP)) ParamsF Factory)
+         coq.mk-app {coq.env.global (const SortP)} ParamsF T1,
+         coq.mk-app {coq.env.global (const ClassP)} ParamsF Factory)
       (coq.error "HB: argument" {coq.term->string MaybeFactory} "is not a factory, it has type:" {coq.term->string FTy}),
   std.assert-ok! (coq.unify-eq T T1) "HB.pack: factory for the wrong type",
   elab-factories More T Factories.

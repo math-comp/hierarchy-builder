@@ -38,7 +38,7 @@ main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory-constructo
 main-located S (loc-abbreviation A) :-
   coq.notation.abbreviation-body A NArgs _,
   coq.notation.abbreviation A {coq.mk-n-holes NArgs} T,
-  coq.safe-dest-app T (global GR) _, !,
+  coq.safe-dest-app T THead _, coq.env.global GR THead, !,
   main-located S (loc-gref GR).
 
 main-located S (loc-gref GR) :- from Factory Mixin GR, !,
