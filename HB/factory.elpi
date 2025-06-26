@@ -28,9 +28,17 @@ argument->w-mixins (indt-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = indt-decl x) ArgwP
 ].
+argument->w-mixins (upoly-indt-decl Decl UI) (pr MLwP ArgwP) :- !, std.do! [
+  pdecl->w-mixins Decl (pr MLwP DeclwP),
+  w-params.map DeclwP (_\ _\ x\ y\ y = upoly-indt-decl x UI) ArgwP
+].
 argument->w-mixins (const-decl Id none Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = const-decl Id none x) ArgwP,
+].
+argument->w-mixins (upoly-const-decl Id none Decl UI) (pr MLwP ArgwP) :- !, std.do! [
+  pdecl->w-mixins Decl (pr MLwP DeclwP),
+  w-params.map DeclwP (_\ _\ x\ y\ y = upoly-const-decl Id none x UI) ArgwP,
 ].
 argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     (pr MLwP ArgwP) :- !, std.do! [
@@ -46,17 +54,35 @@ argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     coq.subst-fun Args Body AppBody,
     y = const-decl Id (some AppBody) x]) ArgwP
 ].
+argument->w-mixins (upoly-const-decl Id (some Body) Decl UI as CDecl)
+    (pr MLwP ArgwP) :- !, std.do! [
+  if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" CDecl),
+  pdecl->w-mixins Decl (pr MLwP DeclwP),
+  if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" Decl
+    "\nwith MLwP =" MLwP),
+  std.length {list-w-params_list MLwP} NML,
+  if-verbose (coq.say "ML length =" NML),
+  w-params.map DeclwP (ps\ t\ x\ y\ sigma Dummies Args AppBody\ std.do! [
+    std.nlist NML (sort prop) Dummies,
+    std.append ps [t|Dummies] Args,
+    coq.subst-fun Args Body AppBody,
+    y = upoly-const-decl Id (some AppBody) x UI]) ArgwP
+].
 argument->w-mixins (ctx-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   cdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = ctx-decl x) ArgwP
 ].
 
+pred indt-decl-name i:indt-decl, o:string.
+indt-decl-name (parameter _ _ _ R) Id :- !, indt-decl-name (R (sort prop)) Id.
+indt-decl-name (record Id _ _ _) Id :- !.
+indt-decl-name (inductive Id _ _ _) Id :- !.
+
 pred argument-name i:argument, o:string.
 argument-name (const-decl Id _ _) Id :- !.
-argument-name (indt-decl (parameter _ _ _ R)) Id :- !,
-argument-name (indt-decl (R (sort prop))) Id.
-argument-name (indt-decl (record Id _ _ _)) Id :- !.
-argument-name (indt-decl (inductive Id _ _ _)) Id :- !.
+argument-name (upoly-const-decl Id _ _ _) Id :- !.
+argument-name (indt-decl Decl) Id :- !, indt-decl-name Decl Id.
+argument-name (upoly-indt-decl Decl _) Id :- !, indt-decl-name Decl Id.
 argument-name (ctx-decl _) "_" :- !.
 
 pred pdecl->w-mixins i:indt-decl, o:w-mixins indt-decl.
@@ -214,7 +240,7 @@ declare-asset Arg AssetKind :- std.do! [
   if-verbose (coq.say {header} "declaring context" FLwP),
   context.declare FLwP MLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
 
-  if (Arg = indt-decl _) (
+  if (Arg = indt-decl _; Arg = upoly-indt-decl _ _) (
     apply-w-params ArgwP Params TheKey (indt-decl (record _ Sort _ Fields)),
     if-verbose (coq.say {header} "declare mixin or factory"),
     declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
