@@ -147,8 +147,7 @@ constraint print-ctx mixin-src {
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq.term-is-gref? i:term, o:gref.
-coq.term-is-gref? (global GR) GR :- !.
-coq.term-is-gref? (pglobal GR _) GR :- !.
+coq.term-is-gref? G GR :- coq.env.global GR G, !.
 coq.term-is-gref? (app [Hd|_]) GR :- !, coq.term-is-gref? Hd GR.
 coq.term-is-gref? (let _ _ T x\x) GR :- !, coq.term-is-gref? T GR.
 
@@ -220,8 +219,9 @@ coq.abstract-indt-decl [C|CS] X (parameter ID explicit Ty1 X1) :-
   coq.gref->id (const C) ID,
   coq.env.typeof (const C) Ty,
   copy Ty Ty1,
+  coq.env.global (const C) G,
   @pi-parameter ID Ty x\
-    (copy (global (const C)) x :- !) =>
+    (copy G x :- !) =>
     coq.abstract-indt-decl CS X (X1 x).
 
 % [coq.abstract-const-decl Section I AbsI] abstracts I over the Section variables
@@ -233,8 +233,9 @@ coq.abstract-const-decl [C|CS] X (pr (fun Name Ty1 X1) (prod Name Ty1 X2)) :-
   coq.id->name ID Name,
   coq.env.typeof (const C) Ty,
   copy Ty Ty1,
+  coq.env.global (const C) G,
   @pi-parameter ID Ty x\
-    (copy (global (const C)) x :- !) =>
+    (copy G x :- !) =>
     coq.abstract-const-decl CS X (pr (X1 x) (X2 x)).
 
 % [coq.copy-clauses-for-unfold CS CL] generates clauses for the copy predicate
@@ -243,21 +244,22 @@ pred coq.copy-clauses-for-unfold i:list constant, o:list prop.
 coq.copy-clauses-for-unfold [] [].
 coq.copy-clauses-for-unfold [C|CS] [ClauseApp,Clause|L] :-
   coq.env.const C (some B) _,
+  coq.env.global (const C) G,
   ClauseApp = (pi B1 Args Args1 B2 Args2 R\
-    copy (app[global (const C)|Args]) R :- !,
+    copy (app[G|Args]) R :- !,
       copy B B1,
       std.map Args copy Args1,
       hd-beta B1 Args1 B2 Args2,
       unwind B2 Args2 R),
   Clause = (pi B1\
-    copy (global (const C)) B1 :- !, copy B B1),
+    copy G B1 :- !, copy B B1),
   coq.copy-clauses-for-unfold CS L.
 
 % like fold-map, needed for coq-elpi < 1.9
 
 pred coq.fold-map i:term, i:A, o:term, o:A.
 coq.fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "coq.fold-map x A x A" at binders
-coq.fold-map (global _ as C) A C A :- !.
+coq.fold-map C A C A :- coq.env.global _ C, !.
 coq.fold-map (sort _ as C) A C A :- !.
 coq.fold-map (fun N T F) A (fun N T1 F1) A2 :- !,
   coq.fold-map T A T1 A1, pi x\ coq.fold-map (F x) A1 (F1 x) A2.
