@@ -24,7 +24,7 @@ add-abbreviation N (private.phant-term AL T1) C Abbrev :- std.do! [
   NC is "phant_" ^ N,
   std.assert-ok! (coq.elaborate-skeleton T1 TTy T) "add-abbreviation: T illtyped",
   log.coq.env.add-const-noimplicits NC T TTy @transparent! C,
-  private.build-abbreviation 0 (global (const C)) AL NParams AbbrevT,
+  private.build-abbreviation 0 {coq.env.global (const C)} AL NParams AbbrevT,
   @global! => log.coq.notation.add-abbreviation N NParams AbbrevT tt Abbrev,
 ].
 
@@ -39,7 +39,7 @@ pred of-gref i:bool, i:gref, i:list mixinname, o:phant-term.
 of-gref WithCopy GRF RealMixinArgs PhBody:- !, std.do! [
   std.assert! (gref-deps GRF MLwP) "mk-phant-term: unknown gref",
   std.assert! (coq.env.typeof GRF FTy) "mk-phant-term: F illtyped",
-  coq.mk-eta (-1) FTy (global GRF) EtaF,
+  coq.mk-eta (-1) FTy {coq.env.global GRF} EtaF,
   % toposort-mixins ML MLSorted,
   MLwP = MLwPSorted, % Assumes we give them already sorted in dep order.
   std.rev {list-w-params_list MLwPSorted} MLSortedRev,
@@ -139,13 +139,13 @@ phant-fun Arg Ty PhF (phant-term [Arg|ArgL] (fun N Ty F)) :-
 pred phant-fun-mixin i:name, i:term, i:(term -> phant-term), o:phant-term.
 phant-fun-mixin N Ty PF (private.phant-term [Status|AL] (fun N Ty F)) :- !, std.do! [
   @pi-decl N Ty t\ PF t = private.phant-term AL (F t),
-  coq.safe-dest-app Ty (global Mixin) _,
+  coq.safe-dest-global-app Ty Mixin _,
   if (this-mixin-is-real-arg Mixin) (Status = private.real N) (Status = private.implicit)
 ].
 
 pred fun-unify-mixin i:term, i:name, i:term, i:(term -> phant-term), o:phant-term.
 fun-unify-mixin T N Ty PF Out :- !, std.do! [
-  coq.safe-dest-app Ty (global M) _,
+  coq.safe-dest-global-app Ty M _,
   Msg is "fun-unify-mixin: No mixin-src on " ^ {coq.term->string T},
   std.assert! (mixin-src T M Msrc) Msg,
   (@pi-decl `m` Ty m\ fun-unify none m Msrc (PF m) (PFM m)),
@@ -158,7 +158,7 @@ fun-unify-mixin T N Ty PF Out :- !, std.do! [
 pred phant-fun-struct i:term, i:name, i:structure, i:list term, i:(term -> phant-term), o:phant-term.
 phant-fun-struct T Name S Params PF Out :- std.do! [
   get-structure-sort-projection S SortProj,
-  mk-app (global S) Params SParams,
+  mk-app {coq.env.global S} Params SParams,
   mk-app SortProj Params SortProjParams,
   % Msg = {{lib:hb.nomsg}},
   Msg = some {{lp:SParams}},
@@ -199,7 +199,7 @@ pred build-type-pattern i:gref, o:term.
 build-type-pattern GR Pat :- build-type-pattern.aux GR {coq.env.typeof GR} Pat.
 build-type-pattern.aux GR T {{ lp:Pat _ }} :- coq.unify-eq T (prod N S T') ok, !,
   @pi-decl N S x\ build-type-pattern.aux GR (T' x) Pat.
-build-type-pattern.aux GR T (global GR) :- coq.unify-eq T {{ Type }} ok, !.
+build-type-pattern.aux GR T G :- coq.unify-eq T {{ Type }} ok, !, coq.env.global GR G.
 build-type-pattern.aux _ _ _ :- coq.error "HB: wrong carrier type".
 
 
@@ -237,13 +237,13 @@ pred mk-phant-term.mixins i:term, i:term, i:classname, i:phant-term,
   i:list term, i:name, i:term, i:(term -> list (w-args mixinname)), o:phant-term.
 mk-phant-term.mixins Target Src CN PF Params N Ty MLwA Out :- std.do! [
   class-def (class CN SI _),
-  mk-app (global SI) Params SIParams,
+  mk-app {coq.env.global SI} Params SIParams,
   coq.name-suffix N "local" Nlocal,
   (@pi-decl Nlocal Ty t\ sigma SK KC ML ParamsT SKPT\ std.do! [
     std.map (MLwA t) triple_1 ML,
     std.append Params [t] ParamsT,
-    SKPT = app [global {get-constructor SI} | ParamsT],
-    ClassTy t = app [global CN | ParamsT],
+    SKPT = app [{coq.env.global {get-constructor SI} } | ParamsT],
+    ClassTy t = app [{coq.env.global CN} | ParamsT],
     (@pi-decl `s` SIParams s\ @pi-decl `c` (ClassTy t) c\ sigma PF2\ std.do![
        synthesis.under-mixins.then (MLwA t) (fun-unify-mixin Target)
           (mk-phant-term.mixins.aux t Params c CN PF) PF2,
