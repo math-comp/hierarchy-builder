@@ -16,14 +16,14 @@ declare.params-key MLwP Params TheKey Out :- !, std.do! [
   if-verbose (coq.say {header} "declaring parameters and key as section variables"),
   declare.params MLwP Params KId KTy F,
   log.coq.env.add-section-variable-noimplicits KId KTy C,
-  TheKey = global (const C),
+  coq.env.global (const C) TheKey,
   Out = F TheKey
 ].
 
 pred declare.params i:w-params A, o:list (triple id term term), o:id, o:term, o:(term -> A).
 declare.params (w-params.cons PId PTy F) [triple PId P PTy|Params] KId KTy Out :- !, std.do! [
   log.coq.env.add-section-variable-noimplicits PId PTy C,
-  P = global (const C),
+  coq.env.global (const C) P,
   declare.params (F P) Params KId KTy Out
 ].
 declare.params (w-params.nil KId KTy F) [] KId KTy F :- !.
@@ -71,7 +71,8 @@ postulate-mixin TheType (triple M Ps T) (triple CL MSL MLwP) (triple OutCL [MC|M
   log.coq.env.add-section-variable-noimplicits Name Ty C,
   factory? Ty NewMwP,
 
-  MC = mixin-src T M (global (const C)),
+  coq.env.global (const C) Tm,
+  MC = mixin-src T M Tm,
   MC => get-option "local" tt =>
     instance.declare-all TheType {findall-classes-for [M]} NewCSL,
   std.map NewCSL snd NewCL,
