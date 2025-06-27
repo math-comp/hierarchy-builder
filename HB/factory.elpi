@@ -28,17 +28,17 @@ argument->w-mixins (indt-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = indt-decl x) ArgwP
 ].
-argument->w-mixins (upoly-indt-decl Decl UI) (pr MLwP ArgwP) :- !, std.do! [
+argument->w-mixins (upoly-indt-decl Decl _UI) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
-  w-params.map DeclwP (_\ _\ x\ y\ y = upoly-indt-decl x UI) ArgwP
+  w-params.map DeclwP (_\ _\ x\ y\ y = indt-decl x) ArgwP % TODO: investigate, looks fishy!
 ].
 argument->w-mixins (const-decl Id none Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = const-decl Id none x) ArgwP,
 ].
-argument->w-mixins (upoly-const-decl Id none Decl UI) (pr MLwP ArgwP) :- !, std.do! [
+argument->w-mixins (upoly-const-decl Id none Decl _UI) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
-  w-params.map DeclwP (_\ _\ x\ y\ y = upoly-const-decl Id none x UI) ArgwP,
+  w-params.map DeclwP (_\ _\ x\ y\ y = const-decl Id none x) ArgwP, % TODO: investigate, looks fishy!
 ].
 argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     (pr MLwP ArgwP) :- !, std.do! [
@@ -54,7 +54,7 @@ argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     coq.subst-fun Args Body AppBody,
     y = const-decl Id (some AppBody) x]) ArgwP
 ].
-argument->w-mixins (upoly-const-decl Id (some Body) Decl UI as CDecl)
+argument->w-mixins (upoly-const-decl Id (some Body) Decl _UI as CDecl)
     (pr MLwP ArgwP) :- !, std.do! [
   if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" CDecl),
   pdecl->w-mixins Decl (pr MLwP DeclwP),
@@ -66,7 +66,7 @@ argument->w-mixins (upoly-const-decl Id (some Body) Decl UI as CDecl)
     std.nlist NML (sort prop) Dummies,
     std.append ps [t|Dummies] Args,
     coq.subst-fun Args Body AppBody,
-    y = upoly-const-decl Id (some AppBody) x UI]) ArgwP
+    y = const-decl Id (some AppBody) x]) ArgwP % TODO: investigate, looks fishy!
 ].
 argument->w-mixins (ctx-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   cdecl->w-mixins Decl (pr MLwP DeclwP),
