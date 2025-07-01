@@ -16,7 +16,8 @@ type by-phantabbrev abbreviation -> factory-abbrev.
 pred declare-abbrev i:id, i:factory-abbrev, o:abbreviation.
 declare-abbrev Name (by-classname GR) Abbrev :-
   % looks fishy (the parameters are not taken into account)
-  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[global GR,t]) tt Abbrev.
+  coq.env.global GR Tm,
+  @global! => log.coq.notation.add-abbreviation Name 1 (fun _ _ t\ app[Tm, t]) tt Abbrev.
 declare-abbrev Name (by-phantabbrev Abbr) Abbrev :- std.do! [
   coq.notation.abbreviation-body Abbr Nargs AbbrTrm,
   @global! => log.coq.notation.add-abbreviation Name Nargs AbbrTrm tt Abbrev,
@@ -27,9 +28,17 @@ argument->w-mixins (indt-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = indt-decl x) ArgwP
 ].
+argument->w-mixins (upoly-indt-decl Decl _UI) (pr MLwP ArgwP) :- !, std.do! [
+  pdecl->w-mixins Decl (pr MLwP DeclwP),
+  w-params.map DeclwP (_\ _\ x\ y\ y = indt-decl x) ArgwP % TODO: investigate, looks fishy!
+].
 argument->w-mixins (const-decl Id none Decl) (pr MLwP ArgwP) :- !, std.do! [
   pdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = const-decl Id none x) ArgwP,
+].
+argument->w-mixins (upoly-const-decl Id none Decl _UI) (pr MLwP ArgwP) :- !, std.do! [
+  pdecl->w-mixins Decl (pr MLwP DeclwP),
+  w-params.map DeclwP (_\ _\ x\ y\ y = const-decl Id none x) ArgwP, % TODO: investigate, looks fishy!
 ].
 argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     (pr MLwP ArgwP) :- !, std.do! [
@@ -45,17 +54,35 @@ argument->w-mixins (const-decl Id (some Body) Decl as CDecl)
     coq.subst-fun Args Body AppBody,
     y = const-decl Id (some AppBody) x]) ArgwP
 ].
+argument->w-mixins (upoly-const-decl Id (some Body) Decl _UI as CDecl)
+    (pr MLwP ArgwP) :- !, std.do! [
+  if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" CDecl),
+  pdecl->w-mixins Decl (pr MLwP DeclwP),
+  if-verbose (coq.say {header} "arguments->w-mixins on const-decl Decl=" Decl
+    "\nwith MLwP =" MLwP),
+  std.length {list-w-params_list MLwP} NML,
+  if-verbose (coq.say "ML length =" NML),
+  w-params.map DeclwP (ps\ t\ x\ y\ sigma Dummies Args AppBody\ std.do! [
+    std.nlist NML (sort prop) Dummies,
+    std.append ps [t|Dummies] Args,
+    coq.subst-fun Args Body AppBody,
+    y = const-decl Id (some AppBody) x]) ArgwP % TODO: investigate, looks fishy!
+].
 argument->w-mixins (ctx-decl Decl) (pr MLwP ArgwP) :- !, std.do! [
   cdecl->w-mixins Decl (pr MLwP DeclwP),
   w-params.map DeclwP (_\ _\ x\ y\ y = ctx-decl x) ArgwP
 ].
 
+pred indt-decl-name i:indt-decl, o:string.
+indt-decl-name (parameter _ _ _ R) Id :- !, indt-decl-name (R (sort prop)) Id.
+indt-decl-name (record Id _ _ _) Id :- !.
+indt-decl-name (inductive Id _ _ _) Id :- !.
+
 pred argument-name i:argument, o:string.
 argument-name (const-decl Id _ _) Id :- !.
-argument-name (indt-decl (parameter _ _ _ R)) Id :- !,
-argument-name (indt-decl (R (sort prop))) Id.
-argument-name (indt-decl (record Id _ _ _)) Id :- !.
-argument-name (indt-decl (inductive Id _ _ _)) Id :- !.
+argument-name (upoly-const-decl Id _ _ _) Id :- !.
+argument-name (indt-decl Decl) Id :- !, indt-decl-name Decl Id.
+argument-name (upoly-indt-decl Decl _) Id :- !, indt-decl-name Decl Id.
 argument-name (ctx-decl _) "_" :- !.
 
 pred pdecl->w-mixins i:indt-decl, o:w-mixins indt-decl.
@@ -213,7 +240,7 @@ declare-asset Arg AssetKind :- std.do! [
   if-verbose (coq.say {header} "declaring context" FLwP),
   context.declare FLwP MLwP Params TheKey MixinSrcClauses SectionCanonicalInstance,
 
-  if (Arg = indt-decl _) (
+  if (Arg = indt-decl _; Arg = upoly-indt-decl _ _) (
     apply-w-params ArgwP Params TheKey (indt-decl (record _ Sort _ Fields)),
     if-verbose (coq.say {header} "declare mixin or factory"),
     declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
@@ -238,10 +265,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
 
-
   if (get-option "primitive" tt)
-    (@primitive! => log.coq.env.add-indt RDeclClosed R)
-    (log.coq.env.add-indt RDeclClosed R),
+    (@primitive! => @univpoly! => log.coq.env.add-indt RDeclClosed R)
+    (@univpoly! => log.coq.env.add-indt RDeclClosed R),
 
   log.coq.env.end-section-name Module, % We need to anyway declare the record inside the section
     % since closing the section purges the unused universe level we may have
@@ -316,13 +342,15 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
   log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
 
-  std.assert! (safe-dest-app Ty1 (global PhF) _Args) "Argument must be a factory",
+  std.assert! (coq.safe-dest-global-app Ty1 PhF _Args) "Argument must be a factory",
   std.assert-ok! (factory-alias->gref PhF F) "HB",
   std.assert! (factory-constructor F FK) "BUG: Factory constructor missing",
 
   MixinSrcClauses => synthesis.infer-all-gref-deps TheParams TheType FK MFK,
   std.assert-ok! (coq.typecheck MFK MFKTy) "BUG: typecking of former factory constructor failed",
-  (pi Args\ copy (app[global F|Args]) (app[global (const C)|Section])) => copy MFKTy MFKTyC,
+  coq.env.global F FHead,
+  coq.env.global (const C) CHead,
+  (pi Args\ copy (app[FHead|Args]) (app[CHead|Section])) => copy MFKTy MFKTyC,
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr MFK MFKTyC) (pr MFKClosed MFKTyCClosed) _,
   log.coq.env.add-const-noimplicits "Axioms_" MFKClosed MFKTyCClosed @transparent! CK,
@@ -393,7 +421,7 @@ abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance
   % compute section variables to be used for discharging
   std.map MixinSrcClauses mixin-src_src Mixins,
   std.append TheParams [TheType|{std.rev Mixins}] Section,
-  std.map Section (x\r\ x = global (const r)) SectionVars,
+  std.map Section (x\r\ coq.env.global (const r) x) SectionVars,
   % We discharge by hand the record declaration so that we can be sure all
   % parameters and mixins are abstracted (even if unused).
   coq.copy-clauses-for-unfold SectionCanonicalInstance CopyUnfold,

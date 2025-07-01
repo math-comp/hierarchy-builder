@@ -50,6 +50,7 @@ tests/two_hier.v
 tests/instance_merge_with_param.v
 tests/instance_merge_with_distinct_param.v
 tests/instance_merge.v
+tests/polymorphic_universes.v
 
 tests/unit/enrich_type.v
 tests/unit/mixin_src_has_mixin_instance.v

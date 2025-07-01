@@ -90,7 +90,7 @@ declare-shadowed-constant (some C) :-
 
 pred declare-shadowed-located i:string, i:located.
 declare-shadowed-located Id (loc-gref GR) :-
-  @global! => log.coq.notation.add-abbreviation Id 0 (global GR) ff _.
+  @global! => log.coq.notation.add-abbreviation Id 0 {coq.env.global GR} ff _.
 declare-shadowed-located Id (loc-abbreviation Abbrev) :-
   coq.notation.abbreviation-body Abbrev NArgs T,
   @global! => log.coq.notation.add-abbreviation Id NArgs T ff _.
@@ -103,7 +103,7 @@ postulate-factory-abbrev TheType Params Name Falias TheFactory :- std.do! [
   Msg is "Unable to declare factory " ^ Name,
   std.assert-ok! (coq.typecheck-ty Package _) Msg,
   log.coq.env.add-section-variable-noimplicits Name Package C,
-  TheFactory = global (const C),
+  coq.env.global (const C) TheFactory,
 ].
 
 % Only record fields can be exported as operations.
@@ -121,14 +121,14 @@ define-factory-operation TheType Params TheFactory NHoles (some P) :-
   coq.mk-n-holes NHoles Holes,
   std.append Holes [TheFactory] Holes_Factory,
   std.append Params [TheType|Holes_Factory] Args,
-  T = app[global (const P)|Args],
+  T = app[{coq.env.global (const P)}|Args],
   std.assert-ok! (coq.typecheck T _) "Illtyped applied factory operation",
   coq.gref->id (const P) Name,
   @local! => log.coq.notation.add-abbreviation Name 0 T ff _.
 
 pred factory i:context-decl, o:string, o:gref.
 factory (context-item IDF _ T _ _\ context-end) IDF GR :- !,
-  coq.safe-dest-app T (global GR) _.
+  coq.safe-dest-global-app T GR _.
 factory (context-item _ _ _ _ R) IDF GR :- !, pi x\ factory (R x) IDF GR.
 factory _ _ _ :- !, coq.error "the last context item is not a factory".
 

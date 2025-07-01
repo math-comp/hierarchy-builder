@@ -87,9 +87,9 @@ declare Module BSkel Sort :- std.do! [
   if (get-option "short.type" ShortType) (
     if-verbose (coq.say {header} "short name for type:" ShortType),
     (@global! => log.coq.notation.add-abbreviation
-      ShortType 0 (global Structure) ff _)) true,
+      ShortType 0 {coq.env.global Structure} ff _)) true,
 
-  coq.mk-app (global Structure) {coq.mk-n-holes {w-params.nparams MLwP}} HB_Instance,
+  coq.mk-app {coq.env.global Structure} {coq.mk-n-holes {w-params.nparams MLwP}} HB_Instance,
   if (get-option "short.pack" ShortPack) (std.do! [
     if-verbose (coq.say {header} "declaring pack abbreviation:" ShortPack),
     % coq.notation.abbreviation-body PackAbbrev NPackAbbrev PackAbbrevTrm,
@@ -106,7 +106,7 @@ declare Module BSkel Sort :- std.do! [
   if-verbose (coq.say {header} "making coercion from type to target"),
   synthesis.infer-coercion-tgt MLwP CoeClass,
   if-arg-sort (private.declare-sort-coercion CoeClass Structure
-    (global (const ArgSortCst))),
+    {coq.env.global (const ArgSortCst)}),
   private.declare-sort-coercion CoeClass Structure SortProjection,
 
   if-verbose (coq.say {header} "exporting unification hints"),
@@ -138,14 +138,14 @@ declare Module BSkel Sort :- std.do! [
 
   if-verbose (coq.say {header} "declaring on_ abbreviation"),
 
-  private.mk-infer-key CoeClass ClassProjection NilwP (global Structure) PhClass,
+  private.mk-infer-key CoeClass ClassProjection NilwP {coq.env.global Structure} PhClass,
 
   phant.add-abbreviation "on_" PhClass _ ClassOfAbbrev,
   (pi c\ coq.notation.abbreviation ClassOfAbbrev [c] (ClassOfAbbrev_ c)),
 
   if-verbose (coq.say {header} "declaring `copy` abbreviation"),
 
-  coq.mk-app (global ClassName) {params->holes NilwP} AppClassHoles,
+  coq.mk-app {coq.env.global ClassName} {params->holes NilwP} AppClassHoles,
   @global! => log.coq.notation.add-abbreviation "copy" 2
     {{fun T C => (lp:(ClassOfAbbrev_ C) : (lp:AppClassHoles T)) }} tt _,
 
@@ -204,9 +204,11 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   gref-deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
+  coq.env.global (const Po) G,
+  coq.env.global (const C) GC,
 
   (pi L L1 L2 Params Rest PoArgs\
-    copy (app [global (const Po)| L]) (app [global (const C) | L2]) :-
+    copy (app [G| L]) (app [GC | L2]) :-
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
@@ -216,7 +218,7 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
 pred operation-body-and-ty i:list prop, i:constant, i:structure, i:term, i:term,
   i:list term, i:term, i:w-args A, o:pair term term.
 operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ ParamsOp _) (pr Bo Ty) :- std.do! [
-  mk-app (global Struct) Params StructType,
+  mk-app {coq.env.global Struct} Params StructType,
   mk-app Psort Params PsortP,
   mk-app Pclass Params PclassP,
   Bo = fun `s` StructType Body,
@@ -284,14 +286,14 @@ pred mk-coe-class-body
   i:list (w-args mixinname),
   o:term.
 mk-coe-class-body FC TC TMLwP Params T _ CoeBody :- std.do! [
-  mk-app (global FC) {std.append Params [T]} Class,
+  mk-app {coq.env.global FC} {std.append Params [T]} Class,
 
   list-w-params_list TMLwP TML,
   std.map TML (from FC) Builders,
-  std.map Builders (x\r\mk-app (global x) Params r) BuildersP,
+  std.map Builders (x\r\ sigma G\ coq.env.global x G, mk-app G Params r) BuildersP,
 
   factory-nparams TC TCNP,
-  mk-app (global {get-constructor TC})
+  mk-app {coq.env.global {get-constructor TC}}
     {coq.mk-n-holes TCNP} KCHoles,
 
   (pi c\ sigma Mixes\
@@ -314,13 +316,13 @@ pred mk-coe-structure-body
 mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection
     Params _T _ SCoeBody :- std.do! [
 
-  mk-app (global StructureF) Params StructureP,
+  mk-app {coq.env.global StructureF} Params StructureP,
   mk-app     SortProjection  Params SortP,
   mk-app     ClassProjection Params ClassP,
   mk-app     Coercion        Params CoercionP,
 
   factory-nparams TC TCNP,
-  mk-app (global {get-constructor StructureT})
+  mk-app {coq.env.global {get-constructor StructureT}}
     {coq.mk-n-holes TCNP} PackPH,
 
   SCoeBody = {{ fun s : lp:StructureP =>
@@ -351,7 +353,7 @@ declare-coercion SortProjection ClassProjection
   log.coq.env.add-const-noimplicits CName CoeBody' Ty @transparent! C,
   log.coq.coercion.declare (coercion (const C) 1 FC (grefclass TC)),
 
-  Coercion = global (const C),
+  coq.env.global (const C) Coercion,
   w-params.then FMLwP mk-fun ignore
     (mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProjection)
     SCoeBody,
@@ -374,7 +376,7 @@ pred join-body i:int, i:int, i:structure, i:term, i:term, i:term, i:term, i:term
   i:list term, i:name, i:term, i:(term -> A), o:term.
 join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
   P N _Ty _F (fun N S3P Pack) :- !,
-  mk-app (global S3) P S3P, !,
+  mk-app {coq.env.global S3} P S3P, !,
   @pi-decl N S3P s\
   sigma S3_to_S1_Ps S3_to_S2_Ps S1_sortS3Ps S2_classS3Ps Holes1 Holes2 \ std.do! [
     coq.mk-n-holes N2 Holes2,
@@ -402,7 +404,7 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
 
   if-verbose (coq.say {header} "declare unification hint" Name),
   w-params.fold MLwP3 mk-fun (join-body N1 N2 S3
-    (global S2_Pack) S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
+    {coq.env.global S2_Pack} S1_sort S3_to_S1 S2_class S3_to_S2) JoinBody,
   std.assert-ok! (coq.typecheck JoinBody Ty) "declare-join: JoinBody illtyped",
   log.coq.env.add-const-noimplicits Name JoinBody Ty @transparent! J,
   log.coq.CS.declare-instance J.
@@ -445,7 +447,8 @@ pred mk-record+sort-field i:sort, i:name, i:term, i:(term -> record-decl), o:ind
 mk-record+sort-field Sort _ T F (record "type" (sort Sort) "Pack" (field _ "sort" T F)).
 
 pred mk-class-field i:classname, i:list term, i:term, i:list (w-args mixinname), o:record-decl.
-mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [global ClassName|Args]) _\end-record) :-
+mk-class-field ClassName Params T _ (field [canonical ff] "class" (app [G|Args]) _\end-record) :-
+  coq.env.global ClassName G,
   std.append Params [T] Args.
 
 % Builds the axioms record and the factories from this class to each mixin
@@ -460,7 +463,7 @@ declare-class+structure MLwP Sort
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
-  (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd),
+  (@univpoly! => @primitive! => log.coq.env.add-indt ClassDeclaration ClassInd),
 
   coq.env.projections ClassInd Projs,
   % TODO: put this code in a named clause
@@ -477,17 +480,18 @@ declare-class+structure MLwP Sort
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
   if (get-option "primitive" tt)
-    (@primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
-    (log.coq.env.add-indt StructureDeclaration StructureInd),
+    (@univpoly! => @primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
+    (@univpoly! => log.coq.env.add-indt StructureDeclaration StructureInd),
 
   coq.env.projections StructureInd [some SortP, some ClassP],
-  global (const SortP) = SortProjection,
-  global (const ClassP) = ClassProjection,
+  coq.env.global (const SortP) SortProjection,
+  coq.env.global (const ClassP) ClassProjection,
 ].
 
 % Declares "sort" as a Coercion Proj : Structurename >-> CoeClass.
 pred declare-sort-coercion i:class, i:structure, i:term.
-declare-sort-coercion CoeClass StructureName (global Proj) :-
+declare-sort-coercion CoeClass StructureName G :-
+  coq.env.global Proj G,
 
   if-verbose (coq.say {header} "declare sort coercion"),
 
@@ -516,14 +520,14 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassProjection GRPack
   log.coq.env.begin-module ModuleName none,
 
   if (Axioms = some GR)
-    (@global! => log.coq.notation.add-abbreviation "axiom" 0 (global GR) ff _)
+    (@global! => log.coq.notation.add-abbreviation "axiom" 0 {coq.env.global GR} ff _)
     true,
 
   if (NewMixins = [NewMixin]) (std.do! [
     if-verbose (coq.say "mc-compat-structure: declaring notations 'axioms', 'mixin_of' and 'Mixin'"),
     factory-nparams NewMixin NewMixinNP,
     MArgs is NewMixinNP + 1,
-    mk-eta MArgs {coq.env.typeof NewMixin} (global NewMixin) EtaNewMixin,
+    mk-eta MArgs {coq.env.typeof NewMixin} {coq.env.global NewMixin} EtaNewMixin,
     @global! => log.coq.notation.add-abbreviation "axioms" MArgs EtaNewMixin ff _,
     @deprecated! "mathcomp 2.0.0" "use the factory instead" =>
     @global! => log.coq.notation.add-abbreviation "mixin_of" MArgs EtaNewMixin ff _,
@@ -553,10 +557,10 @@ mc-compat-structure ModuleName _Module NewMixins CNParams ClassProjection GRPack
 pred clone-phant-body i:factoryname, i:term, i:structure, i:list term, i:term, i:list (w-args mixinname), o:phant-term.
 clone-phant-body ClassName SortProjection ((indt I) as Structure) PL T _ PhF :- std.do! [
   std.assert! (coq.env.indt I _ _ _ _ [PackC] _) "wtf",
-  mk-app (global (indc PackC)) {std.append PL [T]} PackPLT,
-  mk-app (global Structure) PL SPL,
+  mk-app {coq.env.global (indc PackC)} {std.append PL [T]} PackPLT,
+  mk-app {coq.env.global Structure} PL SPL,
   (@pi-decl `cT` SPL cT\
-  mk-app (global ClassName) {std.append PL [T]} CPL,
+  mk-app {coq.env.global ClassName} {std.append PL [T]} CPL,
   @pi-decl `c` CPL c\
   (Ph cT c) =
     {phant.fun-unify none T {mk-app {mk-app SortProjection PL} [cT]}
@@ -578,7 +582,7 @@ pack-body ClassName PL T MLwA F :- std.do! [
 ].
 pack-body.aux PL T BuildC PackS  Body :- !, std.do! [
   synthesis.infer-all-gref-deps PL T BuildC Class,
-  mk-app (global PackS) {std.append PL [T, Class]} Body
+  mk-app {coq.env.global PackS} {std.append PL [T, Class]} Body
 ].
 
 pred mk-infer-key i:class, i:term, i:mixins, i:term, o:phant-term.

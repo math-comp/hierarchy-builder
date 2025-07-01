@@ -1,5 +1,6 @@
 (* Support constants, to be kept in sync with shim/structures.v *)
 From Corelib Require Import ssreflect ssrfun.
+Set Universe Polymotphism.
 
 Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
 Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
@@ -132,7 +133,7 @@ pred factory-alias->gref i:gref, o:gref, o: diagnostic.
 factory-alias->gref PhGR GR ok :- phant-abbrev GR PhGR _, !.
 factory-alias->gref GR GR ok :- phant-abbrev GR _ _, !.
 factory-alias->gref GR _ (error Msg) :- !,
-  Msg is {coq.term->string (global GR)} ^
+  Msg is {coq.term->string {coq.env.global GR} } ^
          " is not a factory or its library (" ^
         { std.string.concat "." {std.drop-last 1 {coq.gref->path GR} } } ^
         ") was not correctly imported".
@@ -487,7 +488,8 @@ actions N :-
   coq.env.current-library File,
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)).
 
-main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
+main [indt-decl D] :- !, record-decl->id D N, with-attributes (actions N).
+main [upoly-indt-decl D _] :- !, coq.say D, record-decl->id D N, coq.say N, with-attributes (actions N).
 
 main _ :-
   coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
@@ -654,6 +656,7 @@ main [const-decl N (some B) Arity] :- std.do! [
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
   with-attributes (with-logging (structure.declare N B Univ)),
 ].
+main [upoly-const-decl N (some B) Arity _] :- main [const-decl N (some B) Arity].
 
 }}.
 #[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
@@ -692,6 +695,7 @@ actions-compat ModuleName :-
   true.
 
 main [const-decl N _ _] :- !, with-attributes (actions N).
+main [upoly-const-decl N _ _ _] :- !, with-attributes (actions N).
 
 main _ :- coq.error "Usage: HB.structure Definition <ModuleName> := { A of <Factory1> A & … & <FactoryN> A }".
 }}.
@@ -779,6 +783,8 @@ Elpi Accumulate lp:{{
 :name "start"
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
   with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _ _)).
+main [upoly-const-decl Name (some BodySkel) TyWPSkel _] :- !,
+  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _ _)).
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
@@ -790,6 +796,10 @@ shorten coq.env.{ begin-section, end-section }.
 
 main [const-decl _ _ (arity _)] :- !.
 main [const-decl _ _ (parameter _ _ _ _)] :- !,
+  SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+  begin-section SectionName, end-section.
+main [upoly-const-decl _ _ (arity _) _] :- !.
+main [upoly-const-decl _ _ (parameter _ _ _ _) _] :- !,
   SectionName is "hb_instance_" ^ {std.any->string {new_int} },
   begin-section SectionName, end-section.
 main [_, _] :- !.
@@ -844,6 +854,7 @@ actions N :-
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)).
 
 main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
+main [upoly-indt-decl D _] :- record-decl->id D N, with-attributes (actions N).
 main [const-decl N _ _] :- with-attributes (actions N).
 
 main _ :-
