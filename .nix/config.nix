@@ -1,7 +1,6 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  no-rocq-yet = true;
   default-bundle = "coq-8.20";
   bundles = let
     mcHBcommon = {
@@ -46,6 +45,12 @@
       bignums.override.version = "master";
       coquelicot.job = false;
     }; };
+
+    "coq-9.1".coqPackages = mcHBcommon // {
+      coq.override.version = "9.1";
+      coq-elpi.override.version = "master";
+      coq-elpi.override.elpi-version = "2.0.7";
+    };
 
     "coq-9.0".coqPackages = mcHBcommon // {
       coq.override.version = "9.0";
