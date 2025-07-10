@@ -206,7 +206,7 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   std.length {list-w-params_list MLwP} NMixins,
 
   (pi L L1 L2 Params Rest PoArgs\
-    copy (app [global (const Po)| L]) (app [global (const C) | L2]) :-
+    copy (app [global (const Po)| L]) (app [global (const C) | L2]) :- !,
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
