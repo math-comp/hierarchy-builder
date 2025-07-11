@@ -1,5 +1,5 @@
-pred log.coq.env.add-section-variable-noimplicits i:id, i:term, o:constant.
-log.coq.env.add-section-variable-noimplicits Name Ty C :- std.do! [
+func log.coq.env.add-section-variable-noimplicits id, term -> constant.
+log.coq.env.add-section-variable-noimplicits Name Ty C :-
   if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
 % elpi:if version coq-elpi < 2.4.0
   @local! => coq.env.add-section-variable ID Ty C,
@@ -8,6 +8,5 @@ log.coq.env.add-section-variable-noimplicits Name Ty C :- std.do! [
   @local! => coq.env.add-section-variable ID _ Ty C,
 % elpi:endif
   log.private.log-vernac (log.private.coq.vernac.variable ID Ty),
-  @local! => log.coq.arguments.set-implicit (const C) [[]],
-].
+  @local! => log.coq.arguments.set-implicit (const C) [[]].
 

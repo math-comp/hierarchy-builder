@@ -5,7 +5,7 @@ namespace instance {
 
 % [declare-existing T F] equips T with all the canonical structures that can be
 % built using factory instance F
-pred declare-existing i:argument, i:argument.
+func declare-existing argument, argument ->.
 declare-existing T0 F0 :- std.do! [
   argument->ty T0 T, % TODO: change this when supporting morphism hierarchies
   argument->term F0 F,
@@ -22,7 +22,7 @@ declare-existing T0 F0 :- std.do! [
 % and equips the type the factory is used on with all the canonical structures
 % that can be built using factory instance B. CFL contains the list of
 % factories being defined, CSL the list of canonical structures being defined.
-pred declare-const i:id, i:term, i:arity, o:list (pair id constant), o:list (pair id constant).
+func declare-const id, term, arity -> list (pair id constant), list (pair id constant).
 declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
@@ -44,7 +44,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   % identify the factory
   std.assert! (coq.safe-dest-app SectionTy (global FactoryAlias) Args) "The type of the instance is not a factory",
   std.assert-ok! (factory-alias->gref FactoryAlias Factory) "HB",
-  std.assert! (factory-nparams Factory NParams) "Not a factory synthesized by HB",
+  std.assert! (factory->nparams Factory NParams) "Not a factory synthesized by HB",
 
   % declare the constant for the factory instance
   private.hack-section-discharging SectionBody SectionBodyHack,
@@ -88,7 +88,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
 ].
 
 % [not-subclass-of X C] holds if C does not inherit from X
-pred not-subclass-of i:classname, i:class.
+func not-subclass-of classname, class ->.
 not-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _).
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
@@ -97,18 +97,13 @@ not-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _
 % rest. For each fulfilled class it declares a local constant inhabiting the
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
-pred declare-all i:term, i:list class, o:list (pair id constant).
+func declare-all term, list class -> list (pair id constant).
 declare-all _ [] [].
 declare-all T [class _ Struct _|Rest] L :- has-instance T Struct, !,
   declare-all T Rest L.
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
-
-  infer-class T Class Struct MLwP S Name STy Clauses,
-
-  !,
-
+  infer-class T Class Struct MLwP S Name STy Clauses, !,
   decl-const-in-struct Name S STy CS,
-
   Clauses => declare-all T Rest L.
 
 declare-all T [class HasNoInstance _ _|Rest] L :-
@@ -118,7 +113,8 @@ declare-all T [class HasNoInstance _ _|Rest] L :-
 
 % for generic types, we need first to instantiate them by giving them holes,
 % so they can be used to instantiate the classes
-pred declare-all-on-type-constructor i:term, i:list class, o:list (pair id constant).
+:index (_ 2)
+func declare-all-on-type-constructor term, list class -> list (pair id constant).
 declare-all-on-type-constructor _ [] [].
 declare-all-on-type-constructor TK [class _ Struct _|Rest] L :- saturate-type-constructor TK T, has-instance T Struct, !,
   declare-all-on-type-constructor TK Rest L.
@@ -127,16 +123,12 @@ declare-all-on-type-constructor TK [class Class Struct MLwP|Rest] [pr Name CS|L]
   %TODO: compute the arity of the Class subject and saturate up to that point
   %      there may even be more than one possibility
   saturate-type-constructor TK T,
-
-  infer-class T Class Struct MLwP S Name _STy Clauses,
-
-  !,
+  infer-class T Class Struct MLwP S Name _STy Clauses, !,
 
   abstract-holes.main S SC,
   std.assert-ok! (coq.typecheck SC SCTy) "declare-all-on-type-constructor: badly closed",
   
   decl-const-in-struct Name SC SCTy CS,
-
   Clauses => declare-all-on-type-constructor TK Rest L.
 
 declare-all-on-type-constructor TK [class HasNoInstance _ _|Rest] L :-
@@ -144,7 +136,7 @@ declare-all-on-type-constructor TK [class HasNoInstance _ _|Rest] L :-
   std.filter Rest (not-subclass-of HasNoInstance) Rest1,
   declare-all-on-type-constructor TK Rest1 L.
 
-pred has-instance i:term, i:structure.
+func has-instance term, structure ->.
 has-instance T Struct :-
   if (has-CS-instance? T Struct)
      (if-verbose (coq.say {header} "skipping already existing"
@@ -152,7 +144,7 @@ has-instance T Struct :-
                     {coq.term->string T}))
      fail. % we build it
 
-pred infer-class i:term, i:classname, i:gref, i:factories, o:term, o:string, o:term, o:list prop.
+func infer-class term, classname, gref, factories -> term, string, term, list prop.
 infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
 
   params->holes MLwP Params,
@@ -178,7 +170,7 @@ infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
      
 ].
 
-pred decl-const-in-struct i:string, i:term, i:term, i:constant.
+func decl-const-in-struct string, term, term, constant ->.
 decl-const-in-struct Name S STy CS:- std.do![
 
   if (ground_term S) (S1 = S, STy1 = STy)
@@ -191,8 +183,74 @@ decl-const-in-struct Name S STy CS:- std.do![
   if-verbose (coq.say {header} "structure instance" Name "declared"),
 ].
 
+
+func declare-factory-sort-deps gref ->.
+declare-factory-sort-deps  GR :- std.do! [
+  if-verbose (coq.say {header} "required instances on factory sort for" GR),
+  Name is "SortInstances" ^ {std.any->string {new_int}},
+  log.coq.env.begin-module Name none,
+  log.coq.env.begin-section Name,
+  mk-factory-sort-deps GR CSL,
+  log.coq.env.end-section-name Name,
+  log.coq.env.end-module-name Name _,
+  std.forall CSL (x\ sigma CS\ x = pr _ CS, log.coq.CS.declare-instance CS)
+].
+
+func declare-factory-sort-factory gref ->.
+declare-factory-sort-factory GR :- std.do! [
+  if-verbose (coq.say {header} "required instances on factory sort for" GR),
+  Name is "SortInstances" ^ {std.any->string {new_int}},
+  log.coq.env.begin-module Name none,
+  log.coq.env.begin-section Name,
+  mk-factory-sort-factory GR CFL CSL,
+  log.coq.env.end-section-name Name,
+  log.coq.env.end-module-name Name _,
+  std.forall {std.append CFL CSL} (x\ sigma CS\ x = pr _ CS, log.coq.CS.declare-instance CS)
+].
+
+pred context.declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:list constant.
+
+func mk-factory-sort-deps gref -> list (pair id constant).
+mk-factory-sort-deps AliasGR CSL :- std.do! [
+  std.assert-ok! (factory-alias->gref AliasGR GR) "HB: mk-factory-sort-deps",
+  gref->deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GR FSort,
+  log.coq.env.add-section-variable-noimplicits "f" FSort CF,
+  GCF = global (const CF),
+  factory-sort (coercion GRFSort _ GR _),
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GRFSort KSort,
+  coq.mk-app KSort [GCF] KFSortEta,
+  list-w-params_list MLwP ML,
+  std.length ML NMLArgs,
+  coq.mk-n-holes NMLArgs SortMLHoles,
+  std.append {std.append SortParams [SortKey|SortMLHoles]} [GCF] KFSortArgs,
+  coq.mk-app (global GRFSort) KFSortArgs KFSort,
+  std.assert-ok! (coq.unify-eq KFSortEta KFSort) "HB: KRSort not an app",
+  std.map SortMSL
+    (c\ o\ sigma m t\ c = mixin-src _ m t, o = mixin-src KFSort m t)
+    KFSortMSL,
+  KFSortMSL =>
+    synthesis.under-mixin-src-from-factory.do! KFSort GCF
+      [declare-all KFSort {findall-classes-for ML} CSL]
+].
+
+func mk-factory-sort-factory gref -> list (pair id constant), list (pair id constant).
+mk-factory-sort-factory AliasGR CFL CSL :- std.do! [
+  std.assert-ok! (factory-alias->gref AliasGR GR) "HB",
+  gref->deps GR MLwPRaw,
+  context.declare MLwPRaw MLwP SortParams SortKey SortMSL _,
+  SortMSL => synthesis.infer-all-gref->deps SortParams SortKey GR FSort,
+  log.coq.env.add-section-variable-noimplicits "f" FSort CF,
+  std.length {list-w-params_list MLwP} NMLArgs,
+  coq.mk-n-holes NMLArgs SortMLHoles,
+  GCF = global (const CF),
+  coq.mk-app (global GR) {std.append SortParams [GCF|SortMLHoles]} FGCF,
+  declare-const "_" GCF (arity FGCF) CFL CSL
+].
+
 % create instances for all possible combinations of types and structure compatible 
-pred saturate-instances i:cs-pattern.
+func saturate-instances cs-pattern ->.
 saturate-instances Filter :- std.do! [
 
   findall-has-mixin-instance Filter ClausesHas,
@@ -210,7 +268,7 @@ saturate-instances Filter :- std.do! [
     declare-all-on-type-constructor t Classes _),
 ].
 
-pred no-instance-for i:cs-pattern, i:class.
+func no-instance-for cs-pattern, class ->.
 no-instance-for K (class _ S _) :-
   get-structure-sort-projection S (global Proj),
   coq.CS.db-for Proj K [].
@@ -223,8 +281,8 @@ namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-pred declare-instance i:factoryname, i:term, i:term,
-  o:list prop, o:list (pair id constant), o:list (pair id constant).
+func declare-instance factoryname, term, term
+  -> list prop, list (pair id constant), list (pair id constant).
 declare-instance Factory T F Clauses CFL CSL :-
   current-mode (builder-from T TheFactory FGR _), !,
   if (get-option "local" tt)
@@ -243,8 +301,8 @@ declare-instance Factory T F Clauses CFL CSL :-
 
 % [add-mixin T F _ M Cl] adds a constant being the mixin instance for M on type
 % T built from factory F
-pred add-mixin i:term, i:factoryname, i:bool, i:mixinname,
-  o:list prop, o:list (pair id constant).
+func add-mixin term, factoryname, bool, mixinname
+  -> list prop, list (pair id constant).
 add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do! [
   new_int N, % timestamp
 
@@ -272,8 +330,8 @@ add-mixin T FGR MakeCanon MissingMixin [MixinSrcCl, BuilderDeclCl] CSL :- std.do
      ]) (CSL = []),
 ].
 
-pred add-all-mixins i:term, i:factoryname, i:list mixinname, i:bool,
-  o:list prop, o:list (pair id constant).
+func add-all-mixins term, factoryname, list mixinname, bool
+  -> list prop, list (pair id constant).
 add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
   std.map ML (m\ o\ sigma ClL CSL\
     add-mixin T FGR MakeCanon m ClL CSL, o = pr ClL CSL) ClLxCSL_L,
@@ -286,7 +344,7 @@ add-all-mixins T FGR ML MakeCanon Clauses CSL :- std.do! [
 % corresponding to parameters in arity A. TS is T applied
 % to all section variables (and hd-beta reduced). Acc should
 % be [] at call site.
-pred postulate-arity i:arity, i:list term, i:term, o:term, o:term.
+func postulate-arity arity, list term, term -> term, term.
 postulate-arity (parameter ID _ S A) Acc T T1 Ty :-
   std.assert-ok! (coq.typecheck-ty S _) "arity parameter illtyped",
   if-verbose (coq.say {header} "postulating" ID),
@@ -303,9 +361,9 @@ postulate-arity (arity Ty) ArgsRev X T Ty :-
 % for becoming builders at section closing time. We also declare
 % all canonical instances these new mixins allow for, so that the user
 % can access their theory and notations
-pred declare-canonical-instances-from-factory-and-local-builders
-   i:factoryname, i:term, i:term, i:term, i:factoryname,
-   o:list prop, o:list (pair id constant), o:list (pair id constant).
+func declare-canonical-instances-from-factory-and-local-builders
+   factoryname, term, term, term, factoryname
+   -> list prop, list (pair id constant), list (pair id constant).
 declare-canonical-instances-from-factory-and-local-builders
     Factory T F _TheFactory FGR Clauses CFL CSL :- std.do! [
   synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\ std.do! [
@@ -318,8 +376,8 @@ declare-canonical-instances-from-factory-and-local-builders
 % [declare-canonical-instances-from-factory T F] given a factory F
 % it uses all known builders to declare canonical instances of structures
 % on T
-pred declare-canonical-instances-from-factory
-  i:factoryname, i:term, i:term, o: list prop, o:list (pair id constant), o:list (pair id constant).
+func declare-canonical-instances-from-factory
+  factoryname, term, term -> list prop, list (pair id constant), list (pair id constant).
 declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.do! [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
@@ -338,7 +396,7 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.d
 
 % If you don't mention the factory in a builder, then Coq won't make
 % a lambda for it at section closing time.
-pred hack-section-discharging i:term, o:term.
+func hack-section-discharging term -> term.
 hack-section-discharging B B :- current-mode no-builder, !.
 hack-section-discharging B B1 :- current-mode (builder-from _ TheFactory _ _), !,
   std.assert-ok! (coq.typecheck TheFactory TheFactoryTy) "TheFactory is illtyped (BUG)",
@@ -347,7 +405,7 @@ hack-section-discharging B B.
 
 % unfolds the constant used for the phant abbreviation to avoid storing all
 % the phantom abstrctions and idfun that were used to trigger inference
-pred optimize-body i:term, o:term.
+func optimize-body term -> term.
 optimize-body (app[global (const C)| Args]) Red :- (phant-abbrev _ (const C) _ ; (rex_match "phant_" {coq.gref->id (const C)})), !,
   coq.env.const C (some B) _,
   hd-beta B Args HD Stack,
@@ -355,11 +413,12 @@ optimize-body (app[global (const C)| Args]) Red :- (phant-abbrev _ (const C) _ ;
 optimize-body (let _ _ T x\x) Red :- !, optimize-body T Red.
 optimize-body X X.
 
-pred hnf i:term, o:term.
+func hnf term -> term.
 hnf X R :- get-option "hnf" tt, !, unwind {whd X []} R.
 hnf X X.
 
-pred optimize-class-body i:term, i:int, i:term, o:term, o:list prop.
+:index (_ _ 1)
+func optimize-class-body term, int, term -> term, list prop.
 optimize-class-body T NParams (let _ _ MBo R) R1 Clauses :- std.do! [
   declare-mixin-name {hnf MBo} MC CL1,
   if (T = global (indt _), MC = global (const C), not(coq.env.opaque? C))
@@ -369,17 +428,17 @@ optimize-class-body T NParams (let _ _ MBo R) R1 Clauses :- std.do! [
 ].
 optimize-class-body _ _ (app L) (app L) [].
 
-pred declare-mixin-name i:term, o:term, o:list prop.
-declare-mixin-name (global _ as T) T [].
-declare-mixin-name T (global GR) [] :- mixin-mem T GR.
-declare-mixin-name T T [] :- coq.safe-dest-app T (global GR) _, not (from _ _ GR), not (get-option "hnf" tt).
+func declare-mixin-name term -> term, list prop.
+declare-mixin-name (global _ as T) T [] :- !.
+declare-mixin-name T (global GR) [] :- mixin-mem T GR, !.
+declare-mixin-name T T [] :- coq.safe-dest-app T (global GR) _, not (from _ _ GR), not (get-option "hnf" tt), !.
 declare-mixin-name T (global (const C)) [mixin-mem T (const C)] :- std.do! [
   Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
   if-verbose (coq.say {header} "Giving name" Name "to mixin instance" {coq.term->string T}),
   log.coq.env.add-const-noimplicits Name T _ @transparent! C,
 ].
 
-pred check-non-forgetful-inheritance i:term, i:gref.
+func check-non-forgetful-inheritance term, gref.
 check-non-forgetful-inheritance _ _ :-
   get-option "non_forgetful_inheritance" tt, !.
 check-non-forgetful-inheritance T Factory :- std.do! [
