@@ -64,7 +64,10 @@ declare Module BSkel Sort :- std.do! [
   (ClassAlias => class-def CurrentClass => GRDepsClauses => MixinMems =>
     w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
   if-verbose (coq.say {header} "declaring pack_ constant =" Pack),
+  coq.say {coq.term->string Pack},
+  std.assert-ok! (coq.typecheck Pack _) "typechecking failure: pack_",
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
+  coq.say "XXXXX",
   GRPack = const ConstPack,
 
   if-arg-sort (
@@ -457,13 +460,13 @@ declare-class+structure MLwP Sort
     (indt ClassInd) (indt StructureInd) SortProjection ClassProjection AllFactories
     (structure-key SortP ClassP (indt StructureInd)):- std.do! [
 
-  if-verbose (coq.say {header} "declare axioms record"MLwP ),
+  if-verbose (coq.say {header} "declare axioms record" MLwP),
 
   w-params.then MLwP (mk-parameter explicit) (mk-parameter explicit)
     synthesize-fields.body ClassDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl ClassDeclaration) "declare-class: illtyped",
-  (@univpoly! => @primitive! => log.coq.env.add-indt ClassDeclaration ClassInd),
+  (@primitive! => log.coq.env.add-indt ClassDeclaration ClassInd),
 
   coq.env.projections ClassInd Projs,
   % TODO: put this code in a named clause
@@ -480,8 +483,8 @@ declare-class+structure MLwP Sort
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
   if (get-option "primitive" tt)
-    (@univpoly! => @primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
-    (@univpoly! => log.coq.env.add-indt StructureDeclaration StructureInd),
+    (@primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
+    (log.coq.env.add-indt StructureDeclaration StructureInd),
 
   coq.env.projections StructureInd [some SortP, some ClassP],
   coq.env.global (const SortP) SortProjection,

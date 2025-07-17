@@ -35,7 +35,7 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.env.add-const Name1 Bo Ty Opaque C,
+  @univpoly! => coq.env.add-const Name1 Bo Ty Opaque C,
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
@@ -49,7 +49,7 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.env.add-const Name1 Bo Ty Opaque C,
+  @univpoly! => coq.env.add-const Name1 Bo Ty Opaque C,
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
@@ -61,7 +61,7 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
-  coq.env.add-const Name Bo Ty Opaque C,
+  @univpoly! => coq.env.add-const Name Bo Ty Opaque C,
   env.add-location (const C),
   if (var Ty) (Ty? = none) (Ty? = some Ty),
   log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo),
@@ -79,7 +79,7 @@ env.add-indt Decl I :- std.do! [
   if (not(coq.ground-indt-decl? Decl))
     (coq.error "HB: cannot infer some information in" {coq.indt-decl->string Decl})
     true,
-  coq.env.add-indt Decl I,
+  (@univpoly! => coq.env.add-indt Decl I),
   (coq.env.record? I P ; P = ff),
   log.private.log-vernac (log.private.coq.vernac.inductive Decl P),
   env.add-location (indt I),

@@ -1,19 +1,23 @@
 From HB Require Import structures.
 From Corelib Require Import ssreflect BinNums IntDef.
+Set Printing Universes.
+Set Universe Polymorphism.
+Unset Printing Records.
 
-#[verbose, log]
-HB.mixin Record AddComoid_of_Type A := {
+#[verbose]
+HB.mixin Record AddComoid_of_Type (A : Type) := {
   zero : A;
   add : A -> A -> A;
   addrA : forall x y z, add x (add y z) = add (add x y) z;
   addrC : forall x y, add x y = add y x;
   add0r : forall x, add zero x = x;
 }.
-#[verbose, log(raw)]
 HB.structure Definition AddComoid := { A of AddComoid_of_Type A }.
 
 Notation "0" := zero.
 Infix "+" := add.
+
+About AddComoid_of_Type.axioms_.
 
 Check forall (M : AddComoid.type) (x : M), x + x = 0.
 
