@@ -300,6 +300,12 @@ cs-pattern->name (cs-sort _) "sort".
 cs-pattern->name cs-default "default".
 cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
 
+% decompose [app (p?global X UI?)|Args] into X and Args, using @univdecl UI to store UI.
+pred coq.safe-dest-global-app i:term, o:gref, o:list term.
+coq.safe-dest-global-app Tm GR Args :- !, std.do![
+    coq.safe-dest-app Tm Head Args, (Head = global GR; Head = pglobal GR _)
+  ].
+
 % ---------------------------------------------------------------------
 % kit for closing a term by abstracting evars with lambdas
 % we use constraints to attach to holes a number

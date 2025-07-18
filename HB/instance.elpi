@@ -23,7 +23,7 @@ declare-existing T0 F0 :- std.do! [
 % that can be built using factory instance B. CFL contains the list of
 % factories being defined, CSL the list of canonical structures being defined.
 pred declare-const i:id, i:term, i:arity, o:list (pair id constant), o:list (pair id constant).
-declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
+declare-const Name BodySkel TyWPSkel CFL CSL :- std.spy-do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
@@ -65,6 +65,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
     (coq.error "HB: The instance subject must be explicitly given.\nUse:\n  HB.instance Definition _ : M <subject> := ...\n  HB.instance Definition _ := M.Build <subject> ...")
     true,
 
+  std.assert-ok! (coq.typecheck OptimizedBody _) "typechecking Optimized Body",
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
   coq.env.global (const C) TheFactory,

@@ -64,10 +64,8 @@ declare Module BSkel Sort :- std.do! [
   (ClassAlias => class-def CurrentClass => GRDepsClauses => MixinMems =>
     w-params.then MLwP mk-fun mk-fun (private.pack-body ClassName) Pack),
   if-verbose (coq.say {header} "declaring pack_ constant =" Pack),
-  coq.say {coq.term->string Pack},
   std.assert-ok! (coq.typecheck Pack _) "typechecking failure: pack_",
   log.coq.env.add-const-noimplicits "pack_" Pack _ @transparent! ConstPack,
-  coq.say "XXXXX",
   GRPack = const ConstPack,
 
   if-arg-sort (
@@ -207,15 +205,21 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
   gref-deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
-  coq.env.global (const Po) G,
-  coq.env.global (const C) GC,
 
-  (pi L L1 L2 Params Rest PoArgs\
-    copy (app [G| L]) (app [GC | L2]) :-
+  % TODO: refactor
+  [(pi L L1 L2 Params Rest PoArgs\
+    (copy (app [global (const Po)| L]) (app [global (const C) | L2]) :-
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
-      std.map L1 copy L2) =>
+      std.map L1 copy L2)),
+   (pi UI L L1 L2 Params Rest PoArgs\
+    (copy (app [pglobal (const Po) UI | L]) (app [pglobal (const C) UI | L2]) :-
+      std.split-at NParams L Params [_|Rest],
+      std.drop NMixins Rest PoArgs,
+      std.append Params [S|PoArgs] L1,
+      std.map L1 copy L2))]
+  =>
   clean-op-ty Ops S T1 T2.
 
 pred operation-body-and-ty i:list prop, i:constant, i:structure, i:term, i:term,
@@ -249,7 +253,7 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
 
   w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
-  if-verbose (coq.say {header} "export operation" Name),
+  if-verbose (coq.say {header} "export operation" Name "as" BodyTy),
   log.coq.env.add-const-noimplicits Name Body BodyTy @transparent! C,
 
   w-params.nparams MwP NP,

@@ -98,11 +98,6 @@ gref->modname_short1 MP S _ S :- string->modpath S MP.
 gref->modname_short1 MP S [X|L] S' :-
   gref->modname_short1 MP {std.string.concat "." [X,S]} L S'.
 
-pred coq.safe-dest-global-app i:term, o:gref, o:list term.
-coq.safe-dest-global-app Tm GR Args :- !, std.do![
-    coq.safe-dest-app Tm Head Args, coq.env.global GR Head
-  ].
-
 % Print shortest qualified identifier of the module containing a gref
 % Sep is used as separator
 pred gref->modname_short i:gref, i:string, o:string.

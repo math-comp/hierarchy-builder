@@ -263,17 +263,13 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   RDeclSkel = record "axioms_" Sort1 Kname Fields,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclSkel RDecl) "record declaration illtyped",
 
-  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosed _,
+  abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-indt-decl RDecl RDeclClosedSkel _,
 
-  coq.say "ZZZZZZZZZZ",
-  std.assert-ok! (coq.typecheck-indt-decl RDeclClosed) "RDeclClosed: illtyped",
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclClosedSkel RDeclClosed) "record declaration illtyped",
 
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
     (log.coq.env.add-indt RDeclClosed R),
-
-  coq.say TheType,
-  coq.say RDeclClosed,
 
   log.coq.env.end-section-name Module, % We need to anyway declare the record inside the section
     % since closing the section purges the unused universe level we may have
@@ -297,6 +293,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "declare notation Build"),
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
+  coq.say "XXXXXXX",
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
 
   if-verbose (coq.say {header} "declare notation axioms"),
@@ -347,10 +344,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
   std.assert-ok! (coq.typecheck Ty1Closed _) "Typechecking of Ty1Closed failed",
-  coq.say "YYYYYYY",
-  coq.say {coq.term->string Ty1Closed},
   log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
-  coq.say {coq.term->string {coq.env.global (const C)}},
 
   std.assert! (coq.safe-dest-global-app Ty1 PhF _Args) "Argument must be a factory",
   std.assert-ok! (factory-alias->gref PhF F) "HB",
