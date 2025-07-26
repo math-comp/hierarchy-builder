@@ -34,34 +34,42 @@
     "coq-master" = { rocqPackages = {
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
-      rocq-elpi.override.version = "master";
-      rocq-elpi.override.elpi-version = "2.0.7";
+      rocq-elpi.override.version = "v3.0.0";
+      rocq-elpi.override.elpi-version = "v3.0.1";
       bignums.override.version = "master";
     }; coqPackages = mcHBcommon // {
       coq.override.version = "master";
       stdlib.override.version = "master";
-      coq-elpi.override.version = "master";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.version = "v3.0.0";
+      coq-elpi.override.elpi-version = "v3.0.1";
       bignums.override.version = "master";
       coquelicot.job = false;
     }; };
 
-    "coq-9.1".coqPackages = mcHBcommon // {
+    "coq-9.1" = { rocqPackages = {
+      rocq-core.override.version = "9.1";
+      rocq-elpi.override.version = "v3.0.0";
+      rocq-elpi.override.elpi-version = "v3.0.1";
+    }; coqPackages = mcHBcommon // {
       coq.override.version = "9.1";
-      coq-elpi.override.version = "master";
-      coq-elpi.override.elpi-version = "2.0.7";
-    };
+      coq-elpi.override.version = "v3.0.0";
+      coq-elpi.override.elpi-version = "v3.0.1";
+    }; };
 
-    "coq-9.0".coqPackages = mcHBcommon // {
+    "coq-9.0" = { rocqPackages = {
+      rocq-core.override.version = "9.0";
+      rocq-elpi.override.version = "v3.0.0";
+      rocq-elpi.override.elpi-version = "v3.0.1";
+    }; coqPackages = mcHBcommon // {
       coq.override.version = "9.0";
-      coq-elpi.override.version = "master";
-      coq-elpi.override.elpi-version = "2.0.7";
-    };
+      coq-elpi.override.version = "v3.0.0";
+      coq-elpi.override.elpi-version = "v3.0.1";
+    }; };
 
     "coq-8.20".coqPackages = mcHBcommon // {
       coq.override.version = "8.20";
-      coq-elpi.override.version = "master";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.version = "v3.0.0";
+      coq-elpi.override.elpi-version = "v3.0.1";
       interval.override.version = "master";
     };
 

@@ -167,3 +167,7 @@ structures.vo : %.vo: __always__ Makefile.coq
 $(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v tests/unit/*.v)): __always__ config build Makefile.test-suite.coq Makefile.test-suite-stdlib.coq
 	+$(COQMAKE_TESTSUITE) $@
 	+$(COQMAKE_TESTSUITE_stdlib) $@
+
+nix:
+	nix-shell --arg do-nothing true --run "updateNixToolBox && genNixActions"
+.PHONY: nix

@@ -139,7 +139,6 @@ jobs:
         --argstr job "QuickChick"
   bignums:
     needs:
-    - coq
     - stdlib
     runs-on: ubuntu-latest
     steps:
@@ -189,10 +188,6 @@ jobs:
         ) ; then\n    echo \"waiting a bit for derivations that should be in cache\"\
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
-    - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
-        --argstr job "coq"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: stdlib'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
@@ -330,8 +325,7 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
         --argstr job "coq-bits"
   coq-elpi:
-    needs:
-    - coq
+    needs: []
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -380,10 +374,6 @@ jobs:
         ) ; then\n    echo \"waiting a bit for derivations that should be in cache\"\
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
-    - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
-        --argstr job "coq"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
@@ -612,7 +602,6 @@ jobs:
         --argstr job "fourcolor"
   hierarchy-builder:
     needs:
-    - coq
     - coq-elpi
     runs-on: ubuntu-latest
     steps:
@@ -662,10 +651,6 @@ jobs:
         ) ; then\n    echo \"waiting a bit for derivations that should be in cache\"\
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
-    - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
-        --argstr job "coq"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: coq-elpi'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
@@ -2682,8 +2667,7 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
         --argstr job "simple-io"
   stdlib:
-    needs:
-    - coq
+    needs: []
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -2732,10 +2716,6 @@ jobs:
         ) ; then\n    echo \"waiting a bit for derivations that should be in cache\"\
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
-    - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
-        --argstr job "coq"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
