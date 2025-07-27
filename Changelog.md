@@ -1,8 +1,16 @@
 # Changelog
 
-## Unreleased
+## [1.10.0] - 2025-07-21
 
-Drop compatibility with 8.18 and 8.19
+Compatible with
+- Coq 8.20 with Coq-Elpi 3.0.x
+- Rocq 9.0 with Rocq-Elpi 3.0.x
+- Rocq 9.1 with Rocq-Elpi 3.0.x
+
+## [1.9.1] - 2025-04-29
+
+Drop compatibility with 8.18 and 8.19.
+Rename opma package to rocq-hierarchy-builder.
 
 ## [1.9.0] - 2025-04-15
 
