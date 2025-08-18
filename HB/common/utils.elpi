@@ -102,7 +102,7 @@ string->modpath S MP :-
 func gref->modname_short1 modpath, string, list string -> string.
 gref->modname_short1 _ S [] S :- !.
 gref->modname_short1 MP "" [X|L] L' :- !, gref->modname_short1 MP X L L'.
-gref->modname_short1 MP S _ S :- !, string->modpath S MP.
+gref->modname_short1 MP S _ S :- string->modpath S MP, !.
 gref->modname_short1 MP S [X|L] S' :-
   gref->modname_short1 MP {std.string.concat "." [X,S]} L S'.
 
