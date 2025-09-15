@@ -1,11 +1,14 @@
 From elpi Require Import elpi.
-Set Universe Polymorphism.
 Set Printing Universes.
 
 Module test_rocq.
-Record test : Type := mktest { foo : Type }.
+Section test.
+Variable A : Type.
+Record test : Type := mktest { foo : A }.
 Print test. (* Record test@{u} : Type@{u+1} := mktest { foo : Type@{u} }. (* u |=  *)*)
+End test.
 End test_rocq.
+Print test_rocq.test. (* Record test@{u} : Type@{u+1} := mktest { foo : Type@{u} }. (* u |=  *)*)
 
 Module test_elpi.
 Elpi Command test_default.
@@ -20,7 +23,7 @@ End test_elpi.
 Module test_explicit.
 Elpi Command test_explicit.
 Elpi Query lp:"
-   @keep-alg-univs! => @univpoly! => coq.env.add-indt (record ""test"" {{Type}} ""mktest""
+   @univpoly! => coq.env.add-indt (record ""test"" {{Type}} ""mktest""
      (field _ ""foo"" {{Type}}  _ \ end-record)) _C.
 ".
 Print test.

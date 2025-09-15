@@ -26,7 +26,9 @@ pred declare-const i:id, i:term, i:arity, o:list (pair id constant), o:list (pai
 declare-const Name BodySkel TyWPSkel CFL CSL :- std.spy-do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
-  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
+  coq.say {coq.term->string Ty},
+  coq.say {coq.term->string BodySkel},
+  std.assert-ok! (coq.elaborate-skeleton BodySkel _ Body) "Definition illtyped WHYYYY?",
 
   % handle parameters via a section -- begin
   if (TyWP = arity SectionTy) (

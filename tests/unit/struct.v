@@ -1,6 +1,9 @@
 From HB Require Import structures.
+Set Universe Polymorphism.
+Set Printing Universes.
 
 HB.mixin Record m1 T := { default1 : T }.
+Print m1.phant_axioms.
 HB.mixin Record m2 T := { default2 : T }.
 HB.mixin Record is_foo P A := { op : P -> A -> A }.
 HB.structure Definition foo P := { A  of is_foo P A}.

@@ -2,8 +2,10 @@
 From Corelib Require Import ssreflect ssrfun.
 Set Universe Polymorphism.
 
-Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
-Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
+Variant phantom (T : Type) (p : T) : Prop :=  Phantom : phantom T p.
+
+Variant error_msg@{u} : Prop := NoMsg | IsNotCanonicallyA (x : Type@{u}).
+Definition unify@{u u'} (T1 T2 : Type@{u}) (t1 : T1) (t2 : T2) (s : error_msg@{u'}) :=
   phantom T1 t1 -> phantom T2 t2.
 Definition id_phant {T} {t : T} (x : phantom T t) := x.
 Definition id_phant_disabled {T T'} {t : T} {t' : T'} (x : phantom T t) := Phantom T' t'.
