@@ -826,8 +826,8 @@ HB.mixin Record IsLeftAdjointOf (C D : cat) (R : D ~> C) L
   Lphi : forall c d, (L c ~> d) -> (c ~> R d);
   Lpsi : forall c d, (c ~> R d) -> (L c ~> d);
   (* there should be a monad and comonad structure wrappers instead *)
-  Lunit : (idmap : C ~> C) ~~> R \o ((L : Functor.type C D) : C ~> D);
-  Lcounit : ((L : Functor.type C D) : C ~> D) \o R ~~> idmap :> D ~> D;
+  Lunit : (idmap : C ~> C) ~> R \o (L : Functor.type C D);
+  Lcounit : (L : Functor.type C D) \o R ~~> idmap :> D ~> D;
   LphiE : forall c d (g : L c ~> d), Lphi c d g = Lunit c \; (R <$> g);
   LpsiE : forall c d (f : c ~> R d), Lpsi c d f = (L <$> f) \; Lcounit d;
   Lwhiskerlr : let L : C ~> D := L : Functor.type C D in
@@ -845,20 +845,20 @@ Arguments Lpsi {C D R s} {c d}.
 Arguments Lunit {C D R s}.
 Arguments Lcounit {C D R s}.
 
-Section LeftAdjointOf_Theory.
-Variables (C D : cat) (R : D ~> C) (L : LeftAdjointOf.type R).
+(* Section LeftAdjointOf_Theory. *)
+(* Variables (C D : cat) (R : D ~> C) (L : LeftAdjointOf.type R). *)
 
-Lemma Lphi_psi (c : C) (d : D) :
-  (@Lphi _ _ R L c d \o @Lpsi _ _ R L c d)%function = @id (c ~> R d).
-Proof.
-apply/funext => f /=; rewrite LphiE LpsiE.
-Admitted.
+(* Lemma Lphi_psi (c : C) (d : D) : *)
+(*   (@Lphi _ _ R L c d \o @Lpsi _ _ R L c d)%function = @id (c ~> R d). *)
+(* Proof. *)
+(* apply/funext => f /=; rewrite LphiE LpsiE. *)
+(* Admitted. *)
 
-Lemma Lpsi_phi (c : C) (d : D) :
-  (@Lpsi _ _ R L c d \o @Lphi _ _ R L c d)%function = @id (L c ~> d).
-Proof.
-Admitted.
-End LeftAdjointOf_Theory.
+(* Lemma Lpsi_phi (c : C) (d : D) : *)
+(*   (@Lpsi _ _ R L c d \o @Lphi _ _ R L c d)%function = @id (L c ~> d). *)
+(* Proof. *)
+(* Admitted. *)
+(* End LeftAdjointOf_Theory. *)
 
 HB.mixin Record IsRightAdjoint (D C : cat) (R : D -> C)
     of @Functor D C R := {
