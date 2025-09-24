@@ -343,8 +343,8 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   std.assert-ok! (coq.elaborate-ty-skeleton Ty1Skel _ Ty1) "Illtyped alias factory",
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr Ty1 _) (pr Ty1Closed _) Section,
-  std.assert-ok! (coq.typecheck Ty1Closed _) "Typechecking of Ty1Closed failed",
-  log.coq.env.add-const-noimplicits "axioms_" Ty1Closed _ @transparent! C,
+  std.assert-ok! (coq.typecheck Ty1Closed Ty1ClosedTy) "Typechecking of Ty1Closed failed",
+  log.coq.env.add-const-noimplicits "axioms_" Ty1Closed Ty1ClosedTy @transparent! C,
 
   std.assert! (coq.safe-dest-global-app Ty1 PhF _Args) "Argument must be a factory",
   std.assert-ok! (factory-alias->gref PhF F) "HB",

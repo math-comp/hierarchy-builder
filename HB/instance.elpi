@@ -388,7 +388,8 @@ declare-mixin-name T T [] :- coq.safe-dest-global-app T GR _, not (from _ _ GR),
 declare-mixin-name T G [mixin-mem T (const C)] :- std.do! [
   Name is "HB_unnamed_mixin_" ^ {std.any->string {new_int}},
   if-verbose (coq.say {header} "Giving name" Name "to mixin instance" {coq.term->string T}),
-  log.coq.env.add-const-noimplicits Name T _ @transparent! C,
+  std.assert-ok! (coq.typecheck T Ty) "Failing typechecking the mixin",
+  log.coq.env.add-const-noimplicits Name T Ty @transparent! C,
   coq.env.global (const C) G
 ].
 
