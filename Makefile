@@ -111,6 +111,7 @@ this-config:: __always__
 	# Remove all of the above when requiring Rocq >= 9.0
 
 this-build:: this-config Makefile.coq
+	cd ../coq-elpi && opam install ./rocq-elpi.opam --ignore-constraints-on=rocq-core
 	+$(COQMAKE)
 
 this-only:: this-config Makefile.coq
