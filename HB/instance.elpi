@@ -23,7 +23,7 @@ declare-existing T0 F0 :- std.do! [
 % that can be built using factory instance B. CFL contains the list of
 % factories being defined, CSL the list of canonical structures being defined.
 pred declare-const i:id, i:term, i:arity, o:list (pair id constant), o:list (pair id constant).
-declare-const Name BodySkel TyWPSkel CFL CSL :- std.spy-do! [
+declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   coq.say "TY=" {coq.term->string Ty},
@@ -106,11 +106,11 @@ declare-all T [class _ Struct _|Rest] L :- has-instance T Struct, !,
   declare-all T Rest L.
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
-  std.spy(infer-class T Class Struct MLwP S Name STy Clauses),
+  infer-class T Class Struct MLwP S Name STy Clauses,
 
   !,
 
-  std.spy(decl-const-in-struct Name S STy CS),
+  decl-const-in-struct Name S STy CS,
 
   Clauses => declare-all T Rest L.
 
@@ -183,15 +183,12 @@ infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
 ].
 
 pred decl-const-in-struct i:string, i:term, i:term, i:constant.
-decl-const-in-struct Name S STy CS:- std.spy-do![
+decl-const-in-struct Name S STy CS:- std.do![
 
   if (ground_term S) (S1 = S, STy1 = STy)
     (abstract-holes.main S S1,
      std.assert-ok! (coq.typecheck S1 STy1) "HB: structure instance illtyped after generalizing over holes"),
 
-  coq.say "T=" {coq.term->string S1},
-  coq.say "Ty=" {coq.term->string STy1},
-  coq.univ.print,
   log.coq.env.add-const-noimplicits Name S1 STy1 @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
   acc-clause current (local-canonical CS),
@@ -368,12 +365,13 @@ optimize-body (let _ _ T x\x) Red :- !, optimize-body T Red.
 optimize-body X X.
 
 pred hnf i:term, o:term.
-hnf X R :- get-option "hnf" tt, !, unwind {whd X []} R.
+hnf X R :- get-option "hnf" tt, !, whd X [] Y Z, unwind Y Z R.
 hnf X X.
 
 pred optimize-class-body i:term, i:int, i:term, o:term, o:list prop.
 optimize-class-body T NParams (let _ _ MBo R) R1 Clauses :- std.do! [
-  declare-mixin-name {hnf MBo} MC CL1,
+  hnf MBo MBoHNF,
+  declare-mixin-name MBoHNF MC CL1,
   if (coq.env.global (indt _) T, coq.env.global (const C) MC, not(coq.env.opaque? C))
      (log.coq.strategy.set [C] (level 1000)) true, % opaque stops simpl
   optimize-class-body T NParams (R MC) R1 CL2,
