@@ -60,11 +60,13 @@ Check id_phant@{u+1} : unify@{u+1 max(u'+1,u'')}  Type@{u} Type@{u} Z _
                          (is_not_canonically_a@{max(u'+1,u'')} AddComoid.type@{u' u''}).
 Set Printing All.
 About AbelianGrp_of_AddComoid.phant_Build.
-(* Set Debug "backtrace".
-Set Debug "ustate". *)
-Check Z : AddComoid.type.
+ Set Debug "backtrace".
+ Set Debug "univMinim".
+ Set Debug "ustate".
+(* Set Debug "ustate". *)
+(* Check Z : AddComoid.type.
 Check AbelianGrp_of_AddComoid.phant_Build Z _ _ (@id_phant _ _) _ (@id_phant _ _) _
-  (@id_phant _ _) _ (@id_phant _ _) (@id_phant _ _) Z.opp Z_add_opp_diag_l.
+  (@id_phant _ _) _ (@id_phant _ _) (@id_phant _ _) Z.opp Z_add_opp_diag_l. *)
 
 #[verbose]
 HB.instance Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z_add_opp_diag_l.

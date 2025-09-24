@@ -191,6 +191,7 @@ decl-const-in-struct Name S STy CS:- std.spy-do![
 
   coq.say "T=" {coq.term->string S1},
   coq.say "Ty=" {coq.term->string STy1},
+  coq.univ.print,
   log.coq.env.add-const-noimplicits Name S1 STy1 @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
   acc-clause current (local-canonical CS),
