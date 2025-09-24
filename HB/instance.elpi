@@ -26,9 +26,9 @@ pred declare-const i:id, i:term, i:arity, o:list (pair id constant), o:list (pai
 declare-const Name BodySkel TyWPSkel CFL CSL :- std.spy-do! [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
-  coq.say {coq.term->string Ty},
-  coq.say {coq.term->string BodySkel},
-  std.assert-ok! (coq.elaborate-skeleton BodySkel _ Body) "Definition illtyped WHYYYY?",
+  coq.say "TY=" {coq.term->string Ty},
+  coq.say "BO=" {coq.term->string BodySkel},
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped WHYYYY?",
 
   % handle parameters via a section -- begin
   if (TyWP = arity SectionTy) (
@@ -67,7 +67,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.spy-do! [
     (coq.error "HB: The instance subject must be explicitly given.\nUse:\n  HB.instance Definition _ : M <subject> := ...\n  HB.instance Definition _ := M.Build <subject> ...")
     true,
 
-  std.assert-ok! (coq.typecheck OptimizedBody _) "typechecking Optimized Body",
+  std.assert-ok! (coq.typecheck OptimizedBody SectionTyUnfolded) "typechecking Optimized Body",
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
   coq.env.global (const C) TheFactory,
@@ -106,11 +106,11 @@ declare-all T [class _ Struct _|Rest] L :- has-instance T Struct, !,
   declare-all T Rest L.
 declare-all T [class Class Struct MLwP|Rest] [pr Name CS|L] :-
 
-  infer-class T Class Struct MLwP S Name STy Clauses,
+  std.spy(infer-class T Class Struct MLwP S Name STy Clauses),
 
   !,
 
-  decl-const-in-struct Name S STy CS,
+  std.spy(decl-const-in-struct Name S STy CS),
 
   Clauses => declare-all T Rest L.
 
@@ -178,16 +178,19 @@ infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
   if-verbose (coq.say {header} "structure instance for" Name "is" {coq.term->string S}),
 
   coq.typecheck S STy ok, % failure may be due to a parameter not rich enough see #435
-     
+  
+  if-verbose (coq.say {header} "and it typechecks"),
 ].
 
 pred decl-const-in-struct i:string, i:term, i:term, i:constant.
-decl-const-in-struct Name S STy CS:- std.do![
+decl-const-in-struct Name S STy CS:- std.spy-do![
 
   if (ground_term S) (S1 = S, STy1 = STy)
     (abstract-holes.main S S1,
      std.assert-ok! (coq.typecheck S1 STy1) "HB: structure instance illtyped after generalizing over holes"),
 
+  coq.say "T=" {coq.term->string S1},
+  coq.say "Ty=" {coq.term->string STy1},
   log.coq.env.add-const-noimplicits Name S1 STy1 @transparent! CS, % Bug coq/coq#11155, could be a Let
   with-locality (log.coq.CS.declare-instance CS), % Bug coq/coq#11155, should be local
   acc-clause current (local-canonical CS),
@@ -239,6 +242,7 @@ declare-instance Factory T F Clauses CFL CSL :-
     T F TheFactory FGR Clauses CFL CSL.
 declare-instance Factory T F Clauses CFL CSL :-
   declare-canonical-instances-from-factory Factory T F Clauses1 CFL CSL,
+  coq.say "DONE",
   if (get-option "export" tt)
      (coq.env.current-library File,
       std.map {std.append CFL CSL} (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses2)

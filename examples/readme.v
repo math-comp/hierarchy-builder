@@ -46,15 +46,29 @@ Axiom Z_add_comm : forall x y, Z.add x y = Z.add y x.
 Axiom Z_add_0_l : forall x, Z.add Z0 x = x.
 Axiom Z_add_opp_diag_l : forall x, Z.add (Z.opp x) x = Z0.
 
-Fail #[verbose]
+(* Set Debug "backtrace". *)
+
+#[verbose]
 HB.instance Definition Z_CoMoid := AddComoid_of_Type.Build Z Z0 Z.add Z_add_assoc Z_add_comm Z_add_0_l.
+
+
 Section test.
 Universe u u' u''.
+About id_phant.
+About unify.
 Check id_phant@{u+1} : unify@{u+1 max(u'+1,u'')}  Type@{u} Type@{u} Z _
                          (is_not_canonically_a@{max(u'+1,u'')} AddComoid.type@{u' u''}).
+Set Printing All.
+About AbelianGrp_of_AddComoid.phant_Build.
+(* Set Debug "backtrace".
+Set Debug "ustate". *)
+Check Z : AddComoid.type.
+Check AbelianGrp_of_AddComoid.phant_Build Z _ _ (@id_phant _ _) _ (@id_phant _ _) _
+  (@id_phant _ _) _ (@id_phant _ _) (@id_phant _ _) Z.opp Z_add_opp_diag_l.
 
+#[verbose]
 HB.instance Definition Z_AbGrp := AbelianGrp_of_AddComoid.Build Z Z.opp Z_add_opp_diag_l.
-
+stop.
 Lemma example2 (x : Z) : x + (- x) = - 0.
 Proof. by rewrite example. Qed.
 
