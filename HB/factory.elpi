@@ -357,6 +357,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
   (pi Args\ copy (app[FHead|Args]) (app[CHead|Section])) => copy MFKTy MFKTyC,
 
   abstract-over-section TheParams TheType MixinSrcClauses SectionCanonicalInstance coq.abstract-const-decl (pr MFK MFKTyC) (pr MFKClosed MFKTyCClosed) _,
+  std.assert-ok! (coq.typecheck MFKClosed MFKTyCClosed) "MFKClosed illtyped",
   log.coq.env.add-const-noimplicits "Axioms_" MFKClosed MFKTyCClosed @transparent! CK,
 
   GRK = const CK,
