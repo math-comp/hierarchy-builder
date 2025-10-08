@@ -1,4 +1,5 @@
 Set Universe Polymorphism.
+Set Printing Universes.
 From Corelib Require Import ssreflect ssrfun.
 From HB Require Import structures.
 
@@ -49,7 +50,7 @@ HB.builders Context A (a : Ring_of_MulMonoid A).
     AddMonoid_of_Type.Build A zero add addrA add0r addr0.
   (* Set Debug "backtrace". *)
   (* Set Debug "ustate". *)
-  Fail #[verbose] HB.instance Definition to_Ring_of_AddMulMonoid :=
+  #[verbose] HB.instance Definition to_Ring_of_AddMulMonoid :=
     Ring_of_AddMulMonoid.Build A opp addrC addNr mulrDl mulrDr.
 
 HB.end.

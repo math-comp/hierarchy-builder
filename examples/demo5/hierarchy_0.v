@@ -143,6 +143,7 @@ HB.mixin Record LModule_of_AG (R : Ring.type) (M : Type) of AddAG M := {
   scaleA : forall a b v, scale a (scale b v) = scale (a * b) v;
   scale1r : forall m, scale 1 m = m;
 }.
+
 HB.structure Definition LModule (R : Ring.type) :=
   { M of LModule_of_AG R M & }.
 Infix "*:" := (@scale _ _) (at level 30) : hb_scope.

@@ -267,6 +267,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RDeclClosedSkel RDeclClosed) "record declaration illtyped",
 
+  coq.say "RDeclClosed=" RDeclClosed,
+  coq.univ.print,
+
   if (get-option "primitive" tt)
     (@primitive! => log.coq.env.add-indt RDeclClosed R)
     (log.coq.env.add-indt RDeclClosed R),
