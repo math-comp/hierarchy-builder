@@ -56,9 +56,6 @@ Section test.
 Universe u u' u''.
 About id_phant.
 About unify.
-Check id_phant@{u+1} : unify@{u+1 max(u'+1,u'')}  Type@{u} Type@{u} Z _
-                         (is_not_canonically_a@{max(u'+1,u'')} AddComoid.type@{u' u''}).
-Set Printing All.
 About AbelianGrp_of_AddComoid.phant_Build.
 (* Set Debug "ustate". *)
 (* Check Z : AddComoid.type.

@@ -22,7 +22,6 @@ HB.mixin Record MulMonoid_of_Type (A : Type) := {
   mul1r : left_id one mul;
   mulr1 : right_id one mul;
 }.
-STOP.
 
 HB.structure Definition MulMonoid := { A of MulMonoid_of_Type A }.
 
