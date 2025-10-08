@@ -38,4 +38,8 @@ HB.mixin Record Ring_of_MulMonoid A of MulMonoid A := {
   mulrDl : left_distributive mul add;
   mulrDr : right_distributive mul add;
 }.
+(* Elpi Trace. *)
+(* Set Debug "backtrace". *)
+(* Set Debug "inferCumul_infer_term". *)
+#[log(raw)]
 HB.structure Definition Ring := { A of MulMonoid A & Ring_of_MulMonoid A }.

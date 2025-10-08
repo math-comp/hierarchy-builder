@@ -162,6 +162,8 @@ declare Module BSkel Sort :- std.do! [
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
+  coq.say "Struct = " {coq.env.global Structure},
+
   if-verbose (coq.say {header} "exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
       private.export-operations Structure SortProjection ClassProjection MLwP [] EX MLToExport,
@@ -214,7 +216,7 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
       std.append Params [S|PoArgs] L1,
       std.map L1 copy L2)),
    (pi UI L L1 L2 Params Rest PoArgs\
-    (copy (app [pglobal (const Po) UI | L]) (app [pglobal (const C) UI | L2]) :-
+    (copy (app [pglobal (const Po) UI | L]) (app [pglobal (const C) _ | L2]) :-
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
@@ -254,6 +256,8 @@ export-1-operation M Struct Psort Pclass MwP (some Poperation) EXI EXO :- !, std
   w-params.then MwP mk-fun-prod ignore (operation-body-and-ty EXI Poperation Struct Psort Pclass) (pr Body BodyTy),
 
   if-verbose (coq.say {header} "export operation" Name "as" BodyTy),
+  std.assert-ok! (coq.typecheck-ty BodyTy _) "Checking type of operation",
+  std.assert-ok! (coq.typecheck Body BodyTy) "Checking body of operation",
   log.coq.env.add-const-noimplicits Name Body BodyTy @transparent! C,
 
   w-params.nparams MwP NP,
