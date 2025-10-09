@@ -143,7 +143,6 @@ HB.mixin Record LModule_of_AG (R : Ring.type) (M : Type) of AddAG M := {
   scaleA : forall a b v, scale a (scale b v) = scale (a * b) v;
   scale1r : forall m, scale 1 m = m;
 }.
-Elpi Trace.
 HB.structure Definition LModule (R : Ring.type) :=
   { M of LModule_of_AG R M & }.
 Infix "*:" := (@scale _ _) (at level 30) : hb_scope.
@@ -152,7 +151,6 @@ Definition regular (R : Type) := R.
 
 HB.instance Definition regular_AG (R : AddAG.type) :=
   AddAG_of_TYPE.Build (regular (AddAG.sort R)) zero add opp addrA addrC add0r addNr.
-
 HB.instance Definition regular_LModule (R : Ring.type) :=
   LModule_of_AG.Build R (regular (Ring.sort R)) mul
     (fun _ _ _ => mulrDl _ _ _) mulrDr mulrA mul1r.

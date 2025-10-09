@@ -13,6 +13,7 @@ HB.structure Definition B (X : A.type 0) := { T of HasB X T }.
    parameter `A` to elaborate it. *)
 HB.mixin Record IsSelfA T of A 0 T & B (A.clone 0 T _) T := {}.
 
+(* Elpi Trace. *)
 HB.structure Definition SelfA := { T of IsSelfA T }.
 
 HB.factory Record IsSelfA' T := { a : T ; b : T -> T}.

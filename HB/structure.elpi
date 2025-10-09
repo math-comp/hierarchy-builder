@@ -215,8 +215,9 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
       std.map L1 copy L2)),
-   (pi UI L L1 L2 Params Rest PoArgs\
-    (copy (app [pglobal (const Po) UI | L]) (app [pglobal (const C) _ | L2]) :-
+   (pi Tm UI L L1 L2 Params Rest PoArgs\
+    (copy (app [pglobal (const Po) UI | L]) (app [Tm | L2]) :-
+      coq.env.global (const C) Tm,
       std.split-at NParams L Params [_|Rest],
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
