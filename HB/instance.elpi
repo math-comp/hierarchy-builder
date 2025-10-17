@@ -88,7 +88,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
 ].
 
 % [not-subclass-of X C] holds if C does not inherit from X
-func not-subclass-of classname, class ->.
+func not-subclass-of classname, hbclass ->.
 not-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _).
 
 % [declare-all T CL MCSTL] given a type T and a list of class definition
@@ -97,7 +97,7 @@ not-subclass-of HasNoInstance (class C _ _) :- not(sub-class C HasNoInstance _ _
 % rest. For each fulfilled class it declares a local constant inhabiting the
 % corresponding structure and declares it canonical.
 % Each mixin used in order to fulfill a class is returned together with its name.
-func declare-all term, list class -> list (pair id constant).
+func declare-all term, list hbclass -> list (pair id constant).
 declare-all _ [] [].
 declare-all T [class _ Struct _|Rest] L :- has-instance T Struct, !,
   declare-all T Rest L.
@@ -114,7 +114,7 @@ declare-all T [class HasNoInstance _ _|Rest] L :-
 % for generic types, we need first to instantiate them by giving them holes,
 % so they can be used to instantiate the classes
 :index (_ 2)
-func declare-all-on-type-constructor term, list class -> list (pair id constant).
+func declare-all-on-type-constructor term, list hbclass -> list (pair id constant).
 declare-all-on-type-constructor _ [] [].
 declare-all-on-type-constructor TK [class _ Struct _|Rest] L :- saturate-type-constructor TK T, has-instance T Struct, !,
   declare-all-on-type-constructor TK Rest L.
@@ -268,7 +268,7 @@ saturate-instances Filter :- std.do! [
     declare-all-on-type-constructor t Classes _),
 ].
 
-func no-instance-for cs-pattern, class ->.
+func no-instance-for cs-pattern, hbclass ->.
 no-instance-for K (class _ S _) :-
   get-structure-sort-projection S (global Proj),
   coq.CS.db-for Proj K [].

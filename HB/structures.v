@@ -100,11 +100,11 @@ typeabbrev (w-mixins A) (pair mixins (w-params A)).
 % instances by calls to `S.Pack T {{lib:elpi.hole}}`, and extending the reconstruction
 % mecanism of mixins to also reinfer these holes.
 
-kind class type.
-type class classname -> structure -> mixins -> class.
+kind hbclass type.
+type class classname -> structure -> mixins -> hbclass.
 
 % class-def contains all the classes ever declared
-pred class-def o:class.
+pred class-def o:hbclass.
 
 %%%%% Builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
