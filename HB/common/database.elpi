@@ -23,10 +23,10 @@ mixin-src_src (mixin-src _ _ S) S.
 func local-canonical-gref prop -> constant.
 local-canonical-gref (local-canonical C) C.
 
-func class_name class -> classname.
+func class_name hbclass -> classname.
 class_name (class N _ _) N.
 
-func class_structure class -> structure.
+func class_structure hbclass -> structure.
 class_structure (class _ S _) S.
 
 func class-def_name prop -> classname.
@@ -38,7 +38,7 @@ mixin-class_class (mixin-class _ C) C.
 func mixin-class_mixin prop -> mixinname.
 mixin-class_mixin (mixin-class M _) M.
 
-func classname->def classname -> class.
+func classname->def classname -> hbclass.
 classname->def CN (class CN S ML) :- class-def (class CN S ML), !.
 
 func classname->mixins classname -> mixins.
@@ -70,7 +70,7 @@ extract-builder (builder-decl B) B.
 func leq-builder builder, builder ->.
 leq-builder (builder N _ _ _) (builder M _ _ _) :- N =< M.
 
-func sub-class? class, class ->.
+func sub-class? hbclass, hbclass ->.
 sub-class? (class C1 _ ML1P) (class C2 _ ML2P) :-
   not (C1 = C2),
   list-w-params_list ML1P ML1,
@@ -187,7 +187,7 @@ toposort-classes In Out :- std.do! [
   std.gref.toposort ES In Out,
 ].
 
-func findall-classes -> list class.
+func findall-classes -> list hbclass.
 findall-classes CLSortedDef :- std.do! [
   std.findall (class-def C_) All,
   std.map All class-def_name CL,
@@ -204,7 +204,7 @@ findall-classes-for.unsorted [M|ML] CLAcc Out :- std.do! [
   findall-classes-for.unsorted ML {std.append CL CLAcc} Out
 ].
 
-func findall-classes-for list mixinname -> list class.
+func findall-classes-for list mixinname -> list hbclass.
 findall-classes-for ML CLSortedDef :- std.do! [
   findall-classes-for.unsorted ML [] CL,
   toposort-classes CL CLSorted,
@@ -252,7 +252,7 @@ findall-local-canonical CL :-
 %
 % [findall-newjoins C AllSuper] finds all C1 and C2 such that C is a (new) join for
 % them
-pred distinct-pairs-below i:class, i:list class, o:class, o:class.
+pred distinct-pairs-below i:hbclass, i:list hbclass, o:hbclass, o:hbclass.
 distinct-pairs-below CurrentClass AllSuper C1 C2 :-
   std.mem AllSuper C1, std.mem AllSuper C2,
   % no cut until here, since we don't know which C1 and C2 to pick
@@ -267,7 +267,7 @@ distinct-pairs-below CurrentClass AllSuper C1 C2 :-
        true, % no join, valid pair
   ].
 
-pred assert-building-bottom-up i:class, i:classname, i:classname, i:classname.
+pred assert-building-bottom-up i:hbclass, i:classname, i:classname, i:classname.
 assert-building-bottom-up CurrentClass C3n C1n C2n :-
   class-def (class C3n X Y),
   CurrentClass = class CC _ _,
@@ -284,10 +284,10 @@ assert-building-bottom-up CurrentClass C3n C1n C2n :-
        Msg2)
      true.
 
-func distinct-pairs_pair prop -> pair class class.
+func distinct-pairs_pair prop -> pair hbclass hbclass.
 distinct-pairs_pair (distinct-pairs-below _ _ X Y) (pr X Y).
 
-func findall-newjoins class, list class -> list (pair class class).
+func findall-newjoins hbclass, list hbclass -> list (pair hbclass hbclass).
 findall-newjoins CurrentClass AllSuper TodoJoins :-
   std.findall (distinct-pairs-below CurrentClass AllSuper C1_ C2_) JoinOf,
   std.map JoinOf distinct-pairs_pair TodoJoins.

@@ -330,7 +330,7 @@ mk-coe-structure-body StructureF StructureT TC Coercion SortProjection ClassProj
 
 % [declare-coercion P1 P2 C1 C2] declares a structure and a class coercion
 % from C1 to C2 given P1 P2 the two projections from the structure of C1
-pred declare-coercion i:term, i:term, i:class, i:class.
+pred declare-coercion i:term, i:term, i:hbclass, i:hbclass.
 declare-coercion SortProjection ClassProjection
     (class FC StructureF FMLwP) (class TC StructureT TMLwP) :- std.do! [
 
@@ -386,7 +386,7 @@ join-body N1 N2 S3 S2_Pack S1_sort S3_to_S1 S2_class S3_to_S2
     mk-app S2_Pack {std.append Holes2 [S1_sortS3Ps, S2_classS3Ps]} (Pack s)
   ].
 
-pred declare-join i:class, i:pair class class, o:prop.
+pred declare-join i:hbclass, i:pair hbclass hbclass, o:prop.
 declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C2 C3) :-
   Name is "join_" ^ {gref->modname S3 2 "_"} ^
     "_between_" ^ {gref->modname S1 2 "_"} ^ "_and_" ^ {gref->modname S2 2 "_"},
@@ -414,7 +414,7 @@ declare-join (class C3 S3 MLwP3) (pr (class C1 S1 _) (class C2 S2 _)) (join C1 C
 % in the middle of existing ones. Possible fix: always declare all intermediate
 % possibilities but without proper names (requires the previous TODO about
 % aliasing already existing stuff).
-pred declare-unification-hints i:term, i:term, i:class, o:list prop.
+pred declare-unification-hints i:term, i:term, i:hbclass, o:list prop.
 declare-unification-hints SortProj ClassProj CurrentClass NewJoins :- std.do! [
   findall-classes All,
 
@@ -495,7 +495,7 @@ declare-sort-coercion CoeClass StructureName (global Proj) :-
 
   log.coq.coercion.declare (coercion Proj 0 StructureName CoeClass).
 
-pred if-class-already-exists-error i:id, i:list class, i:list mixinname.
+pred if-class-already-exists-error i:id, i:list hbclass, i:list mixinname.
 if-class-already-exists-error _ [] _.
 if-class-already-exists-error N [class _ S ML1wP|CS] ML2 :-
   list-w-params_list ML1wP ML1,
