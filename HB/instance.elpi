@@ -263,11 +263,11 @@ saturate-instances Filter :- std.do! [
 
   std.map ClausesHas has-mixin-instance->mixin-src Clauses,
   
-  Clauses => std.forall2 TL UKL (t\k\sigma Classes\
+  Clauses => std.map2 TL UKL (t\k\CI\sigma Classes\
     std.filter AllClasses (no-instance-for k) Classes,
-    declare-all-on-type-constructor t Classes CI),
+    declare-all-on-type-constructor t Classes CI) CIL,
 
-  private.clauses-for-export CI ClausesExport,
+  private.clauses-for-export {std.flatten CIL} ClausesExport,
 
   acc-clauses current ClausesExport,
 ].
