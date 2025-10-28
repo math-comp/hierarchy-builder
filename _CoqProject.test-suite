@@ -60,6 +60,7 @@ tests/unit/struct.v
 tests/factory_when_notation.v
 
 tests/saturate_on.v
+tests/saturate_export.v
 tests/bug_435.v
 tests/bug_447.v
 
