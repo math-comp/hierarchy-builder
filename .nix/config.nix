@@ -36,14 +36,14 @@
       rocqPackages = {
         rocq-core.override.version = "mattam82:universes-clauses";
         stdlib.override.version = "master";
-        rocq-elpi.override.version = "mattam82:universes-clauses";
+        rocq-elpi.override.version = "CohenCyril:universes-clauses";
         rocq-elpi.override.elpi-version = "2.0.7";
         bignums.override.version = "master";
       };
       coqPackages = mcHBcommon // {
         coq.override.version = "mattam82:universes-clauses";
         stdlib.override.version = "master";
-        coq-elpi.override.version = "mattam82:universes-clauses";
+        coq-elpi.override.version = "CohenCyril:universes-clauses";
         coq-elpi.override.elpi-version = "2.0.7";
         bignums.override.version = "master";
         coquelicot.job = false;
