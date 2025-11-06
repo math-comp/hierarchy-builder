@@ -17,12 +17,10 @@ namespace synthesis {
 % which are misxins in ML, abstracts the others
 pred infer-all-these-mixin-args i:list term, i:term, i:list mixinname, i:term, o:term.
 infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
-  coq.say "SYNTH MIXINS = " Ps "," T "," ML "," F,
   std.assert-ok! (coq.typecheck F Ty) "try-infer-these-mixin-args: F illtyped",
   coq.mk-eta (-1) Ty F EtaF,
   coq.subst-fun {std.append Ps [T]} EtaF FT,
   private.instantiate-all-these-mixin-args FT T ML SFX,
-  coq.say "SYNTH MIXINS END"
 ].
 
 % [infer-all-gref-deps Ps T GR X] fills in all the arguments of GR

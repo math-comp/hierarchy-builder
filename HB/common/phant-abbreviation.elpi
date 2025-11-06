@@ -257,21 +257,17 @@ mk-phant-term.mixins Target Src CN PF Params N Ty MLwA Out :- std.do! [
 ].
 
 mk-phant-term.mixins.aux T Params C CN PF X :- std.do![
-  coq.say "entering mk-phant-term.mixins.aux" CN KC,
   get-constructor CN KC,
   synthesis.infer-all-gref-deps Params T KC KCM,
   fun-unify none KCM C PF X,
-  coq.say "exiting mk-phant-term.mixins.aux" CN X,
 ].
 
 pred mk-phant-term.class
   i:term, i:term, i:classname, i:phant-term, o:phant-term.
 mk-phant-term.class Target Src CN PF CPF :- !, std.do! [
   class-def (class CN _ CMLwP),
-  coq.say "Class Hit:" CN CMLwP,
   w-params.fold CMLwP fun-implicit
     (mk-phant-term.mixins Target Src CN PF) CPF,
-  coq.say "Class Folded!"
 ].
 
 pred mk-phant-term.classes
@@ -281,9 +277,7 @@ mk-phant-term.classes EtaF CNF PL Target Src MLwA PhF :- !, std.do! [
   std.map MLwA triple_1 ML,
   synthesis.under-mixins.then MLwA phant-fun-mixin (out\ sigma FPLTM\ std.do! [
     synthesis.infer-all-these-mixin-args PL Target ML EtaF FPLTM,
-    coq.say "MID-PHANT-TERM-CLASSES",
     std.fold CNF (phant-term [] FPLTM) (mk-phant-term.class Target Src) out]) PhF,
-    coq.say "FOLDED!"
 ].
 
 pred mk-phant-term-with-copy i:term, i:list classname,

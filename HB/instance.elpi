@@ -240,7 +240,6 @@ declare-instance Factory T F Clauses CFL CSL :-
     T F TheFactory FGR Clauses CFL CSL.
 declare-instance Factory T F Clauses CFL CSL :-
   declare-canonical-instances-from-factory Factory T F Clauses1 CFL CSL,
-  coq.say "DONE",
   if (get-option "export" tt)
      (coq.env.current-library File,
       std.map {std.append CFL CSL} (x\r\ sigma i c\ x = pr i c, r = instance-to-export File i c) Clauses2)

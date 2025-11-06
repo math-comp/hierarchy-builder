@@ -296,7 +296,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "declare notation Build"),
 
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
-  coq.say "XXXXXXX",
   GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
 
   if-verbose (coq.say {header} "declare notation axioms"),

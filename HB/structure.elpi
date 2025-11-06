@@ -162,8 +162,6 @@ declare Module BSkel Sort :- std.do! [
 
   export.module {calc (Module ^ ".Exports")} Exports,
 
-  coq.say "Struct = " {coq.env.global Structure},
-
   if-verbose (coq.say {header} "exporting operations"),
     ClassAlias => Factories => GRDepsClauses =>
       private.export-operations Structure SortProjection ClassProjection MLwP [] EX MLToExport,
