@@ -282,11 +282,16 @@ build-list-w-params [] TheType Factories (w-params.nil Name TT1 R) :- std.do! [
 
 pred copy-pack-holes i:term, i:term, i:term, o:term.
 copy-pack-holes TheType NewType Term Out :- std.do! [
-  (pi Args NewArgs CSInstance ParamsRev ParamsRevCopy Pack \
+  [(pi Args NewArgs CSInstance ParamsRev ParamsRevCopy Pack \
     (copy (app[global Pack | Args]) (app[global Pack | NewArgs]) :- pack? Pack _,
       std.rev Args [CSInstance,TheType|ParamsRev], !,
       std.map ParamsRev copy ParamsRevCopy,
-      std.rev [{{ lib:elpi.hole }},NewType|ParamsRevCopy] NewArgs)) =>
+      std.rev [{{ lib:elpi.hole }},NewType|ParamsRevCopy] NewArgs)),
+   (pi Args NewArgs CSInstance ParamsRev ParamsRevCopy Pack UI \
+    (copy (app[pglobal Pack UI | Args]) (app[pglobal Pack UI | NewArgs]) :- pack? Pack _,
+      std.rev Args [CSInstance,TheType|ParamsRev], !,
+      std.map ParamsRev copy ParamsRevCopy,
+      std.rev [{{ lib:elpi.hole }},NewType|ParamsRevCopy] NewArgs))] =>
   copy Term Out,
 ].
 
