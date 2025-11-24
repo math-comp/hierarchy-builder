@@ -7,23 +7,23 @@ accumulate HB/common/utils-synterp.
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-pred if-arg-sort i:prop.
+func if-arg-sort (func) ->.
 if-arg-sort P :- get-option "arg_sort" tt, !, P.
 if-arg-sort _.
 
-pred if-MC-compat i:(option gref -> prop).
+func if-MC-compat (func option gref ->) ->.
 if-MC-compat P :- get-option "mathcomp" tt, !, P none.
 if-MC-compat P :- get-option "mathcomp.axiom" S, !,
   std.assert! (coq.locate S GR) "The name passed to the mathcomp.axiom attribute does not exist",
   P (some GR).
 if-MC-compat _.
 
-pred with-locality i:prop.
+func with-locality (func) ->.
 with-locality P :-
   if (get-option "local" tt) (A = @local!) (A = @global!),
   A => P.
 
-pred acc-clause i:scope, i:prop.
+func acc-clause scope, prop.
 acc-clause Scope C :- coq.elpi.accumulate Scope "hb.db" (clause _ _ C).
 
 /* Uncomment and remove HB/common/compat_acc_clauses_*.elpi once requiring coq-elpi >= 1.18.0,
@@ -35,7 +35,8 @@ acc-clauses Scope CL :- coq.elpi.accumulate-clauses Scope "hb.db" {std.map CL (c
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"
 % TODO: rename since this is HB specific and is expected to return a factory
-pred located->gref i:string, i:list located, o:gref.
+:index (_ 2)
+func located->gref string, list located -> gref.
 located->gref _ [loc-gref GR|_] GR.
 located->gref _ [loc-abbreviation Abbrev|_] GR :- phant-abbrev GR _ Abbrev, !.
 located->gref S [loc-abbreviation _|_] _ :- coq.error S "is an abbreviation out of the control of HB".
@@ -44,24 +45,24 @@ located->gref S [loc-modtypath _|_] _ :- coq.error S "should be a factory, but i
 located->gref S [] _ :- coq.error "Could not locate name" S.
 
 % TODO: generalize/rename when we support parameters
-pred argument->gref i:argument, o:gref.
-argument->gref (str S) GR :- located->gref S {coq.locate-all S} GR.
+func argument->gref argument -> gref.
+argument->gref (str S) GR :- !, located->gref S {coq.locate-all S} GR.
 argument->gref X _ :- coq.error "Argument" X "is expected to be a string".
 
-pred argument->term i:argument, o:term.
+func argument->term argument -> term.
 argument->term (str S) (global GR) :- !, argument->gref (str S) GR.
 argument->term (trm T) T1 :- !, std.assert-ok! (coq.elaborate-skeleton T _ T1) "not well typed term".
 argument->term X _ :- coq.error "Argument" X " is expected to be a term or a string".
 
-pred argument->ty i:argument, o:term.
+func argument->ty argument -> term.
 argument->ty (str S) T1 :- !, argument->gref (str S) GR, std.assert-ok! (coq.elaborate-ty-skeleton (global GR) _ T1) "global reference is not a type".
 argument->ty (trm T) T1 :- !, std.assert-ok! (coq.elaborate-ty-skeleton T _ T1) "not well typed type".
 argument->ty X _ :- coq.error "Argument" X " is expected to be a type or a string".
 
-pred builder->string i:builder, o:string.
+func builder->string builder -> string.
 builder->string (builder _ _ _ B) S :- coq.term->string (global B) S.
 
-pred nice-gref->string i:gref, o:string.
+func nice-gref->string gref -> string.
 nice-gref->string X Mod :-
   coq.gref->path X Path,
   std.rev Path [Mod1,Mod2|_], !,
@@ -69,15 +70,15 @@ nice-gref->string X Mod :-
 nice-gref->string X S :-
   coq.term->string (global X) S.
 
-pred gref->modname i:gref, i:int, i:string, o:string.
+func gref->modname gref, int, string -> string.
 gref->modname GR NComp Sep ModName :-
   coq.gref->path GR Path,
   std.rev Path Mods,
   std.length Path Len,
   if (Len >= NComp) true (coq.error "Not enough enclosing modules for" {coq.gref->string GR}),
   std.take NComp Mods L,
-  std.string.concat Sep {std.rev L} ModName. % TODO: check if the new_int is needed
-pred gref->modname-label i:gref, i:int, i:string, o:string.
+  std.string.concat Sep {std.rev L} ModName.
+func gref->modname-label gref, int, string -> string.
 gref->modname-label GR NComp Sep ModName :-
   coq.gref->path GR Path,
   std.rev Path PathRev,
@@ -86,23 +87,30 @@ gref->modname-label GR NComp Sep ModName :-
   std.take N PathRev L,
   std.string.concat Sep {std.rev [{coq.gref->id GR}|L]} ModName.
 
-pred string->modpath i:string, o:modpath.
-string->modpath "" _ :- !, fail. % bug is coq.locate-all if the string is empty
+func cs-pattern->name cs-pattern -> string.
+cs-pattern->name cs-prod "prod".
+cs-pattern->name (cs-sort _) "sort".
+cs-pattern->name cs-default "default".
+cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
+
+
+func string->modpath string -> modpath.
+string->modpath "" _ :- !, fail. % bug in coq.locate-all if the string is empty
 string->modpath S MP :-
   std.filter {coq.locate-all S} (l\l = loc-modpath _) L,
   L = [loc-modpath MP].
 
-pred gref->modname_short1 i:modpath, i:string, i:list string, o:string.
-gref->modname_short1 _ S [] S.
-gref->modname_short1 MP "" [X|L] L' :- gref->modname_short1 MP X L L'.
-gref->modname_short1 MP S _ S :- string->modpath S MP.
+func gref->modname_short1 modpath, string, list string -> string.
+gref->modname_short1 _ S [] S :- !.
+gref->modname_short1 MP "" [X|L] L' :- !, gref->modname_short1 MP X L L'.
+gref->modname_short1 MP S _ S :- string->modpath S MP, !.
 gref->modname_short1 MP S [X|L] S' :-
   if (S = "") (P = X) (P is X ^ "." ^ S),
   gref->modname_short1 MP P L S'.
 
 % Print shortest qualified identifier of the module containing a gref
 % Sep is used as separator
-pred gref->modname_short i:gref, i:string, o:string.
+func gref->modname_short gref, string -> string.
 gref->modname_short GR Sep IDS :-
   coq.gref->path GR Path,
   string->modpath {std.string.concat "." Path} MP,
@@ -111,7 +119,7 @@ gref->modname_short GR Sep IDS :-
 gref->modname_short GR _ IDS :- coq.gref->id GR IDS.
 
 
-pred avoid-name-collision i:string, o:string.
+func avoid-name-collision string -> string.
 avoid-name-collision S S1 :-
   coq.locate-all S L,
   if (std.mem L (loc-gref GR), coq.gref->path GR P, coq.env.current-path P)
@@ -122,39 +130,41 @@ avoid-name-collision S S1 :-
 % function to predicate generic constructions %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred mk-nil o:list A.
+func mk-nil -> list A.
 mk-nil [].
-pred mk0 i:A, o:A.
+func mk0 A -> A.
 mk0 F R :- constant R F [].
-pred mk1 i:(A -> B), i:A, o:B.
+func mk1 (A -> B), A -> B.
 mk1 F X1 R :- constant R F [X1].
-pred mk2 i:(A -> A -> C), i:A, i:A, o:C.
+func mk2 (A -> A -> C), A, A -> C.
 mk2 F X1 X2 R :- constant R F [X1, X2].
-pred mk3 i:(A -> A -> A -> D), i:A, i:A, i:A, o:D.
+func mk3 (A -> A -> A -> D), A, A, A -> D.
 mk3 F X1 X2 X3 R :- constant R F [X1, X2, X3].
-pred mk4 i:(A -> A -> A -> A -> E), i:A, i:A, i:A, i:A, o:E.
+func mk4 (A -> A -> A -> A -> E), A, A, A, A -> E.
 mk4 F X1 X2 X3 X4 R :- constant R F [X1, X2, X3,X4].
 
-pred mk-fun i:name, i:term, i:(term -> term), o:term.
+func mk-fun name, term, (term -> term) -> term.
 mk-fun N Ty Body (fun N Ty Body).
 
 % generic argument to pass to w-params
-pred ignore i:name, i:term, i:(term -> A), o:A.
+func ignore name, term, (term -> A) -> A.
 ignore _ _ F X :- (pi x y\ F x = F y), X = F (sort prop).
 
 % combining body and type
-pred mk-fun-prod i:name, i:term, o:(term -> pair term term), o:pair term term.
+func mk-fun-prod name, term -> (term -> pair term term), pair term term.
 mk-fun-prod N Ty (x\ pr (Body x) (Type x)) (pr (fun N Ty Body) (prod N Ty Type)).
 
-pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> indt-decl), o:indt-decl.
-pred mk-parameter i:implicit_kind, i:name, i:term, i:(term -> arity), o:arity.
-mk-parameter IK Name X F Decl :- !, Decl = parameter {coq.name->id Name} IK X F.
+func mk-parameter implicit_kind, name, term, (term -> indt-decl) -> indt-decl.
+mk-parameter IK Name X F (Decl : indt-decl) :- !, Decl = parameter {coq.name->id Name} IK X F.
 
-pred params->holes i:list-w-params A, o:list term.
+func mk-parameter implicit_kind, name, term, (term -> arity) -> arity.
+mk-parameter IK Name X F (Decl : arity) :- !, Decl = parameter {coq.name->id Name} IK X F.
+
+func params->holes list-w-params A -> list term.
 params->holes (w-params.nil _ _ _) [].
 params->holes (w-params.cons _ _ F) [_|PS] :- pi x\ params->holes (F x) PS.
 
-pred fresh-type o:term.
+func fresh-type -> term.
 fresh-type Ty :-
   Ty = {{Type}},
   std.assert-ok! (coq.typecheck-ty Ty _) "impossible".
@@ -163,27 +173,32 @@ fresh-type Ty :-
 % w-params interface %
 %%%%%%%%%%%%%%%%%%%%%%
 
-pred apply-w-params i:w-params A, i:list term, i:term, o:A.
+:index (1)
+func apply-w-params w-params A, list term, term -> A.
 apply-w-params (w-params.cons _ _ PL) [P|PS] T R :- !, apply-w-params (PL P) PS T R.
 apply-w-params (w-params.nil _ _ L) [] T R :- !, R = L T.
 apply-w-params _ _ _ _ :- coq.error "apply-w-params".
 
-pred w-params.nparams i:w-params A, o:int.
+:index (1)
+func w-params.nparams w-params A -> int.
 w-params.nparams (w-params.cons _ _ F) N :- pi x\ w-params.nparams (F x) M, N is M + 1.
 w-params.nparams (w-params.nil _ _ _) 0.
 
 % [w-params.fold AwP Cons Nil Out] states that Out has shape
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty F
 %   where AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
-pred w-params.fold i:w-params A, i:(name -> term -> (term -> B) -> B -> prop),
-   i:(list term -> name -> term -> (term -> A) -> B -> prop), o:B.
+:index (1)
+func w-params.fold w-params A,
+   (func name, term, (term -> B) -> B),
+   (func list term, name, term, (term -> A) -> B) -> B.
 w-params.fold L Cons Nil Out :- w-params.fold.params L Cons Nil [] Out.
 
-pred w-params.fold.params i:w-params A,
-   i:(name -> term -> (term -> B) -> B -> prop),
-   i:(list term -> name -> term -> (term -> A) -> B -> prop),
-   i:list term, % accumulator
-   o:B.
+:index (1)
+func w-params.fold.params w-params A,
+   (func name, term, (term -> B) -> B),
+   (func list term, name, term, (term -> A) -> B),
+   list term % accumulator
+   -> B.
 w-params.fold.params (w-params.cons ID PTy F) Cons Nil RevPs Out :- !, std.do! [
   coq.id->name ID N,
   (@pi-decl N PTy p\ w-params.fold.params (F p) Cons Nil [p|RevPs] (Body p)),
@@ -198,55 +213,59 @@ w-params.fold.params (w-params.nil ID TTy F) _ Nil RevParams Out :- !, std.do! [
 %   Cons `x_1` T_1 p_1 \ .. \ Nil [p_1 .. p_n] `T` Ty t \ Body
 %   where Pred [p_1 .. p_n] T Body
 %   and AwP = w-params.cons `x_1` T_1 p_1 \ ... \ w-params.nil `T` Ty F
-pred w-params.then i:w-params A,
-   i:(name -> term -> (term -> C) -> C -> prop),
-   i:(name -> term -> (term -> B) -> C -> prop),
-   i:(list term -> term -> A -> B -> prop),
-   o:C.
+:index (1)
+func w-params.then w-params A,
+   (func name, term, (term -> C) -> C),
+   (func name, term, (term -> B) -> C),
+   (func list term, term, A -> B)
+   -> C.
 w-params.then L Cons Nil Pred Out :-
   w-params.fold L Cons (ps\ n\ ty\ f\ out\ sigma Body\
     (@pi-decl n ty t\ Pred ps t (f t) (Body t)),
     Nil n ty Body out) Out.
 
-pred w-params.map i:w-params A, i:(list term -> term -> A -> B -> prop), o:w-params B.
+func w-params.map w-params A, (func list term, term, A -> B) -> w-params B.
 w-params.map AL F BL :-
   w-params.then AL mk-w-params.cons-name mk-w-params.nil-name F BL.
 % TODO: make combinators pass id
-type mk-w-params.cons-name name -> term -> (term -> w-params A) -> w-params A -> prop.
+func mk-w-params.cons-name name, term, (term -> w-params A) -> w-params A.
 mk-w-params.cons-name N T F (w-params.cons ID T F):- coq.name->id N ID.
-type mk-w-params.nil-name name -> term -> (term -> A) -> w-params A -> prop.
+func mk-w-params.nil-name name, term, (term -> A) -> w-params A.
 mk-w-params.nil-name N T F (w-params.nil ID T F):- coq.name->id N ID.
 
 % on the fly abstraction
-pred bind-nil i:id, i:term, i:term, i:A, o:w-params A.
+func bind-nil id, term, term, A -> w-params A.
 bind-nil N T X V (w-params.nil N T A) :- V = A X.
 
-pred bind-cons i:id, i:term, i:term, i:w-params A, o:w-params A.
+func bind-cons id, term, term, w-params A -> w-params A.
 bind-cons N T X V (w-params.cons N T A) :- V = A X.
 
 % Specific to list-w-params
-pred list-w-params_list i:list-w-params A, o:list A.
+func list-w-params_list list-w-params A -> list A.
 list-w-params_list AwP R :- w-params.then AwP ignore ignore
    (p\ t\ x\ std.map x triple_1) R.
 
-pred list-w-params.append i:list-w-params A, i:list-w-params A, o:list-w-params A.
+:index (1)
+func list-w-params.append list-w-params A, list-w-params A -> list-w-params A.
 list-w-params.append (w-params.nil N T ML1) (w-params.nil N T ML2) (w-params.nil N T ML) :-
   pi x\ std.append (ML1 x) (ML2 x) (ML x).
 list-w-params.append (w-params.cons N Ty ML1) (w-params.cons N Ty ML2) (w-params.cons N Ty ML) :-
   pi x\ list-w-params.append (ML1 x) (ML2 x) (ML x).
 
-pred list-w-params.rcons i:list-w-params A, i:(list term -> term -> w-args A -> prop), o:list-w-params A.
+:index (1)
+func list-w-params.rcons list-w-params A, (func list term, term -> w-args A) -> list-w-params A.
 list-w-params.rcons LwP F R :- list-w-params.rcons.aux LwP F [] R.
-pred list-w-params.rcons.aux i:list-w-params A, i:(list term -> term -> w-args A -> prop), i:list term, o:list-w-params A.
+:index (1)
+func list-w-params.rcons.aux list-w-params A, (func list term, term -> w-args A), list term -> list-w-params A.
 list-w-params.rcons.aux (w-params.nil N T ML1) F Acc (w-params.nil N T ML2) :-
   pi x\ sigma Last\ F {std.rev Acc} x Last, std.append (ML1 x) [Last] (ML2 x).
 list-w-params.rcons.aux (w-params.cons N Ty ML1) F Acc (w-params.cons N Ty ML2) :-
   pi x\ list-w-params.rcons.aux (ML1 x) F [x|Acc] (ML2 x).
 
-pred list-w-params.flatten-map
-  i:list-w-params A,
-  i:(A -> list-w-params B -> prop),
-  o:list-w-params B.
+func list-w-params.flatten-map
+  list-w-params A,
+  (func A -> list-w-params B)
+  -> list-w-params B.
 list-w-params.flatten-map (w-params.cons N T L) F (w-params.cons N T L1) :-
   @pi-parameter N T p\
     list-w-params.flatten-map (L p) F (L1 p).
@@ -254,8 +273,8 @@ list-w-params.flatten-map (w-params.nil N TTy L) F (w-params.nil N TTy L1) :-
   @pi-parameter N TTy t\
     list-w-params.flatten-map.aux (L t) F (L1 t).
 
-pred list-w-params.flatten-map.aux
-  i:list (w-args A), i:(A -> list-w-params B -> prop), o:list (w-args B).
+func list-w-params.flatten-map.aux
+  list (w-args A), (func A -> list-w-params B) -> list (w-args B).
 list-w-params.flatten-map.aux [] _ [].
 list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
   F M MwP,
@@ -267,7 +286,7 @@ list-w-params.flatten-map.aux [triple M Ps T|L] F Res1 :-
 % Params is a list of pairs (section variable, its type).
 % ListWParams has as many w-params.cons as TheParams and the terms
 % in Factories are abstracted wrt the first component of TheParams.
-pred build-list-w-params i:list (triple id term term), i:term, i:list (w-args A), o: list-w-params A.
+func build-list-w-params list (triple id term term), term, list (w-args A) -> list-w-params A.
 build-list-w-params [triple ID P Pty|PS] TheType Factories (w-params.cons ID Pty1 R) :- std.do! [
   copy Pty Pty1,
   (@pi-parameter ID Pty1 p\ (copy P p :- !) => build-list-w-params PS TheType Factories (R p)),
@@ -283,7 +302,8 @@ build-list-w-params [] TheType Factories (w-params.nil Name TT1 R) :- std.do! [
         (copy-pack-holes TheType t)) (R t)),
 ].
 
-pred copy-pack-holes i:term, i:term, i:term, o:term.
+:index (1)
+func copy-pack-holes term, term, term -> term.
 copy-pack-holes TheType NewType Term Out :- std.do! [
   (pi Args NewArgs CSInstance ParamsRev ParamsRevCopy Pack \
     (copy (app[global Pack | Args]) (app[global Pack | NewArgs]) :- pack? Pack _,
@@ -293,55 +313,55 @@ copy-pack-holes TheType NewType Term Out :- std.do! [
   copy Term Out,
 ].
 
-pred pack? i:gref, o:classname.
+func pack? gref -> classname.
 pack? (indc K) C :-
   coq.env.indc K _ _ _ KTy, prod-last-gref KTy (indt I), % TODO: use new API
-  class-def (class C (indt I) _).
+  std.once (class-def (class C (indt I) _)).
 
-pred distribute-w-params i:w-params (list A), o:list (w-params A).
+func distribute-w-params w-params (list A) -> list (w-params A).
 distribute-w-params (w-params.cons N T F) L :-
   pi x\ distribute-w-params (F x) (L1 x), std.map (L1 x) (bind-cons N T x) L.
 distribute-w-params (w-params.nil N T F) L :-
   pi x\ std.map (F x) (bind-nil N T x) L.
 
 % Specific to one-w-params
-pred w-params_1 i:one-w-params A, o:A.
+func w-params_1 one-w-params A -> A.
 w-params_1 X Y :- w-params.then X ignore ignore (p\ t\ triple_1) Y.
 
-pred disable-id-phant i:term, o:term.
+func disable-id-phant term -> term.
 disable-id-phant T T1 :-
   (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
   (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
   copy T T1.
 
-pred re-enable-id-phant i:term, o:term.
+func re-enable-id-phant term -> term.
 re-enable-id-phant T T1 :-
   (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
   (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
   copy T T1.
 
-pred disable-id-phant-indt-decl i:indt-decl, o:indt-decl.
+func disable-id-phant-indt-decl indt-decl -> indt-decl.
 disable-id-phant-indt-decl D D1 :-
   (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
   (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
   copy-indt-decl D D1.
 
-pred re-enable-id-phant-indt-decl i:indt-decl, o:indt-decl.
+func re-enable-id-phant-indt-decl indt-decl -> indt-decl.
 re-enable-id-phant-indt-decl D D1 :-
   (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
   (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
   copy-indt-decl D D1.
 
-pred prod-last i:term, o:term.
+func prod-last term -> term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.
 prod-last X X :- !.
 
-pred prod-last-gref i:term, o:gref.
+func prod-last-gref term -> gref.
 prod-last-gref (prod N S X) GR :- !, @pi-decl N S x\ prod-last-gref (X x) GR.
 prod-last-gref X GR :- coq.term->gref X GR.
 
 % saturate a type constructor with holes
-pred saturate-type-constructor i:int, i:term, o:term .
+func saturate-type-constructor int, term -> term .
 saturate-type-constructor 0 T ET :- !,
   coq.typecheck T TH ok,
   coq.count-prods TH N,

@@ -47,12 +47,6 @@ endif
 COQV:= $(shell echo $(COQVVV) | cut -d"." -f1)
 COQVV:= $(shell echo $(COQVVV) | cut -d"." -f1-2)
 
-ifneq "$(DESTDIR)" ""
-HB_INSTALLDIR := $(DESTDIR)/bin
-else
-HB_INSTALLDIR := $(dir $(shell command -v coqtop || command -v rocq))
-endif
-
 # export to sub- targets
 export COQBIN
 export COQMAKEFILE
@@ -100,20 +94,21 @@ distclean: sub-distclean this-distclean
 .PHONY: this-config this-build this-only this-test-suite this-test-suite-stdlib this-distclean this-clean
 
 this-config:: __always__
-	@command -v coqc >/dev/null || exit 1
-	@if [ -e config.stamp -a "`coqc --print-version`" = "`cat config.stamp 2>/dev/null`" ] ; then \
+	@if $$(command -v coqc >/dev/null) ; then \
+	if [ -e config.stamp -a "`coqc --print-version`" = "`cat config.stamp 2>/dev/null`" ] ; then \
 		echo 'already configured';\
 	else\
 		coqc --print-version > config.stamp;\
 		echo 'configuring for ' `coqc --print-version`;\
-		if (coqc --version | grep -q '8.18\|8.19\|8.20') ; then \
+		if (coqc --version | grep -q '8.20') ; then \
 			echo '*****************************************************************';\
 			echo 'old coq version detected, double check the diff before committing';\
 			echo '*****************************************************************';\
 			sed -i.bak -e 's/From Corelib/From Coq/' `find . -name \*.v` ; \
 			sed -i.bak -e 's/IntDef/ZArith/' `find . -name \*.v` ; \
 		fi;\
-	fi
+	fi ; fi
+	# Remove all of the above when requiring Rocq >= 9.0
 
 this-build:: this-config Makefile.coq
 	+$(COQMAKE)
@@ -143,7 +138,6 @@ this-clean:: __always__
 
 install: __always__ Makefile.coq
 	$(COQMAKE) install
-	install -d $(HB_INSTALLDIR)
 
 # counting lines of Coq code -----------------------------------------
 .PHONY: count
@@ -173,3 +167,7 @@ structures.vo : %.vo: __always__ Makefile.coq
 $(addsuffix o,$(wildcard examples/*.v examples/*/*.v tests/*.v  tests/*/*.v tests/unit/*.v)): __always__ config build Makefile.test-suite.coq Makefile.test-suite-stdlib.coq
 	+$(COQMAKE_TESTSUITE) $@
 	+$(COQMAKE_TESTSUITE_stdlib) $@
+
+nix:
+	nix-shell --arg do-nothing true --run "updateNixToolBox && genNixActions"
+.PHONY: nix

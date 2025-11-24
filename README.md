@@ -79,6 +79,8 @@ Proof. by rewrite example. Qed.
 
 ## Documentation
 
+For a tutorial, see the [platform docs](https://github.com/rocq-prover/platform-docs/tree/main/src/hierarchy_builder).
+
 This [paper](https://hal.inria.fr/hal-02478907) describes the language
 in details, and the corresponding talk [is available on youtube](https://www.youtube.com/watch?v=F6iRaTlQrlo).
 The [wiki](https://github.com/math-comp/hierarchy-builder/wiki) gathers some
@@ -174,10 +176,10 @@ against it.
 
 <details><summary>(click to expand)</summary><p>
 
-- [demo1](examples/demo1/) and [demo3](examples/demo3/) declare and evolve a hierarchy up to
+- [demo1](examples_stdlib/demo1/) and [demo3](examples/demo3/) declare and evolve a hierarchy up to
   rings with various clients that are tested not to break when the hierarchy
   evolves
-- [demo2](examples/demo2/) describes the subtle triangular interaction between groups,
+- [demo2](examples_stdlib/demo2/) describes the subtle triangular interaction between groups,
   topological space and uniform spaces. Indeed, 1. all uniform spaces induce a
   topology, which makes them topological spaces, but 2. all topological groups
   (groups that are topological spaces such that the addition and opposite are

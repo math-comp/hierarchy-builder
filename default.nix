@@ -1,6 +1,6 @@
 { config ? {}, withEmacs ? false, print-env ? false, do-nothing ? false,
   update-nixpkgs ? false, ci-matrix ? false,
-  override ? {}, ocaml-override ? {}, global-override ? {},
+  override ? {}, coq-override ? {}, ocaml-override ? {}, global-override ? {},
   bundle ? null, job ? null, inNixShell ? null, src ? ./.,
 }@args:
 let auto = fetchGit {

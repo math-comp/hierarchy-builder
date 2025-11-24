@@ -20,6 +20,7 @@ examples/demo4/hierarchy_0.v
 examples/demo5/hierarchy_0.v
 
 # examples/cat/cat.v
+examples/cat/cat.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
@@ -59,6 +60,7 @@ tests/unit/struct.v
 tests/factory_when_notation.v
 
 tests/saturate_on.v
+tests/saturate_export.v
 tests/bug_435.v
 tests/bug_447.v
 

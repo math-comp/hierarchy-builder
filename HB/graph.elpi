@@ -3,7 +3,7 @@
 
 namespace graph {
 
-pred to-file i:string.
+func to-file string ->.
 to-file File :- !, std.do! [
   open_out File OC,
   output OC "digraph Hierarchy { ",
@@ -18,7 +18,7 @@ to-file File :- !, std.do! [
 
 namespace private {
 
-pred pp-coercion-dot i:out_stream, i:coercion. 
+func pp-coercion-dot out_stream, coercion ->. 
 pp-coercion-dot OC (coercion _ _ Src (grefclass Tgt)) :- class-def (class Src _ _), class-def (class Tgt _ _), !, std.do! [
   output OC {gref->modname_short Tgt "_"},
   output OC " -> ",

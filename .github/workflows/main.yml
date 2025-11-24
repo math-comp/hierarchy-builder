@@ -18,10 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         coq_version:
-          - '8.18'
-          - '8.19'
           - '8.20'
           - '9.0'
+          - '9.1'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1

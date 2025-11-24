@@ -1,36 +1,37 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
-pred export.any i:id.
+func export.any id ->.
 export.any S :-
   coq.locate-all S L,
   if (L = []) (coq.error "HB: cannot locate" S) true,
   if (L = [X]) (export.any.aux S X) (coq.error "HB:" S "is ambiguous:" L).
-export.any.aux S (loc-gref GR) :- export.abbrev S GR.
-export.any.aux S (loc-modpath MP) :- export.module S MP.
+func export.any.aux id, located ->.
+export.any.aux S (loc-gref GR) :- export.abbrev S GR, !.
+export.any.aux S (loc-modpath MP) :- export.module S MP, !.
 export.any.aux S X :- coq.error "HB:" S "denotes" X "which is not supported for exporting".
 
 % [export.module Module] exports a Module now adds it to the collection of
 % modules to export in the end of the current enclosing module,
 % by the command HB.Exports
 % CAVEAT: "module" is a keyword, we put it in the namespace by hand
-pred export.module i:id, i:modpath.
+func export.module id, modpath ->.
 export.module NiceModule Module :- !,
   log.coq.env.export-module NiceModule Module,
   coq.env.current-library File,
   acc-clause current (module-to-export File NiceModule Module).
 
-pred export.abbrev i:id, i:gref.
+func export.abbrev id, gref ->.
 export.abbrev NiceName GR :- !,
   coq.env.current-library File,
   acc-clause current (abbrev-to-export File NiceName GR).
 
-pred export.clause i:prop.
+func export.clause prop ->.
 export.clause Clause :- !,
   coq.env.current-library File,
   acc-clauses current [Clause, clause-to-export File Clause].
 
-pred export.reexport-all-modules-and-CS i:option string.
+func export.reexport-all-modules-and-CS option string ->.
 export.reexport-all-modules-and-CS Filter :- std.do! [
   coq.env.current-library File,
   export.private.compute-filter Filter MFilter,
@@ -72,22 +73,27 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
 
 namespace export.private {
 
-pred abbrev-in-module i:list string, i:prop.
+:index (1)
+func prefixL list A, list A ->.
+prefixL [] _.
+prefixL [X|Xs] [X|Ys] :- prefixL Xs Ys.
+
+func abbrev-in-module list string, prop ->.
 abbrev-in-module PM (abbrev-to-export _ _ GR) :-
   coq.gref->path GR PC,
-  std.appendR PM _ PC. % sublist
+  prefixL PM PC.
 
-pred module-in-module i:list string, i:prop.
+func module-in-module list string, prop ->.
 module-in-module PM (module-to-export _ _ M) :-
   coq.modpath->path M PC,
-  std.appendR PM _ PC. % sublist
+  prefixL PM PC.
 
-pred instance-in-module i:list string, i:prop.
+func instance-in-module list string, prop ->.
 instance-in-module PM (instance-to-export _ C) :-
   coq.gref->path (const C) PC,
-  std.appendR PM _ PC. % sublist
+  prefixL PM PC.
 
-pred compute-filter i:option string, o:list string.
+func compute-filter option string -> list string.
 compute-filter none [].
 compute-filter (some S) MFilter :- % S is a component of the current modpath
   coq.env.current-path P,
@@ -96,8 +102,11 @@ compute-filter (some S) MFilter :- % S is a component of the current modpath
 compute-filter (some S) MFilter :-
   coq.locate-module S M,
   coq.modpath->path M MFilter.
+
+% @gares: same predicate in synterp: code clone?
+func compute-filter.aux list string, list string -> list string.
 compute-filter.aux [S|_] [S] [S] :- !.
-compute-filter.aux [S|XS] [S|SS] [S|YS] :- compute-filter.aux XS SS YS.
+compute-filter.aux [S|XS] [S|SS] [S|YS] :- !, compute-filter.aux XS SS YS.
 compute-filter.aux [X|XS] L [X|YS] :- compute-filter.aux XS L YS.
 
 }
