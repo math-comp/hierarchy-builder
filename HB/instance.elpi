@@ -24,7 +24,7 @@ declare-existing T0 F0 :- std.do! [
 % that can be built using factory instance B. CFL contains the list of
 % factories being defined, CSL the list of canonical structures being defined.
 func declare-const id, term, arity -> list constant, list constant.
-declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
+declare-const Name BodySkel TyWPSkel CFL CSL :- std.time-do! "declare-const" [
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
@@ -69,13 +69,16 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
 
   private.expose-real-subject TheTypeAsInferred TheType,
 
+  coq.term->string TheType TheTypeStr1,
+  rex.replace " " "_" TheTypeStr1 TheTypeStr,
+
   log.coq.env.add-const-noimplicits-failondup RealName OptimizedBody
     SectionTyUnfolded @transparent! C,
   TheFactory = (global (const C)),
 
   private.check-non-forgetful-inheritance TheType Factory,
 
-  if (current-mode (builder-from TheType TheFactoryForBuilderSection FGR _))
+  time-ctx TheTypeStr => if (current-mode (builder-from TheType TheFactoryForBuilderSection FGR _))
     % instance in a builder section for this subject %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     (std.do![
       if (get-option "local" tt)
@@ -191,7 +194,7 @@ has-instance T Struct :-
      fail. % we build it
 
 func infer-class term, classname, gref, factories -> term, string, term, list prop.
-infer-class T  Class Struct MLwP S Name STy Clauses:- std.do![
+infer-class T  Class Struct MLwP S Name STy Clauses:- std.time-do! "infer-class" [
 
   params->holes MLwP Params,
   get-constructor Class KC,
@@ -356,7 +359,7 @@ clauses-for-export CL ECL :-
 % [add-mixin T F M Cl] adds a constant being the mixin instance for M on type
 % T built from factory F
 func add-mixin term, factoryname, mixinname -> prop, constant.
-add-mixin T FGR MissingMixin MixinSrcCl C :- std.do! [
+add-mixin T FGR MissingMixin MixinSrcCl C :- std.time-do! "add-mixin" [
   % new_int N, % timestamp
 
   synthesis.assert!-infer-mixin T MissingMixin Bo,
@@ -410,7 +413,7 @@ func declare-canonical-instances-from-factory-and-local-builders
    factoryname, term, term, term, factoryname
    -> list (pair mixinname constant), list prop, list constant.
 declare-canonical-instances-from-factory-and-local-builders
-    Factory T F _TheFactory FGR NM_CFL MsClauses CSL :- std.do! [
+    Factory T F _TheFactory FGR NM_CFL MsClauses CSL :- std.time-do! "declare-canonical-instances-from-factory-and-local-builders" [
   synthesis.under-new-mixin-src-from-factory.do! T F (NewMixins\ std.do! [
       add-all-mixins T FGR NewMixins MsClauses CFL,
       std.zip NewMixins CFL NM_CFL,
@@ -431,7 +434,7 @@ make-mixin-canonical _ none.
 % on T
 func declare-canonical-instances-from-factory
   factoryname, term, term -> list prop, list constant, list constant.
-declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.do! [
+declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.time-do! "declare-canonical-instances-from-factory" [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
@@ -452,7 +455,7 @@ declare-canonical-instances-from-factory Factory T F ClausesHas CFL CSL :- std.d
 % on T
 pred declare-mixins-from-factory
   i:factoryname, i:term, i:term, o:list mixinname, o:list constant.
-declare-mixins-from-factory Factory T F ML TheMixins :- std.do! [
+declare-mixins-from-factory Factory T F ML TheMixins :- std.time-do! "declare-mixins-from-factory" [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
@@ -469,7 +472,7 @@ declare-mixins-from-factory Factory T F ML TheMixins :- std.do! [
 % [declare-structure-instance-from-mixins T ML MLI] given mixins ML and
 % their implementation MLI declares all structure instances for T
 pred declare-structure-instance-from-mixins i:term, i:list mixinname, i:list constant, o:list prop, o:list constant.
-declare-structure-instance-from-mixins T ML TheMixins ClausesHas CL :- std.do! [
+declare-structure-instance-from-mixins T ML TheMixins ClausesHas CL :- std.time-do! "declare-structure-instance-from-mixins" [
   % The order of the following two "under...do!"  is crucial,
   % priority must be given to canonical mixins
   % as they are the ones which guarantee forgetful inheritance
@@ -490,7 +493,7 @@ close-section-if-has-params _ SectionName :-
 
 pred declare-regular-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
   o:list prop, o:list constant. 
-declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.do![
+declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.time-do! "declare-regular-inst"  [
   private.declare-structure-instance-from-mixins TheType ML TheMixins ClausesHas CCSL,
 
   % TODO: share between the two cases and put just after declare-mixins-from-factory
@@ -504,7 +507,7 @@ declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std
 
 pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
   o:list prop, o:list constant,  o:list mixinname, o:list constant.
-declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WML TheWrappedMixins :- std.do![
+declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WML TheWrappedMixins :- std.time-do! "declare-wrapper-inst" [
   if-verbose (coq.say {header} "Wrapping" ML "for" TheType),
   coq.safe-dest-app TheType TheTypeKey _,
   std.assert! (TheTypeKey = global TheTypeKeyGR) "The subject to be wrapped has no key",
@@ -514,7 +517,7 @@ declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WML Th
 ].
 
 pred derive-wrapper-instances i:term, i:mixinname, o:term, o:constant.
-derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.do! [
+derive-wrapper-instances Instance WrapperMixin WrapperSubject C :- std.time-do! "derive-wrapper-instances" [
 
     % K is the mixin constructor (Build) for WrapperMixin 
      factory->constructor WrapperMixin K,

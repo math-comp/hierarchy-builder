@@ -377,3 +377,17 @@ with-unsafe-univ P :- get-option "unsafe.univ" tt, !,
   P,
   coq.option.set ["Universe","Checking"] Old.
 with-unsafe-univ P :- P.
+
+pred time-ctx o:string.
+func time-ctx->id (pred) -> string.
+time-ctx->id (time-ctx S) S.
+
+func with-time (func).
+with-time P :- std.once(get-option "elpi.loc" L), loc.fields L _ _ _ Line _, std.any->string Line S, time-ctx S => P.
+
+func std.time-do! string, list (pred).
+std.time-do! S L :-
+  time-ctx S => std.time (std.do! L) T,
+  std.findall (time-ctx _) CTX,
+  std.map CTX time-ctx->id CTXS,
+  coq.say {calc ("time:" ^ {std.string.concat "." {std.rev [S|CTXS]}} ^": " ^ {std.any->string T})}.
