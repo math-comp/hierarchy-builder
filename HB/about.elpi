@@ -32,7 +32,7 @@ main-located S (loc-gref (const C)) :- exported-op M _ C, !,
 main-located S (loc-gref GR) :- factory-alias->gref GR F ok, not (F = GR), !,
   main-located S (loc-gref F).
 
-main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, factory->constructor (indt F) GR, !,
+main-located S (loc-abbreviation A) :- phant-abbrev GR PhB A, is-factory (indt F), factory->constructor (indt F) GR, !,
   private.main-factory->constructor S F PhB GR.
 
 main-located S (loc-abbreviation A) :-
