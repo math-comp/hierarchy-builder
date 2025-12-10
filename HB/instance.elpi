@@ -111,7 +111,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.time-do! "declare-const" [
         % wrapper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           (private.declare-wrapper-inst TheTypeAsInferred ML TheMixins TyWP SectionName ClausesHas2 CSL2 WM WMC,
            if (current-mode (builder-from TheLiftedType _ FGR _)) % we are in a builder section
-             (
+             ( % TODO: should we verify that TheLiftedType is what we obtain by wrapping?
               std.map2 WM WMC (MixinName\C\c\sigma N\ new_int N, c = builder-decl (builder N FGR MixinName (const C))) WBdClauses,
               std.map2 WM WMC (MixinName\C\c\c = mixin-src TheLiftedType MixinName (global (const C))) WMsClauses
              )
