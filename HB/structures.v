@@ -694,7 +694,7 @@ main [const-decl N (some B) Arity] :- std.do! [
   % compute the universe for the structure (default )
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
-  with-attributes (with-logging (with-unsafe-univ (structure.declare N B Univ))),
+  with-attributes (with-logging (with-unsafe-univ (with-time "HB.structure" (structure.declare N B Univ)))),
 ].
 
 }}.
@@ -774,10 +774,10 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (with-logging (instance.saturate-instances 0 _)).
-main [str "Type"] :- !, with-attributes (with-logging (instance.saturate-instances 0 (cs-sort _))).
-main [str K] :- !, coq.locate K GR, with-attributes (with-logging (instance.saturate-instances 0 (cs-gref GR))).
-main [trm T] :- !, term->cs-pattern T P, coq.safe-dest-app T _ L, std.length L N, with-attributes (with-logging (instance.saturate-instances N P)).
+main [] :- !, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances 0 _))).
+main [str "Type"] :- !, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances 0 (cs-sort _)))).
+main [str K] :- !, coq.locate K GR, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances 0 (cs-gref GR)))).
+main [trm T] :- !, term->cs-pattern T P, coq.safe-dest-app T _ L, std.length L N, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances N P))).
 main _ :- coq.error "Usage: HB.saturate [key]".
 }}.
 Elpi Typecheck.
@@ -824,7 +824,7 @@ Elpi Accumulate lp:{{
 
 :name "start"
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
-  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _ _)).
+  with-attributes (with-logging (with-time "HB.instance" (instance.declare-const Name BodySkel TyWPSkel _ _))).
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
