@@ -425,8 +425,14 @@ declare-canonical-instances-from-factory-and-local-builders
   MsClauses => declare-all T {findall-classes-for ML} CSL,
 ].
 
+func whd-hd term -> term.
+whd-hd X Y :- std.time-do! "whd-hd" [
+  coq.reduction.lazy.whd X T,
+  coq.safe-dest-app T Y _,
+].
+
 pred make-mixin-canonical i:constant, o:option constant.
-make-mixin-canonical C (some C) :- whd (global (const C)) [] (global (indc _)) _, !, std.do! [
+make-mixin-canonical C (some C) :- whd-hd (global (const C)) (global (indc _)), !, std.time-do! "make-mixin-canonical" [
   if-verbose (coq.say {header} "declare canonical mixin instance" C),
   with-locality (log.coq.CS.declare-instance C),
 ].
