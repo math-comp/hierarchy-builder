@@ -383,19 +383,34 @@ func time-ctx->id (pred) -> string.
 time-ctx->id (time-ctx S) S.
 
 func with-time string, (func).
-with-time S P :-
+with-time Cmd P :-
   std.once(get-option "elpi.loc" L),
-  loc.fields L _ _ _ Line _,
+  loc.fields L File _ _ Line _,
   std.any->string Line LineS,
-  time-ctx LineS => time-ctx S => P.
+  Header is File ^ ": " ^ LineS ^ ": " ^ Cmd ^ ": ",
+  time-ctx Header => P.
+
+func std.time-do!-report float -> .
+std.time-do!-report Begin :- std.do! [
+  gettimeofday End,
+  T is End - Begin,
+  std.findall (time-ctx _) CTX,
+  std.map CTX time-ctx->id CTXS,
+  std.rev CTXS [Header | Rest],
+  coq.say {calc (Header ^ {std.string.concat "." Rest} ^": " ^ {std.any->string T})}
+].
 
 func std.time-do! string, list (pred).
+std.time-do! S L :- get-option "verbose" tt, !,
+  gettimeofday Begin,
+  time-ctx S => if (std.do! L) (std.time-do!-report Begin) (std.time-do!-report Begin, fail). 
 std.time-do! _ L :- !, std.do! L.
-std.time-do! S L :-
-  time-ctx S => std.time (std.do! L) T,
-  ( std.do! [
-      std.findall (time-ctx _) CTX,
-      std.map CTX time-ctx->id CTXS,
-      std.rev [S|CTXS] [Line, Cmd | Rest],
-      coq.say {calc (Line ^ ": " ^ Cmd ^ ": " ^ {std.string.concat "." Rest} ^": " ^ {std.any->string T})}
-    ] ; true ), !.
+  
+func term->size term -> int.
+term->size (app L) N :- !,
+  std.fold {std.map L term->size} 0 (x\a\r\r is x + a) M,
+  N is M + 1.
+term->size (fun _ T B) O :- !, term->size T N, pi x\ term->size (B x) M, O is N + M + 1.
+term->size (prod _ T B) O :- !, term->size T N, pi x\ term->size (B x) M, O is N + M + 1.
+term->size (let _ T X B) O :- !, term->size T N, term->size X N', pi x\ term->size (B x) M, O is N + N' + M + 1.
+term->size _ 1.
