@@ -34,7 +34,7 @@ infer-all-gref->deps Ps T GR X :- std.do! [
   coq.mk-eta (-1) Ty (global GR) EtaF,
   coq.subst-fun {std.append Ps [T]} EtaF FT,
   private.instantiate-all-these-mixin-args FT T ML Xraw,
-  if (ground_term Xraw) (X = Xraw) (infer-holes-depending-on-params T Xraw X),
+  infer-holes-depending-on-params T Xraw X,
 ].
 
 % [infer-holes-depending-on-params TheType T NewT]
