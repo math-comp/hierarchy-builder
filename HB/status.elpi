@@ -28,6 +28,13 @@ print-hierarchy :- std.do! [
     std.forall BDL private.pp-builder-decl
   ),
 
+  std.findall (wrapper-mixin _ _ _) WL,
+  if (WL = []) true (
+    coq.say "",
+    coq.say "--------------------- Wrappers ----------------------",
+    std.forall WL private.pp-wrapper
+  ),
+
   std.findall (current-mode BF_) BFL,
   if (BFL = []) true (
     coq.say "",
@@ -51,10 +58,10 @@ pp-from (from F M T) :-
 pred pp-list-w-params i:mixins, i:term.
 pred pp-list-w-params.list-triple i:list (w-args mixinname), i:term.
 pred pp-list-w-params.triple i:w-args mixinname.
-pp-list-w-params (w-params.cons N Ty LwP) T :-
-  @pi-parameter N Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
-pp-list-w-params (w-params.nil N TTy LwP) T :-
-  @pi-parameter N TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
+pp-list-w-params (w-params.cons N' Ty LwP) T :-
+  @pi-parameter N' Ty p\ pp-list-w-params (LwP p) {coq.mk-app T [p]}.
+pp-list-w-params (w-params.nil N' TTy LwP) T :-
+  @pi-parameter N' TTy t\ pp-list-w-params.list-triple (LwP t) {coq.mk-app T [t]}.
 pp-list-w-params.list-triple L S :-
   coq.say {coq.term->string S} ":=",
   std.forall L pp-list-w-params.triple.
@@ -80,5 +87,9 @@ pred pp-current-mode i:prop.
 pp-current-mode (current-mode (builder-from TheType TheFactory GRF Mod)) :-
   coq.say "The current key is" TheType "with factory" TheFactory
     "corresponding to Global Ref" GRF "in module" Mod.
-  
+
+pred pp-wrapper i:prop.
+pp-wrapper (wrapper-mixin W O M) :-
+  coq.say "wrapper" W "for mixin" M "for lifter" O.
+
 }}

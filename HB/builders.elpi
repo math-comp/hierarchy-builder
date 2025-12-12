@@ -28,7 +28,7 @@ begin CtxSkel :-
 
 }
 
-% "end" is a keyword, be put it in the namespace by hand
+% "end" is a keyword, we put it in the namespace by hand
 func builders.end.
 builders.end :- std.do! [
   current-mode (builder-from _ _ _ ModName),

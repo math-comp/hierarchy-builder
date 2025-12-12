@@ -95,6 +95,7 @@ cs-pattern->name (cs-gref GR) Name :- gref->modname-label GR 1 "_" Name.
 
 
 func string->modpath string -> modpath.
+string->modpath "" _ :- !, fail. % bug in coq.locate-all if the string is empty
 string->modpath S MP :-
   std.filter {coq.locate-all S} (l\l = loc-modpath _) L,
   L = [loc-modpath MP].
@@ -104,7 +105,8 @@ gref->modname_short1 _ S [] S :- !.
 gref->modname_short1 MP "" [X|L] L' :- !, gref->modname_short1 MP X L L'.
 gref->modname_short1 MP S _ S :- string->modpath S MP, !.
 gref->modname_short1 MP S [X|L] S' :-
-  gref->modname_short1 MP {std.string.concat "." [X,S]} L S'.
+  if (S = "") (P = X) (P is X ^ "." ^ S),
+  gref->modname_short1 MP P L S'.
 
 % Print shortest qualified identifier of the module containing a gref
 % Sep is used as separator
@@ -113,7 +115,9 @@ gref->modname_short GR Sep IDS :-
   coq.gref->path GR Path,
   string->modpath {std.string.concat "." Path} MP,
   gref->modname_short1 MP "" {std.rev Path} ID,
-  rex.replace "[.]" Sep ID IDS.
+  rex.replace "[.]" Sep ID IDS, !.
+gref->modname_short GR _ IDS :- coq.gref->id GR IDS.
+
 
 func avoid-name-collision string -> string.
 avoid-name-collision S S1 :-
@@ -314,7 +318,7 @@ pack? (indc K) C :-
   coq.env.indc K _ _ _ KTy, prod-last-gref KTy (indt I), % TODO: use new API
   std.once (class-def (class C (indt I) _)).
 
-func distribute-w-params list-w-params A -> list (one-w-params A).
+func distribute-w-params w-params (list A) -> list (w-params A).
 distribute-w-params (w-params.cons N T F) L :-
   pi x\ distribute-w-params (F x) (L1 x), std.map (L1 x) (bind-cons N T x) L.
 distribute-w-params (w-params.nil N T F) L :-
@@ -336,6 +340,18 @@ re-enable-id-phant T T1 :-
   (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
   copy T T1.
 
+func disable-id-phant-indt-decl indt-decl -> indt-decl.
+disable-id-phant-indt-decl D D1 :-
+  (pi fresh fresh1 t v\ copy {{lib:@hb.id lp:t lp:v}} {{lib:@hb.id_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  (pi fresh fresh1 t v\ copy {{lib:@hb.ignore lp:t lp:v}} {{lib:@hb.ignore_disabled lp:t lp:fresh lp:v lp:fresh1}} :- !) =>
+  copy-indt-decl D D1.
+
+func re-enable-id-phant-indt-decl indt-decl -> indt-decl.
+re-enable-id-phant-indt-decl D D1 :-
+  (pi f1 f2 t v\ copy {{lib:@hb.id_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.id lp:t lp:v}} :- !) =>
+  (pi f1 f2 t v\ copy {{lib:@hb.ignore_disabled lp:t lp:f1 lp:v lp:f2}} {{lib:@hb.ignore lp:t lp:v}} :- !) =>
+  copy-indt-decl D D1.
+
 func prod-last term -> term.
 prod-last (prod N S X) Y :- !, @pi-decl N S x\ prod-last (X x) Y.
 prod-last X X :- !.
@@ -345,8 +361,56 @@ prod-last-gref (prod N S X) GR :- !, @pi-decl N S x\ prod-last-gref (X x) GR.
 prod-last-gref X GR :- coq.term->gref X GR.
 
 % saturate a type constructor with holes
-func saturate-type-constructor term -> term.
-saturate-type-constructor T ET :- 
+func saturate-type-constructor int, term -> term .
+saturate-type-constructor 0 T ET :- !,
   coq.typecheck T TH ok,
   coq.count-prods TH N,
   coq.mk-app T {coq.mk-n-holes N} ET.
+saturate-type-constructor N T ET :- 
+  coq.mk-app T {coq.mk-n-holes N} ET.
+
+
+pred with-unsafe-univ i:prop.
+with-unsafe-univ P :- get-option "unsafe.univ" tt, !,
+  coq.option.get ["Universe","Checking"] Old,
+  coq.option.set ["Universe","Checking"] (coq.option.bool ff),
+  P,
+  coq.option.set ["Universe","Checking"] Old.
+with-unsafe-univ P :- P.
+
+pred time-ctx o:string.
+func time-ctx->id (pred) -> string.
+time-ctx->id (time-ctx S) S.
+
+func with-time string, (func).
+with-time Cmd P :-
+  std.once(get-option "elpi.loc" L),
+  loc.fields L File _ _ Line _,
+  std.any->string Line LineS,
+  Header is File ^ ": " ^ LineS ^ ": " ^ Cmd ^ ": ",
+  time-ctx Header => P.
+
+func std.time-do!-report float -> .
+std.time-do!-report Begin :- std.do! [
+  gettimeofday End,
+  T is End - Begin,
+  std.findall (time-ctx _) CTX,
+  std.map CTX time-ctx->id CTXS,
+  std.rev CTXS [Header | Rest],
+  coq.say {calc (Header ^ {std.string.concat "." Rest} ^": " ^ {std.any->string T})}
+].
+
+func std.time-do! string, list (pred).
+std.time-do! S L :- get-option "verbose" tt, !,
+  gettimeofday Begin,
+  time-ctx S => if (std.do! L) (std.time-do!-report Begin) (std.time-do!-report Begin, fail). 
+std.time-do! _ L :- !, std.do! L.
+  
+func term->size term -> int.
+term->size (app L) N :- !,
+  std.fold {std.map L term->size} 0 (x\a\r\r is x + a) M,
+  N is M + 1.
+term->size (fun _ T B) O :- !, term->size T N, pi x\ term->size (B x) M, O is N + M + 1.
+term->size (prod _ T B) O :- !, term->size T N, pi x\ term->size (B x) M, O is N + M + 1.
+term->size (let _ T X B) O :- !, term->size T N, term->size X N', pi x\ term->size (B x) M, O is N + N' + M + 1.
+term->size _ 1.
