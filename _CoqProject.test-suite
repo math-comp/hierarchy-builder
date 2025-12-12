@@ -83,6 +83,8 @@ tests/MinimalWrapBugs/noglobref.v
 tests/MinimalWrapBugs/typeNotInfered.v
 tests/MinimalWrapBugs/unwrappedSubject.v
 
+tests/mindep.v
+
 -R tests HB.tests
 -R examples HB.examples
 

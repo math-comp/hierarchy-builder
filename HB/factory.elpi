@@ -313,7 +313,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
     % since closing the section purges the unused universe level we may have
     % allocated by typechecking the skeleton just above
 
-  coq.env.indt R tt _ _ _ [K] _,
+  coq.env.indt R tt _ _ _ [K] [KTy],
   GRK = indc K,
   @global! => log.coq.arguments.set-implicit (indt R) [[]],
   @global! => log.coq.arguments.set-implicit GRK [[]],
@@ -322,6 +322,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   w-params.nparams MLwP NParams,
   build-deps-for-projections R MLwP GRDepsClausesProjs,
   GRDepsClauses = [gref->deps (indt R) MLwP, gref->deps (indc K) MLwP|GRDepsClausesProjs],
+
+  % check mlwp is minimal to cover the operators used in KTy
+  warn-unneeded-dep NParams KTy {list-w-params_list MLwP},
 
   % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
   % FactorySortCoe = coercion GRFSort _ _ _,
@@ -376,6 +379,72 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   GRDepsClauses => declare-abbrev Module FactAbbrev _,
 ].
 
+func ops-in-term term -> coq.gref.set.
+ops-in-term T S :-
+  (pi C X A A1\
+    fold-map (global (const C) as X) A X A1 :- exported-op _ _ C, !, coq.gref.set.add (const C) A A1) =>
+  fold-map T {coq.gref.set.empty} _ S.
+
+func mixin-has-op-in coq.gref.set, mixinname -> .
+mixin-has-op-in S M :-
+  exported-op M _ C, coq.gref.set.mem (const C) S, !.
+
+func covers list mixinname -> list classname.
+covers Needed CL :-
+  coq.gref.list->set Needed NeededS,
+  findall-classes-for Needed AllCDefs,
+  std.map AllCDefs class_name AllC,
+  std.filter AllC (c\ sigma Cov\ class-coverage [c] Cov, coq.gref.set.subset NeededS Cov) CL.
+
+func not-covers list mixinname, classname -> pair (list mixinname) classname.
+not-covers ML C (pr EM C) :-
+  classname->mixins C CMLwP,
+  list-w-params_list CMLwP CML,
+  std.filter ML (m\not(std.mem! CML m)) EM, (not(EM = [])).
+
+func longer-excluded (pair (list mixinname) classname), (pair (list mixinname) classname) -> .
+longer-excluded (pr L1 _) (pr L2 _) :- {std.length L1} < {std.length L2}.
+
+{
+
+shorten coq.pp.{ str, h, v, spc, nl, box, brk }.
+
+func pp-better-dep pair (list mixinname) classname -> coq.pp.
+pp-better-dep (pr ML C) PP :-
+  nice-gref->string C CS,
+  std.map ML nice-gref->string MLS,
+  std.map MLS (x\r\ r = str x) MLP,
+  PP = box h [str "- class", spc, str CS, spc, str "leaves out unneeded mixins:", spc | {std.intersperse spc MLP} ].
+
+func better-deps->string list mixinname, list (pair (list mixinname) classname) -> string.
+better-deps->string ML BD S :-
+  std.map ML nice-gref->string MLS,
+  std.map MLS (x\r\ r = str x) MLP,
+  MLPP = box h [str "Unneeded dependencies:",spc |{std.intersperse spc MLP}],
+  PP = box (v 0) [MLPP, brk 0 0, str"Proposed fixes:", brk 0 0 |{std.intersperse (brk 0 0) {std.map BD pp-better-dep}}],
+  coq.pp->string PP S.
+}
+
+func keep-minimals list classname, list classname -> list classname.
+keep-minimals [] X X.
+keep-minimals [X|XS] A R :- std.exists A (sub-classname? X), !, keep-minimals XS A R.
+keep-minimals [X|XS] A R :- keep-minimals XS [X|A] R.
+
+func warn-unneeded-dep int, term, list mixinname -> .
+warn-unneeded-dep 0 Ty L :- !, std.do! [
+  ops-in-term Ty OPS,
+  std.partition L (mixin-has-op-in OPS) Needed Extra,
+  covers Needed CoversUnsorted,
+  toposort-classes CoversUnsorted Covers,
+  keep-minimals Covers [] MinimalCovers, 
+  std.map-filter MinimalCovers (not-covers Extra) BetterDeps,
+  if (BetterDeps = []) true
+     (coq.warning "HB" "HB.unneded-dependency" {better-deps->string Extra BetterDeps})
+].
+warn-unneeded-dep N (prod Na T F) L :- !, M is N - 1,
+  @pi-decl Na T x\
+    warn-unneeded-dep M (F x) L.
+warn-unneeded-dep _ T _ :- coq.error "warn-unneeded-dep" T.
 
 :index (1)
 func declare-factory-alias  list prop, list constant, list term, term,
