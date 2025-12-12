@@ -324,7 +324,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   GRDepsClauses = [gref->deps (indt R) MLwP, gref->deps (indc K) MLwP|GRDepsClausesProjs],
 
   % check mlwp is minimal to cover the operators used in KTy
-  warn-unneeded-dep NParams KTy {list-w-params_list MLwP},
+  if (D = asset-mixin)
+     (warn-unneeded-dep NParams KTy {list-w-params_list MLwP})
+     true, % we should wait HB.end in order to know what is really useless
 
   % GRDepsClauses => mk-factory-sort MLwP (indt R) _ FactorySortCoe,
   % FactorySortCoe = coercion GRFSort _ _ _,
