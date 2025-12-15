@@ -362,9 +362,9 @@ func add-mixin term, factoryname, mixinname -> prop, constant.
 add-mixin T FGR MissingMixin MixinSrcCl C :- std.time-do! "add-mixin" [
   % new_int N, % timestamp
 
-  synthesis.assert!-infer-mixin T MissingMixin Bo,
+  synthesis.assert!-infer-mixin T MissingMixin Bo Ty1,
 
-  std.assert-ok! (coq.typecheck Bo Ty1) "declare-instances: mixin illtyped",
+  %std.assert-ok! (coq.typecheck Bo Ty1) "declare-instances: mixin illtyped",
   safe-dest-app Ty1 (global MixinNameAlias) _,
   std.assert-ok! (factory-alias->gref MixinNameAlias MixinName) "HB",
 
