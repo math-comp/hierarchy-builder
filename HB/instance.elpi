@@ -665,6 +665,7 @@ optimize-body (app[global (const C)| Args]) Red :- (phant-abbrev _ (const C) _ ;
   hd-beta B Args HD Stack,
   unwind HD Stack Red.
 optimize-body (let _ _ T x\x) Red :- !, optimize-body T Red.
+% optimize-body (let N T B F) (let N T B F1) :- !, @pi-def N T B x\ optimize-body (F x) (F1 x).
 optimize-body X X.
 
 func hnf term -> term.
