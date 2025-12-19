@@ -141,9 +141,11 @@ factory-alias->gref GR _ (error Msg) :- !,
 
 % [factory->constructor F K] means K is a constructor for
 % the factory F.
+:index(2)
 func factory->constructor factoryname -> gref.
 
 % [factory->nparams F N] says that F has N parameters
+:index(2)
 func factory->nparams factoryname -> int.
 
 % [is-structure GR] tests if GR is a known structure
@@ -159,6 +161,7 @@ pred sub-class o:classname, o:classname, o:constant, o:int.
 
 % [gref->deps GR MLwP] is a (pre computed) list of dependencies of a know global
 % constant. The list is topologically sorted
+:index(2)
 func gref->deps gref -> mixins.
 
 % [join C1 C2 C3] means that C3 inherits from both C1 and C2
@@ -180,6 +183,7 @@ func mixin-mem term -> gref.
 % the minimal class that includes this mixin.
 % [mixin->first-class M C] states that C is the first/minimal class
 % that contains the mixin M
+:index(2)
 func mixin->first-class mixinname -> classname.
 
 % memory of exported operations (TODO: document fiels)
