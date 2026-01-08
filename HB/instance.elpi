@@ -290,12 +290,19 @@ func declare-instance factoryname, term, term
 declare-instance Factory T F Clauses CFL CSL :-
   current-mode (builder-from T TheFactory FGR _), !,
   if (get-option "local" tt)
-    (coq.error "HB: declare-instance: cannot make builders local.
-    If you want temporary instances, make an alias, e.g. with let T' := T") true,
+    (coq.error "HB:" "declare-instance: cannot make builders local."
+      { calc ("If you want temporary instances, make an alias, e.g. with let " ^ { coq.term->string T } ^ "' := " ^ { coq.term->string T } ) }
+    )
+    true,
   !,
   declare-canonical-instances-from-factory-and-local-builders Factory
     T F TheFactory FGR Clauses CFL CSL.
 declare-instance Factory T F Clauses CFL CSL :-
+  if (not (get-option "local" tt),
+      current-mode (builder-from U _ _ _), not (T = U))
+    (coq.warning "HB" "HB.nonlocal-instance-in-builder-mode"
+      "In builder mode, non-builder instances are always considered local.\n"
+      "Annotate this HB.instance call with #[local] to fix this warning and improve your code documentation.") true,
   declare-canonical-instances-from-factory Factory T F Clauses1 CFL CSL,
   clauses-for-export {std.append CFL CSL} Clauses2,
   std.append Clauses1 Clauses2 Clauses.
