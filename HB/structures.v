@@ -1,6 +1,12 @@
 (* Support constants, to be kept in sync with shim/structures.v *)
 From Corelib Require Import ssreflect ssrfun.
 
+Add Search Blacklist "Builders_".
+Add Search Blacklist "__canonical__".
+Add Search Blacklist "__to__".
+Add Search Blacklist "_between_".
+Add Search Blacklist "_mixin".
+
 Variant error_msg := NoMsg | IsNotCanonicallyA (x : Type).
 Definition unify T1 T2 (t1 : T1) (t2 : T2) (s : error_msg) :=
   phantom T1 t1 -> phantom T2 t2.
