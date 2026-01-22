@@ -22,6 +22,7 @@ examples/demo5/hierarchy_0.v
 # examples/cat/cat.v
 examples/cat/cat.v
 
+tests/test_howto.v
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v
 tests/instance_params_no_type.v

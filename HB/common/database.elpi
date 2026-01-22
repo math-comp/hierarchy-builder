@@ -230,9 +230,9 @@ findall-mixin-src T ML :-
 func findall-factory->constructor -> list prop.
 findall-factory->constructor L :-
   std.map {std.findall (findall-factory->constructor.aux _)} findall-factory->constructor.make L.
-func findall-factory->constructor.aux -> prop.
+pred findall-factory->constructor.aux o:prop.
 findall-factory->constructor.aux (factory->constructor F C) :-
-  is-factory F, !, factory->constructor F C.
+  is-factory F, factory->constructor F C.
 func findall-factory->constructor.make prop -> prop.
 findall-factory->constructor.make (findall-factory->constructor.aux P) P.
 
