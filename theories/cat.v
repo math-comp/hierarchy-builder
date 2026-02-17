@@ -20,6 +20,25 @@ Axiom funext : forall {T : Type} {U : T -> Type} [f g : forall t, U t],
 Axiom propext : forall P Q : Prop, P <-> Q -> P = Q.
 Axiom Prop_irrelevance : forall (P : Prop) (x y : P), x = y.
 
+Definition frefl_def (A B : Type) (f : B -> A) : f =1 f := fun x => erefl.
+Lemma freflE A B f : @frefl A B f  = frefl_def f.
+Proof. exact: Prop_irrelevance. Qed.
+
+(* we prove that congr1 of funext is the identity *)
+Lemma congr1_funext U V (f g : U -> V) (e : f =1 g) x : congr1 (@^~ x) (funext e) = e x.
+Proof. exact: Prop_irrelevance. Qed.
+Arguments congr1_funext {U V f g}.
+
+Lemma existT_eq {T} {P : T -> Type} {x y : T} {x' : P x} {y' : P y} :
+   existT P x x' = existT P y y' -> {p : x = y & ecast y (P y) p x' = y'}.
+Proof.
+set p := existT P y y' =>  exy; rewrite -[y]/(tag p) -[y']/(tagged p).
+by case: _ / exy; exists erefl.
+Qed.
+
+Notation ecast2 x y T ex ey u :=
+  (ecast x ((fun y => T) _) ex (ecast y ((fun x => T) _) ey u)).
+
 (* Shortcut *)
 Notation U := Type.
 
@@ -68,6 +87,14 @@ Notation "f \; g :> T" := (@comp T _ _ _ f g)
   (at level 60, g, T at level 60, format "f  \;  g  :>  T", only parsing) : cat_scope.
 Notation "f \; g" := (comp f g) : cat_scope.
 Notation "\idmap_ a" := (@idmap _ a) (only parsing, at level 0) : cat_scope.
+
+Module ShowCat.
+Notation "a ~>_ C b" := (@hom C a b)
+  (at level 99, C at level 0, format "a  ~>_ C  b") : cat_scope.
+Notation "f \; g :> T" := (@comp T _ _ _ f g)
+  (at level 60, g, T at level 60, format "f  \;  g  :>  T") : cat_scope.
+Notation "\idmap_ a" := (@idmap _ a) (at level 0) : cat_scope.
+End ShowCat.
 
 (* categories are precategories + laws *)
 HB.mixin Record PreCat_IsCat C of PreCat C := {
@@ -131,16 +158,27 @@ Notation "F <$> f" := (@Fhom _ _ F _ _ f)
    (at level 58, format "F  <$>  f", right associativity) : cat_scope.
 
 (* prefunctors are equal if their object and hom part are respectively equal *)
+Lemma prefunctorPcast (C D : quiver) (F G : C ~> D) (eqFG : F =1 G) :
+   (forall a b f,
+     ecast2 x y (x ~> y) (eqFG a) (eqFG b) (F <$> f) = G <$> f) ->
+  F = G.
+Proof.
+move: F G => [F [[/= Fhom]]] [G [[/= Ghom]]] in eqFG *.
+have -> : eqFG = (fun x => congr1 (@^~ x) (funext eqFG)) by apply: Prop_irrelevance.
+move: (funext eqFG) Ghom => {eqFG}; case: _ / => Ghom /= eqFGhom.
+congr PreFunctor.Pack. congr PreFunctor.Class; congr IsPreFunctor.Axioms_.
+by do 3!apply: funext=> ?.
+Qed.
+
 Lemma prefunctorP (C D : quiver) (F G : C ~> D) (eqFG : F =1 G) :
    let homF a b F := F a ~> F b in
    (forall a b f, eq_rect _ (homF a b) (F <$> f) _ (funext eqFG) = G <$> f) ->
   F = G.
 Proof.
-move: F G => [F [[/= Fhom]]] [G [[/= Ghom]]] in eqFG *.
-case: _ / (funext eqFG) => /= in Ghom * => eqFGhom.
-congr PreFunctor.Pack; congr PreFunctor.Class; congr IsPreFunctor.Axioms_.
-by do 3!apply: funext=> ?.
+move=> /= FG; apply/prefunctorPcast => a b f; case: _ / FG.
+by rewrite -[eqFG a]congr1_funext -[eqFG b]congr1_funext; case: _ / funext.
 Qed.
+
 
 (* a functor is a prefunctor + laws for id and comp *)
 HB.mixin Record PreFunctor_IsFunctor (C D : precat) (F : C -> D)
@@ -159,20 +197,27 @@ HB.instance Definition _ := IsQuiver.Build precat Functor.type.
 HB.instance Definition _ := IsQuiver.Build cat Functor.type.
 
 (* functor equality is the same as prefunctor because of PI *)
+Lemma functorPcast (C D : precat) (F G : C ~> D) (eqFG : F =1 G) :
+   (forall a b f, ecast2 x y (x ~> y) (eqFG a) (eqFG b) (F <$> f) = G <$> f) ->
+  F = G.
+Proof.
+move=> /= /prefunctorPcast {eqFG}.
+case: F G => [F [/= [Fm Fm']]] [G [/= [Gm Gm']]] -[_] /existT_eq [eqFG].
+case: _ / eqFG in Gm Gm' * => eqFGm; case: _ / eqFGm in Gm' *.
+congr Functor.Pack; congr Functor.Class.
+case: Fm' Gm' => [F1 Fc] [G1 Gc].
+by congr PreFunctor_IsFunctor.Axioms_; apply: Prop_irrelevance.
+Qed.
+
 Lemma functorP (C D : precat) (F G : C ~> D) (eqFG : F =1 G) :
    let homF a b F := F a ~> F b in
    (forall a b f, eq_rect _ (homF a b) (F^$ f) _ (funext eqFG) = G^$ f) ->
   F = G.
 Proof.
-move=> /= /prefunctorP {eqFG}.
-case: F G => [F [/= Fm Fm']] [G [/= Gm Gm']]//=.
-move=> [_] eqFG; have /= := eq_sigT_rect_existT _ _ eqFG; apply => {}eqFG.
-case: _ / eqFG => /= in Gm Gm' * => eqFG.
-case: _ / eqFG in Gm' *.
-congr Functor.Pack; congr Functor.Class.
-case: Fm' Gm' => [F1 Fc] [G1 Gc].
-by congr PreFunctor_IsFunctor.Axioms_; apply: Prop_irrelevance.
+move=> /= FG; apply/functorPcast => a b f; case: _ / FG.
+by rewrite -[eqFG a]congr1_funext -[eqFG b]congr1_funext; case: _ / funext.
 Qed.
+
 
 (* the identity function is a functor *)
 HB.instance Definition _ (C : quiver) :=
@@ -278,34 +323,66 @@ Unset Universe Checking.
 HB.instance Definition _ := Quiver_IsPreConcrete.Build quiver (fun _ _ => id).
 HB.instance Definition _ := Quiver_IsPreConcrete.Build precat (fun _ _ => id).
 HB.instance Definition _ := Quiver_IsPreConcrete.Build cat (fun _ _ => id).
-Lemma quiver_concrete_subproof : PreConcrete_IsConcrete quiver.
-Proof.
-constructor=> C D F G FG; apply: prefunctorP.
-  by move=> x; congr (_ x); apply: FG.
-by move=> *; apply: Prop_irrelevance.
-Qed.
-HB.instance Definition _ := quiver_concrete_subproof.
-
-Lemma precat_concrete_subproof : PreConcrete_IsConcrete precat.
-Proof.
-constructor=> C D F G FG; apply: functorP.
-  by move=> x; congr (_ x); apply: FG.
-by move=> *; apply: Prop_irrelevance.
-Qed.
-HB.instance Definition _ := precat_concrete_subproof.
-
-Lemma cat_concrete_subproof : PreConcrete_IsConcrete cat.
-Proof.
-constructor=> C D F G FG; apply: functorP.
-  by move=> x; congr (_ x); apply: FG.
-by move=> *; apply: Prop_irrelevance.
-Qed.
-HB.instance Definition _ := cat_concrete_subproof.
-HB.instance Definition _ := PreCat_IsConcrete.Build precat
-   (fun=> erefl) (fun _ _ _ _ _ => erefl).
-HB.instance Definition _ := PreCat_IsConcrete.Build cat
-   (fun=> erefl) (fun _ _ _ _ _ => erefl).
 Set Universe Checking.
+
+(* Definition efun {C D : precat} (e : C = D) : C -> D := ecast D (C -> D) e id. *)
+(* Definition efun_map {C D : precat} (e : C = D) (a b : C) (f : a ~>_C b) : efun e a ~>_D efun e b. *)
+(* Proof. case: _ / e; exact: id. Defined. *)
+  
+(* HB.instance Definition _ {C D : precat} (e : C = D) := *)
+(*   IsPreFunctor.Build _ _ (efun e) (efun_map e). *)
+
+(* Lemma efun_is_functor {C D : precat} (e : C = D) : PreFunctor_IsFunctor _ _ (efun e). *)
+(* Proof. by case: _ / e. Qed. *)
+(* HB.instance Definition _ {C D : precat} (e : C = D) := efun_is_functor e.  *)
+
+(* Definition efunctor {C D : precat} (e : C = D) : C ~> D := efun e : Functor.type _ _.  *)
+
+Definition emap {C : precat} (a b : C) (e : a = b) : a ~> b := ecast b (a ~> b) e idmap.
+
+Lemma functorPemap (C D : cat) (F G : C ~> D) (eqFG : F =1 G) :
+   (forall a b f, (F <$> f) \; emap (eqFG b) = emap (eqFG a) \; G <$> f) ->
+  F = G.
+Proof.
+move=> eFG; apply/functorPcast => a b f; move: {eFG}(eFG a b f).
+move: {eqFG f} (eqFG a) (eqFG b) (F <$> f) (G <$> f) => /=.
+by case: _ /; case: _ / =>  ? ?; rewrite compo1 comp1o.
+Qed.
+  (* Lemma quiver_concrete_subproof : PreConcrete_IsConcrete quiver. *)
+(* Proof. *)
+(* constructor=> C D F G FG. apply: prefunctorP => /=. *)
+(*   by move=> x; congr (_ x); apply: FG. *)
+(* rewrite /concrete_fun /Quiver_IsPreConcrete.concrete_fun/= in FG *. *)
+(* rewrite /Fhom /IsPreFunctor.Fhom/=. *)
+(* move=> eqFG a b f. *)
+(* apply/concrete_fun_inj. *)
+(* move=> eqFG; move: (funext eqFG) FG => {eqFG}. *)
+(* case: _ /. *)
+(* case: _ / (funext eqFG) in FG *. *)
+(* apply: Prop_irrelevance. *)
+(* admit. *)
+(* Admitted. *)
+(* HB.instance Definition _ := quiver_concrete_subproof. *)
+
+(* Lemma precat_concrete_subproof : PreConcrete_IsConcrete precat. *)
+(* Proof. *)
+(* constructor=> C D F G FG; apply: functorP. *)
+(*   by move=> x; congr (_ x); apply: FG. *)
+(* by move=> *; admit. *)
+(* Admitted. *)
+(* HB.instance Definition _ := precat_concrete_subproof. *)
+
+(* Lemma cat_concrete_subproof : PreConcrete_IsConcrete cat. *)
+(* Proof. *)
+(* constructor=> C D F G FG; apply: functorP. *)
+(*   by move=> x; congr (_ x); apply: FG. *)
+(* by move=> *; admit. *)
+(* Admitted. *)
+(* HB.instance Definition _ := cat_concrete_subproof. *)
+(* HB.instance Definition _ := PreCat_IsConcrete.Build precat *)
+(*    (fun=> erefl) (fun _ _ _ _ _ => erefl). *)
+(* HB.instance Definition _ := PreCat_IsConcrete.Build cat *)
+(*    (fun=> erefl) (fun _ _ _ _ _ => erefl). *)
 
 (* constant functor *)
 Definition cst (C D : quiver) (c : C) := fun of D => c.
@@ -965,6 +1042,471 @@ Unset Universe Checking.
 HB.structure Definition Monoidal : Set :=
   { C of PreMonoidal_IsMonoidal C & PreMonoidal C }.
 Set Universe Checking.
+
+Record span (Q : quiver) (A B : Q) := Span {
+  bot : Q;
+  bot2left : bot ~> A;
+  bot2right : bot ~> B
+}.
+
+Section spans.
+Variables (Q : precat) (A B : Q).
+Record span_map (c c' : span A B) := SpanMap {
+  bot_map : bot c ~> bot c';
+  bot2left_map : bot_map \; bot2left c' = bot2left c;
+  bot2right_map : bot_map \; bot2right c' = bot2right c;
+}.
+HB.instance Definition _ := IsQuiver.Build (span A B) span_map.
+
+Lemma span_mapP (c c' : span A B) (f g : c ~> c') :
+  bot_map f = bot_map g <-> f = g.
+Proof.
+split=> [|->]//; case: f g => [/= f ? ?] [/= g + +] efg.
+by elim: efg => // ? ?; congr SpanMap; apply: Prop_irrelevance.
+Qed.
+
+End spans.
+
+Section spans_in_cat.
+Variables (Q : cat) (A B : Q).
+Definition span_idmap (c : span A B) :=
+  @SpanMap Q A B c c idmap (comp1o _) (comp1o _).
+Program Definition span_comp (c1 c2 c3 : span A B)
+    (f12 : c1 ~> c2) (f23 : c2 ~> c3) :=
+  @SpanMap Q A B c1 c3 (bot_map f12 \; bot_map f23) _ _.
+Next Obligation. by move=> *; rewrite -compoA !bot2left_map. Qed.
+Next Obligation. by move=> *; rewrite -compoA !bot2right_map. Qed.
+HB.instance Definition _ := IsPreCat.Build (span A B)
+  span_idmap span_comp.
+
+Lemma span_are_cats : PreCat_IsCat (span A B).
+Proof.
+constructor=> [a b f|a b f|a b c d f g h].
+- by apply/span_mapP => /=; rewrite comp1o.
+- by apply/span_mapP => /=; rewrite compo1.
+- by apply/span_mapP => /=; rewrite compoA.
+Qed.
+HB.instance Definition _ := span_are_cats.
+End spans_in_cat.
+
+Record cospan (Q : quiver) (A B : Q) := Cospan {
+  top : Q;
+  left2top : A ~> top;
+  right2top : B ~> top
+}.
+
+Section cospans.
+Variables (Q : precat) (A B : Q).
+Record cospan_map (c c' : cospan A B) := CospanMap {
+  top_map : top c ~> top c';
+  left2top_map : left2top c \; top_map = left2top c';
+  right2top_map : right2top c \; top_map = right2top c';
+}.
+HB.instance Definition _ := IsQuiver.Build (cospan A B) cospan_map.
+
+Lemma cospan_mapP (c c' : cospan A B) (f g : c ~> c') :
+  top_map f = top_map g <-> f = g.
+Proof.
+split=> [|->]//; case: f g => [/= f ? ?] [/= g + +] efg.
+by elim: efg => // ? ?; congr CospanMap; apply: Prop_irrelevance.
+Qed.
+
+End cospans.
+
+Section cospans_in_cat.
+Variables (Q : cat) (A B : Q).
+Definition cospan_idmap (c : cospan A B) :=
+  @CospanMap Q A B c c idmap (compo1 _) (compo1 _).
+Program Definition cospan_comp (c1 c2 c3 : cospan A B)
+    (f12 : c1 ~> c2) (f23 : c2 ~> c3) :=
+  @CospanMap Q A B c1 c3 (top_map f12 \; top_map f23) _ _.
+Next Obligation. by move=> *; rewrite compoA !left2top_map. Qed.
+Next Obligation. by move=> *; rewrite compoA !right2top_map. Qed.
+HB.instance Definition _ := IsPreCat.Build (cospan A B)
+  cospan_idmap cospan_comp.
+
+Lemma cospan_are_cats : PreCat_IsCat (cospan A B).
+Proof.
+constructor=> [a b f|a b f|a b c d f g h].
+- by apply/cospan_mapP => /=; rewrite comp1o.
+- by apply/cospan_mapP => /=; rewrite compo1.
+- by apply/cospan_mapP => /=; rewrite compoA.
+Qed.
+HB.instance Definition _ := cospan_are_cats.
+End cospans_in_cat.
+
+HB.mixin Record isPrePullback (Q : precat) (A B : Q)
+     (c : cospan A B) (s : span A B) := {
+   is_square : bot2left s \; left2top c = bot2right s \; right2top c;
+}.
+#[short(type=prepullback)]
+HB.structure Definition PrePullback Q A B (c : cospan A B) :=
+  {s of isPrePullback Q A B c s}.
+Arguments prepullback {Q A B} c.
+
+Lemma congr_functor1 {A B : cat} {F G : A ~> B} : F = G -> forall x, F x = G x.
+Proof.
+move=> FG x.
+exact: (congr1 (@^~ x) (congr1 (@Functor.sort _ _) FG)).
+Defined.
+
+
+Lemma is_squarex {A B : cat} {c : cospan A B} {s : prepullback c} :
+  forall x, (left2top c \o bot2left s) x = (right2top c \o bot2right s) x.
+Proof. exact: congr_functor1 is_square. Defined.
+
+Section prepullback.
+Variables (Q : precat) (A B : Q) (c : cospan A B).
+HB.instance Definition _ :=
+  IsQuiver.Build (prepullback c)
+    (fun a b => (a : span A B) ~>_(span A B) (b : span A B)).
+
+Lemma eq_prepullbackP (p q : prepullback c) :
+  p = q :> span _ _ <-> p = q.
+Proof.
+split => [|->//].
+case: p q => [p [/= [sqp]]] [q [/= [+]]] pq; case: _ /pq => sqq.
+congr PrePullback.Pack; congr PrePullback.Class.
+by congr isPrePullback.Axioms_; apply: Prop_irrelevance.
+Qed.
+
+End prepullback.
+Section prepullback.
+Variables (Q : cat) (A B : Q) (csp : cospan A B).
+(* TODO: why can't we do that? *)
+(* HB.instance Definition _ := Cat.on (prepullback csp). *)
+HB.instance Definition _ :=
+  Quiver_IsPreCat.Build (prepullback csp)
+    (fun a => \idmap_(a : span A B))
+      (* TODO: study how to make this coercion trigger
+               even when the target is not reduced to span *)
+    (fun a b c f g => f \; g).
+Lemma prepullback_is_cat : PreCat_IsCat (prepullback csp).
+Proof. (* should be copied from the cat on span *)
+constructor=> [a b f|a b f|a b c d f g h];
+ [exact: comp1o|exact: compo1|exact: compoA].
+Qed.
+End prepullback.
+
+HB.tag Definition pb_terminal (Q : precat)
+  (A B : Q) (c : cospan A B) (s : prepullback c) :
+    obj (prepullback c) := s.
+
+#[wrapper]
+HB.mixin Record prepullback_isTerminal (Q : precat)
+    (A B : Q) (c : cospan A B)
+    (s : span A B) of isPrePullback Q A B c s := {
+  prepullback_terminal :
+    IsTerminal (prepullback c) (pb_terminal s)
+}.
+#[short(type="pullback")]
+HB.structure Definition Pullback (Q : precat) (A B : Q) (c : cospan A B) :=
+  {s of @isPrePullback Q A B c s
+      & @prepullback_isTerminal Q A B c s }.
+
+Lemma pb_universal {C: cat} {A B T P : C}
+  (t: A ~> T) (s: B ~> T) (p : pullback (Cospan t s))
+  (f: P ~> A) (g: P ~> B) :
+  f \; t = g \; s ->
+  {m: P ~> bot p & f = m \; bot2left p /\ g = m \; bot2right p}.
+Proof.
+case: p => [[P0 p1 p2] p1p2ts_pb] ftgs; pose c := Cospan t s.
+pose p12 : pullback c := HB.pack (Span p1 p2) p1p2ts_pb.
+have fg_sq : isPrePullback _ _ _ c (Span f g) by constructor; exact: ftgs.
+pose fg : prepullback c := HB.pack (Span f g) fg_sq.
+pose m := @from _ (pb_terminal p12) fg.
+by exists (bot_map m); split; rewrite (bot2left_map m, bot2right_map m).
+Qed.
+Arguments pb_universal {C A B T P}.
+
+Inductive walking_cospan := Top | Left | Right.
+Definition walking_cospan_hom (x y : walking_cospan) := match x, y with
+  | Top, Top  | Left, Left | Right, Right |
+    Left, Top | Right, Top => Datatypes.unit
+  | _, _ => False
+  end.
+
+HB.instance Definition _ :=
+  IsQuiver.Build walking_cospan walking_cospan_hom.
+
+Definition walking_cospan_id (x : walking_cospan) : x ~> x.
+Proof. by case: x; constructor. Defined.
+
+Definition walking_cospan_comp (x y z : walking_cospan) :
+  (x ~> y) -> (y ~> z) -> (x ~> z).
+Proof. by case: x y z => [] [] []. Defined.
+
+HB.instance Definition _ := Quiver_IsPreCat.Build walking_cospan
+  walking_cospan_id walking_cospan_comp.
+
+Lemma walking_cospan_cat : PreCat_IsCat walking_cospan.
+Proof. by constructor=> [[] []|[] []|[] [] [] []]// []. Qed.
+HB.instance Definition _ := walking_cospan_cat.
+
+Section Pullback_Natural.
+Context (C : cat) (A B : C) (csp : cospan A B).
+
+Definition cspF (x : walking_cospan) : C :=
+  match x with Left => A | Right => B | Top => top csp end.
+
+Definition cspFhom : forall (x y : walking_cospan),
+    (x ~> y) -> cspF x ~> cspF y.
+Proof.
+move=> [] []//.
+- move=> _; exact: idmap.
+- move=> _; exact: left2top csp.
+- move=> _; exact: idmap.
+- move=> _; exact: right2top csp.
+- move=> _; exact: idmap.
+Defined.
+
+HB.instance Definition _ := IsPreFunctor.Build _ _ cspF cspFhom.
+Lemma cspF_functor : PreFunctor_IsFunctor _ _ cspF.
+Proof.
+by constructor=> [[]|[] [] []]//= [] []//=;
+   rewrite ?(compo1, comp1o)//.
+Qed.
+HB.instance Definition _ := cspF_functor.
+
+Section prepullback2natural.
+Variable (p : prepullback csp).
+
+Definition wcsp w : cst walking_cospan (bot p) w ~> cspF w.
+Proof.
+case: w; rewrite /cst /=.
+- exact: (bot2left _ \; left2top _).
+- exact: bot2left.
+- exact: bot2right.
+Defined.
+
+Lemma wcsp_natural : IsNatural _ _ _ _ wcsp.
+Proof.
+constructor=> - [] [] //= [] /=; rewrite ?(comp1o, compo1)//=.
+exact: is_square.
+Qed.
+
+End prepullback2natural.
+
+Section natural2prepullback.
+Variables (c : C) (n : cst walking_cospan c ~~> cspF).
+
+Definition s := {| bot := c; bot2left := n Left; bot2right := n Right |}.
+
+Lemma s_prepullback : isPrePullback _ _ _ csp s.
+Proof.
+constructor => /=.
+have p := natural n (tt : Right ~> Top).
+have /esym q := natural n (tt : Left ~> Top).
+exact: etrans q p.
+Qed.
+
+End natural2prepullback.
+
+End Pullback_Natural.
+
+Notation square u v f g :=
+  (isPrePullback _ _ _ (Cospan f g) (Span u v)).
+Notation pbsquare u v f g :=
+  (Pullback _ (Cospan f g) (Span u v)).
+Notation pb s := (prepullback_isTerminal _ _ _ _ s).
+
+(** CATEGORIES WITH PULLBACKS **)
+
+(* Ideally span is in fact expanded and the final mixin has
+a pb : forall A B, cospan A B -> C
+but it is not clear how to do that yet
+*)
+(* pullback operator *)
+HB.mixin Record HasPBop C of Cat C :=
+  { pbk : forall A B : C, cospan A B -> span A B }.
+#[short(type="pbop")] HB.structure Definition PBop := {C of HasPBop C & Cat C}. 
+Arguments pbk {_ _ _}.
+
+(* category with all prepullbacks *)
+(* Problematic: wrapping a class (PBop) instead of a mixin *)
+#[wrapper]
+HB.mixin Record HasPreBCat C of PBop C : Type := {
+  is_ppbk : forall (a b : C) (c : cospan a b),
+      isPrePullback C a b c (pbk c)
+  }.
+#[short(type="prepbcat")]
+HB.structure Definition PreBCat := {C of HasPreBCat C & PBop C}.
+
+(* category with all pullbacks *)
+#[wrapper]
+HB.mixin Record HasPBCat C of PBop C & HasPreBCat C : Type := {
+  is_tpbk : forall (a b : C) (c : cospan a b),
+     prepullback_isTerminal C a b c (pbk c)
+  }.
+#[short(type="pbcat")]
+HB.structure Definition PBCat := {C of HasPBCat C & PreBCat C}.
+
+(** The projections of a binary product of categoris are functors *)
+
+Definition fst0 {A B: cat} : (A * B) -> A := fst.
+Definition snd0 {A B: cat} : (A * B) -> B := snd.
+
+HB.instance Definition _ (C D : cat) :=
+  IsPreFunctor.Build (C * D)%type C fst0 (fun (a b : C * D) (f : a ~> b) => f.1).
+HB.instance Definition _ (C D : cat) :=
+  IsPreFunctor.Build (C * D)%type D snd0 (fun (a b : C * D) (f : a ~> b) => f.2).
+
+Lemma fst0_IsFunctor_lemma (C D: cat) : PreFunctor_IsFunctor ((C * D)%type: cat) C fst0.
+Proof. by []. Qed.
+Lemma snd0_IsFunctor_lemma (C D: cat) : PreFunctor_IsFunctor ((C * D)%type: cat) D snd0.
+Proof. by []. Qed.
+HB.instance Definition _ (C D : cat) := fst0_IsFunctor_lemma C D.
+HB.instance Definition _ (C D : cat) := snd0_IsFunctor_lemma C D.
+
+Definition fstF {A B : cat} : (A * B)%type ~>_cat A := fst0 : Functor.type _ _.
+Definition sndF {A B : cat} : (A * B)%type ~>_cat B := snd0 : Functor.type _ _.
+
+Module cat_pbk.
+Section cat_pbk.
+Context {A B : cat} (csp : cospan A B).
+Let F := left2top csp.
+Let G := right2top csp.
+
+Definition C := {x : A * B & F x.1 = G x.2}.
+Definition Chom (x y : C) := { f : tag x ~> tag y &
+    (F <$> f.1) \; emap (tagged y) = emap (tagged x) \; G <$> f.2 }.      
+     (* ecast2 x y (x ~> y) (tagged x) (tagged y) (F <$> f.1) = (G <$> f.2) }. *)
+#[export] HB.instance Definition _ := IsQuiver.Build C Chom.
+
+Lemma eqC (c d : C) : tag c = tag d -> c = d.
+Proof.
+case: c d => [c ceq] [d +]//= cd; case: _ / cd => {d} deq.
+by case: _ / (Prop_irrelevance ceq deq).
+Qed.
+
+Lemma eqChom (c d : C) (f g : c ~> d) : tag f = tag g -> f = g.
+Proof.
+case: f g => [/= f feq] [/= g +] fg; case: _ / fg => {g} geq.
+by case: _ / (Prop_irrelevance feq geq) => {geq}.
+Qed.
+
+Program Definition Cidmap (c : C) : c ~> c := @Tagged _ idmap _ _.
+Next Obligation. by move=> a /=; rewrite !F1 /=; case: _ / (tagged a). Qed.
+
+Program Definition Ccomp (x y z : C) (f : x ~> y) (g : y ~> z) : x ~> z :=
+  @Tagged _ (tag f \; tag g) _ _.
+Next Obligation.
+move=> x y z [[/= f1 f2] fe] [[/= g1 g2] ge] /=; rewrite !Fcomp/=.
+by rewrite -compoA ge compoA fe compoA.
+Qed.
+#[export] HB.instance Definition _ := Quiver_IsPreCat.Build C Cidmap Ccomp.
+
+Lemma C_cat : PreCat_IsCat C.
+Proof.
+by split=> [a b f|a b f|a b c d f g h]; apply/eqChom => //=; rewrite (comp1o, compo1, compoA).
+Qed.
+#[export] HB.instance Definition _ := C_cat.
+
+Definition valC : C -> A * B := tag.
+Definition valChom (x y : C) : (x ~> y) -> (tag x ~> tag y) := tag.
+#[export] HB.instance Definition _ := IsPreFunctor.Build C (A * B)%type valC valChom.
+
+Lemma valC_functor : PreFunctor_IsFunctor _ _ valC. Proof. by []. Qed. 
+#[export] HB.instance Definition _ := valC_functor.
+
+Definition valF : C ~>_cat (A * B)%type := valC : Functor.type _ _.
+
+Definition Cpb := @Span cat A B (C : cat) (valF \; fstF) (valF \; sndF).
+
+Lemma Cpb_prepb : isPrePullback cat A B csp Cpb.
+Proof.
+split.
+apply/functorPemap => //=; first by case.
+move=> h [[/=a b] p] [[/= a' b'] p'] [[/= f g]].
+do !rewrite /Fhom//=.
+move: (h _) (h _).
+rewrite /valC/= => h1 h2.
+rewrite (_ : p = h1); first exact: Prop_irrelevance.
+by rewrite (_ : p' = h2); first exact: Prop_irrelevance.
+Qed.
+#[export] HB.instance Definition _ := Cpb_prepb.
+
+Definition from_obj (s : prepullback csp) : bot s -> C.
+Proof.
+unshelve eexists => /=.
+  split; [exact: (bot2left s)|exact: (bot2right s)].
+exact: is_squarex.
+Defined.
+
+Definition from_obj_prefunctor s : IsPreFunctor _ _ (@from_obj s).
+split=> x y f.
+unshelve eexists; rewrite /from_obj /tag/=.
+  by split => /=; apply: Fhom f.
+move=> /=.
+rewrite /F /G/=.
+rewrite /is_squarex.
+rewrite -[left2top csp <$> bot2left s <$> f]/((left2top csp \o bot2left s) <$> f).
+rewrite -[right2top csp <$> bot2right s <$> f]/((right2top csp \o bot2right s) <$> f).
+move: is_square.
+move: (bot2right s) (right2top csp) (bot2left s) (left2top csp) => u v w t /=.
+rewrite -[v (u x)]/((u \; v) x).
+rewrite -[v (u y)]/((u \; v) y).
+by case: _ / => /=; rewrite compo1 comp1o.
+Defined.
+HB.instance Definition _ s := from_obj_prefunctor s.
+
+Definition from_obj_functor s : PreFunctor_IsFunctor _ _ (@from_obj s).
+Proof. by split => [x|x y z f g]/=; apply: eqChom; rewrite /= ?(F1, Fcomp). Qed.
+HB.instance Definition _ s := from_obj_functor s.
+
+Definition from (s : prepullback csp) : s ~> Cpb.
+Proof.
+exists (@from_obj s : Functor.type _ _) => //; apply/functorPemap => a b f /=.
+- by rewrite freflE/= compo1 comp1o.
+- by rewrite freflE/= compo1 comp1o.
+Defined.
+
+End cat_pbk.
+
+HB.instance Definition _ := HasPBop.Build cat (@Cpb).
+
+Lemma cat_prepb : HasPreBCat cat.
+Proof.
+split => A B csp; split.
+apply/functorPemap => //=; first by case.
+move=> h [[/=a b] p] [[/= a' b'] p'] [[/= f g]].
+do !rewrite /Fhom//=.
+move: (h _) (h _).
+rewrite /valC/= => h1 h2.
+rewrite (_ : p = h1); first exact: Prop_irrelevance.
+by rewrite (_ : p' = h2); first exact: Prop_irrelevance.
+Qed.
+HB.instance Definition _ := cat_prepb.
+
+Lemma cat_pb {A B : cat} (csp : cospan A B) : IsTerminal _ (pb_terminal (pbk csp)).
+Proof.
+unshelve eexists.
+  move=> c; rewrite /pbk /pb_terminal /=.
+  exact: from.
+move=> c [/= f f1 f2].
+apply/span_mapP => /=.
+apply/functorPemap => //=.
+  move=> x /=; rewrite /from_obj/=.
+  apply/eqC => //=; rewrite -f1 -f2/=.
+  by case: (f x) => -[].
+move=> eqf x y u; apply/eqChom => /=.
+rewrite /valF /fstF /sndF /valC in f1 f2 *.
+have tag_emap : forall y, tag (emap (eqf y)) = emap (congr1 tag (eqf y)).
+  by move=> z; case: _ / eqf.
+rewrite !tag_emap.
+move: f1 f2 (congr1 tag (eqf x)) (congr1 tag (eqf y)).
+rewrite /from_obj/=.
+case: _ /; case: _/; rewrite /= /valC /fst0 /snd0 /=.
+rewrite -[(f \; _ \; fstF) <$> _]/(tag (f <$> u)).1.
+rewrite -[(f \; _ \; sndF) <$> _]/(tag (f <$> u)).2.
+case: (tag (f <$> u)) => /=.
+case: (tag (f x)) => /= b1 b2.
+case: (tag (f y)) => /= a1 a2 ba1 ba2 eb ea.
+by rewrite (Prop_irrelevance ea erefl) (Prop_irrelevance eb erefl) compo1 comp1o.
+Qed.
+Fail HB.instance Definition _ {A B : cat} (csp : cospan A B) := @cat_pb A B csp.
+
+(**********************************************************************)
 
 HB.mixin Record IsRing A := {
   zero : A;

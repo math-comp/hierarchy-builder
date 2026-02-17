@@ -1,7 +1,7 @@
 {
   format = "1.0.0";
   attribute = "hierarchy-builder";
-  default-bundle = "coq-8.20";
+  default-bundle = "rocq-9.1";
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "master";
@@ -31,7 +31,7 @@
       jasmin.job = false;  # currently broken
     };
   in {
-    "coq-master" = { rocqPackages = {
+    "rocq-master" = { rocqPackages = {
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
       rocq-elpi.override.version = "master";
@@ -46,25 +46,17 @@
       coquelicot.job = false;
     }; };
 
-    "coq-9.1" = { rocqPackages = {
+    "rocq-9.1" = { rocqPackages = {
       rocq-core.override.version = "9.1";
     }; coqPackages = mcHBcommon // {
       coq.override.version = "9.1";
     }; };
 
-    "coq-9.0" = { rocqPackages = {
+    "rocq-9.0" = { rocqPackages = {
       rocq-core.override.version = "9.0";
     }; coqPackages = mcHBcommon // {
       coq.override.version = "9.0";
     }; };
-
-    "coq-8.20".coqPackages = mcHBcommon // {
-      coq.override.version = "8.20";
-      interval.override.version = "master";
-      coq-elpi.override.version = "v3.0.0";
-      coq-elpi.override.elpi-version = "3.0.1";
-    };
-
   };
   cachix.coq = {};
   cachix.coq-community = {};

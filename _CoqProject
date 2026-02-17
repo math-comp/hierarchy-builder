@@ -1,4 +1,5 @@
 HB/structures.v
+theories/cat.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
 -arg -w -arg -elpi.typecheck-syntax
