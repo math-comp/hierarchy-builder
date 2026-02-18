@@ -24,7 +24,9 @@ with-attributes P :-
     att "primitive" bool,
     att "non_forgetful_inheritance" bool,
     att "hnf" bool,
-  ] Opts, !,
+    att "wrapper" bool,
+    att "unsafe.univ" bool,
+ ] Opts, !,
   Opts => (save-docstring, P).
 
 func if-verbose (func) -> .

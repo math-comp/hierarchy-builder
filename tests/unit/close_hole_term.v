@@ -21,7 +21,7 @@ inj x y : S (f x) (f y) -> R x y.
 
 Elpi Query HB.structure lp:{{
     Y = {{Inj}}, %Inj has 5 implicit arguments
-    saturate-type-constructor Y X,
+    saturate-type-constructor 0 Y X,
     % X needs to be typechecked here to get rid of the holes of the types of its arguments
     coq.typecheck X _ ok,
     abstract-holes.main X Z,

@@ -180,6 +180,18 @@ pred join o:classname, o:classname, o:classname.
 % `Clauses =>` in infer-class. Should perform a dynamic check?
 func mixin-mem term -> gref.
 
+% [wrapper-mixin Wrapper NewSubject WrappedMixin]
+%  #[wrapper] HB.mixin Record hom_isMon T of Quiver T :=
+%      { private : forall A B, isMon (@hom T A B) }.
+%  -->
+%  wrapper-mixin (indt "hom_isMon") (const "hom") (indt "isMon").
+pred wrapper-mixin o:mixinname, o:gref, o:mixinname.
+
+% designated identity function for wrapping (sometimes you don't have a
+% structure op for it).
+% [tag GR Class NParams]
+pred tag o:gref, o:classname, o:int.
+
 %%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Operations (named mixin fields) need to be exported exactly once,
 % but the same mixin can be used in many structure, hence this memory
@@ -192,10 +204,12 @@ func mixin-mem term -> gref.
 :index(2)
 func mixin->first-class mixinname -> classname.
 
-% memory of exported operations (TODO: document fiels)
+% memory of exported operations.
+% [exported-op Mixin MixinProjection Operation], where Operation is a
+% structure projection.
 pred exported-op o:mixinname, o:constant, o:constant.
 
-% memory of factory sort coercion
+% memory of factory sort coercion (Unused?)
 pred factory-sort o:coercion.
 
 % memory of canonical projections for a structure (X.sort, X.class, X.type)
@@ -242,7 +256,7 @@ pred current-mode o:declaration.
 
 % library, nice-name, object
 pred module-to-export   o:string, o:id, o:modpath.
-pred instance-to-export o:string, o:id, o:constant.
+pred instance-to-export o:string, o:constant.
 pred abbrev-to-export   o:string, o:id, o:gref.
 pred clause-to-export   o:string, o:prop.
 
@@ -591,6 +605,34 @@ Elpi Export HB.pack.
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 
+Elpi Tactic HB.from.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+#[skip="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
+#[only="8.1[89].*"] Elpi Accumulate File "HB/common/compat_add_secvar_18_19.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/pack.elpi".
+Elpi Accumulate lp:{{
+
+solve (goal _ _ Ty _ Args as G) GLS :- with-attributes (with-logging (std.do! [
+  pack.main-use-factories Ty Args Instance,
+  refine Instance G GLS,
+])).
+
+}}.
+Elpi Typecheck.
+
+Tactic Notation "HB.from" open_constr_list(L) :=
+  elpi HB.from ltac_term_list:(L).
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
 (** [HB.structure] declares a packed structure.
 
   Syntax to declare a structure combing the axioms from [Factory1] … [FactoryN].
@@ -662,7 +704,7 @@ main [const-decl N (some B) Arity] :- std.do! [
   % compute the universe for the structure (default )
   prod-last {coq.arity->term Arity} Ty,
   if (ground_term Ty) (Sort = Ty) (Sort = {{Type}}), sort Univ = Sort,
-  with-attributes (with-logging (structure.declare N B Univ)),
+  with-attributes (with-logging (with-unsafe-univ (with-time "HB.structure" (structure.declare N B Univ)))),
 ].
 
 }}.
@@ -686,6 +728,10 @@ actions N :-
   coq.env.current-library File,
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)),
   coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
+
+  % hack
+  std.forall {std.iota 30} (x\begin-section "x",end-section), 
+
   if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (actions-compat N) true.
 
 pred actions-compat i:id.
@@ -738,10 +784,10 @@ Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/factory.elpi".
 Elpi Accumulate lp:{{
-main [] :- !, with-attributes (with-logging (instance.saturate-instances _)).
-main [str "Type"] :- !, with-attributes (with-logging (instance.saturate-instances (cs-sort _))).
-main [str K] :- !, coq.locate K GR, with-attributes (with-logging (instance.saturate-instances (cs-gref GR))).
-main [trm T] :- !, term->cs-pattern T P, with-attributes (with-logging (instance.saturate-instances P)).
+main [] :- !, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances 0 _))).
+main [str "Type"] :- !, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances 0 (cs-sort _)))).
+main [str K] :- !, coq.locate K GR, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances 0 (cs-gref GR)))).
+main [trm T] :- !, term->cs-pattern T P, coq.safe-dest-app T _ L, std.length L N, with-attributes (with-logging (with-time "HB.saturate" (instance.saturate-instances N P))).
 main _ :- coq.error "Usage: HB.saturate [key]".
 }}.
 Elpi Typecheck.
@@ -788,7 +834,7 @@ Elpi Accumulate lp:{{
 
 :name "start"
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
-  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _ _)).
+  with-attributes (with-logging (with-time "HB.instance" (instance.declare-const Name BodySkel TyWPSkel _ _))).
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
@@ -1209,6 +1255,70 @@ check-or-not Skel :-
 }}.
 Elpi Typecheck.
 Elpi Export HB.check.
+
+
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+(* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
+
+(** [HB.tag] declares a tag for mixin subjects
+
+[[
+HB.tag Definition N Params (x : S.type) : Type := x
+]]
+
+*)
+
+#[arguments(raw)] Elpi Command HB.tag.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate lp:{{
+
+main [const-decl Name (some BodySkel) AritySkel] :- !, std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton AritySkel _ Arity) "HB: type illtyped",
+  coq.arity->nparams Arity N,
+  coq.arity->term Arity Ty,
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "HB: body illtyped",
+  with-attributes (with-logging (std.do! [
+    log.coq.env.add-const Name Body Ty @transparent! C,
+    coq.arity->implicits Arity CImpls,
+    if (coq.any-implicit? CImpls)
+     (@global! => coq.arguments.set-implicit (const C) [CImpls])
+     true,
+  ])),
+  M is N - 1,
+  class-of-nth-arg M Ty Class,
+  acc-clause current (tag (const C) Class M),
+].
+main [str G, str"|", int M] :- !,
+  coq.locate G GR,
+  coq.env.typeof GR Ty,
+  class-of-nth-arg M Ty Class,
+  acc-clause current (tag GR Class M).
+
+main _ :- coq.error "Usage: HB.tag Definition <Name> ... <subject> := T ...\nUsage: HB.tag <gref> | <nparams>".
+
+pred class-of-nth-arg i:int, i:term, o:classname.
+class-of-nth-arg 0 (prod _ (global S) _\_) Class :- class-def (class Class S _).
+class-of-nth-arg 0 (prod _ (app [global S|_]) _\_) Class :- class-def (class Class S _).
+class-of-nth-arg N (prod Name Ty Bo) Class :- N > 0, !, M is N - 1,
+  @pi-decl Name Ty x\ class-of-nth-arg M (Bo x) Class.
+class-of-nth-arg 0 T _ :- !,
+  coq.error "HB: the last parameter of a tag must be of a structure type:" {coq.term->string T}.
+class-of-nth-arg _ T _ :- !,
+  coq.error "HB: not enough argsuments:" {coq.term->string T}.
+
+}}.
+Elpi Typecheck.
+Elpi Export HB.tag.
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)

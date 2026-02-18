@@ -48,7 +48,7 @@ export.reexport-all-modules-and-CS Filter :- std.do! [
   std.forall2 NiceMods Mods log.coq.env.export-module,
 
 
-  std.findall (instance-to-export File NiceInstance_ Const_) InstCL,
+  std.findall (instance-to-export File Const_) InstCL,
   std.filter {std.list-uniq InstCL} (export.private.instance-in-module MFilter) InstCLFiltered,
   std.map InstCLFiltered instance-to-export_instance Insts,
 
@@ -89,7 +89,7 @@ module-in-module PM (module-to-export _ _ M) :-
   prefixL PM PC.
 
 func instance-in-module list string, prop ->.
-instance-in-module PM (instance-to-export _ _ C) :-
+instance-in-module PM (instance-to-export _ C) :-
   coq.gref->path (const C) PC,
   prefixL PM PC.
 

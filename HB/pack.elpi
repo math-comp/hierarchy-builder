@@ -12,7 +12,6 @@ main Ty Args Instance :- std.do! [
   std.assert! (Args = [trm TSkel|FactoriesSkel]) "HB.pack: not enough arguments",
 
   get-constructor Class KC,
-  get-constructor Structure KS,
 
   std.assert-ok! (d\
     (coq.elaborate-ty-skeleton TSkel _ T d, d = ok) ;
@@ -29,9 +28,40 @@ main Ty Args Instance :- std.do! [
         (AllFactories = Factories)
       (AllFactories = Factories, Tkey = T), % it's a factory, won't add anything
 
-  private.synth-instance Params KC KS T Tkey AllFactories Instance,
+  private.synth-instance Params KC T Tkey AllFactories ClassInstance,
+
+  get-constructor Structure KS,
+  std.append Params [T, ClassInstance] InstanceArgs,
+  Instance = app[global KS | InstanceArgs]
 
 ].
+
+pred main-use-factories i:term, i:list argument, o:term.
+main-use-factories Ty FactoriesSkel ClassInstance :- std.do! [
+  std.assert! (not(var Ty)) "HB.from: the class cannot be unknown",
+
+  factory? {unwind {whd Ty []}} (triple Class Params T),
+
+  std.assert! (class-def (class Class _ _)) "HB.from: not a class",
+
+  get-constructor Class KC,
+
+  private.elab-factories FactoriesSkel T Factories,
+
+  if (var T) (coq.error "HB.from: you must pass a type or at least one factory") true,
+
+  if2 (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
+        (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories], Tkey = T) % already existing class on T
+      (def T _ _ Tkey) % we unfold letins if we can, they may hide constants with CS instances
+        (AllFactories = Factories)
+      (AllFactories = Factories, Tkey = T), % it's a factory, won't add anything
+
+  private.try-synth-instance Params KC Tkey AllFactories ClassInstance,
+  
+].
+
+
+
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- private code ------------------------------ */
@@ -39,21 +69,32 @@ main Ty Args Instance :- std.do! [
 
 namespace private {
 
-pred synth-instance.aux i:list term, i:gref, i:gref, i:term, i:term, i:list term, i:list prop, o:term.
-synth-instance.aux Params KC KS T Tkey [Factory|Factories] MLCano Instance :-
+pred synth-instance.aux i:list term, i:gref, i:term, i:term, i:list term, i:list prop, o:term.
+synth-instance.aux Params KC T Tkey [Factory|Factories] MLCano ClassInstance :-
   synthesis.under-new-mixin-src-from-factory.do! Tkey Factory (_\
-    synth-instance.aux Params KC KS T Tkey Factories MLCano Instance).
-synth-instance.aux Params KC KS T Tkey [] MLCano Instance :-
+    synth-instance.aux Params KC T Tkey Factories MLCano ClassInstance).
+synth-instance.aux Params KC _T Tkey [] MLCano ClassInstance :-
 	MLCano => std.do! [
     std.assert-ok! (synthesis.infer-all-args-let Params Tkey KC ClassInstance) "HB.pack: cannot infer the instance",
-    std.append Params [T, ClassInstance] InstanceArgs,
-      Instance = app[global KS | InstanceArgs]
 ].
 
-pred synth-instance i:list term, i:gref, i:gref, i:term, i:term, i:list term, o:term.
-synth-instance Params KC KS T Tkey Factories Instance :-
+pred synth-instance i:list term, i:gref, i:term, i:term, i:list term, o:term.
+synth-instance Params KC T Tkey Factories ClassInstance :-
 	if (coq.safe-dest-app Tkey (global _) _) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
-	synth-instance.aux Params KC KS T Tkey Factories MLCano Instance.
+	synth-instance.aux Params KC T Tkey Factories MLCano ClassInstance.
+
+pred try-synth-instance i:list term, i:gref, i:term, i:list term, o:term.
+try-synth-instance Params KC Tkey [Factory|Factories] ClassInstance :-
+  synthesis.under-new-mixin-src-from-factory.do! Tkey Factory (_\
+    try-synth-instance Params KC Tkey Factories ClassInstance).
+try-synth-instance Params KC Tkey [] ClassInstance :- coq.safe-dest-app Tkey (global _) _, !,
+	synthesis.local-canonical-mixins-of Tkey MLCano,
+  MLCano => std.do! [
+    synthesis.try-infer-all-args-let Params Tkey KC ClassInstance,
+].
+try-synth-instance Params KC Tkey [] ClassInstance :- std.do! [
+  synthesis.try-infer-all-args-let Params Tkey KC ClassInstance,
+].
 
 pred elab-factories i:list argument, i:term, o:list term.
 elab-factories [] _ [].

@@ -68,6 +68,24 @@ tests/bug_447.v
 tests/unimported_relevant_class.v
 tests/unimported_irrelevant_class.v
 
+tests/tag_wrap.v
+tests/wrap.v
+tests/auto_wrap.v
+
+
+tests/MinimalWrapBugs/aboutAutowrap.v
+tests/MinimalWrapBugs/aboutAutowrap2.v
+tests/MinimalWrapBugs/buildersofwrap.v
+tests/MinimalWrapBugs/buildersofwrap2.v
+tests/MinimalWrapBugs/buggyFactories.v
+tests/MinimalWrapBugs/canonicalByHand.v
+tests/MinimalWrapBugs/mwb.v
+tests/MinimalWrapBugs/noglobref.v
+tests/MinimalWrapBugs/typeNotInfered.v
+tests/MinimalWrapBugs/unwrappedSubject.v
+
+tests/mindep.v
+
 -R tests HB.tests
 -R examples HB.examples
 

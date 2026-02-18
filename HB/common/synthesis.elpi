@@ -20,6 +20,7 @@ infer-all-these-mixin-args Ps T ML F SFX :- std.do! [
   std.assert-ok! (coq.typecheck F Ty) "try-infer-these-mixin-args: F illtyped",
   coq.mk-eta (-1) Ty F EtaF,
   coq.subst-fun {std.append Ps [T]} EtaF FT,
+  % coq.say "instantiate-all-these-mixin-args on" {coq.term->string FT}, 
   private.instantiate-all-these-mixin-args FT T ML SFX,
 ].
 
@@ -74,12 +75,19 @@ infer-all-args-let Ps T GR X Diag :- std.do! [
   private.instantiate-all-args-let FT T X Diag,
 ].
 
+pred try-infer-all-args-let i:list term, i:term, i:gref, o:term.
+try-infer-all-args-let Ps T GR X :- std.do! [
+  coq.env.typeof GR Ty,
+  coq.mk-eta (-1) Ty (global GR) EtaF,
+  coq.subst-fun {std.append Ps [T]} EtaF FT,
+  private.try-instantiate-all-args-let FT T X,
+].
 
 % [assert!-infer-mixin TheType M Out] infers one mixin M on TheType and
 % aborts with an error message if the mixin cannot be inferred
-func assert!-infer-mixin term, mixinname -> term.
-assert!-infer-mixin T M B :-
-  if (private.mixin-for T M B)
+func assert!-infer-mixin term, mixinname -> term, term.
+assert!-infer-mixin T M B Ty :-
+  if (private.mixin-for T M B Ty)
      true
      (coq.error "HB: cannot inhabit mixin"
        {nice-gref->string M} "on"{coq.term->string T}).
@@ -96,7 +104,7 @@ local-canonical-mixins-of.aux T [S|Ss] MSL'' :- std.do! [
 	].
 	
 func local-canonical-mixins-of term -> list prop.
-local-canonical-mixins-of T MSL :- std.do! [
+local-canonical-mixins-of T MSL :- std.time-do! "local-canonical-mixins-of" [
   get-canonical-structures T CS,
 	std.map CS (s\c\ sigma w\ class-def (class c s w)) Cl,
 	toposort-classes Cl ClSorted,
@@ -111,6 +119,17 @@ under-mixin-src-from-factory.do! TheType TheFactory LP :-
   private.factory-instance->new-mixins [] TheFactory ML,
   std.map ML (m\c\ c = mixin-src TheType m TheFactory) MLClauses,
   MLClauses => std.do! LP.
+
+
+% Given TheType makes the provided list of mixins and instances
+% available for inference.
+pred under-these-mixin-src.do! i:term, i:list mixinname, i:list constant, o:list prop, i:list prop.
+under-these-mixin-src.do! TheType ML TheMixins ClausesHas LP :- std.do! [
+  std.map2 ML TheMixins (m\mi\c\ c = mixin-src TheType m (global (const mi))) MLClauses,
+  std.map-filter MLClauses mixin-src->has-mixin-instance ClausesHas,
+  MLClauses => std.do! LP
+].
+
 
 % Given TheType and a factory instance (on it), builds all the *new* mixins
 % provided by the factory available for and passes them to the given
@@ -163,6 +182,7 @@ infer-coercion-tgt (w-params.cons ID Ty F) CoeClass :-
   @pi-parameter ID Ty x\ infer-coercion-tgt (F x) CoeClass.
 infer-coercion-tgt (w-params.nil _ {{ Type }} _) sortclass :- !.
 infer-coercion-tgt (w-params.nil _ {{ forall x, _ }} _) funclass :- !. % do not use {{ _ -> _ }} since Funclass can be a dependent function!
+infer-coercion-tgt (w-params.nil _ T _) (grefclass _) :- name T, !, coq.error "The type of the structure carrier cannot be a parameter".
 infer-coercion-tgt (w-params.nil _ T _) (grefclass GR) :- coq.term->gref T GR.
 
 :index (_ _ 2)
@@ -183,18 +203,26 @@ namespace private {
 
 % [mixin-for T M MI] synthesizes an instance of mixin M on type T using
 % the databases [mixin-src] and [from]
-func mixin-for term, mixinname -> term.
-mixin-for T M MICompressed :- mixin-src T M Tm, !,
+func mixin-for term, mixinname -> term, term.
+mixin-for T M MICompressed MICompressedTy :- mixin-src T M Tm, !,
   %if-verbose (coq.say {header} "Trying to infer mixin for" M),
   std.assert-ok! (coq.typecheck Tm Ty) "mixin-for: Tm illtyped",
 
 %%%%% mterm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  factory? Ty (triple Factory Params _),
+  factory? Ty (triple Factory Params Subj),
 
-  if (M = Factory) (MI = Tm) (
-      private.builder->term Params T Factory M B,
-      coq.subst-fun [Tm] B MI
+  if (M = Factory)
+  (
+      if-verbose (coq.say {header} "Found mixin has type" Factory "on" Subj "no need to apply a builder"),
+      MI = Tm, MICompressedTy = Ty
+  )
+  (
+      if-verbose (coq.say {header} "Found mixin has type" Factory "on" Subj "hence we apply a builder"),
+
+      private.builder->term Params T Factory Tm M MI MITy, MICompressedTy = MITy
+      % private.builder->term Params T Factory M B,
+      % coq.subst-fun [Tm] B MI
   ),
 
   %if-verbose (coq.say {header} "Trying to compress mixin for" {coq.term->string MI}),
@@ -226,18 +254,25 @@ compress-coercion-paths MI MICompressed :-
      (MI = MICompressed).
 
 func mixin-for_mixin-builder prop -> term.
-mixin-for_mixin-builder (mixin-for _ _ B) B.
+mixin-for_mixin-builder (mixin-for _ _ B _) B.
 
 % [builder->term Params TheType Src Tgt MF] finds a builder from Src to Tgt
 % and fills in all the mixins required by the builder using mixin-src, obtaining
 % a function (MF = Builder Params TheType InferredStuff : Src -> Tgt)
-func builder->term list term, term, factoryname, mixinname -> term.
-builder->term Ps T Src Tgt B :- !, std.do! [
+func builder->term list term, term, factoryname, term, mixinname -> term, term.
+builder->term Ps T Src HasSrc Tgt B1 BTy :- !, std.do! [
   from Src Tgt FGR,
   F = global FGR,
   gref->deps Src MLwP,
   list-w-params_list MLwP ML,
-  infer-all-these-mixin-args Ps T ML F B,
+  if-verbose (coq.say {header} "Found builder" FGR "from" Src "to" Tgt),
+  if-verbose (coq.say {header} "Found builder" FGR "depends on" ML),
+  % infer-all-these-mixin-args Ps T ML F B,
+  coq.mk-n-holes {std.length ML} Holes,
+  coq.mk-app F {std.flatten [Ps,[T],Holes,[HasSrc]]} B,
+  std.time (std.assert-ok! (coq.typecheck B BTy) "builder illtyped") _Time1,
+  B = B1
+
 ].
 
 % [instantiate-all-these-mixin-args T F M_i TFX] where mixin-for T M_i X_i states that
@@ -250,9 +285,12 @@ func instantiate-all-these-mixin-args term, term, list mixinname -> term.
 instantiate-all-these-mixin-args (fun _ Tm F) T ML R :-
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M ok,
+  if-verbose (coq.say {header} "Looking at argument" M),
   std.mem! ML M,
+  % factory? Tm (triple _ _ Subj), Subj = T, % check the subject is T (do not pass T to factory?)
   !,
-  if (mixin-for T M X) true (coq.error "HB: Unable to find mixin" {nice-gref->string M} "on subject" {coq.term->string T}), !,
+  if-verbose (coq.say {header} "We have to inhabit it on" T),
+  if (mixin-for T M X _) true (coq.error "HB: Unable to find mixin" {nice-gref->string M} "on subject" {coq.term->string T}), !,
   instantiate-all-these-mixin-args (F X) T ML R.
 instantiate-all-these-mixin-args (fun N Ty F) T ML (fun N Ty FX) :- !,
   @pi-decl N Ty m\ instantiate-all-these-mixin-args (F m) T ML (FX m).
@@ -262,13 +300,23 @@ func instantiate-all-args-let term, term -> term, diagnostic.
 instantiate-all-args-let (fun N Tm F) T (let N Tm X R) Diag :- !, std.do! [
   coq.safe-dest-app Tm (global TmGR) _,
   factory-alias->gref TmGR M ok,
-  if (mixin-for T M X)
+  if (mixin-for T M X _)
      (@pi-def N Tm X m\ instantiate-all-args-let (F m) T (R m) Diag)
      (Diag = error Msg,
       Msg is "cannot synthesize mixin " ^ {nice-gref->string M} ^
              " for " ^ {coq.term->string T}),
 ].
 instantiate-all-args-let F _ F ok.
+
+pred try-instantiate-all-args-let i:term, i:term, o:term.
+try-instantiate-all-args-let (fun N Tm F) T (let N Tm X R) :- !, std.do! [
+  coq.safe-dest-app Tm (global TmGR) _,
+  factory-alias->gref TmGR M ok,
+  (mixin-for T M X _; true),
+  (@pi-def N Tm X m\ try-instantiate-all-args-let (F m) T (R m)),
+].
+try-instantiate-all-args-let F _ F.
+
 
 % [structure-instance->mixin-srcs TheType Structure] finds a CS instance for
 % Structure on TheType (if any) and builds mixin-src clauses for all the mixins
@@ -315,7 +363,7 @@ structure-instance->mixin-srcs.aux T  F CL :-
 % which can be generated by the factory instance FI which are not part of
 % OldMixins (that is, the contribution of FI to the current context)
 func factory-instance->new-mixins list mixinname, term -> list mixinname.
-factory-instance->new-mixins OldMixins X NewML :-
+factory-instance->new-mixins OldMixins X NewML :- std.time-do! "factory-instance->new-mixins" [
   std.assert-ok! (coq.typecheck X XTy) "mixin-src: X illtyped",
   if (not (coq.safe-dest-app XTy (global _) _))
      (coq.error "Term:\n" {coq.term->string X}
@@ -325,6 +373,7 @@ factory-instance->new-mixins OldMixins X NewML :-
   coq.term->gref XTy Src,
   factory-provides Src MLwP,
   list-w-params_list MLwP ML,
-  std.filter ML (m\ not(std.mem! OldMixins m)) NewML.
+  std.filter ML (m\ not(std.mem! OldMixins m)) NewML,
+].
 
 }}
