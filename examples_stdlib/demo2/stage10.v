@@ -77,7 +77,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-HB.mixin Record Ring_of_AddAG A of AddAG A := {
+HB.mixin Record Ring_of_AddAG A & AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -200,7 +200,7 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-HB.mixin Record JoinTAddAG T of AddAG_of_TYPE T & Topological T := {
+HB.mixin Record JoinTAddAG T & AddAG_of_TYPE T & Topological T := {
   add_continuous : continuous2 (add : T -> T -> T);
   opp_continuous : continuous (opp : T -> T)
 }.

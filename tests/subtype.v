@@ -30,9 +30,9 @@ HB.structure Definition SubInhab (T : Type) P :=
 HB.structure Definition SubNontrivial T P := { sT of is_nontrivial sT & is_SUB T P sT }.
 
 #[key="sT"]
-HB.factory Record InhabForSub (T : Inhab.type) P (sT : Type) of SubNontrivial T P sT := {}.
+HB.factory Record InhabForSub (T : Inhab.type) P (sT : Type) & SubNontrivial T P sT := {}.
 
-HB.builders Context (T : Inhab.type) P sT of InhabForSub T P sT.
+HB.builders Context (T : Inhab.type) P sT & InhabForSub T P sT.
 
 Axiom xxx : P (default : T).
 HB.instance Definition SubInhabMix := is_inhab.Build sT (Sub (default : T) xxx).

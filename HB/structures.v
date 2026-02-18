@@ -439,7 +439,7 @@ Elpi Export HB.graph.
   with requirements [Factory1] .. [FactoryN]:
 
 [[
-HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
+HB.mixin Record MixinName T & Factory1 T & … & FactoryN T := {
    op : T -> …
    …
    property : forall x : T, op …
@@ -451,7 +451,7 @@ HB.mixin Record MixinName T of Factory1 T & … & FactoryN T := {
   - [MixinName T] abbreviation for the type of the (degenerate) factory
   - [MixinName.Build T] abbreviation for the constructor of the factory
 
-  Note: [T of f1 T & … & fN T] is ssreflect syntax for [T (_ : f1 T) … (_ : fN T)]
+  Note: [T & f1 T & … & fN T] is syntactic sugar for [T (_ : f1 T) … (_ : fN T)]
 
   Supported attributes:
   - [#[primitive]] experimental attribute to make the mixin/factory primitive,
@@ -500,7 +500,7 @@ actions N :-
 main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
 
 main _ :-
-  coq.error "Usage: HB.mixin Record <MixinName> T of F A & … := { … }.".
+  coq.error "Usage: HB.mixin Record <MixinName> T & F A & … := { … }.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.mixin.
@@ -857,7 +857,7 @@ main [indt-decl D] :- record-decl->id D N, with-attributes (actions N).
 main [const-decl N _ _] :- with-attributes (actions N).
 
 main _ :-
-  coq.error "Usage: HB.factory Record <FactoryName> T of F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
+  coq.error "Usage: HB.factory Record <FactoryName> T & F A & … := { … }.\nUsage: HB.factory Definition <FactoryName> T of F A := t.".
 }}.
 Elpi Typecheck.
 Elpi Export HB.factory.
@@ -1121,7 +1121,7 @@ This command populates the current section with canonical instances.
 
   Syntax:
 [[
-HB.declare Context (p1 : P1) ... (pn : Pn) (t : T) of F0 ... Fk.
+HB.declare Context (p1 : P1) ... (pn : Pn) (t : T) & F0 & ... & Fk.
 ]]
   Effect:
 [[

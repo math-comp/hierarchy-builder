@@ -65,8 +65,8 @@ End Theory.
 HB.mixin Record Dummy T := { u : unit }.
 HB.structure Definition URing := { R of Ring R & Dummy R }.
 
-HB.factory Record dummy R of Ring R := {}.
-HB.builders Context T of dummy T.
+HB.factory Record dummy R & Ring R := {}.
+HB.builders Context T & dummy T.
 HB.instance Definition _ := Dummy.Build T tt.
 Definition addrNK := addrNK.
 HB.export addrNK.

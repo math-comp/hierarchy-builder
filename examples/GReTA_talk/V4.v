@@ -7,7 +7,7 @@ HB.mixin Record is_semigroup (S : Type) := {
 }.
 HB.structure Definition SemiGroup := { S & is_semigroup S }.
 
-HB.mixin Record semigroup_is_monoid M of is_semigroup M := {
+HB.mixin Record semigroup_is_monoid M & is_semigroup M := {
   zero  : M;
   add0r : forall x, add zero x = x;
   addr0 : forall x, add x zero = x;
@@ -20,14 +20,14 @@ HB.factory Record is_monoid M := {
   add0r : forall x, add zero x = x;
   addr0 : forall x, add x zero = x;
 }.
-HB.builders Context (M : Type) of is_monoid M.
+HB.builders Context (M : Type) & is_monoid M.
   HB.instance Definition _ := is_semigroup.Build M add addrA.
   HB.instance Definition _ := semigroup_is_monoid.Build M zero add0r addr0.
 HB.end.
 
 HB.structure Definition Monoid := { M & is_monoid M }.
 
-HB.mixin Record monoid_is_group G of is_monoid G := {
+HB.mixin Record monoid_is_group G & is_monoid G := {
   opp : G -> G;
   subrr : forall x, add x (opp x) = zero;
   addNr : forall x, add (opp x) x = zero;
@@ -43,7 +43,7 @@ HB.factory Record is_group G := {
   subrr : forall x, add x (opp x) = zero;
   addNr : forall x, add (opp x) x = zero;
 }.
-HB.builders Context G of is_group G.
+HB.builders Context G & is_group G.
   Let addr0 : forall x, add x zero = x.
   Proof. by move=> x; rewrite -(addNr x) addrA subrr add0r. Qed.
   HB.instance Definition _ := is_monoid.Build G zero add addrA add0r addr0.

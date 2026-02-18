@@ -19,7 +19,7 @@ Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
 
 (* Left mixin in Fig. 1. *)
-HB.mixin Record Ring_of_Monoid R of Monoid R := {
+HB.mixin Record Ring_of_Monoid R & Monoid R := {
   one : R;
   opp : R -> R;
   mul : R -> R -> R;

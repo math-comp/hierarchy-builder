@@ -19,20 +19,20 @@ HB.mixin Record AddMonoid_of_Type A := {
 }.
 HB.structure Definition AddMonoid := { A of AddMonoid_of_Type A }.
 
-HB.mixin Record AbGroup_of_AddMonoid A of AddMonoid A := {
+HB.mixin Record AbGroup_of_AddMonoid A & AddMonoid A := {
   opp : A -> A;
   addrC : commutative (add : A -> A -> A);
   addNr : left_inverse zero opp add;
 }.
 HB.structure Definition AbGroup := { A of AddMonoid A & AbGroup_of_AddMonoid A }.
 
-HB.mixin Record Ring_of_AbGroupMulMonoid A of MulMonoid A & AbGroup A := {
+HB.mixin Record Ring_of_AbGroupMulMonoid A & MulMonoid A & AbGroup A := {
   mulrDl : left_distributive mul (add : A -> A -> A);
   mulrDr : right_distributive mul (add : A -> A -> A);
 }.
 HB.structure Definition Ring := { A of MulMonoid A & AbGroup A & Ring_of_AbGroupMulMonoid A }.
 
-HB.factory Record Ring_of_AddMulMonoid A of MulMonoid A & AddMonoid A := {
+HB.factory Record Ring_of_AddMulMonoid A & MulMonoid A & AddMonoid A := {
   opp : A -> A;
   addrC : commutative (add : A -> A -> A);
   addNr : left_inverse zero opp add;
@@ -52,7 +52,7 @@ HB.builders Context A (a : Ring_of_AddMulMonoid A).
 
 HB.end.
 
-HB.factory Record Ring_of_MulMonoid A of MulMonoid A := {
+HB.factory Record Ring_of_MulMonoid A & MulMonoid A := {
   zero : A;
   add : A -> A -> A;
   addrA : associative add;

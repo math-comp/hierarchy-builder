@@ -15,7 +15,7 @@ Infix    "+" := add.
 (* The type of the operations and axioms depend on a CMonoid.type structure. *)
 Check addrC. (* ?M : CMonoid.type |- commutative (@add ?M) *)
 
-HB.mixin Record AbelianGrp_of_CMonoid A of CMonoid A := {
+HB.mixin Record AbelianGrp_of_CMonoid A & CMonoid A := {
   opp   : A -> A;
   (* We can write `add` here since A is a  CMonoid   *)
   addNr : left_inverse zero opp add; (* `opp` is the additive inverse *)
@@ -24,7 +24,7 @@ HB.structure Definition AbelianGrp := { A of AbelianGrp_of_CMonoid A }.
 Notation "- x"   := (opp x).
 Notation "x - y" := (add x (opp y)).
 
-HB.mixin Record SemiRing_of_CMonoid A of CMonoid A := {
+HB.mixin Record SemiRing_of_CMonoid A & CMonoid A := {
   one    : A;
   mul    : A -> A -> A;
   mulrA  : associative mul;  (* `mul` is associative   *)

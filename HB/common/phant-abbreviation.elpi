@@ -225,14 +225,14 @@ build-type-pattern.aux _ _ _ :- coq.error "HB: wrong carrier type".
 %         [find s_0 | t ~ s_0]
 %         [find c_0 | s_0 ~ SK q_1 .. q_l t c_0]
 %         [find m'_{i_0_0}, .., m'_{i_0_n0} | c_0 ~ CK m'_{i_0_0} .. m'_{i_0_n0}]
-%         fun of hb.unify m_{i_0_0} m'_{i_0_0} & ... & hb.unify m_{i_0_n0} m'_{i_0_n0} =>
+%         fun & hb.unify m_{i_0_0} m'_{i_0_0} & ... & hb.unify m_{i_0_n0} m'_{i_0_n0} =>
 %       ...
 %       fun q'_1 .. q'_l' =>
 %         [find t   | T ~ t]
 %         [find s_k | t ~ s_k]
 %         [find c_k | s_k ~ SK q'_1 .. q'_l' y c_k]
 %         [find m'_{i_k_0}, .., m'_{i_k_nk} | c_0 ~ CK m'_{i_k_0} .. m'_{i_k_nk}]
-%         fun of hb.unify m_{i_0_0} m'_{i_0_0} & ... & hb.unify m_{i_k_nk} m'_{i_k_nk} =>
+%         fun & hb.unify m_{i_0_0} m'_{i_0_0} & ... & hb.unify m_{i_k_nk} m'_{i_k_nk} =>
 %       F p_1 ... p_k T m_i0_j0 .. m_il_jl}}
 func mk-phant-term.mixins term, term, classname, phant-term,
   list term, name, term, (term -> list (w-args mixinname)) -> phant-term.

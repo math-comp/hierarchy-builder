@@ -16,7 +16,7 @@ HB.structure Definition AddComoid := { A of AddComoid_of_TYPE A }.
 
 (* Begin change *)
 
-HB.mixin Record AddAG_of_AddComoid A of AddComoid A := {
+HB.mixin Record AddAG_of_AddComoid A & AddComoid A := {
   opp : A -> A;
   addNr : left_inverse zero opp add;
 }.
@@ -43,7 +43,7 @@ HB.builders Context A (a : AddAG_of_TYPE A).
 HB.end.
 HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
-HB.mixin Record Ring_of_AddAG A of AddAG A := {
+HB.mixin Record Ring_of_AddAG A & AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -56,7 +56,7 @@ HB.mixin Record Ring_of_AddAG A of AddAG A := {
 
 HB.structure Definition Ring := { A of Ring_of_AddAG A }.
 
-HB.factory Record Ring_of_AddComoid A of AddComoid A := {
+HB.factory Record Ring_of_AddComoid A & AddComoid A := {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;

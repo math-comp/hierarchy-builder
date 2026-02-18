@@ -8,7 +8,7 @@ End A.
 Module Export B.
 Import A.
 HB.factory Record isB T := {}.
-HB.builders Context T of isB T.
+HB.builders Context T & isB T.
   HB.instance Definition _ := isA.Build T.
 HB.end.
 End B.
