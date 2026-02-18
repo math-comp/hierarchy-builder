@@ -79,16 +79,16 @@ Record axioms_ (m : CMonoid_of_Type.axioms_ A) := Axioms_ {
 }.
 
 Definition phant_Build  :=
-  fun (s : CMonoid.type) of [unify A with CMonoid.sort s] =>
-  fun (c : CMonoid.axioms A) of [unify s with CMonoid.Pack A c] =>
-  fun (m : CMonoid_of_Type.axioms_ A) of [unify c with CMonoid.Class A m] =>
+  fun (s : CMonoid.type) & [unify A with CMonoid.sort s] =>
+  fun (c : CMonoid.axioms A) & [unify s with CMonoid.Pack A c] =>
+  fun (m : CMonoid_of_Type.axioms_ A) & [unify c with CMonoid.Class A m] =>
   fun (opp : A -> A) (addNr : left_inverse (@zero (M m)) opp (@add (M m))) =>
     Axioms_ m opp addNr.
 
 Definition phant_axioms  :=
-  fun (s : CMonoid.type) of [unify A with CMonoid.sort s] =>
-  fun (c : CMonoid.axioms A) of [unify s with CMonoid.Pack A c] =>
-  fun (m : CMonoid_of_Type.axioms_ A) of [unify c with CMonoid.Class A m] =>
+  fun (s : CMonoid.type) & [unify A with CMonoid.sort s] =>
+  fun (c : CMonoid.axioms A) & [unify s with CMonoid.Pack A c] =>
+  fun (m : CMonoid_of_Type.axioms_ A) & [unify c with CMonoid.Class A m] =>
     axioms_ m.
 
 End AbelianGrp_of_CMonoid.

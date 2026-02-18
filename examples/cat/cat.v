@@ -40,7 +40,7 @@ Notation "a ~>_ C b" := (@hom C a b)
   (at level 99, C at level 0, only parsing) : cat_scope.
 
 (* precategories are quivers + id and comp *)
-HB.mixin Record Quiver_IsPreCat C of Quiver C := {
+HB.mixin Record Quiver_IsPreCat C & Quiver C := {
   idmap : forall (a : C), a ~> a;
   comp : forall (a b c : C), (a ~> b) -> (b ~> c) -> (a ~> c);
 }.
@@ -50,7 +50,7 @@ HB.factory Record IsPreCat C := {
   idmap : forall (a : C), hom a a;
   comp : forall (a b c : C), hom a b -> hom b c -> hom a c;
 }.
-HB.builders Context C of IsPreCat C.
+HB.builders Context C & IsPreCat C.
   HB.instance Definition _ := IsQuiver.Build C hom.
   HB.instance Definition _ := Quiver_IsPreCat.Build C idmap comp.
 HB.end.
@@ -70,7 +70,7 @@ Notation "f \; g" := (comp f g) : cat_scope.
 Notation "\idmap_ a" := (@idmap _ a) (only parsing, at level 0) : cat_scope.
 
 (* categories are precategories + laws *)
-HB.mixin Record PreCat_IsCat C of PreCat C := {
+HB.mixin Record PreCat_IsCat C & PreCat C := {
   comp1o : forall (a b : C) (f : a ~> b), idmap \; f = f;
   compo1 : forall (a b : C) (f : a ~> b), f \; idmap = f;
   compoA : forall (a b c d : C) (f : a ~> b) (g : b ~> c) (h : c ~> d),
@@ -144,7 +144,7 @@ Qed.
 
 (* a functor is a prefunctor + laws for id and comp *)
 HB.mixin Record PreFunctor_IsFunctor (C D : precat) (F : C -> D)
-     of @PreFunctor C D F := {
+     & @PreFunctor C D F := {
    F1 : forall (a : C), F <$> \idmap_a = idmap;
    Fcomp : forall (a b c : C) (f : a ~> b) (g : b ~> c),
       F <$> (f \; g) = F <$> f \; F <$> g;
@@ -227,7 +227,7 @@ HB.instance Definition _ := cat_cat.
 Check (cat : cat).
 
 (* concrete categories *)
-HB.mixin Record Quiver_IsPreConcrete T of Quiver T := {
+HB.mixin Record Quiver_IsPreConcrete T & Quiver T := {
   concrete : T -> U;
   concrete_fun : forall (a b : T), (a ~> b) -> concrete a -> concrete b;
 }.
@@ -238,7 +238,7 @@ HB.structure Definition PreConcreteQuiver : Set :=
 Set Universe Checking.
 Coercion concrete : PreConcreteQuiver.sort >-> Sortclass.
 
-HB.mixin Record PreConcrete_IsConcrete T of PreConcreteQuiver T := {
+HB.mixin Record PreConcrete_IsConcrete T & PreConcreteQuiver T := {
   concrete_fun_inj : forall (a b : T), injective (concrete_fun a b)
 }.
 Unset Universe Checking.
@@ -250,7 +250,7 @@ Set Universe Checking.
 HB.instance Definition _ (C : ConcreteQuiver.type) :=
   IsPreFunctor.Build _ _ (concrete : C -> U) concrete_fun.
 
-HB.mixin Record PreCat_IsConcrete T of ConcreteQuiver T & PreCat T := {
+HB.mixin Record PreCat_IsConcrete T & ConcreteQuiver T & PreCat T := {
   concrete1 : forall (a : T), concrete <$> \idmap_a = idfun;
   concrete_comp : forall (a b c : T) (f : a ~> b) (g : b ~> c),
     concrete <$> (f \; g) = ((concrete <$> g) \o (concrete <$> f))%function;
@@ -308,7 +308,7 @@ HB.instance Definition _ := PreCat_IsConcrete.Build cat
    (fun=> erefl) (fun _ _ _ _ _ => erefl).
 
 (* constant functor *)
-Definition cst (C D : quiver) (c : C) := fun of D => c.
+Definition cst (C D : quiver) (c : C) := fun & D => c.
 Arguments cst {C} D c.
 HB.instance Definition _ {C D : precat} (c : C) :=
   IsPreFunctor.Build D C (cst D c) (fun _ _ _ => idmap).
@@ -574,7 +574,7 @@ Lemma delta_functor {C D : cat} : PreFunctor_IsFunctor _ _ (delta C D).
 Proof. by constructor=> [a|a b c f g]; exact/natP. Qed.
 HB.instance Definition _ C D := @delta_functor C D.
 
-HB.mixin Record IsMonad (C : precat) (M : C -> C) of @PreFunctor C C M := {
+HB.mixin Record IsMonad (C : precat) (M : C -> C) & @PreFunctor C C M := {
   unit : idfun ~~> M;
   join : (M \o M)%function ~~> M;
   bind : forall (a b : C), (a ~> M b) -> (M a ~> M b);
@@ -591,19 +591,19 @@ HB.structure Definition PreMonad (C : precat) :=
 HB.structure Definition Monad (C : precat) :=
    {M of @Functor C C M & IsMonad C M}.
 
-HB.factory Record IsJoinMonad (C : precat) (M : C -> C) of @PreFunctor C C M := {
+HB.factory Record IsJoinMonad (C : precat) (M : C -> C) & @PreFunctor C C M := {
   unit : idfun ~~> M;
   join : (M \o M)%function ~~> M;
   unit_join : forall a, (M <$> unit a) \; join _ = idmap;
   join_unit : forall a, join _ \; (M <$> unit a) = idmap;
   join_square : forall a, M <$> join a \; join _ = join _ \; join _
 }.
-HB.builders Context C M of IsJoinMonad C M.
+HB.builders Context C M & IsJoinMonad C M.
   HB.instance Definition _ := IsMonad.Build C M
     (fun a b f => erefl) unit_join join_unit join_square.
 HB.end.
 
-HB.mixin Record IsCoMonad (C : precat) (M : C -> C) of @IsPreFunctor C C M := {
+HB.mixin Record IsCoMonad (C : precat) (M : C -> C) & @IsPreFunctor C C M := {
   counit : M ~~> idfun;
   cojoin : M ~~> (M \o M)%function;
   cobind : forall (a b : C), (M a ~> b) -> (M a ~> M b);
@@ -619,14 +619,14 @@ HB.structure Definition PreCoMonad (C : precat) :=
 HB.structure Definition CoMonad (C : precat) :=
    {M of @Functor C C M & IsCoMonad C M}.
 
-HB.factory Record IsJoinCoMonad (C : precat) (M : C -> C) of @IsPreFunctor C C M := {
+HB.factory Record IsJoinCoMonad (C : precat) (M : C -> C) & @IsPreFunctor C C M := {
   counit : M ~~> idfun;
   cojoin : M ~~> (M \o M)%function;
   unit_cojoin : forall a, (M <$> counit a) \; cojoin _ = idmap;
   join_counit : forall a, cojoin _ \; (M <$> counit a) = idmap;
   cojoin_square : forall a, cojoin _ \; M <$> cojoin a = cojoin _ \; cojoin _
 }.
-HB.builders Context C M of IsJoinCoMonad C M.
+HB.builders Context C M & IsJoinCoMonad C M.
   HB.instance Definition _ := IsCoMonad.Build C M
     (fun a b f => erefl) unit_cojoin join_counit cojoin_square.
 HB.end.
@@ -822,7 +822,7 @@ Definition feqsym {C : precat} {a b : C} : a = b -> b ~> a.
 Proof. by move<-; exact idmap. Defined.
 
 HB.mixin Record IsLeftAdjointOf (C D : cat) (R : D ~> C) L
-    of @Functor C D L := {
+    & @Functor C D L := {
   Lphi : forall c d, (L c ~> d) -> (c ~> R d);
   Lpsi : forall c d, (c ~> R d) -> (L c ~> d);
   (* there should be a monad and comonad structure wrappers instead *)
@@ -861,7 +861,7 @@ Arguments Lcounit {C D R s}.
 (* End LeftAdjointOf_Theory. *)
 
 HB.mixin Record IsRightAdjoint (D C : cat) (R : D -> C)
-    of @Functor D C R := {
+    & @Functor D C R := {
   (* we should have a wrapper instead *)
   left_adjoint : C ~> D;
   LLphi : forall c d, (left_adjoint c ~> d) -> (c ~> R d);
@@ -886,7 +886,7 @@ Arguments LLpsi {D C s} {c d}.
 Arguments LLunit {D C s}.
 Arguments LLcounit {D C s}.
 
-HB.mixin Record PreCat_IsMonoidal C of PreCat C := {
+HB.mixin Record PreCat_IsMonoidal C & PreCat C := {
   onec : C;
   prod : (C * C)%type ~>_precat C;
 }.
@@ -906,7 +906,7 @@ Definition hom_cast {C : quiver} {a a' : C} (eqa : a = a')
   (a ~> b) -> (a' ~> b').
 Proof. now elim: _ / eqa; elim: _ / eqb. Defined.
 
-HB.mixin Record PreFunctor_IsMonoidal (C D : premonoidal) F of
+HB.mixin Record PreFunctor_IsMonoidal (C D : premonoidal) F &
     @PreFunctor C D F := {
   fun_one : F 1 = 1;
   fun_prod : forall (x y : C), F (x * y) = F x * F y;
@@ -949,7 +949,7 @@ HB.instance Definition _ {C : premonoidal} :=
   IsPreFunctor.Build C C prod1l
    (fun (a b : C) (f : a ~> b) => f <*> \idmap_1).
 
-HB.mixin Record PreMonoidal_IsMonoidal C of PreMonoidal C := {
+HB.mixin Record PreMonoidal_IsMonoidal C & PreMonoidal C := {
   prodA  : prod3l ~~> prod3r;
   prod1c : prod1r ~~> idfun;
   prodc1 : prod1l ~~> idfun;
@@ -1070,7 +1070,7 @@ HB.mixin Record IsIdeal (R : ring) (I : R -> Prop) := {
 }.
 HB.structure Definition Ideal (R : ring) := { I of IsIdeal R I }.
 
-HB.mixin Record Ideal_IsPrime (R : ring) (I : R -> Prop) of IsIdeal R I := {
+HB.mixin Record Ideal_IsPrime (R : ring) (I : R -> Prop) & IsIdeal R I := {
   ideal_prime : forall x y : R, I (x * y)%A -> I x \/ I y
 }.
 #[short(type="spectrum")]

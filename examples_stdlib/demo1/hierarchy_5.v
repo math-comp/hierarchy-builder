@@ -16,7 +16,7 @@ HB.mixin Record AddMonoid_of_TYPE S := {
 }.
 HB.structure Definition AddMonoid := { A of AddMonoid_of_TYPE A }.
 
-HB.mixin Record AddComoid_of_AddMonoid A of AddMonoid A := {
+HB.mixin Record AddComoid_of_AddMonoid A & AddMonoid A := {
   addrC : commutative (add : A -> A -> A);
 }.
 HB.factory Record AddComoid_of_TYPE A := {
@@ -45,7 +45,7 @@ HB.structure Definition AddComoid := { A of AddComoid_of_TYPE A }.
 
 (* End change *)
 
-HB.mixin Record AddAG_of_AddComoid A of AddComoid A := {
+HB.mixin Record AddAG_of_AddComoid A & AddComoid A := {
   opp : A -> A;
   addNr : left_inverse zero opp add;
 }.
@@ -74,7 +74,7 @@ HB.structure Definition AddAG := { A of AddAG_of_TYPE A }.
 
 (* Begin changes *)
 
-HB.mixin Record BiNearRing_of_AddMonoid A of AddMonoid A := {
+HB.mixin Record BiNearRing_of_AddMonoid A & AddMonoid A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -89,7 +89,7 @@ HB.structure Definition BiNearRing := { A of AddMonoid A & BiNearRing_of_AddMono
 
 (* this factory is accidentally a duplicate of BiNearRing_of_AddMonoid *)
 (* we alias it for backward compatilibity and uniformity purposes *)
-HB.factory Definition SemiRing_of_AddComoid A of AddComoid A :=
+HB.factory Definition SemiRing_of_AddComoid A & AddComoid A :=
     BiNearRing_of_AddMonoid A.
 
 HB.builders Context A (a : SemiRing_of_AddComoid A).
@@ -106,7 +106,7 @@ HB.structure Definition SemiRing := { A of AddComoid A & SemiRing_of_AddComoid A
 Set Implicit Arguments. (* The factory builder will have implicit arguments *)
 
 #[doc="Builds a Ring from an Abelian Group: the absorbing properties mul0r and mul0r are derived from addrC and the other ring axioms, following a proof of Hankel (Gerhard Betsch. On the beginnings and development of near-ring theory. In Near-rings and near-fields. Proceedings of the conference held in Fredericton, New Brunswick, July 18-24, 1993, pages 1–11. Mathematics and its Applications, 336. Kluwer Academic Publishers Group, Dordrecht, 1995)."]
-HB.factory Record Ring_of_AddAG A of AddAG A := {
+HB.factory Record Ring_of_AddAG A & AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -141,7 +141,7 @@ HB.builders Context A (a : Ring_of_AddAG A).
 
 HB.end.
 
-HB.factory Record Ring_of_AddComoid A of AddComoid A := {
+HB.factory Record Ring_of_AddComoid A & AddComoid A := {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;

@@ -19,7 +19,7 @@ Notation "0" := zero : hb_scope.
 Infix "+" := (@add _) : hb_scope.
 
 (* Bottom right mixin in Fig. 1. *)
-HB.mixin Record AbelianGroup_of_Monoid A of Monoid A := {
+HB.mixin Record AbelianGroup_of_Monoid A & Monoid A := {
   opp : A -> A;
   addrC : commutative (add : A -> A -> A);
   addNr : left_inverse zero opp add;
@@ -30,7 +30,7 @@ Notation "- x" := (@opp _ x) : hb_scope.
 Notation "x - y" := (x + - y) : hb_scope.
 
 (* Top right mixin in Fig. 1. *)
-HB.mixin Record Ring_of_AbelianGroup R of AbelianGroup R := {
+HB.mixin Record Ring_of_AbelianGroup R & AbelianGroup R := {
   one : R;
   mul : R -> R -> R;
   mulrA : associative mul;
@@ -48,7 +48,7 @@ Lemma addrN {R : AbelianGroup.type} : right_inverse (zero : R) opp add.
 Proof. by move=> x; rewrite addrC addNr. Qed.
 
 (* Left factory in Fig. 1. *)
-HB.factory Record Ring_of_Monoid R of Monoid R := {
+HB.factory Record Ring_of_Monoid R & Monoid R := {
   one : R;
   opp : R -> R;
   mul : R -> R -> R;

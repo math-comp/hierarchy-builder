@@ -8,15 +8,15 @@ HB.structure Definition POrder d := { T of IsDualPOrdered d T }.
 
 HB.factory Record IsPOrdered (d : unit) T := { le : T -> T -> bool }.
 
-HB.builders Context d T of IsPOrdered d T.
+HB.builders Context d T & IsPOrdered d T.
 HB.instance Definition _ := IsDualPOrdered.Build d T le le.
 HB.end.
 
-HB.mixin Record HasBottom d T of IsDualPOrdered d T := { bottom : T }.
+HB.mixin Record HasBottom d T & IsDualPOrdered d T := { bottom : T }.
 
 HB.structure Definition BPOrder d := { T of HasBottom d T & IsDualPOrdered d T }.
 
-HB.mixin Record HasTop d T of IsDualPOrdered d T := { top : T }.
+HB.mixin Record HasTop d T & IsDualPOrdered d T := { top : T }.
 
 HB.structure Definition TPOrder d := { T of HasTop d T & IsDualPOrdered d T }.
 

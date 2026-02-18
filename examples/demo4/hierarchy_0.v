@@ -16,7 +16,7 @@ Check (refl_equal _ : @inhab _ _ = 7).
 HB.instance Definition list_m1 A := m1.Build (option A) (list nat) (cons 7 nil) None.
 Check (refl_equal _ : @inhab _ _ = (cons 7 nil)).
 
-HB.mixin Record m2 (T : Type) (A : Type) of m1 T A := {
+HB.mixin Record m2 (T : Type) (A : Type) & m1 T A := {
   inj : T -> A;
 }.
 

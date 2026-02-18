@@ -16,7 +16,7 @@ HB.mixin Record AddComoid_of_TYPE A := {
 }.
 HB.structure Definition AddComoid := { A of AddComoid_of_TYPE A }.
 
-HB.mixin Record Ring_of_AddComoid A of AddComoid A := {
+HB.mixin Record Ring_of_AddComoid A & AddComoid A := {
   opp : A -> A;
   one : A;
   mul : A -> A -> A;

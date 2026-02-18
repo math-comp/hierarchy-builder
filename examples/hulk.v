@@ -81,7 +81,7 @@ HB.mixin Record HasMul T := {
 }.
 HB.structure Definition Mul := { T of HasMul T }.
 
-HB.mixin Record HasSq T of Mul T := {
+HB.mixin Record HasSq T & Mul T := {
   sq : T -> T;
   sq_mul : forall x, sq x = mul x x;
 }.
@@ -136,7 +136,7 @@ HB.mixin Record HasEqDec T := {
 }.
 HB.structure Definition Equality := { T of HasEqDec T }.
 
-HB.mixin Record IsContractible T of HasEqDec T := {
+HB.mixin Record IsContractible T & HasEqDec T := {
     def : T;
     all_def : forall x, eqtest x def = true;
 }.
@@ -302,16 +302,16 @@ Module MissingJoin.
 HB.mixin Record isTop M := { }.
 HB.structure Definition Top := {M of isTop M}.
 
-HB.mixin Record isA1 M of Top M := { }.
+HB.mixin Record isA1 M & Top M := { }.
 HB.structure Definition A1 := {M of isA1 M & isTop M}.
 
-HB.mixin Record isA2 M of Top M := { }.
+HB.mixin Record isA2 M & Top M := { }.
 HB.structure Definition A2 := {M of isA2 M & isTop M}.
 
-HB.mixin Record isB1 M of A1 M := { }.
+HB.mixin Record isB1 M & A1 M := { }.
 HB.structure Definition B1 := {M of isB1 M & }.
 
-HB.mixin Record isB2 M of A2 M := { }.
+HB.mixin Record isB2 M & A2 M := { }.
 HB.structure Definition B2 :=  {M of isB2 M & isA2 M }.
 
 HB.structure Definition B2A1 := {M of B2 M & A1 M }.
@@ -328,16 +328,16 @@ Module GoodJoin.
 HB.mixin Record isTop M := { }.
 HB.structure Definition Top := {M of isTop M}.
 
-HB.mixin Record isA1 M of Top M := { }.
+HB.mixin Record isA1 M & Top M := { }.
 HB.structure Definition A1 := {M of isA1 M & isTop M}.
 
-HB.mixin Record isA2 M of Top M := { }.
+HB.mixin Record isA2 M & Top M := { }.
 HB.structure Definition A2 := {M of isA2 M & isTop M}.
 
-HB.mixin Record isB1 M of A1 M := { }.
+HB.mixin Record isB1 M & A1 M := { }.
 HB.structure Definition B1 := {M of isB1 M & }.
 
-HB.mixin Record isB2 M of A2 M := { }.
+HB.mixin Record isB2 M & A2 M := { }.
 HB.structure Definition B2 :=  {M of isB2 M & isA2 M }.
 
 HB.structure Definition join := {M of A1 M & A2 M }.

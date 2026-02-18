@@ -33,7 +33,7 @@ HB.factory Record MOT T (F : T -> T -> T) := {
   commid : forall x : T , F x id = F id x;
 }.
 
-HB.builders Context T F of MOT T F.
+HB.builders Context T F & MOT T F.
 
 HB.instance Definition x3 := has_assoc.Build T F assoc.
 

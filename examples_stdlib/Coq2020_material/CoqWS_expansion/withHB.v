@@ -16,7 +16,7 @@ HB.structure
   Definition CMonoid := { A of CMonoid_of_Type A }.
 
 HB.mixin
-  Record AbelianGrp_of_CMonoid A of CMonoid A := {
+  Record AbelianGrp_of_CMonoid A & CMonoid A := {
     opp   : A -> A;
     addNr : left_inverse zero opp add;
   }.

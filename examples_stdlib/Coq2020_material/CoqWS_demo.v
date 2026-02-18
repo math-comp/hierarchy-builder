@@ -65,7 +65,7 @@ Proof. by move=> M x; rewrite addrC. Qed.
 *)
 
 HB.mixin
-  Record AbelianGrp_of_CMonoid A of CMonoid A := {
+  Record AbelianGrp_of_CMonoid A & CMonoid A := {
     opp   : A -> A;
     addNr : left_inverse zero opp add;
   }.
@@ -83,7 +83,7 @@ Check forall x y, x - (y + 0) = x.
   The puzzle piece on the left and the SemiRing str.
 *)
 HB.mixin
-  Record SemiRing_of_CMonoid A of CMonoid A := {
+  Record SemiRing_of_CMonoid A & CMonoid A := {
     one    : A;
     mul    : A -> A -> A;
     mulrA  : associative mul;
@@ -193,7 +193,7 @@ HB.factory
 
 (* The ''compilation'' of a factory *)
 HB.builders
-  Context A of Ring_of_Type A.
+  Context A & Ring_of_Type A.
 
 (* We are in a Context with a type A that with operations
    and properties, but which is not yet known to be a Ring *)

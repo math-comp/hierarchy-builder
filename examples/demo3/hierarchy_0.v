@@ -10,7 +10,7 @@ HB.mixin Record MulMonoid_of_Type A := {
 }.
 HB.structure Definition MulMonoid := { A of MulMonoid_of_Type A }.
 
-HB.mixin Record Ring_of_MulMonoid A of MulMonoid A := {
+HB.mixin Record Ring_of_MulMonoid A & MulMonoid A := {
   zero : A;
   add : A -> A -> A;
   addrA : associative add;

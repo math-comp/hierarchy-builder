@@ -80,7 +80,7 @@ Proof. by rewrite opprD opprK addrC. Qed.
 
 End AddAGTheory.
 
-HB.mixin Record Ring_of_AddAG A of AddAG A := {
+HB.mixin Record Ring_of_AddAG A & AddAG A := {
   one : A;
   mul : A -> A -> A;
   mulrA : associative mul;
@@ -204,7 +204,7 @@ Definition continuous {T T' : TopologicalSpace.type} (f : T -> T') :=
 Definition continuous2 {T T' T'': TopologicalSpace.type}
   (f : T -> T' -> T'') := continuous (fun xy => f xy.1 xy.2).
 
-HB.mixin Record JoinTAddAG_wo_Uniform T of AddAG_of_TYPE T & Topological T := {
+HB.mixin Record JoinTAddAG_wo_Uniform T & AddAG_of_TYPE T & Topological T := {
   add_continuous : continuous2 (add : T -> T -> T);
   opp_continuous : continuous (opp : T -> T)
 }.
@@ -242,12 +242,12 @@ Section Uniform_Topology.
 
 End Uniform_Topology.
 
-HB.mixin Record Join_Uniform_Topology U of Topological U & Uniform_wo_Topology U := {
+HB.mixin Record Join_Uniform_Topology U & Topological U & Uniform_wo_Topology U := {
   openE : open = (uniform_open _ : set (set (uniform U)))
 }.
 
 (* TODO: this factory should be replaced by type alias uniform *)
-HB.factory Record Uniform_Topology U of Uniform_wo_Topology U := { }.
+HB.factory Record Uniform_Topology U & Uniform_wo_Topology U := { }.
 
 HB.builders Context U (f : Uniform_Topology U).
 
@@ -297,13 +297,13 @@ End TAddAGUniform.
 HB.structure Definition Uniform_TAddAG_unjoined :=
   { A of TAddAG_wo_Uniform A & Uniform_wo_Topology A }.
   (* should be created automatically *)
-HB.mixin Record Join_TAddAG_Uniform T of Uniform_TAddAG_unjoined T := {
+HB.mixin Record Join_TAddAG_Uniform T & Uniform_TAddAG_unjoined T := {
     entourageE :
     entourage = (TAddAG_entourage _ : set (set (tAddAG T * tAddAG T)))
 }.
 
   (* TODO: should be subsumed by the type alias TAddAG *)
-HB.factory Record TAddAG_Uniform U of TAddAG_wo_Uniform U := { }.
+HB.factory Record TAddAG_Uniform U & TAddAG_wo_Uniform U := { }.
 
 HB.builders Context U (a : TAddAG_Uniform U).
 
@@ -325,7 +325,7 @@ HB.structure Definition TAddAG :=
    { A of TAddAG_Uniform A (* TODO: should be replaced by type alias TAddAG *)
         & TAddAG_wo_Uniform A }. (* TODO: should be omitted *)
 
-HB.factory Definition JoinTAddAG T of AddAG_of_TYPE T & Topological T :=
+HB.factory Definition JoinTAddAG T & AddAG_of_TYPE T & Topological T :=
   (JoinTAddAG_wo_Uniform T).
 
 HB.builders Context T (a : JoinTAddAG T).

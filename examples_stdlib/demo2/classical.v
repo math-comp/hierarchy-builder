@@ -408,7 +408,7 @@ Proof. by apply: (iffP (asboolP _)). Qed.
 (* -------------------------------------------------------------------- *)
 Module BoolQuant.
 
-Inductive box := Box of bool.
+Inductive box := Box & bool.
 
 Bind    Scope box_scope with box.
 Delimit Scope box_scope with P.

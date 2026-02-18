@@ -37,7 +37,7 @@ HB.mixin Record HasMul T := {
 HB.structure Definition Mul := { T of HasMul T }.
 
 #[primitive]
-HB.mixin Record HasSq T of Mul T := {
+HB.mixin Record HasSq T & Mul T := {
   sq : T -> T;
   pmul : forall x y, sq (mul x y) = mul (sq x) (sq y);
 }.

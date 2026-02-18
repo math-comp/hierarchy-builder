@@ -13,7 +13,7 @@ HB.structure Definition B := {T of hasB T}.
 HB.structure Definition AB := {T of hasA T & hasB T}.
 
 HB.factory Record hasAB T := { a : T; b : T * T }.
-HB.builders Context T of hasAB T.
+HB.builders Context T & hasAB T.
 
 Definition xxx := HB.pack_for AB.type T (hasB.Build T b) (hasA.Build T a).
 HB.instance Definition _ := AB.copy T xxx.

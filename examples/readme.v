@@ -17,7 +17,7 @@ Infix "+" := add.
 
 Check forall (M : AddComoid.type) (x : M), x + x = 0.
 
-HB.mixin Record AbelianGrp_of_AddComoid A of AddComoid_of_Type A := {
+HB.mixin Record AbelianGrp_of_AddComoid A & AddComoid_of_Type A := {
   opp : A -> A;
   addNr : forall x, opp x + x = 0;
 }.

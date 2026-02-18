@@ -10,7 +10,7 @@ HB.structure Definition B := {T of isB T}.
 
 Module Export C.
 Import A.
-HB.mixin Record isC T of A T & B T := {}.
+HB.mixin Record isC T & A T & B T := {}.
 HB.structure Definition C := {T of isB T & isA T & isC T}.
 End C.
 
