@@ -86,6 +86,7 @@ Notation "f \o g" := (comp g f) : cat_scope.
 Notation "f \; g :> T" := (@comp T _ _ _ f g)
   (at level 60, g, T at level 60, format "f  \;  g  :>  T", only parsing) : cat_scope.
 Notation "f \; g" := (comp f g) : cat_scope.
+Notation "1" := idmap (at level 0) : cat_scope.
 Notation "\idmap_ a" := (@idmap _ a) (only parsing, at level 0) : cat_scope.
 
 Module ShowCat.
@@ -976,7 +977,7 @@ Reserved Notation "f <*> g"   (at level 40, g at level 40, format "f  <*>  g").
 Notation "f <*> g" := (prod^$ (f, g)) (only printing) : cat_scope.
 Notation "f <*> g" := (prod^$ ((f, g) : (_, _) ~> (_, _)))
   (only parsing) : cat_scope.
-Notation "1" := onec : cat_scope.
+Notation "11" := onec : cat_scope.
 
 Definition hom_cast {C : quiver} {a a' : C} (eqa : a = a')
                                  {b b' : C} (eqb : b = b') :
@@ -985,7 +986,7 @@ Proof. now elim: _ / eqa; elim: _ / eqb. Defined.
 
 HB.mixin Record PreFunctor_IsMonoidal (C D : premonoidal) F of
     @PreFunctor C D F := {
-  fun_one : F 1 = 1;
+  fun_one : F 11 = 11;
   fun_prod : forall (x y : C), F (x * y) = F x * F y;
 }.
 #[short(type="monoidal_prefunctor")]
@@ -1016,22 +1017,22 @@ HB.instance Definition _ {C : premonoidal} :=
   IsPreFunctor.Build _ C prod3r
    (fun a b (f : a ~> b) => f.1.1 <*> (f.1.2 <*> f.2)).
 
-Definition prod1r {C : premonoidal} (x : C) : C := 1 * x.
+Definition prod1r {C : premonoidal} (x : C) : C := 11 * x.
 HB.instance Definition _ {C : premonoidal} :=
   IsPreFunctor.Build C C prod1r
-   (fun (a b : C) (f : a ~> b) => \idmap_1 <*> f).
+   (fun (a b : C) (f : a ~> b) => \idmap_11 <*> f).
 
-Definition prod1l {C : premonoidal} (x : C) : C := x * 1.
+Definition prod1l {C : premonoidal} (x : C) : C := x * 11.
 HB.instance Definition _ {C : premonoidal} :=
   IsPreFunctor.Build C C prod1l
-   (fun (a b : C) (f : a ~> b) => f <*> \idmap_1).
+   (fun (a b : C) (f : a ~> b) => f <*> \idmap_11).
 
 HB.mixin Record PreMonoidal_IsMonoidal C of PreMonoidal C := {
   prodA  : prod3l ~~> prod3r;
   prod1c : prod1r ~~> idfun;
   prodc1 : prod1l ~~> idfun;
   prodc1c : forall (x y : C),
-      prodA (x, 1, y) \; \idmap_x <*> prod1c y = prodc1 x <*> \idmap_y;
+      prodA (x, 11, y) \; \idmap_x <*> prod1c y = prodc1 x <*> \idmap_y;
   prodA4 : forall (w x y z : C),
       prodA (w * x, y, z) \; prodA (w, x, y * z) =
         prodA (w, x, y) <*> \idmap_z \; prodA (w, x * y, z) \; \idmap_w <*> prodA (x, y, z);
@@ -1325,21 +1326,21 @@ Arguments pbk {_ _ _}.
 (* category with all prepullbacks *)
 (* Problematic: wrapping a class (PBop) instead of a mixin *)
 #[wrapper]
-HB.mixin Record HasPreBCat C of PBop C : Type := {
+HB.mixin Record HasPrePBCat C of PBop C : Type := {
   is_ppbk : forall (a b : C) (c : cospan a b),
       isPrePullback C a b c (pbk c)
   }.
 #[short(type="prepbcat")]
-HB.structure Definition PreBCat := {C of HasPreBCat C & PBop C}.
+HB.structure Definition PrePBCat := {C of HasPrePBCat C & PBop C}.
 
 (* category with all pullbacks *)
 #[wrapper]
-HB.mixin Record HasPBCat C of PBop C & HasPreBCat C : Type := {
+HB.mixin Record HasPBCat C of PBop C & HasPrePBCat C : Type := {
   is_tpbk : forall (a b : C) (c : cospan a b),
      prepullback_isTerminal C a b c (pbk c)
   }.
 #[short(type="pbcat")]
-HB.structure Definition PBCat := {C of HasPBCat C & PreBCat C}.
+HB.structure Definition PBCat := {C of HasPBCat C & PrePBCat C}.
 
 (** The projections of a binary product of categoris are functors *)
 
@@ -1413,7 +1414,7 @@ Definition valF : C ~>_cat (A * B)%type := valC : Functor.type _ _.
 
 Definition Cpb := @Span cat A B (C : cat) (valF \; fstF) (valF \; sndF).
 
-Lemma Cpb_prepb : isPrePullback cat A B csp Cpb.
+Lemma Cpb_is_prepb : isPrePullback cat A B csp Cpb.
 Proof.
 split.
 apply/functorPemap => //=; first by case.
@@ -1424,7 +1425,7 @@ rewrite /valC/= => h1 h2.
 rewrite (_ : p = h1); first exact: Prop_irrelevance.
 by rewrite (_ : p' = h2); first exact: Prop_irrelevance.
 Qed.
-#[export] HB.instance Definition _ := Cpb_prepb.
+#[export] HB.instance Definition _ := Cpb_is_prepb.
 
 Definition from_obj (s : prepullback csp) : bot s -> C.
 Proof.
@@ -1461,34 +1462,11 @@ exists (@from_obj s : Functor.type _ _) => //; apply/functorPemap => a b f /=.
 - by rewrite freflE/= compo1 comp1o.
 Defined.
 
-End cat_pbk.
-
-HB.instance Definition _ := HasPBop.Build cat (@Cpb).
-
-Lemma cat_prepb : HasPreBCat cat.
+Lemma from_terminal : IsTerminal (prepullback csp) (pb_terminal Cpb).
 Proof.
-split => A B csp; split.
-apply/functorPemap => //=; first by case.
-move=> h [[/=a b] p] [[/= a' b'] p'] [[/= f g]].
-do !rewrite /Fhom//=.
-move: (h _) (h _).
-rewrite /valC/= => h1 h2.
-rewrite (_ : p = h1); first exact: Prop_irrelevance.
-by rewrite (_ : p' = h2); first exact: Prop_irrelevance.
-Qed.
-HB.instance Definition _ := cat_prepb.
-
-Lemma cat_pb {A B : cat} (csp : cospan A B) : IsTerminal _ (pb_terminal (pbk csp)).
-Proof.
-unshelve eexists.
-  move=> c; rewrite /pbk /pb_terminal /=.
-  exact: from.
-move=> c [/= f f1 f2].
-apply/span_mapP => /=.
-apply/functorPemap => //=.
-  move=> x /=; rewrite /from_obj/=.
-  apply/eqC => //=; rewrite -f1 -f2/=.
-  by case: (f x) => -[].
+unshelve eexists; first by move=> c; rewrite /pbk /pb_terminal /=; apply: from.
+move=> c [/= f f1 f2]; apply/span_mapP/functorPemap => //=.
+  by move=> x /=; apply/eqC => //=; rewrite -f1 -f2/=; case: (f x) => -[].
 move=> eqf x y u; apply/eqChom => /=.
 rewrite /valF /fstF /sndF /valC in f1 f2 *.
 have tag_emap : forall y, tag (emap (eqf y)) = emap (congr1 tag (eqf y)).
@@ -1504,7 +1482,31 @@ case: (tag (f x)) => /= b1 b2.
 case: (tag (f y)) => /= a1 a2 ba1 ba2 eb ea.
 by rewrite (Prop_irrelevance ea erefl) (Prop_irrelevance eb erefl) compo1 comp1o.
 Qed.
-HB.instance Definition _ {A B : cat} (csp : cospan A B) := @cat_pb A B csp.
+HB.instance Definition _ := from_terminal.
+
+End cat_pbk.
+
+#[export]
+HB.instance Definition _ := HasPBop.Build cat (@Cpb).
+
+Lemma cat_prepb : HasPrePBCat cat.
+Proof. by split=> A B csp; apply: Cpb_is_prepb. Defined.
+#[export] HB.instance Definition _ := cat_prepb.
+
+#[export]
+HB.instance Definition _ A B c :
+  IsTerminal (prepullback c) (pb_terminal (@pbk cat A B c)) := from_terminal c.
+
+Lemma cat_haspbcat : HasPBCat cat.
+Proof. split=> A B csp; rewrite /pbk/=; exact: Pullback.class (Cpb csp). Defined.
+#[export]
+ HB.instance Definition _ := cat_haspbcat.
+Module Exports.
+HB.reexport.
+End Exports.
+End cat_pbk.
+
+Export cat_pbk.Exports.
 
 (**********************************************************************)
 
@@ -1618,5 +1620,3 @@ HB.mixin Record Ideal_IsPrime (R : ring) (I : R -> Prop) of IsIdeal R I := {
 #[short(type="spectrum")]
 HB.structure Definition PrimeIdeal (R : ring) :=
   { I of Ideal_IsPrime R I & Ideal R I }.
-
-End cat_pbk.

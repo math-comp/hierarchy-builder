@@ -20,7 +20,7 @@ examples/demo4/hierarchy_0.v
 examples/demo5/hierarchy_0.v
 
 # examples/cat/cat.v
-examples/cat/cat.v
+theories/cat.v
 
 tests/type_of_exported_ops.v
 tests/duplicate_structure.v

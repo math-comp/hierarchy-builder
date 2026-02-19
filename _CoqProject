@@ -1,5 +1,6 @@
 HB/structures.v
 theories/cat.v
+theories/icat.v
 -arg -w -arg -elpi.accumulate-syntax
 -arg -w -arg +elpi.typecheck
 -arg -w -arg -elpi.typecheck-syntax
@@ -8,3 +9,4 @@ theories/cat.v
 
 -R tests HB.tests
 -R examples HB.examples
+-R theories HB.theories
