@@ -349,41 +349,6 @@ move=> eFG; apply/functorPcast => a b f; move: {eFG}(eFG a b f).
 move: {eqFG f} (eqFG a) (eqFG b) (F <$> f) (G <$> f) => /=.
 by case: _ /; case: _ / =>  ? ?; rewrite compo1 comp1o.
 Qed.
-  (* Lemma quiver_concrete_subproof : PreConcrete_IsConcrete quiver. *)
-(* Proof. *)
-(* constructor=> C D F G FG. apply: prefunctorP => /=. *)
-(*   by move=> x; congr (_ x); apply: FG. *)
-(* rewrite /concrete_fun /Quiver_IsPreConcrete.concrete_fun/= in FG *. *)
-(* rewrite /Fhom /IsPreFunctor.Fhom/=. *)
-(* move=> eqFG a b f. *)
-(* apply/concrete_fun_inj. *)
-(* move=> eqFG; move: (funext eqFG) FG => {eqFG}. *)
-(* case: _ /. *)
-(* case: _ / (funext eqFG) in FG *. *)
-(* apply: Prop_irrelevance. *)
-(* admit. *)
-(* Admitted. *)
-(* HB.instance Definition _ := quiver_concrete_subproof. *)
-
-(* Lemma precat_concrete_subproof : PreConcrete_IsConcrete precat. *)
-(* Proof. *)
-(* constructor=> C D F G FG; apply: functorP. *)
-(*   by move=> x; congr (_ x); apply: FG. *)
-(* by move=> *; admit. *)
-(* Admitted. *)
-(* HB.instance Definition _ := precat_concrete_subproof. *)
-
-(* Lemma cat_concrete_subproof : PreConcrete_IsConcrete cat. *)
-(* Proof. *)
-(* constructor=> C D F G FG; apply: functorP. *)
-(*   by move=> x; congr (_ x); apply: FG. *)
-(* by move=> *; admit. *)
-(* Admitted. *)
-(* HB.instance Definition _ := cat_concrete_subproof. *)
-(* HB.instance Definition _ := PreCat_IsConcrete.Build precat *)
-(*    (fun=> erefl) (fun _ _ _ _ _ => erefl). *)
-(* HB.instance Definition _ := PreCat_IsConcrete.Build cat *)
-(*    (fun=> erefl) (fun _ _ _ _ _ => erefl). *)
 
 (* constant functor *)
 Definition cst (C D : quiver) (c : C) := fun of D => c.
