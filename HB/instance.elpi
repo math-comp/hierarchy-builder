@@ -117,6 +117,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.time-do! "declare-const" [
              )
              (WMsClauses = [], WBdClauses = []))
       ,
+      private.close-section-if-has-params TyWP SectionName,
       CFL = CSL, % ???
       
       % shared to all branches
@@ -502,7 +503,7 @@ close-section-if-has-params _ SectionName :-
 
 pred declare-regular-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
   o:list prop, o:list constant. 
-declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std.time-do! "declare-regular-inst"  [
+declare-regular-inst TheType ML TheMixins _TyWP _SectionName ClausesHas CSL :- std.time-do! "declare-regular-inst"  [
   private.declare-structure-instance-from-mixins TheType ML TheMixins ClausesHas CCSL,
 
   % TODO: share between the two cases and put just after declare-mixins-from-factory
@@ -511,16 +512,16 @@ declare-regular-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL :- std
   std.map-filter TheCanonicalMixins (x\r\x = some r) MCSL,
   std.append MCSL CCSL CSL,
  
-  private.close-section-if-has-params TyWP SectionName,
+  % private.close-section-if-has-params TyWP SectionName,
 ].
 
 pred declare-wrapper-inst i:term, i:list mixinname, i:list constant, i:arity, i:id,
   o:list prop, o:list constant,  o:list mixinname, o:list constant.
-declare-wrapper-inst TheType ML TheMixins TyWP SectionName ClausesHas CSL WML TheWrappedMixins :- std.time-do! "declare-wrapper-inst" [
+declare-wrapper-inst TheType ML TheMixins _TyWP _SectionName ClausesHas CSL WML TheWrappedMixins :- std.time-do! "declare-wrapper-inst" [
   if-verbose (coq.say {header} "Wrapping" ML "for" TheType),
   coq.safe-dest-app TheType TheTypeKey _,
   std.assert! (TheTypeKey = global TheTypeKeyGR) "The subject to be wrapped has no key",
-  private.close-section-if-has-params TyWP SectionName,
+  % private.close-section-if-has-params TyWP SectionName,
   private.wrap-mixins TheTypeKeyGR ML TheMixins TheNewType WML TheWrappedMixins, % TODO: give TheNewType in output and check it agrees with the factory (when in a builder section)
   private.declare-structure-instance-from-mixins TheNewType WML TheWrappedMixins ClausesHas CSL,
 ].

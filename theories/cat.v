@@ -1504,7 +1504,7 @@ case: (tag (f x)) => /= b1 b2.
 case: (tag (f y)) => /= a1 a2 ba1 ba2 eb ea.
 by rewrite (Prop_irrelevance ea erefl) (Prop_irrelevance eb erefl) compo1 comp1o.
 Qed.
-Fail HB.instance Definition _ {A B : cat} (csp : cospan A B) := @cat_pb A B csp.
+HB.instance Definition _ {A B : cat} (csp : cospan A B) := @cat_pb A B csp.
 
 (**********************************************************************)
 
@@ -1618,3 +1618,5 @@ HB.mixin Record Ideal_IsPrime (R : ring) (I : R -> Prop) of IsIdeal R I := {
 #[short(type="spectrum")]
 HB.structure Definition PrimeIdeal (R : ring) :=
   { I of Ideal_IsPrime R I & Ideal R I }.
+
+End cat_pbk.
