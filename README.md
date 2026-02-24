@@ -92,10 +92,11 @@ tricks and FAQs. If you want to work on the implementation of HB, this
 <details><summary>(click to expand)</summary><p>
 
  - You can install HB via OPAM 
-  
+  ```shell
  opam repo add rocq-released https://rocq-prover.org/opam/released
  opam install rocq-hierarchy-builder 
-  
+  ```
+
  - You can use it in nix with the attribute `rocqPackages_9_X.hierarchy-builder` e.g. 
    via `nix-shell -p rocq_9_0 -p rocqPackages_9_0.hierarchy-builder` 
  
