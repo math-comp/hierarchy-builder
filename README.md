@@ -91,15 +91,13 @@ tricks and FAQs. If you want to work on the implementation of HB, this
 
 <details><summary>(click to expand)</summary><p>
 
-- You can install HB via OPAM
-
-```shell
-opam repo add coq-released https://coq.inria.fr/opam/released
-opam install coq-hierarchy-builder
-```
-
-- You can use it in nix with the attribute `coqPackages_8_XX.hierarchy-builder` e.g.
-  via `nix-shell -p coq_8_13 -p coqPackages_8_13.hierarchy-builder`
+ - You can install HB via OPAM 
+  
+ opam repo add rocq-released https://rocq-prover.org/opam/released
+ opam install rocq-hierarchy-builder 
+  
+ - You can use it in nix with the attribute `rocqPackages_9_X.hierarchy-builder` e.g. 
+   via `nix-shell -p rocq_9_0 -p rocqPackages_9_0.hierarchy-builder` 
  
 </p></details>
 
