@@ -1,6 +1,9 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+accumulate HB/common/database.
+accumulate HB/common/log.
+
 namespace about {
 
 func main string ->.

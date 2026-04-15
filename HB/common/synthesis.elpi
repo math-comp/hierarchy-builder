@@ -11,6 +11,8 @@
 % a bunch of mixins at hand and does want to pass them down to other terms,
 % without explictly saying exactly where they should be used.
 
+accumulate HB/common/database.
+
 namespace synthesis {
 
 % [infer-all-these-mixin-args Ps T ML F X] fills in all the arguments of F

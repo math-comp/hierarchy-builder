@@ -1,0 +1,16 @@
+accumulate HB/common/database.
+accumulate HB/common/log.
+
+pred check-or-not i:term.
+check-or-not Skel :-
+  coq.version VersionString _ _ _,
+  if (get-option "skip" R, rex_match R VersionString)
+     (coq.warning "HB" "HB.skip" {get-option "elpi.loc"} "Skipping test on Coq" VersionString "as requested")
+     (log.coq.check Skel Ty T Result,
+      if (Result = error Msg)
+         (if (get-option "fail" tt)
+             (coq.say "The command did fail as expected with message:" Msg)
+             (coq.error "HB.check:" Msg))
+         (if (get-option "fail" tt)
+             (coq.error "The command did not fail")
+             (coq.say "HB.check:" {coq.term->string T} ":" {coq.term->string Ty}))).
