@@ -1,0 +1,7 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% The signature of export.db, the database of the synterp phase
+
+% library, module to export
+pred module-to-export o:string, o:modpath.

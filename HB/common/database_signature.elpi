@@ -1,0 +1,188 @@
+typeabbrev mixinname   gref.
+typeabbrev classname   gref.
+typeabbrev factoryname gref.
+typeabbrev structure   gref.
+
+typeabbrev (w-args A) (triple A (list term) term).
+
+kind w-params type -> type.
+type w-params.cons id -> term -> (term -> w-params A) -> w-params A.
+type w-params.nil id -> term -> (term -> A) -> w-params A.
+
+typeabbrev (list-w-params A) (w-params (list (w-args A))).
+typeabbrev (one-w-params A) (w-params (w-args A)).
+typeabbrev mixins (list-w-params mixinname).
+typeabbrev factories (list-w-params mixinname).
+typeabbrev (w-mixins A) (pair mixins (w-params A)).
+
+%%%%% Classes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% (class C S ML) represents a class C packed in S containing mixins ML.
+% Example:
+%
+%  HB.mixin Record IsZmodule V := { ... }
+%  HB.mixin Record Zmodule_IsLmodule (R : ringType) V of Zmodule V := { ... }
+%  HB.structure Definition Lmodule R := {M of Zmodule M & Zmodule_IsLmodule R M}
+%
+% The class description for Lmodule would be:
+%
+%  class (indt «Lmodule.axioms»)                   /* The record with all mixins     */
+%        (indt «Lmodule.type»)                     /* The record with sort and class */
+%        (w-params.cons "R" {{ Ring.type }} P \    /* The first parameter, named "R" */
+%          w-params.nil "M" {{ Type }} T \         /* The key of the structure       */
+%           [...,                                  /* deps of IsZmodule.mixin        */
+%            triple (indt «IsZmodule.mixin») [] T, /* a mixins with its params       */
+%            triple (indt «Zmodule_IsLmodule.mixin») [P] T ]) /* another mixins      */
+%
+% If some mixin parameters depend on other mixins (through a canonical instance that
+% can be inferred from them). Since our structure does not account for dependencies
+% between mixins (the list in the end is flat), we compensate by replacing canonical
+% instances by calls to `S.Pack T {{lib:elpi.hole}}`, and extending the reconstruction
+% mecanism of mixins to also reinfer these holes.
+
+kind hbclass type.
+type class classname -> structure -> mixins -> hbclass.
+
+% class-def contains all the classes ever declared
+pred class-def o:hbclass.
+
+%%%%% Builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [from FN MN F] invariant:
+% "F : forall p1 .. pn T LMN, FN p1 .. pn T LMN1 -> MN c1 .. cm T LMN2" where
+%  - LMN1 and LMN2 are sub lists of LMN
+%  - c1 .. cm are terms built using p1 .. pn and T
+% - [factory-requires FN LMN]
+% [from _ M _] tests whether M is a declared mixin.
+pred from o:factoryname, o:mixinname, o:gref.
+
+%%%%% Abbreviations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [phant-abbrev Cst AbbrevCst Abbrev]
+% Stores phantom abbreviation Abbrev associated with Cst
+% AbbrevCst is the constant that serves as support
+% e.g. Definition AbbrevCst := fun t1 t2 (phant_id t1 t2) => Cst t2.
+%      Notation   Abbrev t1 := (AbbrevCst t1 _ idfun).
+pred phant-abbrev o:gref, o:gref, o:abbreviation.
+
+% [factory-alias->gref X GR] when X is already a factory X = GR
+% however, when X is a phantom abbreviated gref, we find the underlying
+% factory gref GR associated to it.
+func factory-alias->gref gref -> gref, diagnostic.
+factory-alias->gref PhGR GR ok :- phant-abbrev GR PhGR _, !.
+factory-alias->gref GR GR ok :- phant-abbrev GR _ _, !.
+factory-alias->gref GR _ (error Msg) :- !,
+  Msg is {coq.term->string (global GR)} ^
+         " is not a factory or its library (" ^
+        { std.string.concat "." {std.drop-last 1 {coq.gref->path GR} } } ^
+        ") was not correctly imported".
+
+%%%%% Cache of known facts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [factory->constructor F K] means K is a constructor for
+% the factory F.
+:index(2)
+func factory->constructor factoryname -> gref.
+
+% [factory->nparams F N] says that F has N parameters
+:index(2)
+func factory->nparams factoryname -> int.
+
+% [is-structure GR] tests if GR is a known structure
+pred is-structure o:gref.
+
+% [is-factory GR] tests if GR is a known factory
+pred is-factory o:gref.
+
+% [sub-class C1 C2 Coercion12 NparamsCoercion] C1 is a sub-class of C2,
+% see also sub-class? which computes it on the fly
+:index (2 2 1)
+pred sub-class o:classname, o:classname, o:constant, o:int.
+
+% [gref->deps GR MLwP] is a (pre computed) list of dependencies of a know global
+% constant. The list is topologically sorted
+:index(2)
+func gref->deps gref -> mixins.
+
+% [join C1 C2 C3] means that C3 inherits from both C1 and C2
+pred join o:classname, o:classname, o:classname.
+
+% Section local memory of names for mixins, so that we can reuse them
+% and build terms with simpler conversion problems (less unfolding
+% in order to discover two mixins are the same)
+% @gares : is it really a func. Ideally I think so, bu we load mixin-mem via
+% `Clauses =>` in infer-class. Should perform a dynamic check?
+func mixin-mem term -> gref.
+
+%%%%%% Memory of exported mixins (HB.structure) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Operations (named mixin fields) need to be exported exactly once,
+% but the same mixin can be used in many structure, hence this memory
+% to keep the invariant.
+% Also we remember which is the first class/structure that includes
+% a given mixin, assuming the invariant that this first class is also
+% the minimal class that includes this mixin.
+% [mixin->first-class M C] states that C is the first/minimal class
+% that contains the mixin M
+:index(2)
+func mixin->first-class mixinname -> classname.
+
+% memory of exported operations (TODO: document fiels)
+pred exported-op o:mixinname, o:constant, o:constant.
+
+% memory of factory sort coercion
+pred factory-sort o:coercion.
+
+% memory of canonical projections for a structure (X.sort, X.class, X.type)
+pred structure-key o:constant, o:constant, o:structure.
+
+%%%%%% Membership of mixins to a  class %%%%%%%%%%%%%%%%
+% [mixin-class M C] means M belongs to C
+pred mixin-class o:mixinname, o:classname.
+
+%% database for HB.context %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [mixin-src T M X] states that X can be used to reconstruct
+% an instance of the mixin [M T …], directly or through a builder.
+% Since HB.builders sections can declare canonical instances of
+% mixins that do not yet form a structure, we cannot resort to
+% Coq's CS database (which is just for structures).
+pred mixin-src o:term, o:mixinname, o:term.
+
+% [has-mixin-instance K M G] states that G is a reference to an instance
+% of mixin M for subject K
+pred has-mixin-instance o:cs-pattern, o:mixinname, o:gref.
+
+%% database for HB.builders %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [builder N TheFactory TheMixin S] is used to
+% remember that the user run [HB.instance S] hence [HB.end] has to
+% synthesize builders from TheFactory to TheMixin mixins generated by S.
+% N is a timestamp.
+kind builder type.
+type builder int -> factoryname -> mixinname -> gref -> builder.
+pred builder-decl o:builder.
+
+%% database for builder-local canonical instances %%%%%%%%%%%%%%%%%%%%%%%
+pred local-canonical o:constant.
+
+% To tell HB.end what we are doing
+kind declaration type.
+% TheType, TheFactory and it's name and the name of the module encloding all that
+type builder-from term -> term -> factoryname -> id -> declaration.
+type no-builder declaration.
+pred current-mode o:declaration.
+
+%% database for HB.export / HB.reexport %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% library, nice-name, object
+pred module-to-export   o:string, o:id, o:modpath.
+pred instance-to-export o:string, o:id, o:constant.
+pred abbrev-to-export   o:string, o:id, o:gref.
+pred clause-to-export   o:string, o:prop.
+
+%% database for HB.locate and HB.about %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred decl-location o:gref, o:loc.
+
+% [docstring Loc Doc] links a location in the source text and some doc
+pred docstring o:loc, o:string.

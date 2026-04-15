@@ -1,0 +1,25 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% The synterp phase of HB.mixin and HB.factory
+
+accumulate HB/common/export_database_signature.
+accumulate HB/common/utils_synterp.
+
+namespace factory {
+
+shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
+
+pred declare i:id.
+declare N :-
+  begin-module N none,
+    begin-section N,
+    end-section,
+    begin-module "Exports" none,
+    end-module E,
+  end-module _,
+  export-module E,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)).
+
+}
