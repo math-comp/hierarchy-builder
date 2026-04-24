@@ -673,12 +673,12 @@ This does not create an instance.
 (* Join naturality *)
 Let mjoin (X : C) := bind (@idmap C (M X)).
 
-Lemma nat_mjoin X Y f : mjoin Y \o (M \o M)%FUN <$> f = M <$> f \o mjoin X.
+Lemma nat_mjoin X Y f : mjoin Y \o (M \o M)%function <$> f = M <$> f \o mjoin X.
 Proof. by rewrite bindbind compoA bindfunit comp1o bindbind compo1. Qed.
 
 HB.instance Definition _ :=
-  IsNatural.Build _ _ (M \o M)%FUN M
-    (mjoin : forall A, ((M \o M)%FUN : Functor.type C C) A ~> M A)
+  IsNatural.Build _ _ (M \o M)%function M
+    (mjoin : forall A, ((M \o M)%function : Functor.type C C) A ~> M A)
     nat_mjoin.
 
 (* Three monad axioms *)
