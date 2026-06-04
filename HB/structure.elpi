@@ -47,7 +47,7 @@ declare Module BSkel Sort :- std.do! [
   GRDepsClauses =
     [gref->deps (indt ClassInd) NilwP, gref->deps (indc ClassK) MLwP],
   std.map ML (m\ o\ o = mixin-class m ClassName) MixinMems,
-  Factories => std.map ML (private.mixin-clause Structure) MixinClauses,
+  [class-def CurrentClass, StructKeyClause | GRDepsClauses] => Factories => std.map-i ML (private.mixin-clause Structure) MixinClauses,
   std.filter ML (m\ not (mixin->first-class m _)) NewMixins,
   std.map NewMixins (m\ r\ r = mixin->first-class m ClassName) MixinFirstClass,
 
@@ -128,10 +128,11 @@ declare Module BSkel Sort :- std.do! [
       Factories, [is-structure Structure],
       NewJoins, [class-def CurrentClass], GRDepsClauses,
       [gref->deps GRPack MLwP], MixinMems, [StructKeyClause],
-      MixinClauses
     ]
     NewClauses,
   acc-clauses current NewClauses,
+  std.map MixinClauses (c\ r\ r = clause _ _ c) MixinClauses0,
+  coq.elpi.accumulate-clauses _ "tc.db" MixinClauses0,
 
   if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
@@ -197,10 +198,50 @@ namespace private {
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
-func mixin-clause structure, mixinname -> prop.
-mixin-clause Structure M Clause :-
-  factory->nparams M NP,
-  coq.error "STOP".
+func clause.mk-n-pis int, list term, (func list term -> prop) -> prop.
+clause.mk-n-pis 0 RArgs P Clause :- !, std.rev RArgs Args, P Args Clause.
+clause.mk-n-pis N Args P (pi x\ Clause x) :-
+  calc (N - 1) N0,
+  pi x\ clause.mk-n-pis N0 [x|Args] P (Clause x).
+
+func mixin-clause structure, int, mixinname -> prop.
+mixin-clause S I M Clause :-
+  structure-key SortProj _ S, !,
+  get-constructor S KS,
+  class-def (class (indt Class) S CMLwP), !,
+  get-constructor (indt Class) KC,
+  tc.gref->pred-name M PredName,
+  gref->deps M MDeps,
+  
+% tc-...-NModule_isLSemiModule.tc-axioms_ R T isNModule Inst :-
+%   coq.unify-eq T (Sort R ST) ok,
+%   coq.unify-eq ST (S.Pack R T CT) ok,
+%   coq.unify-eq CT (C.Axioms_ R T isNModule NModule_isLSemiModule),
+%   std.nth 1 [isNModule, NModule_isLSemiModule] Inst.
+  clause.mk-n-pis {structure-nparams S} [] (Params\ clause\
+  clause.mk-n-pis {factory->nparams M} [] (MParams\ clause\
+  clause.mk-n-pis {std.length {list-w-params_list CMLwP}} [] (MIL\ clause\
+  clause.mk-n-pis {std.length {list-w-params_list MDeps}} [] (MHDeps\ clause\
+    sigma Clause' MILI\
+    std.take I MIL MILI,
+    clause = (pi T ST CT Inst\ Clause' T ST CT Inst),
+    pi T ST CT Inst\ sigma ParamsST SortParamsST KSParamsC CBody C\
+    std.append Params [ST] ParamsST,
+    coq.mk-app (global (const SortProj)) ParamsST SortParamsST,
+    coq.mk-app (global KS) {std.append Params [T, CT]} KSParamsC,
+    coq.mk-app (global KC) {std.append Params [T | MIL]} CBody,
+    coq.elpi.predicate PredName {std.append MParams {std.append [T | MHDeps] [Inst]}} C,
+    Clause' T ST CT Inst = (C :-
+      coq.unify-eq T SortParamsST ok,
+      coq.unify-eq ST KSParamsC ok,
+      coq.unify-eq CT CBody ok,
+      std.nth I MIL Inst)
+  ) clause) clause) clause) Clause,
+  coq.say "Clause for " M " is " Clause.
+      
+      
+
+
 
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra

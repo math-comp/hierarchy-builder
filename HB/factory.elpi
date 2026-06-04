@@ -283,8 +283,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   if-verbose (coq.say {header} "declare notation Build"),
 
-  GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
-  GRDepsClauses => phant.add-abbreviation "Build" PhGRK BuildConst BuildAbbrev,
+  coq.say "Hello, world!",
+  GRDepsClauses => coq.notation.add-abbreviation "Build" 0 (global GRK) tt _,
 
   if-verbose (coq.say {header} "declare notation axioms"),
 
@@ -297,12 +297,12 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
-	coq.TC.declare-class R,
+  coq.say "Declaring mixin as typeclass",
+	coq.TC.declare-class (indt R),
   std.flatten [Clauses, GRDepsClauses, [
     is-factory (indt R),
     factory->constructor (indt R) GRK,
     factory->nparams (indt R) NParams,
-    phant-abbrev GRK (const BuildConst) BuildAbbrev,
     % gref->deps GRFSort MLwP,
     % factory-sort FactorySortCoe,
   ]] NewClauses,
@@ -310,8 +310,9 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   list-w-params_list MLwP MLwoP,
   std.map MLwoP (_\ r\ r = maximal) Implicits,
+  std.map {std.iota NParams} (_\ r\ r = explicit) Explicits,
   /* std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits, */
-  @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
+  @global! => log.coq.arguments.set-implicit GRK [[explicit|{std.append Explicits Implicits}]],
   % @global! => log.coq.coercion.declare FactorySortCoe,
 
   log.coq.env.end-module-name "Exports" Exports,
@@ -352,6 +353,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   log.coq.env.end-section-name Module,
 
+  % TODO: make the mixins implicit.
   @global! => log.coq.arguments.set-implicit GRK [[]],
 
   factories-provide GRFSwP MLwP,
@@ -364,7 +366,8 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   if (mixin->first-class F _) (PhGRK = PhGRK0)
     (phant.append-fun-unify PhGRK0 PhGRK),
-  GRDepsClauses => phant.add-abbreviation "Build" GRK _ _,
+  @global! => log.coq.arguments.set-implicit GRK [[]],
+  GRDepsClauses => coq.notation.add-abbreviation "Build" 0 (global GRK) tt _,
 
   GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 
