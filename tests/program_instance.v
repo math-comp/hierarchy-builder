@@ -13,7 +13,7 @@ HB.factory Record m3 T := { default3 : T }.
 HB.builders Context T of m3 T.
 HB.instance Definition _ := m1.Build T default3.
 
-#[verbose,interactive] HB.instance Definition _ := m2.Build T _ _.
+#[verbose,interactive] HB.instance Definition _ (n:nat) := m2.Build T _ _.
 exact default3.
 exact default3.
 HB.endinstance.
@@ -30,7 +30,7 @@ instantiate (1:=0).
 reflexivity.
 reflexivity.
 HB.endinstance.
-
+(* Print HB_unnamed_factory_12. *)
 #[verbose,interactive] HB.instance Definition _ : m2 nat := m2.Build nat _ _.
 exact 0.
 exact 2.
@@ -94,6 +94,8 @@ simpl. intros.
 rewrite opA'. 
 reflexivity.
 HB.endinstance.
+(* Print HB_unnamed_factory_40. *)
+
 HB.instance Definition _ := semiGroup_isGroup.Build T e idl' idr invl invr.
 HB.end.
 

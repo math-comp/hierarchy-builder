@@ -34,7 +34,10 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
      % A side effect of opening a section is loosing meta data associated
      % with instances, in particular builder tags are lost
      if-verbose (coq.say  "HB: skipping section opening"),
-     SectionBody = Body
+     SectionBody = Body,
+     %FIXME : introduce a bug
+     std.assert! (coq.next-synterp-action (begin-section SectionName)) "synterp code did not open section",
+    log.coq.env.begin-section SectionName
    ) (
     std.assert! (coq.next-synterp-action (begin-section SectionName)) "synterp code did not open section",
     log.coq.env.begin-section SectionName,
@@ -78,10 +81,11 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
      true,
 
   % handle parameters via a section -- end
-  if (TyWP = arity _) true (
+  % FIXME 
+  % if (TyWP = arity _) true (
     if-verbose (coq.say {header} "closing instance section"),
-    log.coq.env.end-section-name SectionName
-  ),
+    log.coq.env.end-section-name SectionName,
+  % ),
 
   % we accumulate clauses now that the section is over
   acc-clauses current Clauses

@@ -797,23 +797,28 @@ main [str "Program", const-decl Name (some BodySkel) TyWPSkel] :- !,
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
-main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ _ Goal (const-decl Name (some Body) TyWP) :- 
+main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ Body Goal (const-decl Name (some Body) TyWP) :- 
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
   coq.ltac.collect-goals Body Goal _.
 }}.
+
 #[synterp] Elpi Accumulate lp:{{
 
 shorten coq.env.{ begin-section, end-section }.
 
-main [const-decl _ _ (arity _)] :- !.
-main [const-decl _ _ (parameter _ _ _ _)] :- !,
-  SectionName is "hb_instance_" ^ {std.any->string {new_int} },
-  begin-section SectionName, end-section.
-main [_, _] :- !.
+pred interactive-in-attributes i:list attribute. 
+  interactive-in-attributes [attribute "interactive" (leaf-str "") | _].
+  interactive-in-attributes [_ | Atts] :- interactive-in-attributes Atts.
 
-main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
+main _ :-
+  attributes A,
+  coq.say "opening section w attrr" A,
+  if (interactive-in-attributes A)
+    (true)
+    (SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+     begin-section SectionName, end-section).
 }}.
 Elpi Typecheck.
 #[proof(begin_if="interactive")]
@@ -847,12 +852,23 @@ Elpi Accumulate lp:{{
         (YS = Proofs)
         (replace-last-with-list XS Proofs YS).
 
-  main-interp-qed _ _ _P GL (const-decl Name (some Body) TyWP) :-
-    from-sealed-goal-to-term GL Tkt,
-    Body = app LBody, 
-    replace-last-with-list LBody Tkt NewBody,
-    LNewBody = app NewBody,
-    with-attributes (with-logging (instance.declare-const Name LNewBody TyWP _ _)).
+  main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
+    % coq.say "Body" Body,
+    % from-sealed-goal-to-term GL Tkt,
+    % Body = app LBody, 
+    % replace-last-with-list LBody Tkt NewBody,
+    % LNewBody = app NewBody,
+    coq.say "P" P,
+    with-attributes (with-logging (instance.declare-const Name P TyWP _ _)).
+}}.
+
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ begin-section, end-section }.
+
+main _ :- 
+  SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+  begin-section SectionName, end-section.
 }}.
 
 #[proof="end"] 
