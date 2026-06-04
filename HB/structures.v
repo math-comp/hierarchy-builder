@@ -773,6 +773,7 @@ HB.instance Definition N Params := Factory.Build Params T …
     - [#[verbose]] for a verbose output.
     - [#[hnf] to compute the head normal form of CS instances before declaring
       them
+    - [#[interactive]] to provide part of the instance in tactics mode.
 *)
 
 #[arguments(raw)] Elpi Command HB.instance.
@@ -790,9 +791,6 @@ Elpi Accumulate lp:{{
 
 :name "start"
 main [const-decl Name (some BodySkel) TyWPSkel] :- !,
-  with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _ _)).
-main [str "Program", const-decl Name (some BodySkel) TyWPSkel] :- !,
-  coq.say "\n Program detected \n",
   with-attributes (with-logging (instance.declare-const Name BodySkel TyWPSkel _ _)).
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
@@ -814,12 +812,12 @@ pred interactive-in-attributes i:list attribute.
 
 main _ :-
   attributes A,
-  coq.say "opening section w attrr" A,
   if (interactive-in-attributes A)
     (true)
     (SectionName is "hb_instance_" ^ {std.any->string {new_int} },
      begin-section SectionName, end-section).
 }}.
+
 Elpi Typecheck.
 #[proof(begin_if="interactive")]
 Elpi Export HB.instance.
@@ -838,28 +836,41 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate lp:{{
-  pred from-sealed-goal-to-term i:list sealed-goal o:list term.
-    from-sealed-goal-to-term [] [].
-    from-sealed-goal-to-term [seal (goal _ (T) _ _ _)|Q] [T|QT] :- 
-      from-sealed-goal-to-term Q QT.
+  pred under term, list (pair term term) -> term.
+    under (fun _N _Ty _F) _Acc (fun _N _Ty _F') :- 
+      coq.error "not implemented yet wit a parameter".
+    %   @pi-decl Ty x\ 
+    %     under (F x) [(pr x Ty)|Acc] (F' x). 
+    under (app L) Acc (app L') :- 
+      coq.say "\n L" L,
+      aux Acc L L', 
+      coq.say "L'" L'.
 
-  pred replace-last-with-list i:list term, i:list term, o:list term.
-    replace-last-with-list [X | XS] Proofs [X | YS] :-
-      std.length XS XSlength,
-      std.length Proofs Proofslength,
-      % coq.say "XS and its length : " XS XSlength " Proofs and its length : " Proofs Proofslength,
-      if (XSlength = Proofslength)
-        (YS = Proofs)
-        (replace-last-with-list XS Proofs YS).
+  pred aux list (pair term term), list term -> list term.
+    aux _ [] [].
+    aux Acc [T|TS] [T|TS'] :- 
+      coq.typecheck T Ty ok,
+      coq.say "type of " T "is " Ty,
+      % coq.env.typeof (global Ty) prop,
+      not (Ty = {{Prop}}), 
+      aux Acc TS TS'.
+    aux Acc [T|_] [T'|_] :- 
+      abstract Acc T TA, 
+      log.coq.env.add-const _ TA _ @opaque! C, 
+      coq.say "HERE T: " T " TA: " TA "C: " C "\n",
+      T' = T. % T' = app [C|Acc]. %should be Acc instead of TS'
+
+  pred abstract list (pair term term), term -> term.
+    abstract [] T T' :- 
+      copy T T'.
+  %   % abstract [(pr V Ty) | A] T (fun Ty F) :- 
+  %   %   pi w\ copy V w => abstract A T (F w).
 
   main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
-    % coq.say "Body" Body,
-    % from-sealed-goal-to-term GL Tkt,
-    % Body = app LBody, 
-    % replace-last-with-list LBody Tkt NewBody,
-    % LNewBody = app NewBody,
-    coq.say "P" P,
-    with-attributes (with-logging (instance.declare-const Name P TyWP _ _)).
+    % coq.say "here's the P: " P,
+    under P [] P',
+    coq.say "The new P':" P' "\n",
+    with-attributes (with-logging (instance.declare-const Name P' TyWP _ _)).
 }}.
 
 #[synterp] Elpi Accumulate lp:{{

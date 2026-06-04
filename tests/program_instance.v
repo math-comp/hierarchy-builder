@@ -1,6 +1,34 @@
 From HB Require Import structures.
 From Stdlib Require Import ZArith.
 
+HB.mixin Record XX T := { X1 : T ; P : X1 = X1}.
+HB.structure Definition x1  := { T of XX T }.
+
+
+
+(* First, no props in the tactics *)
+#[interactive] HB.instance Definition _ := XX.Build nat _ eq_refl.
+exact 0. 
+HB.endinstance.
+
+(* then a prop *)
+#[interactive] HB.instance Definition _ := XX.Build Type nat _.
+reflexivity. 
+HB.endinstance.
+(* Print HB_unnamed_factory_1258.  *)
+
+(* then with a parameter *)
+(* #[interactive] HB.instance Definition _ (n:nat) := XX.Build nat _.
+exact n.
+HB.endinstance.
+#[interactive] HB.instance Definition _ (n:nat) := XX.Build Z _.
+exact 0%Z.
+HB.endinstance. *)
+(* HB.instance Definition _ (n:bool) := XX.Build bool n eq_refl.
+
+
+
+(* the rest *)
 HB.mixin Record m1 T := { default1 : T }.
 HB.structure Definition s1  := { T of m1 T }.
 
@@ -13,16 +41,20 @@ HB.factory Record m3 T := { default3 : T }.
 HB.builders Context T of m3 T.
 HB.instance Definition _ := m1.Build T default3.
 
-#[verbose,interactive] HB.instance Definition _ (n:nat) := m2.Build T _ _.
+HB.instance Definition _ (n:nat) := m2.Build T default3 default3.
+(* #[verbose,interactive] HB.instance Definition _ (n:nat) := m2.Build T _ _.
 exact default3.
 exact default3.
-HB.endinstance.
+HB.endinstance. *)
 HB.end.
 
-
-#[interactive] HB.instance Definition _ : m1 nat := m1.Build _ _.
-exact 1.
-HB.endinstance.
+(* TODO: this should work, but for now it breaks future declarations of instances *)
+(* #[interactive] HB.instance Definition _ (n:Z) : m1 Z := m1.Build _ _.
+destruct (Z.eqb n 0%Z).
+- exact 4%Z.
+- exact (Z.add n n).
+HB.endinstance. 
+Print HB_unnamed_factory_1710. *)
 
 HB.mixin Record mt2 T := { d2 : T ; d2b : d2 = d2; d2bb : d2 = d2 }.
 #[verbose,interactive] HB.instance Definition _ : mt2 nat := mt2.Build nat _ _ _.
@@ -48,7 +80,7 @@ HB.about Z.
 
 
 
-HB.about nat.
+(* HB.about nat. *)
 
 
 
@@ -118,4 +150,4 @@ Lemma Zadder :  forall x:Z, exists xinv:Z, Z.add xinv x = 0%Z.
   Proof. intros. exists (Z.opp x). apply Z.add_opp_diag_l. Qed.
 HB.instance Definition _ := semiGroup_isGroup.Build Z 0%Z Z.add_0_l Z.add_0_r Zaddel Zadder.
 HB.about Z.
-
+ *)
