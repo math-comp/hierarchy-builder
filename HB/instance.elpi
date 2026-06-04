@@ -36,6 +36,7 @@ declare-const Name BodySkel TyWPSkel CFL CSL :- std.do! [
      if-verbose (coq.say  "HB: skipping section opening"),
      SectionBody = Body,
      %FIXME : introduce a bug
+     %TODO re-allow local instances (test file local_instance.v) 
      std.assert! (coq.next-synterp-action (begin-section SectionName)) "synterp code did not open section",
     log.coq.env.begin-section SectionName
    ) (
