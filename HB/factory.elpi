@@ -297,6 +297,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
+	coq.TC.declare-class R,
   std.flatten [Clauses, GRDepsClauses, [
     is-factory (indt R),
     factory->constructor (indt R) GRK,
@@ -363,7 +364,7 @@ declare-factory-alias MixinSrcClauses SectionCanonicalInstance
 
   if (mixin->first-class F _) (PhGRK = PhGRK0)
     (phant.append-fun-unify PhGRK0 PhGRK),
-  GRDepsClauses => phant.add-abbreviation "Build" PhGRK _ _,
+  GRDepsClauses => phant.add-abbreviation "Build" GRK _ _,
 
   GRDepsClauses => mk-factory-abbrev "axioms" (const C) Clauses FactAbbrev,
 
