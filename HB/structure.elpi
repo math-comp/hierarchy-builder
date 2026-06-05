@@ -47,7 +47,7 @@ declare Module BSkel Sort :- std.do! [
   GRDepsClauses =
     [gref->deps (indt ClassInd) NilwP, gref->deps (indc ClassK) MLwP],
   std.map ML (m\ o\ o = mixin-class m ClassName) MixinMems,
-  [class-def CurrentClass, StructKeyClause | GRDepsClauses] => Factories => std.map ML (private.mixin-clause Structure) MixinClauses,
+  [class-def CurrentClass, StructKeyClause | GRDepsClauses] => Factories => std.map-i ML (private.mixin-clause Structure) MixinClauses,
   std.filter ML (m\ not (mixin->first-class m _)) NewMixins,
   std.map NewMixins (m\ r\ r = mixin->first-class m ClassName) MixinFirstClass,
 
@@ -204,14 +204,14 @@ clause.mk-n-pis N Args P (pi x\ Clause x) :-
   calc (N - 1) N0,
   pi x\ clause.mk-n-pis N0 [x|Args] P (Clause x).
 
-func mixin-clause structure, mixinname -> prop.
-mixin-clause S M Clause :-
+func mixin-clause structure, int, mixinname -> prop.
+mixin-clause S I M Clause :-
   structure-key SortProj _ S, !,
   get-constructor S KS,
   class-def (class (indt Class) S CMLwP), !,
+  get-constructor (indt Class) KC,
   tc.gref->pred-name M PredName,
   gref->deps M MDeps,
-  from (indt Class) M CMP, !,
   
 % tc-...-NModule_isLSemiModule.tc-axioms_ R T isNModule Inst :-
 %   coq.unify-eq T (Sort R ST) ok,
@@ -222,19 +222,26 @@ mixin-clause S M Clause :-
   clause.mk-n-pis {factory->nparams M} [] (MParams\ clause\
   clause.mk-n-pis {std.length {list-w-params_list CMLwP}} [] (MIL\ clause\
   clause.mk-n-pis {std.length {list-w-params_list MDeps}} [] (MHDeps\ clause\
-    sigma Clause'\
+    sigma Clause' MILI\
+    std.take I MIL MILI,
     clause = (pi T ST CT Inst\ Clause' T ST CT Inst),
-    pi T ST CT Inst\ sigma ParamsST SortParamsST KSParamsC CBody C MBody\
+    pi T ST CT Inst\ sigma ParamsST SortParamsST KSParamsC CBody C\
     std.append Params [ST] ParamsST,
     coq.mk-app (global (const SortProj)) ParamsST SortParamsST,
     coq.mk-app (global KS) {std.append Params [T, CT]} KSParamsC,
-    coq.mk-app (global CMP) {std.append Params [T, CT]} MBody,
+    coq.mk-app (global KC) {std.append Params [T | MIL]} CBody,
     coq.elpi.predicate PredName {std.append MParams {std.append [T | MHDeps] [Inst]}} C,
     Clause' T ST CT Inst = (C :-
       coq.unify-eq T SortParamsST ok,
       coq.unify-eq ST KSParamsC ok,
-      Inst = MBody)
-  ) clause) clause) clause) Clause.
+      coq.unify-eq CT CBody ok,
+      std.nth I MIL Inst)
+  ) clause) clause) clause) Clause,
+  coq.say "Clause for " M " is " Clause.
+      
+      
+
+
 
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra
