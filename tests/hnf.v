@@ -11,10 +11,10 @@ HB.end.
 #[hnf] HB.instance Definition _ := f.Build nat (3 + 2).
 Print Datatypes_nat__canonical__hnf_S.
 (* TODO print the correct unnamed mixin after fixing the bug introduced in instance.elpi *)
-(* Print HB_unnamed_mixin_44. *)
+Print HB_unnamed_mixin_10.
 
 HB.instance Definition _ := f.Build bool (3 + 2).
 Print Datatypes_bool__canonical__hnf_S.
 (* TODO print the correct unnamed mixin after fixing the bug introduced in instance.elpi *)
-(* Print HB_unnamed_mixin_55. *)
+Print HB_unnamed_mixin_15.
 

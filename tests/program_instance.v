@@ -9,22 +9,30 @@ HB.structure Definition x1  := { T of XX T }.
 (* First, no props in the tactics *)
 #[interactive] HB.instance Definition _ := XX.Build nat _ eq_refl.
 exact 0. 
+(* Elpi Trace Browser. *)
 HB.endinstance.
+(* Print HB_unnamed_factory_3. *)
 
 (* then a prop *)
 #[interactive] HB.instance Definition _ := XX.Build Type nat _.
 reflexivity. 
 HB.endinstance.
-(* Print HB_unnamed_factory_1258.  *)
+(* Print HB_unnamed_factory_14.  *)
 
 (* then with a parameter *)
-(* #[interactive] HB.instance Definition _ (n:nat) := XX.Build nat _.
-exact n.
+#[interactive] HB.instance Definition _ (n:nat) := XX.Build nat _ eq_refl.
+exact (n+1).
 HB.endinstance.
-#[interactive] HB.instance Definition _ (n:nat) := XX.Build Z _.
-exact 0%Z.
-HB.endinstance. *)
-(* HB.instance Definition _ (n:bool) := XX.Build bool n eq_refl.
+
+
+#[interactive] HB.instance Definition _ (n:Z) := XX.Build Z _ _.
+exact (Z.add n 2%Z).
+reflexivity.
+HB.endinstance.
+Inspect 5.
+(* Print  HB_unnamed_factory_58.
+Print  unnamed__57. *)
+HB.instance Definition _ (n:bool) := XX.Build bool n eq_refl.
 
 
 
@@ -58,7 +66,7 @@ Print HB_unnamed_factory_1710. *)
 
 HB.mixin Record mt2 T := { d2 : T ; d2b : d2 = d2; d2bb : d2 = d2 }.
 #[verbose,interactive] HB.instance Definition _ : mt2 nat := mt2.Build nat _ _ _.
-instantiate (1:=0).
+exact 0.
 reflexivity.
 reflexivity.
 HB.endinstance.
@@ -121,12 +129,12 @@ HB.about isGroup.
 
 HB.builders Context T of isGroup T.
 #[verbose,interactive] HB.instance Definition _ := isSemiGroup.Build T _ _.
-instantiate (1:=op). (*why is the goal not even shelved?*)
+exact op. (*why is the goal not even shelved?*)
 simpl. intros.
 rewrite opA'. 
 reflexivity.
 HB.endinstance.
-(* Print HB_unnamed_factory_40. *)
+(* Print unnamed. *)
 
 HB.instance Definition _ := semiGroup_isGroup.Build T e idl' idr invl invr.
 HB.end.
@@ -150,4 +158,3 @@ Lemma Zadder :  forall x:Z, exists xinv:Z, Z.add xinv x = 0%Z.
   Proof. intros. exists (Z.opp x). apply Z.add_opp_diag_l. Qed.
 HB.instance Definition _ := semiGroup_isGroup.Build Z 0%Z Z.add_0_l Z.add_0_r Zaddel Zadder.
 HB.about Z.
- *)

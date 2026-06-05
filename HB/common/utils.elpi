@@ -117,6 +117,9 @@ gref->modname_short GR Sep IDS :-
 
 func avoid-name-collision string -> string.
 avoid-name-collision S S1 :-
+  if (var S)
+    (S = "unnamed")
+    (true),
   coq.locate-all S L,
   if (std.mem L (loc-gref GR), coq.gref->path GR P, coq.env.current-path P)
      (S1 is S ^ "__" ^ {std.any->string {new_int}})

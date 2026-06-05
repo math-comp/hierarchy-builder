@@ -795,11 +795,12 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !,
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
-main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ Body Goal (const-decl Name (some Body) TyWP) :- 
+main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ Body AllGoals (const-decl Name (some Body) TyWP) :- 
   std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
-  coq.ltac.collect-goals Body Goal _.
+  coq.ltac.collect-goals Body Goal Shelved,
+  std.append Shelved Goal AllGoals. 
 }}.
 
 #[synterp] Elpi Accumulate lp:{{
@@ -836,40 +837,35 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate lp:{{
-  pred under term, list (pair term term) -> term.
-    under (fun _N _Ty _F) _Acc (fun _N _Ty _F') :- 
-      coq.error "not implemented yet wit a parameter".
-    %   @pi-decl Ty x\ 
-    %     under (F x) [(pr x Ty)|Acc] (F' x). 
+  func under term, list (pair term term) -> term.
+    under (fun N Ty F) Acc (fun N Ty F') :- 
+      @pi-decl N Ty x\ 
+        under (F x) [(pr x Ty)|Acc] (F' x). 
     under (app L) Acc (app L') :- 
-      coq.say "\n L" L,
-      aux Acc L L', 
-      coq.say "L'" L'.
+      aux Acc L L'. 
 
-  pred aux list (pair term term), list term -> list term.
+  func aux list (pair term term), list term -> list term.
     aux _ [] [].
     aux Acc [T|TS] [T|TS'] :- 
       coq.typecheck T Ty ok,
-      coq.say "type of " T "is " Ty,
-      % coq.env.typeof (global Ty) prop,
-      not (Ty = {{Prop}}), 
+      coq.typecheck Ty TyTy ok,
+      %coq.typecheck-ty does not make coercions
+      (not (TyTy = {{Prop}}); T = global _), !,
       aux Acc TS TS'.
-    aux Acc [T|_] [T'|_] :- 
-      abstract Acc T TA, 
+    aux Acc [T|TS] [T'|TS'] :- 
+      std.spy! (abstract Acc T TA), 
       log.coq.env.add-const _ TA _ @opaque! C, 
-      coq.say "HERE T: " T " TA: " TA "C: " C "\n",
-      T' = T. % T' = app [C|Acc]. %should be Acc instead of TS'
+      T' = app [(global (const C))|{std.map Acc fst}],
+      aux Acc TS TS'. 
 
-  pred abstract list (pair term term), term -> term.
+  func abstract list (pair term term), term -> term.
     abstract [] T T' :- 
       copy T T'.
-  %   % abstract [(pr V Ty) | A] T (fun Ty F) :- 
-  %   %   pi w\ copy V w => abstract A T (F w).
+    abstract [(pr V Ty) | A] T (fun `x` Ty F) :- 
+      pi w\ (copy V w :- !) => abstract A T (F w).
 
   main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
-    % coq.say "here's the P: " P,
     under P [] P',
-    coq.say "The new P':" P' "\n",
     with-attributes (with-logging (instance.declare-const Name P' TyWP _ _)).
 }}.
 
