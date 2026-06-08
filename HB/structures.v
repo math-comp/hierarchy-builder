@@ -800,7 +800,8 @@ main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ Body AllGoals (co
   coq.arity->term TyWP Ty,
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
   coq.ltac.collect-goals Body Goal Shelved,
-  std.append Shelved Goal AllGoals. 
+  std.append Shelved Goal AllGoals,
+  coq.say "Once there are no more subgoals, use the command \"HB.end_instance.\" to conclude the instance". 
 }}.
 
 #[synterp] Elpi Accumulate lp:{{
@@ -837,39 +838,8 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate lp:{{
-  
-
-  func under term, list (triple name term term) -> term.
-    under (fun N Ty F) Acc (fun N Ty F') :- 
-      @pi-decl N Ty x\ 
-        under (F x) [(triple N x Ty)|Acc] (F' x). 
-    under (app L) Acc (app L') :- 
-      aux Acc L L'. 
-
-  func aux list (triple name term term), list term -> list term.
-    aux _ [] [].
-    aux Acc [(global _ as T)|TS] [T|TS'] :- !,
-      aux Acc TS TS'.
-    aux Acc [T|TS] [T|TS'] :- 
-      coq.typecheck T Ty ok,
-      coq.typecheck Ty TyTy ok,
-      %coq.typecheck-ty does not make coercions
-      (not (TyTy = {{Prop}})), !,
-      aux Acc TS TS'.
-    aux Acc [T|TS] [T'|TS'] :- 
-      std.spy! (abstract Acc T TA), 
-      log.coq.env.add-const _ TA _ @opaque! C, 
-      T' = app [(global (const C))|{std.map Acc triple_2}],
-      aux Acc TS TS'. 
-
-  func abstract list (triple name term term), term -> term.
-    abstract [] T T' :- 
-      copy T T'.
-    abstract [(triple N V Ty) | A] T (fun N Ty F) :- 
-      pi w\ (copy V w :- !) => abstract A T (F w).
-
-  main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
-    under P [] P',
+    main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
+    abstract-props-as-lemmas.main P [] P',
     with-attributes (with-logging (instance.declare-const Name P' TyWP _ _)).
 }}.
 
