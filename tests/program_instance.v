@@ -50,12 +50,12 @@ HB.builders Context T of m3 T.
 HB.instance Definition _ := m1.Build T default3.
 
 HB.instance Definition _ (n:nat) := m2.Build T default3 default3.
-(* #[verbose,interactive] HB.instance Definition _ (n:nat) := m2.Build T _ _.
+(* #[interactive] HB.instance Definition _ (n:nat) := m2.Build T _ _.
 exact default3.
 exact default3.
 HB.end_instance. *)
 HB.end.
-
+Inspect 5.
 (* TODO: this should work, but for now it breaks future declarations of instances *)
 (* #[interactive] HB.instance Definition _ (n:Z) : m1 Z := m1.Build _ _.
 destruct (Z.eqb n 0%Z).
@@ -65,16 +65,25 @@ HB.end_instance.
 Print HB_unnamed_factory_1710. *)
 
 HB.mixin Record mt2 T := { d2 : T ; d2b : d2 = d2; d2bb : d2 = d2 }.
-#[verbose,interactive] HB.instance Definition _ : mt2 nat := mt2.Build nat _ _ _.
+#[interactive] HB.instance Definition _ : mt2 nat := mt2.Build nat _ _ _.
 exact 0.
 reflexivity.
 reflexivity.
 HB.end_instance.
 (* Print HB_unnamed_factory_12. *)
-#[verbose,interactive] HB.instance Definition _ : m2 nat := m2.Build nat _ _.
+#[interactive] HB.instance Definition _ : m2 nat := m2.Build nat _ _.
 exact 0.
 exact 2.
 HB.end_instance.
+
+(* #[interactive] HB.instance Definition _ (n:Z) := XX.Build Z _ _. *)
+#[interactive] HB.instance Definition _ (b1:bool) := m2.Build bool _ _.
+exact (negb b1).
+exact (negb (negb b1)).
+HB.end_instance.
+Inspect 5.
+(* Print HB_unnamed_factory_37. *)
+
 
 
 (* Fail #[interactive] HB.instance Definition _ : m1 Z := m1.Build Z 3%Z. *)
@@ -128,7 +137,7 @@ HB.factory Record isGroup T := {
 HB.about isGroup.
 
 HB.builders Context T of isGroup T.
-#[verbose,interactive] HB.instance Definition _ := isSemiGroup.Build T _ _.
+#[interactive] HB.instance Definition _ := isSemiGroup.Build T _ _.
 exact op. (*why is the goal not even shelved?*)
 simpl. intros.
 rewrite opA'. 

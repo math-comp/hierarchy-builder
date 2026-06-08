@@ -848,11 +848,13 @@ Elpi Accumulate lp:{{
 
   func aux list (triple name term term), list term -> list term.
     aux _ [] [].
+    aux Acc [(global _ as T)|TS] [T|TS'] :- !,
+      aux Acc TS TS'.
     aux Acc [T|TS] [T|TS'] :- 
       coq.typecheck T Ty ok,
       coq.typecheck Ty TyTy ok,
       %coq.typecheck-ty does not make coercions
-      (not (TyTy = {{Prop}}); T = global _), !,
+      (not (TyTy = {{Prop}})), !,
       aux Acc TS TS'.
     aux Acc [T|TS] [T'|TS'] :- 
       std.spy! (abstract Acc T TA), 
