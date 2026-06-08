@@ -42,6 +42,7 @@ examples_stdlib/Coq2020_material/CoqWS_expansion/withoutHB.v
 tests_stdlib/exports.v
 tests_stdlib/exports2.v
 tests_stdlib/funclass.v
+tests_stdlib/program_instance.v
 
 -R tests_stdlib HB.tests_stdlib
 -R examples_stdlib HB.examples_stdlib
