@@ -10,25 +10,25 @@ HB.structure Definition x1  := { T of XX T }.
 #[interactive] HB.instance Definition _ := XX.Build nat _ eq_refl.
 exact 0. 
 (* Elpi Trace Browser. *)
-HB.endinstance.
+HB.end_instance.
 (* Print HB_unnamed_factory_3. *)
 
 (* then a prop *)
 #[interactive] HB.instance Definition _ := XX.Build Type nat _.
 reflexivity. 
-HB.endinstance.
+HB.end_instance.
 (* Print HB_unnamed_factory_14.  *)
 
 (* then with a parameter *)
 #[interactive] HB.instance Definition _ (n:nat) := XX.Build nat _ eq_refl.
 exact (n+1).
-HB.endinstance.
+HB.end_instance.
 
 
 #[interactive] HB.instance Definition _ (n:Z) := XX.Build Z _ _.
 exact (Z.add n 2%Z).
 reflexivity.
-HB.endinstance.
+HB.end_instance.
 Inspect 5.
 (* Print  HB_unnamed_factory_58.
 Print  unnamed__57. *)
@@ -53,7 +53,7 @@ HB.instance Definition _ (n:nat) := m2.Build T default3 default3.
 (* #[verbose,interactive] HB.instance Definition _ (n:nat) := m2.Build T _ _.
 exact default3.
 exact default3.
-HB.endinstance. *)
+HB.end_instance. *)
 HB.end.
 
 (* TODO: this should work, but for now it breaks future declarations of instances *)
@@ -61,7 +61,7 @@ HB.end.
 destruct (Z.eqb n 0%Z).
 - exact 4%Z.
 - exact (Z.add n n).
-HB.endinstance. 
+HB.end_instance. 
 Print HB_unnamed_factory_1710. *)
 
 HB.mixin Record mt2 T := { d2 : T ; d2b : d2 = d2; d2bb : d2 = d2 }.
@@ -69,12 +69,12 @@ HB.mixin Record mt2 T := { d2 : T ; d2b : d2 = d2; d2bb : d2 = d2 }.
 exact 0.
 reflexivity.
 reflexivity.
-HB.endinstance.
+HB.end_instance.
 (* Print HB_unnamed_factory_12. *)
 #[verbose,interactive] HB.instance Definition _ : m2 nat := m2.Build nat _ _.
 exact 0.
 exact 2.
-HB.endinstance.
+HB.end_instance.
 
 
 (* Fail #[interactive] HB.instance Definition _ : m1 Z := m1.Build Z 3%Z. *)
@@ -82,7 +82,7 @@ HB.endinstance.
 
 #[interactive] HB.instance Definition _ : m3 Z := m3.Build Z _.
 exact 3%Z.
-HB.endinstance.
+HB.end_instance.
 HB.about Z.
 
 
@@ -133,7 +133,7 @@ exact op. (*why is the goal not even shelved?*)
 simpl. intros.
 rewrite opA'. 
 reflexivity.
-HB.endinstance.
+HB.end_instance.
 (* Print unnamed. *)
 
 HB.instance Definition _ := semiGroup_isGroup.Build T e idl' idr invl invr.

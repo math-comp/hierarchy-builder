@@ -825,7 +825,7 @@ Elpi Export HB.instance.
 
 
 
-#[arguments(raw)] Elpi Command HB.endinstance.
+#[arguments(raw)] Elpi Command HB.end_instance.
 Elpi Accumulate Db hb.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
@@ -879,7 +879,7 @@ main _ :-
 }}.
 
 #[proof="end"] 
-Elpi Export HB.endinstance.
+Elpi Export HB.end_instance.
 
 
 
