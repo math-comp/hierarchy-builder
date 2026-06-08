@@ -282,10 +282,11 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   if-verbose (coq.say {header} "declare notation Build"),
 
+  GRDepsClauses => coq.env.add-const "Axioms" (global GRK) _ ff GRK0,
   GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
   GRDepsClauses => phant.add-abbreviation "Build_" PhGRK BuildConst BuildAbbrev,
   calc (NParams + 1) NParams1,
-  GRDepsClauses => coq.notation.add-abbreviation "Build" NParams1 {coq.mk-n-fun NParams1 (args\ coq.mk-app (global GRK) {std.append args {coq.mk-n-holes {std.length {list-w-params_list MLwP}}}}) []} tt _,
+  GRDepsClauses => coq.notation.add-abbreviation "Build" NParams1 {coq.mk-n-fun NParams1 (args\ coq.mk-app (global (const GRK0)) {std.append args {coq.mk-n-holes {std.length {list-w-params_list MLwP}}}}) []} tt _,
   if-verbose (coq.say {header} "declare notation axioms"),
 
   if (D = asset-mixin)
@@ -312,6 +313,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   std.map MLwoP (_\ r\ r = maximal) Implicits,
   std.map {std.iota NParams} (_\ r\ r = explicit) Explicits,
   /* std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits, */
+  @global! => log.coq.arguments.set-implicit GRK [[maximal|Implicits]],
+
 
   NewImplicits = [explicit|{std.append Explicits Implicits}],
   coq.arguments.set-default-implicit GRK,
@@ -319,8 +322,8 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   std.drop {std.length NewImplicits} GRKImplicits RImplicits, 
 
   if (std.forall RImplicits(x\ x = explicit)) 
-    (@global! => log.coq.arguments.set-implicit GRK [NewImplicits])
-    (@global! => log.coq.arguments.set-implicit GRK [NewImplicits, {std.append NewImplicits RImplicits}]),
+    (@global! => log.coq.arguments.set-implicit (const GRK0) [NewImplicits])
+    (@global! => log.coq.arguments.set-implicit (const GRK0) [NewImplicits, {std.append NewImplicits RImplicits}]),
   % @global! => log.coq.coercion.declare FactorySortCoe,
 
   log.coq.env.end-module-name "Exports" Exports,
