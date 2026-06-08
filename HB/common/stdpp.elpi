@@ -150,6 +150,12 @@ constraint print-ctx mixin-src {
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+func coq.mk-n-fun int, (func list term -> term), list term -> term.
+coq.mk-n-fun 0 F L R :- !, F {std.rev L} R.
+coq.mk-n-fun N F L (fun _ _ (x\ R x)) :-
+  calc (N - 1) N1,
+  pi x\ coq.mk-n-fun N1 F [x|L] (R x).
+
 func coq.term-is-gref? term -> gref.
 coq.term-is-gref? (global GR) GR.
 coq.term-is-gref? (pglobal GR _) GR.

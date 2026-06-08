@@ -269,7 +269,6 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   coq.env.indt R tt _ _ _ [K] _,
   GRK = indc K,
   @global! => log.coq.arguments.set-implicit (indt R) [[]],
-  @global! => log.coq.arguments.set-implicit GRK [[]],
 
   factories-provide GRFSwP MLwP,
   w-params.nparams MLwP NParams,
@@ -283,9 +282,10 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   if-verbose (coq.say {header} "declare notation Build"),
 
-  coq.say "Hello, world!",
-  GRDepsClauses => coq.notation.add-abbreviation "Build" 0 (global GRK) tt _,
-
+  GRDepsClauses => phant.of-gref ff GRK [] PhGRK,
+  GRDepsClauses => phant.add-abbreviation "Build_" PhGRK BuildConst BuildAbbrev,
+  calc (NParams + 1) NParams1,
+  GRDepsClauses => coq.notation.add-abbreviation "Build" NParams1 {coq.mk-n-fun NParams1 (args\ coq.mk-app (global GRK) {std.append args {coq.mk-n-holes {std.length {list-w-params_list MLwP}}}}) []} tt _,
   if-verbose (coq.say {header} "declare notation axioms"),
 
   if (D = asset-mixin)
@@ -297,12 +297,12 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   if-verbose (coq.say {header} "start module Exports"),
 
   log.coq.env.begin-module "Exports" none,
-  coq.say "Declaring mixin as typeclass",
 	coq.TC.declare-class (indt R),
   std.flatten [Clauses, GRDepsClauses, [
     is-factory (indt R),
     factory->constructor (indt R) GRK,
     factory->nparams (indt R) NParams,
+    phant-abbrev GRK (const BuildConst) BuildAbbrev,
     % gref->deps GRFSort MLwP,
     % factory-sort FactorySortCoe,
   ]] NewClauses,
@@ -312,7 +312,15 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
   std.map MLwoP (_\ r\ r = maximal) Implicits,
   std.map {std.iota NParams} (_\ r\ r = explicit) Explicits,
   /* std.map {list-w-params_list MLwP} (_\ r\ r = maximal) Implicits, */
-  @global! => log.coq.arguments.set-implicit GRK [[explicit|{std.append Explicits Implicits}]],
+
+  NewImplicits = [explicit|{std.append Explicits Implicits}],
+  coq.arguments.set-default-implicit GRK,
+  coq.arguments.implicit GRK [GRKImplicits|_],
+  std.drop {std.length NewImplicits} GRKImplicits RImplicits, 
+
+  if (std.forall RImplicits(x\ x = explicit)) 
+    (@global! => log.coq.arguments.set-implicit GRK [NewImplicits])
+    (@global! => log.coq.arguments.set-implicit GRK [NewImplicits, {std.append NewImplicits RImplicits}]),
   % @global! => log.coq.coercion.declare FactorySortCoe,
 
   log.coq.env.end-module-name "Exports" Exports,

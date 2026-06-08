@@ -132,7 +132,7 @@ declare Module BSkel Sort :- std.do! [
     NewClauses,
   acc-clauses current NewClauses,
   std.map MixinClauses (c\ r\ r = clause _ _ c) MixinClauses0,
-  coq.elpi.accumulate-clauses _ "tc.db" MixinClauses0,
+  coq.elpi.accumulate-clauses current "tc.db" MixinClauses0,
 
   if-verbose (coq.say {header} "stop module Exports"),
   log.coq.env.end-module-name "Exports" Exports,
@@ -236,8 +236,7 @@ mixin-clause S I M Clause :-
       coq.unify-eq ST KSParamsC ok,
       coq.unify-eq CT CBody ok,
       std.nth I MIL Inst)
-  ) clause) clause) clause) Clause,
-  coq.say "Clause for " M " is " Clause.
+  ) clause) clause) clause) Clause.
       
       
 
