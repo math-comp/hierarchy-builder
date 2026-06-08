@@ -20,10 +20,10 @@ HB.end_instance.
 (* Print HB_unnamed_factory_14.  *)
 
 (* then with a parameter *)
-#[interactive] HB.instance Definition _ (n:nat) := XX.Build nat _ eq_refl.
-exact (n+1).
+#[interactive] HB.instance Definition _ (xxxxx:nat) := XX.Build nat _ eq_refl.
+exact (xxxxx+1).
 HB.end_instance.
-
+(* Print unnamed__25. *)
 
 #[interactive] HB.instance Definition _ (n:Z) := XX.Build Z _ _.
 exact (Z.add n 2%Z).

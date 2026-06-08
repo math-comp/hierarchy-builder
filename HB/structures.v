@@ -837,14 +837,16 @@ Elpi Accumulate File "HB/common/synthesis.elpi".
 Elpi Accumulate File "HB/context.elpi".
 Elpi Accumulate File "HB/instance.elpi".
 Elpi Accumulate lp:{{
-  func under term, list (pair term term) -> term.
+  
+
+  func under term, list (triple name term term) -> term.
     under (fun N Ty F) Acc (fun N Ty F') :- 
       @pi-decl N Ty x\ 
-        under (F x) [(pr x Ty)|Acc] (F' x). 
+        under (F x) [(triple N x Ty)|Acc] (F' x). 
     under (app L) Acc (app L') :- 
       aux Acc L L'. 
 
-  func aux list (pair term term), list term -> list term.
+  func aux list (triple name term term), list term -> list term.
     aux _ [] [].
     aux Acc [T|TS] [T|TS'] :- 
       coq.typecheck T Ty ok,
@@ -855,13 +857,13 @@ Elpi Accumulate lp:{{
     aux Acc [T|TS] [T'|TS'] :- 
       std.spy! (abstract Acc T TA), 
       log.coq.env.add-const _ TA _ @opaque! C, 
-      T' = app [(global (const C))|{std.map Acc fst}],
+      T' = app [(global (const C))|{std.map Acc triple_2}],
       aux Acc TS TS'. 
 
-  func abstract list (pair term term), term -> term.
+  func abstract list (triple name term term), term -> term.
     abstract [] T T' :- 
       copy T T'.
-    abstract [(pr V Ty) | A] T (fun `x` Ty F) :- 
+    abstract [(triple N V Ty) | A] T (fun N Ty F) :- 
       pi w\ (copy V w :- !) => abstract A T (F w).
 
   main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
