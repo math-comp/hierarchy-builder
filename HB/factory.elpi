@@ -299,7 +299,7 @@ declare-mixin-or-factory MixinSrcClauses SectionCanonicalInstance
 
   log.coq.env.begin-module "Exports" none,
 	coq.TC.declare-class (indt R),
-  coq.TC.override-solver "axioms_",
+  coq.TC.override-solver ["axioms_"],
   std.flatten [Clauses, GRDepsClauses, [
     is-factory (indt R),
     factory->constructor (indt R) GRK,

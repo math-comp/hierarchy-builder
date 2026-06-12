@@ -24,8 +24,7 @@ From elpi Require Import elpi tc.
 
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 
-TC.AddAllClasses.
-TC.AddAllInstances.
+Elpi TC Solver Override TC.Solver None.
 
 Register unify as hb.unify.
 Register id_phant as hb.id.
@@ -469,6 +468,7 @@ HB.mixin Record MixinName T & Factory1 T & … & FactoryN T := {
 *)
 
 #[arguments(raw)] Elpi Command HB.mixin.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
@@ -654,6 +654,7 @@ HB.structure Definition StructureName params :=
 *)
 
 #[arguments(raw)] Elpi Command HB.structure.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
@@ -739,6 +740,7 @@ Elpi Export HB.structure.
 *)
 
 #[arguments(raw)] Elpi Command HB.saturate.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
@@ -834,6 +836,7 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 #[arguments(raw)] Elpi Command HB.factory.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
@@ -919,6 +922,7 @@ HB.end.
 *)
 
 #[arguments(raw)] Elpi Command HB.builders.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
@@ -1168,6 +1172,7 @@ HB.instance Definition _ : Ml ... T := ml.
 *)
 
 #[arguments(raw)] Elpi Command HB.declare.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
