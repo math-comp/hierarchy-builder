@@ -47,9 +47,10 @@ declare Module BSkel Sort :- std.do! [
   GRDepsClauses =
     [gref->deps (indt ClassInd) NilwP, gref->deps (indc ClassK) MLwP],
   std.map ML (m\ o\ o = mixin-class m ClassName) MixinMems,
-  [class-def CurrentClass, StructKeyClause | GRDepsClauses] => Factories => std.map-i ML (private.mixin-clause Structure) MixinClauses,
   std.filter ML (m\ not (mixin->first-class m _)) NewMixins,
   std.map NewMixins (m\ r\ r = mixin->first-class m ClassName) MixinFirstClass,
+  [class-def CurrentClass, StructKeyClause | GRDepsClauses] => MixinFirstClass => Factories => std.map-i ML (private.mixin-clause Structure) OptMixinClauses,
+  std.map-filter OptMixinClauses (c\c'\ c = some c') MixinClauses,
 
 
   if-verbose (coq.say {header} "structure: new mixins" NewMixins),
@@ -204,11 +205,12 @@ clause.mk-n-pis N Args P (pi x\ Clause x) :-
   calc (N - 1) N0,
   pi x\ clause.mk-n-pis N0 [x|Args] P (Clause x).
 
-func mixin-clause structure, int, mixinname -> prop.
+func mixin-clause structure, int, mixinname -> option prop.
 mixin-clause S I M Clause :-
   structure-key SortProj _ S, !,
   get-constructor S KS,
   class-def (class (indt Class) S CMLwP), !,
+  if (not (mixin->first-class M (indt Class))) (Clause = none) (
   get-constructor (indt Class) KC,
   tc.gref->pred-name M PredName,
   gref->deps M MDeps,
@@ -236,7 +238,8 @@ mixin-clause S I M Clause :-
       coq.unify-eq ST KSParamsC ok,
       coq.unify-eq CT CBody ok,
       std.nth I MIL Inst)
-  ) clause) clause) clause) Clause.
+  ) clause) clause) clause) Clause',
+  Clause = some Clause').
       
       
 

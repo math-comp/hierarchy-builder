@@ -27,6 +27,7 @@ elaborate-w-tc (app [KFactory|Args]) Ty Body Diag :-
   factory->nparams Factory NParams,
   std.length {list-w-params_list {gref->deps Factory}} NDeps,
   calc (NParams + NDeps + 1) N,
+  N =< {std.length Args},
   std.split-at N Args NArgs Rest,
   std.assert-ok! (coq.elaborate-skeleton (app [KFactory|NArgs]) _ Head) "tc resolution of mixins failed",
   coq.elaborate-skeleton {coq.mk-app Head Rest} Ty Body Diag.
