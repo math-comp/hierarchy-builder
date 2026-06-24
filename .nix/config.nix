@@ -5,6 +5,9 @@
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "master";
+    };
+    coqMcHBcommon = {
+      mathcomp.override.version = "master";
       mathcomp.job = true;
       mathcomp-single.job = true;
       graph-theory.job = false;
@@ -29,14 +32,18 @@
       QuickChick.override.version = "master";
       # jasmin.override.version = "main";
       jasmin.job = false;  # currently broken
+      autosubst.job = false;
+      ConCert.job = false;
+      interval.job = false;
     };
   in {
-    "rocq-master" = { rocqPackages = {
+    "rocq-master" = { rocqPackages = mcHBcommon // {
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
       rocq-elpi.override.version = "master";
+      micromega-plugin.override.version = "master";
       bignums.override.version = "master";
-    }; coqPackages = mcHBcommon // {
+    }; coqPackages = coqMcHBcommon // {
       coq.override.version = "master";
       stdlib.override.version = "master";
       coq-elpi.override.version = "master";
@@ -44,21 +51,23 @@
       coquelicot.job = false;
     }; };
 
-    "rocq-9.2" = { rocqPackages = {
+    "rocq-9.2" = { rocqPackages = mcHBcommon // {
       rocq-core.override.version = "9.2";
-    }; coqPackages = mcHBcommon // {
+      micromega-plugin.override.version = "master";
+      micromega-plugin.job = false;
+    }; coqPackages = coqMcHBcommon // {
       coq.override.version = "9.2";
     }; };
 
-    "rocq-9.1" = { rocqPackages = {
+    "rocq-9.1" = { rocqPackages = mcHBcommon // {
       rocq-core.override.version = "9.1";
-    }; coqPackages = mcHBcommon // {
+    }; coqPackages = coqMcHBcommon // {
       coq.override.version = "9.1";
     }; };
 
-    "rocq-9.0" = { rocqPackages = {
+    "rocq-9.0" = { rocqPackages = mcHBcommon // {
       rocq-core.override.version = "9.0";
-    }; coqPackages = mcHBcommon // {
+    }; coqPackages = coqMcHBcommon // {
       coq.override.version = "9.0";
     }; };
   };

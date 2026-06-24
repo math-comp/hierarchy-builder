@@ -1,2 +1,2 @@
-{ mathcomp, version ? null }:
-mathcomp.override {single = true; inherit version;}
+{ mathcomp }:
+mathcomp.override {single = true;}
