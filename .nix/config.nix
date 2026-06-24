@@ -41,6 +41,7 @@
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
       rocq-elpi.override.version = "master";
+      micromega-plugin.override.version = "master";
       bignums.override.version = "master";
     }; coqPackages = coqMcHBcommon // {
       coq.override.version = "master";
@@ -52,6 +53,8 @@
 
     "rocq-9.2" = { rocqPackages = mcHBcommon // {
       rocq-core.override.version = "9.2";
+      micromega-plugin.override.version = "master";
+      micromega-plugin.job = false;
     }; coqPackages = coqMcHBcommon // {
       coq.override.version = "9.2";
     }; };
