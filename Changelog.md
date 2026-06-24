@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.2] - 2026-06-24
+
+Compatible with
+- Coq 8.20 with Coq-Elpi 3.0.x
+- Rocq 9.0 with Rocq-Elpi 3.0.x
+- Rocq 9.1 with Rocq-Elpi 3.0.x
+- Rocq 9.2 with Rocq-Elpi 3.3.x
+
 ## [1.10.1] - 2025-09-08
 
 Compatible with
