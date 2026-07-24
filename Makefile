@@ -13,10 +13,10 @@
 #                                                                    #
 # Additionally, the following variables may be customized:           #
 SUBDIRS?=
-COQBIN?=$(dir $(shell command -v coqtop || command -v rocq))
-COQTOP=$(shell command -v coqtop || echo "$(COQBIN)rocq repl")
-COQMAKEFILE?=$(shell command -v coq_makefile || echo "$(COQBIN)rocq makefile")
-COQDEP?=$(COQBIN)coqdep
+COQBIN?=$(dir $(shell command -v rocq))
+COQTOP=$(shell echo "$(COQBIN)rocq repl")
+COQMAKEFILE?=$(shell echo "$(COQBIN)rocq makefile")
+COQDEP?=$(shell echo "$(COQBIN)rocq dep")
 COQPROJECT?=_CoqProject
 COQMAKEOPTIONS?=
 COQMAKEFILEOPTIONS?=
@@ -92,23 +92,6 @@ distclean: sub-distclean this-distclean
 
 # Local config, build, clean and distclean ---------------------------
 .PHONY: this-config this-build this-only this-test-suite this-test-suite-stdlib this-distclean this-clean
-
-this-config:: __always__
-	@if $$(command -v coqc >/dev/null) ; then \
-	if [ -e config.stamp -a "`coqc --print-version`" = "`cat config.stamp 2>/dev/null`" ] ; then \
-		echo 'already configured';\
-	else\
-		coqc --print-version > config.stamp;\
-		echo 'configuring for ' `coqc --print-version`;\
-		if (coqc --version | grep -q '8.20') ; then \
-			echo '*****************************************************************';\
-			echo 'old coq version detected, double check the diff before committing';\
-			echo '*****************************************************************';\
-			sed -i.bak -e 's/From Corelib/From Coq/' `find . -name \*.v` ; \
-			sed -i.bak -e 's/IntDef/ZArith/' `find . -name \*.v` ; \
-		fi;\
-	fi ; fi
-	# Remove all of the above when requiring Rocq >= 9.0
 
 this-build:: this-config Makefile.coq
 	+$(COQMAKE)

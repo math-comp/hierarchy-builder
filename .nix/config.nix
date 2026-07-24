@@ -5,6 +5,10 @@
   bundles = let
     mcHBcommon = {
       mathcomp.override.version = "master";
+      mathcomp-bigenough.override.version = "master";
+      mathcomp-finmap.override.version = "master";
+      mathcomp-real-closed.override.version = "master";
+      mathcomp-analysis.override.version = "master";
     };
     coqMcHBcommon = {
       mathcomp.override.version = "master";
