@@ -376,7 +376,7 @@ namespace abstract-props-as-lemmas {
       aux Acc TS TS'.
     aux Acc [T|TS] [T'|TS'] :- 
       std.spy! (abstract Acc T TA), 
-      log.coq.env.add-const _ TA _ @opaque! C, 
+      coq.env.add-const _ TA _ @opaque! C, 
       T' = app [(global (const C))|{std.map Acc triple_2}],
       aux Acc TS TS'. 
 

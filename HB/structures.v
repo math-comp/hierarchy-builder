@@ -804,6 +804,7 @@ main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ Body AllGoals (co
   coq.say "Once there are no more subgoals, use the command \"HB.end_instance.\" to conclude the instance". 
 }}.
 
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
 #[synterp] Elpi Accumulate lp:{{
 
 shorten coq.env.{ begin-section, end-section }.
@@ -813,12 +814,14 @@ pred interactive-in-attributes i:list attribute.
   interactive-in-attributes [_ | Atts] :- interactive-in-attributes Atts.
 
 main _ :-
-  attributes A,
-  %TODO use the API
-  if (interactive-in-attributes A)
-    (true)
-    (SectionName is "hb_instance_" ^ {std.any->string {new_int} },
-     begin-section SectionName, end-section).
+  with-attributes (
+    if (get-option "interactive" _)
+      (true)
+      (
+        SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+        begin-section SectionName, end-section
+      )
+  ).
 }}.
 
 Elpi Typecheck.
