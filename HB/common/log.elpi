@@ -8,6 +8,8 @@
 %   were logging takes place. Hence we never call, say, coq.evn.add-* directly,
 %   but always via this proxy
 
+accumulate HB/common/database.
+
 namespace log.coq {
 
 :index (1)
@@ -158,6 +160,13 @@ coercion.declare C :- std.do! [
   log.private.log-vernac (log.private.coq.vernac.coercion Name SRCGR TGTCL),
 ]. 
 
+
+func env.add-section-variable-noimplicits id, term -> constant.
+env.add-section-variable-noimplicits Name Ty C :-
+  if (Name = "_") (ID is "fresh_name_" ^ {std.any->string {new_int}}) (ID = Name),
+  @local! ==> coq.env.add-section-variable ID _ Ty C,
+  log.private.log-vernac (log.private.coq.vernac.variable ID Ty),
+  @local! ==> arguments.set-implicit (const C) [[]].
 
 }
 

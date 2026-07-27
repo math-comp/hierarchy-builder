@@ -3,7 +3,8 @@
 
 
 % This file contains some HB specific utilities
-accumulate HB/common/utils-synterp.
+accumulate HB/common/utils_synterp.
+accumulate HB/common/stdpp.
 
 shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }.
 
@@ -26,11 +27,9 @@ with-locality P :-
 func acc-clause scope, prop.
 acc-clause Scope C :- coq.elpi.accumulate Scope "hb.db" (clause _ _ C).
 
-/* Uncomment and remove HB/common/compat_acc_clauses_*.elpi once requiring coq-elpi >= 1.18.0,
-   which implies Coq >= 8.17
-pred acc-clauses i:scope, i:list prop.
+:index (1)
+func acc-clauses scope, list prop.
 acc-clauses Scope CL :- coq.elpi.accumulate-clauses Scope "hb.db" {std.map CL (c\r\ r = clause _ _ c)}.
-*/
 
 % TODO: Should this only be used for gref that are factories? (and check in the first/second branch so?)
 % Should we make this an HO predicate, eg "located->gref S L is-factory? GR"

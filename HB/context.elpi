@@ -1,6 +1,9 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+accumulate HB/common/log.
+accumulate HB/instance.
+
 namespace context {
 
 pred declare i:factories, o:mixins, o:list term, o:term, o:list prop, o:list constant.
