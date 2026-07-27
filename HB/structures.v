@@ -814,6 +814,7 @@ pred interactive-in-attributes i:list attribute.
 
 main _ :-
   attributes A,
+  %TODO use the API
   if (interactive-in-attributes A)
     (true)
     (SectionName is "hb_instance_" ^ {std.any->string {new_int} },
