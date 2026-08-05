@@ -279,33 +279,6 @@ HB.instance Definition _ := Quiver_IsPreConcrete.Build quiver (fun _ _ => id).
 HB.instance Definition _ := Quiver_IsPreConcrete.Build precat (fun _ _ => id).
 HB.instance Definition _ := Quiver_IsPreConcrete.Build cat (fun _ _ => id).
 Set Universe Checking.
-Lemma quiver_concrete_subproof : PreConcrete_IsConcrete quiver.
-Proof.
-constructor=> C D F G FG; apply: prefunctorP.
-  by move=> x; congr (_ x); apply: FG.
-by move=> *; admit.
-Admitted.
-HB.instance Definition _ := quiver_concrete_subproof.
-
-Lemma precat_concrete_subproof : PreConcrete_IsConcrete precat.
-Proof.
-constructor=> C D F G FG; apply: functorP.
-  by move=> x; congr (_ x); apply: FG.
-by move=> *; admit.
-Admitted.
-HB.instance Definition _ := precat_concrete_subproof.
-
-Lemma cat_concrete_subproof : PreConcrete_IsConcrete cat.
-Proof.
-constructor=> C D F G FG; apply: functorP.
-  by move=> x; congr (_ x); apply: FG.
-by move=> *; admit.
-Admitted.
-HB.instance Definition _ := cat_concrete_subproof.
-HB.instance Definition _ := PreCat_IsConcrete.Build precat
-   (fun=> erefl) (fun _ _ _ _ _ => erefl).
-HB.instance Definition _ := PreCat_IsConcrete.Build cat
-   (fun=> erefl) (fun _ _ _ _ _ => erefl).
 
 (* constant functor *)
 Definition cst (C D : quiver) (c : C) := fun & D => c.
