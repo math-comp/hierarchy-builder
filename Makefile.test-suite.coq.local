@@ -9,7 +9,7 @@ output_for=`\
 DIFF=\
 	@if [ -z "$$COQ_ELPI_ATTRIBUTES" ]; then \
 	echo OUTPUT DIFF $(1);\
-	$(COQTOP) $(COQFLAGS) $(COQLIBS) -topfile $(1) \
+	$(COQTOP) $(COQFLAGS) $(COQLIBS) -w -deprecated-from-Coq -topfile $(1) \
 	  < $(1) 2>&1 \
 	  | sed 's/Coq < *//g' \
 	  | sed 's/Rocq < *//g' \
