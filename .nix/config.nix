@@ -58,11 +58,6 @@
       rocq-core.override.version = "9.1";
       coq.override.version = "9.1";
     }; };
-
-    "rocq-9.0" = { rocqPackages = mcHBcommon // {
-      rocq-core.override.version = "9.0";
-      coq.override.version = "9.0";
-    }; };
   };
   cachix.coq = {};
   cachix.coq-community = {};

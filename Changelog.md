@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+
+Drop support for Rocq 9.0 (following mathcomp doing so)
+
 ## [1.10.3] - 2026-06-24
 
 Compatible with
