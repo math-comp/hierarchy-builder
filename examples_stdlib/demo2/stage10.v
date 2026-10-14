@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect ssrfun ssrbool ZArith QArith Qcanon.
+From Stdlib Require Import ssreflect ssrfun ssrbool ZArith QArith Qcanon.
 From HB Require Import structures.
 
 Require Import classical.

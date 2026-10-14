@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect ssrfun ssrbool.
+From Corelib Require Import ssreflect ssrfun ssrbool.
 From HB Require Import structures.
 
 (* without params *)

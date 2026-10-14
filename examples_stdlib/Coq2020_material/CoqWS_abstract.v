@@ -1,5 +1,5 @@
 (* Accompanying material to Coq workshop presentation *)
-From Coq Require Import ssreflect ssrfun ZArith.
+From Stdlib Require Import ssreflect ssrfun ZArith.
 From HB Require Import structures.
 
 HB.mixin Record CMonoid_of_Type A := { (* The set of axioms making A a commutative monoid. *)

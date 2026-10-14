@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect ssrfun ZArith.
+From Stdlib Require Import ssreflect ssrfun ZArith.
 From HB Require Import structures.
 
 Module Enclosing.
