@@ -117,6 +117,9 @@ gref->modname_short GR Sep IDS :-
 
 func avoid-name-collision string -> string.
 avoid-name-collision S S1 :-
+  if (var S)
+    (S = "unnamed")
+    (true),
   coq.locate-all S L,
   if (std.mem L (loc-gref GR), coq.gref->path GR P, coq.env.current-path P)
      (S1 is S ^ "__" ^ {std.any->string {new_int}})
@@ -350,3 +353,36 @@ saturate-type-constructor T ET :-
   coq.typecheck T TH ok,
   coq.count-prods TH N,
   coq.mk-app T {coq.mk-n-holes N} ET.
+
+
+namespace abstract-props-as-lemmas {
+  
+  func main term, list (triple name term term) -> term.
+    main (fun N Ty F) Acc (fun N Ty F') :- 
+      @pi-decl N Ty x\ 
+        main (F x) [(triple N x Ty)|Acc] (F' x). 
+    main (app L) Acc (app L') :- 
+      aux Acc L L'. 
+
+  func aux list (triple name term term), list term -> list term.
+    aux _ [] [].
+    aux Acc [(global _ as T)|TS] [T|TS'] :- !,
+      aux Acc TS TS'.
+    aux Acc [T|TS] [T|TS'] :- 
+      coq.typecheck T Ty ok,
+      coq.typecheck Ty TyTy ok,
+      %coq.typecheck-ty does not make coercions
+      (not (TyTy = {{Prop}})), !,
+      aux Acc TS TS'.
+    aux Acc [T|TS] [T'|TS'] :- 
+      std.spy! (abstract Acc T TA), 
+      coq.env.add-const _ TA _ @opaque! C, 
+      T' = app [(global (const C))|{std.map Acc triple_2}],
+      aux Acc TS TS'. 
+
+  func abstract list (triple name term term), term -> term.
+    abstract [] T T' :- 
+      copy T T'.
+    abstract [(triple N V Ty) | A] T (fun N Ty F) :- 
+      pi w\ (copy V w :- !) => abstract A T (F w).
+}
