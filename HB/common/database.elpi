@@ -286,8 +286,9 @@ assert-building-bottom-up CurrentClass C3n :-
        Msg2 {std.map ICL (IC\ gref->modname_short IC ".")})
      true.
 
-% [mixins->classes ML] computes a list of classes containing exactly
+% [mixins->classes ML CL] computes a list of classes CL containing all
 % the mixins in ML, with no class in the list being a subclass of another.
+% CL is minimal in terms of provided mixins.
 func mixins->classes list mixinname -> list classname.
 mixins->classes [] [].
 mixins->classes [M|ML] R :-
