@@ -1,5 +1,5 @@
 (* Accompanying material to Coq workshop presentation *)
-From Coq Require Import ssreflect ssrfun ZArith.
+From Stdlib Require Import ssreflect ssrfun ZArith.
 From HB Require Import structures.
 Set Warnings "-redundant-canonical-projection".
 

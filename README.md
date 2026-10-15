@@ -22,7 +22,8 @@ a few concepts and a few declarative Coq commands.
 
 ```coq
 From HB Require Import structures.
-From Coq Require Import ssreflect ZArith.
+From Corelib Require Import ssreflect.
+From Stdlib Require Import ZArith.
 
 HB.mixin Record IsAddComoid A := {
   zero : A;
