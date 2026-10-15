@@ -20,7 +20,11 @@ Definition ignore {T} (x: T) := x.
 Definition ignore_disabled {T T'} (x : T) (x' : T') := x'.
 
 (* ********************* structures ****************************** *)
-From elpi Require Import elpi.
+From elpi Require Import elpi tc.
+
+From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
+
+Elpi TC Solver Override TC.Solver None.
 
 Register unify as hb.unify.
 Register id_phant as hb.id.
@@ -306,6 +310,7 @@ Elpi Export HB.locate.
 
 #[arguments(raw)] Elpi Command HB.about.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/utils.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
@@ -340,6 +345,7 @@ Elpi Export HB.about.
 
 #[arguments(raw)] Elpi Command HB.howto.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -382,6 +388,7 @@ Elpi Export HB.howto.
 
 #[arguments(raw)] Elpi Command HB.status.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -412,6 +419,7 @@ tred file.dot | xdot -
 
 #[arguments(raw)] Elpi Command HB.graph.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -460,7 +468,10 @@ HB.mixin Record MixinName T & Factory1 T & … & FactoryN T := {
 *)
 
 #[arguments(raw)] Elpi Command HB.mixin.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -543,6 +554,7 @@ Elpi Export HB.mixin.
 
 Elpi Tactic HB.pack_for.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -566,6 +578,7 @@ Elpi Export HB.pack_for.
 
 Elpi Tactic HB.pack.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -641,7 +654,10 @@ HB.structure Definition StructureName params :=
 *)
 
 #[arguments(raw)] Elpi Command HB.structure.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -724,7 +740,10 @@ Elpi Export HB.structure.
 *)
 
 #[arguments(raw)] Elpi Command HB.saturate.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -775,6 +794,7 @@ HB.instance Definition N Params := Factory.Build Params T …
 
 #[arguments(raw)] Elpi Command HB.instance.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -816,7 +836,10 @@ Elpi Export HB.instance.
 (** [HB.factory] declares a factory. It has the same syntax of [HB.mixin] *)
 
 #[arguments(raw)] Elpi Command HB.factory.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -899,7 +922,10 @@ HB.end.
 *)
 
 #[arguments(raw)] Elpi Command HB.builders.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -941,6 +967,7 @@ Elpi Export HB.builders.
 
 #[arguments(raw)] Elpi Command HB.end.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -1015,6 +1042,7 @@ Export Algebra.Exports.
 
 #[arguments(raw)] Elpi Command HB.export.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -1061,6 +1089,7 @@ Elpi Export HB.export.
 
 #[arguments(raw)] Elpi Command HB.reexport.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -1143,7 +1172,10 @@ HB.instance Definition _ : Ml ... T := ml.
 *)
 
 #[arguments(raw)] Elpi Command HB.declare.
+Elpi Accumulate Plugin "tc-builtin.elpi".
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
@@ -1180,6 +1212,7 @@ Elpi Export HB.declare.
 
 #[arguments(raw)] Elpi Command HB.check.
 Elpi Accumulate Db hb.db.
+Elpi Accumulate Db tc.db.
 Elpi Accumulate File "HB/common/stdpp.elpi".
 Elpi Accumulate File "HB/common/database.elpi".
 Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
