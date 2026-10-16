@@ -31,7 +31,7 @@ begin CtxSkel :-
 % "end" is a keyword, be put it in the namespace by hand
 func builders.end.
 builders.end :- std.do! [
-  current-mode (builder-from _ _ _ ModName),
+  current-mode (builder-from T _ _ ModName),
 
   log.coq.env.end-section-name ModName,
 
@@ -40,8 +40,10 @@ builders.end :- std.do! [
   std.fold LFIL [] builders.private.declare-1-builder Clauses,
 
   if (Clauses = [])
-     (coq.error "No builders to declare, did you forget HB.instance?")
-     true,
+     (coq.error "HB:"
+      { calc ("No builders on " ^ { coq.term->string T } ^ " to declare.") }
+      { calc ("This HB.builders section must HB.instance at least one mixin or factory on " ^ { coq.term->string T } ^ ".") }
+     ) true,
 
   std.findall (abbrev-to-export F_ N_ A_) ExportClauses,
   coq.env.current-path CurModPath,
