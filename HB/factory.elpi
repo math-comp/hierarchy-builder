@@ -156,7 +156,7 @@ func key-decl-w-mixins string, string, term, (term -> A),
 key-decl-w-mixins DeclKind ID TySkel Rest Conv Out :- std.do! [
   if-verbose (coq.say {header} "processing key" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "key illtyped",
-  coq.string->name ID N, @pi-decl N Ty t\ Conv (Rest t) (pr (MLwA t) (R t)),
+  coq.id->name ID N, @pi-decl N Ty t\ Conv (Rest t) (pr (MLwA t) (R t)),
   if (var Ty) (fresh-type Ty) true,
   Out = pr (w-params.nil ID Ty MLwA) (w-params.nil ID Ty R)
 ].
@@ -166,7 +166,7 @@ func param-decl-w-mixins string, string, term, (term -> A),
 param-decl-w-mixins DeclKind ID TySkel Rest Conv Out :-
   if-verbose (coq.say {header} "processing param" DeclKind),
   std.assert-ok! (coq.elaborate-ty-skeleton TySkel _ Ty) "param illtyped",
-  coq.string->name ID N, @pi-decl N Ty p\ Conv (Rest p) (pr (MLwP p) (R p)),
+  coq.id->name ID N, @pi-decl N Ty p\ Conv (Rest p) (pr (MLwP p) (R p)),
   if (var Ty) (fresh-type Ty) true,
   Out = pr (w-params.cons ID Ty MLwP) (w-params.cons ID Ty R).
 
