@@ -57,6 +57,8 @@
     "rocq-9.1" = { rocqPackages = mcHBcommon // {
       rocq-core.override.version = "9.1";
       coq.override.version = "9.1";
+      multinomials.job = false;  # no longer support 9.1
+      coqeal.job = false;  # depends on multinomials
     }; };
   };
   cachix.coq = {};
