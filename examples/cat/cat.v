@@ -67,7 +67,7 @@ Notation "f \o g" := (comp g f) : cat_scope.
 Notation "f \; g :> T" := (@comp T _ _ _ f g)
   (at level 60, g, T at level 60, format "f  \;  g  :>  T", only parsing) : cat_scope.
 Notation "f \; g" := (comp f g) : cat_scope.
-Notation "\idmap_ a" := (@idmap _ a) (only parsing, at level 0) : cat_scope.
+Notation "\idmap_ a" := (@idmap _ a) (only parsing, at level 1) : cat_scope.
 
 (* categories are precategories + laws *)
 HB.mixin Record PreCat_IsCat C & PreCat C := {
