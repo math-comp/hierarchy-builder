@@ -234,7 +234,7 @@ type coq.vernac.notation      string -> int -> term         -> coq.vernac.
 type coq.vernac.coercion      string -> gref -> class       -> coq.vernac.
 type coq.vernac.canonical     string -> bool                -> coq.vernac.
 type coq.vernac.implicit      bool -> string -> list (list implicit_kind)  -> coq.vernac.
-type coq.vernac.comment       A                             -> coq.vernac.
+type coq.vernac.comment       string                        -> coq.vernac.
 type coq.vernac.check         term -> bool                  -> coq.vernac.
 type coq.vernac.strategy      list constant -> conversion_strategy -> coq.vernac.
 
@@ -362,8 +362,7 @@ coq.vernac->pp1 (vernac.implicit Local Name [L]) (box h [Locality, str "Argument
   local->locality Local Locality,
   std.map L coq.vernac->ppimparg PP1,
   std.intersperse spc PP1 PP.
-coq.vernac->pp1 (comment A) (box (hov 2) [str"(*", str S, str"*)"]) :-
-  std.any->string A S.
+coq.vernac->pp1 (comment S) (box (hov 2) [str"(*", str S, str"*)"]).
 coq.vernac->pp1 (check T Fail) (box (hov 2) [Failure, str"Check", spc, PPT, str"."]) :-
   (@holes! => coq.term->pp T PPT),
   fail->failure Fail Failure.
