@@ -1,6 +1,13 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+accumulate HB/common/database.
+accumulate HB/common/log.
+accumulate HB/common/synthesis.
+accumulate HB/common/phant-abbreviation.
+accumulate HB/context.
+accumulate HB/export.
+
 namespace factory {
 
 func declare argument ->.
@@ -198,6 +205,7 @@ declare-id-builder GR (from GR GR (const C)) :- std.do! [
   std.assert-ok! (coq.elaborate-skeleton IDBodySkel IDType IDBody) "identity builder illtyped",
   log.coq.env.add-const-noimplicits "identity_builder" IDBody IDType @transparent! C,
 ].
+func declare-id-builder.aux gref, list term, term -> term.
 declare-id-builder.aux GR Params TheType (fun `x` Ty x\x) :-
   synthesis.infer-all-gref->deps Params TheType GR Ty.
 
