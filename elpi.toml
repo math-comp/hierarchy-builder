@@ -1,0 +1,13 @@
+# The project of the Elpi files of Hierarchy Builder, for elpi-lsp (outside
+# Rocq). rocq-elpi gives the prelude of an Elpi Command (the shim of its
+# quotations, the documentation of its builtins, the template of a command)
+# and the logical paths of its own files.
+name = "rocq-hierarchy-builder"
+use = ["+rocq-elpi"]
+
+[warnings]
+flex-clause = "off"
+
+# the logical path of _CoqProject (-R HB HB): accumulate HB/common/utils
+[paths]
+"HB" = "+/HB"
