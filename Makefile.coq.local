@@ -5,3 +5,15 @@ clean::
 	$(SHOW)'CLEAN *.hb *.hb.old'
 	$(HIDE) find . -name \*.hb -delete
 	$(HIDE) find . -name \*.hb.old -delete
+
+# The Elpi files of HB, installed as the findlib package
+# rocq-hierarchy-builder (the name of elpi.toml), next to its META, at their
+# paths in the sources: for elpi-lsp, a project that has
+# use = ["+rocq-hierarchy-builder"], and elpi -check-package
+HB_FINDLIB = $(COQPLUGININSTALL)/rocq-hierarchy-builder
+
+install-extra::
+	$(SHOW)'INSTALL elpi.toml HB/*.elpi $(HB_FINDLIB)'
+	$(HIDE)install -d $(HB_FINDLIB) # first: the path has .. through directories that a DESTDIR may not have yet
+	$(HIDE)for f in elpi.toml $$(find HB -name '*.elpi'); do install -Dm 0644 $$f $(HB_FINDLIB)/$$f || exit 1; done
+	$(HIDE)echo 'description = "The Elpi files of Hierarchy Builder, for elpi-lsp"' > $(HB_FINDLIB)/META
