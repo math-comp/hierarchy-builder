@@ -12,15 +12,15 @@ Check list_foo.
 Elpi Query HB.structure lp:{{
 
 has-mixin-instance->mixin-src (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo}}) MS,
-    MS = (pi a b \ 
-        mixin-src (app [{{list}}, b]) ({{:gref is_foo.axioms_}}) (app [{{list_foo}}, a]) 
-            :- [coq.unify-eq a b ok])
+    MS = (pi a b aty diag \
+        mixin-src (app [{{list}}, b]) ({{:gref is_foo.axioms_}}) (app [{{list_foo}}, a])
+            :- [coq.typecheck a aty diag, coq.unify-eq a b ok])
 }}.
 
 Elpi Query HB.structure lp:{{
 
 has-mixin-instance->mixin-src (has-mixin-instance (cs-gref{{:gref list}}) {{:gref is_foo.axioms_}} {{:gref list_foo'}}) MS',
-MS' = (pi p a b \ 
+MS' = (pi p a b aty diag \
     mixin-src (app [{{list}}, b]) {{:gref is_foo.axioms_}} (app [{{list_foo'}}, p,a])
-        :- [coq.unify-eq  a b ok]).
+        :- [coq.typecheck a aty diag, coq.unify-eq  a b ok]).
 }}.

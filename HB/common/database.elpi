@@ -378,11 +378,15 @@ func mixin-instance-type->mixin-src.aux
   list prop % Cond list
   -> prop.
 mixin-instance-type->mixin-src.aux [] T M I Cond (mixin-src T M I :- Cond).
-mixin-instance-type->mixin-src.aux [A|Args] T M I Cond  (pi a \ C a) :-
-  pi a \
+% The argument A is typechecked before being unified: when it is the primitive
+% projection of a parameter of the instance, e.g. (list X.(sort)), the type
+% of the parameter X must be known for A to be well typed
+mixin-instance-type->mixin-src.aux [A|Args] T M I Cond  (pi a aty diag \ C a aty diag) :-
+  pi a aty diag \
   sigma Ta\
     coq.mk-app T [a] Ta,
-    mixin-instance-type->mixin-src.aux Args Ta M I [coq.unify-eq A a ok|Cond] (C a).
+    mixin-instance-type->mixin-src.aux Args Ta M I
+      [coq.typecheck A aty diag, coq.unify-eq A a ok|Cond] (C a aty diag).
 
 
 % transforms the type of a mixin instance into a

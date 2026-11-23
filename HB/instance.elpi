@@ -446,11 +446,20 @@ declare-mixin-name T (global (const C)) [mixin-mem T (const C)] :- std.do! [
   log.coq.env.add-const-noimplicits Name T _ @transparent! C,
 ].
 
+% [sort-projection-head T C] holds when T is an application of the constant C,
+% or of the primitive projection whose compatibility constant is C (the sort
+% of an instance of a primitive structure)
+func sort-projection-head term -> constant.
+sort-projection-head T C :- coq.safe-dest-app T (global (const C)) _, !.
+sort-projection-head T C :-
+  coq.safe-dest-app T (primitive (proj P _)) _,
+  coq.env.primitive-projection? P C _, !.
+
 func check-non-forgetful-inheritance term, gref.
 check-non-forgetful-inheritance _ _ :-
   get-option "non_forgetful_inheritance" tt, !.
 check-non-forgetful-inheritance T Factory :- std.do! [
-  if (coq.safe-dest-app T (global (const HdSym)) _, structure-key HdSym _ Super) (
+  if (sort-projection-head T HdSym, structure-key HdSym _ Super) (
     coq.warning "HB" "HB.non-forgetful-inheritance"
       "non forgetful inheritance detected.\n"
       "You have two solutions:"

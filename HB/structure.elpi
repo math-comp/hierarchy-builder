@@ -198,9 +198,13 @@ shorten coq.{ term->gref, subst-fun, safe-dest-app, mk-app, mk-eta, subst-prod }
 % const Po : forall p1 .. pm T m1 .. mn, Extra  (Eg Extra = forall x y, x + y = y + z)
 % const C : forall p1 .. pm s, Extra
 % Po P1 .. PM T M1 .. MN PoArgs -> C P1 .. PM S PoArgs
-pred clean-op-ty i:list prop, i:term, i:term, o:term.
-clean-op-ty [] _ T1 T2 :- copy T1 T2.
-clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
+% When the mixin is a primitive record, Po is also used as a primitive
+% projection, applied to the mixin only:
+% MN.(Po) PoArgs -> C P1 .. PM S PoArgs
+% where P1 .. PM are the parameters of the structure S lives in
+pred clean-op-ty i:list prop, i:list term, i:term, i:term, o:term.
+clean-op-ty [] _ _ T1 T2 :- copy T1 T2.
+clean-op-ty [exported-op _ Po C|Ops] SParams S T1 T2 :-
   gref->deps (const Po) MLwP,
   w-params.nparams MLwP NParams,
   std.length {list-w-params_list MLwP} NMixins,
@@ -211,7 +215,12 @@ clean-op-ty [exported-op _ Po C|Ops] S T1 T2 :-
       std.drop NMixins Rest PoArgs,
       std.append Params [S|PoArgs] L1,
       std.map L1 copy L2) =>
-  clean-op-ty Ops S T1 T2.
+  (pi P N M PoArgs L1 L2\
+    copy (app [primitive (proj P N), M | PoArgs]) (app [global (const C) | L2]) :-
+      coq.env.primitive-projection? P Po _, !,
+      std.append SParams [S|PoArgs] L1,
+      std.map L1 copy L2) =>
+  clean-op-ty Ops SParams S T1 T2.
 
 pred operation-body-and-ty i:list prop, i:constant, i:structure, i:term, i:term,
   i:list term, i:term, i:w-args A, o:pair term term.
@@ -228,7 +237,7 @@ operation-body-and-ty EXI Poperation Struct Psort Pclass Params _T (triple _ Par
         % just in case..
         synthesis.infer-all-gref->deps ParamsOp Carrier (const Poperation) (Body s),
         std.assert-ok! (coq.typecheck (Body s) (DirtyTy s)) "export-1-operation: Body illtyped",
-        clean-op-ty EXI s (DirtyTy s) (BodyTy s),
+        clean-op-ty EXI Params s (DirtyTy s) (BodyTy s),
       ],
   ]),
 ].
@@ -478,7 +487,7 @@ declare-class+structure MLwP Sort
     (mk-class-field (indt ClassInd)) StructureDeclaration,
 
   std.assert-ok! (coq.typecheck-indt-decl StructureDeclaration) "declare: illtyped",
-  if (get-option "primitive" tt)
+  if (primitive-records)
     (@primitive! => log.coq.env.add-indt StructureDeclaration StructureInd)
     (log.coq.env.add-indt StructureDeclaration StructureInd),
 
