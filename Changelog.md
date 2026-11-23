@@ -1,8 +1,16 @@
 # Changelog
 
-## unreleased
+## [1.10.4] - 2026-11-23
 
-Drop support for Rocq 9.0 (following mathcomp doing so)
+Compatible with
+- Rocq 9.1 with Rocq-Elpi 3.x
+- Rocq 9.2 with Rocq-Elpi >= 3.3
+- Rocq 9.3 with Rocq-Elpi >= 3.5
+
+- **Removed** Support for Coq 8.20 and Rocq 9.0 (following mathcomp)
+- **New** Support for Rocq 9.3
+- **Fix** Typing of `coq.vernac.comment` in the logger
+- **Change** Examples and tests use `From Corelib`/`From Stdlib` instead of `From Coq`
 
 ## [1.10.3] - 2026-06-24
 
