@@ -11,10 +11,10 @@ func if-arg-sort (func) ->.
 if-arg-sort P :- get-option "arg_sort" tt, !, P.
 if-arg-sort _.
 
-% Records (mixins, factories, structures) are declared as primitive records
-% when the attribute #[primitive] is given
+% Records (mixins, factories, structures) are declared as primitive records,
+% unless the attribute #[primitive=no] is given
 func primitive-records.
-primitive-records :- get-option "primitive" tt.
+primitive-records :- not (get-option "primitive" ff).
 
 % [fold-projections T T1] T1 is T where each full application of the
 % compatibility constant of a primitive projection is replaced by the

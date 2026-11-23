@@ -2,7 +2,7 @@ Datatypes_nat__canonical__hnf_S =
 {| S.sort := nat; S.class := {| S.hnf_M_mixin := HB_unnamed_mixin_8 |} |}
      : S.type
 HB_unnamed_mixin_8 =
-{| M.x := f.y nat HB_unnamed_factory_6 + 1 |}
+{| M.x := f.y _ HB_unnamed_factory_6 + 1 |}
      : M.axioms_ nat
 Datatypes_bool__canonical__hnf_S =
 {| S.sort := bool; S.class := {| S.hnf_M_mixin := HB_unnamed_mixin_12 |} |}
