@@ -199,6 +199,14 @@ mixin-for T M MICompressed :- mixin-src T M Tm, !,
 
   %if-verbose (coq.say {header} "Trying to compress mixin for" {coq.term->string MI}),
   compress-coercion-paths MI MICompressed.
+% The mixins of the sort of an instance of a primitive structure are recorded
+% for the primitive projection, not for its compatibility constant
+mixin-for T M MICompressed :-
+  coq.safe-dest-app T (global (const C)) Args,
+  coq.env.primitive-projection? P C N,
+  std.length Args NArgs, NArgs > N,
+  std.drop N Args [S|Rest], !,
+  mixin-for {coq.mk-app (app [primitive (proj P N), S]) Rest} M MICompressed.
 
 func drop int, list A -> list A.
 drop 0 L L :- !.

@@ -11,6 +11,26 @@ func if-arg-sort (func) ->.
 if-arg-sort P :- get-option "arg_sort" tt, !, P.
 if-arg-sort _.
 
+% Records (mixins, factories, structures) are declared as primitive records,
+% unless the attribute #[primitive=no] is given
+func primitive-records.
+primitive-records :- not (get-option "primitive" ff).
+
+% [fold-projections T T1] T1 is T where each full application of the
+% compatibility constant of a primitive projection is replaced by the
+% primitive projection itself, as Rocq does when it elaborates a term: the
+% terms HB declares then have the same shape as the ones written by the user
+func fold-projections term -> term.
+fold-projections T T1 :-
+  (pi C Args P N NParams NArgs S Rest S1 Rest1\
+    copy (app [global (const C) | Args]) (app [primitive (proj P N), S1 | Rest1]) :-
+      coq.env.primitive-projection? P C N,
+      coq.env.projection? C NParams,
+      std.length Args NArgs, NArgs > NParams, !,
+      std.drop NParams Args [S|Rest],
+      copy S S1, std.map Rest copy Rest1) =>
+  copy T T1, !.
+
 func if-MC-compat (func option gref ->) ->.
 if-MC-compat P :- get-option "mathcomp" tt, !, P none.
 if-MC-compat P :- get-option "mathcomp.axiom" S, !,

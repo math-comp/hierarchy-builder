@@ -36,10 +36,11 @@ env.add-const-noimplicits Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.env.add-const Name1 Bo Ty Opaque C,
+  fold-projections Bo Bo1,
+  if (var Ty) (Ty? = none) (fold-projections Ty Ty1, Ty? = some Ty1),
+  coq.env.add-const Name1 Bo1 Ty1 Opaque C,
   env.add-location (const C),
-  if (var Ty) (Ty? = none) (Ty? = some Ty),
-  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
+  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo1),
   @local! => arguments.set-implicit (const C) [[]],
 ].
 
@@ -51,10 +52,11 @@ env.add-const Name Bo Ty Opaque C :- std.do! [
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
   avoid-name-collision Name Name1,
-  coq.env.add-const Name1 Bo Ty Opaque C,
+  fold-projections Bo Bo1,
+  if (var Ty) (Ty? = none) (fold-projections Ty Ty1, Ty? = some Ty1),
+  coq.env.add-const Name1 Bo1 Ty1 Opaque C,
   env.add-location (const C),
-  if (var Ty) (Ty? = none) (Ty? = some Ty),
-  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo),
+  log.private.log-vernac (log.private.coq.vernac.definition Name1 Ty? Bo1),
 ].
 
 func env.add-const-noimplicits-failondup id, term, term, opaque? -> constant.
@@ -63,10 +65,11 @@ env.add-const-noimplicits-failondup Name Bo Ty Opaque C :- std.do! [
     (coq.error "HB: cannot infer some information in" Name
                ":" {coq.term->string Ty} ":=" {coq.term->string Bo})
     true,
-  coq.env.add-const Name Bo Ty Opaque C,
+  fold-projections Bo Bo1,
+  if (var Ty) (Ty? = none) (fold-projections Ty Ty1, Ty? = some Ty1),
+  coq.env.add-const Name Bo1 Ty1 Opaque C,
   env.add-location (const C),
-  if (var Ty) (Ty? = none) (Ty? = some Ty),
-  log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo),
+  log.private.log-vernac (log.private.coq.vernac.definition Name Ty? Bo1),
   @local! => arguments.set-implicit (const C) [[]],
 ].
 

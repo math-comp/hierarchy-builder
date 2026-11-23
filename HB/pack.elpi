@@ -4,6 +4,19 @@
 
 namespace pack {
 
+% [sort-projection-app T SortProj Params] holds when T is the sort SortProj of
+% a structure instance, applied to Params (the parameters of the structure
+% followed by the instance), either as a constant or as a primitive
+% projection. In the latter case the parameters are the ones of the type of
+% the instance, when it is syntactically the structure.
+func sort-projection-app term -> constant, list term.
+sort-projection-app (app [global (const SortProj)|ProjParams]) SortProj ProjParams :- !.
+sort-projection-app (app [primitive (proj P _), S]) SortProj ProjParams :-
+  coq.env.primitive-projection? P SortProj _,
+  std.assert-ok! (coq.typecheck S STy) "HB.pack: ill-typed structure instance",
+  coq.safe-dest-app STy (global (indt _)) SParams,
+  std.append SParams [S] ProjParams.
+
 pred main i:term, i:list argument, o:term.
 main Ty Args Instance :- std.do! [
   std.assert! (not(var Ty)) "HB.pack: the structure to pack cannot be unknown, use HB.pack_for",
@@ -23,7 +36,7 @@ main Ty Args Instance :- std.do! [
 
   if (var T) (coq.error "HB.pack: you must pass a type or at least one factory") true,
 
-  if2 (T = app[global (const SortProj)|ProjParams], structure-key SortProj ClassProj _)
+  if2 (sort-projection-app T SortProj ProjParams, structure-key SortProj ClassProj _)
         (AllFactories = [app[global (const ClassProj)|ProjParams] | Factories], Tkey = T) % already existing class on T
       (def T _ _ Tkey) % we unfold letins if we can, they may hide constants with CS instances
         (AllFactories = Factories)
@@ -50,9 +63,13 @@ synth-instance.aux Params KC KS T Tkey [] MLCano Instance :-
       Instance = app[global KS | InstanceArgs]
 ].
 
+func has-key term.
+has-key T :- coq.safe-dest-app T (global _) _, !.
+has-key T :- coq.safe-dest-app T (primitive (proj _ _)) _.
+
 pred synth-instance i:list term, i:gref, i:gref, i:term, i:term, i:list term, o:term.
 synth-instance Params KC KS T Tkey Factories Instance :-
-	if (coq.safe-dest-app Tkey (global _) _) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
+	if (has-key Tkey) (synthesis.local-canonical-mixins-of Tkey MLCano) (MLCano = []),
 	synth-instance.aux Params KC KS T Tkey Factories MLCano Instance.
 
 pred elab-factories i:list argument, i:term, o:list term.
