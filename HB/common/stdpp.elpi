@@ -302,6 +302,10 @@ term->cs-pattern (sort U) (cs-sort U) :- !.
 term->cs-pattern T (cs-gref GR) :- coq.term->gref T GR, !.
 term->cs-pattern T _ :- coq.error T "HB database: is not a valid canonical key".
 
+func coq.term->gref term -> gref.
+:before "term->gref:fail"
+coq.term->gref (fun N Ty F) GR :- !, @pi-decl N Ty x\ coq.term->gref (F x) GR.
+
 % ---------------------------------------------------------------------
 % kit for closing a term by abstracting evars with lambdas
 % we use constraints to attach to holes a number
