@@ -1,0 +1,36 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% The synterp phase of HB.export and HB.reexport
+
+accumulate HB/common/export_database_signature.
+accumulate HB/common/utils_synterp.
+
+namespace export {
+
+shorten coq.env.{ export-module }.
+
+pred any i:string.
+any M :- any.aux {coq.locate-all M}.
+
+pred any.aux i:list located.
+any.aux [loc-modpath MP] :- !,
+  export-module MP,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File MP)).
+any.aux [].
+
+pred module-in-module i:list string, i:prop.
+module-in-module PM (module-to-export _ M) :-
+  coq.modpath->path M PC,
+  std.appendR PM _ PC. % sublist
+
+pred reexport-all-modules i:option id.
+reexport-all-modules Filter :-
+  coq.env.current-library File,
+  compute-filter Filter MFilter,
+  std.findall (module-to-export File Module_) ModsCL,
+  std.filter {list-uniq ModsCL} (module-in-module MFilter) ModsCLFiltered,
+  std.forall ModsCLFiltered (x\sigma mp\x = module-to-export _ mp, export-module mp).
+
+}

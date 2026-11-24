@@ -1,3 +1,0 @@
-:index (1)
-func acc-clauses scope, list prop.
-acc-clauses Scope CL :- coq.elpi.accumulate-clauses Scope "hb.db" {std.map CL (c\r\ r = clause _ _ c)}.

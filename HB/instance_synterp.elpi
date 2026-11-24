@@ -1,0 +1,17 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% The synterp phase of HB.instance
+
+namespace instance {
+
+shorten coq.env.{ begin-section, end-section }.
+
+% a section is opened (and closed) when the instance has parameters
+pred declare-const i:arity.
+declare-const (arity _) :- !.
+declare-const (parameter _ _ _ _) :-
+  SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+  begin-section SectionName, end-section.
+
+}

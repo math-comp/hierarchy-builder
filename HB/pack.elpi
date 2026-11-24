@@ -2,6 +2,10 @@
 /*        Hierarchy Builder: algebraic hierarchies made easy
     This software is released under the terms of the MIT license              */
 
+accumulate HB/common/database.
+accumulate HB/common/synthesis.
+accumulate HB/common/log.
+
 namespace pack {
 
 pred main i:term, i:list argument, o:term.

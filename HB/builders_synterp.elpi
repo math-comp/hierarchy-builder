@@ -1,0 +1,31 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% The synterp phase of HB.builders and HB.end
+
+accumulate HB/common/export_database_signature.
+accumulate HB/common/utils_synterp.
+
+namespace builders {
+
+shorten coq.env.{ begin-module, end-module, begin-section, end-section, export-module }.
+
+pred begin.
+begin :-
+  N is "Builders_" ^ {std.any->string {new_int} },
+  begin-module N none,
+    begin-module "Super" none,
+    end-module _,
+    begin-section N.
+
+pred end.
+end :-
+    end-section,
+    begin-module {calc ("Builders_Export_" ^ {std.any->string {new_int} })} none,
+    end-module M,
+  end-module _,
+  export-module M,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File M)).
+
+}

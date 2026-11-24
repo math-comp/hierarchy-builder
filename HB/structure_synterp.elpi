@@ -1,0 +1,42 @@
+/*        Hierarchy Builder: algebraic hierarchies made easy
+    This software is released under the terms of the MIT license              */
+
+% The synterp phase of HB.structure
+
+accumulate HB/common/export_database_signature.
+accumulate HB/common/utils_synterp.
+
+namespace structure {
+
+shorten coq.env.{ begin-module, end-module, import-module, export-module }.
+
+pred declare i:id.
+declare N :-
+  begin-module N none,
+    begin-module "Exports" none,
+    end-module E,
+    import-module E,
+  end-module _,
+  export-module E,
+  begin-module {calc (N ^ "ElpiOperations")} none,
+  end-module O,
+  export-module O,
+  coq.env.current-library File,
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File E)),
+  coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)),
+  if (get-option "mathcomp" tt ; get-option "mathcomp.axiom" _) (declare-compat N) true.
+
+pred declare-compat i:id.
+declare-compat ModuleName :-
+  CompatModuleName is "MathCompCompat" ^ ModuleName,
+  begin-module CompatModuleName none,
+    begin-module ModuleName none,
+    end-module _,
+  end-module O,
+  export-module O,
+  % is this a bug?
+  % coq.env.current-library File,
+  % coq.elpi.accumulate current "export.db" (clause _ _ (module-to-export File O)).
+  true.
+
+}

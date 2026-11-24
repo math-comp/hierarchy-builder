@@ -11,6 +11,10 @@
 %
 % See /Canonical Structures for the working Coq user/ by Mahboubi and Tassi
 
+accumulate HB/common/database.
+accumulate HB/common/synthesis.
+accumulate HB/common/log.
+
 % This type is private, build it via the APIs below
 typeabbrev phant-term phant.private.phant-term.
 
@@ -257,6 +261,7 @@ mk-phant-term.mixins Target Src CN PF Params N Ty MLwA Out :- std.do! [
   fun-implicit Nlocal Ty Body Out
 ].
 
+func mk-phant-term.mixins.aux term, list term, term, gref, phant-term -> phant-term.
 mk-phant-term.mixins.aux T Params C CN PF X :- std.do![
   get-constructor CN KC,
   synthesis.infer-all-gref->deps Params T KC KCM,
