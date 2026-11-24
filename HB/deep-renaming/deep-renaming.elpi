@@ -1,0 +1,241 @@
+shorten std.{fatal-error-w-data}.
+
+namespace context {
+
+% The type of "reduced" contexts, which can't contain definitions (x := e)
+% and explicitness.
+kind reduced-ctx type.
+type ctx-end reduced-ctx.
+% [ctx-item Id Ty Rest]
+type ctx-item id -> term -> (term -> reduced-ctx) -> reduced-ctx.
+
+type already-reduced reduced-ctx -> context-decl.
+
+func reduce context-decl -> reduced-ctx.
+reduce context-end ctx-end.
+reduce (context-item _ _ _ (some Bo) Rest) Out :- !,
+  reduce (Rest Bo) Out.
+reduce (context-item Id _ Ty none Rest) (ctx-item Id Ty OutRest) :- !,
+  @pi-parameter Id Ty x\ reduce (Rest x) (OutRest x).
+reduce (already-reduced C) C :- !.
+
+func from-record record-decl -> reduced-ctx.
+from-record end-record ctx-end.
+from-record (field _ Id Ty Rest) (ctx-item Id Ty OutRest) :- !,
+  @pi-parameter Id Ty x\ from-record (Rest x) (OutRest x).
+
+% [open Γ T T']
+% Assuming T has the type ∀ x₁ : Γ(x₁), .., xₙ : Γ(xₙ), Ty
+% return its n-th eta expansion in T'.
+func open reduced-ctx, term -> term.
+open ctx-end T T.
+open (ctx-item Id Ty Rest) T (fun Name Ty F) :- !,
+  coq.id->name Id Name,
+  @pi-decl Name Ty x\ open (Rest x) {coq.mk-app T [x]} (F x).
+
+func from-pi term, int -> reduced-ctx.
+from-pi _T N ctx-end :- N is 0, !.
+from-pi T N (ctx-item Id Ty Rest) :- N > 0, !,
+  PredN is N - 1,
+  std.assert! (coq.reduction.lazy.whd T (prod Name Ty Bo)) "Given type is not a Pi",
+  % This is pretty wonky, names are supposed to be irrelevant
+  coq.name->id Name Id,
+  @pi-decl Name Ty x\ from-pi (Bo x) PredN (Rest x).
+
+} % context
+
+namespace util {
+
+% Association list
+typeabbrev (assoc A B) (list (pair A B)).
+
+} % util
+
+namespace renaming {
+
+shorten util.{assoc}.
+shorten context.{reduced-ctx, ctx-end, ctx-item}.
+
+typeabbrev renaming assoc (list string) (list string).
+typeabbrev substitution (func term -> term).
+
+macro @passthrough :- get-option "passthrough" tt.
+macro @recursive-passthrough :- get-option "recursive_passthrough" tt.
+macro @global-passthrough :- get-option "global_passthrough" tt.
+
+% [unapply-indt Ty I Args]
+% Decomposes the type Ty as an application of the inductive I to parameters Args
+func unapply-indt term -> inductive, list term.
+unapply-indt T I Params :- unapply-indt.aux {coq.reduction.lazy.whd T} I Params.
+func unapply-indt.aux term -> inductive, list term.
+unapply-indt.aux (global (indt I)) I [] :- !.
+unapply-indt.aux (app [(global (indt I))|Params]) I Params :- !.
+unapply-indt.aux T _ _ :- fatal-error-w-data "Not an inductive application" T.
+
+% [unapply-record-decl Ty I RDecl Params]
+% Assuming Ty is an instantiation of a record type with parameters,
+% decompose it into the inductive handle I, record declaration RDecl
+% instantiated with the parameters, and applied parameters Params.
+func unapply-record-decl term -> inductive, record-decl, list term.
+unapply-record-decl T I Decl Params :-
+  unapply-indt T I Params,
+  coq.env.indt-decl I IDecl,
+  unapply-record-decl.aux IDecl Params Decl.
+
+func unapply-record-decl.aux indt-decl, list term -> record-decl.
+unapply-record-decl.aux (parameter _ _ _ F) Params RDecl :- !,
+  std.assert! (Params = [Param|ParamTail])
+    "Not enough arguments to instantiate record parameters",
+  unapply-record-decl.aux (F Param) ParamTail RDecl.
+unapply-record-decl.aux (record _ _ _ RDecl) Params RDecl :- !,
+  std.assert! (Params = [])
+    "Too many arguments specified to apply record parameters".
+unapply-record-decl.aux (inductive I _ _ _) _ _ :- !,
+  fatal-error-w-data "Non-record inductive" I.
+
+% [apply-projection Ty ProjName Head (Projected, Type)]
+func apply-projection term, id, term -> pair term term.
+apply-projection Ty ProjName Head Out :-
+  unapply-record-decl Ty I RDecl Params,
+  coq.env.projections I Projs,
+  apply-projection.decl RDecl {std.append Params [Head]} Projs ProjName Out.
+
+func apply-projection.decl
+  record-decl, list term, list (option constant), id
+  -> pair term term.
+apply-projection.decl end-record _ _ P _ :- !,
+  fatal-error-w-data "Projection not found" P.
+apply-projection.decl (field _ FldId Ty _) ProjArgs [Proj|_] P Out :- FldId = P, !,
+  % A projection may not have an associated constant if it's anonymous (the field is called "_")
+  % or undefinable, such as a record in Prop with a field in Type
+  std.assert! (Proj = some RealProj) "Undefinable projections not supported",
+  Out = pr {coq.mk-app (global (const RealProj)) ProjArgs} Ty.
+apply-projection.decl (field _ _ _ Flds) ProjArgs [Proj|Projs] P Out :- !,
+  std.assert! (Proj = some RealProj) "Undefinable projections not supported",
+  coq.mk-app (global (const RealProj)) ProjArgs Projected,
+  apply-projection.decl (Flds Projected) ProjArgs Projs P Out.
+
+% [iterate-projections T Ty Path Out]
+% Given a term T of type Ty and a list of identifiers ["p1", "p2", ..., "pn"],
+% sets Out to be the term (T .p1 .p2 ... .pn)
+func iterate-projections term, term, list id -> term.
+iterate-projections T _ [] T :- !.
+iterate-projections T Ty [P|Ps] Out :- !, std.do![
+  apply-projection Ty P T (pr Projected FieldTy),
+  iterate-projections Projected FieldTy Ps Out
+].
+
+% [extend θ Γ Δ T T']
+func extend renaming, context-decl, context-decl, term -> term.
+extend Th G D T O :-
+  context.reduce G RG, context.reduce D RD,
+  extend.red Th RG RD T O.
+
+% [named-ctx Id Term Ty]
+func named-ctx id -> term, term.
+
+func extend.red renaming, reduced-ctx, reduced-ctx, term -> term.
+% First open Γ and build T' as an iterated lambda,
+% remembering the variables by name.
+extend.red Th (ctx-item Id Ty Rest) D T Out :- !,
+  coq.id->name Id Name,
+  % Preventing "Universe xyz undefined" anomalies.
+  % What I think is happening is that when a top-level Context argument mentions
+  % Type, a new universe is created, but it's not registered as a global
+  % universe. Then if the output term references this universe (such as if we
+  % just reused Ty here and set Out = fun N Ty Bo), we'd get an error when
+  % calling add-const. elaborate-ty-skeleton discards universes in Ty and
+  % replaces them with fresh ones.
+  % TODO: look into this further, maybe move it to the command entrypoint.
+  std.assert-ok! (coq.elaborate-ty-skeleton Ty _ Elaborated)
+    "A type in new context could not be elaborated",
+  (@pi-decl Name Elaborated x\
+    [named-ctx Id x Elaborated :- !] => extend.red Th (Rest x) D T (Bo x)),
+  Out = fun Name Elaborated Bo.
+extend.red Th ctx-end D T Out :- !, extend.open Th D T Out.
+
+func extend.open renaming, reduced-ctx, term -> term.
+extend.open _ ctx-end T T :- !.
+extend.open Th (ctx-item I Ty Rest) T Out :- !, std.do![
+  % Focused = x⁻¹θ
+  focus Th I Focused,
+  coq.reduction.lazy.whd T WhnfT,
+  std.assert! (WhnfT = fun _ Ty' Bo) "Open term not closed by a lambda",
+  std.assert-ok! (coq.unify-eq Ty Ty')
+    {calc ("Open term " ^ {std.any->string T} ^
+           " not closed under expected context")},
+  if (Ty is uvar) (fatal-error-w-data "Could not infer type of argument" I) true,
+  % Arg = θ*(γ)(I)
+  extend.instance I Ty Focused Arg,
+  % Calculate the rest of the telescope with I instantiated
+  extend.open Th (Rest Arg) (Bo Arg) Out
+].
+
+% [focus Th X XTh]
+% Constructs the renaming XTh by stripping a leading X from input paths in Th,
+% so that XTh(P) = Th([X|P]).
+func focus renaming, id -> renaming.
+focus Th X Out :-
+  std.map-filter Th
+    (i\ o\ sigma iPath oPath\ (i = pr [X|iPath] oPath, o = pr iPath oPath))
+    Out.
+
+%[extend.instance Id Ty Focused Out]
+func extend.instance id, term, renaming -> term.
+
+% TODO: I think DeclaredTy still exists in Delta, not in Gamma; what breaks?
+% Only consider these cases if the appropriate passthrough is enabled
+extend.instance Id DeclaredTy [] Instance :- @passthrough,
+  named-ctx Id Instance StoredTy, !,
+  std.assert-ok! (coq.unify-eq DeclaredTy StoredTy)
+    {calc ("The type of " ^ Id ^ " is different in the new context")}.
+extend.instance Id DeclaredTy [] Instance :- @global-passthrough,
+  % coq.locate fails fatally if the reference isn't found
+  coq.locate-all Id Refs,
+  std.exists! Refs (r\ r = loc-gref GR),
+  coq.env.global GR Instance, !,
+  coq.env.typeof GR GRType,
+  std.assert-ok! (coq.unify-eq DeclaredTy GRType)
+    "Global reference does not have the expected type".
+
+% x⁻¹dom(θ) = {ε} ⇝ θ(x) = x₀ ... xₙ ⇝ (x⁻¹θ)(ε) = x₀ ... xₙ
+extend.instance _ DeclaredTy [pr [] [Var|Projs]] EOut :- !, std.do![
+  % γ(x₀)
+  named-ctx Var Instance Ty,
+  % γ(x₀).x₁ ... .xₙ
+  iterate-projections Instance Ty Projs EOut,
+  std.assert-ok! (coq.typecheck EOut DeclaredTy)
+    "Projection does not have the expected type"
+].
+
+extend.instance _ Ty XTh Instance :-
+  % If there are no substitutions, only consider this case
+  % when the appropriate options are enabled
+
+  % Optimization possibility: short circuit if none of the other
+  % passthrough options are enabled, since from now on the renaming is
+  % empty, so the only way we don't fail is through passthrough. This
+  % would save on whd normalizing the types on the leftmost path in
+  % the tree of records and their fields' types, i.e. when Ty is a
+  % record type, and its first field's type is an expensive-to-evaluate
+  % expression which computes to a record type, whose first field's type
+  % is ...; but hopefully this doesn't occur in the wild
+  if (XTh = []) @recursive-passthrough true, !,
+  % XTh := x⁻¹θ, renaming instantiating fields of Ty by name
+  unapply-record-decl Ty I RDecl Params,
+  % XDelta := x⁻¹Δ, context of field names of Ty
+  context.from-record RDecl XDelta,
+  % Monomorphised constructor of Ty
+  coq.env.indt I _ _ _ _ [Ctor] _,
+  coq.mk-app (global (indc Ctor)) Params ACtor,
+  % Eta expand the constructor to be in context XDelta
+  context.open XDelta ACtor ECtor,
+  % Pull back the constructor call to the new context
+  extend.open XTh XDelta ECtor Instance.
+
+:name "extend.instance:fail"
+extend.instance Id _ _ _ :- !,
+  fatal-error-w-data "Don't know how to handle variable" Id.
+  % TODO: Add hints about passthrough
+
+} % renaming
