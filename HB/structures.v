@@ -1,3 +1,5 @@
+Set Warnings "-elpi.flex-clause".
+
 (* Support constants, to be kept in sync with shim/structures.v *)
 From Corelib Require Import ssreflect ssrfun.
 
@@ -771,6 +773,7 @@ HB.instance Definition N Params := Factory.Build Params T …
     - [#[verbose]] for a verbose output.
     - [#[hnf] to compute the head normal form of CS instances before declaring
       them
+    - [#[interactive]] to provide part of the instance in tactics mode.
 *)
 
 #[arguments(raw)] Elpi Command HB.instance.
@@ -792,22 +795,72 @@ main [const-decl Name (some BodySkel) TyWPSkel] :- !,
 main [T0, F0] :- !,
   coq.warning "HB" "HB.deprecated" "The syntax \"HB.instance Key FactoryInstance\" is deprecated, use \"HB.instance Definition\" instead",
   with-attributes (with-logging (instance.declare-existing T0 F0)).
-
+main-interp-proof [const-decl Name (some BodySkel) TyWPSkel] _ Body AllGoals (const-decl Name (some Body) TyWP) :- 
+  std.assert-ok! (coq.elaborate-arity-skeleton TyWPSkel _ TyWP) "Definition type illtyped",
+  coq.arity->term TyWP Ty,
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "Definition illtyped",
+  coq.ltac.collect-goals Body Goal Shelved,
+  std.append Shelved Goal AllGoals,
+  coq.say "Once there are no more subgoals, use the command \"HB.end_instance.\" to conclude the instance". 
 }}.
+
+#[synterp] Elpi Accumulate File "HB/common/utils-synterp.elpi".
 #[synterp] Elpi Accumulate lp:{{
 
 shorten coq.env.{ begin-section, end-section }.
 
-main [const-decl _ _ (arity _)] :- !.
-main [const-decl _ _ (parameter _ _ _ _)] :- !,
+pred interactive-in-attributes i:list attribute. 
+  interactive-in-attributes [attribute "interactive" (leaf-str "") | _].
+  interactive-in-attributes [_ | Atts] :- interactive-in-attributes Atts.
+
+main _ :-
+  with-attributes (
+    if (get-option "interactive" _)
+      (true)
+      (
+        SectionName is "hb_instance_" ^ {std.any->string {new_int} },
+        begin-section SectionName, end-section
+      )
+  ).
+}}.
+
+Elpi Typecheck.
+#[proof(begin_if="interactive")]
+Elpi Export HB.instance.
+
+
+
+#[arguments(raw)] Elpi Command HB.end_instance.
+Elpi Accumulate Db hb.db.
+Elpi Accumulate File "HB/common/stdpp.elpi".
+Elpi Accumulate File "HB/common/database.elpi".
+Elpi Accumulate File "HB/common/compat_acc_clauses_all.elpi".
+Elpi Accumulate File "HB/common/compat_add_secvar_all.elpi".
+Elpi Accumulate File "HB/common/utils.elpi".
+Elpi Accumulate File "HB/common/log.elpi".
+Elpi Accumulate File "HB/common/synthesis.elpi".
+Elpi Accumulate File "HB/context.elpi".
+Elpi Accumulate File "HB/instance.elpi".
+Elpi Accumulate lp:{{
+    main-interp-qed _ _ P _GL (const-decl Name (some _Body) TyWP) :-
+    abstract-props-as-lemmas.main P [] P',
+    with-attributes (with-logging (instance.declare-const Name P' TyWP _ _)).
+}}.
+
+#[synterp] Elpi Accumulate lp:{{
+
+shorten coq.env.{ begin-section, end-section }.
+
+main _ :- 
   SectionName is "hb_instance_" ^ {std.any->string {new_int} },
   begin-section SectionName, end-section.
-main [_, _] :- !.
-
-main _ :- coq.error "Usage: HB.instance Definition <Name> := <Builder> T ...".
 }}.
-Elpi Typecheck.
-Elpi Export HB.instance.
+
+#[proof="end"] 
+Elpi Export HB.end_instance.
+
+
+
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
